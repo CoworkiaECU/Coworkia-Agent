@@ -86,16 +86,19 @@ router.post('/webhooks/wassenger', async (req, res) => {
     }
 
     // Perfil/memoria
-    const current = loadProfile(userId) || {};
+    const current = await loadProfile(userId) || {};
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
-    const profile = saveProfile(userId, {
+    const profile = {
       ...current,
       userId,
       name: name || current.name,
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
       firstVisit
-    });
+    };
+    
+    // Guardar perfil actualizado
+    await saveProfile(userId, profile);
 
     // Procesar mensaje con orquestador
     const resultado = procesarMensaje(text, profile, []);

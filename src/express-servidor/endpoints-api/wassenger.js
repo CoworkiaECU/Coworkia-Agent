@@ -12,6 +12,143 @@ import {
   calculateReservationCost
 } from '../../perfiles-interacciones/memoria.js';
 
+const router = Router();
+
+/**
+ * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
+ */
+function cleanWhatsAppName(whatsappName) {
+  if (!whatsappName || typeof whatsappName !== 'string') return null;
+  
+  let cleaned = whatsappName.trim();
+  
+  // Remover emojis comunes
+  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆]/g, '');
+  
+  // Remover texto común de WhatsApp Business
+  const businessKeywords = [
+    'whatsapp business', 'business', 'empresa', 'company', 
+    'servicio', 'service', 'oficial', 'official', '+593', '+1',
+    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
+  ];
+  
+  for (const keyword of businessKeywords) {
+    const regex = new RegExp(keyword, 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+  
+  // Remover números de teléfono
+  cleaned = cleaned.replace(/\\+?\\d{1,4}[\\s-]?\\d{6,}/g, '');
+  
+  // Limpiar espacios y caracteres especiales (mantener acentos españoles)
+  cleaned = cleaned.replace(/[^\\w\\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\\s+/g, ' ').trim();
+  
+  // Solo tomar el primer nombre si es muy largo
+  if (cleaned.length > 20) {
+    cleaned = cleaned.split(' ')[0];
+  }
+  
+  // Capitalizar primera letra
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+  }
+  
+  return cleaned.length > 1 ? cleaned : null;
+}
+
+/**
+ * 🔍 Detecta nombre desde mensaje de presentación
+ */
+function extractNameFromMessage(message) {
+  if (!message) return null;
+  
+  // Patrones comunes de presentación
+  const patterns = [
+    /(?:soy|me llamo|mi nombre es|soy de)\\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i,
+    /(?:hola|buenos días|buenas tardes|buenas noches),?\\s*(?:soy)?\\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    if (match && match[1].length > 1) {
+      return match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * 🆕 Limpia el nombre de WhatsApp removiendo emojis, texto comercial, números
+ */
+function cleanWhatsAppName(whatsappName) {
+  if (!whatsappName || typeof whatsappName !== 'string') return null;
+  
+  let cleaned = whatsappName.trim();
+  
+  // Remover emojis comunes
+  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆]/g, '');
+  
+  // Remover texto común de WhatsApp Business
+  const businessKeywords = [
+    'whatsapp business', 'business', 'empresa', 'company', 
+    'servicio', 'service', 'oficial', 'official', '+593', '+1',
+    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
+  ];
+  
+  for (const keyword of businessKeywords) {
+    const regex = new RegExp(keyword, 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+  
+  // Remover números de teléfono
+  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
+  
+  // Limpiar espacios y caracteres especiales
+  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  // Solo tomar el primer nombre si es muy largo
+  if (cleaned.length > 20) {
+    cleaned = cleaned.split(' ')[0];
+  }
+  
+  // Capitalizar primera letra
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+  }
+  
+  return cleaned.length > 1 ? cleaned : null;
+}
+
+/**
+ * 🆕 Extrae nombres del primer mensaje del usuario
+ */
+function extractNameFromMessage(message) {
+  if (!message || typeof message !== 'string') return null;
+  
+  const lowerMsg = message.toLowerCase();
+  
+  // Detectar frases de presentación
+  const patterns = [
+    /soy\s+([a-záéíóúüñ]{2,15})/i,
+    /me llamo\s+([a-záéíóúüñ]{2,15})/i,
+    /mi nombre es\s+([a-záéíóúüñ]{2,15})/i,
+    /hola soy\s+([a-záéíóúüñ]{2,15})/i,
+    /buenos días soy\s+([a-záéíóúüñ]{2,15})/i,
+    /buenas tardes soy\s+([a-záéíóúüñ]{2,15})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    if (match && match[1]) {
+      const name = match[1].trim();
+      return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    }
+  }
+  
+  return null;
+}
+
 /**
  * 🆕 Limpia el nombre de WhatsApp para obtener solo el nombre real
  */

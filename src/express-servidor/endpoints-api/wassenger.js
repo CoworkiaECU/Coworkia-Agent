@@ -2,7 +2,15 @@
 import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
-import { loadProfile, saveProfile, saveInteraction } from '../../perfiles-interacciones/memoria.js';
+import { 
+  loadProfile, 
+  saveProfile, 
+  saveInteraction, 
+  loadConversationHistory, 
+  saveConversationMessage,
+  getPaymentInfo,
+  calculateReservationCost
+} from '../../perfiles-interacciones/memoria.js';
 
 const router = Router();
 
@@ -166,26 +174,47 @@ router.post('/webhooks/wassenger', async (req, res) => {
     // Perfil/memoria
     const current = await loadProfile(userId) || {};
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
+    
+    // 🆕 Cargar historial de conversación (últimos 10 mensajes)
+    const conversationHistory = await loadConversationHistory(userId, 10);
+    
     const profile = {
       ...current,
       userId,
       name: name || current.name,
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
-      firstVisit
+      firstVisit,
+      conversationCount: (current.conversationCount || 0) + 1,
+      freeTrialUsed: current.freeTrialUsed || false,
+      freeTrialDate: current.freeTrialDate || null,
+      reservationHistory: current.reservationHistory || []
     };
     
     // Guardar perfil actualizado
     await saveProfile(userId, profile);
 
-    // Procesar mensaje con orquestador
-    const resultado = procesarMensaje(text, profile, []);
+    // 🆕 Guardar mensaje del usuario en historial
+    await saveConversationMessage(userId, {
+      role: 'user',
+      content: text
+    });
+
+    // Procesar mensaje con orquestador (ahora con historial)
+    const resultado = procesarMensaje(text, profile, conversationHistory);
 
     // Generar respuesta con OpenAI
     const reply = await complete(resultado.prompt, {
       temperature: 0.4,
       max_tokens: 300,
       system: resultado.systemPrompt
+    });
+
+    // 🆕 Guardar respuesta del asistente en historial
+    await saveConversationMessage(userId, {
+      role: 'assistant',
+      content: reply,
+      agent: resultado.agente
     });
 
     // Guardar interacción
@@ -199,7 +228,9 @@ router.post('/webhooks/wassenger', async (req, res) => {
       meta: { 
         route: '/webhooks/wassenger',
         via: 'whatsapp',
-        rol: resultado.metadata.rol
+        rol: resultado.metadata.rol,
+        freeTrialUsed: profile.freeTrialUsed,
+        conversationCount: profile.conversationCount
       }
     });
 

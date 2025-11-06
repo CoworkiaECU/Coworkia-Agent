@@ -12,7 +12,76 @@ import {
   calculateReservationCost
 } from '../../perfiles-interacciones/memoria.js';
 
-const router = Router();
+/**
+ * 🆕 Limpia el nombre de WhatsApp para obtener solo el nombre real
+ */
+function cleanWhatsAppName(whatsappName) {
+  if (!whatsappName) return null;
+  
+  let cleaned = whatsappName.trim();
+  
+  // Remover emojis comunes
+  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝]/g, '');
+  
+  // Remover texto común de WhatsApp Business
+  const businessKeywords = [
+    'whatsapp business', 'business', 'empresa', 'company', 
+    'servicio', 'service', 'oficial', 'official', '+593', '+1'
+  ];
+  
+  for (const keyword of businessKeywords) {
+    const regex = new RegExp(keyword, 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+  
+  // Remover números de teléfono
+  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
+  
+  // Limpiar espacios y caracteres especiales
+  cleaned = cleaned.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  // Solo tomar el primer nombre si es muy largo
+  if (cleaned.length > 20) {
+    cleaned = cleaned.split(' ')[0];
+  }
+  
+  // Capitalizar primera letra
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+  }
+  
+  return cleaned.length > 1 ? cleaned : null;
+}
+
+/**
+ * 🆕 Intenta extraer nombre del primer mensaje del usuario
+ */
+function extractNameFromMessage(message) {
+  if (!message) return null;
+  
+  const lowerMsg = message.toLowerCase();
+  
+  // Patrones comunes de presentación
+  const patterns = [
+    /mi nombre es ([a-záéíóúñ]+)/i,
+    /me llamo ([a-záéíóúñ]+)/i,
+    /soy ([a-záéíóúñ]+)/i,
+    /hola,? soy ([a-záéíóúñ]+)/i,
+    /buenos días,? soy ([a-záéíóúñ]+)/i,
+    /buenas tardes,? soy ([a-záéíóúñ]+)/i,
+    /hola,? mi nombre es ([a-záéíóúñ]+)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    if (match && match[1] && match[1].length > 1) {
+      const name = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+      return name;
+    }
+  }
+  
+  return null;
+}
 
 /**
  * 🛡️ Detecta si un mensaje proviene de un bot
@@ -178,10 +247,29 @@ router.post('/webhooks/wassenger', async (req, res) => {
     // 🆕 Cargar historial de conversación (últimos 10 mensajes)
     const conversationHistory = await loadConversationHistory(userId, 10);
     
+    // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
+    let detectedName = current.name || null;
+    
+    // Si no tenemos nombre guardado, intentar extraerlo
+    if (!detectedName && name) {
+      detectedName = cleanWhatsAppName(name);
+      console.log(`[WASSENGER] Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
+    }
+    
+    // También intentar detectar nombre del mensaje si es primera vez
+    if (!detectedName && firstVisit && text) {
+      const nameFromMessage = extractNameFromMessage(text);
+      if (nameFromMessage) {
+        detectedName = nameFromMessage;
+        console.log(`[WASSENGER] Nombre detectado del mensaje: "${nameFromMessage}"`);
+      }
+    }
+    
     const profile = {
       ...current,
       userId,
-      name: name || current.name,
+      name: detectedName,
+      whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
       firstVisit,

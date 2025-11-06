@@ -64,7 +64,22 @@ INSTRUCCIONES:
     metadata: {
       rol: agente.rol,
       responsabilidades: agente.responsabilidades,
-      primeraVisita: perfil.firstVisit || false
+      primeraVisita: perfil.firstVisit || false,
+      // 🆕 Contexto extendido para los agentes
+      userProfile: {
+        isFirstTime: perfil.firstVisit || false,
+        freeTrialUsed: perfil.freeTrialUsed || false,
+        freeTrialDate: perfil.freeTrialDate || null,
+        conversationCount: perfil.conversationCount || 0,
+        totalReservations: perfil.reservationHistory ? perfil.reservationHistory.length : 0,
+        hasEmail: !!perfil.email,
+        name: perfil.name || null
+      },
+      conversationContext: {
+        hasHistory: historial && historial.length > 0,
+        messageCount: historial ? historial.length : 0,
+        isFirstMessage: !historial || historial.length === 0
+      }
     }
   };
 }
@@ -74,18 +89,57 @@ INSTRUCCIONES:
  */
 function construirContextoPerfil(perfil = {}) {
   if (!perfil || Object.keys(perfil).length === 0) {
-    return 'PERFIL USUARIO: Usuario nuevo sin perfil registrado.';
+    return 'PERFIL USUARIO: Usuario nuevo sin perfil registrado. Es primera vez.';
   }
 
   const lineas = ['PERFIL USUARIO:'];
   
-  if (perfil.name) lineas.push(`- Nombre: ${perfil.name}`);
+  // 🆕 Información del nombre detectado
+  if (perfil.name) {
+    lineas.push(`- Nombre: ${perfil.name} ✅`);
+    if (perfil.whatsappDisplayName && perfil.whatsappDisplayName !== perfil.name) {
+      lineas.push(`- WhatsApp muestra: "${perfil.whatsappDisplayName}"`);
+    }
+  } else {
+    lineas.push(`- Nombre: No detectado → **USAR "Hola" genérico**`);
+  }
+  
   if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);
   if (perfil.email) lineas.push(`- Email: ${perfil.email}`);
   if (perfil.channel) lineas.push(`- Canal: ${perfil.channel}`);
+  
+  // 🆕 Información de primera visita vs cliente recurrente
   if (perfil.firstVisit !== undefined) {
-    lineas.push(`- Primera visita: ${perfil.firstVisit ? 'SÍ (mencionar día gratis)' : 'NO (cliente recurrente)'}`);
+    if (perfil.firstVisit) {
+      const greeting = perfil.name ? `Hola ${perfil.name}!` : 'Hola!';
+      lineas.push(`- Primera visita: SÍ → Saludo: "${greeting}" + **OFRECER DÍA GRATIS de 2h**`);
+    } else {
+      const greeting = perfil.name ? `Hola ${perfil.name}!` : 'Hola de nuevo!';
+      lineas.push(`- Primera visita: NO → Saludo: "${greeting}" (cliente recurrente)`);
+    }
   }
+
+  // 🆕 Información sobre uso del día gratis
+  if (perfil.freeTrialUsed !== undefined) {
+    if (perfil.freeTrialUsed) {
+      lineas.push(`- Día gratis usado: SÍ (${perfil.freeTrialDate || 'fecha anterior'}) → **DEBE PAGAR**`);
+    } else {
+      lineas.push(`- Día gratis disponible: SÍ → Puede usarlo gratis`);
+    }
+  }
+
+  // 🆕 Historial de reservas
+  if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
+    const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
+    lineas.push(`- Última reserva: ${ultimaReserva.date} - ${ultimaReserva.type} (${ultimaReserva.status})`);
+    lineas.push(`- Total reservas: ${perfil.reservationHistory.length}`);
+  }
+
+  // 🆕 Conteo de mensajes para personalización
+  if (perfil.conversationCount) {
+    lineas.push(`- Mensajes enviados: ${perfil.conversationCount}`);
+  }
+  
   if (perfil.lastMessageAt) lineas.push(`- Última interacción: ${perfil.lastMessageAt}`);
   
   return lineas.join('\n');
@@ -96,19 +150,47 @@ function construirContextoPerfil(perfil = {}) {
  */
 function construirContextoHistorial(historial = []) {
   if (!historial || historial.length === 0) {
-    return 'HISTORIAL: Primera interacción.';
+    return 'HISTORIAL: Primera interacción - sin mensajes previos.';
   }
 
-  const lineas = ['HISTORIAL RECIENTE:'];
+  const lineas = ['HISTORIAL CONVERSACIÓN:'];
   
-  // Tomar últimas 3 interacciones máximo
-  const recientes = historial.slice(-3);
+  // Tomar últimos 5 mensajes máximo para no saturar el contexto
+  const recientes = historial.slice(-5);
   
   recientes.forEach((item, index) => {
-    lineas.push(`${index + 1}. Usuario: "${item.input || item.message}"`);
-    if (item.agent) lineas.push(`   → Atendió: ${item.agent}`);
-    if (item.output) lineas.push(`   → Respuesta: "${item.output.substring(0, 100)}..."`);
+    const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '';
+    
+    if (item.role === 'user') {
+      lineas.push(`${timestamp} Usuario: "${item.content}"`);
+    } else if (item.role === 'assistant') {
+      const agentInfo = item.agent ? ` (${item.agent})` : '';
+      // Limitar respuesta a 80 caracteres para no saturar
+      const shortResponse = item.content.length > 80 ? 
+        item.content.substring(0, 80) + '...' : 
+        item.content;
+      lineas.push(`${timestamp} Bot${agentInfo}: "${shortResponse}"`);
+    }
   });
+
+  lineas.push(''); // Línea en blanco para separar
+  lineas.push('INSTRUCCIONES SEGÚN HISTORIAL:');
+  
+  // 🆕 Detectar patrones en el historial para dar instrucciones específicas
+  const userMessages = recientes.filter(m => m.role === 'user');
+  const lastUserMessage = userMessages[userMessages.length - 1];
+  
+  if (userMessages.length === 1) {
+    lineas.push('- Es el primer mensaje del usuario, presentarte cálidamente');
+  } else if (userMessages.length > 1) {
+    lineas.push('- Usuario ya ha enviado mensajes anteriores, NO te presentes de nuevo');
+    lineas.push('- Continúa la conversación naturalmente basándote en el contexto');
+  }
+
+  // Detectar si hay preguntas sin resolver
+  if (lastUserMessage && lastUserMessage.content.includes('?')) {
+    lineas.push('- Asegúrate de responder la pregunta actual del usuario');
+  }
 
   return lineas.join('\n');
 }

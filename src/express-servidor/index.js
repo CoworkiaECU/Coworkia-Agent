@@ -1,6 +1,9 @@
 // src/express-servidor/index.js
 'use strict';
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';

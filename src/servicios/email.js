@@ -1,6 +1,9 @@
 // Sistema de Email para confirmaciones de reservas - Coworkia
 // Envía emails profesionales con detalles de reserva
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import nodemailer from 'nodemailer';
 
 /**
@@ -24,7 +27,7 @@ function createEmailTransporter() {
 
   try {
     console.log('[EMAIL] 🏗️ Creando transportador nodemailer...');
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: EMAIL_SERVICE,
       auth: {
         user: EMAIL_USER,

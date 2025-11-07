@@ -116,27 +116,27 @@ IMPORTANTE:
     
     bienvenidaConNombre: '¡Hola {nombre}, soy Aurora! �🏼‍💼✨ Te asisto en conseguir el espacio ideal para ti o tu equipo de trabajo. ¿Cuándo quieres venir a Coworkia?',
     
-    primeraVisita: '¡Perfecto! Como es tu primera vez, tienes **2 horas GRATIS** para conocer Coworkia 🎉 ¿Qué fecha te viene bien? Solo necesito saber cuándo quieres venir.',
+    primeraVisita: '¡Perfecto! Como es tu primera vez, tienes *2 horas GRATIS* para conocer Coworkia 🎉\n\n¿Qué fecha te viene bien?\n\nSolo necesito saber cuándo quieres venir.',
     
-    solicitudReserva: '¡Excelente! Para tu reserva necesito:\n📅 **Fecha** (ej: mañana, 7 nov)\n⏰ **Hora de inicio** (ej: 9:00am)\n⏱️ **Duración** (ej: 2 horas)\n\n¿Me das estos datos?',
+    solicitudReserva: '¡Excelente! Para tu reserva necesito:\n\n📅 *Fecha* (ej: mañana, 7 nov)\n⏰ *Hora de inicio* (ej: 9:00am)\n⏱️ *Duración* (ej: 2 horas)\n\n¿Me das estos datos?',
     
-    confirmacionReserva: '¡Perfecto! 📋 **CONFIRMA TU RESERVA:**\n\n📅 **Fecha:** {fecha}\n⏰ **Horario:** {inicio} - {fin}\n🏢 **Espacio:** Hot Desk\n💰 **Total:** ${precio} USD\n\n¿**Confirmas esta reserva?**\nResponde **SI** para continuar con el pago o **NO** para cancelar 👍',
+    confirmacionReserva: '¡Perfecto! 📋 *CONFIRMA TU RESERVA:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n💰 *Total:* ${precio} USD\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* para continuar con el pago o *NO* para cancelar 👍',
     
-    confirmacionGratis: '¡Perfecto! 🎉 **CONFIRMA TU DÍA GRATIS:**\n\n📅 **Fecha:** {fecha}\n⏰ **Horario:** {inicio} - {fin}\n🏢 **Espacio:** Hot Desk\n💰 **Precio:** ¡GRATIS! (primera vez)\n\n¿**Confirmas esta reserva?**\nResponde **SI** o **NO** 👍',
+    confirmacionGratis: '¡Perfecto! 🎉 *CONFIRMA TU DÍA GRATIS:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n💰 *Precio:* ¡GRATIS! (primera vez)\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* o *NO* 👍',
     
-    pagoConfirmado: '✅ *¡Pago verificado automáticamente!* Tu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
+    pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
     
-    comprobanteProcesando: '📸 Recibido! Analizando tu comprobante de pago con IA... ✨\n(Esto toma unos segundos)',
+    comprobanteProcesando: '📸 Recibido!\n\nAnalizando tu comprobante de pago con IA... ✨\n\n(Esto toma unos segundos)',
     
-    derivarAluna: 'Para planes mensuales te conecto con **Aluna**, nuestra especialista en membresías 👋\n¡Ella te dará todos los detalles!',
+    derivarAluna: 'Para planes mensuales te conecto con *Aluna*, nuestra especialista en membresías 👋\n\n¡Ella te dará todos los detalles!',
     
-    derivarEnzo: 'Para consultas de marketing y tecnología, menciona **@enzo** + tu pregunta.\n¡Él es nuestro experto! 🚀',
+    derivarEnzo: 'Para consultas de marketing y tecnología, menciona *@enzo* + tu pregunta.\n\n¡Él es nuestro experto! 🚀',
     
-    derivarAdriana: 'Para seguros, menciona **@adriana** + tu consulta.\n¡Es nuestra experta en seguros de Segpopular! �️',
+    derivarAdriana: 'Para seguros, menciona *@adriana* + tu consulta.\n\n¡Es nuestra experta en seguros de Segpopular! 🛡️',
     
-    confirmarReservaDiaGratis: '✅ *¡Tu día gratis está confirmado!* 🎉\n📅 {fecha} de {inicio} a {fin}\n📧 Te envié los detalles por email\n📍 ¡Te esperamos en Whymper 403!\n\n🗺️ Ubicación: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
+    confirmarReservaDiaGratis: '✅ *¡Tu día gratis está confirmado!* 🎉\n\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié los detalles por email\n📍 ¡Te esperamos en Whymper 403!\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
     
-    errorDisponibilidad: '❌ Lo siento, ese horario no está disponible.\n¿Te sirve alguna de estas opciones?\n• {alternativa1}\n• {alternativa2}',
+    errorDisponibilidad: '❌ Lo siento, ese horario no está disponible.\n\n¿Te sirve alguna de estas opciones?\n\n• {alternativa1}\n• {alternativa2}',
     
     informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk desde $4/hora\n☕ WiFi + Café incluido\n\n🗺️ Ubicación: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69'
   }

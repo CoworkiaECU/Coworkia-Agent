@@ -193,14 +193,16 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
       return {
         success: true,
-        message: `✅ **¡Reserva confirmada${userName}!**
+        message: `✅ *¡Reserva confirmada${userName}!*
 
 🎉 Tu día gratis está listo:
-📅 **${pendingReservation.date}**
-⏰ **${pendingReservation.startTime} - ${pendingReservation.endTime}**
+
+📅 *${pendingReservation.date}*
+⏰ *${pendingReservation.startTime} - ${pendingReservation.endTime}*
 
 📧 Te he enviado la confirmación por email.
-📍 **Ubicación:** Whymper 403, Edificio Finistere
+
+📍 *Ubicación:* Whymper 403, Edificio Finistere
 
 ¡Te esperamos! 🚀`,
         needsAction: false,
@@ -213,22 +215,22 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     
     return {
       success: true,
-      message: `✅ **¡Reserva confirmada${userName}!**
+      message: `✅ *¡Reserva confirmada${userName}!*
 
-💳 **DATOS PARA EL PAGO:**
+💳 *DATOS PARA EL PAGO:*
 
-💰 **Total:** $${pendingReservation.totalPrice} USD
-🔢 **Referencia:** ${reservationResult.reservation.id}
+💰 *Total:* $${pendingReservation.totalPrice} USD
+🔢 *Referencia:* ${reservationResult.reservation.id}
 
-**💳 PAYPHONE (recomendado):**
+*💳 PAYPHONE (recomendado):*
 👉 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
-**🏦 TRANSFERENCIA BANCARIA:**
+*🏦 TRANSFERENCIA BANCARIA:*
 👉 Banco Pichincha
 👉 Cuenta: 2207158516
 👉 Nombre: Coworkia
 
-⚠️ **Importante:** Después de pagar, envíame una captura de pantalla del comprobante para confirmar automáticamente.
+⚠️ *Importante:* Después de pagar, envíame una captura de pantalla del comprobante para confirmar automáticamente.
 
 ¿Listo para pagar? 🚀`,
       needsAction: true,
@@ -264,8 +266,9 @@ export async function processNegativeConfirmation(userProfile) {
 ❌ He cancelado la reserva pendiente.
 
 ¿En qué más puedo ayudarte?
+
 • Otra fecha/hora
-• Información de espacios
+• Información de espacios  
 • Planes mensuales
 
 ¡Estoy aquí para lo que necesites! 😊`,
@@ -285,8 +288,9 @@ export function processAmbiguousResponse(userProfile, message) {
     message: `No estoy seguro de tu respuesta${userName} 🤔
 
 Por favor responde claramente:
-• **SI** - para confirmar la reserva
-• **NO** - para cancelar
+
+• *SI* - para confirmar la reserva
+• *NO* - para cancelar
 
 Tu mensaje: "${message}"
 

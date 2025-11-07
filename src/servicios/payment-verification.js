@@ -129,6 +129,7 @@ Por favor, verifica el monto o contacta a soporte.`,
       message: `✅ *¡Pago confirmado!*
 
 🎉 Tu reserva está lista:
+
 📅 *Fecha:* ${pendingReservation.date}
 ⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
 🏢 *Espacio:* ${pendingReservation.spaceType}
@@ -136,6 +137,7 @@ Por favor, verifica el monto o contacta a soporte.`,
 💳 *Referencia:* ${paymentData.transactionNumber}
 
 📧 Te he enviado la confirmación por email.
+
 ¡Nos vemos en Coworkia! 🚀`,
       data: paymentData,
       reservation: updatedReservation

@@ -7,16 +7,23 @@ import nodemailer from 'nodemailer';
  * 📧 Configuración del transportador de email
  */
 function createEmailTransporter() {
+  console.log('[EMAIL] 🔧 Inicializando transportador de email');
+  
   const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
   const EMAIL_PASS = process.env.EMAIL_PASS || process.env.GMAIL_PASS;
   const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
   
+  console.log('[EMAIL] - Usuario:', EMAIL_USER);
+  console.log('[EMAIL] - Servicio:', EMAIL_SERVICE);
+  console.log('[EMAIL] - Password configurado:', EMAIL_PASS ? 'SÍ' : 'NO');
+  
   if (!EMAIL_USER || !EMAIL_PASS) {
-    console.warn('[EMAIL] Configuración de email no encontrada. Emails no se enviarán.');
+    console.warn('[EMAIL] ❌ Configuración de email no encontrada. Emails no se enviarán.');
     return null;
   }
 
   try {
+    console.log('[EMAIL] 🏗️ Creando transportador nodemailer...');
     const transporter = nodemailer.createTransporter({
       service: EMAIL_SERVICE,
       auth: {
@@ -25,9 +32,10 @@ function createEmailTransporter() {
       }
     });
     
+    console.log('[EMAIL] ✅ Transportador creado exitosamente');
     return transporter;
   } catch (error) {
-    console.error('[EMAIL] Error creando transportador:', error);
+    console.error('[EMAIL] ❌ Error creando transportador:', error);
     return null;
   }
 }
@@ -439,10 +447,18 @@ Equipo Coworkia
  * 💳 Envía email de confirmación de pago
  */
 export async function sendPaymentConfirmationEmail(userEmail, userName, reservationData) {
+  console.log('[EMAIL] 🚀 Iniciando envío de confirmación de pago');
+  console.log('[EMAIL] - Destinatario:', userEmail);
+  console.log('[EMAIL] - Usuario:', userName);
+  console.log('[EMAIL] - Datos reserva:', JSON.stringify(reservationData, null, 2));
+  
   const transporter = createEmailTransporter();
   if (!transporter) {
+    console.error('[EMAIL] ❌ Transportador no configurado');
     return { success: false, error: 'Email no configurado' };
   }
+  
+  console.log('[EMAIL] ✅ Transportador creado exitosamente');
 
   const { paymentData } = reservationData;
   const emailHtml = generatePaymentConfirmationHTML({
@@ -450,6 +466,8 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
     ...reservationData,
     paymentData
   });
+  
+  console.log('[EMAIL] ✅ HTML del email generado');
 
   const emailOptions = {
     from: `"Coworkia" <${process.env.EMAIL_USER}>`,
@@ -458,10 +476,18 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
     html: emailHtml,
     text: `¡Pago confirmado! Tu reserva para ${reservationData.date} está lista. Referencia: ${paymentData?.transactionNumber}`
   };
+  
+  console.log('[EMAIL] 📧 Configuración de email:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject
+  });
 
   try {
+    console.log('[EMAIL] 📤 Enviando email...');
     const info = await transporter.sendMail(emailOptions);
-    console.log('[EMAIL] Confirmación de pago enviada:', info.messageId);
+    console.log('[EMAIL] ✅ Email enviado exitosamente. ID:', info.messageId);
+    console.log('[EMAIL] 📊 Info completa:', info);
     
     return {
       success: true,
@@ -469,7 +495,10 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
       email: userEmail
     };
   } catch (error) {
-    console.error('[EMAIL] Error enviando confirmación de pago:', error);
+    console.error('[EMAIL] ❌ ERROR enviando confirmación de pago:', error.message);
+    console.error('[EMAIL] 📜 Stack trace completo:', error.stack);
+    console.error('[EMAIL] 🔍 Tipo de error:', error.name);
+    console.error('[EMAIL] 📋 Código de error:', error.code);
     return {
       success: false,
       error: error.message

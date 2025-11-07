@@ -90,14 +90,37 @@ Por favor, verifica el monto o contacta a soporte.`,
     });
 
     // 7. Enviar email de confirmación
+    console.log('[Payment Verification] Intentando enviar email a:', userProfile.email);
+    
+    if (!userProfile.email) {
+      console.warn('[Payment Verification] Usuario no tiene email registrado');
+      return {
+        success: true,
+        message: `✅ **¡Pago confirmado!**
+
+🎉 Tu reserva está lista:
+📅 **Fecha:** ${pendingReservation.date}
+⏰ **Hora:** ${pendingReservation.startTime} - ${pendingReservation.endTime}
+
+⚠️ **Nota:** No pude enviar email de confirmación porque no tienes email registrado.
+📍 **Ubicación:** Whymper 403, Edificio Finistere
+
+¡Te esperamos! 🚀`,
+        data: updatedReservation
+      };
+    }
+    
     try {
+      console.log('[Payment Verification] Enviando email de confirmación...');
       await sendPaymentConfirmationEmail(
         userProfile.email,
         userProfile.name || 'Cliente',
         updatedReservation
       );
+      console.log('[Payment Verification] ✅ Email enviado exitosamente a:', userProfile.email);
     } catch (emailError) {
-      console.error('[Payment Verification] Error enviando email:', emailError);
+      console.error('[Payment Verification] ❌ Error enviando email:', emailError);
+      console.error('[Payment Verification] Stack trace:', emailError.stack);
     }
 
     // 8. Respuesta de éxito

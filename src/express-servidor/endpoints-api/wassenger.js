@@ -86,31 +86,41 @@ function extractNameFromMessage(message) {
  * Retorna { detected: boolean, reason: string }
  */
 function detectarBot(data, text, name) {
-  // 1. Detectar por campo isBot o type
+  // 🚨 FILTROS TEMPORALMENTE DESHABILITADOS PARA TESTING
+  // TODO: Reactivar filtros una vez confirmado que Aurora responde
+  
+  // 1. ÚNICO FILTRO ACTIVO: Detectar por campo isBot explícito
   if (data.isBot === true || data.type === 'bot' || data.fromBot === true) {
     return { detected: true, reason: 'campo_isBot_true' };
   }
 
-  // 2. Detectar por sufijo @c.us o @g.us en el ID (grupos y canales)
+  // 2. ÚNICO FILTRO ACTIVO: Detectar grupos
   const userId = data.fromNumber || data.from || '';
   if (userId.includes('@g.us') || userId.includes('@broadcast')) {
     return { detected: true, reason: 'mensaje_de_grupo_o_broadcast' };
   }
 
+  // ⚠️ FILTROS COMENTADOS TEMPORALMENTE:
+  
   // 3. Detectar números sospechosos de bots (números muy largos o con patrones)
+  /*
   const numeros = userId.replace(/\D/g, '');
   if (numeros.length > 15 || numeros.startsWith('000000')) {
     return { detected: true, reason: 'numero_invalido_o_sospechoso' };
   }
+  */
 
   // 4. Detectar nombres típicos de bots
+  /*
   const nombreLower = (name || '').toLowerCase();
   const botKeywords = ['bot', 'automated', 'auto-reply', 'no-reply', 'noreply', 'system', 'whatsapp business'];
   if (botKeywords.some(keyword => nombreLower.includes(keyword))) {
     return { detected: true, reason: 'nombre_contiene_keyword_bot' };
   }
+  */
 
   // 5. Detectar mensajes con estructura típica de bot (muy cortos o solo comandos)
+  /*
   const textLower = text.toLowerCase().trim();
   if (textLower.startsWith('/') || textLower.startsWith('!') || textLower.startsWith('.')) {
     // Comandos de bots, pero permitimos si parece humano
@@ -118,13 +128,16 @@ function detectarBot(data, text, name) {
       return { detected: true, reason: 'comando_bot_detectado' };
     }
   }
+  */
 
   // 6. Detectar mensajes con URLs acortadas repetitivas (spam bots)
+  /*
   const urlPattern = /(bit\.ly|tinyurl|goo\.gl|t\.co|ow\.ly)/gi;
   const urlMatches = text.match(urlPattern);
   if (urlMatches && urlMatches.length > 2) {
     return { detected: true, reason: 'multiples_urls_acortadas_spam' };
   }
+  */
 
   // No es bot
   return { detected: false, reason: null };
@@ -304,6 +317,14 @@ router.post('/webhooks/wassenger', async (req, res) => {
       console.log(`[WASSENGER] BOT DETECTADO y bloqueado: ${isBot.reason}`);
       return res.json({ ok: true, ignored: true, reason: 'bot_detected', details: isBot.reason });
     }
+
+    // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
+    console.log('[WASSENGER] ✅ PROCESANDO MENSAJE VÁLIDO:');
+    console.log(`- Usuario: ${userId}`);
+    console.log(`- Nombre: ${name}`);
+    console.log(`- Texto: "${text}"`);
+    console.log(`- Tipo: ${messageType}`);
+    console.log('- Datos completos:', JSON.stringify(data, null, 2));
 
     // Perfil/memoria
     const current = await loadProfile(userId) || {};

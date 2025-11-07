@@ -82,65 +82,6 @@ function extractNameFromMessage(message) {
 }
 
 /**
- * 🆕 Extrae nombres del primer mensaje del usuario
- */
-function extractNameFromMessage(message) {
-  if (!message || typeof message !== 'string') return null;
-  
-  const lowerMsg = message.toLowerCase();
-  
-  // Detectar frases de presentación
-  const patterns = [
-    /soy\s+([a-záéíóúüñ]{2,15})/i,
-    /me llamo\s+([a-záéíóúüñ]{2,15})/i,
-    /mi nombre es\s+([a-záéíóúüñ]{2,15})/i,
-    /hola soy\s+([a-záéíóúüñ]{2,15})/i,
-    /buenos días soy\s+([a-záéíóúüñ]{2,15})/i,
-    /buenas tardes soy\s+([a-záéíóúüñ]{2,15})/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = message.match(pattern);
-    if (match && match[1]) {
-      const name = match[1].trim();
-      return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-    }
-  }
-  
-  return null;
-}
-
-/**
- * 🆕 Intenta extraer nombre del primer mensaje del usuario
- */
-function extractNameFromMessage(message) {
-  if (!message) return null;
-  
-  const lowerMsg = message.toLowerCase();
-  
-  // Patrones comunes de presentación
-  const patterns = [
-    /mi nombre es ([a-záéíóúñ]+)/i,
-    /me llamo ([a-záéíóúñ]+)/i,
-    /soy ([a-záéíóúñ]+)/i,
-    /hola,? soy ([a-záéíóúñ]+)/i,
-    /buenos días,? soy ([a-záéíóúñ]+)/i,
-    /buenas tardes,? soy ([a-záéíóúñ]+)/i,
-    /hola,? mi nombre es ([a-záéíóúñ]+)/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = message.match(pattern);
-    if (match && match[1] && match[1].length > 1) {
-      const name = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
-      return name;
-    }
-  }
-  
-  return null;
-}
-
-/**
  * 🛡️ Detecta si un mensaje proviene de un bot
  * Retorna { detected: boolean, reason: string }
  */

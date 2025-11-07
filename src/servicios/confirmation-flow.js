@@ -121,32 +121,32 @@ export function generateConfirmationMessage(reservationData, userProfile) {
   if (wasFree) {
     return `¡Perfecto${userName}! 🎉
 
-📋 **CONFIRMA TU DÍA GRATIS:**
+📋 *CONFIRMA TU DÍA GRATIS:*
 
-📅 **Fecha:** ${formattedDate}
-⏰ **Horario:** ${startTime} - ${endTime} 
-🏢 **Espacio:** ${serviceName}
-⏱️ **Duración:** ${durationHours} hora${durationHours > 1 ? 's' : ''}
-💰 **Precio:** ¡GRATIS! (primera vez)
+📅 *Fecha:* ${formattedDate}
+⏰ *Horario:* ${startTime} - ${endTime} 
+🏢 *Espacio:* ${serviceName}
+⏱️ *Duración:* ${durationHours} hora${durationHours > 1 ? 's' : ''}
+💰 *Precio:* ¡GRATIS! (primera vez)
 
-¿**Confirmas esta reserva?**
+¿*Confirmas esta reserva?*
 
-Responde **SI** para confirmar o **NO** para cancelar 👍`;
+Responde *SI* para confirmar o *NO* para cancelar 👍`;
   }
 
   return `¡Perfecto${userName}! 🎉
 
-📋 **CONFIRMA TU RESERVA:**
+📋 *CONFIRMA TU RESERVA:*
 
-📅 **Fecha:** ${formattedDate}
-⏰ **Horario:** ${startTime} - ${endTime}
-🏢 **Espacio:** ${serviceName}  
-⏱️ **Duración:** ${durationHours} hora${durationHours > 1 ? 's' : ''}
-💰 **Total:** $${totalPrice} USD
+📅 *Fecha:* ${formattedDate}
+⏰ *Horario:* ${startTime} - ${endTime}
+🏢 *Espacio:* ${serviceName}  
+⏱️ *Duración:* ${durationHours} hora${durationHours > 1 ? 's' : ''}
+💰 *Total:* $${totalPrice} USD
 
-¿**Confirmas esta reserva?**
+¿*Confirmas esta reserva?*
 
-Responde **SI** para continuar con el pago o **NO** para cancelar 👍`;
+Responde *SI* para continuar con el pago o *NO* para cancelar 👍`;
 }
 
 /**
@@ -203,6 +203,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 📧 Te he enviado la confirmación por email.
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
+🗺️ https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
 
 ¡Te esperamos! 🚀`,
         needsAction: false,

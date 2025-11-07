@@ -94,14 +94,16 @@ function construirContextoPerfil(perfil = {}) {
 
   const lineas = ['PERFIL USUARIO:'];
   
-  // 🆕 Información del nombre detectado
+  // 🆕 Información del nombre detectado para saludo personalizado
   if (perfil.name) {
-    lineas.push(`- Nombre: ${perfil.name} ✅`);
+    lineas.push(`- Nombre detectado: ${perfil.name} ✅`);
+    lineas.push(`- SALUDO PERSONALIZADO: "¡Hola ${perfil.name}, soy Aurora! 👩🏼‍💼✨"`);
     if (perfil.whatsappDisplayName && perfil.whatsappDisplayName !== perfil.name) {
       lineas.push(`- WhatsApp muestra: "${perfil.whatsappDisplayName}"`);
     }
   } else {
-    lineas.push(`- Nombre: No detectado → **USAR "Hola" genérico**`);
+    lineas.push(`- Nombre: No detectado`);
+    lineas.push(`- SALUDO GENÉRICO: "¡Hola, soy Aurora! 👩🏼‍💼✨"`);
   }
   
   if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);

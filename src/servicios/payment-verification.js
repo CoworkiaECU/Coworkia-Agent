@@ -96,14 +96,14 @@ Por favor, verifica el monto o contacta a soporte.`,
       console.warn('[Payment Verification] Usuario no tiene email registrado');
       return {
         success: true,
-        message: `✅ **¡Pago confirmado!**
+        message: `✅ *¡Pago confirmado!*
 
 🎉 Tu reserva está lista:
-📅 **Fecha:** ${pendingReservation.date}
-⏰ **Hora:** ${pendingReservation.startTime} - ${pendingReservation.endTime}
+📅 *Fecha:* ${pendingReservation.date}
+⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
 
-⚠️ **Nota:** No pude enviar email de confirmación porque no tienes email registrado.
-📍 **Ubicación:** Whymper 403, Edificio Finistere
+⚠️ *Nota:* No pude enviar email de confirmación porque no tienes email registrado.
+📍 *Ubicación:* Whymper 403, Edificio Finistere
 
 ¡Te esperamos! 🚀`,
         data: updatedReservation
@@ -126,14 +126,14 @@ Por favor, verifica el monto o contacta a soporte.`,
     // 8. Respuesta de éxito
     return {
       success: true,
-      message: `✅ **¡Pago confirmado!**
+      message: `✅ *¡Pago confirmado!*
 
 🎉 Tu reserva está lista:
-📅 **Fecha:** ${pendingReservation.date}
-⏰ **Hora:** ${pendingReservation.startTime} - ${pendingReservation.endTime}
-🏢 **Espacio:** ${pendingReservation.spaceType}
-💰 **Total:** $${expectedAmount}
-💳 **Referencia:** ${paymentData.transactionNumber}
+📅 *Fecha:* ${pendingReservation.date}
+⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
+🏢 *Espacio:* ${pendingReservation.spaceType}
+💰 *Total:* $${expectedAmount}
+💳 *Referencia:* ${paymentData.transactionNumber}
 
 📧 Te he enviado la confirmación por email.
 ¡Nos vemos en Coworkia! 🚀`,

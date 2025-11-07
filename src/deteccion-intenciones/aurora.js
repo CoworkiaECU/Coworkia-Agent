@@ -123,7 +123,7 @@ IMPORTANTE:
     
     confirmacionGratis: '¡Perfecto! 🎉 **CONFIRMA TU DÍA GRATIS:**\n\n📅 **Fecha:** {fecha}\n⏰ **Horario:** {inicio} - {fin}\n🏢 **Espacio:** Hot Desk\n💰 **Precio:** ¡GRATIS! (primera vez)\n\n¿**Confirmas esta reserva?**\nResponde **SI** o **NO** 👍',
     
-    pagoConfirmado: '✅ **¡Pago verificado automáticamente!** Tu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀',
+    pagoConfirmado: 'Pago verificado automaticamente! Tu reserva esta confirmada:\n{fecha} de {inicio} a {fin}\nTe envie la confirmacion por email\nNos vemos en Whymper 403!\n\nUbicacion: https://goo.gl/maps/coworkia-quito',
     
     comprobanteProcesando: '📸 Recibido! Analizando tu comprobante de pago con IA... ✨\n(Esto toma unos segundos)',
     
@@ -133,10 +133,10 @@ IMPORTANTE:
     
     derivarAdriana: 'Para seguros, menciona **@adriana** + tu consulta.\n¡Es nuestra experta en seguros de Segpopular! �️',
     
-    confirmarReservaDiaGratis: '✅ **¡Tu día gratis está confirmado!** 🎉\n📅 {fecha} de {inicio} a {fin}\n📧 Te envié los detalles por email\n📍 ¡Te esperamos en Whymper 403!',
+    confirmarReservaDiaGratis: 'Tu dia gratis esta confirmado!\n{fecha} de {inicio} a {fin}\nTe envie los detalles por email\nTe esperamos en Whymper 403!\n\nUbicacion: https://goo.gl/maps/coworkia-quito',
     
     errorDisponibilidad: '❌ Lo siento, ese horario no está disponible.\n¿Te sirve alguna de estas opciones?\n• {alternativa1}\n• {alternativa2}',
     
-    informacionGeneral: '🏢 **Coworkia** - Espacios que inspiran\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk desde $4/hora\n☕ WiFi + Café incluido'
+    informacionGeneral: 'Coworkia - Espacios que inspiran\n\nWhymper 403, Edificio Finistere, Quito\nLun-Vie 8:00-18:00 | Sab 9:00-14:00\nHot Desk desde $4/hora\nWiFi + Cafe incluido\n\nUbicacion: https://goo.gl/maps/coworkia-quito'
   }
 };

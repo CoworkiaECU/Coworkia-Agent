@@ -1,7 +1,7 @@
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import { updateReservationPayment, getReservationByPaymentInfo } from './calendario.js';
 import { sendPaymentConfirmationEmail } from './email.js';
-import memoria from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, updateUser } from '../perfiles-interacciones/memoria.js';
 
 /**
  * 💳 Procesa comprobante de pago automáticamente
@@ -34,7 +34,7 @@ export async function processPaymentReceipt(imageUrl, userPhone) {
     }
 
     // 3. Buscar reserva pendiente del usuario
-    const userProfile = memoria.getUser(userPhone);
+    const userProfile = loadProfile(userPhone);
     const pendingReservation = userProfile.reservations?.find(r => 
       r.status === 'pending_payment' || r.status === 'created'
     );
@@ -83,12 +83,10 @@ Por favor, verifica el monto o contacta a soporte.`,
     });
 
     // 6. Actualizar perfil del usuario
-    memoria.updateUser(userPhone, {
+    await updateUser(userPhone, {
       'reservations.$[elem].status': 'confirmed',
       'reservations.$[elem].paymentStatus': 'paid',
       'reservations.$[elem].paymentData': updatedReservation.paymentData
-    }, {
-      arrayFilters: [{ 'elem.id': pendingReservation.id }]
     });
 
     // 7. Enviar email de confirmación

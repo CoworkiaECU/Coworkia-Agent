@@ -3,7 +3,7 @@
  * Maneja flujos de confirmación de reservas antes del pago
  */
 
-import memoria from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria.js';
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
 
@@ -168,7 +168,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     }
     
     // 2. Actualizar perfil del usuario
-    memoria.updateUser(userProfile.userId, {
+    await updateUser(userProfile.userId, {
       pendingConfirmation: null,
       lastReservation: reservationResult.reservation
     });
@@ -209,7 +209,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     }
 
     // 4. Si requiere pago, enviar datos de pago
-    const paymentInfo = memoria.getPaymentInfo();
+    const paymentInfo = getPaymentInfo();
     
     return {
       success: true,
@@ -249,11 +249,11 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 /**
  * ❌ Procesa confirmación negativa
  */
-export function processNegativeConfirmation(userProfile) {
+export async function processNegativeConfirmation(userProfile) {
   const userName = userProfile.name ? `, ${userProfile.name}` : '';
   
   // Limpiar confirmación pendiente
-  memoria.updateUser(userProfile.userId, {
+  await updateUser(userProfile.userId, {
     pendingConfirmation: null
   });
 

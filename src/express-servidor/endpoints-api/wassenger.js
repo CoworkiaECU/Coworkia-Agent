@@ -82,48 +82,6 @@ function extractNameFromMessage(message) {
 }
 
 /**
- * 🆕 Limpia el nombre de WhatsApp removiendo emojis, texto comercial, números
- */
-function cleanWhatsAppName(whatsappName) {
-  if (!whatsappName || typeof whatsappName !== 'string') return null;
-  
-  let cleaned = whatsappName.trim();
-  
-  // Remover emojis comunes
-  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆]/g, '');
-  
-  // Remover texto común de WhatsApp Business
-  const businessKeywords = [
-    'whatsapp business', 'business', 'empresa', 'company', 
-    'servicio', 'service', 'oficial', 'official', '+593', '+1',
-    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
-  ];
-  
-  for (const keyword of businessKeywords) {
-    const regex = new RegExp(keyword, 'gi');
-    cleaned = cleaned.replace(regex, '');
-  }
-  
-  // Remover números de teléfono
-  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
-  
-  // Limpiar espacios y caracteres especiales
-  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
-  
-  // Solo tomar el primer nombre si es muy largo
-  if (cleaned.length > 20) {
-    cleaned = cleaned.split(' ')[0];
-  }
-  
-  // Capitalizar primera letra
-  if (cleaned.length > 0) {
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
-  }
-  
-  return cleaned.length > 1 ? cleaned : null;
-}
-
-/**
  * 🆕 Extrae nombres del primer mensaje del usuario
  */
 function extractNameFromMessage(message) {
@@ -150,47 +108,6 @@ function extractNameFromMessage(message) {
   }
   
   return null;
-}
-
-/**
- * 🆕 Limpia el nombre de WhatsApp para obtener solo el nombre real
- */
-function cleanWhatsAppName(whatsappName) {
-  if (!whatsappName) return null;
-  
-  let cleaned = whatsappName.trim();
-  
-  // Remover emojis comunes
-  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝]/g, '');
-  
-  // Remover texto común de WhatsApp Business
-  const businessKeywords = [
-    'whatsapp business', 'business', 'empresa', 'company', 
-    'servicio', 'service', 'oficial', 'official', '+593', '+1'
-  ];
-  
-  for (const keyword of businessKeywords) {
-    const regex = new RegExp(keyword, 'gi');
-    cleaned = cleaned.replace(regex, '');
-  }
-  
-  // Remover números de teléfono
-  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
-  
-  // Limpiar espacios y caracteres especiales
-  cleaned = cleaned.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  
-  // Solo tomar el primer nombre si es muy largo
-  if (cleaned.length > 20) {
-    cleaned = cleaned.split(' ')[0];
-  }
-  
-  // Capitalizar primera letra
-  if (cleaned.length > 0) {
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
-  }
-  
-  return cleaned.length > 1 ? cleaned : null;
 }
 
 /**

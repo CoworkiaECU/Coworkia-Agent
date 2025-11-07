@@ -111,11 +111,11 @@ function construirContextoPerfil(perfil = {}) {
   // 🆕 Información de primera visita vs cliente recurrente
   if (perfil.firstVisit !== undefined) {
     if (perfil.firstVisit) {
-      const greeting = perfil.name ? `¡Hola ${perfil.name}! 😊` : '¡Hola! 😊';
-      lineas.push(`- Primera visita: SÍ → Saludo: "${greeting}" + **OFRECER DÍA GRATIS de 2h**`);
+      lineas.push(`- Primera visita: SÍ → Usa saludo de presentación profesional como Aurora`);
+      lineas.push(`- Ofrecer día gratis SOLO si pregunta por servicios (no agresivamente)`);
     } else {
-      const greeting = perfil.name ? `¡Hola denuevo, ${perfil.name}! 😊👋` : '¡Hola denuevo! 😊👋';
-      lineas.push(`- Primera visita: NO → Saludo: "${greeting}" (cliente recurrente, cálido y natural)`);
+      lineas.push(`- Cliente recurrente: Ya conoce Coworkia, saludo más directo y familiar`);
+      lineas.push(`- NO ofrecer día gratis (ya lo usó antes)`);
     }
   }
 

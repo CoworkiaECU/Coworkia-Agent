@@ -3,6 +3,8 @@ import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isPaymentReceipt } from '../../servicios/payment-verification.js';
+import { processConfirmationResponse, hasPendingConfirmation } from '../../servicios/confirmation-flow.js';
+import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -493,6 +495,48 @@ router.post('/webhooks/wassenger', async (req, res) => {
       content: text
     });
 
+    // 🔄 SISTEMA DE CONFIRMACIONES SI/NO
+    if (hasPendingConfirmation(profile)) {
+      console.log('[WASSENGER] Usuario tiene confirmación pendiente, procesando respuesta SI/NO');
+      
+      const confirmationResult = await processConfirmationResponse(text, profile);
+      
+      // Enviar respuesta de confirmación
+      await enviarWhatsApp(userId, confirmationResult.message);
+      
+      // Guardar interacción de confirmación
+      await saveInteraction({
+        userId,
+        agent: 'aurora',
+        agentName: 'Aurora',
+        intentReason: 'confirmation_response',
+        input: text,
+        output: confirmationResult.message,
+        meta: {
+          route: '/webhooks/wassenger',
+          via: 'whatsapp',
+          confirmationSuccess: confirmationResult.success,
+          actionType: confirmationResult.actionType,
+          needsAction: confirmationResult.needsAction
+        }
+      });
+
+      // Guardar respuesta en historial
+      await saveConversationMessage(userId, {
+        role: 'assistant',
+        content: confirmationResult.message,
+        agent: 'Aurora'
+      });
+      
+      return res.json({ 
+        ok: true, 
+        processed: true,
+        type: 'confirmation_response',
+        success: confirmationResult.success,
+        needsAction: confirmationResult.needsAction
+      });
+    }
+
     // Procesar mensaje con orquestador (ahora con historial)
     const resultado = procesarMensaje(text, profile, conversationHistory);
 
@@ -503,10 +547,24 @@ router.post('/webhooks/wassenger', async (req, res) => {
       system: resultado.systemPrompt
     });
 
+    // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
+    let finalReply = reply;
+    let confirmationActivated = false;
+    
+    if (resultado.agenteKey === 'AURORA') {
+      const enhancement = await enhanceAuroraResponse(reply, profile);
+      
+      if (enhancement.enhanced) {
+        finalReply = enhancement.finalMessage;
+        confirmationActivated = true;
+        console.log('[WASSENGER] Aurora activó sistema de confirmación');
+      }
+    }
+
     // 🆕 Guardar respuesta del asistente en historial
     await saveConversationMessage(userId, {
       role: 'assistant',
-      content: reply,
+      content: finalReply,
       agent: resultado.agente
     });
 
@@ -517,18 +575,19 @@ router.post('/webhooks/wassenger', async (req, res) => {
       agentName: resultado.agente,
       intentReason: resultado.razonSeleccion,
       input: text,
-      output: reply,
+      output: finalReply,
       meta: { 
         route: '/webhooks/wassenger',
         via: 'whatsapp',
         rol: resultado.metadata.rol,
         freeTrialUsed: profile.freeTrialUsed,
-        conversationCount: profile.conversationCount
+        conversationCount: profile.conversationCount,
+        confirmationActivated: confirmationActivated
       }
     });
 
     // Enviar respuesta a WhatsApp
-    const envio = await enviarWhatsApp(userId, reply);
+    const envio = await enviarWhatsApp(userId, finalReply);
 
     if (!envio.ok) {
       console.error('[WASSENGER] Error al enviar respuesta:', envio.error);
@@ -539,7 +598,8 @@ router.post('/webhooks/wassenger', async (req, res) => {
       ok: true, 
       agent: resultado.agente,
       messageSent: envio.ok,
-      reply 
+      reply: finalReply,
+      confirmationActivated: confirmationActivated 
     });
 
   } catch (err) {

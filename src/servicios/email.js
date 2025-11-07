@@ -108,7 +108,7 @@ function generateConfirmationEmailHTML(reservationData) {
       </div>
       <div style="font-size: 14px; color: #92400e;">
         <p style="margin: 8px 0;"><strong>💳 Payphone:</strong> 
-          <a href="https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA" style="color: #3b82f6;">Pagar aquí</a>
+          <a href="https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA" style="color: #0f766e;">Pagar aquí</a>
         </p>
         <p style="margin: 8px 0;"><strong>🏦 Transferencia:</strong> Banco Pichincha - Cta: 2207158516</p>
       </div>
@@ -127,9 +127,24 @@ function generateConfirmationEmailHTML(reservationData) {
       
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
-        <!-- Header azul -->
-        <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; text-align: center; padding: 30px 20px;">
-          <h1 style="margin: 0; font-size: 24px; font-weight: 600;">� ¡Reserva Confirmada!</h1>
+        <!-- Header con colores corporativos Coworkia -->
+        <div style="background: linear-gradient(135deg, #4FD1C7 0%, #2DD4BF 100%); color: #1f2937; text-align: center; padding: 30px 20px;">
+          <div style="margin-bottom: 15px;">
+            <svg width="80" height="60" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
+              <!-- Laptop con taza de café (logo Coworkia) -->
+              <rect x="10" y="25" width="50" height="30" rx="3" fill="#374151" stroke="#1f2937" stroke-width="2"/>
+              <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
+              <rect x="25" y="55" width="30" height="3" rx="1" fill="#374151"/>
+              <!-- Taza de café -->
+              <ellipse cx="55" cy="18" rx="8" ry="6" fill="#374151"/>
+              <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
+              <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#374151" stroke-width="2" fill="none"/>
+              <!-- Vapor -->
+              <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #1f2937;">✅ ¡Reserva Confirmada!</h1>
+          <p style="margin: 8px 0 0 0; color: #374151; font-size: 16px;">Tu espacio te está esperando</p>
         </div>
 
         <div style="padding: 30px;">
@@ -140,8 +155,8 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           <!-- Detalles de la reserva -->
-          <div style="background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="color: #1f2937; margin-top: 0; font-size: 16px; font-weight: 600;">✅ DETALLES DE TU RESERVA</h3>
+          <div style="background: #f0fdfa; border-left: 4px solid #4FD1C7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="color: #0f766e; margin-top: 0; font-size: 16px; font-weight: 600;">✅ DETALLES DE TU RESERVA</h3>
             
             <div style="margin: 15px 0;">
               <div style="display: flex; align-items: center; margin: 8px 0;">
@@ -172,7 +187,7 @@ function generateConfirmationEmailHTML(reservationData) {
             
             <div style="text-align: center; margin: 15px 0;">
               <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" 
-                 style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block;">
+                 style="background: #4FD1C7; color: #1f2937; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block;">
                 Ver en Google Maps
               </a>
             </div>
@@ -206,17 +221,35 @@ function generateConfirmationEmailHTML(reservationData) {
 
           <!-- Footer -->
           <div style="text-align: center; margin: 30px 0 0 0;">
-            <p style="color: #059669; font-size: 16px; font-weight: 600; margin: 0;">¡Nos vemos pronto! 🚀</p>
+            <p style="color: #0f766e; font-size: 16px; font-weight: 600; margin: 0;">¡Nos vemos pronto! 🚀</p>
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Aurora ✨ - Tu asistente de Coworkia</p>
           </div>
 
         </div>
       </div>
 
-      <!-- Footer externo -->
-      <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
-        © 2025 Coworkia Ecuador - Espacios que inspiran<br>
-        Whymper 403, Quito | RUC: 1792954078001
+      <!-- Footer externo con branding corporativo -->
+      <div style="text-align: center; padding: 20px; background: #1f2937; color: #9ca3af; font-size: 12px;">
+        <div style="margin-bottom: 10px;">
+          <svg width="60" height="45" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
+            <!-- Laptop con taza de café (logo Coworkia) -->
+            <rect x="10" y="25" width="50" height="30" rx="3" fill="#4FD1C7" stroke="#2DD4BF" stroke-width="2"/>
+            <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
+            <rect x="25" y="55" width="30" height="3" rx="1" fill="#4FD1C7"/>
+            <!-- Taza de café -->
+            <ellipse cx="55" cy="18" rx="8" ry="6" fill="#4FD1C7"/>
+            <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
+            <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#4FD1C7" stroke-width="2" fill="none"/>
+            <!-- Vapor -->
+            <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+        <div style="color: #4FD1C7; font-size: 18px; font-weight: 600; margin-bottom: 5px;">coWorkia</div>
+        <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">work · connect · grow</div>
+        <div style="color: #6b7280; font-size: 12px;">
+          © 2025 Coworkia Ecuador - Espacios que inspiran<br>
+          Whymper 403, Quito | RUC: 1792954078001
+        </div>
       </div>
     </body>
     </html>
@@ -475,10 +508,24 @@ function generatePaymentConfirmationHTML(data) {
         
         <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             
-            <!-- Header -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">✅ ¡Pago Confirmado!</h1>
-                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Tu reserva está confirmada</p>
+            <!-- Header con colores corporativos Coworkia -->
+            <div style="background: linear-gradient(135deg, #4FD1C7 0%, #2DD4BF 100%); padding: 30px 20px; text-align: center;">
+                <div style="margin-bottom: 15px;">
+                    <svg width="80" height="60" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
+                      <!-- Laptop con taza de café (logo Coworkia) -->
+                      <rect x="10" y="25" width="50" height="30" rx="3" fill="#374151" stroke="#1f2937" stroke-width="2"/>
+                      <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
+                      <rect x="25" y="55" width="30" height="3" rx="1" fill="#374151"/>
+                      <!-- Taza de café -->
+                      <ellipse cx="55" cy="18" rx="8" ry="6" fill="#374151"/>
+                      <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
+                      <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#374151" stroke-width="2" fill="none"/>
+                      <!-- Vapor -->
+                      <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </div>
+                <h1 style="color: #1f2937; margin: 0; font-size: 28px; font-weight: 600;">✅ ¡Pago Confirmado!</h1>
+                <p style="color: #374151; margin: 10px 0 0 0; font-size: 16px;">Tu reserva está confirmada</p>
             </div>
 
             <!-- Contenido -->
@@ -493,51 +540,51 @@ function generatePaymentConfirmationHTML(data) {
                 </div>
 
                 <!-- Información de la Reserva -->
-                <div style="background: #f7fafc; border-left: 4px solid #4299e1; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
-                    <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 18px;">📋 Detalles de tu Reserva</h3>
+                <div style="background: #f0fdfa; border-left: 4px solid #4FD1C7; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #0f766e; margin: 0 0 15px 0; font-size: 18px;">📋 Detalles de tu Reserva</h3>
                     <div style="display: grid; gap: 12px;">
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="color: #4a5568; font-weight: 500;">📅 Fecha:</span>
-                            <span style="color: #2d3748; font-weight: 600;">${date}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">📅 Fecha:</span>
+                            <span style="color: #1f2937; font-weight: 600;">${date}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="color: #4a5568; font-weight: 500;">⏰ Horario:</span>
-                            <span style="color: #2d3748; font-weight: 600;">${startTime} - ${endTime}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">⏰ Horario:</span>
+                            <span style="color: #1f2937; font-weight: 600;">${startTime} - ${endTime}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="color: #4a5568; font-weight: 500;">🏢 Espacio:</span>
-                            <span style="color: #2d3748; font-weight: 600;">${serviceName}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">🏢 Espacio:</span>
+                            <span style="color: #1f2937; font-weight: 600;">${serviceName}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="color: #4a5568; font-weight: 500;">⏱️ Duración:</span>
-                            <span style="color: #2d3748; font-weight: 600;">${durationHours} hora${durationHours > 1 ? 's' : ''}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">⏱️ Duración:</span>
+                            <span style="color: #1f2937; font-weight: 600;">${durationHours} hora${durationHours > 1 ? 's' : ''}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Información de Pago -->
-                <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
-                    <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 18px;">💳 Confirmación de Pago</h3>
+                <div style="background: #f0fdfa; border-left: 4px solid #4FD1C7; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #0f766e; margin: 0 0 15px 0; font-size: 18px;">💳 Confirmación de Pago</h3>
                     <div style="display: grid; gap: 12px;">
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #c6f6d5;">
-                            <span style="color: #22543d; font-weight: 500;">💰 Monto Total:</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">💰 Monto Total:</span>
                             <span style="color: #1a202c; font-weight: 700; font-size: 18px;">$${total}</span>
                         </div>
                         ${paymentData?.transactionNumber ? `
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #c6f6d5;">
-                            <span style="color: #22543d; font-weight: 500;">🔢 Referencia:</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">🔢 Referencia:</span>
                             <span style="color: #1a202c; font-weight: 600;">${paymentData.transactionNumber}</span>
                         </div>
                         ` : ''}
                         ${paymentData?.bank ? `
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #c6f6d5;">
-                            <span style="color: #22543d; font-weight: 500;">🏦 Banco:</span>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1;">
+                            <span style="color: #0f766e; font-weight: 500;">🏦 Banco:</span>
                             <span style="color: #1a202c; font-weight: 600;">${paymentData.bank}</span>
                         </div>
                         ` : ''}
                         <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                            <span style="color: #22543d; font-weight: 500;">✅ Estado:</span>
-                            <span style="color: #22543d; font-weight: 700;">PAGADO</span>
+                            <span style="color: #0f766e; font-weight: 500;">✅ Estado:</span>
+                            <span style="color: #0f766e; font-weight: 700;">PAGADO</span>
                         </div>
                     </div>
                 </div>
@@ -555,7 +602,7 @@ function generatePaymentConfirmationHTML(data) {
 
                 <!-- Acciones -->
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://wa.me/593969696969" style="background: #25d366; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
+                    <a href="https://wa.me/593969696969" style="background: #4FD1C7; color: #1f2937; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                         💬 Contactar Soporte
                     </a>
                 </div>
@@ -573,12 +620,28 @@ function generatePaymentConfirmationHTML(data) {
 
             </div>
 
-            <!-- Footer -->
-            <div style="background: #2d3748; padding: 20px; text-align: center;">
+            <!-- Footer con branding corporativo -->
+            <div style="background: #1f2937; padding: 20px; text-align: center;">
+                <div style="margin-bottom: 15px;">
+                  <svg width="60" height="45" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
+                    <!-- Laptop con taza de café (logo Coworkia) -->
+                    <rect x="10" y="25" width="50" height="30" rx="3" fill="#4FD1C7" stroke="#2DD4BF" stroke-width="2"/>
+                    <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
+                    <rect x="25" y="55" width="30" height="3" rx="1" fill="#4FD1C7"/>
+                    <!-- Taza de café -->
+                    <ellipse cx="55" cy="18" rx="8" ry="6" fill="#4FD1C7"/>
+                    <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
+                    <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#4FD1C7" stroke-width="2" fill="none"/>
+                    <!-- Vapor -->
+                    <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
+                  </svg>
+                </div>
+                <div style="color: #4FD1C7; font-size: 18px; font-weight: 600; margin-bottom: 5px;">coWorkia</div>
+                <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">work · connect · grow</div>
                 <p style="color: #a0aec0; margin: 0; font-size: 14px;">
                     ¡Gracias por elegir Coworkia! 🚀<br>
-                    <a href="mailto:info@coworkia.com" style="color: #63b3ed;">info@coworkia.com</a> | 
-                    <a href="https://wa.me/593969696969" style="color: #63b3ed;">+593 96 969 6969</a>
+                    <a href="mailto:info@coworkia.com" style="color: #4FD1C7;">info@coworkia.com</a> | 
+                    <a href="https://wa.me/593969696969" style="color: #4FD1C7;">+593 96 969 6969</a>
                 </p>
             </div>
 

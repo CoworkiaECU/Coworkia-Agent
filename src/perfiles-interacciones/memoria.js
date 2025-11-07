@@ -190,5 +190,63 @@ export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
 }
 
 /**
+ * 🔄 Guarda confirmación pendiente en el perfil del usuario
+ */
+export async function savePendingConfirmation(userId, reservationData) {
+  try {
+    const profile = await loadProfile(userId) || { userId };
+    
+    profile.pendingConfirmation = {
+      ...reservationData,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutos
+    };
+    
+    await saveProfile(userId, profile);
+    return profile;
+  } catch (error) {
+    console.error('[Memoria] Error guardando confirmación pendiente:', error);
+    return null;
+  }
+}
+
+/**
+ * 🔄 Actualiza perfil del usuario (función genérica)
+ */
+export async function updateUser(userId, updates) {
+  try {
+    const profile = await loadProfile(userId) || { userId };
+    
+    // Aplicar actualizaciones
+    Object.assign(profile, updates);
+    
+    await saveProfile(userId, profile);
+    return profile;
+  } catch (error) {
+    console.error('[Memoria] Error actualizando usuario:', error);
+    return null;
+  }
+}
+
+/**
+ * 🔄 Limpia confirmaciones expiradas
+ */
+export async function cleanExpiredConfirmations(userId) {
+  try {
+    const profile = await loadProfile(userId);
+    if (!profile || !profile.pendingConfirmation) return;
+    
+    const expiresAt = new Date(profile.pendingConfirmation.expiresAt);
+    if (expiresAt < new Date()) {
+      profile.pendingConfirmation = null;
+      await saveProfile(userId, profile);
+      console.log(`[Memoria] Confirmación expirada eliminada para ${userId}`);
+    }
+  } catch (error) {
+    console.error('[Memoria] Error limpiando confirmaciones:', error);
+  }
+}
+
+/**
  * 🆕 Obtiene información de pago si el usuario ya usó su día gratis (FUNCIÓN ANTERIOR - ELIMINADA)
  */

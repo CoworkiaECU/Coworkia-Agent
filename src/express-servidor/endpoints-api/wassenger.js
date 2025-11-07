@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
+import { processPaymentReceipt, isPaymentReceipt } from '../../servicios/payment-verification.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -344,9 +345,76 @@ router.post('/webhooks/wassenger', async (req, res) => {
     const userId = (data.fromNumber || data.from || '').trim();
     const text = (data.body || data.message || '').trim();
     const name = data.fromName || data.name || '';
+    const messageType = data.type || 'text';
+    const mediaUrl = data.mediaUrl || data.media?.url || null;
 
-    if (!userId || !text) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'no_user_or_text' });
+    if (!userId) {
+      return res.status(200).json({ ok: true, ignored: true, reason: 'no_user_id' });
+    }
+
+    // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
+    if (messageType === 'image' || messageType === 'document') {
+      console.log('[WASSENGER] Procesando imagen/documento:', mediaUrl);
+      
+      if (!mediaUrl) {
+        // Enviar mensaje pidiendo reenviar la imagen
+        await enviarWhatsApp(userId, '❌ No pude recibir la imagen correctamente. Por favor, envíala de nuevo.');
+        return res.json({ ok: true, processed: true, type: 'image_error' });
+      }
+
+      // Verificar si parece un comprobante de pago
+      const isReceipt = await isPaymentReceipt(mediaUrl);
+      
+      if (isReceipt) {
+        console.log('[WASSENGER] Imagen detectada como comprobante de pago');
+        
+        // Procesar comprobante de pago
+        const paymentResult = await processPaymentReceipt(mediaUrl, userId);
+        
+        // Enviar respuesta
+        await enviarWhatsApp(userId, paymentResult.message);
+        
+        // Guardar interacción
+        await saveInteraction({
+          userId,
+          agent: 'aurora',
+          agentName: 'Aurora',
+          intentReason: 'payment_verification',
+          input: `[IMAGEN: Comprobante de pago]`,
+          output: paymentResult.message,
+          meta: {
+            route: '/webhooks/wassenger',
+            via: 'whatsapp',
+            mediaUrl,
+            paymentVerified: paymentResult.success,
+            paymentData: paymentResult.data
+          }
+        });
+        
+        return res.json({ 
+          ok: true, 
+          processed: true, 
+          type: 'payment_verification',
+          success: paymentResult.success 
+        });
+      } else {
+        // No es un comprobante de pago
+        await enviarWhatsApp(userId, 
+          '📷 He recibido tu imagen, pero no parece ser un comprobante de pago. ' +
+          'Si tienes una reserva pendiente, envíame la captura de pantalla o foto de tu transferencia/pago realizado.'
+        );
+        
+        return res.json({ 
+          ok: true, 
+          processed: true, 
+          type: 'image_not_receipt' 
+        });
+      }
+    }
+
+    // Continuar con procesamiento normal de texto
+    if (!text) {
+      return res.status(200).json({ ok: true, ignored: true, reason: 'no_text_content' });
     }
 
     // 🛡️ FILTRO 2: Evitar procesar el propio número del bot

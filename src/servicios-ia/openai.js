@@ -32,3 +32,122 @@ export async function complete(prompt, opts = {}) {
 
   return res.choices?.[0]?.message?.content?.trim() || '';
 }
+
+/**
+ * 👁️ Analiza imagen usando OpenAI Vision API
+ */
+export async function analyzeImage(imageUrl, prompt, opts = {}) {
+  const {
+    temperature = 0.2,
+    max_tokens = 500,
+    model = 'gpt-4o', // Modelo con capacidades de visión
+    detail = 'high'
+  } = opts;
+
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: prompt
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+                detail: detail
+              }
+            }
+          ]
+        }
+      ],
+      temperature,
+      max_tokens,
+    });
+
+    return {
+      success: true,
+      content: response.choices[0]?.message?.content?.trim() || '',
+      usage: response.usage
+    };
+
+  } catch (error) {
+    console.error('[OpenAI Vision] Error:', error);
+    return {
+      success: false,
+      error: error.message,
+      content: null
+    };
+  }
+}
+
+/**
+ * 💳 Analiza comprobante de pago específicamente
+ */
+export async function analyzePaymentReceipt(imageUrl) {
+  const prompt = `Analiza este comprobante de pago y extrae la siguiente información en formato JSON:
+
+{
+  "transactionNumber": "número de transacción/referencia",
+  "amount": "monto en números (ej: 8.40)",
+  "currency": "moneda (USD, EUR, etc)",
+  "date": "fecha en formato YYYY-MM-DD",
+  "time": "hora en formato HH:MM",
+  "bank": "nombre del banco o método de pago",
+  "paymentMethod": "transferencia/payphone/tarjeta/etc",
+  "recipient": "nombre del destinatario/empresa",
+  "isValid": true/false,
+  "confidence": "porcentaje de confianza (0-100)"
+}
+
+IMPORTANTE:
+- Si no encuentras algún dato, usa null
+- Solo extrae información que esté claramente visible
+- isValid debe ser true solo si es un comprobante legítimo
+- confidence indica qué tan seguro estás de los datos extraídos
+
+Responde SOLO con el JSON, sin texto adicional.`;
+
+  const result = await analyzeImage(imageUrl, prompt, {
+    temperature: 0.1, // Muy baja para consistencia
+    max_tokens: 300
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error,
+      data: null
+    };
+  }
+
+  try {
+    // Extraer JSON de la respuesta
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No se encontró JSON válido en la respuesta');
+    }
+
+    const paymentData = JSON.parse(jsonMatch[0]);
+    
+    return {
+      success: true,
+      data: paymentData,
+      rawResponse: result.content,
+      usage: result.usage
+    };
+
+  } catch (parseError) {
+    console.error('[OpenAI Vision] Error parsing JSON:', parseError);
+    return {
+      success: false,
+      error: `Error parsing response: ${parseError.message}`,
+      data: null,
+      rawResponse: result.content
+    };
+  }
+}

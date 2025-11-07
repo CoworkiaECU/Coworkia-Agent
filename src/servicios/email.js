@@ -461,10 +461,15 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
   console.log('[EMAIL] ✅ Transportador creado exitosamente');
 
   const { paymentData } = reservationData;
+  
+  // Generar link de Google Calendar
+  const calendarLink = generateGoogleCalendarLink(reservationData);
+  
   const emailHtml = generatePaymentConfirmationHTML({
     userName,
     ...reservationData,
-    paymentData
+    paymentData,
+    calendarLink
   });
   
   console.log('[EMAIL] ✅ HTML del email generado');
@@ -631,6 +636,12 @@ function generatePaymentConfirmationHTML(data) {
 
                 <!-- Acciones -->
                 <div style="text-align: center; margin: 30px 0;">
+                    ${data.calendarLink ? `
+                    <a href="${data.calendarLink}" style="background: #4285F4; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 10px;">
+                        📅 Agregar a Google Calendar
+                    </a>
+                    <br>
+                    ` : ''}
                     <a href="https://wa.me/593969696969" style="background: #4FD1C7; color: #1f2937; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                         💬 Contactar Soporte
                     </a>
@@ -708,9 +719,46 @@ export async function testEmailConfiguration() {
   }
 }
 
+/**
+ * 📅 Genera link de Google Calendar para agregar evento
+ */
+export function generateGoogleCalendarLink(reservationData) {
+  const { date, startTime, endTime, userName = 'Cliente' } = reservationData;
+  
+  try {
+    // Convertir fecha y horas a formato de Google Calendar (UTC)
+    const startDateTime = new Date(`${date}T${startTime}:00`);
+    const endDateTime = new Date(`${date}T${endTime}:00`);
+    
+    // Formato ISO para Google Calendar (quitamos los : de la hora)
+    const start = startDateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const end = endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    
+    const title = encodeURIComponent('Reserva Coworkia - Hot Desk');
+    const details = encodeURIComponent(`
+Reserva confirmada en Coworkia
+👤 Usuario: ${userName}
+📅 Fecha: ${date}
+⏰ Horario: ${startTime} - ${endTime}
+📍 Ubicación: Whymper 403, Edificio Finistere, Quito
+🏢 Espacio: Hot Desk
+
+¡Nos vemos en Coworkia! 🚀
+    `.trim());
+    
+    const location = encodeURIComponent('Coworkia - Whymper 403, Edificio Finistere, Quito');
+    
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+  } catch (error) {
+    console.error('[EMAIL] Error generando link de Google Calendar:', error);
+    return null;
+  }
+}
+
 export default {
   sendReservationConfirmation,
   sendPaymentConfirmationEmail,
   sendReservationReminder,
-  testEmailConfiguration
+  testEmailConfiguration,
+  generateGoogleCalendarLink
 };

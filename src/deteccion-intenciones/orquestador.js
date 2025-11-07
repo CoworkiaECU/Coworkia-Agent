@@ -111,11 +111,11 @@ function construirContextoPerfil(perfil = {}) {
   // 🆕 Información de primera visita vs cliente recurrente
   if (perfil.firstVisit !== undefined) {
     if (perfil.firstVisit) {
-      const greeting = perfil.name ? `Hola ${perfil.name}!` : 'Hola!';
+      const greeting = perfil.name ? `¡Hola ${perfil.name}! 😊` : '¡Hola! 😊';
       lineas.push(`- Primera visita: SÍ → Saludo: "${greeting}" + **OFRECER DÍA GRATIS de 2h**`);
     } else {
-      const greeting = perfil.name ? `Hola ${perfil.name}!` : 'Hola de nuevo!';
-      lineas.push(`- Primera visita: NO → Saludo: "${greeting}" (cliente recurrente)`);
+      const greeting = perfil.name ? `¡Hola denuevo, ${perfil.name}! 😊👋` : '¡Hola denuevo! 😊👋';
+      lineas.push(`- Primera visita: NO → Saludo: "${greeting}" (cliente recurrente, cálido y natural)`);
     }
   }
 

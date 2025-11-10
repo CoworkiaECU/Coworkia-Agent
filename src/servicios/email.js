@@ -9,7 +9,7 @@ import nodemailer from 'nodemailer';
 /**
  * 📧 Configuración del transportador de email
  */
-function createEmailTransporter() {
+async function createEmailTransporter() {
   console.log('[EMAIL] 🔧 Inicializando transportador de email');
   
   const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
@@ -32,10 +32,30 @@ function createEmailTransporter() {
       auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS
-      }
+      },
+      // Configuración adicional para Gmail
+      tls: {
+        rejectUnauthorized: false
+      },
+      debug: true, // Debugging habilitado
+      logger: true
     });
     
-    console.log('[EMAIL] ✅ Transportador creado exitosamente');
+    console.log('[EMAIL] ✅ Transportador creado, verificando conexión...');
+    
+    // Verificar la conexión
+    try {
+      await transporter.verify();
+      console.log('[EMAIL] ✅ Conexión SMTP verificada exitosamente');
+    } catch (verifyError) {
+      console.error('[EMAIL] ❌ Error verificando conexión SMTP:', verifyError.message);
+      console.error('[EMAIL] 💡 Posibles soluciones:');
+      console.error('  1. Usar App Password en lugar de contraseña normal');
+      console.error('  2. Verificar que 2FA esté habilitado en Gmail');
+      console.error('  3. Generar un App Password específico para esta aplicación');
+      console.error('  4. Verificar que EMAIL_PASS sea el App Password, no la contraseña normal');
+    }
+    
     return transporter;
   } catch (error) {
     console.error('[EMAIL] ❌ Error creando transportador:', error);
@@ -298,9 +318,11 @@ export async function processPaymentReceipt(imageData, amount) {
  * �📧 Envía email de confirmación de reserva
  */
 export async function sendReservationConfirmation(reservationData) {
-  const transporter = createEmailTransporter();
+  console.log('[EMAIL] 🚀 Iniciando envío de confirmación de reserva...');
+  const transporter = await createEmailTransporter();
   
   if (!transporter) {
+    console.error('[EMAIL] ❌ No se pudo crear el transportador de email');
     return {
       success: false,
       error: 'Configuración de email no disponible'
@@ -354,18 +376,44 @@ Equipo Coworkia
   };
 
   try {
-    console.log(`[EMAIL] Enviando confirmación a ${email}...`);
+    console.log(`[EMAIL] 📤 Enviando confirmación a ${email}...`);
+    console.log('[EMAIL] 📋 Configuración del email:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      hasHtml: !!mailOptions.html,
+      hasText: !!mailOptions.text
+    });
+    
     const result = await transporter.sendMail(mailOptions);
     
-    console.log(`[EMAIL] ✅ Email enviado exitosamente: ${result.messageId}`);
+    console.log(`[EMAIL] ✅ Email enviado exitosamente!`);
+    console.log('[EMAIL] 📊 Detalles del resultado:', {
+      messageId: result.messageId,
+      accepted: result.accepted,
+      rejected: result.rejected,
+      pending: result.pending,
+      response: result.response
+    });
+    
+    // Verificar si hay destinatarios rechazados
+    if (result.rejected && result.rejected.length > 0) {
+      console.warn('[EMAIL] ⚠️ Algunos destinatarios fueron rechazados:', result.rejected);
+    }
+    
     return {
       success: true,
       messageId: result.messageId,
+      accepted: result.accepted,
+      rejected: result.rejected,
       message: 'Email de confirmación enviado exitosamente'
     };
     
   } catch (error) {
-    console.error('[EMAIL] ❌ Error enviando email:', error);
+    console.error('[EMAIL] ❌ Error enviando email:', error.message);
+    console.error('[EMAIL] 📜 Tipo de error:', error.name);
+    console.error('[EMAIL] 🔍 Código de error:', error.code);
+    console.error('[EMAIL] 📋 Stack trace:', error.stack);
     return {
       success: false,
       error: error.message
@@ -377,7 +425,7 @@ Equipo Coworkia
  * 📧 Envía email de recordatorio (24h antes)
  */
 export async function sendReservationReminder(reservationData) {
-  const transporter = createEmailTransporter();
+  const transporter = await createEmailTransporter();
   
   if (!transporter) {
     return { success: false, error: 'Configuración de email no disponible' };
@@ -455,7 +503,7 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
   console.log('[EMAIL] - Usuario:', userName);
   console.log('[EMAIL] - Datos reserva:', JSON.stringify(reservationData, null, 2));
   
-  const transporter = createEmailTransporter();
+  const transporter = await createEmailTransporter();
   if (!transporter) {
     console.error('[EMAIL] ❌ Transportador no configurado');
     return { success: false, error: 'Email no configurado' };
@@ -699,7 +747,7 @@ function generatePaymentConfirmationHTML(data) {
  * 🧪 Prueba la configuración de email
  */
 export async function testEmailConfiguration() {
-  const transporter = createEmailTransporter();
+  const transporter = await createEmailTransporter();
   
   if (!transporter) {
     return {

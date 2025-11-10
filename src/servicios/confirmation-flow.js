@@ -175,8 +175,12 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
     // 3. Si es gratis, enviar email y confirmar
     if (pendingReservation.wasFree) {
+      console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, intentando enviar email');
+      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);
+      
       try {
         if (userProfile.email) {
+          console.log('[Confirmation] 📧 Enviando email de confirmación gratuita...');
           await sendReservationConfirmation(
             userProfile.email,
             userProfile.name || 'Cliente',
@@ -186,9 +190,12 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
               wasFree: true
             }
           );
+          console.log('[Confirmation] ✅ Email de confirmación enviado exitosamente');
+        } else {
+          console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
         }
       } catch (emailError) {
-        console.error('[Confirmation] Error enviando email gratis:', emailError);
+        console.error('[Confirmation] ❌ Error enviando email gratis:', emailError);
       }
 
       return {

@@ -90,7 +90,13 @@ Por favor, verifica el monto o contacta a soporte.`,
     });
 
     // 7. Enviar email de confirmación
-    console.log('[Payment Verification] Intentando enviar email a:', userProfile.email);
+    console.log('[Payment Verification] 🔍 DEBUG: Intentando enviar email a:', userProfile.email);
+    console.log('[Payment Verification] 🔍 DEBUG: Reserva actualizada:', {
+      id: updatedReservation.id,
+      date: updatedReservation.date,
+      time: `${updatedReservation.startTime}-${updatedReservation.endTime}`,
+      status: updatedReservation.status
+    });
     
     if (!userProfile.email) {
       console.warn('[Payment Verification] Usuario no tiene email registrado');

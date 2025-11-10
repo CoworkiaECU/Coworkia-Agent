@@ -218,7 +218,8 @@ router.post('/webhooks/wassenger', async (req, res) => {
     // Extraer datos (compatibilidad con diferentes formatos de Wassenger)
     const userId = (data.fromNumber || data.from || '').trim();
     const text = (data.body || data.message || '').trim();
-    const name = data.fromName || data.name || '';
+    // 🔧 FIX: Extraer nombre desde la estructura correcta de Wassenger
+    const name = data.chat?.name || data.contact?.name || data.fromName || data.name || '';
     const messageType = data.type || 'text';
     const mediaUrl = data.mediaUrl || data.media?.url || null;
 
@@ -352,10 +353,19 @@ router.post('/webhooks/wassenger', async (req, res) => {
       }
     }
     
+    // 🆕 DETECCIÓN AUTOMÁTICA DE EMAIL
+    let detectedEmail = current.email || null;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(text.trim())) {
+      detectedEmail = text.trim().toLowerCase();
+      console.log(`[WASSENGER] 📧 Email detectado automáticamente: "${detectedEmail}"`);
+    }
+    
     const profile = {
       ...current,
       userId,
       name: detectedName,
+      email: detectedEmail, // 🆕 Guardar email detectado automáticamente
       whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),

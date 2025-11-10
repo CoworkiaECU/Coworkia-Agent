@@ -428,8 +428,21 @@ router.post('/webhooks/wassenger', async (req, res) => {
       // Simular resultado para campaña
       resultado = { agenteKey: 'AURORA', agente: 'Aurora' };
     } else {
+      // 🔍 DEBUG: Verificar perfil antes de enviar al orquestador
+      console.log(`[WASSENGER] 🔍 DEBUGGING NOMBRE - Perfil antes del orquestador:`, {
+        userId: profile.userId,
+        name: profile.name,
+        whatsappDisplayName: profile.whatsappDisplayName,
+        firstVisit: profile.firstVisit
+      });
+      
       // Procesar mensaje con orquestador (ahora con historial)
       resultado = procesarMensaje(text, profile, conversationHistory);
+      
+      console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
+        promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
+        perfilNombre: profile.name
+      });
 
       // Generar respuesta con OpenAI
       reply = await complete(resultado.prompt, {

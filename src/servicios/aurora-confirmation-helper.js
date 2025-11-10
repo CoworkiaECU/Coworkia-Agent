@@ -84,18 +84,31 @@ export function extractReservationData(message, userProfile) {
 
     const reservationDate = dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0];
     
-    // 🚨 VALIDACIÓN: No permitir horarios en el pasado
+    // 🚨 VALIDACIÓN: Usar zona horaria de Ecuador (UTC-5)
     const now = new Date();
+    const ecuadorOffset = -5 * 60; // Ecuador es UTC-5
+    const ecuadorTime = new Date(now.getTime() + (ecuadorOffset * 60 * 1000));
     const reservationDateTime = new Date(`${reservationDate}T${startTime}:00`);
     
-    if (reservationDateTime <= now) {
-      console.warn('[VALIDATION] Horario en el pasado detectado:', startTime, 'actual:', now.toTimeString());
-      // Ajustar a próxima hora disponible
-      const nextHour = new Date(now.getTime() + 60 * 60 * 1000); // +1 hora
-      startTime = `${nextHour.getHours().toString().padStart(2, '0')}:00`;
-      const endHour = nextHour.getHours() + durationHours;
-      endTime = `${endHour.toString().padStart(2, '0')}:00`;
-      console.log('[VALIDATION] Horario ajustado a:', startTime, '-', endTime);
+    console.log('[VALIDATION] Hora Ecuador actual:', ecuadorTime.toTimeString());
+    console.log('[VALIDATION] Horario solicitado:', startTime, 'fecha:', reservationDate);
+    
+    // Solo validar si es el mismo día
+    if (reservationDate === ecuadorTime.toISOString().split('T')[0]) {
+      const currentEcuadorHour = ecuadorTime.getHours();
+      const requestedHour = parseInt(startTime.split(':')[0]);
+      
+      if (requestedHour <= currentEcuadorHour) {
+        console.warn('[VALIDATION] Horario en el pasado detectado Ecuador:', startTime, 'actual Ecuador:', currentEcuadorHour);
+        // Ajustar a próxima hora disponible en Ecuador
+        const nextHour = currentEcuadorHour + 1;
+        startTime = `${nextHour.toString().padStart(2, '0')}:00`;
+        const endHour = nextHour + durationHours;
+        endTime = `${endHour.toString().padStart(2, '0')}:00`;
+        console.log('[VALIDATION] Horario ajustado Ecuador:', startTime, '-', endTime);
+      } else {
+        console.log('[VALIDATION] ✅ Horario válido para Ecuador');
+      }
     }
 
     return {

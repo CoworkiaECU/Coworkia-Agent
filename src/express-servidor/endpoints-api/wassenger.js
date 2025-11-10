@@ -32,7 +32,7 @@ function cleanWhatsAppName(whatsappName) {
   // Remover texto común de WhatsApp Business
   const businessKeywords = [
     'whatsapp business', 'business', 'empresa', 'company', 
-    'servicio', 'service', 'oficial', 'official', '+593', '+1',
+    'servicio', 'service', 'oficial', 'official', '\\+593', '\\+1',
     'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
   ];
   

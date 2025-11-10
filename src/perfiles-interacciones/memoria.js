@@ -16,14 +16,43 @@ export function loadAllProfiles() {
   return fs.promises.readFile(PROFILES_FILE, 'utf-8');
 }
 
-export function loadProfile(userId) {
-  const filePath = path.join(DATA_DIR, userId + '.json');
-  if (!fs.existsSync(filePath)) return null;
-  return fs.promises.readFile(filePath, 'utf-8').then(JSON.parse).catch(() => null);
+export async function loadProfile(userId) {
+  try {
+    // Leer del archivo profiles.json centralizado
+    if (!fs.existsSync(PROFILES_FILE)) {
+      return null;
+    }
+    
+    const content = await fs.promises.readFile(PROFILES_FILE, 'utf-8');
+    const profiles = JSON.parse(content);
+    
+    return profiles[userId] || null;
+  } catch (error) {
+    console.error('Error loading profile:', error);
+    return null;
+  }
 }
 
-export function saveProfile(userId, partialProfile = {}) {
-  return fs.promises.writeFile(path.join(DATA_DIR, userId + '.json'), JSON.stringify(partialProfile, null, 2));
+export async function saveProfile(userId, partialProfile = {}) {
+  try {
+    // Leer perfiles existentes
+    let profiles = {};
+    if (fs.existsSync(PROFILES_FILE)) {
+      const content = await fs.promises.readFile(PROFILES_FILE, 'utf-8');
+      profiles = JSON.parse(content);
+    }
+    
+    // Actualizar perfil específico
+    profiles[userId] = { ...profiles[userId], ...partialProfile };
+    
+    // Guardar archivo actualizado
+    await fs.promises.writeFile(PROFILES_FILE, JSON.stringify(profiles, null, 2));
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    return false;
+  }
 }
 
 export function saveInteraction(event = {}) {

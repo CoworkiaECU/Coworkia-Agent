@@ -358,7 +358,7 @@ router.post('/webhooks/wassenger', async (req, res) => {
       whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
-      firstVisit: false, // 🔧 SIEMPRE marcar como false después de primera interacción
+      firstVisit: current.firstVisit !== undefined ? current.firstVisit : firstVisit, // 🔧 Mantener valor existente o usar detectado
       conversationCount: (current.conversationCount || 0) + 1,
       freeTrialUsed: current.freeTrialUsed || false,
       freeTrialDate: current.freeTrialDate || null,

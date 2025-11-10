@@ -18,7 +18,8 @@ export function shouldActivateConfirmation(message) {
     /continuar\s+con\s+el\s+pago/i,
     /acepta[rs]?\s+(esta\s+)?reserva/i,
     /\[CONFIRMAR\]/i,
-    /sistema\s+confirmacion/i
+    /sistema\s+confirmacion/i,
+    /responde\s+(si|sí)\s+para\s+continuar/i
   ];
 
   return confirmationTriggers.some(pattern => pattern.test(message));
@@ -40,11 +41,42 @@ export function extractReservationData(message, userProfile) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // 🔧 FIX: Mejorar lógica de horarios
+    let startTime = '09:00';
+    let endTime = '11:00';
+    let durationHours = 2;
+    
+    if (timeMatch && timeMatch.length >= 1) {
+      startTime = timeMatch[0];
+      
+      if (timeMatch.length >= 2) {
+        // Si hay dos horarios, usar ambos
+        endTime = timeMatch[1];
+        const start = parseInt(startTime.split(':')[0]);
+        const end = parseInt(endTime.split(':')[0]);
+        durationHours = end - start;
+      } else {
+        // Si solo hay un horario, es la hora de INICIO - calcular duración
+        if (durationMatch) {
+          durationHours = parseInt(durationMatch[1]);
+        } else {
+          // Duración por defecto de 2 horas
+          durationHours = 2;
+        }
+        
+        // Calcular hora de fin
+        const startHour = parseInt(startTime.split(':')[0]);
+        const startMinutes = parseInt(startTime.split(':')[1]);
+        const endHour = startHour + durationHours;
+        endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+      }
+    }
+
     return {
       date: dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0],
-      startTime: timeMatch ? timeMatch[0] : '09:00',
-      endTime: timeMatch && timeMatch[1] ? timeMatch[1] : '11:00',
-      durationHours: durationMatch ? parseInt(durationMatch[1]) : 2,
+      startTime,
+      endTime,
+      durationHours,
       serviceType: 'hotDesk',
       totalPrice: priceMatch ? parseFloat(priceMatch[1]) : 8.40,
       wasFree: !userProfile.freeTrialUsed,

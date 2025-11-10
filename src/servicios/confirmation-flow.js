@@ -181,16 +181,25 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       try {
         if (userProfile.email) {
           console.log('[Confirmation] 📧 Enviando email de confirmación gratuita...');
-          await sendReservationConfirmation(
-            userProfile.email,
-            userProfile.name || 'Cliente',
-            {
-              ...reservationResult.reservation,
-              totalPrice: 0,
-              wasFree: true
-            }
-          );
-          console.log('[Confirmation] ✅ Email de confirmación enviado exitosamente');
+          
+          // Formato correcto para sendReservationConfirmation
+          const emailResult = await sendReservationConfirmation({
+            email: userProfile.email,
+            userName: userProfile.name || 'Cliente',
+            date: pendingReservation.date,
+            startTime: pendingReservation.startTime,
+            endTime: pendingReservation.endTime,
+            serviceType: pendingReservation.serviceType || 'Hot Desk',
+            wasFree: true,
+            durationHours: 2,
+            total: 0
+          });
+          
+          if (emailResult.success) {
+            console.log('[Confirmation] ✅ Email de confirmación enviado exitosamente');
+          } else {
+            console.error('[Confirmation] ❌ Error enviando email:', emailResult.error);
+          }
         } else {
           console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
         }

@@ -3,7 +3,7 @@
  * Mensajes específicos para Instagram/Facebook y otras campañas
  */
 
-// 🚀 CAMPAÑA PRINCIPAL: DÍA GRATIS
+// 🚀 CAMPAÑA PRINCIPAL: 2 HORAS GRATIS
 export const CAMPAIGN_PROMPTS = {
   
   // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
@@ -11,15 +11,15 @@ export const CAMPAIGN_PROMPTS = {
     trigger: "quiero probar el servicio",
     response: `¡Hola {nombre}, soy Aurora! 👩🏼‍💼✨ 
 
-¡Perfecto! Como es tu primera vez en Coworkia, puedes disfrutar de un DÍA COMPLETAMENTE GRATIS 🎉
+¡Perfecto! Como es tu primera vez en Coworkia, puedes disfrutar de 2 HORAS COMPLETAMENTE GRATIS 🎉
 
-📋 **Tu día gratis incluye:**
+📋 **Tus 2 horas gratis incluyen:**
 • Hot Desk (espacio compartido)
 • WiFi de alta velocidad
 • Café ilimitado ☕
 • Acceso a todas nuestras instalaciones
 
-📅 Para activar tu día gratis, solo necesito que me digas:
+📅 Para activar tus 2 horas gratis, solo necesito que me digas:
 ¿Qué día te gustaría venir? (lunes a sábado)
 ¿A qué hora prefieres llegar? (8am-6pm)
 
@@ -33,11 +33,11 @@ export const CAMPAIGN_PROMPTS = {
 
 Genial, veo que buscas una solución completa y profesional. Para espacios privados con locker y pago mensual, te conecto con **Aluna**, nuestra especialista en membresías 👱🏼‍♀️
 
-Pero antes... ¡como es tu primera vez, puedes probar GRATIS por un día! Así conoces nuestras instalaciones antes de decidir 🎉
+Pero antes... ¡como es tu primera vez, puedes probar GRATIS por 2 horas! Así conoces nuestras instalaciones antes de decidir 🎉
 
-¿Te gustaría que te conecte directamente con Aluna para los planes mensuales, o prefieres primero probar tu día gratis?
+¿Te gustaría que te conecte directamente con Aluna para los planes mensuales, o prefieres primero probar tus 2 horas gratis?
 
-**Para día gratis:** Solo dime cuándo quieres venir
+**Para 2 horas gratis:** Solo dime cuándo quieres venir
 **Para planes mensuales:** Te derivo con Aluna ahora mismo
 
 ¿Qué prefieres? 😊`

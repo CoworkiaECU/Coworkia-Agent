@@ -127,7 +127,7 @@ function generateConfirmationEmailHTML(reservationData) {
 
   const priceSection = wasFree ? `
     <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
-      <h3 style="color: #059669; margin: 0; font-size: 20px;">🎉 ¡Día Gratis Confirmado!</h3>
+      <h3 style="color: #059669; margin: 0; font-size: 20px;">🎉 ¡2 Horas Gratis Confirmadas!</h3>
       <p style="margin: 8px 0 0 0; color: #065f46; font-size: 16px;">Esta es tu primera visita, disfruta 2 horas sin costo.</p>
     </div>
   ` : `
@@ -364,7 +364,7 @@ Tu reserva en Coworkia ha sido confirmada:
 📅 Fecha: ${date}
 🕐 Horario: ${startTime}
 🏢 Servicio: ${serviceType}
-${wasFree ? '🎉 Día gratis confirmado!' : '💳 Recuerda realizar el pago'}
+${wasFree ? '🎉 2 horas gratis confirmadas!' : '💳 Recuerda realizar el pago'}
 
 Ubicación: Edificio Finistere - Planta Baja, Whymper 403, Quito
 https://goo.gl/maps/9GD83LV3XRf23XK59

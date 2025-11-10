@@ -88,19 +88,29 @@ export async function createCalendarEvent(reservationData) {
     endDateTime.setHours(endHour, endMinute, 0);
     endDateTime.setUTCHours(endDateTime.getHours() + 5); // Ajustar a UTC
 
+    // Formato del título con acompañantes
+    const guestCount = reservationData.guestCount || 0;
+    const guestSuffix = guestCount > 0 ? ` +${guestCount}` : '';
+    const eventTitle = `${serviceType} ${userName}${guestSuffix}`;
+    
     // Definir el evento
     const event = {
-      summary: `🏢 Coworkia - ${serviceType}`,
+      summary: eventTitle, // Ejemplo: "Hot Desk Diego Villota +2"
       description: `
 🎯 Reserva confirmada en Coworkia
 
 👤 Cliente: ${userName}
 📧 Email: ${email}
 🏢 Espacio: ${serviceType}
+👥 Personas: ${1 + guestCount} (cliente + ${guestCount} acompañantes)
 ⏱️ Duración: ${duration || '2 horas'}
 💰 Precio: ${price ? `$${price} USD` : 'GRATIS (primera vez)'}
 
+📅 Fecha: ${date}
+🕐 Horario: ${startTime} - ${endTime}
+
 📍 Ubicación: Whymper 403, Edificio Finistere, Quito
+🗺️ Google Maps: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
 📞 Contacto: +593 99 483 7117
 
 ¡Te esperamos! 🚀

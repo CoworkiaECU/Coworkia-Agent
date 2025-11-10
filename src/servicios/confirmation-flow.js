@@ -6,6 +6,7 @@
 import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria.js';
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
+import { checkAvailability, getOccupancyStats } from './availability-system.js';
 
 /**
  * ✅ Detecta respuestas afirmativas del usuario
@@ -156,7 +157,33 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
   try {
     const userName = userProfile.name ? `, ${userProfile.name}` : '';
     
-    // 1. Crear la reserva oficialmente
+    // 🔍 1. Verificar disponibilidad antes de crear reserva
+    console.log('[Confirmation] 🔍 Verificando disponibilidad antes de confirmar...');
+    const availability = await checkAvailability({
+      date: pendingReservation.date,
+      startTime: pendingReservation.startTime,
+      endTime: pendingReservation.endTime,
+      serviceType: pendingReservation.serviceType,
+      guestCount: pendingReservation.guestCount || 0
+    });
+    
+    if (!availability.available) {
+      return {
+        success: false,
+        message: `❌ Lo siento${userName}, ese horario ya no está disponible:
+
+${availability.reason}
+
+${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availability.suggestions.map(s => `• ${s}`).join('\n') : ''}
+
+¿Te gustaría probar con otro horario? 🕐`,
+        needsAction: false
+      };
+    }
+    
+    console.log('[Confirmation] ✅ Disponibilidad confirmada:', availability.message);
+    
+    // 2. Crear la reserva oficialmente
     const reservationResult = await createReservation(pendingReservation);
     
     if (!reservationResult.success) {
@@ -182,7 +209,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         if (userProfile.email) {
           console.log('[Confirmation] 📧 Enviando email de confirmación gratuita...');
           
-          // Formato correcto para sendReservationConfirmation
+          // Formato correcto para sendReservationConfirmation con acompañantes
           const emailResult = await sendReservationConfirmation({
             email: userProfile.email,
             userName: userProfile.name || 'Cliente',
@@ -190,6 +217,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
             startTime: pendingReservation.startTime,
             endTime: pendingReservation.endTime,
             serviceType: pendingReservation.serviceType || 'Hot Desk',
+            guestCount: pendingReservation.guestCount || 0, // Número de acompañantes
             wasFree: true,
             durationHours: 2,
             total: 0

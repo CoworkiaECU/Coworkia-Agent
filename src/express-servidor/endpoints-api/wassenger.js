@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
-import { processPaymentReceipt, isPaymentReceipt } from '../../servicios/payment-verification.js';
+import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
@@ -232,22 +232,24 @@ router.post('/webhooks/wassenger', async (req, res) => {
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
     if (messageType === 'image' || messageType === 'document') {
-      console.log('[WASSENGER] Procesando imagen/documento:', mediaUrl);
+      console.log('[WASSENGER] 📸 Procesando imagen/documento...');
       
-      if (!mediaUrl) {
-        // Enviar mensaje pidiendo reenviar la imagen
-        await enviarWhatsApp(userId, '❌ No pude recibir la imagen correctamente. Por favor, envíala de nuevo.');
-        return res.json({ ok: true, processed: true, type: 'image_error' });
-      }
-
-      // Verificar si parece un comprobante de pago
-      const isReceipt = await isPaymentReceipt(mediaUrl);
+      const messageData = { type: messageType, media: { url: mediaUrl } };
       
-      if (isReceipt) {
-        console.log('[WASSENGER] Imagen detectada como comprobante de pago');
+      // Verificar si es un comprobante de pago
+      if (isReceiptImage(messageData)) {
+        console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
+        
+        // Cargar perfil del usuario
+        const userProfile = await loadProfile(userId);
+        
+        if (!userProfile) {
+          await enviarWhatsApp(userId, '❌ No encontré tu perfil. ¿Puedes intentar hacer una reserva primero?');
+          return res.json({ ok: true, processed: true, type: 'profile_error' });
+        }
         
         // Procesar comprobante de pago
-        const paymentResult = await processPaymentReceipt(mediaUrl, userId);
+        const paymentResult = await processPaymentReceipt(messageData, userProfile);
         
         // Enviar respuesta
         await enviarWhatsApp(userId, paymentResult.message);

@@ -437,7 +437,14 @@ router.post('/webhooks/wassenger', async (req, res) => {
       console.log('[WASSENGER] 🎯 Campaña publicitaria detectada:', campaignCheck.campaign);
       reply = personalizeCampaignResponse(campaignCheck.template, profile);
       // Simular resultado para campaña
-      resultado = { agenteKey: 'AURORA', agente: 'Aurora' };
+      resultado = { 
+        agenteKey: 'AURORA', 
+        agente: 'Aurora',
+        razonSeleccion: `campana_${campaignCheck.campaign}`,
+        metadata: {
+          rol: 'asistente_coworking'
+        }
+      };
     } else {
       // 🔍 DEBUG: Verificar perfil antes de enviar al orquestador
       console.log(`[WASSENGER] 🔍 DEBUGGING NOMBRE - Perfil antes del orquestador:`, {

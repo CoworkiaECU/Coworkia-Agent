@@ -139,20 +139,11 @@ export async function createCalendarEvent(reservationData) {
         timeZone: 'America/Guayaquil'
       },
       location: 'Whymper 403, Edificio Finistere, Quito, Ecuador',
-      attendees: [
-        {
-          email: email,
-          displayName: userName
-        },
-        {
-          email: process.env.EMAIL_USER || 'secretaria.coworkia@gmail.com',
-          displayName: 'Coworkia'
-        }
-      ],
+      // NOTA: Service Accounts no pueden invitar attendees sin Domain-Wide Delegation
+      // Solo creamos el evento como referencia. Las notificaciones van por email separado.
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'email', minutes: 24 * 60 }, // 1 día antes
           { method: 'popup', minutes: 60 }        // 1 hora antes
         ]
       },
@@ -164,17 +155,17 @@ export async function createCalendarEvent(reservationData) {
       summary: event.summary,
       start: event.start.dateTime,
       end: event.end.dateTime,
-      attendees: event.attendees.map(a => a.email)
+      location: event.location
     });
 
     // Usar el calendario configurado o crear en calendario principal
     const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
     
-    // Crear el evento
+    // Crear el evento (sin invitaciones - las notificaciones van por email)
     const response = await calendar.events.insert({
       calendarId: calendarId,
       resource: event,
-      sendUpdates: 'all' // Enviar invitaciones automáticamente
+      sendUpdates: 'none' // No enviar invitaciones automáticas
     });
 
     console.log('[CALENDAR] ✅ Evento creado exitosamente!');

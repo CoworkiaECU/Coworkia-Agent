@@ -5,6 +5,7 @@ import { complete } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isPaymentReceipt } from '../../servicios/payment-verification.js';
 import { processConfirmationResponse, hasPendingConfirmation } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
+import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -416,15 +417,27 @@ router.post('/webhooks/wassenger', async (req, res) => {
       });
     }
 
-    // Procesar mensaje con orquestador (ahora con historial)
-    const resultado = procesarMensaje(text, profile, conversationHistory);
+    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS PRIMERO
+    const campaignCheck = detectCampaignMessage(text);
+    let reply;
+    let resultado = null;
+    
+    if (campaignCheck.detected) {
+      console.log('[WASSENGER] 🎯 Campaña publicitaria detectada:', campaignCheck.campaign);
+      reply = personalizeCampaignResponse(campaignCheck.template, profile);
+      // Simular resultado para campaña
+      resultado = { agenteKey: 'AURORA', agente: 'Aurora' };
+    } else {
+      // Procesar mensaje con orquestador (ahora con historial)
+      resultado = procesarMensaje(text, profile, conversationHistory);
 
-    // Generar respuesta con OpenAI
-    const reply = await complete(resultado.prompt, {
-      temperature: 0.4,
-      max_tokens: 300,
-      system: resultado.systemPrompt
-    });
+      // Generar respuesta con OpenAI
+      reply = await complete(resultado.prompt, {
+        temperature: 0.4,
+        max_tokens: 300,
+        system: resultado.systemPrompt
+      });
+    }
 
     // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
     let finalReply = reply;

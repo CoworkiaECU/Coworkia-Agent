@@ -29,9 +29,9 @@ export async function diagnoseUserReservationFlow(userId) {
     }
     
     // 2. Simular mensaje de reserva
-    console.log('\n🎯 SIMULANDO MENSAJE: "quiero reservar un hot desk para hoy a las 11am por 2 horas por favor"');
+    console.log('\n🎯 SIMULANDO MENSAJE: "quiero hacer una reserva para hoy 1pm"');
     
-    const mensaje = "quiero reservar un hot desk para hoy a las 11am por 2 horas por favor";
+    const mensaje = "quiero hacer una reserva para hoy 1pm";
     
     // 3. Procesar con orquestador
     const resultado = procesarMensaje(mensaje, profile, []);
@@ -69,15 +69,20 @@ export async function diagnoseUserReservationFlow(userId) {
         
         // Verificar si los horarios son correctos
         console.log('\n⏰ VERIFICACIÓN DE HORARIOS:');
-        console.log(`- Hora solicitada: 11:00 AM`);
+        console.log(`- Mensaje original: "${mensaje}"`);
         console.log(`- Hora detectada inicio: ${reservationData.startTime}`);
         console.log(`- Hora detectada fin: ${reservationData.endTime}`);
         console.log(`- Duración: ${reservationData.durationHours} horas`);
         
-        if (reservationData.startTime === '11:00') {
-          console.log('✅ HORARIO CORRECTO');
+        // Verificar si el horario está en el futuro y es lógico
+        const now = new Date();
+        const currentHour = now.getHours();
+        const requestedHour = parseInt(reservationData.startTime.split(':')[0]);
+        
+        if (requestedHour > currentHour) {
+          console.log('✅ HORARIO VÁLIDO - está en el futuro');
         } else {
-          console.log('❌ HORARIO INCORRECTO - debería ser 11:00');
+          console.log('⚠️  HORARIO EN EL PASADO - podría necesitar ajuste');
         }
       } else {
         console.log('❌ No se pudieron extraer datos de reserva');

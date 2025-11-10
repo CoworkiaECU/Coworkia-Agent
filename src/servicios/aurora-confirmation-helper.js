@@ -32,26 +32,36 @@ export function extractReservationData(message, userProfile) {
   try {
     // Buscar patrones de fecha y hora en la respuesta
     const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|hoy|lunes|martes|miércoles|jueves|viernes|sábado|domingo)/i);
-    const timeMatch = message.match(/(\d{1,2}:\d{2})/g);
+    
+    // 🔧 MEJORAR: Detectar horarios en múltiples formatos
+    const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)?/g) || 
+                     message.match(/(\d{1,2}:\d{2})/g) ||
+                     message.match(/(\d{1,2})\s*(am|pm|AM|PM)/g);
+    
     const priceMatch = message.match(/\$(\d+\.?\d*)/);
     const durationMatch = message.match(/(\d+)\s*hora[s]?/i);
+
+    console.log('[DEBUG] Mensaje analizado:', message);
+    console.log('[DEBUG] timeMatch encontrado:', timeMatch);
 
     // Valores por defecto si no se detectan
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // 🔧 FIX: Mejorar lógica de horarios
+    // 🔧 FIX: Mejorar lógica de horarios - normalizar formato
     let startTime = '09:00';
     let endTime = '11:00';
     let durationHours = 2;
     
     if (timeMatch && timeMatch.length >= 1) {
-      startTime = timeMatch[0];
+      // Normalizar primer horario detectado
+      startTime = normalizeTimeFormat(timeMatch[0]);
+      console.log('[DEBUG] startTime normalizado:', startTime);
       
       if (timeMatch.length >= 2) {
         // Si hay dos horarios, usar ambos
-        endTime = timeMatch[1];
+        endTime = normalizeTimeFormat(timeMatch[1]);
         const start = parseInt(startTime.split(':')[0]);
         const end = parseInt(endTime.split(':')[0]);
         durationHours = end - start;
@@ -66,14 +76,30 @@ export function extractReservationData(message, userProfile) {
         
         // Calcular hora de fin
         const startHour = parseInt(startTime.split(':')[0]);
-        const startMinutes = parseInt(startTime.split(':')[1]);
+        const startMinutes = parseInt(startTime.split(':')[1] || '0');
         const endHour = startHour + durationHours;
         endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
       }
     }
 
+    const reservationDate = dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0];
+    
+    // 🚨 VALIDACIÓN: No permitir horarios en el pasado
+    const now = new Date();
+    const reservationDateTime = new Date(`${reservationDate}T${startTime}:00`);
+    
+    if (reservationDateTime <= now) {
+      console.warn('[VALIDATION] Horario en el pasado detectado:', startTime, 'actual:', now.toTimeString());
+      // Ajustar a próxima hora disponible
+      const nextHour = new Date(now.getTime() + 60 * 60 * 1000); // +1 hora
+      startTime = `${nextHour.getHours().toString().padStart(2, '0')}:00`;
+      const endHour = nextHour.getHours() + durationHours;
+      endTime = `${endHour.toString().padStart(2, '0')}:00`;
+      console.log('[VALIDATION] Horario ajustado a:', startTime, '-', endTime);
+    }
+
     return {
-      date: dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0],
+      date: reservationDate,
       startTime,
       endTime,
       durationHours,
@@ -90,7 +116,43 @@ export function extractReservationData(message, userProfile) {
 }
 
 /**
- * 📅 Parsea fecha en diferentes formatos
+ * � Normaliza formato de hora (11 am → 11:00, 1:30pm → 13:30)
+ */
+function normalizeTimeFormat(timeStr) {
+  if (!timeStr) return '09:00';
+  
+  // Limpiar y normalizar
+  timeStr = timeStr.toLowerCase().trim();
+  
+  // Si ya está en formato HH:MM, verificar y retornar
+  if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+    return timeStr.padStart(5, '0');
+  }
+  
+  // Extraer componentes
+  const match = timeStr.match(/(\d{1,2}):?(\d{0,2})\s*(am|pm)?/);
+  if (!match) return '09:00';
+  
+  let hour = parseInt(match[1]);
+  let minutes = parseInt(match[2] || '0');
+  const period = match[3];
+  
+  // Convertir AM/PM a formato 24h
+  if (period === 'pm' && hour !== 12) {
+    hour += 12;
+  } else if (period === 'am' && hour === 12) {
+    hour = 0;
+  }
+  
+  // Asegurar formato válido
+  if (hour > 23) hour = 23;
+  if (minutes > 59) minutes = 0;
+  
+  return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
+ * �📅 Parsea fecha en diferentes formatos
  */
 function parseDate(dateStr) {
   const today = new Date();

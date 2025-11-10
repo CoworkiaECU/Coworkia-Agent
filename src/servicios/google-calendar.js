@@ -24,11 +24,27 @@ async function createCalendarClient() {
     // Parsear las credenciales del service account
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
     
+    console.log('[CALENDAR] 📋 Credenciales cargadas:', {
+      client_email: credentials.client_email,
+      project_id: credentials.project_id,
+      private_key_length: credentials.private_key ? credentials.private_key.length : 0
+    });
+    
+    // Asegurar formato correcto de private_key
+    let privateKey = credentials.private_key;
+    if (privateKey && !privateKey.includes('\\n')) {
+      // Ya tiene saltos de línea reales, no necesita conversión
+      privateKey = privateKey;
+    } else if (privateKey) {
+      // Convertir \n a saltos de línea reales
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+    
     // Crear cliente JWT para autenticación
     const jwtClient = new google.auth.JWT(
       credentials.client_email,
       null,
-      credentials.private_key,
+      privateKey,
       ['https://www.googleapis.com/auth/calendar'], // Scope para Google Calendar
       null
     );

@@ -77,4 +77,49 @@ router.post('/test-calendar', async (req, res) => {
   }
 });
 
+/**
+ * 📅 Endpoint para probar creación de evento en Google Calendar
+ */
+router.post('/test-event', async (req, res) => {
+  console.log('[HEALTH] 🧪 Probando creación de evento en Google Calendar...');
+  
+  try {
+    const { createCalendarEvent } = await import('../../servicios/google-calendar.js');
+    
+    const testData = {
+      userName: req.body.userName || 'Usuario Prueba',
+      spaceType: req.body.spaceType || 'Hot Desk',
+      date: req.body.date || new Date().toISOString().split('T')[0],
+      startTime: req.body.startTime || '09:00',
+      endTime: req.body.endTime || '17:00',
+      acompanantes: req.body.acompanantes || [],
+      whatsapp: req.body.whatsapp || 'test',
+      isTest: true
+    };
+    
+    const result = await createCalendarEvent(testData);
+    
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: 'Evento de prueba creado exitosamente',
+        eventData: result
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Error creando evento de prueba',
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error('[HEALTH] ❌ Error probando creación de evento:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno probando evento',
+      error: error.message
+    });
+  }
+});
+
 export default router;

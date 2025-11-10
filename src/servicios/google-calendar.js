@@ -40,14 +40,12 @@ async function createCalendarClient() {
       privateKey = privateKey.replace(/\\n/g, '\n');
     }
     
-    // Crear cliente JWT para autenticación
-    const jwtClient = new google.auth.JWT(
-      credentials.client_email,
-      null,
-      privateKey,
-      ['https://www.googleapis.com/auth/calendar'], // Scope para Google Calendar
-      null
-    );
+    // Crear cliente JWT para autenticación con objeto de credenciales
+    const jwtClient = new google.auth.JWT({
+      email: credentials.client_email,
+      key: privateKey,
+      scopes: ['https://www.googleapis.com/auth/calendar']
+    });
 
     // Autorizar el cliente
     await jwtClient.authorize();

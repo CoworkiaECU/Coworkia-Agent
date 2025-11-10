@@ -44,4 +44,37 @@ router.post('/test-email', async (req, res) => {
   }
 });
 
+/**
+ * 📅 Endpoint para probar la configuración de Google Calendar
+ */
+router.post('/test-calendar', async (req, res) => {
+  console.log('[HEALTH] 🧪 Probando configuración de Google Calendar...');
+  
+  try {
+    const { testCalendarConnection } = await import('../../servicios/google-calendar.js');
+    const testResult = await testCalendarConnection();
+    
+    if (testResult.success) {
+      res.status(200).json({
+        success: true,
+        message: 'Configuración de Google Calendar correcta',
+        details: testResult
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Error en configuración de Google Calendar',
+        error: testResult.error
+      });
+    }
+  } catch (error) {
+    console.error('[HEALTH] ❌ Error probando Google Calendar:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno probando Google Calendar',
+      error: error.message
+    });
+  }
+});
+
 export default router;

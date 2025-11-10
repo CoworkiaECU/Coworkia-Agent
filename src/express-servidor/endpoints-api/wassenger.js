@@ -373,7 +373,7 @@ router.post('/webhooks/wassenger', async (req, res) => {
       whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
-      firstVisit: current.firstVisit !== undefined ? current.firstVisit : firstVisit, // 🔧 Mantener valor existente o usar detectado
+      firstVisit: current.firstVisit !== undefined ? current.firstVisit : true, // 🔧 Solo true para usuarios completamente nuevos
       conversationCount: (current.conversationCount || 0) + 1,
       freeTrialUsed: current.freeTrialUsed || false,
       freeTrialDate: current.freeTrialDate || null,
@@ -493,6 +493,25 @@ router.post('/webhooks/wassenger', async (req, res) => {
       content: finalReply,
       agent: resultado.agente
     });
+
+    // 🔧 MARCAR PRIMERA VISITA COMO COMPLETADA después de respuesta de Aurora
+    if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
+      console.log('[WASSENGER] 🎯 Marcando primera visita como completada para:', userId);
+      console.log('[WASSENGER] 📊 Perfil antes del cambio:', JSON.stringify(profile, null, 2));
+      
+      const updatedProfile = {
+        ...profile,
+        firstVisit: false, // ✅ Ya no es primera visita después de que Aurora responda
+        conversationCount: (profile.conversationCount || 0) + 1 // Asegurar que se incremente
+      };
+      
+      await saveProfile(userId, updatedProfile);
+      console.log('[WASSENGER] ✅ Perfil actualizado con firstVisit: false');
+      
+      // Verificar que se guardó correctamente
+      const verifiedProfile = await loadProfile(userId);
+      console.log('[WASSENGER] 🔍 Perfil verificado después del guardado:', verifiedProfile.firstVisit);
+    }
 
     // Guardar interacción
     saveInteraction({

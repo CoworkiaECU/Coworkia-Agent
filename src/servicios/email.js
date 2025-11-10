@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import nodemailer from 'nodemailer';
+import { createCalendarEvent } from './google-calendar.js';
 
 /**
  * 📧 Configuración del transportador de email
@@ -401,12 +402,33 @@ Equipo Coworkia
       console.warn('[EMAIL] ⚠️ Algunos destinatarios fueron rechazados:', result.rejected);
     }
     
+    // 📅 CREAR EVENTO EN GOOGLE CALENDAR AUTOMÁTICAMENTE
+    console.log('[EMAIL] 📅 Creando evento en Google Calendar para reserva...');
+    const calendarResult = await createCalendarEvent({
+      userName,
+      email,
+      date,
+      startTime,
+      endTime: reservationData.endTime,
+      serviceType: serviceType || 'Hot Desk',
+      duration: wasFree ? '2 horas' : `${reservationData.durationHours || 2} horas`,
+      price: wasFree ? 0 : reservationData.total
+    });
+    
+    if (calendarResult.success) {
+      console.log('[EMAIL] ✅ Evento de calendario creado exitosamente para reserva!');
+      console.log('[EMAIL] 🔗 URL del evento:', calendarResult.eventUrl);
+    } else {
+      console.error('[EMAIL] ⚠️ No se pudo crear evento de calendario para reserva:', calendarResult.error);
+    }
+    
     return {
       success: true,
       messageId: result.messageId,
       accepted: result.accepted,
       rejected: result.rejected,
-      message: 'Email de confirmación enviado exitosamente'
+      message: 'Email de confirmación enviado exitosamente',
+      calendarEvent: calendarResult // Incluir resultado del calendario
     };
     
   } catch (error) {
@@ -545,10 +567,31 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
     console.log('[EMAIL] ✅ Email enviado exitosamente. ID:', info.messageId);
     console.log('[EMAIL] 📊 Info completa:', info);
     
+    // 📅 CREAR EVENTO EN GOOGLE CALENDAR AUTOMÁTICAMENTE
+    console.log('[EMAIL] 📅 Creando evento en Google Calendar...');
+    const calendarResult = await createCalendarEvent({
+      userName,
+      email: userEmail,
+      date: reservationData.date,
+      startTime: reservationData.startTime,
+      endTime: reservationData.endTime,
+      serviceType: reservationData.serviceType || 'Hot Desk',
+      duration: reservationData.durationHours ? `${reservationData.durationHours} horas` : '2 horas',
+      price: reservationData.total
+    });
+    
+    if (calendarResult.success) {
+      console.log('[EMAIL] ✅ Evento de calendario creado exitosamente!');
+      console.log('[EMAIL] 🔗 URL del evento:', calendarResult.eventUrl);
+    } else {
+      console.error('[EMAIL] ⚠️ No se pudo crear evento de calendario:', calendarResult.error);
+    }
+    
     return {
       success: true,
       messageId: info.messageId,
-      email: userEmail
+      email: userEmail,
+      calendarEvent: calendarResult // Incluir resultado del calendario
     };
   } catch (error) {
     console.error('[EMAIL] ❌ ERROR enviando confirmación de pago:', error.message);

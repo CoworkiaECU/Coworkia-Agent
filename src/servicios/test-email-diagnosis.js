@@ -8,6 +8,7 @@ dotenv.config();
 
 import nodemailer from 'nodemailer';
 import { sendReservationConfirmation, sendPaymentConfirmationEmail, generateGoogleCalendarLink } from './email.js';
+import { testCalendarConnection } from './google-calendar.js';
 import { loadProfile } from '../perfiles-interacciones/memoria.js';
 
 /**
@@ -16,30 +17,44 @@ import { loadProfile } from '../perfiles-interacciones/memoria.js';
 export async function testEmailConfiguration() {
   console.log('=== 🔬 DIAGNÓSTICO DE EMAIL ===\n');
   
-  // 1. Verificar variables de entorno
-  console.log('1. 📋 Variables de entorno:');
-  console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✅ Configurado' : '❌ No configurado'}`);
-  console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '✅ Configurado' : '❌ No configurado'}`);
-  console.log(`   GMAIL_USER: ${process.env.GMAIL_USER ? '✅ Configurado' : '❌ No configurado'}`);
-  console.log(`   GMAIL_PASS: ${process.env.GMAIL_PASS ? '✅ Configurado' : '❌ No configurado'}`);
+  // 1. Verificar variables de entorno actuales
+  console.log('1. 📋 Variables de entorno (actualizadas):');
+  console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✅ ' + process.env.EMAIL_USER : '❌ No configurado'}`);
+  console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '✅ Configurado (App Password)' : '❌ No configurado'}`);
+  console.log(`   EMAIL_SERVICE: ${process.env.EMAIL_SERVICE ? '✅ ' + process.env.EMAIL_SERVICE : '❌ No configurado'}`);
   
   // 2. Verificar Google Calendar
   console.log('\n2. 📅 Google Calendar:');
+  console.log(`   GOOGLE_CALENDAR_ID: ${process.env.GOOGLE_CALENDAR_ID ? '✅ Configurado' : '❌ No configurado'}`);
   console.log(`   GOOGLE_SERVICE_ACCOUNT_JSON: ${process.env.GOOGLE_SERVICE_ACCOUNT_JSON ? '✅ Configurado' : '❌ No configurado'}`);
   
-  // 3. Crear transportador
+  // 3. Crear transportador (solo con variables actuales)
   console.log('\n3. 🚀 Prueba de transportador:');
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: process.env.EMAIL_SERVICE || 'gmail',
       auth: {
-        user: process.env.EMAIL_USER || process.env.GMAIL_USER,
-        pass: process.env.EMAIL_PASS || process.env.GMAIL_PASS
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     });
     
     await transporter.verify();
     console.log('   ✅ Transportador funcional');
+    
+    // 4. Prueba de Google Calendar
+    console.log('\n4. 📅 Prueba de Google Calendar:');
+    try {
+      const calendarResult = await testCalendarConnection();
+      if (calendarResult.success) {
+        console.log('   ✅ Google Calendar conectado exitosamente');
+        console.log(`   📊 Calendarios disponibles: ${calendarResult.calendars?.length || 0}`);
+      } else {
+        console.log(`   ⚠️ Google Calendar no disponible: ${calendarResult.error}`);
+      }
+    } catch (error) {
+      console.log(`   ❌ Error probando Google Calendar: ${error.message}`);
+    }
     
     return { success: true, transporter };
   } catch (error) {

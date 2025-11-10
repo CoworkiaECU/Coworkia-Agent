@@ -79,13 +79,14 @@ export async function createCalendarEvent(reservationData) {
   try {
     const {
       userName,
-      email,
+      email = 'prueba@coworkia.com', // Email por defecto para tests
       date,
       startTime,
       endTime,
       serviceType = 'Hot Desk',
       duration,
-      price
+      price,
+      isTest = false
     } = reservationData;
 
     // Construir fechas/horas para el evento

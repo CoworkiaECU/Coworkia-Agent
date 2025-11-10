@@ -42,10 +42,10 @@ function cleanWhatsAppName(whatsappName) {
   }
   
   // Remover números de teléfono
-  cleaned = cleaned.replace(/\\+?\\d{1,4}[\\s-]?\\d{6,}/g, '');
+  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
   
   // Limpiar espacios y caracteres especiales (mantener acentos españoles)
-  cleaned = cleaned.replace(/[^\\w\\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
   
   // Solo tomar el primer nombre si es muy largo
   if (cleaned.length > 20) {
@@ -355,9 +355,10 @@ router.post('/webhooks/wassenger', async (req, res) => {
     
     // 🆕 DETECCIÓN AUTOMÁTICA DE EMAIL
     let detectedEmail = current.email || null;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(text.trim())) {
-      detectedEmail = text.trim().toLowerCase();
+    const emailRegex = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+    const emailMatch = text.match(emailRegex);
+    if (emailMatch && !detectedEmail) {
+      detectedEmail = emailMatch[0].toLowerCase();
       console.log(`[WASSENGER] 📧 Email detectado automáticamente: "${detectedEmail}"`);
     }
     

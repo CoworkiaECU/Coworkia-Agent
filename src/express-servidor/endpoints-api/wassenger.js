@@ -52,9 +52,12 @@ function cleanWhatsAppName(whatsappName) {
     cleaned = cleaned.split(' ')[0];
   }
   
-  // Capitalizar primera letra
+  // Capitalizar cada palabra (Title Case)
   if (cleaned.length > 0) {
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+    cleaned = cleaned
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
   
   return cleaned.length > 1 ? cleaned : null;

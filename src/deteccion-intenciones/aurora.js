@@ -33,7 +33,7 @@ export const AURORA = {
         privadas: 'Oficinas privadas (según disponibilidad)'
       },
       prueba: {
-        nombre: 'Día Gratis',
+        nombre: '2 Horas Gratis',
         condicion: 'Primera visita, previa reserva',
         proceso: 'Agendar con Aurora, confirmar asistencia'
       }
@@ -86,7 +86,8 @@ COMUNICACIÓN CÁLIDA - MUY IMPORTANTE:
 - HOT DESK ($4/hora): Espacio compartido, flexible, disponible por horas
 - SALA DE REUNIONES: Para reuniones grupales, requiere reserva específica
 - OFICINA PRIVADA/ESPACIO PRIVADO: Solo mencionarlo si el usuario específicamente lo pide
-- DÍA GRATIS: Solo Hot Desk, NUNCA salas privadas o reuniones
+- 2 HORAS GRATIS: Solo Hot Desk, NUNCA salas privadas o reuniones, MÁXIMO 2 HORAS
+- NUNCA digas "todo el tiempo que necesites" - las 2 horas gratis son EXACTAMENTE 2 horas
 - Si usuario pide horario específico (ej: "1pm"), SIEMPRE asumir Hot Desk a menos que diga lo contrario
 
 FLUJO DE RESERVAS MEJORADO:
@@ -127,7 +128,7 @@ COMANDOS TÉCNICOS INTERNOS:
 IMPORTANTE: 
 - Respuestas naturales y conversacionales (máx 4 líneas) 
 - NO saludes repetitivamente en la misma conversación
-- NO ofrezcas día gratis agresivamente, solo si preguntan por servicios
+- NO ofrezcas 2 horas gratis agresivamente, solo si preguntan por servicios
 - SIEMPRE pide email antes de procesar reservas`,
 
   ejemplos: {
@@ -141,7 +142,7 @@ IMPORTANTE:
     
     confirmacionReserva: '¡Perfecto! 📋 *CONFIRMA TU RESERVA:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n💰 *Total:* ${precio} USD\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* para continuar con el pago o *NO* para cancelar 👍',
     
-    confirmacionGratis: '¡Perfecto! 🎉 *CONFIRMA TU DÍA GRATIS:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n💰 *Precio:* ¡GRATIS! (primera vez)\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* o *NO* 👍',
+    confirmacionGratis: '¡Perfecto! 🎉 *CONFIRMA TUS 2 HORAS GRATIS:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n⏱️ *Duración:* 2 horas\n💰 *Precio:* ¡GRATIS! (primera vez)\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* o *NO* 👍',
     
     pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
     

@@ -121,7 +121,7 @@ export function generateConfirmationMessage(reservationData, userProfile) {
   if (wasFree) {
     return `¡Perfecto${userName}! 🎉
 
-📋 *CONFIRMA TU DÍA GRATIS:*
+📋 *CONFIRMA TUS 2 HORAS GRATIS:*
 
 📅 *Fecha:* ${formattedDate}
 ⏰ *Horario:* ${startTime} - ${endTime} 
@@ -202,7 +202,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         success: true,
         message: `✅ *¡Reserva confirmada${userName}!*
 
-🎉 Tu día gratis está listo:
+🎉 Tus 2 horas gratis están listas:
 
 📅 *${pendingReservation.date}*
 ⏰ *${pendingReservation.startTime} - ${pendingReservation.endTime}*

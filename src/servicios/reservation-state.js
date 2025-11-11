@@ -15,10 +15,11 @@ function futureIso(minutes) {
 }
 
 export async function cleanupExpiredConfirmations() {
-  await databaseService.run(
+  const result = await databaseService.run(
     'DELETE FROM pending_confirmations WHERE expires_at IS NOT NULL AND expires_at < ?',
     [nowIso()]
   );
+  return result?.changes || 0;
 }
 
 export async function setPendingConfirmation(userPhone, reservationData, ttlMinutes = 30) {
@@ -58,6 +59,16 @@ export async function getPendingConfirmation(userPhone) {
 
 export async function clearPendingConfirmation(userPhone) {
   await databaseService.run('DELETE FROM pending_confirmations WHERE user_phone = ?', [userPhone]);
+}
+
+export async function cleanupJustConfirmedFlags() {
+  const result = await databaseService.run(
+    `UPDATE reservation_state
+     SET just_confirmed_until = NULL
+     WHERE just_confirmed_until IS NOT NULL AND just_confirmed_until < ?`,
+    [nowIso()]
+  );
+  return result?.changes || 0;
 }
 
 export async function markJustConfirmed(userPhone, reservationId = null, coolDownMinutes = 10) {

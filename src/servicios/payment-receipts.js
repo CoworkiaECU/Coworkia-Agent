@@ -6,6 +6,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import reservationRepository from '../database/reservationRepository.js';
+import { updateReservationPayment } from './calendario.js';
+import { enqueueBackgroundTask } from './task-queue.js';
+import { sendReservationConfirmation } from './email.js';
+import { createCalendarEvent } from './google-calendar.js';
+import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { markJustConfirmed } from './reservation-state.js';
+
 /**
  * 📄 Instrucciones para solicitar comprobantes de pago
  */
@@ -98,52 +106,45 @@ export async function processPaymentReceipt(messageData, userProfile) {
   console.log('[RECEIPT] 🔍 Procesando comprobante de pago...');
   
   try {
-    // 1. Verificar que el usuario tenga reserva pendiente de pago
-    if (!userProfile.pendingConfirmation) {
+    const pendingReservation = await reservationRepository.findPendingByUser(userProfile.userId);
+
+    if (!pendingReservation || pendingReservation.status !== 'pending_payment' || pendingReservation.payment_status === 'paid') {
       return {
         success: false,
-        message: `📄 Recibí tu imagen, pero no tienes reservas pendientes de pago.
+        message: `📄 Recibí tu imagen, pero no encuentro reservas pendientes de pago en tu cuenta.
         
-¿Necesitas hacer una nueva reserva? Solo dime cuándo quieres venir 😊`,
+¿Necesitas agendar otra fecha? Solo dime cuándo quieres venir 😊`,
         needsAction: false
       };
     }
     
-    const pending = userProfile.pendingConfirmation;
+    const expectedAmount = Number(pendingReservation.total_price || 0);
     
-    // 2. Simular análisis de imagen (en el futuro, usar Vision AI)
     console.log('[RECEIPT] 🤖 Analizando comprobante con IA...');
-    const analysisResult = await analyzeReceiptImage(messageData, pending.totalPrice);
+    const analysisResult = await analyzeReceiptImage(messageData, expectedAmount);
     
     if (analysisResult.isValid) {
-      // 3. Pago válido - confirmar reserva automáticamente
-      console.log('[RECEIPT] ✅ Pago válido detectado, confirmando reserva...');
-      
-      // Actualizar perfil: marcar como pagado
-      const updatedProfile = {
-        ...userProfile,
-        pendingConfirmation: null,
-        lastPaymentVerified: new Date().toISOString(),
-        paymentMethod: analysisResult.paymentMethod
-      };
-      
-      // Crear reserva confirmada
-      const reservation = {
-        ...pending,
-        status: 'confirmed',
-        paymentVerified: true,
-        paymentAmount: analysisResult.amount,
-        paymentReference: analysisResult.reference
-      };
+      console.log('[RECEIPT] ✅ Pago válido detectado, confirmando reserva en SQLite...');
+
+      const updatedReservation = await updateReservationPayment(pendingReservation.id, {
+        paymentMethod: analysisResult.paymentMethod,
+        reference: analysisResult.reference,
+        amount: analysisResult.amount,
+        date: new Date().toISOString()
+      });
+
+      await clearPendingConfirmation(userProfile.userId);
+      await markJustConfirmed(userProfile.userId, updatedReservation.id);
+      queueReservationNotifications(updatedReservation, userProfile, analysisResult.amount);
       
       return {
         success: true,
         message: `✅ **¡Pago verificado y reserva confirmada!** 🎉
 
 📋 **Detalles confirmados:**
-📅 ${pending.date}
-🕐 ${pending.startTime} - ${pending.endTime} 
-🏢 ${pending.serviceType}
+📅 ${updatedReservation.date}
+🕐 ${updatedReservation.start_time} - ${updatedReservation.end_time} 
+🏢 ${formatServiceType(updatedReservation.service_type)}
 💰 $${analysisResult.amount} USD ✅
 
 📧 Te envío la confirmación completa por email
@@ -151,13 +152,12 @@ export async function processPaymentReceipt(messageData, userProfile) {
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Te esperamos! 🚀`,
-        reservation: reservation,
+        reservation: updatedReservation,
         needsAction: true, // Para enviar email de confirmación
         actionType: 'SEND_CONFIRMATION_EMAIL'
       };
       
     } else {
-      // 4. Pago no válido o no detectado
       return {
         success: false,
         message: `❌ No pude verificar tu comprobante automáticamente.
@@ -166,7 +166,7 @@ export async function processPaymentReceipt(messageData, userProfile) {
 ${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') : '• Imagen no clara o incompleta'}
 
 📱 **Por favor, envía una nueva foto que incluya:**
-• Monto completo: $${pending.totalPrice} USD
+• Monto completo: $${expectedAmount} USD
 • Fecha y hora del pago
 • Número de transacción/referencia
 • Foto clara y legible
@@ -357,4 +357,55 @@ export async function getReceiptStats() {
     },
     averageProcessingTime: '45 segundos'
   };
+}
+function formatServiceType(serviceType = '') {
+  if (serviceType === 'hotDesk') return 'Hot Desk';
+  if (serviceType === 'meetingRoom') return 'Sala de Reuniones';
+  if (serviceType === 'privateOffice') return 'Oficina Privada';
+  return serviceType;
+}
+
+function queueReservationNotifications(reservation, userProfile, paidAmount) {
+  if (userProfile.email) {
+    enqueueBackgroundTask(
+      'emails',
+      'send-paid-confirmation',
+      () => sendReservationConfirmation({
+        email: userProfile.email,
+        userName: userProfile.name || 'Cliente',
+        date: reservation.date,
+        startTime: reservation.start_time,
+        endTime: reservation.end_time,
+        serviceType: reservation.service_type,
+        guestCount: reservation.guest_count || 0,
+        wasFree: false,
+        durationHours: reservation.duration_hours,
+        total: paidAmount
+      }),
+      { circuitId: 'emails-confirmation' }
+    ).catch(error => {
+      console.error('[RECEIPT] ❌ Error enviando email de confirmación (background):', error);
+    });
+  } else {
+    console.warn('[RECEIPT] ⚠️ Email no enviado: usuario sin email configurado');
+  }
+
+  enqueueBackgroundTask(
+    'calendar-events',
+    'create-paid-event',
+    () => createCalendarEvent({
+      userName: userProfile.name || 'Cliente',
+      email: userProfile.email || 'noemail@coworkia.com',
+      date: reservation.date,
+      startTime: reservation.start_time,
+      endTime: reservation.end_time,
+      serviceType: reservation.service_type,
+      duration: `${reservation.duration_hours} horas`,
+      price: paidAmount,
+      guestCount: reservation.guest_count || 0
+    }),
+    { circuitId: 'calendar-events-job' }
+  ).catch(error => {
+    console.error('[RECEIPT] ❌ Error creando evento en calendar (background):', error);
+  });
 }

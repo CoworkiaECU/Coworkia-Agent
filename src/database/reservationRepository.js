@@ -200,6 +200,20 @@ class ReservationRepository {
   }
 
   /**
+   * 🔄 Actualiza solo el estado de una reserva
+   */
+  async updateStatus(reservationId, status) {
+    databaseService.ensureInitialized();
+    await databaseService.run(
+      `UPDATE reservations 
+       SET status = ?, confirmed_at = CASE WHEN ? = 'confirmed' THEN COALESCE(confirmed_at, CURRENT_TIMESTAMP) ELSE confirmed_at END
+       WHERE id = ?`,
+      [status, status, reservationId]
+    );
+    return await this.findById(reservationId);
+  }
+
+  /**
    * 💳 Marca reserva como pagada
    */
   async markAsPaid(reservationId, paymentData) {

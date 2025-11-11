@@ -11,6 +11,7 @@ import databaseService from '../database/database.js';
 import { enqueueBackgroundTask } from './task-queue.js';
 import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
+import reservationRepository from '../database/reservationRepository.js';
 
 class ConfirmationFlowError extends Error {
   constructor(payload) {
@@ -195,6 +196,10 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       }
 
       reservationRecord = reservationResult.reservation;
+
+       if (!pendingReservation.wasFree) {
+        reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'pending_payment');
+      }
 
       await clearPendingConfirmation(userProfile.userId);
       await updateUser(userProfile.userId, {

@@ -94,14 +94,16 @@ export async function createCalendarEvent(reservationData) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Crear objetos Date para inicio y fin
+    // Crear objetos Date para inicio y fin en zona horaria de Ecuador (UTC-5)
     const startDateTime = new Date(eventDate);
     startDateTime.setHours(startHour, startMinute, 0);
-    startDateTime.setUTCHours(startDateTime.getHours() + 5); // Ajustar a UTC (Ecuador es UTC-5)
-
+    
     const endDateTime = new Date(eventDate);
     endDateTime.setHours(endHour, endMinute, 0);
-    endDateTime.setUTCHours(endDateTime.getHours() + 5); // Ajustar a UTC
+    
+    // Convertir a UTC restando 5 horas (Ecuador es UTC-5)
+    const startDateTimeUTC = new Date(startDateTime.getTime() - (5 * 60 * 60 * 1000));
+    const endDateTimeUTC = new Date(endDateTime.getTime() - (5 * 60 * 60 * 1000));
 
     // 🎯 Formato del título con nombres correctos de servicios
     const guestCount = reservationData.guestCount || 0;
@@ -140,11 +142,11 @@ export async function createCalendarEvent(reservationData) {
 ¡Te esperamos! 🚀
       `.trim(),
       start: {
-        dateTime: startDateTime.toISOString(),
+        dateTime: startDateTimeUTC.toISOString(),
         timeZone: 'America/Guayaquil' // Zona horaria de Ecuador
       },
       end: {
-        dateTime: endDateTime.toISOString(), 
+        dateTime: endDateTimeUTC.toISOString(), 
         timeZone: 'America/Guayaquil'
       },
       location: 'Whymper 403, Edificio Finistere, Quito, Ecuador',

@@ -84,10 +84,26 @@ export function extractReservationData(message, userProfile) {
         const start = parseInt(startTime.split(':')[0]);
         const end = parseInt(endTime.split(':')[0]);
         durationHours = end - start;
+        
+        // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
+        if (durationHours > 2) {
+          console.log(`[DEBUG] ⚠️ Duración calculada: ${durationHours}h - LIMITANDO A 2 HORAS`);
+          durationHours = 2;
+          // Recalcular endTime con máximo 2 horas
+          const startHour = parseInt(startTime.split(':')[0]);
+          const startMinutes = parseInt(startTime.split(':')[1] || '0');
+          const endHour = startHour + 2;
+          endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+        }
       } else {
         // Si solo hay un horario, es la hora de INICIO - calcular duración
         if (durationMatch) {
           durationHours = parseInt(durationMatch[1]);
+          // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
+          if (durationHours > 2) {
+            console.log(`[DEBUG] ⚠️ Duración solicitada: ${durationHours}h - LIMITANDO A 2 HORAS`);
+            durationHours = 2;
+          }
         } else {
           // Duración por defecto de 2 horas
           durationHours = 2;
@@ -335,13 +351,14 @@ export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
     return originalResponse; // Ya menciona precios
   }
 
-  // Agregar información de precios para usuario recurrente
-  const pricingInfo = `\n\n💰 *Recordatorio:* Ya usaste tu día gratis${userProfile.freeTrialDate ? ` el ${userProfile.freeTrialDate}` : ''}. Ahora aplican nuestras tarifas:
+  // Agregar información de precios para usuario recurrente de forma SUTIL
+  const pricingInfo = `\n\n💰 *Perfecto! Las tarifas para hoy son:*
 
-🏢 *Hot Desk:* $10 USD + IVA (primeras 2 horas), luego $10 + IVA por hora adicional
-🏢 *Sala Reuniones:* $29 USD + IVA por sala (3-4 personas, 2h mínimas), luego $15 + IVA por hora adicional
+🏢 *Hot Desk:* $10 (primeras 2 horas), luego $10 por hora adicional
+🏢 *Sala Reuniones:* $29 por sala (3-4 personas, 2h mínimas), luego $15 por hora adicional
+📋 *IVA 15% si requiere factura*
 
-💳 *Pago fácil:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+💳 *Pago con tarjeta:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 🏦 *Transferencia:* Banco Pichincha, Cta 2207158516`;
 
   return originalResponse + pricingInfo;

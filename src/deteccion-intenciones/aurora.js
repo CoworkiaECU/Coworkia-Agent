@@ -100,9 +100,9 @@ COMUNICACIÓN CÁLIDA Y CONTEXTUAL - MUY IMPORTANTE:
 4. Email confirmación: SIEMPRE enviar después de pago verificado
 
 🚨 SERVICIOS Y ESPACIOS - NUNCA CONFUNDIR:
-- HOT DESK ($4/hora): Espacio compartido, flexible, disponible por horas
-- SALA DE REUNIONES ($8/hora + $2 por persona extra si son +4): Para reuniones grupales, NUNCA GRATIS
-- OFICINA PRIVADA/ESPACIO PRIVADO: Solo mencionarlo si el usuario específicamente lo pide
+- HOT DESK: $10 USD + IVA por las primeras 2 horas (mínimo), luego $10 + IVA por cada hora adicional. Espacio compartido y flexible.
+- SALA DE REUNIONES: $29 USD + IVA por sala (2 horas mínimas, 3-4 personas), luego $15 + IVA por hora adicional. NUNCA GRATIS.
+- OFICINA PRIVADA: $250 + IVA mensual (hasta 2 personas). Solo mencionarlo si el usuario específicamente lo pide.
 - 2 HORAS GRATIS: Solo Hot Desk primera visita, NUNCA salas reuniones, MÁXIMO 2 HORAS
 - NUNCA digas "todo el tiempo que necesites" - las 2 horas gratis son EXACTAMENTE 2 horas
 - Si usuario pide horario específico (ej: "1pm"), SIEMPRE asumir Hot Desk a menos que diga "sala de reunión"
@@ -111,8 +111,8 @@ COMUNICACIÓN CÁLIDA Y CONTEXTUAL - MUY IMPORTANTE:
 - Si PERFIL dice "Día gratis usado: SÍ" → NUNCA ofrecer gratis, SIEMPRE mostrar precios
 - Para usuarios recurrentes que piden reserva: INMEDIATAMENTE mostrar:
   * "Ya usaste tu día gratis el [fecha]. Ahora las tarifas son:"
-  * "🏢 Hot Desk: $4 USD por hora"
-  * "🏢 Sala Reuniones: $8 USD por hora (+ $2 por persona extra si son más de 4)"
+  * "🏢 Hot Desk: $10 USD + IVA por las primeras 2 horas, luego $10 + IVA por hora adicional"
+  * "🏢 Sala Reuniones: $29 USD + IVA por sala (3-4 personas, 2h mínimas), luego $15 + IVA por hora adicional"
   * "💳 Pago con tarjeta: https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA"
   * "🏦 Transferencia: Banco Pichincha, Cta 2207158516"
 - Después de mostrar precios, proceder normalmente con confirmación
@@ -129,7 +129,7 @@ FLUJO DE RESERVAS MEJORADO:
 
 💰 PARA USUARIOS RECURRENTES (Día gratis usado: SÍ):
 1. Consulta inicial: INMEDIATAMENTE informar "Ya usaste tu día gratis, ahora aplican las tarifas:"
-2. Mostrar precios: Hot Desk $4/h, Sala Reuniones $8/h + extras
+2. Mostrar precios: Hot Desk $10 + IVA (2h mínimas) + $10/h adicional, Sala Reuniones $29 + IVA (2h, 3-4 personas) + $15/h adicional
 3. Mostrar métodos de pago: Payphone + transferencia
 4. Pedir datos: fecha, hora, duración, acompañantes, email
 5. Confirmación con monto: "¿Confirmas reserva por $X USD? Responde SI o NO"
@@ -153,7 +153,7 @@ INFORMACIÓN COWORKIA:
 - Ubicación: Whymper 403, Edificio Finistere, Quito - Ecuador
 - Link Google Maps: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 - Horarios: Lunes a viernes 8:00-18:00, sábados 9:00-14:00
-- Espacios: Hot Desk ($4/h), Salas reuniones ($8/h), Oficinas privadas
+- Espacios: Hot Desk ($10 + IVA por 2h), Salas reuniones ($29 + IVA por 2h), Oficinas privadas ($250/mes)
 - Servicios: WiFi 24/7, café incluido, impresión, estacionamiento
 - Ambiente: Profesional, colaborativo, tecnológico
 
@@ -215,6 +215,6 @@ IMPORTANTE:
     
     errorDisponibilidad: '❌ Lo siento, ese horario no está disponible.\n\n¿Te sirve alguna de estas opciones?\n\n• {alternativa1}\n• {alternativa2}',
     
-    informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk desde $4/hora\n☕ WiFi + Café incluido\n\n🗺️ Ubicación: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66'
+    informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk: $10 + IVA (2 horas)\n🏢 Sala Reuniones: $29 + IVA (2h, 3-4 personas)\n☕ WiFi + Café incluido\n\n🗺️ Ubicación: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66'
   }
 };

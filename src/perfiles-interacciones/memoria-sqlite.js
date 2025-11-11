@@ -359,25 +359,51 @@ export async function updateReservationHistory(userId, reservation) {
   return await loadProfile(userId);
 }
 
-export function calculateReservationCost(serviceType, hours) {
-  const PRICING = {
-    hotDesk: { name: 'Hot Desk', pricePerHour: 4.00 },
-    meetingRoom: { name: 'Sala de Reuniones', pricePerHour: 8.00 }
-  };
-
-  const service = PRICING[serviceType];
-  if (!service) {
+export function calculateReservationCost(serviceType, hours, people = 1) {
+  // HOT DESK: $10 por primeras 2 horas, luego $10 por hora adicional
+  // SALA REUNIONES: $29 por sala (2h, 3-4 personas), luego $15 por hora adicional
+  
+  let basePrice = 0;
+  let serviceName = '';
+  
+  if (serviceType === 'hotDesk') {
+    serviceName = 'Hot Desk';
+    // Mínimo 2 horas = $10
+    if (hours <= 2) {
+      basePrice = 10.00;
+    } else {
+      // $10 por primeras 2h + $10 por cada hora adicional
+      const additionalHours = hours - 2;
+      basePrice = 10.00 + (additionalHours * 10.00);
+    }
+  } else if (serviceType === 'meetingRoom') {
+    serviceName = 'Sala de Reuniones';
+    // Validar personas (mínimo 3, máximo 4)
+    if (people < 3) {
+      return { error: 'Sala de reuniones requiere mínimo 3 personas' };
+    }
+    if (people > 4) {
+      return { error: 'Sala de reuniones tiene capacidad máxima de 4 personas' };
+    }
+    
+    // $29 por primeras 2h, luego $15 por hora adicional
+    if (hours <= 2) {
+      basePrice = 29.00;
+    } else {
+      const additionalHours = hours - 2;
+      basePrice = 29.00 + (additionalHours * 15.00);
+    }
+  } else {
     return { error: `Tipo de servicio no válido: ${serviceType}` };
   }
 
-  const basePrice = service.pricePerHour * hours;
   const payphoneFee = basePrice * 0.05; // 5% fee
   const totalPrice = basePrice + payphoneFee;
 
   return {
-    service: service.name,
+    service: serviceName,
     hours,
-    pricePerHour: service.pricePerHour,
+    people,
     basePrice: basePrice.toFixed(2),
     payphoneFee: payphoneFee.toFixed(2),
     totalPrice: totalPrice.toFixed(2),

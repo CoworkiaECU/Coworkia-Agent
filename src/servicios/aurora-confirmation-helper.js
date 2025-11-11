@@ -338,8 +338,8 @@ export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
   // Agregar información de precios para usuario recurrente
   const pricingInfo = `\n\n💰 *Recordatorio:* Ya usaste tu día gratis${userProfile.freeTrialDate ? ` el ${userProfile.freeTrialDate}` : ''}. Ahora aplican nuestras tarifas:
 
-🏢 *Hot Desk:* $4 USD por hora
-🏢 *Sala Reuniones:* $8 USD por hora (+ $2 por persona extra si son más de 4)
+🏢 *Hot Desk:* $10 USD + IVA (primeras 2 horas), luego $10 + IVA por hora adicional
+🏢 *Sala Reuniones:* $29 USD + IVA por sala (3-4 personas, 2h mínimas), luego $15 + IVA por hora adicional
 
 💳 *Pago fácil:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 🏦 *Transferencia:* Banco Pichincha, Cta 2207158516`;
@@ -432,19 +432,28 @@ function calculateServicePrice(serviceType, durationHours, guestCount, userProfi
   
   // SALA DE REUNIÓN - NUNCA GRATIS, SIEMPRE PAGADA
   if (serviceType === 'meetingRoom') {
-    const baseRoomPrice = 8.0; // $8 USD por hora base
-    const guestFee = 2.0; // $2 USD por acompañante extra (más de 4 personas)
+    // $29 por sala (primeras 2h), luego $15 por hora adicional
+    const totalPeople = 1 + guestCount;
     
-    let totalPrice = durationHours * baseRoomPrice;
-    
-    // Cargos adicionales por acompañantes (si son más de 4 personas total)
-    const totalPeople = 1 + guestCount; // Cliente + acompañantes
-    if (totalPeople > 4) {
-      const extraPeople = totalPeople - 4;
-      totalPrice += extraPeople * guestFee * durationHours;
+    // Validar capacidad (3-4 personas)
+    if (totalPeople < 3 || totalPeople > 4) {
+      console.log(`[PRICING] ⚠️ Sala de Reunión requiere 3-4 personas (solicitaron: ${totalPeople})`);
+      return {
+        totalPrice: 0,
+        wasFree: false,
+        error: totalPeople < 3 ? 'Sala de reuniones requiere mínimo 3 personas' : 'Sala de reuniones tiene capacidad máxima de 4 personas'
+      };
     }
     
-    console.log(`[PRICING] 🏢 Sala de Reunión: ${durationHours}h × $${baseRoomPrice} + ${guestCount > 3 ? (guestCount - 3) + ' personas extra' : 'sin extras'} = $${totalPrice}`);
+    let totalPrice = 0;
+    if (durationHours <= 2) {
+      totalPrice = 29.0;
+    } else {
+      const additionalHours = durationHours - 2;
+      totalPrice = 29.0 + (additionalHours * 15.0);
+    }
+    
+    console.log(`[PRICING] 🏢 Sala de Reunión: ${totalPeople} personas × ${durationHours}h = $${totalPrice}`);
     
     return {
       totalPrice,
@@ -453,7 +462,7 @@ function calculateServicePrice(serviceType, durationHours, guestCount, userProfi
   }
   
   // HOT DESK - Puede ser gratis solo en primera visita
-  const baseDeskPrice = 4.0; // $4 USD por hora
+  // $10 por primeras 2h, luego $10 por hora adicional
   
   if (isFirstTimeUser && durationHours <= 2) {
     // Primera visita hasta 2 horas: GRATIS
@@ -465,16 +474,22 @@ function calculateServicePrice(serviceType, durationHours, guestCount, userProfi
   } else if (isFirstTimeUser && durationHours > 2) {
     // Primera visita más de 2h: Gratis las primeras 2h, pagar el resto
     const paidHours = durationHours - 2;
-    const totalPrice = paidHours * baseDeskPrice;
-    console.log(`[PRICING] 🔄 Hot Desk Mixto: 2h gratis + ${paidHours}h × $${baseDeskPrice} = $${totalPrice}`);
+    const totalPrice = paidHours * 10.0;
+    console.log(`[PRICING] 🔄 Hot Desk Mixto: 2h gratis + ${paidHours}h × $10 = $${totalPrice}`);
     return {
       totalPrice,
       wasFree: false
     };
   } else {
-    // Cliente recurrente: pagar todas las horas
-    const totalPrice = durationHours * baseDeskPrice;
-    console.log(`[PRICING] 💰 Hot Desk Pagado: ${durationHours}h × $${baseDeskPrice} = $${totalPrice}`);
+    // Cliente recurrente: $10 por primeras 2h, luego $10 por hora adicional
+    let totalPrice = 0;
+    if (durationHours <= 2) {
+      totalPrice = 10.0;
+    } else {
+      const additionalHours = durationHours - 2;
+      totalPrice = 10.0 + (additionalHours * 10.0);
+    }
+    console.log(`[PRICING] 💰 Hot Desk Pagado: ${durationHours}h = $${totalPrice}`);
     return {
       totalPrice,
       wasFree: false

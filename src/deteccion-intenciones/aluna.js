@@ -25,27 +25,56 @@ export const ALUNA = {
     planes: {
       plan10: {
         nombre: 'Plan 10',
-        descripcion: '10 días al mes en Hot Desk',
+        precio: '$100 USD + IVA mensual',
+        descripcion: '10 días + 1 GRATIS = 11 días al mes en Hot Desk',
+        duracion: '2 horas cada visita',
         ideal: 'Freelancers con horarios flexibles',
-        beneficios: ['Flexibilidad', 'Networking', 'Espacios compartidos']
+        beneficios: [
+          'Locker O cajonera privada (a elegir)',
+          '2 invitados gratis al mes (máximo 2)',
+          '2 usos de sala de reuniones por 2 horas cada vez',
+          'Secretaria Virtual Básica (contratos 9+ meses)'
+        ]
       },
       plan20: {
         nombre: 'Plan 20',
-        descripcion: '20 días al mes en Hot Desk',
+        precio: '$180 USD + IVA mensual',
+        descripcion: '20 días + 2 GRATIS = 22 días al mes en Hot Desk',
+        duracion: '2 horas cada visita',
         ideal: 'Profesionales con rutina regular',
-        beneficios: ['Mayor presencia', 'Comunidad activa', 'Prioridad en reservas']
+        beneficios: [
+          'Locker O cajonera privada (a elegir)',
+          '4 invitados gratis al mes (máximo 4)',
+          '4 usos de sala de reuniones por 2 horas cada vez',
+          'Secretaria Virtual Básica (contratos 9+ meses)'
+        ]
       },
       oficinaEjecutiva: {
         nombre: 'Oficina Ejecutiva',
-        descripcion: 'Espacio privado amoblado',
-        ideal: 'Equipos pequeños o ejecutivos',
-        beneficios: ['Privacidad total', 'Mobiliario incluido', 'Imagen profesional']
+        precio: '$250 USD + IVA mensual',
+        descripcion: 'Espacio privado XL totalmente dedicado con escritorio XL',
+        ideal: 'Ejecutivos o profesionales que necesitan espacio dedicado',
+        beneficios: [
+          'Entrada libre (sin límite de horas)',
+          'Locker privado Y cajonera privada',
+          'Branding ligero (personalización)',
+          '1 invitado diario por 2+ horas sin costo',
+          '6 usos de sala de reuniones por 2 horas cada vez',
+          'Secretaria Virtual Básica (contratos 6+ meses)'
+        ]
       },
       oficinaVirtual: {
         nombre: 'Oficina Virtual',
-        descripcion: 'Dirección comercial + servicios',
-        ideal: 'Emprendedores sin sede física',
-        beneficios: ['Dirección comercial', 'Recepción de correspondencia', 'Uso ocasional de salas']
+        precio: '$350 USD + IVA anual (solo planes anuales, pago anticipado)',
+        descripcion: 'Dirección comercial + servicios administrativos ($1/día equivalente)',
+        ideal: 'Emprendedores remotos que necesitan presencia física legal',
+        beneficios: [
+          'Dirección comercial oficial',
+          'Recepción de correspondencia',
+          'Branding ligero (personalización)',
+          '4 usos de sala de reuniones al año (4 personas, 2h cada vez)',
+          'Cumplimiento de requisitos legales para entidades de control'
+        ]
       }
     },
 
@@ -87,10 +116,35 @@ METODOLOGÍA DE CIERRE:
 5. CERRAR: "¿Arrancamos hoy? Te envío el link de pago"
 
 PLANES DISPONIBLES:
-- Plan 10: 10 días/mes Hot Desk (freelancers flexibles)
-- Plan 20: 20 días/mes Hot Desk (profesionales regulares)
-- Oficina Ejecutiva: Privada, amoblada (equipos/ejecutivos)
-- Oficina Virtual: Dirección comercial + servicios (emprendedores remotos)
+
+📦 *PLAN 10 - $100 + IVA/mes*
+• 10 días + 1 GRATIS = 11 días (2h cada visita)
+• Locker O cajonera (a elegir)
+• 2 invitados gratis/mes + 2 usos sala reuniones
+• Secretaria Virtual (contratos 9+ meses)
+→ Ideal: Freelancers flexibles
+
+📦 *PLAN 20 - $180 + IVA/mes*
+• 20 días + 2 GRATIS = 22 días (2h cada visita)
+• Locker O cajonera (a elegir)
+• 4 invitados gratis/mes + 4 usos sala reuniones
+• Secretaria Virtual (contratos 9+ meses)
+→ Ideal: Profesionales con rutina
+
+🏢 *OFICINA EJECUTIVA - $250 + IVA/mes*
+• Espacio privado XL con entrada libre
+• Locker Y cajonera
+• Branding ligero + 1 invitado diario gratis
+• 6 usos sala reuniones/mes
+• Secretaria Virtual (contratos 6+ meses)
+→ Ideal: Ejecutivos dedicados
+
+📍 *OFICINA VIRTUAL - $350 + IVA/año*
+• Dirección comercial oficial ($1/día)
+• Solo planes anuales, pago anticipado
+• Branding ligero + 4 usos sala/año
+• Cumplimiento legal entidades control
+→ Ideal: Emprendedores remotos
 
 REGLAS DE ORO:
 1. Pregunta ANTES de ofrecer (descubre necesidad real)

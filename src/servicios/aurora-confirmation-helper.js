@@ -85,8 +85,17 @@ export function extractReservationData(message, userProfile) {
         const end = parseInt(endTime.split(':')[0]);
         durationHours = end - start;
         
-        // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
-        if (durationHours > 2) {
+        // 🚨 VALIDAR DURACIÓN: debe ser positiva y razonable
+        if (durationHours <= 0 || durationHours > 10) {
+          console.log(`[DEBUG] ⚠️ Duración inválida: ${durationHours}h - USANDO 2 HORAS POR DEFECTO`);
+          durationHours = 2;
+          // Calcular endTime con 2 horas desde el inicio
+          const startHour = parseInt(startTime.split(':')[0]);
+          const startMinutes = parseInt(startTime.split(':')[1] || '0');
+          const endHour = startHour + 2;
+          endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+        } else if (durationHours > 2) {
+          // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
           console.log(`[DEBUG] ⚠️ Duración calculada: ${durationHours}h - LIMITANDO A 2 HORAS`);
           durationHours = 2;
           // Recalcular endTime con máximo 2 horas

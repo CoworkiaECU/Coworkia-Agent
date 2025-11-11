@@ -9,6 +9,13 @@ export function validateWebhookSignature(req, res, next) {
   const isProd = process.env.NODE_ENV === 'production';
   const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
   const sharedToken = process.env.WASSENGER_WEBHOOK_TOKEN || process.env.WASSENGER_TOKEN;
+  const bypassTemp = process.env.WEBHOOK_BYPASS_TEMP === 'true';
+
+  // Bypass temporal para configuración inicial
+  if (bypassTemp) {
+    console.log('[WEBHOOK-SECURITY] ⚠️ BYPASS TEMPORAL ACTIVO - Request permitido sin autenticación');
+    return next();
+  }
 
   if (!isProd) {
     console.log('[WEBHOOK-SECURITY] 🔐 Modo desarrollo - validación flexible');

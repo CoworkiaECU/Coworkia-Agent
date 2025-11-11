@@ -7,6 +7,7 @@ import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfile
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
 import { checkAvailability, getOccupancyStats } from './availability-system.js';
+import { createCalendarEvent } from './google-calendar.js';
 
 /**
  * ✅ Detecta respuestas afirmativas del usuario
@@ -206,13 +207,37 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
       };
     }
     
-    // 2. Actualizar perfil del usuario
+    // 2. Crear evento en Google Calendar
+    console.log('[Confirmation] 📅 Creando evento en Google Calendar...');
+    try {
+      const calendarEvent = await createCalendarEvent({
+        userName: pendingReservation.userName,
+        email: userProfile.email || 'noemail@coworkia.com',
+        date: pendingReservation.date,
+        startTime: pendingReservation.startTime,
+        endTime: pendingReservation.endTime,
+        serviceType: pendingReservation.serviceType,
+        duration: `${pendingReservation.durationHours} horas`,
+        price: pendingReservation.totalPrice,
+        guestCount: pendingReservation.guestCount || 0
+      });
+      
+      if (calendarEvent.success) {
+        console.log('[Confirmation] ✅ Evento creado en Google Calendar:', calendarEvent.eventUrl);
+      } else {
+        console.error('[Confirmation] ❌ Error creando evento en Google Calendar:', calendarEvent.error);
+      }
+    } catch (calendarError) {
+      console.error('[Confirmation] ❌ Error con Google Calendar:', calendarError);
+    }
+
+    // 3. Actualizar perfil del usuario
     await updateUser(userProfile.userId, {
       pendingConfirmation: null,
       lastReservation: reservationResult.reservation
     });
 
-    // 3. Si es gratis, enviar email y confirmar
+    // 4. Si es gratis, enviar email y confirmar
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, intentando enviar email');
       console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);

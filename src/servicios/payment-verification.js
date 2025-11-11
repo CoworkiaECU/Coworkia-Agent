@@ -2,6 +2,7 @@ import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import { updateReservationPayment, getReservationByPaymentInfo } from './calendario.js';
 import { sendPaymentConfirmationEmail } from './email.js';
 import { loadProfile, saveProfile, updateUser } from '../perfiles-interacciones/memoria.js';
+import { createCalendarEvent } from './google-calendar.js';
 
 /**
  * 💳 Procesa comprobante de pago automáticamente
@@ -82,14 +83,38 @@ Por favor, verifica el monto o contacta a soporte.`,
       }
     });
 
-    // 6. Actualizar perfil del usuario
+    // 6. Crear evento en Google Calendar
+    console.log('[Payment Verification] 📅 Creando evento en Google Calendar...');
+    try {
+      const calendarEvent = await createCalendarEvent({
+        userName: userProfile.name || 'Cliente',
+        email: userProfile.email || 'noemail@coworkia.com',
+        date: pendingReservation.date,
+        startTime: pendingReservation.startTime,
+        endTime: pendingReservation.endTime,
+        serviceType: pendingReservation.serviceType || 'hotDesk',
+        duration: `${pendingReservation.durationHours || 2} horas`,
+        price: expectedAmount,
+        guestCount: pendingReservation.guestCount || 0
+      });
+      
+      if (calendarEvent.success) {
+        console.log('[Payment Verification] ✅ Evento creado en Google Calendar:', calendarEvent.eventUrl);
+      } else {
+        console.error('[Payment Verification] ❌ Error creando evento en Google Calendar:', calendarEvent.error);
+      }
+    } catch (calendarError) {
+      console.error('[Payment Verification] ❌ Error con Google Calendar:', calendarError);
+    }
+
+    // 7. Actualizar perfil del usuario
     await updateUser(userPhone, {
       'reservations.$[elem].status': 'confirmed',
       'reservations.$[elem].paymentStatus': 'paid',
       'reservations.$[elem].paymentData': updatedReservation.paymentData
     });
 
-    // 7. Enviar email de confirmación
+    // 8. Enviar email de confirmación
     console.log('[Payment Verification] 🔍 DEBUG: Intentando enviar email a:', userProfile.email);
     console.log('[Payment Verification] 🔍 DEBUG: Reserva actualizada:', {
       id: updatedReservation.id,
@@ -131,7 +156,7 @@ Por favor, verifica el monto o contacta a soporte.`,
       console.error('[Payment Verification] Stack trace:', emailError.stack);
     }
 
-    // 8. Respuesta de éxito
+    // 9. Respuesta de éxito
     return {
       success: true,
       message: `✅ *¡Pago confirmado!*

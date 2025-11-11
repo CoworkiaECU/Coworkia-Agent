@@ -383,9 +383,13 @@ export async function enhanceAuroraResponse(originalResponse, userProfile) {
 
     if (!confirmationResult.success) {
       console.log('[Confirmation Helper] Error:', confirmationResult.error);
+      
+      // 🚨 CRÍTICO: Generar mensaje de error amigable para el usuario
+      const errorMessage = generateErrorMessage(confirmationResult.error, confirmationResult.alternatives);
+      
       return {
-        enhanced: enhancedResponse !== originalResponse,
-        finalMessage: enhancedResponse,
+        enhanced: true, // Sí modificamos el mensaje
+        finalMessage: errorMessage,
         error: confirmationResult.error
       };
     }
@@ -408,7 +412,38 @@ export async function enhanceAuroraResponse(originalResponse, userProfile) {
 }
 
 /**
- * 👥 Extrae número de acompañantes del mensaje
+ * � Genera mensaje de error amigable cuando falla la confirmación
+ */
+function generateErrorMessage(error, alternatives) {
+  let message = '¡Ups! 😅 ';
+  
+  // Identificar tipo de error y dar respuesta apropiada
+  if (error.includes('Fuera del horario laboral')) {
+    message += 'Ese horario está fuera de nuestro horario de atención (7:00 AM - 8:00 PM). ';
+    message += '\n\n¿Te gustaría reservar para mañana o en otro horario? 🗓️';
+  } else if (error.includes('pasado')) {
+    message += 'Ese horario ya pasó. ';
+    message += '\n\n¿Prefieres reservar para mañana o más tarde hoy? 📅';
+  } else if (error.includes('ocupado') || error.includes('no disponible')) {
+    message += 'Ese horario ya está ocupado. ';
+    if (alternatives && alternatives.length > 0) {
+      message += '\n\nTe sugiero estas alternativas:\n';
+      alternatives.forEach(alt => {
+        message += `• ${alt}\n`;
+      });
+    } else {
+      message += '\n\n¿Te gustaría probar otro horario? 🕐';
+    }
+  } else {
+    message += 'No pude procesar esa reserva. ';
+    message += '\n\n¿Podrías intentar con otro horario o fecha? 🤔';
+  }
+  
+  return message;
+}
+
+/**
+ * �👥 Extrae número de acompañantes del mensaje
  */
 function extractGuestCount(message) {
   const guestPatterns = [

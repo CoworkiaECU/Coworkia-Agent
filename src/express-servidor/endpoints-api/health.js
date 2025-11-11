@@ -122,4 +122,54 @@ router.post('/test-event', async (req, res) => {
   }
 });
 
+/**
+ * 📧 Endpoint para probar el nuevo diseño del email
+ */
+router.post('/test-email-design', async (req, res) => {
+  console.log('[HEALTH] 🎨 Probando nuevo diseño del email...');
+  
+  try {
+    const { sendConfirmationEmail } = await import('../../servicios/email.js');
+    
+    const testData = {
+      userName: req.body.userName || 'Diego Villota',
+      email: req.body.email || 'yo@diegovillota.com',
+      date: req.body.date || '2024-11-11',
+      startTime: req.body.startTime || '09:00',
+      endTime: req.body.endTime || '17:00',
+      serviceType: req.body.serviceType || 'Hot Desk',
+      durationHours: req.body.durationHours || 8,
+      wasFree: req.body.wasFree !== undefined ? req.body.wasFree : true,
+      totalPrice: req.body.totalPrice || 20,
+      reservation: {
+        id: 'test-' + Date.now(),
+        whatsapp: '593987770788'
+      }
+    };
+    
+    const result = await sendConfirmationEmail(testData);
+    
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: 'Email de prueba enviado exitosamente con nuevo diseño',
+        emailData: result
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Error enviando email de prueba',
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error('[HEALTH] ❌ Error probando email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno probando email',
+      error: error.message
+    });
+  }
+});
+
 export default router;

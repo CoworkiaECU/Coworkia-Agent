@@ -129,7 +129,7 @@ router.post('/test-email-design', async (req, res) => {
   console.log('[HEALTH] 🎨 Probando nuevo diseño del email...');
   
   try {
-    const { sendConfirmationEmail } = await import('../../servicios/email.js');
+    const { sendReservationConfirmation } = await import('../../servicios/email.js');
     
     const testData = {
       userName: req.body.userName || 'Diego Villota',
@@ -147,7 +147,7 @@ router.post('/test-email-design', async (req, res) => {
       }
     };
     
-    const result = await sendConfirmationEmail(testData);
+    const result = await sendReservationConfirmation(testData);
     
     if (result.success) {
       res.status(200).json({

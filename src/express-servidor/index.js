@@ -12,6 +12,9 @@ import cors from 'cors';
 // 🗄️ Inicializar SQLite Database
 import databaseService from '../database/database.js';
 
+// ⏰ Cron Scheduler
+import { startCronJobs, stopCronJobs } from '../servicios/cron-scheduler.js';
+
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
 import aiRouter from './endpoints-api/ai.js';
@@ -81,10 +84,15 @@ async function startServer() {
     await databaseService.initialize();
     console.log('✅ Base de datos SQLite inicializada correctamente');
     
+    // Iniciar tareas programadas (cron jobs)
+    console.log('⏰ Iniciando tareas programadas...');
+    startCronJobs();
+    
     // Arrancar servidor después de DB
     app.listen(PORT, () => {
       console.log(`> Coworkia Agent listo en http://localhost:${PORT}`);
       console.log(`> SQLite Database: ${process.env.DATABASE_URL || './data/coworkia.db'}`);
+      console.log(`> Cron Jobs: ACTIVOS`);
     });
     
   } catch (error) {
@@ -92,6 +100,19 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// Cleanup al cerrar
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Recibida señal SIGTERM, cerrando...');
+  stopCronJobs();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Recibida señal SIGINT, cerrando...');
+  stopCronJobs();
+  process.exit(0);
+});
 
 // Iniciar la aplicación
 startServer();

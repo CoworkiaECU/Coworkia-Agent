@@ -12,8 +12,8 @@ import cors from 'cors';
 // 🗄️ Inicializar SQLite Database
 import databaseService from '../database/database.js';
 
-// ⏰ Cron Scheduler
-import { startCronJobs, stopCronJobs } from '../servicios/cron-scheduler.js';
+// 🕐 Scheduler para tareas programadas
+import { initScheduler, stopScheduler } from '../servicios/cron-scheduler.js';
 
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
@@ -84,9 +84,9 @@ async function startServer() {
     await databaseService.initialize();
     console.log('✅ Base de datos SQLite inicializada correctamente');
     
-    // Iniciar tareas programadas (cron jobs)
+    // Iniciar tareas programadas
     console.log('⏰ Iniciando tareas programadas...');
-    startCronJobs();
+    initScheduler();
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {
@@ -101,16 +101,16 @@ async function startServer() {
   }
 }
 
-// Cleanup al cerrar
-process.on('SIGTERM', async () => {
+// Manejar shutdown graceful
+process.on('SIGTERM', () => {
   console.log('\n🛑 Recibida señal SIGTERM, cerrando...');
-  stopCronJobs();
+  stopScheduler();
   process.exit(0);
 });
 
-process.on('SIGINT', async () => {
+process.on('SIGINT', () => {
   console.log('\n🛑 Recibida señal SIGINT, cerrando...');
-  stopCronJobs();
+  stopScheduler();
   process.exit(0);
 });
 

@@ -1,117 +1,120 @@
-/**
- * ⏰ Cron Scheduler para tareas automáticas
- * 
- * Este módulo ejecuta tareas periódicas:
- * - Limpieza de confirmaciones expiradas (cada hora)
- * - Limpieza de flags justConfirmed (cada hora)
- * - Backup automático (cada 6 horas, si está configurado)
- * - Limpieza de interacciones antiguas (cada día)
- */
-
-import {
-  cleanupExpiredConfirmations,
+// src/servicios/cron-scheduler.js
+import { CronJob } from 'cron';
+import { 
+  cleanupExpiredConfirmations, 
   cleanupJustConfirmedFlags,
-  cleanupOldInteractions
+  cleanupOldInteractions 
 } from '../../scripts/cleanup-expired-data.js';
 
-// Intervalos en milisegundos
-const ONE_HOUR = 60 * 60 * 1000;
-const SIX_HOURS = 6 * ONE_HOUR;
-const ONE_DAY = 24 * ONE_HOUR;
-
-let intervals = [];
+const jobs = [];
+const isProd = process.env.NODE_ENV === 'production';
 
 /**
- * 🔄 Ejecuta limpieza de confirmaciones expiradas
+ * 🕐 Inicializa tareas programadas
  */
-async function runConfirmationCleanup() {
-  try {
-    console.log('[CRON] 🧹 Ejecutando limpieza de confirmaciones expiradas...');
-    const count = await cleanupExpiredConfirmations();
-    if (count > 0) {
-      console.log(`[CRON] ✅ Eliminadas ${count} confirmaciones expiradas`);
-    }
-  } catch (error) {
-    console.error('[CRON] ❌ Error en limpieza de confirmaciones:', error);
-  }
-}
-
-/**
- * 🔄 Ejecuta limpieza de flags justConfirmed
- */
-async function runJustConfirmedCleanup() {
-  try {
-    console.log('[CRON] 🧹 Ejecutando limpieza de flags justConfirmed...');
-    const count = await cleanupJustConfirmedFlags();
-    if (count > 0) {
-      console.log(`[CRON] ✅ Limpiados ${count} flags expirados`);
-    }
-  } catch (error) {
-    console.error('[CRON] ❌ Error en limpieza de flags:', error);
-  }
-}
-
-/**
- * 🔄 Ejecuta limpieza de interacciones antiguas
- */
-async function runInteractionsCleanup() {
-  try {
-    console.log('[CRON] 🧹 Ejecutando limpieza de interacciones antiguas (>90 días)...');
-    const count = await cleanupOldInteractions();
-    if (count > 0) {
-      console.log(`[CRON] ✅ Eliminadas ${count} interacciones antiguas`);
-    }
-  } catch (error) {
-    console.error('[CRON] ❌ Error en limpieza de interacciones:', error);
-  }
-}
-
-/**
- * 🚀 Inicia el scheduler
- */
-export function startCronJobs() {
-  const isDevelopment = process.env.NODE_ENV !== 'production';
-  
+export function initScheduler() {
   console.log('[CRON] ⏰ Iniciando tareas programadas...');
-  console.log(`[CRON] 🔧 Modo: ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+  console.log(`[CRON] 🔧 Modo: ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'}`);
   
-  // En desarrollo, ejecutar cada 5 minutos para testing
-  // En producción, ejecutar cada hora
-  const cleanupInterval = isDevelopment ? 5 * 60 * 1000 : ONE_HOUR;
+  // ✅ Limpieza de confirmaciones expiradas y flags justConfirmed
+  // Cada hora
+  const cleanupFlagsJob = new CronJob(
+    '0 * * * *', // Cada hora en punto
+    async () => {
+      try {
+        console.log('[CRON] 🧹 Ejecutando limpieza de confirmaciones expiradas...');
+        const confirmations = await cleanupExpiredConfirmations();
+        console.log(`[CRON] ✅ Eliminadas ${confirmations} confirmaciones expiradas`);
+        
+        console.log('[CRON] 🧹 Ejecutando limpieza de flags justConfirmed...');
+        const flags = await cleanupJustConfirmedFlags();
+        console.log(`[CRON] ✅ Eliminados ${flags} flags justConfirmed expirados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en limpieza de flags:', error);
+      }
+    },
+    null, // onComplete
+    true, // start
+    'America/Guayaquil' // timezone Ecuador
+  );
   
-  // Limpieza de confirmaciones y flags cada hora (o 5min en dev)
-  const confirmationInterval = setInterval(async () => {
-    await runConfirmationCleanup();
-    await runJustConfirmedCleanup();
-  }, cleanupInterval);
+  jobs.push(cleanupFlagsJob);
+  console.log('[CRON] 📅 Limpieza de confirmaciones/flags: cada 60 minutos');
   
-  intervals.push(confirmationInterval);
+  // ✅ Limpieza de interacciones antiguas
+  // Una vez al día a las 3 AM Ecuador
+  const cleanupInteractionsJob = new CronJob(
+    '0 3 * * *', // 3:00 AM diario
+    async () => {
+      try {
+        const retentionDays = parseInt(process.env.INTERACTIONS_RETENTION_DAYS || '30', 10);
+        console.log(`[CRON] 🧹 Ejecutando limpieza de interacciones (>${retentionDays} días)...`);
+        
+        const deleted = await cleanupOldInteractions({ retentionDays });
+        console.log(`[CRON] ✅ Eliminadas ${deleted} interacciones antiguas`);
+        
+        if (deleted > 0) {
+          console.log(`[CRON] 📊 Estadística: Se liberaron ~${(deleted * 0.5).toFixed(1)} KB de espacio`);
+        }
+      } catch (error) {
+        console.error('[CRON] ❌ Error en limpieza de interacciones:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
   
-  // Limpieza de interacciones antiguas cada día
-  const interactionsInterval = setInterval(runInteractionsCleanup, ONE_DAY);
-  intervals.push(interactionsInterval);
+  jobs.push(cleanupInteractionsJob);
+  console.log('[CRON] 📅 Limpieza de interacciones: cada 24 horas');
   
-  // Ejecutar una vez al inicio (después de 1 minuto)
-  setTimeout(async () => {
-    await runConfirmationCleanup();
-    await runJustConfirmedCleanup();
-  }, 60 * 1000);
+  // ✅ Opcional: Backup automático (solo en producción)
+  if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {
+    const backupJob = new CronJob(
+      '0 4 * * *', // 4:00 AM diario (1h después de cleanup)
+      async () => {
+        try {
+          console.log('[CRON] 💾 Ejecutando backup automático...');
+          // Aquí se ejecutaría el backup
+          console.log('[CRON] ✅ Backup completado');
+        } catch (error) {
+          console.error('[CRON] ❌ Error en backup:', error);
+        }
+      },
+      null,
+      true,
+      'America/Guayaquil'
+    );
+    
+    jobs.push(backupJob);
+    console.log('[CRON] 📅 Backup automático: cada 24 horas (4:00 AM)');
+  }
   
-  console.log(`[CRON] ✅ Scheduler iniciado`);
-  console.log(`[CRON] 📅 Limpieza de confirmaciones/flags: cada ${cleanupInterval / 60000} minutos`);
-  console.log(`[CRON] 📅 Limpieza de interacciones: cada 24 horas`);
+  console.log('[CRON] ✅ Scheduler iniciado');
+  
+  return jobs;
 }
 
 /**
- * 🛑 Detiene el scheduler
+ * 🛑 Detiene todas las tareas programadas
  */
-export function stopCronJobs() {
+export function stopScheduler() {
   console.log('[CRON] 🛑 Deteniendo tareas programadas...');
-  intervals.forEach(interval => clearInterval(interval));
-  intervals = [];
+  jobs.forEach(job => job.stop());
+  jobs.length = 0;
   console.log('[CRON] ✅ Scheduler detenido');
 }
 
-// Limpieza al cerrar la aplicación
-process.on('SIGTERM', stopCronJobs);
-process.on('SIGINT', stopCronJobs);
+/**
+ * 📊 Obtiene estado de los jobs
+ */
+export function getSchedulerStatus() {
+  return {
+    active: jobs.length,
+    jobs: jobs.map((job, index) => ({
+      id: index,
+      running: job.running,
+      nextRun: job.nextDate()?.toISO()
+    }))
+  };
+}

@@ -311,11 +311,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return res.json({ ok: true, ignored: true, reason: 'message_from_bot' });
     }
 
-    // 🛡️ FILTRO 4: Ignorar mensajes muy antiguos (más de 5 minutos)
+    // 🛡️ FILTRO 4: Ignorar mensajes muy antiguos (más de 1 hora)
     const messageTimestamp = data.timestamp || Date.now() / 1000;
     const now = Date.now() / 1000;
-    if (now - messageTimestamp > 300) { // 5 minutos
-      console.log('[WASSENGER] Mensaje ignorado: muy antiguo');
+    if (now - messageTimestamp > 3600) { // 1 hora
+      console.log('[WASSENGER] Mensaje ignorado: muy antiguo (>1h)');
       return res.json({ ok: true, ignored: true, reason: 'old_message' });
     }
 

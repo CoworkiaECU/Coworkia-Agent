@@ -126,23 +126,33 @@ function generateConfirmationEmailHTML(reservationData) {
   ` : '';
 
   const priceSection = wasFree ? `
-    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
-      <h3 style="color: #059669; margin: 0; font-size: 20px;">🎉 ¡2 Horas Gratis Confirmadas!</h3>
-      <p style="margin: 8px 0 0 0; color: #065f46; font-size: 16px;">Esta es tu primera visita, disfruta 2 horas sin costo.</p>
+    <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; box-shadow: 0 4px 12px rgba(78,205,196,0.2);">
+      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+        <span style="color: #4ECDC4; font-size: 28px; margin-right: 10px;">🎉</span>
+        <h3 style="color: #374151; margin: 0; font-size: 20px; font-weight: 700;">¡2 Horas Gratis Confirmadas!</h3>
+      </div>
+      <p style="margin: 8px 0 0 0; color: #374151; font-size: 16px;">Esta es tu primera visita, disfruta 2 horas sin costo.</p>
     </div>
   ` : `
-    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 20px 0;">
-      <h3 style="color: #92400e; margin: 0; font-size: 18px;">💳 Información de Pago</h3>
-      <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0;">
-        <p style="margin: 0; color: #374151; font-size: 18px; font-weight: 600;">
-          Total: <span style="color: #059669;">$${totalPrice} USD</span>
+    <div style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.1)); border: 2px solid #F59E0B; border-radius: 12px; padding: 25px; margin: 25px 0;">
+      <div style="display: flex; align-items: center; margin-bottom: 15px;">
+        <span style="color: #F59E0B; font-size: 24px; margin-right: 10px;">💳</span>
+        <h3 style="color: #374151; margin: 0; font-size: 18px; font-weight: 600;">Información de Pago</h3>
+      </div>
+      <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border: 1px solid rgba(245,158,11,0.2);">
+        <p style="margin: 0; color: #374151; font-size: 20px; font-weight: 600; text-align: center;">
+          Total: <span style="color: #4ECDC4; font-size: 24px;">$${totalPrice} USD</span>
         </p>
       </div>
-      <div style="font-size: 14px; color: #92400e;">
-        <p style="margin: 8px 0;"><strong>💳 Payphone:</strong> 
-          <a href="https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA" style="color: #0f766e;">Pagar aquí</a>
-        </p>
-        <p style="margin: 8px 0;"><strong>🏦 Transferencia:</strong> Banco Pichincha - Cta: 2207158516</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+        <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(245,158,11,0.2);">
+          <p style="margin: 0; color: #374151; font-weight: 600;">💳 Payphone</p>
+          <a href="https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA" style="color: #4ECDC4; text-decoration: none; font-weight: 500;">Pagar aquí</a>
+        </div>
+        <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(245,158,11,0.2);">
+          <p style="margin: 0; color: #374151; font-weight: 600;">🏦 Transferencia</p>
+          <p style="margin: 5px 0 0 0; color: #374151; font-size: 13px;">Banco Pichincha<br>Cta: 2207158516</p>
+        </div>
       </div>
     </div>
   `;
@@ -159,24 +169,19 @@ function generateConfirmationEmailHTML(reservationData) {
       
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
-        <!-- Header con colores corporativos Coworkia -->
-        <div style="background: linear-gradient(135deg, #4FD1C7 0%, #2DD4BF 100%); color: #1f2937; text-align: center; padding: 30px 20px;">
-          <div style="margin-bottom: 15px;">
-            <svg width="80" height="60" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
-              <!-- Laptop con taza de café (logo Coworkia) -->
-              <rect x="10" y="25" width="50" height="30" rx="3" fill="#374151" stroke="#1f2937" stroke-width="2"/>
-              <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
-              <rect x="25" y="55" width="30" height="3" rx="1" fill="#374151"/>
-              <!-- Taza de café -->
-              <ellipse cx="55" cy="18" rx="8" ry="6" fill="#374151"/>
-              <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
-              <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#374151" stroke-width="2" fill="none"/>
-              <!-- Vapor -->
-              <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
-            </svg>
+        <!-- Header limpio con colores corporativos Coworkia -->
+        <div style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); text-align: center; padding: 40px 20px;">
+          <!-- Solo texto, sin logos -->
+          <div style="color: white; font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px;">
+            Coworkia
           </div>
-          <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #1f2937;">✅ ¡Reserva Confirmada!</h1>
-          <p style="margin: 8px 0 0 0; color: #374151; font-size: 16px;">Tu espacio te está esperando</p>
+          <div style="color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
+            work · connect · grow
+          </div>
+          <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ ¡Reserva Confirmada!</h1>
+            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">Tu espacio te está esperando</p>
+          </div>
         </div>
 
         <div style="padding: 30px;">
@@ -187,23 +192,29 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           <!-- Detalles de la reserva -->
-          <div style="background: #f0fdfa; border-left: 4px solid #4FD1C7; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="color: #0f766e; margin-top: 0; font-size: 16px; font-weight: 600;">✅ DETALLES DE TU RESERVA</h3>
+          <div style="background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(78,205,196,0.1);">
+            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">📋 DETALLES DE TU RESERVA</h3>
             
-            <div style="margin: 15px 0;">
-              <div style="display: flex; align-items: center; margin: 8px 0;">
-                <span style="width: 24px;">📅</span>
-                <span style="color: #1f2937; font-weight: 500;">${formatDate}</span>
+            <div style="margin: 20px 0;">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
+                <div style="display: flex; align-items: center;">
+                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">📅</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${formatDate}</span>
+                </div>
               </div>
               
-              <div style="display: flex; align-items: center; margin: 8px 0;">
-                <span style="width: 24px;">🕐</span>
-                <span style="color: #1f2937; font-weight: 500;">${startTime} - ${endTime}</span>
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
+                <div style="display: flex; align-items: center;">
+                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">🕐</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${startTime} - ${endTime}</span>
+                </div>
               </div>
               
-              <div style="display: flex; align-items: center; margin: 8px 0;">
-                <span style="width: 24px;">🏢</span>
-                <span style="color: #1f2937; font-weight: 500;">${serviceType}</span>
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
+                <div style="display: flex; align-items: center;">
+                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">🏢</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${serviceType}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -212,36 +223,54 @@ function generateConfirmationEmailHTML(reservationData) {
           ${priceSection}
 
           <!-- Ubicación -->
-          <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin: 20px 0;">
-            <h3 style="color: #92400e; margin-top: 0; font-size: 16px;">📍 UBICACIÓN</h3>
-            <p style="margin: 5px 0; color: #92400e; font-weight: 500;">Coworkia</p>
-            <p style="margin: 5px 0; color: #92400e;">Edificio Finistere - Planta Baja<br>Whymper 403, Quito</p>
+          <div style="background: linear-gradient(135deg, rgba(55,65,81,0.05), rgba(55,65,81,0.1)); border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(78,205,196,0.2);">
+            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">📍 UBICACIÓN</h3>
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0;">
+              <p style="margin: 5px 0; color: #4ECDC4; font-weight: 700; font-size: 18px;">Coworkia</p>
+              <p style="margin: 5px 0; color: #374151; font-weight: 500;">Edificio Finistere - Planta Baja</p>
+              <p style="margin: 5px 0; color: #374151;">Whymper 403, Quito</p>
+            </div>
             
-            <div style="text-align: center; margin: 15px 0;">
+            <div style="text-align: center; margin: 20px 0;">
               <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" 
-                 style="background: #4FD1C7; color: #1f2937; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block;">
-                Ver en Google Maps
+                 style="background: linear-gradient(135deg, #4ECDC4, #44A08D); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(78,205,196,0.3); transition: all 0.3s ease;">
+                📍 Ver en Google Maps
               </a>
             </div>
           </div>
 
           <!-- Advertencia importante -->
-          <div style="background: #fef9c3; border: 1px solid #eab308; border-radius: 8px; padding: 15px; margin: 20px 0;">
-            <h4 style="color: #a16207; margin-top: 0; font-size: 14px; font-weight: 600;">⚠️ IMPORTANTE - Llegada tardía</h4>
-            <p style="color: #a16207; font-size: 14px; margin: 5px 0;">
-              El tiempo regular de espera es de 10 minutos. Si llegarás más tarde, avísanos para mantener tu espacio reservado.
+          <div style="background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.1)); border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+              <span style="color: #F59E0B; font-size: 24px; margin-right: 10px;">⚠️</span>
+              <h4 style="color: #374151; margin: 0; font-size: 16px; font-weight: 600;">IMPORTANTE - Llegada tardía</h4>
+            </div>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0; line-height: 1.6;">
+              El tiempo regular de espera es de <strong>10 minutos</strong>. Si llegarás más tarde, avísanos para mantener tu espacio reservado.
             </p>
           </div>
 
           <!-- Lo que te espera -->
-          <div style="margin: 25px 0;">
-            <h3 style="color: #1f2937; font-size: 16px; margin-bottom: 10px;">🌟 Lo que te espera:</h3>
-            <ul style="color: #6b7280; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-              <li>☕ Café ilimitado</li>
-              <li>🌐 Internet de alta velocidad</li>
-              <li>🖥️ Espacios cómodos y modernos</li>
-              <li>🤝 Ambiente colaborativo</li>
-            </ul>
+          <div style="background: rgba(78,205,196,0.05); border-radius: 12px; padding: 25px; margin: 25px 0;">
+            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">🌟 Lo que te espera:</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
+                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">☕</span>
+                <span style="color: #374151; font-weight: 500;">Café ilimitado</span>
+              </div>
+              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
+                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🌐</span>
+                <span style="color: #374151; font-weight: 500;">Internet de alta velocidad</span>
+              </div>
+              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
+                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🖥️</span>
+                <span style="color: #374151; font-weight: 500;">Espacios cómodos y modernos</span>
+              </div>
+              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
+                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🤝</span>
+                <span style="color: #374151; font-weight: 500;">Ambiente colaborativo</span>
+              </div>
+            </div>
           </div>
 
           <!-- Contacto -->
@@ -252,33 +281,24 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           <!-- Footer -->
-          <div style="text-align: center; margin: 30px 0 0 0;">
-            <p style="color: #0f766e; font-size: 16px; font-weight: 600; margin: 0;">¡Nos vemos pronto! 🚀</p>
-            <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Aurora ✨ - Tu asistente de Coworkia</p>
+          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-radius: 12px;">
+            <p style="color: #4ECDC4; font-size: 18px; font-weight: 700; margin: 0;">¡Nos vemos pronto! 🚀</p>
+            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Aurora ✨ - Tu asistente de Coworkia</p>
           </div>
 
         </div>
       </div>
 
-      <!-- Footer externo con branding corporativo -->
-      <div style="text-align: center; padding: 20px; background: #1f2937; color: #9ca3af; font-size: 12px;">
-        <div style="margin-bottom: 10px;">
-          <svg width="60" height="45" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
-            <!-- Laptop con taza de café (logo Coworkia) -->
-            <rect x="10" y="25" width="50" height="30" rx="3" fill="#4FD1C7" stroke="#2DD4BF" stroke-width="2"/>
-            <rect x="15" y="28" width="40" height="22" rx="1" fill="white"/>
-            <rect x="25" y="55" width="30" height="3" rx="1" fill="#4FD1C7"/>
-            <!-- Taza de café -->
-            <ellipse cx="55" cy="18" rx="8" ry="6" fill="#4FD1C7"/>
-            <ellipse cx="55" cy="15" rx="6" ry="4" fill="white"/>
-            <path d="M63 18 Q68 18 68 22 Q68 26 63 26" stroke="#4FD1C7" stroke-width="2" fill="none"/>
-            <!-- Vapor -->
-            <path d="M52 8 Q53 5 54 8 Q55 5 56 8" stroke="#4FD1C7" stroke-width="1.5" fill="none"/>
-          </svg>
+      <!-- Footer externo limpio -->
+      <div style="text-align: center; padding: 30px 20px; background: #374151; color: #9CA3AF;">
+        <!-- Solo texto elegante, sin logos -->
+        <div style="color: #4ECDC4; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px;">
+          Coworkia
         </div>
-        <div style="color: #4FD1C7; font-size: 18px; font-weight: 600; margin-bottom: 5px;">coWorkia</div>
-        <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">work · connect · grow</div>
-        <div style="color: #6b7280; font-size: 12px;">
+        <div style="color: #9CA3AF; font-size: 14px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
+          work · connect · grow
+        </div>
+        <div style="color: #6B7280; font-size: 12px; line-height: 1.6;">
           © 2025 Coworkia Ecuador - Espacios que inspiran<br>
           Whymper 403, Quito | RUC: 1792954078001
         </div>

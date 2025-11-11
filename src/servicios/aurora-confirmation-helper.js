@@ -118,7 +118,7 @@ export function extractReservationData(message, userProfile) {
       durationHours,
       serviceType: 'hotDesk',
       totalPrice: priceMatch ? parseFloat(priceMatch[1]) : 8.40,
-      wasFree: !userProfile.freeTrialUsed,
+      wasFree: !userProfile.freeTrialUsed, // Solo Hot Desk puede ser gratis en primera visita
       userId: userProfile.userId,
       userName: userProfile.name || 'Cliente'
     };

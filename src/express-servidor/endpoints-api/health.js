@@ -139,6 +139,7 @@ router.post('/test-email-design', async (req, res) => {
       endTime: req.body.endTime || '17:00',
       serviceType: req.body.serviceType || 'Hot Desk',
       durationHours: req.body.durationHours || 8,
+      guestCount: req.body.guestCount || 2, // Acompañantes para test
       wasFree: req.body.wasFree !== undefined ? req.body.wasFree : true,
       totalPrice: req.body.totalPrice || 20,
       reservation: {

@@ -119,7 +119,10 @@ export function generateConfirmationMessage(reservationData, userProfile) {
     day: 'numeric'
   });
 
-  if (wasFree) {
+  // Solo Hot Desk puede ser gratis, sala de reuniones NUNCA
+  const isActuallyFree = wasFree && serviceType === 'hotDesk';
+  
+  if (isActuallyFree) {
     return `¡Perfecto${userName}! 🎉
 
 📋 *CONFIRMA TUS 2 HORAS GRATIS:*

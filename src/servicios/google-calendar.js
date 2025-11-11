@@ -108,8 +108,12 @@ export async function createCalendarEvent(reservationData) {
     const guestSuffix = guestCount > 0 ? ` +${guestCount}` : '';
     const eventTitle = `${serviceType} ${userName}${guestSuffix}`;
     
+    // Generar ID único para evitar conflictos
+    const uniqueId = `coworkia-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     // Definir el evento
     const event = {
+      id: uniqueId, // ID único para evitar reemplazos
       summary: eventTitle, // Ejemplo: "Hot Desk Diego Villota +2"
       description: `
 🎯 Reserva confirmada en Coworkia

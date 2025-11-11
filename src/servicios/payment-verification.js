@@ -136,7 +136,7 @@ Por favor, verifica el monto o contacta a soporte.`,
 ⚠️ *Nota:* No pude enviar email de confirmación porque no tienes email registrado.
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Te esperamos! 🚀`,
         data: updatedReservation
@@ -172,7 +172,7 @@ Por favor, verifica el monto o contacta a soporte.`,
 📧 Te he enviado la confirmación por email.
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Nos vemos en Coworkia! 🚀`,
       data: paymentData,

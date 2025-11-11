@@ -151,7 +151,7 @@ FLUJO DE RESERVAS MEJORADO:
 
 INFORMACIÓN COWORKIA:
 - Ubicación: Whymper 403, Edificio Finistere, Quito - Ecuador
-- Link Google Maps: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
+- Link Google Maps: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 - Horarios: Lunes a viernes 8:00-18:00, sábados 9:00-14:00
 - Espacios: Hot Desk ($4/h), Salas reuniones ($8/h), Oficinas privadas
 - Servicios: WiFi 24/7, café incluido, impresión, estacionamiento
@@ -164,7 +164,7 @@ RESPUESTA PERFECTA:
 "📍 Coworkia - Whymper 403, Edificio Finistere (Planta Baja), Quito
 
 🗺️ Link de ubicación:
-https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69"
+https://maps.app.goo.gl/Nqy6YeGuxo3czEt66"
 
 NO USES:
 - "Ver ubicación" con links falsos
@@ -201,7 +201,7 @@ IMPORTANTE:
     
     confirmacionGratis: '¡Perfecto! 🎉 *CONFIRMA TUS 2 HORAS GRATIS:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n⏱️ *Duración:* 2 horas\n💰 *Precio:* ¡GRATIS! (primera vez)\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* o *NO* 👍',
     
-    pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
+    pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/Nqy6YeGuxo3czEt66',
     
     comprobanteProcesando: '📸 Recibido!\n\nAnalizando tu comprobante de pago con IA... ✨\n\n(Esto toma unos segundos)',
     
@@ -211,10 +211,10 @@ IMPORTANTE:
     
     derivarAdriana: 'Para seguros, menciona *@adriana* + tu consulta.\n\n¡Es nuestra experta en seguros de Segpopular! 🛡️',
     
-    confirmarReservaDiaGratis: '✅ *¡Tu día gratis está confirmado!* 🎉\n\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié los detalles por email\n📍 ¡Te esperamos en Whymper 403!\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/ZrKqKw8vBm2eZeK69',
+    confirmarReservaDiaGratis: '✅ *¡Tu día gratis está confirmado!* 🎉\n\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié los detalles por email\n📍 ¡Te esperamos en Whymper 403!\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/Nqy6YeGuxo3czEt66',
     
     errorDisponibilidad: '❌ Lo siento, ese horario no está disponible.\n\n¿Te sirve alguna de estas opciones?\n\n• {alternativa1}\n• {alternativa2}',
     
-    informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk desde $4/hora\n☕ WiFi + Café incluido\n\n🗺️ Ubicación: https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69'
+    informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:00-18:00 | Sáb 9:00-14:00\n💻 Hot Desk desde $4/hora\n☕ WiFi + Café incluido\n\n🗺️ Ubicación: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66'
   }
 };

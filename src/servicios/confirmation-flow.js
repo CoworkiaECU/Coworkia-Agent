@@ -284,7 +284,7 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
 📧 Te he enviado la confirmación por email.
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/ZrKqKw8vBm2eZeK69
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Te esperamos! 🚀`,
         needsAction: false,

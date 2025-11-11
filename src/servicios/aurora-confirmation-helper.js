@@ -4,7 +4,7 @@
  */
 
 import { generateConfirmationMessage } from './confirmation-flow.js';
-import { savePendingConfirmation, getPaymentInfo } from '../perfiles-interacciones/memoria.js';
+import { savePendingConfirmation, getPaymentInfo } from '../perfiles-interacciones/memoria-sqlite.js';
 import { checkAvailability } from './calendario.js';
 
 /**

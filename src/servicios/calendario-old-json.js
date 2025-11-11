@@ -288,28 +288,29 @@ export async function getUserReservations(userId) {
 }
 
 /**
- * 💳 Actualiza información de pago de una reserva
+ * � Actualiza información de pago de una reserva
  */
 export async function updateReservationPayment(reservationId, paymentInfo) {
-  try {
-    const reservation = await reservationRepository.findById(reservationId);
-    
-    if (!reservation) {
-      throw new Error(`Reserva ${reservationId} no encontrada`);
-    }
-    
-    const updated = await reservationRepository.markAsPaid(reservationId, {
-      payment_method: paymentInfo.paymentMethod || 'transfer',
-      payment_reference: paymentInfo.reference || null,
-      payment_amount: paymentInfo.amount || reservation.total_amount,
-      payment_date: paymentInfo.date || new Date().toISOString()
-    });
-    
-    return updated;
-  } catch (error) {
-    console.error('[CALENDARIO] Error actualizando pago:', error);
-    throw error;
+  const reservations = await loadReservations();
+  const reservationIndex = reservations.findIndex(r => r.id === reservationId);
+  
+  if (reservationIndex === -1) {
+    throw new Error(`Reserva ${reservationId} no encontrada`);
   }
+  
+  // Actualizar reserva con información de pago
+  reservations[reservationIndex] = {
+    ...reservations[reservationIndex],
+    ...paymentInfo,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const saved = await saveReservations(reservations);
+  if (!saved) {
+    throw new Error('Error guardando información de pago');
+  }
+  
+  return reservations[reservationIndex];
 }
 
 /**

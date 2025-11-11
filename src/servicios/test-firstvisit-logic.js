@@ -1,5 +1,5 @@
 // Test para verificar y arreglar la lógica de firstVisit
-import { loadProfile, saveProfile } from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile } from '../perfiles-interacciones/memoria-sqlite.js';
 
 const TEST_USER_ID = '593987770788'; // Diego Villota
 

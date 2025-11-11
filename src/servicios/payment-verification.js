@@ -1,7 +1,7 @@
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import { updateReservationPayment, getReservationByPaymentInfo } from './calendario.js';
 import { sendPaymentConfirmationEmail } from './email.js';
-import { loadProfile, saveProfile, updateUser } from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, updateUser } from '../perfiles-interacciones/memoria-sqlite.js';
 import { createCalendarEvent } from './google-calendar.js';
 
 /**
@@ -35,7 +35,7 @@ export async function processPaymentReceipt(imageUrl, userPhone) {
     }
 
     // 3. Buscar reserva pendiente del usuario
-    const userProfile = loadProfile(userPhone);
+    const userProfile = await loadProfile(userPhone);
     const pendingReservation = userProfile.reservations?.find(r => 
       r.status === 'pending_payment' || r.status === 'created'
     );
@@ -115,7 +115,7 @@ Por favor, verifica el monto o contacta a soporte.`,
     });
 
     // 8. Enviar email de confirmación
-    console.log('[Payment Verification] 🔍 DEBUG: Intentando enviar email a:', userProfile.email);
+    console.log('[Payment Verification] 🔍 DEBUG: Intentando enviar email:', userProfile.email ? 'Configurado' : 'No configurado');
     console.log('[Payment Verification] 🔍 DEBUG: Reserva actualizada:', {
       id: updatedReservation.id,
       date: updatedReservation.date,
@@ -150,7 +150,7 @@ Por favor, verifica el monto o contacta a soporte.`,
         userProfile.name || 'Cliente',
         updatedReservation
       );
-      console.log('[Payment Verification] ✅ Email enviado exitosamente a:', userProfile.email);
+      console.log('[Payment Verification] ✅ Email enviado exitosamente');
     } catch (emailError) {
       console.error('[Payment Verification] ❌ Error enviando email:', emailError);
       console.error('[Payment Verification] Stack trace:', emailError.stack);

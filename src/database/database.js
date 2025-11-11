@@ -8,8 +8,12 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 // Configuración de la base de datos
-const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), 'data', 'coworkia.db');
+// Usar SQLITE_PATH si está definido, sino usar path local
+// DATABASE_URL se reserva para Postgres en producción futura
+const DB_PATH = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'coworkia.db');
 const DATA_DIR = path.dirname(DB_PATH);
+
+console.log(`[DATABASE] 📁 Ruta SQLite: ${DB_PATH}`);
 
 // Asegurar que existe la carpeta data/
 try {

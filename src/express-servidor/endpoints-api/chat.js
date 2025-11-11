@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
-import { loadProfile, saveProfile, saveInteraction } from '../../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, saveInteraction } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 const router = Router();
 
@@ -25,9 +25,9 @@ router.post('/chat', async (req, res) => {
 
     // Carga y actualiza perfil si hay userId
     if (userId) {
-      const current = loadProfile(userId) || {};
+      const current = await loadProfile(userId) || {};
       const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
-      persistedProfile = saveProfile(userId, {
+      persistedProfile = await saveProfile(userId, {
         ...current,
         ...profile,
         userId,
@@ -40,7 +40,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Procesar mensaje con el orquestador (incluye detección y contexto)
-    const resultado = procesarMensaje(
+    const resultado = await procesarMensaje(
       message,
       persistedProfile || profile,
       historial

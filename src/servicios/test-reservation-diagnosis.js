@@ -6,7 +6,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { loadProfile, saveProfile } from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile } from '../perfiles-interacciones/memoria-sqlite.js';
 import { procesarMensaje } from '../deteccion-intenciones/orquestador.js';
 import { extractReservationData, shouldActivateConfirmation } from './aurora-confirmation-helper.js';
 import { complete } from '../servicios-ia/openai.js';

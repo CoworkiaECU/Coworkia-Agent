@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --config nodemon.json src/express-servidor/index.js",
-    "start": "node src/express-servidor/index.js"
+    "start": "node src/express-servidor/index.js",
+    "backup": "node scripts/backup-database.js",
+    "backup:list": "node scripts/backup-database.js list",
+    "migrate": "node scripts/migrate-to-sqlite.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -3,7 +3,7 @@
  * Maneja flujos de confirmación de reservas antes del pago
  */
 
-import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria-sqlite.js';
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
 import { checkAvailability, getOccupancyStats } from './availability-system.js';
@@ -240,7 +240,7 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
     // 4. Si es gratis, enviar email y confirmar
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, intentando enviar email');
-      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);
+      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email ? 'Configurado' : 'No configurado');
       
       try {
         if (userProfile.email) {

@@ -6,6 +6,7 @@ import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '.
 import { processConfirmationResponse, hasPendingConfirmation } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
+import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -14,7 +15,7 @@ import {
   saveConversationMessage,
   getPaymentInfo,
   calculateReservationCost
-} from '../../perfiles-interacciones/memoria.js';
+} from '../../perfiles-interacciones/memoria-sqlite.js';
 
 const router = Router();
 
@@ -201,7 +202,7 @@ async function enviarWhatsApp(numero, mensaje) {
  *   }
  * }
  */
-router.post('/webhooks/wassenger', async (req, res) => {
+router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
   try {
     const body = req.body || {};
     const evt = body.event || '';

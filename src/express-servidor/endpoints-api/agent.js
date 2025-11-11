@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { authAgentBuilder } from '../seguridad-auth/auth.js';
 import { detectarIntencion } from '../../deteccion-intenciones/detectar-intencion.js';
 import { complete } from '../../servicios-ia/openai.js';
-import { loadProfile, saveProfile, saveInteraction } from '../../perfiles-interacciones/memoria.js';
+import { loadProfile, saveProfile, saveInteraction } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 const router = Router();
 
@@ -18,9 +18,9 @@ router.post('/agent/handle', authAgentBuilder, async (req, res) => {
     const userId = (profile.userId || '').toString().trim() || null;
     let persistedProfile = null;
     if (userId) {
-      const current = loadProfile(userId) || {};
+      const current = await loadProfile(userId) || {};
       const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
-      persistedProfile = saveProfile(userId, {
+      persistedProfile = await saveProfile(userId, {
         ...current,
         ...profile,
         userId,

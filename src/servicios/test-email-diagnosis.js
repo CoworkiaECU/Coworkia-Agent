@@ -9,7 +9,7 @@ dotenv.config();
 import nodemailer from 'nodemailer';
 import { sendReservationConfirmation, sendPaymentConfirmationEmail, generateGoogleCalendarLink } from './email.js';
 import { testCalendarConnection } from './google-calendar.js';
-import { loadProfile } from '../perfiles-interacciones/memoria.js';
+import { loadProfile } from '../perfiles-interacciones/memoria-sqlite.js';
 
 /**
  * 🧪 Prueba de configuración de email

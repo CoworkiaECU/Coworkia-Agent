@@ -17,9 +17,9 @@ async function createEmailTransporter() {
   const EMAIL_PASS = process.env.EMAIL_PASS || process.env.GMAIL_PASS;
   const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
   
-  console.log('[EMAIL] - Usuario:', EMAIL_USER);
+  console.log('[EMAIL] - Usuario configurado:', EMAIL_USER ? '✅' : '❌');
   console.log('[EMAIL] - Servicio:', EMAIL_SERVICE);
-  console.log('[EMAIL] - Password configurado:', EMAIL_PASS ? 'SÍ' : 'NO');
+  console.log('[EMAIL] - Password configurado:', EMAIL_PASS ? '✅' : '❌');
   
   if (!EMAIL_USER || !EMAIL_PASS) {
     console.warn('[EMAIL] ❌ Configuración de email no encontrada. Emails no se enviarán.');
@@ -544,9 +544,9 @@ Equipo Coworkia
  */
 export async function sendPaymentConfirmationEmail(userEmail, userName, reservationData) {
   console.log('[EMAIL] 🚀 Iniciando envío de confirmación de pago');
-  console.log('[EMAIL] - Destinatario:', userEmail);
-  console.log('[EMAIL] - Usuario:', userName);
-  console.log('[EMAIL] - Datos reserva:', JSON.stringify(reservationData, null, 2));
+  console.log('[EMAIL] - Destinatario:', userEmail ? 'Configurado' : 'No configurado');
+  console.log('[EMAIL] - Usuario:', userName ? 'Sí' : 'No');
+  console.log('[EMAIL] - Datos reserva: [SANITIZED]');
   
   const transporter = await createEmailTransporter();
   if (!transporter) {

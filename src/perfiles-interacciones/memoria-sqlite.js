@@ -415,6 +415,42 @@ export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
   };
 }
 
+/**
+ * 📜 Carga historial de conversación (stub temporal)
+ * TODO: Implementar con tabla interactions
+ */
+export async function loadConversationHistory(userId, limit = 10) {
+  try {
+    const interactions = await databaseService.all(
+      'SELECT * FROM interactions WHERE user_phone = ? ORDER BY created_at DESC LIMIT ?',
+      [userId, limit]
+    );
+    return interactions.reverse(); // Orden cronológico
+  } catch (error) {
+    console.error('[MEMORIA-SQLITE] Error cargando historial:', error);
+    return [];
+  }
+}
+
+/**
+ * 💬 Guarda mensaje de conversación (stub temporal)
+ * TODO: Implementar almacenamiento estructurado
+ */
+export async function saveConversationMessage(userId, message, role = 'user') {
+  try {
+    await saveInteraction({
+      user_phone: userId,
+      event: 'message',
+      data: { message, role },
+      timestamp: new Date().toISOString()
+    });
+    return true;
+  } catch (error) {
+    console.error('[MEMORIA-SQLITE] Error guardando mensaje:', error);
+    return false;
+  }
+}
+
 // Mantener exports para compatibilidad
 export { saveProfile as updateProfile };
 export { databaseService };

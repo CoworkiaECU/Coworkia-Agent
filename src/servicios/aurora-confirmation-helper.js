@@ -71,59 +71,41 @@ export function extractReservationData(message, userProfile) {
     // 🔧 FIX: Mejorar lógica de horarios - normalizar formato
     let startTime = '09:00';
     let endTime = '11:00';
-    let durationHours = 2;
+    let durationHours = 2; // SIEMPRE 2 HORAS POR DEFECTO
     
     if (timeMatch && timeMatch.length >= 1) {
-      // Normalizar primer horario detectado
+      // Normalizar primer horario detectado (SIEMPRE ES LA HORA DE INICIO)
       startTime = normalizeTimeFormat(timeMatch[0]);
-      console.log('[DEBUG] startTime normalizado:', startTime);
+      console.log('[DEBUG] 🕐 startTime normalizado:', startTime);
       
-      if (timeMatch.length >= 2) {
-        // Si hay dos horarios, usar ambos
-        endTime = normalizeTimeFormat(timeMatch[1]);
-        const start = parseInt(startTime.split(':')[0]);
-        const end = parseInt(endTime.split(':')[0]);
-        durationHours = end - start;
+      // 🎯 NUEVA LÓGICA: Solo mirar durationMatch, IGNORAR segundo horario
+      if (durationMatch) {
+        const requestedDuration = parseInt(durationMatch[1]);
+        console.log('[DEBUG] ⏱️ Duración solicitada explícitamente:', requestedDuration, 'horas');
         
-        // 🚨 VALIDAR DURACIÓN: debe ser positiva y razonable
-        if (durationHours <= 0 || durationHours > 10) {
-          console.log(`[DEBUG] ⚠️ Duración inválida: ${durationHours}h - USANDO 2 HORAS POR DEFECTO`);
+        // SOLO permitir más de 2h si el usuario lo dice EXPLÍCITAMENTE
+        if (requestedDuration > 2 && requestedDuration <= 8) {
+          durationHours = requestedDuration;
+          console.log('[DEBUG] ✅ Aceptando duración explícita:', durationHours, 'horas');
+        } else if (requestedDuration > 8) {
           durationHours = 2;
-          // Calcular endTime con 2 horas desde el inicio
-          const startHour = parseInt(startTime.split(':')[0]);
-          const startMinutes = parseInt(startTime.split(':')[1] || '0');
-          const endHour = startHour + 2;
-          endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
-        } else if (durationHours > 2) {
-          // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
-          console.log(`[DEBUG] ⚠️ Duración calculada: ${durationHours}h - LIMITANDO A 2 HORAS`);
-          durationHours = 2;
-          // Recalcular endTime con máximo 2 horas
-          const startHour = parseInt(startTime.split(':')[0]);
-          const startMinutes = parseInt(startTime.split(':')[1] || '0');
-          const endHour = startHour + 2;
-          endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+          console.log('[DEBUG] ⚠️ Duración muy larga (>8h) - LIMITANDO A 2 HORAS');
+        } else {
+          durationHours = requestedDuration;
         }
       } else {
-        // Si solo hay un horario, es la hora de INICIO - calcular duración
-        if (durationMatch) {
-          durationHours = parseInt(durationMatch[1]);
-          // 🚨 LIMITAR A MÁXIMO 2 HORAS POR DEFECTO
-          if (durationHours > 2) {
-            console.log(`[DEBUG] ⚠️ Duración solicitada: ${durationHours}h - LIMITANDO A 2 HORAS`);
-            durationHours = 2;
-          }
-        } else {
-          // Duración por defecto de 2 horas
-          durationHours = 2;
-        }
-        
-        // Calcular hora de fin
-        const startHour = parseInt(startTime.split(':')[0]);
-        const startMinutes = parseInt(startTime.split(':')[1] || '0');
-        const endHour = startHour + durationHours;
-        endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+        // Sin duración explícita = 2 horas por defecto
+        durationHours = 2;
+        console.log('[DEBUG] 📋 Sin duración especificada - Usando 2 HORAS por defecto');
       }
+      
+      // 🎯 CALCULAR endTime desde startTime + duración validada
+      const startHour = parseInt(startTime.split(':')[0]);
+      const startMinutes = parseInt(startTime.split(':')[1] || '0');
+      const endHour = startHour + durationHours;
+      endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+      
+      console.log('[DEBUG] 📅 Horario final:', startTime, '-', endTime, `(${durationHours}h)`);
     }
 
     const reservationDate = dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0];

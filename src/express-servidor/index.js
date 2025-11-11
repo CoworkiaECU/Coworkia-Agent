@@ -49,6 +49,15 @@ app.use(limiter);
 // Healthchecks rápidos
 app.get('/', (_req, res) => res.json({ ok: true, service: 'coworkia-agent', env: process.env.ENV || 'local' }));
 app.get('/health', (_req, res) => res.json({ ok: true, ai: 'ready' }));
+app.get('/health/db', async (_req, res) => {
+  try {
+    await databaseService.get('SELECT 1 as ok');
+    res.json({ ok: true, db: 'ready' });
+  } catch (error) {
+    console.error('[HEALTH][DB] Error:', error);
+    res.status(500).json({ ok: false, error: 'DB_UNAVAILABLE', message: error.message });
+  }
+});
 
 // Health para Wassenger (evita 404 en pruebas GET)
 app.get('/webhooks/wassenger', (_req, res) => res.status(200).send('ok'));

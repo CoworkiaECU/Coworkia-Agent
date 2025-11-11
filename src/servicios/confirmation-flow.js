@@ -6,8 +6,18 @@
 import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria-sqlite.js';
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
-import { checkAvailability, getOccupancyStats } from './availability-system.js';
 import { createCalendarEvent } from './google-calendar.js';
+import databaseService from '../database/database.js';
+import { enqueueBackgroundTask } from './task-queue.js';
+import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { markJustConfirmed } from './reservation-state.js';
+
+class ConfirmationFlowError extends Error {
+  constructor(payload) {
+    super(payload?.message || 'CONFIRMATION_FLOW_ERROR');
+    this.payload = payload;
+  }
+}
 
 /**
  * ✅ Detecta respuestas afirmativas del usuario
@@ -169,109 +179,99 @@ Responde *SI* para continuar con el pago o *NO* para cancelar 👍`;
 export async function processPositiveConfirmation(userProfile, pendingReservation) {
   try {
     const userName = userProfile.name ? `, ${userProfile.name}` : '';
+    let reservationRecord = null;
     
-    // 🔍 1. Verificar disponibilidad antes de crear reserva
-    console.log('[Confirmation] 🔍 Verificando disponibilidad antes de confirmar...');
-    const availability = await checkAvailability({
-      date: pendingReservation.date,
-      startTime: pendingReservation.startTime,
-      endTime: pendingReservation.endTime,
-      serviceType: pendingReservation.serviceType,
-      guestCount: pendingReservation.guestCount || 0
+    // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción
+    await databaseService.transaction(async () => {
+      const reservationResult = await createReservation(pendingReservation);
+      
+      if (!reservationResult.success) {
+        throw new ConfirmationFlowError({
+          success: false,
+          message: `❌ ${reservationResult.error}`,
+          needsAction: false,
+          alternatives: reservationResult.alternatives
+        });
+      }
+
+      reservationRecord = reservationResult.reservation;
+
+      await clearPendingConfirmation(userProfile.userId);
+      await updateUser(userProfile.userId, {
+        lastReservation: reservationRecord
+      });
     });
-    
-    if (!availability.available) {
-      return {
-        success: false,
-        message: `❌ Lo siento${userName}, ese horario ya no está disponible:
 
-${availability.reason}
+    await markJustConfirmed(userProfile.userId, reservationRecord?.id);
 
-${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availability.suggestions.map(s => `• ${s}`).join('\n') : ''}
+    const confirmedDate = reservationRecord?.date || pendingReservation.date;
+    const confirmedStart = reservationRecord?.startTime || pendingReservation.startTime;
+    const confirmedEnd = reservationRecord?.endTime || pendingReservation.endTime;
 
-¿Te gustaría probar con otro horario? 🕐`,
-        needsAction: false
-      };
-    }
-    
-    console.log('[Confirmation] ✅ Disponibilidad confirmada:', availability.message);
-    
-    // 2. Crear la reserva oficialmente
-    const reservationResult = await createReservation(pendingReservation);
-    
-    if (!reservationResult.success) {
-      return {
-        success: false,
-        message: `❌ No pude confirmar tu reserva: ${reservationResult.error}`,
-        needsAction: false
-      };
-    }
-    
-    // 2. Crear evento en Google Calendar
-    console.log('[Confirmation] 📅 Creando evento en Google Calendar...');
-    try {
-      const calendarEvent = await createCalendarEvent({
+    // 2. Crear evento en Google Calendar (fuera de la transacción)
+    enqueueBackgroundTask(
+      'calendar-events',
+      'create-reservation',
+      () => createCalendarEvent({
         userName: pendingReservation.userName,
         email: userProfile.email || 'noemail@coworkia.com',
-        date: pendingReservation.date,
-        startTime: pendingReservation.startTime,
-        endTime: pendingReservation.endTime,
+        date: confirmedDate,
+        startTime: confirmedStart,
+        endTime: confirmedEnd,
         serviceType: pendingReservation.serviceType,
         duration: `${pendingReservation.durationHours} horas`,
         price: pendingReservation.totalPrice,
         guestCount: pendingReservation.guestCount || 0
+      }),
+      { circuitId: 'calendar-events-job' }
+    )
+      .then(calendarEvent => {
+        if (calendarEvent?.success) {
+          console.log('[Confirmation] ✅ Evento en Google Calendar en background:', calendarEvent.eventUrl);
+        } else {
+          console.error('[Confirmation] ❌ Calendario reportó error:', calendarEvent?.error || 'Unknown');
+        }
+      })
+      .catch(calendarError => {
+        console.error('[Confirmation] ❌ Error creando evento en background:', calendarError);
       });
-      
-      if (calendarEvent.success) {
-        console.log('[Confirmation] ✅ Evento creado en Google Calendar:', calendarEvent.eventUrl);
-      } else {
-        console.error('[Confirmation] ❌ Error creando evento en Google Calendar:', calendarEvent.error);
-      }
-    } catch (calendarError) {
-      console.error('[Confirmation] ❌ Error con Google Calendar:', calendarError);
-    }
-
-    // 3. Actualizar perfil del usuario
-    await updateUser(userProfile.userId, {
-      pendingConfirmation: null,
-      lastReservation: reservationResult.reservation,
-      justConfirmed: true, // Flag temporal para evitar flujo paralelo inmediato
-      justConfirmedAt: new Date().toISOString()
-    });
 
     // 4. Si es gratis, enviar email y confirmar
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, intentando enviar email');
       console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email ? 'Configurado' : 'No configurado');
       
-      try {
-        if (userProfile.email) {
-          console.log('[Confirmation] 📧 Enviando email de confirmación gratuita...');
-          
-          // Formato correcto para sendReservationConfirmation con acompañantes
-          const emailResult = await sendReservationConfirmation({
+      if (userProfile.email) {
+        console.log('[Confirmation] 📧 Encolando email de confirmación gratuita...');
+        enqueueBackgroundTask(
+          'emails',
+          'send-free-confirmation',
+          () => sendReservationConfirmation({
             email: userProfile.email,
             userName: userProfile.name || 'Cliente',
-            date: pendingReservation.date,
-            startTime: pendingReservation.startTime,
-            endTime: pendingReservation.endTime,
+            date: confirmedDate,
+            startTime: confirmedStart,
+            endTime: confirmedEnd,
             serviceType: pendingReservation.serviceType || 'Hot Desk',
-            guestCount: pendingReservation.guestCount || 0, // Número de acompañantes
+            guestCount: pendingReservation.guestCount || 0,
             wasFree: true,
             durationHours: 2,
             total: 0
+          }),
+          { circuitId: 'emails-confirmation' }
+        )
+          .then(result => {
+            if (result?.success) {
+              console.log('[Confirmation] ✅ Email de confirmación enviado (background)');
+            } else {
+              console.error('[Confirmation] ❌ Email reportó error:', result?.error);
+            }
+          })
+          .catch(emailError => {
+            console.error('[Confirmation] ❌ Error enviando email (background):', emailError);
           });
-          
-          if (emailResult.success) {
-            console.log('[Confirmation] ✅ Email de confirmación enviado exitosamente');
-          } else {
-            console.error('[Confirmation] ❌ Error enviando email:', emailResult.error);
-          }
-        } else {
-          console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
-        }
-      } catch (emailError) {
-        console.error('[Confirmation] ❌ Error enviando email gratis:', emailError);
+      } else {
+        console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
       }
 
       return {
@@ -280,8 +280,8 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
 
 🎉 Tus 2 horas gratis están listas:
 
-📅 *${pendingReservation.date}*
-⏰ *${pendingReservation.startTime} - ${pendingReservation.endTime}*
+📅 *${confirmedDate}*
+⏰ *${confirmedStart} - ${confirmedEnd}*
 
 📧 Te he enviado la confirmación por email.
 
@@ -290,7 +290,7 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
 
 ¡Te esperamos! 🚀`,
         needsAction: false,
-        reservation: reservationResult.reservation
+        reservation: reservationRecord
       };
     }
 
@@ -304,7 +304,7 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
 💳 *DATOS PARA EL PAGO:*
 
 💰 *Total:* $${pendingReservation.totalPrice} USD
-🔢 *Referencia:* ${reservationResult.reservation.id}
+🔢 *Referencia:* ${reservationRecord.id}
 
 *💳 PAYPHONE (recomendado):*
 👉 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
@@ -319,10 +319,13 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
 ¿Listo para pagar? 🚀`,
       needsAction: true,
       actionType: 'payment_pending',
-      reservation: reservationResult.reservation
+      reservation: reservationRecord
     };
 
   } catch (error) {
+    if (error instanceof ConfirmationFlowError) {
+      return error.payload;
+    }
     console.error('[Confirmation] Error procesando confirmación positiva:', error);
     return {
       success: false,

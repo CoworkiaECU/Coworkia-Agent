@@ -7,6 +7,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { exec as execCallback } from 'child_process';
+import { promisify } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +16,9 @@ const __dirname = path.dirname(__filename);
 const DB_PATH = process.env.SQLITE_PATH || path.join(__dirname, '../data/coworkia.db');
 const BACKUP_DIR = path.join(__dirname, '../data/backups');
 const MAX_BACKUPS = 7; // Mantener últimos 7 backups
+const REMOTE_MIRROR_DIR = process.env.BACKUP_REMOTE_DIR;
+const UPLOAD_COMMAND_TEMPLATE = process.env.BACKUP_UPLOAD_COMMAND || process.env.BACKUP_SYNC_COMMAND;
+const exec = promisify(execCallback);
 
 /**
  * 📁 Asegura que existe la carpeta de backups
@@ -50,13 +55,28 @@ async function createBackup() {
     const sizeKB = (stats.size / 1024).toFixed(2);
 
     console.log(`[BACKUP] ✅ Backup creado: ${backupFilename} (${sizeKB} KB)`);
-    
-    return {
+
+    const backupInfo = {
       filename: backupFilename,
       path: backupPath,
       size: stats.size,
       timestamp: new Date()
     };
+
+    // Copiar a carpeta espejo si se configuró
+    if (REMOTE_MIRROR_DIR) {
+      const mirrorPath = path.join(REMOTE_MIRROR_DIR, backupFilename);
+      await fs.promises.mkdir(REMOTE_MIRROR_DIR, { recursive: true });
+      await fs.promises.copyFile(backupPath, mirrorPath);
+      console.log(`[BACKUP] 📦 Copia espejo guardada en: ${mirrorPath}`);
+    }
+
+    // Ejecutar comando de subida (ej. aws s3 cp)
+    if (UPLOAD_COMMAND_TEMPLATE) {
+      await uploadBackup(backupInfo);
+    }
+
+    return backupInfo;
   } catch (error) {
     console.error('[BACKUP] ❌ Error creando backup:', error);
     throw error;
@@ -93,6 +113,48 @@ async function cleanOldBackups() {
     console.log(`[BACKUP] 🧹 Limpieza completada: ${toDelete.length} backups eliminados`);
   } catch (error) {
     console.error('[BACKUP] ❌ Error limpiando backups:', error);
+  }
+}
+
+/**
+ * ☁️ Sube el backup usando un comando externo (ej. AWS CLI, rclone)
+ */
+async function uploadBackup(backupInfo) {
+  if (!UPLOAD_COMMAND_TEMPLATE) {
+    console.log('[BACKUP] ⚠️ BACKUP_UPLOAD_COMMAND no configurado, saltando subida remota');
+    return null;
+  }
+  
+  // Construir comando con placeholders
+  let command = UPLOAD_COMMAND_TEMPLATE
+    .replace('{file}', backupInfo.path)
+    .replace('{filename}', backupInfo.filename);
+  
+  // Si hay destino remoto, agregarlo al comando
+  if (REMOTE_MIRROR_DIR) {
+    command += ` ${REMOTE_MIRROR_DIR}/${backupInfo.filename}`;
+  }
+  
+  console.log(`[BACKUP] ☁️ Subiendo backup...`);
+  console.log(`[BACKUP] 📤 Comando: ${command}`);
+  
+  try {
+    const { stdout, stderr } = await exec(command, { 
+      env: process.env,
+      timeout: 60000 // 1 minuto timeout
+    });
+    
+    if (stdout) console.log(`[BACKUP] ☁️ Resultado: ${stdout.trim()}`);
+    if (stderr && !stderr.includes('warning')) {
+      console.warn(`[BACKUP] ⚠️ Avisos: ${stderr.trim()}`);
+    }
+    
+    console.log('[BACKUP] ✅ Backup cargado correctamente al destino remoto');
+    return true;
+  } catch (error) {
+    console.error('[BACKUP] ❌ Error subiendo backup remoto:', error.message);
+    console.error('[BACKUP] 💡 Tip: Verifica que las credenciales (AWS_*, GOOGLE_*) estén configuradas');
+    throw error;
   }
 }
 

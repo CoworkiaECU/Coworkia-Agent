@@ -152,7 +152,7 @@ export async function createReservation(reservationData) {
     wasFree = false,
     email = null,
     total = 0,
-    guestCount = 1
+    guestCount = 0
   } = reservationData;
   
   // Verificar disponibilidad primero
@@ -170,17 +170,17 @@ export async function createReservation(reservationData) {
   try {
     const newReservation = await reservationRepository.create({
       user_phone: userId,
-      user_name: userName,
       service_type: serviceType,
-      reservation_date: date,
+      date,
       start_time: startTime,
       end_time: endTime,
       duration_hours: durationHours,
       guest_count: guestCount,
-      total_amount: total,
+      total_price: total,
+      was_free: wasFree,
       status: 'pending',
-      was_free_trial: wasFree ? 1 : 0,
-      user_email: email
+      payment_status: wasFree ? 'waived' : 'pending',
+      payment_data: email ? { email } : null
     });
     
     return {
@@ -205,9 +205,13 @@ export async function createReservation(reservationData) {
     };
   } catch (error) {
     console.error('[CALENDARIO] Error creando reserva:', error);
+    const fallbackAlternatives = await suggestAlternatives(date, durationHours);
     return {
       success: false,
-      error: 'Error guardando la reserva'
+      error: error?.code === 'SQLITE_CONSTRAINT'
+        ? 'Ese horario acaba de ocuparse hace segundos. Intentemos con otro horario.'
+        : 'Error guardando la reserva',
+      alternatives: fallbackAlternatives
     };
   }
 }

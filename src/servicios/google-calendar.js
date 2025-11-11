@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { google } from 'googleapis';
+import { runWithRetry } from './external-dispatcher.js';
 
 /**
  * 🔧 Crear cliente autenticado de Google Calendar
@@ -48,7 +49,11 @@ async function createCalendarClient() {
     });
 
     // Autorizar el cliente
-    await jwtClient.authorize();
+    await runWithRetry('google-calendar:authorize', () => jwtClient.authorize(), {
+      maxRetries: 2,
+      backoffBaseMs: 500,
+      circuitId: 'google-calendar-auth'
+    });
     console.log('[CALENDAR] ✅ Cliente autorizado exitosamente');
 
     // Crear instancia de Google Calendar API
@@ -173,10 +178,14 @@ export async function createCalendarEvent(reservationData) {
     const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
     
     // Crear el evento (sin invitaciones - las notificaciones van por email)
-    const response = await calendar.events.insert({
-      calendarId: calendarId,
+    const response = await runWithRetry('google-calendar:insert', () => calendar.events.insert({
+      calendarId,
       resource: event,
-      sendUpdates: 'none' // No enviar invitaciones automáticas
+      sendUpdates: 'none'
+    }), {
+      maxRetries: 2,
+      backoffBaseMs: 600,
+      circuitId: 'google-calendar-insert'
     });
 
     console.log('[CALENDAR] ✅ Evento creado exitosamente!');

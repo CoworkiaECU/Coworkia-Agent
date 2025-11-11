@@ -45,8 +45,10 @@ class DatabaseService {
         
         console.log('[DATABASE] ✅ Conectado a SQLite:', DB_PATH);
         
-        // Habilitar foreign keys
+        // Configuración de seguridad/concurrencia
         this.db.run('PRAGMA foreign_keys = ON');
+        this.db.run('PRAGMA journal_mode = WAL');
+        this.db.run('PRAGMA busy_timeout = 5000');
         
         this.createTables()
           .then(() => {
@@ -120,6 +122,14 @@ class DatabaseService {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         expires_at DATETIME,
         FOREIGN KEY (user_phone) REFERENCES users(phone_number)
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS reservation_state (
+        user_phone TEXT PRIMARY KEY,
+        just_confirmed_until DATETIME,
+        last_reservation_id TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_phone) REFERENCES users(phone_number)
       )`
     ];
 
@@ -129,6 +139,9 @@ class DatabaseService {
       'CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_phone)',
       'CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(date)',
       'CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status)',
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type)',
+      'CREATE INDEX IF NOT EXISTS idx_pending_confirmations_expires ON pending_confirmations(expires_at)',
+      'CREATE INDEX IF NOT EXISTS idx_reservation_state_just_confirmed ON reservation_state(just_confirmed_until)',
       'CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone)',
       'CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp)'
     ];
@@ -220,6 +233,27 @@ class DatabaseService {
   ensureInitialized() {
     if (!this.isInitialized) {
       throw new Error('Database not initialized. Call initialize() first.');
+    }
+  }
+
+  /**
+   * 🔁 Ejecuta operaciones dentro de una transacción
+   */
+  async transaction(work, mode = 'IMMEDIATE') {
+    this.ensureInitialized();
+    await this.run(`BEGIN ${mode} TRANSACTION`);
+
+    try {
+      const result = await work();
+      await this.run('COMMIT');
+      return result;
+    } catch (error) {
+      try {
+        await this.run('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('[DATABASE] ❌ Error realizando rollback:', rollbackError);
+      }
+      throw error;
     }
   }
 }

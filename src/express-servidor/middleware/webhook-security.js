@@ -6,66 +6,63 @@ import crypto from 'crypto';
  * Previene requests no autorizados al webhook
  */
 export function validateWebhookSignature(req, res, next) {
-  // 🚨 TEMPORALMENTE DESHABILITADO - Wassenger no envía firma HMAC compatible
-  console.log('[WEBHOOK-SECURITY] 🔓 Validación HMAC deshabilitada temporalmente');
-  return next();
+  const isProd = process.env.NODE_ENV === 'production';
+  const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
+  const sharedToken = process.env.WASSENGER_WEBHOOK_TOKEN || process.env.WASSENGER_TOKEN;
 
-  /* CÓDIGO ORIGINAL - REACTIVAR CUANDO WASSENGER TENGA FIRMA HMAC
-  // Solo aplicar en producción
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[WEBHOOK-SECURITY] 🔓 Modo desarrollo - validación HMAC desactivada');
+  if (!isProd) {
+    console.log('[WEBHOOK-SECURITY] 🔐 Modo desarrollo - validación flexible');
+  }
+
+  if (!webhookSecret && !sharedToken) {
+    console.warn('[WEBHOOK-SECURITY] ⚠️ No hay secreto configurado, permitiré request solo en entornos no productivos');
+    if (isProd) {
+      return res.status(500).json({ success: false, error: 'Webhook secret not configured' });
+    }
     return next();
   }
 
-  const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
-  
-  if (!webhookSecret) {
-    console.warn('[WEBHOOK-SECURITY] ⚠️ WASSENGER_WEBHOOK_SECRET no configurado');
-    return next(); // Permitir en caso de no estar configurado (backward compatibility)
-  }
+  const signatureHeader = req.headers['x-webhook-signature'] || req.headers['x-hub-signature'];
 
-  const signature = req.headers['x-webhook-signature'] || req.headers['x-hub-signature'];
-  
-  if (!signature) {
-    console.error('[WEBHOOK-SECURITY] ❌ Request sin firma HMAC');
-    return res.status(401).json({
-      success: false,
-      error: 'Unauthorized - Missing signature'
-    });
-  }*/
+  if (webhookSecret && signatureHeader) {
+    try {
+      const body = JSON.stringify(req.body || {});
+      const hmac = crypto.createHmac('sha256', webhookSecret);
+      hmac.update(body);
+      const expectedSignature = 'sha256=' + hmac.digest('hex');
 
-  /* CÓDIGO COMENTADO TEMPORALMENTE
-  try {
-    // Generar HMAC del body
-    const hmac = crypto.createHmac('sha256', webhookSecret);
-    const body = JSON.stringify(req.body);
-    hmac.update(body);
-    const expectedSignature = 'sha256=' + hmac.digest('hex');
+      if (!timingSafeCompare(signatureHeader, expectedSignature)) {
+        console.error('[WEBHOOK-SECURITY] ❌ Firma HMAC inválida');
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
 
-    // Comparación segura contra timing attacks
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-
-    if (!isValid) {
-      console.error('[WEBHOOK-SECURITY] ❌ Firma HMAC inválida');
-      return res.status(401).json({
-        success: false,
-        error: 'Unauthorized - Invalid signature'
-      });
+      return next();
+    } catch (error) {
+      console.error('[WEBHOOK-SECURITY] ❌ Error validando firma:', error);
+      return res.status(500).json({ success: false, error: 'Signature validation failed' });
     }
-
-    console.log('[WEBHOOK-SECURITY] ✅ Firma HMAC válida');
-    next();
-  } catch (error) {
-    console.error('[WEBHOOK-SECURITY] ❌ Error validando firma:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
   }
-  */
+
+  const tokenHeader = req.headers['x-wassenger-token'] || req.headers['x-webhook-secret'];
+  if (sharedToken && tokenHeader) {
+    if (!timingSafeCompare(tokenHeader, sharedToken)) {
+      console.error('[WEBHOOK-SECURITY] ❌ Token de webhook inválido');
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    return next();
+  }
+
+  console.error('[WEBHOOK-SECURITY] ❌ Request sin credenciales válidas');
+  return res.status(401).json({ success: false, error: 'Unauthorized' });
+}
+
+function timingSafeCompare(input, expected) {
+  const a = Buffer.from(input);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(a, b);
 }
 
 /**

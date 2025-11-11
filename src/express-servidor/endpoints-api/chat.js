@@ -55,7 +55,7 @@ router.post('/chat', async (req, res) => {
 
     // Registrar interacción
     try {
-      saveInteraction({
+      await saveInteraction({
         userId: userId || 'anonymous',
         agent: resultado.agenteKey,
         agentName: resultado.agente,

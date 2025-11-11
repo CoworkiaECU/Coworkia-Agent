@@ -8,6 +8,12 @@ import userRepository from '../database/userRepository.js';
 import reservationRepository from '../database/reservationRepository.js';
 import fs from 'fs';
 import path from 'path';
+import {
+  getPendingConfirmation as dbGetPendingConfirmation,
+  setPendingConfirmation as dbSetPendingConfirmation,
+  clearPendingConfirmation as dbClearPendingConfirmation,
+  getJustConfirmedState
+} from '../servicios/reservation-state.js';
 
 // Mantener compatibilidad con archivos JSON durante transición
 const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -90,6 +96,10 @@ export async function loadProfile(userId) {
     }
     
     // Convertir formato SQLite a formato esperado por la aplicación
+    const reservationHistory = await getReservationHistory(userId);
+    const pendingConfirmation = await dbGetPendingConfirmation(userId);
+    const justState = await getJustConfirmedState(userId);
+
     return {
       userId: user.phone_number,
       name: user.name,
@@ -103,8 +113,10 @@ export async function loadProfile(userId) {
       lastMessageAt: user.last_message_at,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
-      // Agregar historial de reservas
-      reservationHistory: await getReservationHistory(userId)
+      reservationHistory,
+      pendingConfirmation,
+      justConfirmed: justState.isActive,
+      justConfirmedUntil: justState.until
     };
   } catch (error) {
     console.error('[MEMORIA] Error cargando perfil desde SQLite:', error);
@@ -275,57 +287,13 @@ async function saveInteractionToJsonl(interactionData) {
  */
 export async function getPendingConfirmation(userId) {
   await ensureDbInitialized();
-  
-  try {
-    const query = `
-      SELECT * FROM pending_confirmations 
-      WHERE user_phone = ?
-    `;
-    
-    const result = await databaseService.get(query, [userId]);
-    
-    if (result) {
-      try {
-        return JSON.parse(result.reservation_data);
-      } catch (e) {
-        console.error('[MEMORIA] Error parsing confirmation data:', e);
-        return null;
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('[MEMORIA] Error obteniendo confirmación pendiente:', error);
-    return null;
-  }
+  return await dbGetPendingConfirmation(userId);
 }
 
-/**
- * 💾 Guarda confirmación pendiente
- */
 export async function savePendingConfirmation(userId, reservationData) {
   await ensureDbInitialized();
-  
   try {
-    // Eliminar confirmación existente si hay una
-    await databaseService.run('DELETE FROM pending_confirmations WHERE user_phone = ?', [userId]);
-    
-    // Insertar nueva confirmación
-    const query = `
-      INSERT INTO pending_confirmations (user_phone, reservation_data, expires_at)
-      VALUES (?, ?, ?)
-    `;
-    
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 30); // Expira en 30 minutos
-    
-    const params = [
-      userId,
-      JSON.stringify(reservationData),
-      expiresAt.toISOString()
-    ];
-    
-    await databaseService.run(query, params);
+    await dbSetPendingConfirmation(userId, reservationData);
     return true;
   } catch (error) {
     console.error('[MEMORIA] Error guardando confirmación pendiente:', error);
@@ -333,14 +301,10 @@ export async function savePendingConfirmation(userId, reservationData) {
   }
 }
 
-/**
- * 🗑️ Elimina confirmación pendiente
- */
 export async function clearPendingConfirmation(userId) {
   await ensureDbInitialized();
-  
   try {
-    await databaseService.run('DELETE FROM pending_confirmations WHERE user_phone = ?', [userId]);
+    await dbClearPendingConfirmation(userId);
     return true;
   } catch (error) {
     console.error('[MEMORIA] Error eliminando confirmación pendiente:', error);

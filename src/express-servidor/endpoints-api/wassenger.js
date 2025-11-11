@@ -16,6 +16,8 @@ import {
   getPaymentInfo,
   calculateReservationCost
 } from '../../perfiles-interacciones/memoria-sqlite.js';
+import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
+import { clearJustConfirmed } from '../../servicios/reservation-state.js';
 
 const router = Router();
 
@@ -168,7 +170,8 @@ async function enviarWhatsApp(numero, mensaje) {
   }
 
   try {
-    const response = await fetch(`https://api.wassenger.com/v1/messages`, {
+    const response = await dispatchHttpRequest({
+      url: 'https://api.wassenger.com/v1/messages',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -178,10 +181,13 @@ async function enviarWhatsApp(numero, mensaje) {
         phone: numero,
         message: mensaje,
         device: WASSENGER_DEVICE
-      })
+      }),
+      circuitId: 'wassenger:messages',
+      timeoutMs: 5000,
+      maxRetries: 2
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     return { ok: response.ok, data };
   } catch (error) {
     console.error('[WASSENGER] Error enviando mensaje:', error);
@@ -207,8 +213,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const body = req.body || {};
     const evt = body.event || '';
     const data = body.data || {};
+    const isProd = process.env.NODE_ENV === 'production';
 
-    console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
+    if (isProd) {
+      console.log('[WASSENGER] Webhook recibido', {
+        event: evt,
+        from: data.fromNumber || data.from || 'unknown'
+      });
+    } else {
+      console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
+    }
 
     if (!evt || !data) {
       return res.status(400).json({ ok: false, error: 'INVALID_PAYLOAD' });
@@ -327,12 +341,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
-    console.log('[WASSENGER] ✅ PROCESANDO MENSAJE VÁLIDO:');
-    console.log(`- Usuario: ${userId}`);
-    console.log(`- Nombre: ${name}`);
-    console.log(`- Texto: "${text}"`);
-    console.log(`- Tipo: ${messageType}`);
-    console.log('- Datos completos:', JSON.stringify(data, null, 2));
+    if (!isProd) {
+      console.log('[WASSENGER] ✅ PROCESANDO MENSAJE VÁLIDO:');
+      console.log(`- Usuario: ${userId}`);
+      console.log(`- Nombre: ${name}`);
+      console.log(`- Texto: "${text}"`);
+      console.log(`- Tipo: ${messageType}`);
+      console.log('- Datos completos:', JSON.stringify(data, null, 2));
+    }
 
     // Perfil/memoria
     const current = await loadProfile(userId) || {};
@@ -347,7 +363,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Si no tenemos nombre guardado, intentar extraerlo
     if (!detectedName && name) {
       detectedName = cleanWhatsAppName(name);
-      console.log(`[WASSENGER] Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
+      if (!isProd) {
+        console.log(`[WASSENGER] Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
+      }
     }
     
     // También intentar detectar nombre del mensaje si es primera vez
@@ -355,7 +373,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const nameFromMessage = extractNameFromMessage(text);
       if (nameFromMessage) {
         detectedName = nameFromMessage;
-        console.log(`[WASSENGER] Nombre detectado del mensaje: "${nameFromMessage}"`);
+        if (!isProd) {
+          console.log(`[WASSENGER] Nombre detectado del mensaje: "${nameFromMessage}"`);
+        }
       }
     }
     
@@ -365,7 +385,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const emailMatch = text.match(emailRegex);
     if (emailMatch && !detectedEmail) {
       detectedEmail = emailMatch[0].toLowerCase();
-      console.log(`[WASSENGER] 📧 Email detectado automáticamente: "${detectedEmail}"`);
+      if (!isProd) {
+        console.log(`[WASSENGER] 📧 Email detectado automáticamente: "${detectedEmail}"`);
+      }
     }
     
     const profile = {
@@ -387,15 +409,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     await saveProfile(userId, profile);
 
     // 🧹 Limpiar flag temporal "justConfirmed" si han pasado más de 10 minutos
-    if (profile.justConfirmed && profile.justConfirmedAt) {
-      const confirmedTime = new Date(profile.justConfirmedAt).getTime();
-      const now = new Date().getTime();
-      const minutesPassed = (now - confirmedTime) / (1000 * 60);
-      
-      if (minutesPassed > 10) {
-        console.log('[WASSENGER] 🧹 Limpiando flag justConfirmed (pasaron', minutesPassed.toFixed(1), 'minutos)');
+    if (profile.justConfirmed && profile.justConfirmedUntil) {
+      const expiresAt = new Date(profile.justConfirmedUntil).getTime();
+      const now = Date.now();
+      if (now > expiresAt) {
+        console.log('[WASSENGER] 🧹 Fin de periodo justConfirmed, limpiando en DB');
+        await clearJustConfirmed(userId);
         profile.justConfirmed = false;
-        await saveProfile(userId, profile);
       }
     }
 

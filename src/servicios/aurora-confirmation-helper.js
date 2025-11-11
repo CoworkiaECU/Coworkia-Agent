@@ -4,7 +4,7 @@
  */
 
 import { generateConfirmationMessage } from './confirmation-flow.js';
-import { savePendingConfirmation } from '../perfiles-interacciones/memoria.js';
+import { savePendingConfirmation, getPaymentInfo } from '../perfiles-interacciones/memoria.js';
 import { checkAvailability } from './calendario.js';
 
 /**
@@ -304,27 +304,74 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
 }
 
 /**
+ * 💰 Modifica respuesta de Aurora para usuarios recurrentes (ya no gratis)
+ */
+export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
+  // Solo modificar si el usuario ya usó su día gratis
+  if (!userProfile.freeTrialUsed) {
+    return originalResponse; // Usuario nuevo, no modificar
+  }
+
+  // Detectar si Aurora está ofreciendo algo relacionado con reservas
+  const reservationPatterns = [
+    /reserva/i,
+    /agendar/i,
+    /espacio/i,
+    /hot\s*desk/i,
+    /sala.*reun/i,
+    /cuando.*quieres.*venir/i,
+    /disponibilidad/i,
+    /horario/i
+  ];
+
+  const isReservationRelated = reservationPatterns.some(pattern => pattern.test(originalResponse));
+  
+  if (!isReservationRelated) {
+    return originalResponse; // No es sobre reservas, no modificar
+  }
+
+  // Si ya menciona precios, no duplicar
+  if (originalResponse.includes('$') || originalResponse.includes('precio') || originalResponse.includes('pagar')) {
+    return originalResponse; // Ya menciona precios
+  }
+
+  // Agregar información de precios para usuario recurrente
+  const pricingInfo = `\n\n💰 *Recordatorio:* Ya usaste tu día gratis${userProfile.freeTrialDate ? ` el ${userProfile.freeTrialDate}` : ''}. Ahora aplican nuestras tarifas:
+
+🏢 *Hot Desk:* $4 USD por hora
+🏢 *Sala Reuniones:* $8 USD por hora (+ $2 por persona extra si son más de 4)
+
+💳 *Pago fácil:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+🏦 *Transferencia:* Banco Pichincha, Cta 2207158516`;
+
+  return originalResponse + pricingInfo;
+}
+
+/**
  * 🧠 Modifica respuesta de Aurora para incluir confirmación si es necesario
  */
 export async function enhanceAuroraResponse(originalResponse, userProfile) {
   try {
-    // Solo procesar si Aurora sugiere una confirmación
-    if (!shouldActivateConfirmation(originalResponse)) {
+    // 1. Primero, mejorar respuesta para usuarios recurrentes
+    let enhancedResponse = enhanceRecurrentUserResponse(originalResponse, userProfile);
+
+    // 2. Luego, procesar confirmaciones si es necesario
+    if (!shouldActivateConfirmation(enhancedResponse)) {
       return {
-        enhanced: false,
-        finalMessage: originalResponse
+        enhanced: enhancedResponse !== originalResponse, // True si se modificó para usuario recurrente
+        finalMessage: enhancedResponse
       };
     }
 
     console.log('[Confirmation Helper] Aurora quiere activar confirmación, procesando...');
 
-    const confirmationResult = await processAuroraConfirmationRequest(originalResponse, userProfile);
+    const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile);
 
     if (!confirmationResult.success) {
       console.log('[Confirmation Helper] Error:', confirmationResult.error);
       return {
-        enhanced: false,
-        finalMessage: originalResponse,
+        enhanced: enhancedResponse !== originalResponse,
+        finalMessage: enhancedResponse,
         error: confirmationResult.error
       };
     }

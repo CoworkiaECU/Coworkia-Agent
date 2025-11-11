@@ -6,6 +6,11 @@ import crypto from 'crypto';
  * Previene requests no autorizados al webhook
  */
 export function validateWebhookSignature(req, res, next) {
+  // 🚨 TEMPORALMENTE DESHABILITADO - Wassenger no envía firma HMAC compatible
+  console.log('[WEBHOOK-SECURITY] 🔓 Validación HMAC deshabilitada temporalmente');
+  return next();
+
+  /* CÓDIGO ORIGINAL - REACTIVAR CUANDO WASSENGER TENGA FIRMA HMAC
   // Solo aplicar en producción
   if (process.env.NODE_ENV !== 'production') {
     console.log('[WEBHOOK-SECURITY] 🔓 Modo desarrollo - validación HMAC desactivada');
@@ -27,8 +32,9 @@ export function validateWebhookSignature(req, res, next) {
       success: false,
       error: 'Unauthorized - Missing signature'
     });
-  }
+  }*/
 
+  /* CÓDIGO COMENTADO TEMPORALMENTE
   try {
     // Generar HMAC del body
     const hmac = crypto.createHmac('sha256', webhookSecret);
@@ -59,6 +65,7 @@ export function validateWebhookSignature(req, res, next) {
       error: 'Internal server error'
     });
   }
+  */
 }
 
 /**

@@ -234,7 +234,9 @@ ${availability.suggestions ? '💡 **Alternativas disponibles:**\n' + availabili
     // 3. Actualizar perfil del usuario
     await updateUser(userProfile.userId, {
       pendingConfirmation: null,
-      lastReservation: reservationResult.reservation
+      lastReservation: reservationResult.reservation,
+      justConfirmed: true, // Flag temporal para evitar flujo paralelo inmediato
+      justConfirmedAt: new Date().toISOString()
     });
 
     // 4. Si es gratis, enviar email y confirmar

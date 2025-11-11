@@ -386,6 +386,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Guardar perfil actualizado
     await saveProfile(userId, profile);
 
+    // 🧹 Limpiar flag temporal "justConfirmed" si han pasado más de 10 minutos
+    if (profile.justConfirmed && profile.justConfirmedAt) {
+      const confirmedTime = new Date(profile.justConfirmedAt).getTime();
+      const now = new Date().getTime();
+      const minutesPassed = (now - confirmedTime) / (1000 * 60);
+      
+      if (minutesPassed > 10) {
+        console.log('[WASSENGER] 🧹 Limpiando flag justConfirmed (pasaron', minutesPassed.toFixed(1), 'minutos)');
+        profile.justConfirmed = false;
+        await saveProfile(userId, profile);
+      }
+    }
+
     // 🆕 Guardar mensaje del usuario en historial
     await saveConversationMessage(userId, {
       role: 'user',

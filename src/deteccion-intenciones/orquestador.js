@@ -119,6 +119,12 @@ function construirContextoPerfil(perfil = {}) {
     }
   }
 
+  // 🆕 Flag de reserva recién confirmada (temporal)
+  if (perfil.justConfirmed) {
+    lineas.push(`- RESERVA RECIÉN CONFIRMADA: SÍ → NO iniciar nuevo flujo, conversación completada exitosamente`);
+    lineas.push(`- Confirmada en: ${perfil.justConfirmedAt || 'hace momentos'}`);
+  }
+
   // 🆕 Información sobre uso del día gratis
   if (perfil.freeTrialUsed !== undefined) {
     if (perfil.freeTrialUsed) {

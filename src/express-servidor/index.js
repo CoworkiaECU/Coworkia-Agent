@@ -9,6 +9,9 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 
+// 🗄️ Inicializar SQLite Database
+import databaseService from '../database/database.js';
+
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
 import aiRouter from './endpoints-api/ai.js';
@@ -62,7 +65,24 @@ app.use((req, res) => {
   res.status(404).json({ ok: false, error: 'Not Found' });
 });
 
-// Arranque
-app.listen(PORT, () => {
-  console.log(`> Coworkia Agent listo en http://localhost:${PORT}`);
-});
+// 🚀 Inicializar base de datos antes de arrancar servidor
+async function startServer() {
+  try {
+    console.log('🗄️ Inicializando base de datos SQLite...');
+    await databaseService.initialize();
+    console.log('✅ Base de datos SQLite inicializada correctamente');
+    
+    // Arrancar servidor después de DB
+    app.listen(PORT, () => {
+      console.log(`> Coworkia Agent listo en http://localhost:${PORT}`);
+      console.log(`> SQLite Database: ${process.env.DATABASE_URL || './data/coworkia.db'}`);
+    });
+    
+  } catch (error) {
+    console.error('💥 Error inicializando aplicación:', error);
+    process.exit(1);
+  }
+}
+
+// Iniciar la aplicación
+startServer();

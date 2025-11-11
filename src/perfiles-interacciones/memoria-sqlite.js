@@ -422,7 +422,7 @@ export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
 export async function loadConversationHistory(userId, limit = 10) {
   try {
     const interactions = await databaseService.all(
-      'SELECT * FROM interactions WHERE user_phone = ? ORDER BY created_at DESC LIMIT ?',
+      'SELECT * FROM interactions WHERE user_phone = ? ORDER BY timestamp DESC LIMIT ?',
       [userId, limit]
     );
     return interactions.reverse(); // Orden cronológico
@@ -439,10 +439,13 @@ export async function loadConversationHistory(userId, limit = 10) {
 export async function saveConversationMessage(userId, message, role = 'user') {
   try {
     await saveInteraction({
-      user_phone: userId,
-      event: 'message',
-      data: { message, role },
-      timestamp: new Date().toISOString()
+      userId: userId,  // Corregido: usar userId en lugar de user_phone
+      agent: 'aurora',
+      agentName: 'Aurora',
+      intentReason: 'conversation',
+      input: role === 'user' ? message : '',
+      output: role === 'assistant' ? message : '',
+      meta: { role, timestamp: new Date().toISOString() }
     });
     return true;
   } catch (error) {

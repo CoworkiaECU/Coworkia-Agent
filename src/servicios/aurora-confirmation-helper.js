@@ -111,14 +111,41 @@ export function extractReservationData(message, userProfile) {
       }
     }
 
+    // 🔧 FIX: Lógica de precios para Hot Desk
+    const isFirstTimeUser = !userProfile.freeTrialUsed;
+    const basePrice = 4.0; // $4 USD por hora
+    let totalPrice = 0;
+    let wasFree = false;
+    
+    if (isFirstTimeUser && durationHours <= 2) {
+      // Primera visita hasta 2 horas: GRATIS
+      totalPrice = 0;
+      wasFree = true;
+    } else if (isFirstTimeUser && durationHours > 2) {
+      // Primera visita más de 2h: Gratis las primeras 2h, pagar el resto
+      const paidHours = durationHours - 2;
+      totalPrice = paidHours * basePrice;
+      wasFree = false; // No completamente gratis
+    } else {
+      // Cliente recurrente: pagar todas las horas
+      totalPrice = durationHours * basePrice;
+      wasFree = false;
+    }
+    
+    // Si hay precio explícito en el mensaje, usar ese
+    if (priceMatch) {
+      totalPrice = parseFloat(priceMatch[1]);
+      wasFree = false;
+    }
+
     return {
       date: reservationDate,
       startTime,
       endTime,
       durationHours,
       serviceType: 'hotDesk',
-      totalPrice: priceMatch ? parseFloat(priceMatch[1]) : 8.40,
-      wasFree: !userProfile.freeTrialUsed, // Solo Hot Desk puede ser gratis en primera visita
+      totalPrice,
+      wasFree,
       userId: userProfile.userId,
       userName: userProfile.name || 'Cliente'
     };

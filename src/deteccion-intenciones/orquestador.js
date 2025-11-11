@@ -94,16 +94,14 @@ function construirContextoPerfil(perfil = {}) {
 
   const lineas = ['PERFIL USUARIO:'];
   
-  // 🆕 Información del nombre detectado para saludo personalizado
+  // 🆕 Información del nombre (sin saludos automáticos)
   if (perfil.name) {
     lineas.push(`- Nombre detectado: ${perfil.name} ✅`);
-    lineas.push(`- SALUDO PERSONALIZADO: "¡Hola ${perfil.name}, soy Aurora! 👩🏼‍💼✨"`);
     if (perfil.whatsappDisplayName && perfil.whatsappDisplayName !== perfil.name) {
       lineas.push(`- WhatsApp muestra: "${perfil.whatsappDisplayName}"`);
     }
   } else {
     lineas.push(`- Nombre: No detectado`);
-    lineas.push(`- SALUDO GENÉRICO: "¡Hola, soy Aurora! 👩🏼‍💼✨"`);
   }
   
   if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);
@@ -113,11 +111,11 @@ function construirContextoPerfil(perfil = {}) {
   // 🆕 Información de primera visita vs cliente recurrente
   if (perfil.firstVisit !== undefined) {
     if (perfil.firstVisit) {
-      lineas.push(`- Primera visita: SÍ → Usa saludo de presentación profesional como Aurora`);
+      lineas.push(`- Primera visita: SÍ → Solo SI ES SALUDO INICIAL usa presentación como Aurora`);
       lineas.push(`- Ofrecer día gratis SOLO si pregunta por servicios (no agresivamente)`);
     } else {
-      lineas.push(`- Cliente recurrente: Ya conoce Coworkia, saludo más directo y familiar`);
-      lineas.push(`- NO ofrecer día gratis (ya lo usó antes)`);
+      lineas.push(`- Cliente recurrente: Ya me conoce, NO saludos repetitivos`);
+      lineas.push(`- Ve directo al grano, NO ofrecer día gratis (ya lo usó antes)`);
     }
   }
 

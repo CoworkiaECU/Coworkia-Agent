@@ -314,6 +314,12 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
  * 💰 Modifica respuesta de Aurora para usuarios recurrentes (ya no gratis)
  */
 export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
+  // 🚨 CRÍTICO: NO mostrar precios si acaba de confirmar reserva
+  if (userProfile.justConfirmed) {
+    console.log('[Enhancement] Usuario acaba de confirmar, NO agregar precios');
+    return originalResponse; // Confirmación reciente, no modificar
+  }
+
   // Solo modificar si el usuario ya usó su día gratis
   if (!userProfile.freeTrialUsed) {
     return originalResponse; // Usuario nuevo, no modificar

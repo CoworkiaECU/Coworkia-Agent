@@ -105,7 +105,8 @@ export function generateConfirmationMessage(reservationData, userProfile) {
     serviceType,
     durationHours,
     totalPrice,
-    wasFree
+    wasFree,
+    guestCount = 0
   } = reservationData;
   
   const userName = userProfile.name ? `, ${userProfile.name}` : '';
@@ -122,6 +123,12 @@ export function generateConfirmationMessage(reservationData, userProfile) {
   // Solo Hot Desk puede ser gratis, sala de reuniones NUNCA
   const isActuallyFree = wasFree && serviceType === 'hotDesk';
   
+  // Información de acompañantes
+  const totalPeople = 1 + guestCount;
+  const peopleInfo = guestCount > 0 ? 
+    `👥 *Personas:* ${totalPeople} (tú + ${guestCount} acompañante${guestCount > 1 ? 's' : ''})` : 
+    `👥 *Personas:* Solo tú`;
+  
   if (isActuallyFree) {
     return `¡Perfecto${userName}! 🎉
 
@@ -130,6 +137,7 @@ export function generateConfirmationMessage(reservationData, userProfile) {
 📅 *Fecha:* ${formattedDate}
 ⏰ *Horario:* ${startTime} - ${endTime} 
 🏢 *Espacio:* ${serviceName}
+${peopleInfo}
 ⏱️ *Duración:* ${durationHours} hora${durationHours > 1 ? 's' : ''}
 💰 *Precio:* ¡GRATIS! (primera vez)
 
@@ -144,7 +152,8 @@ Responde *SI* para confirmar o *NO* para cancelar 👍`;
 
 📅 *Fecha:* ${formattedDate}
 ⏰ *Horario:* ${startTime} - ${endTime}
-🏢 *Espacio:* ${serviceName}  
+🏢 *Espacio:* ${serviceName}
+${peopleInfo}
 ⏱️ *Duración:* ${durationHours} hora${durationHours > 1 ? 's' : ''}
 💰 *Total:* $${totalPrice} USD
 

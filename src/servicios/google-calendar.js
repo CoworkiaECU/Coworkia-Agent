@@ -103,10 +103,19 @@ export async function createCalendarEvent(reservationData) {
     endDateTime.setHours(endHour, endMinute, 0);
     endDateTime.setUTCHours(endDateTime.getHours() + 5); // Ajustar a UTC
 
-    // Formato del título con acompañantes
+    // 🎯 Formato del título con nombres correctos de servicios
     const guestCount = reservationData.guestCount || 0;
     const guestSuffix = guestCount > 0 ? ` +${guestCount}` : '';
-    const eventTitle = `${serviceType} ${userName}${guestSuffix}`;
+    
+    // Convertir serviceType a nombres legibles
+    const serviceNames = {
+      'hotDesk': 'Hot Desk',
+      'meetingRoom': 'Sala de Reuniones',
+      'privateOffice': 'Oficina Privada'
+    };
+    
+    const serviceName = serviceNames[serviceType] || serviceType;
+    const eventTitle = `${serviceName} ${userName}${guestSuffix}`;
     
     // Definir el evento (Google generará ID automáticamente)
     const event = {
@@ -116,7 +125,7 @@ export async function createCalendarEvent(reservationData) {
 
 👤 Cliente: ${userName}
 📧 Email: ${email}
-🏢 Espacio: ${serviceType}
+🏢 Espacio: ${serviceName}
 👥 Personas: ${1 + guestCount} (cliente + ${guestCount} acompañantes)
 ⏱️ Duración: ${duration || '2 horas'}
 💰 Precio: ${price ? `$${price} USD` : 'GRATIS (primera vez)'}

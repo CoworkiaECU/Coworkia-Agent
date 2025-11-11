@@ -30,6 +30,25 @@ export function shouldActivateConfirmation(message) {
  */
 export function extractReservationData(message, userProfile) {
   try {
+    // 🎯 DETECTAR TIPO DE SERVICIO DESDE EL MENSAJE
+    let serviceType = 'hotDesk'; // Por defecto Hot Desk
+    const guestCount = extractGuestCount(message);
+    
+    // Detectar sala de reunión
+    const meetingRoomPatterns = [
+      /sala\s+de\s+reun(ión|ion)/i,
+      /meeting\s+room/i,
+      /sala\s+reun(ión|ion)/i,
+      /espacio\s+para\s+reun(ión|ion)/i,
+      /sala\s+privada/i,
+      /reunirse/i
+    ];
+    
+    if (meetingRoomPatterns.some(pattern => pattern.test(message))) {
+      serviceType = 'meetingRoom';
+      console.log('[DEBUG] 🏢 DETECTADO: Sala de Reunión solicitada');
+    }
+
     // Buscar patrones de fecha y hora en la respuesta
     const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|hoy|lunes|martes|miércoles|jueves|viernes|sábado|domingo)/i);
     
@@ -111,41 +130,24 @@ export function extractReservationData(message, userProfile) {
       }
     }
 
-    // 🔧 FIX: Lógica de precios para Hot Desk
-    const isFirstTimeUser = !userProfile.freeTrialUsed;
-    const basePrice = 4.0; // $4 USD por hora
-    let totalPrice = 0;
-    let wasFree = false;
-    
-    if (isFirstTimeUser && durationHours <= 2) {
-      // Primera visita hasta 2 horas: GRATIS
-      totalPrice = 0;
-      wasFree = true;
-    } else if (isFirstTimeUser && durationHours > 2) {
-      // Primera visita más de 2h: Gratis las primeras 2h, pagar el resto
-      const paidHours = durationHours - 2;
-      totalPrice = paidHours * basePrice;
-      wasFree = false; // No completamente gratis
-    } else {
-      // Cliente recurrente: pagar todas las horas
-      totalPrice = durationHours * basePrice;
-      wasFree = false;
-    }
-    
-    // Si hay precio explícito en el mensaje, usar ese
-    if (priceMatch) {
-      totalPrice = parseFloat(priceMatch[1]);
-      wasFree = false;
-    }
+    // 🔧 CÁLCULO AUTOMÁTICO DE PRECIOS SEGÚN SERVICIO
+    const { totalPrice, wasFree } = calculateServicePrice(
+      serviceType, 
+      durationHours, 
+      guestCount, 
+      userProfile, 
+      priceMatch
+    );
 
     return {
       date: reservationDate,
       startTime,
       endTime,
       durationHours,
-      serviceType: 'hotDesk',
+      serviceType, // 🎯 Ahora detecta correctamente hotDesk o meetingRoom
       totalPrice,
       wasFree,
+      guestCount,
       userId: userProfile.userId,
       userName: userProfile.name || 'Cliente'
     };
@@ -340,6 +342,95 @@ export async function enhanceAuroraResponse(originalResponse, userProfile) {
       enhanced: false,
       finalMessage: originalResponse,
       error: error.message
+    };
+  }
+}
+
+/**
+ * 👥 Extrae número de acompañantes del mensaje
+ */
+function extractGuestCount(message) {
+  const guestPatterns = [
+    /(\d+)\s*personas?/i,
+    /somos\s+(\d+)/i,
+    /(\d+)\s*acompañantes?/i,
+    /\+(\d+)/i,
+    /con\s+(\d+)/i
+  ];
+  
+  for (const pattern of guestPatterns) {
+    const match = message.match(pattern);
+    if (match) {
+      const count = parseInt(match[1]);
+      return Math.max(0, count - 1); // Restar 1 porque el cliente no cuenta como acompañante
+    }
+  }
+  
+  return 0; // Sin acompañantes por defecto
+}
+
+/**
+ * 💰 Calcula precio automáticamente según tipo de servicio
+ */
+function calculateServicePrice(serviceType, durationHours, guestCount, userProfile, priceMatch) {
+  const isFirstTimeUser = !userProfile.freeTrialUsed;
+  
+  // Si hay precio explícito en el mensaje de Aurora, usar ese
+  if (priceMatch) {
+    return {
+      totalPrice: parseFloat(priceMatch[1]),
+      wasFree: false
+    };
+  }
+  
+  // SALA DE REUNIÓN - NUNCA GRATIS, SIEMPRE PAGADA
+  if (serviceType === 'meetingRoom') {
+    const baseRoomPrice = 8.0; // $8 USD por hora base
+    const guestFee = 2.0; // $2 USD por acompañante extra (más de 4 personas)
+    
+    let totalPrice = durationHours * baseRoomPrice;
+    
+    // Cargos adicionales por acompañantes (si son más de 4 personas total)
+    const totalPeople = 1 + guestCount; // Cliente + acompañantes
+    if (totalPeople > 4) {
+      const extraPeople = totalPeople - 4;
+      totalPrice += extraPeople * guestFee * durationHours;
+    }
+    
+    console.log(`[PRICING] 🏢 Sala de Reunión: ${durationHours}h × $${baseRoomPrice} + ${guestCount > 3 ? (guestCount - 3) + ' personas extra' : 'sin extras'} = $${totalPrice}`);
+    
+    return {
+      totalPrice,
+      wasFree: false
+    };
+  }
+  
+  // HOT DESK - Puede ser gratis solo en primera visita
+  const baseDeskPrice = 4.0; // $4 USD por hora
+  
+  if (isFirstTimeUser && durationHours <= 2) {
+    // Primera visita hasta 2 horas: GRATIS
+    console.log('[PRICING] 🆓 Hot Desk GRATIS (primera visita, ≤2h)');
+    return {
+      totalPrice: 0,
+      wasFree: true
+    };
+  } else if (isFirstTimeUser && durationHours > 2) {
+    // Primera visita más de 2h: Gratis las primeras 2h, pagar el resto
+    const paidHours = durationHours - 2;
+    const totalPrice = paidHours * baseDeskPrice;
+    console.log(`[PRICING] 🔄 Hot Desk Mixto: 2h gratis + ${paidHours}h × $${baseDeskPrice} = $${totalPrice}`);
+    return {
+      totalPrice,
+      wasFree: false
+    };
+  } else {
+    // Cliente recurrente: pagar todas las horas
+    const totalPrice = durationHours * baseDeskPrice;
+    console.log(`[PRICING] 💰 Hot Desk Pagado: ${durationHours}h × $${baseDeskPrice} = $${totalPrice}`);
+    return {
+      totalPrice,
+      wasFree: false
     };
   }
 }

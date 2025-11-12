@@ -47,6 +47,9 @@ async function ensureUserExists(userPhone, metadata = {}) {
     }
   } catch (error) {
     console.error('[RESERVATION-STATE] ⚠️ No se pudo asegurar usuario previo a escritura:', error);
+    console.error('[RESERVATION-STATE] Error detalles:', error.message);
+    console.error('[RESERVATION-STATE] Stack:', error.stack);
+    throw error; // Propagar el error para que el flujo falle correctamente
   }
 }
 

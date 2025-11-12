@@ -464,9 +464,13 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
 
   } catch (error) {
     console.error('[Confirmation Helper] Error procesando solicitud:', error);
+    console.error('[Confirmation Helper] Stack trace:', error.stack);
+    console.error('[Confirmation Helper] Error name:', error.name);
+    console.error('[Confirmation Helper] Error message:', error.message);
     return {
       success: false,
-      error: 'Error interno procesando confirmación'
+      error: 'Error interno procesando confirmación',
+      userMessage: `¡Ups! 😅 Tuve un problema técnico procesando tu reserva.\n\n¿Podrías intentar de nuevo o probar con otro horario? 🔄`
     };
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import confirmationFlowService from './confirmation-flow.js';
-import { getDatabase } from '../memoria/memoria-sqlite.js';
+import databaseService from '../database/database.js';
 import calendario from './calendario.js';
 import { 
   validateReservation, 

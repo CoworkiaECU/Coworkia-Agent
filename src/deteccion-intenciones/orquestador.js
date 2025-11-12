@@ -20,9 +20,10 @@ export const AGENTES = {
  * @param {string} mensaje - Mensaje del usuario
  * @param {object} perfil - Perfil del usuario (opcional)
  * @param {array} historial - Últimas interacciones (opcional)
+ * @param {object} formData - Datos del formulario parcial (opcional)
  * @returns {object} { agente, systemPrompt, prompt, metadata }
  */
-export function procesarMensaje(mensaje, perfil = {}, historial = []) {
+export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = null) {
   // 1. Detectar intención y agente apropiado
   const intencion = detectarIntencion(mensaje);
   const agente = AGENTES[intencion.agent];
@@ -37,11 +38,16 @@ export function procesarMensaje(mensaje, perfil = {}, historial = []) {
   // 3. Construir contexto de historial
   const contextoHistorial = construirContextoHistorial(historial);
 
-  // 4. Construir prompt completo con contexto
+  // 4. 🧠 Construir contexto de formulario parcial
+  const contextoFormulario = formData ? construirContextoFormulario(formData) : '';
+
+  // 5. Construir prompt completo con contexto
   const prompt = `
 ${contextoUsuario}
 
 ${contextoHistorial}
+
+${contextoFormulario}
 
 MENSAJE ACTUAL DEL USUARIO:
 ${mensaje}
@@ -49,6 +55,8 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${formData ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
+${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
 - Si es primera visita, menciona el día gratis (solo Aurora)
 - Si detectas cambio de tema que requiere otro agente, deriva apropiadamente
 - Máximo 4-5 líneas, excepto casos que requieran más detalle
@@ -196,6 +204,44 @@ function construirContextoHistorial(historial = []) {
   // Detectar si hay preguntas sin resolver
   if (lastUserMessage && lastUserMessage.content.includes('?')) {
     lineas.push('- Asegúrate de responder la pregunta actual del usuario');
+  }
+
+  return lineas.join('\n');
+}
+
+/**
+ * 🧠 Construye contexto del formulario parcial de reserva
+ */
+function construirContextoFormulario(formData) {
+  if (!formData || !formData.form) {
+    return '';
+  }
+
+  const { form, summary, needsMoreInfo, nextQuestion } = formData;
+  const lineas = ['🧠 FORMULARIO PARCIAL DE RESERVA (datos ya proporcionados):'];
+
+  if (summary) {
+    lineas.push(summary);
+  }
+
+  const missing = form.getMissingFields();
+  if (missing.length > 0) {
+    lineas.push('\n❓ DATOS FALTANTES:');
+    const fieldNames = {
+      spaceType: 'Tipo de espacio (Hot Desk o Sala)',
+      date: 'Fecha de la visita',
+      time: 'Hora de llegada',
+      email: 'Correo electrónico'
+    };
+    missing.forEach(field => {
+      lineas.push(`- ${fieldNames[field] || field}`);
+    });
+  }
+
+  if (needsMoreInfo && nextQuestion) {
+    lineas.push(`\n💡 PREGUNTA SIGUIENTE: ${nextQuestion}`);
+  } else if (!needsMoreInfo) {
+    lineas.push('\n✅ FORMULARIO COMPLETO - Proceder con validación y confirmación');
   }
 
   return lineas.join('\n');

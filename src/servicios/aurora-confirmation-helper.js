@@ -127,24 +127,33 @@ export function extractReservationData(message, userProfile) {
 
     const reservationDate = dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0];
     
-    // 🚨 VALIDACIÓN: Usar zona horaria de Ecuador (UTC-5)
+    // 🚨 VALIDACIÓN: Usar zona horaria de Ecuador (America/Guayaquil) con Intl
     const now = new Date();
-    const ecuadorOffset = -5 * 60; // Ecuador es UTC-5
-    const ecuadorTime = new Date(now.getTime() + (ecuadorOffset * 60 * 1000));
-    const reservationDateTime = new Date(`${reservationDate}T${startTime}:00`);
+    const ecuadorFormatter = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
     
-    console.log('[VALIDATION] Hora Ecuador actual:', ecuadorTime.toTimeString());
+    const ecuadorParts = ecuadorFormatter.formatToParts(now);
+    const ecuadorHour = parseInt(ecuadorParts.find(p => p.type === 'hour').value);
+    const ecuadorDate = `${ecuadorParts.find(p => p.type === 'year').value}-${ecuadorParts.find(p => p.type === 'month').value}-${ecuadorParts.find(p => p.type === 'day').value}`;
+    
+    console.log('[VALIDATION] Hora Ecuador actual:', ecuadorHour, '- Fecha:', ecuadorDate);
     console.log('[VALIDATION] Horario solicitado:', startTime, 'fecha:', reservationDate);
     
     // Solo validar si es el mismo día
-    if (reservationDate === ecuadorTime.toISOString().split('T')[0]) {
-      const currentEcuadorHour = ecuadorTime.getHours();
+    if (reservationDate === ecuadorDate) {
       const requestedHour = parseInt(startTime.split(':')[0]);
       
-      if (requestedHour <= currentEcuadorHour) {
-        console.warn('[VALIDATION] Horario en el pasado detectado Ecuador:', startTime, 'actual Ecuador:', currentEcuadorHour);
+      if (requestedHour <= ecuadorHour) {
+        console.warn('[VALIDATION] Horario en el pasado detectado Ecuador:', startTime, 'actual Ecuador:', ecuadorHour);
         // Ajustar a próxima hora disponible en Ecuador
-        const nextHour = currentEcuadorHour + 1;
+        const nextHour = ecuadorHour + 1;
         startTime = `${nextHour.toString().padStart(2, '0')}:00`;
         const endHour = nextHour + durationHours;
         endTime = `${endHour.toString().padStart(2, '0')}:00`;
@@ -218,20 +227,35 @@ function normalizeTimeFormat(timeStr) {
 }
 
 /**
- * �📅 Parsea fecha en diferentes formatos
+ * 📅 Parsea fecha en diferentes formatos (timezone-aware para Ecuador)
  */
 function parseDate(dateStr) {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Obtener fecha actual en timezone Ecuador
+  const formatter = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  const today = `${year}-${month}-${day}`;
+  
+  // Calcular mañana
+  const tomorrowDate = new Date(`${today}T12:00:00`);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split('T')[0];
 
   // Manejar términos relativos
   if (/mañana/i.test(dateStr)) {
-    return tomorrow.toISOString().split('T')[0];
+    return tomorrow;
   }
   
   if (/hoy/i.test(dateStr)) {
-    return today.toISOString().split('T')[0];
+    return today;
   }
 
   // Manejar días de la semana (simplificado - próximo día)

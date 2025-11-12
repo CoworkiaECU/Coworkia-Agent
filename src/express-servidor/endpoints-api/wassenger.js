@@ -7,6 +7,7 @@ import { processConfirmationResponse, hasPendingConfirmation } from '../../servi
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
+import { processMessageWithForm } from '../../servicios/partial-reservation-form.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -467,6 +468,36 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       });
     }
 
+    // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente
+    console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
+    const formResult = await processMessageWithForm(userId, text);
+    
+    if (formResult.updates && Object.keys(formResult.updates).length > 0) {
+      console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
+      
+      // Actualizar perfil con datos detectados
+      if (formResult.updates.email && !profile.email) {
+        profile.email = formResult.updates.email;
+        await saveProfile(userId, profile);
+      }
+    }
+    
+    // 💡 LÓGICA DE UPSELL: Si mencionó personas y pidió hot desk, sugerir sala
+    let upsellMessage = null;
+    if (formResult.form.spaceType === 'hotDesk' && formResult.form.numPeople >= 3) {
+      console.log('[WASSENGER] 💡 Upsell detectado: 3+ personas con hot desk');
+      upsellMessage = `
+¡Nota! Veo que vienen ${formResult.form.numPeople} personas 👥
+
+Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 personas):
+✅ Espacio privado
+✅ Más cómodo para trabajar en equipo
+✅ Incluye pizarra y pantalla
+
+¿Prefieres cambiar a la sala o mantenemos el hot desk? 🤔
+`.trim();
+    }
+
     // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS PRIMERO
     const campaignCheck = detectCampaignMessage(text);
     let reply;
@@ -493,8 +524,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         firstVisit: profile.firstVisit
       });
       
-      // Procesar mensaje con orquestador (ahora con historial)
-      resultado = procesarMensaje(text, profile, conversationHistory);
+      // Procesar mensaje con orquestador (ahora con historial + formulario)
+      resultado = procesarMensaje(text, profile, conversationHistory, formResult);
       
       console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
         promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
@@ -509,7 +540,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       });
     }
 
-    // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
+    // � Agregar mensaje de upsell si aplica (ANTES de Aurora response)
+    if (upsellMessage && !campaignCheck.detected) {
+      reply = `${reply}\n\n${upsellMessage}`;
+    }
+
+    // �🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
     let finalReply = reply;
     let confirmationActivated = false;
     

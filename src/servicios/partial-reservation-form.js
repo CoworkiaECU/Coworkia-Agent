@@ -1,0 +1,345 @@
+/**
+ * 🧠 Formulario Parcial de Reserva Inteligente
+ * 
+ * Permite a Aurora "recordar" datos entre mensajes y completar
+ * progresivamente la información de reserva sin obligar al usuario
+ * a seguir un orden estricto.
+ * 
+ * El usuario puede mencionar datos en cualquier orden:
+ * - "quiero un hot desk para hoy, mi correo es yo@diegovillota.com"
+ * - "mañana a las 3pm"
+ * - "voy con 2 personas más"
+ * 
+ * Aurora completa el formulario progresivamente y pregunta solo
+ * lo que falta.
+ */
+
+import { getPendingConfirmation, savePendingConfirmation, clearPendingConfirmation } from '../database/reservation-state.js';
+
+// TTL del formulario: 15 minutos (tiempo razonable para completar reserva)
+const FORM_TTL_SECONDS = 15 * 60;
+
+/**
+ * 🎯 Clase que representa un formulario parcial de reserva
+ */
+export class PartialReservationForm {
+  constructor(userId, existingData = {}) {
+    this.userId = userId;
+    this.spaceType = existingData.spaceType || null;      // 'hotDesk' | 'meetingRoom'
+    this.date = existingData.date || null;                // '2025-11-12'
+    this.time = existingData.time || null;                // '10:00'
+    this.email = existingData.email || null;              // 'yo@diegovillota.com'
+    this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
+    this.durationHours = existingData.durationHours || 2; // default 2h
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * 📋 Actualiza un campo del formulario
+   */
+  updateField(field, value) {
+    if (this[field] !== undefined) {
+      this[field] = value;
+      this.updatedAt = new Date();
+      console.log(`[FORM] 📝 Campo actualizado: ${field} = ${value}`);
+    }
+  }
+
+  /**
+   * 📊 Actualiza múltiples campos a la vez
+   */
+  updateFields(data) {
+    Object.keys(data).forEach(key => {
+      if (this[key] !== undefined && data[key] !== null && data[key] !== undefined) {
+        this[key] = data[key];
+      }
+    });
+    this.updatedAt = new Date();
+    console.log('[FORM] 📝 Múltiples campos actualizados:', Object.keys(data));
+  }
+
+  /**
+   * ❓ Obtiene lista de campos faltantes
+   */
+  getMissingFields() {
+    const missing = [];
+    
+    if (!this.spaceType) missing.push('spaceType');
+    if (!this.date) missing.push('date');
+    if (!this.time) missing.push('time');
+    if (!this.email) missing.push('email');
+    
+    return missing;
+  }
+
+  /**
+   * ✅ Verifica si el formulario está completo
+   */
+  isComplete() {
+    return this.getMissingFields().length === 0;
+  }
+
+  /**
+   * 🎯 Genera pregunta inteligente para el siguiente campo faltante
+   */
+  getNextQuestion() {
+    const missing = this.getMissingFields();
+    
+    if (missing.length === 0) {
+      return null; // Formulario completo
+    }
+
+    const field = missing[0];
+    const userName = this.userName || '';
+
+    switch(field) {
+      case 'spaceType':
+        return `¿Qué espacio necesitas${userName}? Tenemos:\n\n📍 Hot Desk ($10/2h)\n🏢 Sala de Reuniones (3-4 personas, $29/2h)`;
+      
+      case 'date':
+        return `¿Para qué día${userName}? Puedes decir "hoy", "mañana" o una fecha específica 📅`;
+      
+      case 'time':
+        return `¿A qué hora te gustaría venir? (horario: 7am - 8pm) ⏰`;
+      
+      case 'email':
+        return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
+      
+      default:
+        return `¿Podrías darme más detalles sobre tu reserva${userName}?`;
+    }
+  }
+
+  /**
+   * 📄 Genera resumen del formulario actual
+   */
+  getSummary() {
+    const parts = [];
+    
+    if (this.spaceType) {
+      const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+      parts.push(`🏢 Espacio: ${spaceName}`);
+    }
+    
+    if (this.date) {
+      parts.push(`📅 Fecha: ${this.date}`);
+    }
+    
+    if (this.time) {
+      parts.push(`⏰ Hora: ${this.time}`);
+    }
+    
+    if (this.numPeople > 1) {
+      parts.push(`👥 Personas: ${this.numPeople}`);
+    }
+    
+    if (this.email) {
+      parts.push(`📧 Email: ${this.email}`);
+    }
+
+    return parts.join('\n');
+  }
+
+  /**
+   * 💾 Convierte a objeto plano para almacenamiento
+   */
+  toJSON() {
+    return {
+      userId: this.userId,
+      spaceType: this.spaceType,
+      date: this.date,
+      time: this.time,
+      email: this.email,
+      numPeople: this.numPeople,
+      durationHours: this.durationHours,
+      updatedAt: this.updatedAt.toISOString()
+    };
+  }
+
+  /**
+   * 📂 Crea formulario desde objeto almacenado
+   */
+  static fromJSON(data) {
+    return new PartialReservationForm(data.userId, {
+      spaceType: data.spaceType,
+      date: data.date,
+      time: data.time,
+      email: data.email,
+      numPeople: data.numPeople,
+      durationHours: data.durationHours
+    });
+  }
+}
+
+/**
+ * 🔍 Obtiene o crea formulario parcial para un usuario
+ */
+export async function getOrCreateForm(userId) {
+  try {
+    const existing = await getPendingConfirmation(userId);
+    
+    if (existing && existing.formData) {
+      console.log('[FORM] 📂 Formulario existente cargado para:', userId);
+      return PartialReservationForm.fromJSON(existing.formData);
+    }
+    
+    console.log('[FORM] ✨ Nuevo formulario creado para:', userId);
+    return new PartialReservationForm(userId);
+  } catch (error) {
+    console.error('[FORM] ❌ Error obteniendo formulario:', error);
+    return new PartialReservationForm(userId);
+  }
+}
+
+/**
+ * 💾 Guarda formulario parcial en BD
+ */
+export async function saveForm(form) {
+  try {
+    await savePendingConfirmation(form.userId, {
+      formData: form.toJSON(),
+      type: 'partial_form'
+    }, FORM_TTL_SECONDS);
+    
+    console.log('[FORM] 💾 Formulario guardado para:', form.userId);
+    return true;
+  } catch (error) {
+    console.error('[FORM] ❌ Error guardando formulario:', error);
+    return false;
+  }
+}
+
+/**
+ * 🗑️ Limpia formulario parcial (cuando se completa o cancela)
+ */
+export async function clearForm(userId) {
+  try {
+    await clearPendingConfirmation(userId);
+    console.log('[FORM] 🗑️ Formulario limpiado para:', userId);
+    return true;
+  } catch (error) {
+    console.error('[FORM] ❌ Error limpiando formulario:', error);
+    return false;
+  }
+}
+
+/**
+ * 🎯 Extrae datos del mensaje del usuario y actualiza formulario
+ * 
+ * Detecta menciones de:
+ * - Tipo de espacio: "hot desk", "sala de reuniones"
+ * - Fecha: "hoy", "mañana", "lunes", "12/11/2025"
+ * - Hora: "10am", "3:30pm", "15:00"
+ * - Email: "yo@diegovillota.com"
+ * - Número de personas: "voy con 2 personas", "somos 3"
+ */
+export function extractDataFromMessage(message, currentForm) {
+  const updates = {};
+  const lowerMsg = message.toLowerCase();
+
+  // 🏢 Detectar tipo de espacio
+  if (!currentForm.spaceType) {
+    if (/hot\s*desk|escritorio|puesto/i.test(message)) {
+      updates.spaceType = 'hotDesk';
+      console.log('[FORM] 🏢 Detectado: Hot Desk');
+    } else if (/sala|meeting\s*room|reuni[oó]n/i.test(message)) {
+      updates.spaceType = 'meetingRoom';
+      console.log('[FORM] 🏢 Detectado: Sala de Reuniones');
+    }
+  }
+
+  // 📅 Detectar fecha
+  if (!currentForm.date) {
+    const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|hoy|ma[ñn]ana)/i);
+    if (dateMatch) {
+      const dateText = dateMatch[1].toLowerCase();
+      const today = new Date();
+      
+      if (dateText === 'hoy') {
+        updates.date = today.toISOString().split('T')[0];
+      } else if (dateText === 'mañana' || dateText === 'manana') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        updates.date = tomorrow.toISOString().split('T')[0];
+      } else {
+        // Formato DD/MM/YYYY o DD-MM-YYYY
+        updates.date = dateText; // Se validará después
+      }
+      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+    }
+  }
+
+  // ⏰ Detectar hora
+  if (!currentForm.time) {
+    const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
+    if (timeMatch) {
+      let hour = parseInt(timeMatch[1]);
+      const minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+      const meridiem = timeMatch[3]?.toLowerCase();
+
+      if (meridiem === 'pm' && hour < 12) hour += 12;
+      if (meridiem === 'am' && hour === 12) hour = 0;
+
+      updates.time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      console.log('[FORM] ⏰ Detectado hora:', updates.time);
+    }
+  }
+
+  // 📧 Detectar email
+  if (!currentForm.email) {
+    const emailMatch = message.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+      updates.email = emailMatch[1];
+      console.log('[FORM] 📧 Detectado email:', updates.email);
+    }
+  }
+
+  // 👥 Detectar número de personas
+  const peoplePatterns = [
+    /(?:somos|vamos|iremos|voy con)\s+(\d+)/i,
+    /(\d+)\s+personas?/i,
+    /con\s+(\d+)\s+(?:personas?|acompa[ñn]antes?)/i
+  ];
+
+  for (const pattern of peoplePatterns) {
+    const match = message.match(pattern);
+    if (match) {
+      const num = parseInt(match[1]);
+      updates.numPeople = num;
+      console.log('[FORM] 👥 Detectado personas:', num);
+      break;
+    }
+  }
+
+  return updates;
+}
+
+/**
+ * 🤖 Procesa mensaje y actualiza formulario automáticamente
+ * Retorna: { form, updates, nextQuestion, needsMoreInfo }
+ */
+export async function processMessageWithForm(userId, message) {
+  // 1. Obtener o crear formulario
+  const form = await getOrCreateForm(userId);
+
+  // 2. Extraer datos del mensaje
+  const updates = extractDataFromMessage(message, form);
+
+  // 3. Actualizar formulario si hay datos nuevos
+  if (Object.keys(updates).length > 0) {
+    form.updateFields(updates);
+    await saveForm(form);
+  }
+
+  // 4. Verificar si está completo
+  const isComplete = form.isComplete();
+  const nextQuestion = isComplete ? null : form.getNextQuestion();
+
+  return {
+    form,
+    updates,
+    nextQuestion,
+    needsMoreInfo: !isComplete,
+    summary: form.getSummary()
+  };
+}

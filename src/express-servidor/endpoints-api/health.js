@@ -3,7 +3,7 @@ import { testEmailConfiguration } from '../../servicios/email.js';
 import { circuitBreakerManager } from '../../utils/circuit-breaker.js';
 import { getQueueStats } from '../../servicios/task-queue.js';
 import reservationRepository from '../../database/reservationRepository.js';
-import { scheduler } from '../../tareas-programadas/scheduler.js';
+import { getSchedulerStatus } from '../../servicios/cron-scheduler.js';
 
 const router = Router();
 
@@ -254,19 +254,18 @@ router.get('/queues', async (req, res) => {
       };
     });
     
-    // 3. Estado de cron jobs (si scheduler está disponible)
+    // 3. Estado de cron jobs
     let cronStatus = { active: false, jobs: [] };
     try {
-      if (scheduler && scheduler.getScheduledJobs) {
-        const jobs = scheduler.getScheduledJobs();
+      const schedulerStatus = getSchedulerStatus();
+      if (schedulerStatus && schedulerStatus.active > 0) {
         cronStatus = {
           active: true,
-          jobCount: jobs.length,
-          jobs: jobs.map(job => ({
+          jobCount: schedulerStatus.active,
+          jobs: schedulerStatus.jobs.map(job => ({
             id: job.id,
-            name: job.name || 'unnamed',
-            nextRun: job.nextInvocation()?.toISOString() || null,
-            lastRun: job.lastExecution || null
+            running: job.running,
+            nextRun: job.nextRun || null
           }))
         };
       }

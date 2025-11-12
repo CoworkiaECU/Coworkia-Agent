@@ -337,14 +337,15 @@ Por favor, intenta así:
       // 🎯 RESPUESTA AMIGABLE basada en el tipo de error
       let userMessage = '❌ ';
       
-      if (validation.errors.some(e => e.includes('horario'))) {
+      // FIX: validation.errors contiene objetos {valid, reason, suggestion}, no strings
+      if (validation.errors.some(err => err.reason?.includes('horario') || err.reason?.includes('Fuera del horario'))) {
         userMessage += `Ese horario no está disponible 😕
 
 📅 ¿Qué tal alguna de estas opciones?
 ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.endTime}`).join('\n')}
 
 ¿Te sirve alguna?`;
-      } else if (validation.errors.some(e => e.includes('duración'))) {
+      } else if (validation.errors.some(err => err.reason?.includes('duración') || err.reason?.includes('Duración'))) {
         userMessage += `La duración debe ser entre 1 y 8 horas 🕐
 
 ¿Cuántas horas necesitas?`;

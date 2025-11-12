@@ -16,6 +16,31 @@ const CALENDAR_CONFIG = {
   availableSpaces: ['hotDesk1', 'hotDesk2', 'hotDesk3', 'hotDesk4', 'meetingRoom1', 'privateOffice1']
 };
 
+const SERVICE_NAMES = {
+  hotDesk: 'Hot Desk',
+  meetingRoom: 'Sala de Reuniones',
+  privateOffice: 'Oficina Privada'
+};
+
+function parseCapacity(value, fallback = 1) {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const SERVICE_CAPACITY = {
+  hotDesk: parseCapacity(process.env.COWORKIA_HOTDESK_CAPACITY, 1),
+  meetingRoom: parseCapacity(process.env.COWORKIA_MEETINGROOM_CAPACITY, 1),
+  privateOffice: parseCapacity(process.env.COWORKIA_PRIVATEOFFICE_CAPACITY, 1)
+};
+
+function getServiceCapacity(serviceType) {
+  return SERVICE_CAPACITY[serviceType] > 0 ? SERVICE_CAPACITY[serviceType] : 1;
+}
+
+function getServiceName(serviceType) {
+  return SERVICE_NAMES[serviceType] || 'Espacio';
+}
+
 /**
  * 🕐 Convierte string de hora "14:30" a minutos desde medianoche
  */
@@ -56,11 +81,11 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: 'Ese horario ya pasó',
       suggestion: `¿Qué tal ${nextTime}?`,
-      alternatives: await suggestAlternatives(date, durationHours)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType)
     };
   }
-  
-  const reservations = await reservationRepository.findByDate(date);
+
+  const reservations = await reservationRepository.findByDate(date, serviceType);
   
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = startMinutes + (durationHours * 60);
@@ -73,7 +98,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
     return {
       available: false,
       reason: 'Fuera del horario laboral (7:00 AM - 8:00 PM)',
-      alternatives: await suggestAlternatives(date, durationHours)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType)
     };
   }
   
@@ -87,44 +112,72 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
     // Verificar solapamiento
     return !(endMinutes <= resStart || startMinutes >= resEnd);
   });
-  
-  if (overlappingReservations.length >= CALENDAR_CONFIG.maxSimultaneousSpaces) {
+
+  const serviceCapacity = getServiceCapacity(serviceType);
+
+  if (overlappingReservations.length >= serviceCapacity) {
     return {
       available: false,
-      reason: `Máximo ${CALENDAR_CONFIG.maxSimultaneousSpaces} espacios ocupados en ese horario`,
+      reason: `${getServiceName(serviceType)} ocupado en ese horario`,
       occupiedSpaces: overlappingReservations.length,
-      alternatives: await suggestAlternatives(date, durationHours)
+      capacity: serviceCapacity,
+      alternatives: await suggestAlternatives(date, durationHours, serviceType)
     };
+  }
+
+  // Validar límite global de espacios si aplica
+  if (CALENDAR_CONFIG.maxSimultaneousSpaces) {
+    const dayReservations = await reservationRepository.findByDate(date);
+    const overlappingAll = dayReservations.filter(res => {
+      if (res.status === 'cancelled') return false;
+      
+      const resStart = timeToMinutes(res.start_time);
+      const resEnd = timeToMinutes(res.end_time);
+      
+      return !(endMinutes <= resStart || startMinutes >= resEnd);
+    });
+
+    if (overlappingAll.length >= CALENDAR_CONFIG.maxSimultaneousSpaces) {
+      return {
+        available: false,
+        reason: `Máximo ${CALENDAR_CONFIG.maxSimultaneousSpaces} espacios ocupados en ese horario`,
+        occupiedSpaces: overlappingAll.length,
+        capacity: CALENDAR_CONFIG.maxSimultaneousSpaces,
+        alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      };
+    }
   }
   
   return {
     available: true,
     occupiedSpaces: overlappingReservations.length,
-    availableSpaces: CALENDAR_CONFIG.maxSimultaneousSpaces - overlappingReservations.length
+    availableSpaces: Math.max(serviceCapacity - overlappingReservations.length, 0),
+    capacity: serviceCapacity
   };
 }
 
 /**
  * 💡 Sugiere horarios alternativos si no hay disponibilidad
  */
-async function suggestAlternatives(date, durationHours) {
+async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk') {
   const alternatives = [];
-  
+  const capacity = getServiceCapacity(serviceType);
+  const dayReservations = await reservationRepository.findByDate(date, serviceType);
+
   // Buscar horarios libres el mismo día (evitar recursión infinita)
   for (let hour = CALENDAR_CONFIG.workingHours.start; hour <= CALENDAR_CONFIG.workingHours.end - durationHours; hour++) {
     const testTime = `${hour.toString().padStart(2, '0')}:00`;
-    const reservations = await reservationRepository.findByDate(date);
     const startMinutes = timeToMinutes(testTime);
     const endMinutes = startMinutes + (durationHours * 60);
     
-    const overlapping = reservations.filter(res => {
+    const overlapping = dayReservations.filter(res => {
       if (res.status === 'cancelled') return false;
       const resStart = timeToMinutes(res.start_time);
       const resEnd = timeToMinutes(res.end_time);
       return !(endMinutes <= resStart || startMinutes >= resEnd);
     });
     
-    if (overlapping.length < CALENDAR_CONFIG.maxSimultaneousSpaces && alternatives.length < 3) {
+    if (overlapping.length < capacity && alternatives.length < 3) {
       alternatives.push({
         date,
         time: testTime,
@@ -137,9 +190,17 @@ async function suggestAlternatives(date, durationHours) {
   if (alternatives.length === 0) {
     const nextDate = getNextDate(date);
     const testTime = '09:00';
-    const reservations = await reservationRepository.findByDate(nextDate);
+    const nextReservations = await reservationRepository.findByDate(nextDate, serviceType);
+    const nextStart = timeToMinutes(testTime);
+    const nextEnd = nextStart + (durationHours * 60);
+    const overlappingNext = nextReservations.filter(res => {
+      if (res.status === 'cancelled') return false;
+      const resStart = timeToMinutes(res.start_time);
+      const resEnd = timeToMinutes(res.end_time);
+      return !(nextEnd <= resStart || nextStart >= resEnd);
+    });
     
-    if (reservations.length < CALENDAR_CONFIG.maxSimultaneousSpaces) {
+    if (overlappingNext.length < capacity) {
       alternatives.push({
         date: nextDate,
         time: testTime,
@@ -384,6 +445,8 @@ export async function getDayStats(date) {
   };
 }
 
+export { CALENDAR_CONFIG, SERVICE_CAPACITY };
+
 export default {
   checkAvailability,
   createReservation,
@@ -393,5 +456,6 @@ export default {
   updateReservationPayment,
   getReservationByPaymentInfo,
   getDayStats,
-  CALENDAR_CONFIG
+  CALENDAR_CONFIG,
+  SERVICE_CAPACITY
 };

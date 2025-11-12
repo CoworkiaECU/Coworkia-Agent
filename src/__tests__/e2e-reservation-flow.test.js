@@ -42,7 +42,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       const updates = extractDataFromMessage(message, form);
       Object.assign(form, updates);
       
-      expect(form.spaceType).toBe('hot desk');
+      expect(form.spaceType).toBe('hotDesk');
       expect(form.date).toBe(fecha);
       expect(form.time).toBe('14:00');
       expect(form.isComplete()).toBe(false); // Falta email
@@ -72,7 +72,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       form = Object.assign(form, extractDataFromMessage(`a las 10am`, form));
       
       expect(form.isComplete()).toBe(true);
-      expect(form.spaceType).toBe('hot desk');
+      expect(form.spaceType).toBe('hotDesk');
       expect(form.date).toBe(fecha);
       expect(form.time).toBe('10:00');
       expect(form.email).toBe('test@coworkia.com');
@@ -145,7 +145,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       let form = new PartialReservationForm(testPhone);
       form = Object.assign(form, extractDataFromMessage(`hot desk ${fecha} 10am test@coworkia.com`, form));
       
-      expect(form.spaceType).toBe('hot desk');
+      expect(form.spaceType).toBe('hotDesk');
       expect(form.date).toBe(fecha);
       expect(form.time).toBe('10:00');
       expect(form.email).toBe('test@coworkia.com');
@@ -243,7 +243,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       // Recuperar con getOrCreateForm
       const recovered = await getOrCreateForm(testPhone);
       expect(recovered).toBeDefined();
-      expect(recovered.spaceType).toBe('hot desk');
+      expect(recovered.spaceType).toBe('hotDesk');
       expect(recovered.date).toBe(fecha);
       expect(recovered.time).toBe('10:00');
       expect(recovered.email).toBe('test@coworkia.com');
@@ -268,7 +268,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       const form3 = await getOrCreateForm(testPhone);
       Object.assign(form3, extractDataFromMessage('a las 10am', form3));
       
-      expect(form3.spaceType).toBe('hot desk');
+      expect(form3.spaceType).toBe('hotDesk');
       expect(form3.date).toBe(fecha);
       expect(form3.time).toBe('10:00');
     });

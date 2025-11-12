@@ -250,37 +250,68 @@ export function extractDataFromMessage(message, currentForm) {
 
   // 📅 Detectar fecha
   if (!currentForm.date) {
-    const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|hoy|ma[ñn]ana)/i);
-    if (dateMatch) {
-      const dateText = dateMatch[1].toLowerCase();
-      const today = new Date();
-      
-      if (dateText === 'hoy') {
+    const today = new Date();
+    const relativeMatch = lowerMsg.match(/\b(hoy|ma[ñn]ana)\b/);
+    const isoMatch = message.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    const shortMatch = message.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+
+    if (relativeMatch) {
+      const keyword = relativeMatch[1];
+      if (keyword === 'hoy') {
         updates.date = today.toISOString().split('T')[0];
-      } else if (dateText === 'mañana' || dateText === 'manana') {
+      } else {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         updates.date = tomorrow.toISOString().split('T')[0];
-      } else {
-        // Formato DD/MM/YYYY o DD-MM-YYYY
-        updates.date = dateText; // Se validará después
       }
+      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+    } else if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      const normalizedYear = year.padStart(4, '0');
+      updates.date = `${normalizedYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+    } else if (shortMatch) {
+      const [, day, month, yearPart] = shortMatch;
+      let year = yearPart;
+      if (yearPart.length === 2) {
+        const century = today.getFullYear().toString().slice(0, 2);
+        year = `${century}${yearPart.padStart(2, '0')}`;
+      } else if (yearPart.length === 3) {
+        year = `2${yearPart.padStart(3, '0')}`;
+      }
+      updates.date = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       console.log('[FORM] 📅 Detectado fecha:', updates.date);
     }
   }
 
   // ⏰ Detectar hora
   if (!currentForm.time) {
-    const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
-    if (timeMatch) {
-      let hour = parseInt(timeMatch[1]);
-      const minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-      const meridiem = timeMatch[3]?.toLowerCase();
+    const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+    let detectedTime = null;
+
+    for (const match of message.matchAll(timeRegex)) {
+      const [, prefix, hourStr, minuteStr, meridiemRaw] = match;
+      const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
+      const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
+      const isTimeContext = Boolean(prefix);
+
+      if (!isTimeContext && !meridiem && !hasExplicitMinutes) {
+        continue; // Evitar confundir números de personas con horas
+      }
+
+      let hour = parseInt(hourStr, 10);
+      if (Number.isNaN(hour)) continue;
+      const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
 
       if (meridiem === 'pm' && hour < 12) hour += 12;
       if (meridiem === 'am' && hour === 12) hour = 0;
 
-      updates.time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      break;
+    }
+
+    if (detectedTime) {
+      updates.time = detectedTime;
       console.log('[FORM] ⏰ Detectado hora:', updates.time);
     }
   }

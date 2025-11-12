@@ -3,6 +3,7 @@
  */
 
 import databaseService from '../database/database.js';
+import userRepository from '../database/userRepository.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -14,6 +15,41 @@ function futureIso(minutes) {
   return date.toISOString();
 }
 
+async function ensureUserExists(userPhone, metadata = {}) {
+  try {
+    const existing = await userRepository.findByPhone(userPhone);
+    const formData = metadata?.formData || metadata;
+    const candidateEmail = formData?.email || formData?.contactEmail || formData?.correo;
+    const candidateName = formData?.userName || formData?.name || formData?.fullName;
+
+    if (!existing) {
+      await userRepository.create(userPhone, {
+        name: candidateName || null,
+        email: candidateEmail || null,
+        first_visit: true,
+        free_trial_used: false,
+        conversation_count: 0,
+        last_message_at: new Date().toISOString()
+      });
+      return;
+    }
+
+    const updates = {};
+    if (candidateEmail && !existing.email) {
+      updates.email = candidateEmail;
+    }
+    if (candidateName && !existing.name) {
+      updates.name = candidateName;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await userRepository.update(userPhone, updates);
+    }
+  } catch (error) {
+    console.error('[RESERVATION-STATE] ⚠️ No se pudo asegurar usuario previo a escritura:', error);
+  }
+}
+
 export async function cleanupExpiredConfirmations() {
   const result = await databaseService.run(
     'DELETE FROM pending_confirmations WHERE expires_at IS NOT NULL AND expires_at < ?',
@@ -23,6 +59,7 @@ export async function cleanupExpiredConfirmations() {
 }
 
 export async function setPendingConfirmation(userPhone, reservationData, ttlMinutes = 30) {
+  await ensureUserExists(userPhone, reservationData);
   await cleanupExpiredConfirmations();
   const expiresAt = futureIso(ttlMinutes);
   await databaseService.run(
@@ -72,6 +109,7 @@ export async function cleanupJustConfirmedFlags() {
 }
 
 export async function markJustConfirmed(userPhone, reservationId = null, coolDownMinutes = 10) {
+  await ensureUserExists(userPhone, { lastReservationId: reservationId });
   const until = futureIso(coolDownMinutes);
   await databaseService.run(
     `INSERT INTO reservation_state (user_phone, just_confirmed_until, last_reservation_id, updated_at)

@@ -3,7 +3,7 @@
  * Permite que Aurora active confirmaciones SI/NO desde sus respuestas
  */
 
-import confirmationFlowService from './confirmation-flow.js';
+import confirmationFlowService, { generateConfirmationMessage } from './confirmation-flow.js';
 import databaseService from '../database/database.js';
 import calendario, { checkAvailability } from './calendario.js';
 import { 

@@ -3,9 +3,14 @@
  * Permite que Aurora active confirmaciones SI/NO desde sus respuestas
  */
 
-import { generateConfirmationMessage } from './confirmation-flow.js';
-import { savePendingConfirmation, getPaymentInfo } from '../perfiles-interacciones/memoria-sqlite.js';
-import { checkAvailability } from './calendario.js';
+import confirmationFlowService from './confirmation-flow.js';
+import { getDatabase } from '../memoria/memoria-sqlite.js';
+import calendario from './calendario.js';
+import { 
+  validateReservation, 
+  suggestAlternativeSlots, 
+  formatValidationErrors 
+} from './reservation-validation.js';
 
 /**
  * ✅ Detecta si Aurora quiere activar un flujo de confirmación
@@ -272,7 +277,41 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
       };
     }
 
-    // 2. Verificar disponibilidad
+    // 2. ✅ VALIDACIONES MEJORADAS: Duración, horario laboral, ventana de reserva
+    const validation = validateReservation(
+      reservationData.date,
+      reservationData.startTime,
+      reservationData.endTime,
+      reservationData.durationHours
+    );
+    
+    if (!validation.valid) {
+      console.log('[Validation] ❌ Reserva rechazada:', validation.errors);
+      
+      // Sugerir horarios alternativos si es problema de horario
+      const alternatives = suggestAlternativeSlots(
+        reservationData.date,
+        reservationData.startTime,
+        reservationData.durationHours,
+        [] // TODO: Pasar reservas existentes aquí
+      );
+      
+      return {
+        success: false,
+        error: formatValidationErrors(validation),
+        alternatives: alternatives.slice(0, 3).map(alt => 
+          `${alt.startTime} - ${alt.endTime} (${alt.durationHours}h)`
+        ),
+        validationDetails: validation
+      };
+    }
+    
+    // Log warnings pero continuar
+    if (validation.hasWarnings) {
+      console.log('[Validation] ⚠️ Advertencias:', validation.warnings);
+    }
+
+    // 3. Verificar disponibilidad
     const availability = await checkAvailability(
       reservationData.date,
       reservationData.startTime,

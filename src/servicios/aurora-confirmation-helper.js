@@ -54,19 +54,30 @@ export function extractReservationData(message, userProfile) {
       console.log('[DEBUG] 🏢 DETECTADO: Sala de Reunión solicitada');
     }
 
-    // Buscar patrones de fecha y hora en la respuesta
-    const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|hoy|lunes|martes|miércoles|jueves|viernes|sábado|domingo)/i);
+    // 🎯 MEJORADO: Buscar patrones de fecha con más flexibilidad
+    console.log('[AURORA-EXTRACT] 📝 Analizando mensaje:', message.substring(0, 200) + '...');
     
-    // 🔧 MEJORAR: Detectar horarios en múltiples formatos
+    // Detectar fechas: números, "hoy", "mañana", días de semana
+    const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|ma\u00f1ana|hoy|hoi|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)/i);
+    console.log('[AURORA-EXTRACT] 📅 dateMatch:', dateMatch ? dateMatch[1] : 'NO DETECTADO');
+    
+    // 🎯 MEJORADO: Detectar horarios con múltiples formatos naturales
+    // Patrones: "10am", "10 am", "10:00", "10:30am", "3pm", "15:00"
     const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)?/g) || 
                      message.match(/(\d{1,2}:\d{2})/g) ||
-                     message.match(/(\d{1,2})\s*(am|pm|AM|PM)/g);
+                     message.match(/(\d{1,2})\s*(am|pm|AM|PM)/gi);
+    console.log('[AURORA-EXTRACT] 🕐 timeMatch:', timeMatch ? timeMatch : 'NO DETECTADO');
     
     const priceMatch = message.match(/\$(\d+\.?\d*)/);
     const durationMatch = message.match(/(\d+)\s*hora[s]?/i);
-
-    console.log('[DEBUG] Mensaje analizado:', message);
-    console.log('[DEBUG] timeMatch encontrado:', timeMatch);
+    console.log('[AURORA-EXTRACT] ⏱️ durationMatch:', durationMatch ? durationMatch[1] + 'h' : 'NO DETECTADO');
+    
+    // 🚨 VALIDACIÓN TEMPRANA: Si no hay hora, abortar con mensaje útil
+    if (!timeMatch || timeMatch.length === 0) {
+      console.error('[AURORA-EXTRACT] ❌ NO SE DETECTÓ HORARIO en el mensaje');
+      console.error('[AURORA-EXTRACT] 💡 Mensaje recibido:', message);
+      return null; // Esto hará que Aurora pida aclaración
+    }
 
     // Valores por defecto si no se detectan
     const today = new Date();
@@ -267,15 +278,39 @@ function parseDate(dateStr) {
  */
 export async function processAuroraConfirmationRequest(originalMessage, userProfile) {
   try {
+    console.log('[AURORA-PROCESS] 🎯 Iniciando procesamiento de confirmación');
+    console.log('[AURORA-PROCESS] 👤 Usuario:', userProfile.userId);
+    console.log('[AURORA-PROCESS] 📨 Mensaje:', originalMessage.substring(0, 150) + '...');
+    
     // 1. Extraer datos de la reserva del mensaje de Aurora
     const reservationData = extractReservationData(originalMessage, userProfile);
     
     if (!reservationData) {
+      console.error('[AURORA-PROCESS] ❌ FALLO: No se pudieron extraer datos de reserva');
+      console.error('[AURORA-PROCESS] 💡 Mensaje completo:', originalMessage);
+      
+      // 🎯 RESPUESTA AMIGABLE: Explica qué falta
       return {
         success: false,
-        error: 'No se pudieron extraer datos de reserva del mensaje'
+        error: 'parsing_failed',
+        userMessage: `Lo siento, no logré entender la hora que mencionaste 🤔
+
+Por favor, intenta así:
+• "Quiero un hot desk para hoy a las 10am"
+• "Necesito una sala para mañana a las 2pm"
+• "Hot desk el lunes a las 9:00"
+
+¿A qué hora te gustaría venir?`
       };
     }
+    
+    console.log('[AURORA-PROCESS] ✅ Datos extraídos:', {
+      date: reservationData.date,
+      startTime: reservationData.startTime,
+      endTime: reservationData.endTime,
+      duration: reservationData.durationHours,
+      serviceType: reservationData.serviceType
+    });
 
     // 2. ✅ VALIDACIONES MEJORADAS: Duración, horario laboral, ventana de reserva
     const validation = validateReservation(
@@ -286,7 +321,7 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
     );
     
     if (!validation.valid) {
-      console.log('[Validation] ❌ Reserva rechazada:', validation.errors);
+      console.error('[AURORA-PROCESS] ❌ VALIDACIÓN FALLIDA:', validation.errors);
       
       // Sugerir horarios alternativos si es problema de horario
       const alternatives = suggestAlternativeSlots(
@@ -296,9 +331,30 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
         [] // TODO: Pasar reservas existentes aquí
       );
       
+      console.log('[AURORA-PROCESS] 💡 Alternativas sugeridas:', alternatives.slice(0, 3));
+      
+      // 🎯 RESPUESTA AMIGABLE basada en el tipo de error
+      let userMessage = '❌ ';
+      
+      if (validation.errors.some(e => e.includes('horario'))) {
+        userMessage += `Ese horario no está disponible 😕
+
+📅 ¿Qué tal alguna de estas opciones?
+${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.endTime}`).join('\n')}
+
+¿Te sirve alguna?`;
+      } else if (validation.errors.some(e => e.includes('duración'))) {
+        userMessage += `La duración debe ser entre 1 y 8 horas 🕐
+
+¿Cuántas horas necesitas?`;
+      } else {
+        userMessage += formatValidationErrors(validation);
+      }
+      
       return {
         success: false,
-        error: formatValidationErrors(validation),
+        error: 'validation_failed',
+        userMessage,
         alternatives: alternatives.slice(0, 3).map(alt => 
           `${alt.startTime} - ${alt.endTime} (${alt.durationHours}h)`
         ),
@@ -320,12 +376,25 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
     );
 
     if (!availability.available) {
+      console.error('[AURORA-PROCESS] ❌ NO DISPONIBLE:', availability.reason);
+      console.log('[AURORA-PROCESS] 💡 Alternativas de calendario:', availability.alternatives);
+      
+      // 🎯 RESPUESTA AMIGABLE con alternativas
+      const altText = availability.alternatives && availability.alternatives.length > 0
+        ? `\n\n📅 ¿Qué tal estos horarios?\n${availability.alternatives.slice(0, 3).map((alt, i) => 
+            `${i+1}. ${alt.startTime || alt}`
+          ).join('\n')}`
+        : '\n\n¿Prefieres otro horario? 😊';
+      
       return {
         success: false,
-        error: `No disponible: ${availability.reason}`,
+        error: 'availability_failed',
+        userMessage: `⚠️ ${availability.reason}${altText}`,
         alternatives: availability.alternatives
       };
     }
+    
+    console.log('[AURORA-PROCESS] ✅ Disponibilidad confirmada');
 
     // 3. Guardar confirmación pendiente
     await savePendingConfirmation(userProfile.userId, reservationData);
@@ -421,10 +490,14 @@ export async function enhanceAuroraResponse(originalResponse, userProfile) {
     const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile);
 
     if (!confirmationResult.success) {
-      console.log('[Confirmation Helper] Error:', confirmationResult.error);
+      console.log('[Confirmation Helper] ❌ Error:', confirmationResult.error);
       
-      // 🚨 CRÍTICO: Generar mensaje de error amigable para el usuario
-      const errorMessage = generateErrorMessage(confirmationResult.error, confirmationResult.alternatives);
+      // 🎯 USAR MENSAJE PERSONALIZADO si está disponible
+      const errorMessage = confirmationResult.userMessage 
+        ? confirmationResult.userMessage
+        : generateErrorMessage(confirmationResult.error, confirmationResult.alternatives);
+      
+      console.log('[Confirmation Helper] 💬 Mensaje de error generado:', errorMessage.substring(0, 100) + '...');
       
       return {
         enhanced: true, // Sí modificamos el mensaje

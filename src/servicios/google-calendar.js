@@ -99,16 +99,13 @@ export async function createCalendarEvent(reservationData) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Crear objetos Date para inicio y fin en zona horaria de Ecuador (UTC-5)
-    const startDateTime = new Date(eventDate);
-    startDateTime.setHours(startHour, startMinute, 0);
+    // Crear objetos Date para inicio y fin en zona horaria de Ecuador
+    // ⚠️ IMPORTANTE: NO restar 5 horas manualmente - Google Calendar maneja el timezone automáticamente
+    const startDateTime = new Date(date);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
     
-    const endDateTime = new Date(eventDate);
-    endDateTime.setHours(endHour, endMinute, 0);
-    
-    // Convertir a UTC restando 5 horas (Ecuador es UTC-5)
-    const startDateTimeUTC = new Date(startDateTime.getTime() - (5 * 60 * 60 * 1000));
-    const endDateTimeUTC = new Date(endDateTime.getTime() - (5 * 60 * 60 * 1000));
+    const endDateTime = new Date(date);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
 
     // 🎯 Formato del título con nombres correctos de servicios
     const guestCount = reservationData.guestCount || 0;
@@ -147,12 +144,12 @@ export async function createCalendarEvent(reservationData) {
 ¡Te esperamos! 🚀
       `.trim(),
       start: {
-        dateTime: startDateTimeUTC.toISOString(),
-        timeZone: 'America/Guayaquil' // Zona horaria de Ecuador
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'America/Guayaquil' // Google Calendar ajustará automáticamente
       },
       end: {
-        dateTime: endDateTimeUTC.toISOString(), 
-        timeZone: 'America/Guayaquil'
+        dateTime: endDateTime.toISOString(), 
+        timeZone: 'America/Guayaquil' // Google Calendar ajustará automáticamente
       },
       location: 'Whymper 403, Edificio Finistere, Quito, Ecuador',
       // NOTA: Service Accounts no pueden invitar attendees sin Domain-Wide Delegation

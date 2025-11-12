@@ -18,6 +18,7 @@ import { initScheduler, stopScheduler, getSchedulerStatus } from '../servicios/c
 // 📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
+import { circuitBreakerManager } from '../utils/circuit-breaker.js';
 
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
@@ -69,16 +70,19 @@ app.get('/health/db', async (_req, res) => {
 // 📊 Sistema completo de salud
 app.get('/health/system', async (_req, res) => {
   try {
-    // 1. Circuit Breakers
-    const circuits = getAllCircuits();
+    // 1. Circuit Breakers (nuevo sistema)
+    const circuitBreakers = circuitBreakerManager.getAllStates();
     
-    // 2. Task Queues
+    // 2. Circuit Breakers legacy (external-dispatcher)
+    const legacyCircuits = getAllCircuits();
+    
+    // 3. Task Queues
     const queues = getQueueStats();
     
-    // 3. Cron Jobs
+    // 4. Cron Jobs
     const scheduler = getSchedulerStatus();
     
-    // 4. Database Metrics
+    // 5. Database Metrics
     const [usersCount, reservationsCount, interactionsCount, pendingConfirmationsCount] = await Promise.all([
       databaseService.get('SELECT COUNT(*) as count FROM users'),
       databaseService.get('SELECT COUNT(*) as count FROM reservations'),
@@ -86,7 +90,7 @@ app.get('/health/system', async (_req, res) => {
       databaseService.get('SELECT COUNT(*) as count FROM pending_confirmations')
     ]);
     
-    // 5. Database Size (aproximación basada en row counts)
+    // 6. Database Size (aproximación basada en row counts)
     const dbStats = {
       users: usersCount.count,
       reservations: reservationsCount.count,
@@ -95,16 +99,29 @@ app.get('/health/system', async (_req, res) => {
       totalRecords: usersCount.count + reservationsCount.count + interactionsCount.count + pendingConfirmationsCount.count
     };
     
+    // 7. Calcular health status general
+    const circuitBreakerHealth = Object.values(circuitBreakers).every(cb => cb.state === 'CLOSED');
+    const overallHealth = circuitBreakerHealth ? 'healthy' : 'degraded';
+    
     res.json({
       ok: true,
+      health: overallHealth,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development',
       version: process.env.npm_package_version || 'unknown',
       
       circuitBreakers: {
-        total: Object.keys(circuits).length,
-        circuits: circuits
+        total: Object.keys(circuitBreakers).length,
+        healthy: Object.values(circuitBreakers).filter(cb => cb.state === 'CLOSED').length,
+        degraded: Object.values(circuitBreakers).filter(cb => cb.state === 'HALF_OPEN').length,
+        failed: Object.values(circuitBreakers).filter(cb => cb.state === 'OPEN').length,
+        breakers: circuitBreakers
+      },
+      
+      legacyCircuitBreakers: {
+        total: Object.keys(legacyCircuits).length,
+        circuits: legacyCircuits
       },
       
       taskQueues: {

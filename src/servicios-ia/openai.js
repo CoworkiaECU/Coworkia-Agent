@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import OpenAI from 'openai';
+import { openaiBreaker } from '../utils/circuit-breaker.js';
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
@@ -23,14 +24,22 @@ export async function complete(prompt, opts = {}) {
     ? [{ role: 'system', content: system }, { role: 'user', content: prompt }]
     : [{ role: 'user', content: prompt }];
 
-  const res = await client.chat.completions.create({
-    model,
-    messages,
-    temperature,
-    max_tokens,
-  });
+  // 🛡️ Proteger con circuit breaker
+  const fallback = () => {
+    console.log('[OpenAI] ⚠️ Usando respuesta de fallback');
+    return 'Lo siento, estoy experimentando dificultades técnicas en este momento. Por favor, intenta de nuevo en unos momentos o contacta directamente a nuestro equipo.';
+  };
 
-  return res.choices?.[0]?.message?.content?.trim() || '';
+  return await openaiBreaker.execute(async () => {
+    const res = await client.chat.completions.create({
+      model,
+      messages,
+      temperature,
+      max_tokens,
+    });
+
+    return res.choices?.[0]?.message?.content?.trim() || '';
+  }, fallback);
 }
 
 /**
@@ -44,36 +53,48 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
     detail = 'high'
   } = opts;
 
-  try {
-    const response = await client.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: imageUrl,
-                detail: detail
-              }
-            }
-          ]
-        }
-      ],
-      temperature,
-      max_tokens,
-    });
-
+  // 🛡️ Proteger con circuit breaker
+  const fallback = () => {
+    console.log('[OpenAI Vision] ⚠️ Usando respuesta de fallback');
     return {
-      success: true,
-      content: response.choices[0]?.message?.content?.trim() || '',
-      usage: response.usage
+      success: false,
+      error: 'Servicio temporalmente no disponible. Por favor, intenta de nuevo.',
+      content: null
     };
+  };
+
+  try {
+    return await openaiBreaker.execute(async () => {
+      const response = await client.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                  detail: detail
+                }
+              }
+            ]
+          }
+        ],
+        temperature,
+        max_tokens,
+      });
+
+      return {
+        success: true,
+        content: response.choices[0]?.message?.content?.trim() || '',
+        usage: response.usage
+      };
+    }, fallback);
 
   } catch (error) {
     console.error('[OpenAI Vision] Error:', error);

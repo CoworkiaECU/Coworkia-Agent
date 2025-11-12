@@ -260,8 +260,9 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
             serviceType: pendingReservation.serviceType || 'Hot Desk',
             guestCount: pendingReservation.guestCount || 0,
             wasFree: true,
-            durationHours: 2,
-            total: 0
+            durationHours: pendingReservation.durationHours || 2,
+            totalPrice: 0,
+            reservation: reservationRecord
           }),
           { circuitId: 'emails-confirmation' }
         )

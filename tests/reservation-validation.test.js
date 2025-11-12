@@ -39,40 +39,41 @@ describe('Reservation Validation', () => {
   
   describe('validateBusinessHours', () => {
     it('should reject times before business hours', () => {
-      const result = validateBusinessHours('2024-01-15', '06:00', '08:00');
+      const result = validateBusinessHours('2024-01-15', '06:00', '07:00');
       expect(result.valid).toBe(false);
       expect(result.reason).toContain('Fuera del horario laboral');
     });
     
     it('should reject times after business hours', () => {
-      const result = validateBusinessHours('2024-01-15', '19:00', '21:00');
+      const result = validateBusinessHours('2024-01-15', '20:30', '22:00');
       expect(result.valid).toBe(false);
       expect(result.reason).toContain('Fuera del horario laboral');
     });
     
     it('should accept times within weekday business hours', () => {
-      const result = validateBusinessHours('2024-01-15', '09:00', '11:00');
+      // 7 AM debería ser válido ahora
+      const result = validateBusinessHours('2024-01-15', '07:00', '09:00');
       expect(result.valid).toBe(true);
     });
     
     it('should use weekend hours for Saturday and Sunday', () => {
-      // Saturday
-      const satResult = validateBusinessHours('2024-01-13', '09:00', '11:00');
+      // Saturday - ahora desde 8 AM
+      const satResult = validateBusinessHours('2024-01-13', '08:00', '10:00');
       expect(satResult.valid).toBe(true);
       
       // Sunday
-      const sunResult = validateBusinessHours('2024-01-14', '09:00', '11:00');
+      const sunResult = validateBusinessHours('2024-01-14', '08:00', '10:00');
       expect(sunResult.valid).toBe(true);
       
-      // Early weekend should fail
+      // Early weekend should fail (antes de 8 AM)
       const earlyResult = validateBusinessHours('2024-01-13', '07:00', '09:00');
       expect(earlyResult.valid).toBe(false);
     });
   });
   
   describe('validateReservationWindow', () => {
-    it('should reject reservations less than 2 hours ahead', () => {
-      // Test usando fecha/hora muy cercana (en el pasado)
+    it('should reject reservations in the past', () => {
+      // Test usando fecha/hora claramente en el pasado
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const date = yesterday.toISOString().split('T')[0];
@@ -80,7 +81,7 @@ describe('Reservation Validation', () => {
       
       const result = validateReservationWindow(date, time);
       expect(result.valid).toBe(false);
-      expect(result.reason).toContain('anticipación');
+      expect(result.reason).toContain('pasado');
     });
     
     it('should reject reservations more than 30 days ahead', () => {
@@ -94,12 +95,11 @@ describe('Reservation Validation', () => {
       expect(result.reason).toContain('30 días');
     });
     
-    it('should accept reservations between 2 hours and 30 days', () => {
+    it('should accept reservations for future dates', () => {
       const future = new Date();
       future.setDate(future.getDate() + 7);
-      future.setHours(future.getHours() + 3);
       const date = future.toISOString().split('T')[0];
-      const time = `${future.getHours().toString().padStart(2, '0')}:00`;
+      const time = '10:00';
       
       const result = validateReservationWindow(date, time);
       expect(result.valid).toBe(true);

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { testEmailConfiguration } from '../../servicios/email.js';
+import { circuitBreakerManager } from '../../utils/circuit-breaker.js';
 
 const router = Router();
 
@@ -169,6 +170,50 @@ router.post('/test-email-design', async (req, res) => {
       success: false,
       message: 'Error interno probando email',
       error: error.message
+    });
+  }
+});
+
+/**
+ * 🛡️ Endpoint para monitorear circuit breakers
+ */
+router.get('/circuit-breakers', (req, res) => {
+  const states = circuitBreakerManager.getAllStates();
+  
+  const summary = {
+    total: Object.keys(states).length,
+    healthy: 0,
+    degraded: 0,
+    failed: 0,
+    breakers: states
+  };
+  
+  Object.values(states).forEach(breaker => {
+    if (breaker.state === 'CLOSED') summary.healthy++;
+    else if (breaker.state === 'HALF_OPEN') summary.degraded++;
+    else if (breaker.state === 'OPEN') summary.failed++;
+  });
+  
+  res.status(200).json(summary);
+});
+
+/**
+ * 🔄 Endpoint para resetear circuit breakers
+ */
+router.post('/circuit-breakers/reset', (req, res) => {
+  const { name } = req.body;
+  
+  if (name) {
+    circuitBreakerManager.reset(name);
+    res.status(200).json({
+      success: true,
+      message: `Circuit breaker ${name} reseteado`
+    });
+  } else {
+    circuitBreakerManager.resetAll();
+    res.status(200).json({
+      success: true,
+      message: 'Todos los circuit breakers reseteados'
     });
   }
 });

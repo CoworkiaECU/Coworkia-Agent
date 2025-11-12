@@ -380,7 +380,8 @@ function queueReservationNotifications(reservation, userProfile, paidAmount) {
         guestCount: reservation.guest_count || 0,
         wasFree: false,
         durationHours: reservation.duration_hours,
-        total: paidAmount
+        totalPrice: paidAmount,
+        reservation: reservation
       }),
       { circuitId: 'emails-confirmation' }
     ).catch(error => {

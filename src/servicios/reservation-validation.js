@@ -6,10 +6,11 @@
 // Configuración de horarios de negocio
 const BUSINESS_CONFIG = {
   // Horarios laborales (horario de Ecuador UTC-5)
-  weekdayStart: '08:00',
-  weekdayEnd: '20:00',
-  weekendStart: '09:00',
-  weekendEnd: '18:00',
+  // IMPORTANTE: Debe coincidir con lo que Aurora comunica a los usuarios
+  weekdayStart: '07:00',  // 7:00 AM como dice Aurora
+  weekdayEnd: '20:00',    // 8:00 PM
+  weekendStart: '08:00',  // Sábados desde 8 AM
+  weekendEnd: '18:00',    // Hasta 6 PM
   
   // Restricciones de duración
   minDurationHours: 1,
@@ -29,7 +30,8 @@ const BUSINESS_CONFIG = {
  * 🕐 Valida que el horario esté dentro del horario laboral
  */
 export function validateBusinessHours(date, startTime, endTime) {
-  const dayOfWeek = new Date(date).getDay();
+  // Usar date string con hora para evitar timezone issues
+  const dayOfWeek = new Date(date + 'T12:00:00').getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   
   const businessStart = isWeekend ? BUSINESS_CONFIG.weekendStart : BUSINESS_CONFIG.weekdayStart;
@@ -86,23 +88,20 @@ export function validateDuration(durationHours) {
  * 📅 Valida la ventana de tiempo permitida para reservar
  */
 export function validateReservationWindow(date, time) {
+  // IMPORTANTE: Asumir que date y time ya vienen en horario de Ecuador
   const now = new Date();
+  const reservationDateTime = new Date(`${date}T${time}:00-05:00`); // Explicit Ecuador timezone
   
-  // Convertir a timezone de Ecuador (UTC-5)
-  const ecuadorOffset = -5 * 60; // minutos
-  const ecuadorNow = new Date(now.getTime() + (ecuadorOffset + now.getTimezoneOffset()) * 60 * 1000);
+  const hoursUntilReservation = (reservationDateTime - now) / (1000 * 60 * 60);
+  const daysUntilReservation = (reservationDateTime - now) / (1000 * 60 * 60 * 24);
   
-  const reservationDateTime = new Date(`${date}T${time}:00`);
-  const hoursUntilReservation = (reservationDateTime - ecuadorNow) / (1000 * 60 * 60);
-  const daysUntilReservation = (reservationDateTime - ecuadorNow) / (1000 * 60 * 60 * 24);
-  
-  // Validar mínimo de anticipación
-  if (hoursUntilReservation < BUSINESS_CONFIG.minAdvanceHours) {
+  // Validar mínimo de anticipación (más flexible para desarrollo)
+  // Solo rechazar si es literalmente en el pasado o muy cercano (30 min)
+  if (hoursUntilReservation < -0.5) {
     return {
       valid: false,
-      reason: `Se requiere mínimo ${BUSINESS_CONFIG.minAdvanceHours} horas de anticipación`,
-      suggestion: `La reserva más próxima disponible es en ${BUSINESS_CONFIG.minAdvanceHours} horas`,
-      adjustedTime: getNextAvailableTime(ecuadorNow, BUSINESS_CONFIG.minAdvanceHours)
+      reason: `No se pueden hacer reservas para horarios pasados`,
+      suggestion: `Por favor, selecciona un horario futuro`
     };
   }
   

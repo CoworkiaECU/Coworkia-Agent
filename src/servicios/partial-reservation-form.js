@@ -14,7 +14,7 @@
  * lo que falta.
  */
 
-import { getPendingConfirmation, savePendingConfirmation, clearPendingConfirmation } from '../database/reservation-state.js';
+import { getPendingConfirmation, savePendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 
 // TTL del formulario: 15 minutos (tiempo razonable para completar reserva)
 const FORM_TTL_SECONDS = 15 * 60;

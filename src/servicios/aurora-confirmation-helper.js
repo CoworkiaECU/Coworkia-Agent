@@ -11,6 +11,7 @@ import {
   suggestAlternativeSlots, 
   formatValidationErrors 
 } from './reservation-validation.js';
+import { savePendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 
 /**
  * ✅ Detecta si Aurora quiere activar un flujo de confirmación

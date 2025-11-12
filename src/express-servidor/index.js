@@ -13,7 +13,11 @@ import cors from 'cors';
 import databaseService from '../database/database.js';
 
 // 🕐 Scheduler para tareas programadas
-import { initScheduler, stopScheduler } from '../servicios/cron-scheduler.js';
+import { initScheduler, stopScheduler, getSchedulerStatus } from '../servicios/cron-scheduler.js';
+
+// 📊 Sistema de monitoreo
+import { getAllCircuits } from '../servicios/external-dispatcher.js';
+import { getQueueStats } from '../servicios/task-queue.js';
 
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
@@ -59,6 +63,70 @@ app.get('/health/db', async (_req, res) => {
   } catch (error) {
     console.error('[HEALTH][DB] Error:', error);
     res.status(500).json({ ok: false, error: 'DB_UNAVAILABLE', message: error.message });
+  }
+});
+
+// 📊 Sistema completo de salud
+app.get('/health/system', async (_req, res) => {
+  try {
+    // 1. Circuit Breakers
+    const circuits = getAllCircuits();
+    
+    // 2. Task Queues
+    const queues = getQueueStats();
+    
+    // 3. Cron Jobs
+    const scheduler = getSchedulerStatus();
+    
+    // 4. Database Metrics
+    const [usersCount, reservationsCount, interactionsCount, pendingConfirmationsCount] = await Promise.all([
+      databaseService.get('SELECT COUNT(*) as count FROM users'),
+      databaseService.get('SELECT COUNT(*) as count FROM reservations'),
+      databaseService.get('SELECT COUNT(*) as count FROM interactions'),
+      databaseService.get('SELECT COUNT(*) as count FROM pending_confirmations')
+    ]);
+    
+    // 5. Database Size (aproximación basada en row counts)
+    const dbStats = {
+      users: usersCount.count,
+      reservations: reservationsCount.count,
+      interactions: interactionsCount.count,
+      pendingConfirmations: pendingConfirmationsCount.count,
+      totalRecords: usersCount.count + reservationsCount.count + interactionsCount.count + pendingConfirmationsCount.count
+    };
+    
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || 'unknown',
+      
+      circuitBreakers: {
+        total: Object.keys(circuits).length,
+        circuits: circuits
+      },
+      
+      taskQueues: {
+        total: Object.keys(queues).length,
+        queues: queues
+      },
+      
+      scheduler: {
+        active: scheduler.active,
+        jobs: scheduler.jobs
+      },
+      
+      database: dbStats
+    });
+    
+  } catch (error) {
+    console.error('[HEALTH][SYSTEM] Error:', error);
+    res.status(500).json({ 
+      ok: false, 
+      error: 'SYSTEM_CHECK_FAILED', 
+      message: error.message 
+    });
   }
 });
 

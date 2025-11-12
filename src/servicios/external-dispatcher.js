@@ -179,6 +179,20 @@ export function getCircuitState(id) {
   return {
     failures: circuit.failures,
     openedAt: circuit.openedAt,
+    isOpen: isCircuitOpen(circuit),
     options: circuit.options
   };
+}
+
+export function getAllCircuits() {
+  const result = {};
+  for (const [id, circuit] of circuits.entries()) {
+    result[id] = {
+      failures: circuit.failures,
+      openedAt: circuit.openedAt,
+      isOpen: isCircuitOpen(circuit),
+      options: circuit.options
+    };
+  }
+  return result;
 }

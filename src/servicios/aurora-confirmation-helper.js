@@ -12,6 +12,7 @@ import {
   formatValidationErrors 
 } from './reservation-validation.js';
 import { savePendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import reservationRepository from '../database/reservationRepository.js';
 
 /**
  * ✅ Detecta si Aurora quiere activar un flujo de confirmación
@@ -348,12 +349,24 @@ Por favor, intenta así:
     if (!validation.valid) {
       console.error('[AURORA-PROCESS] ❌ VALIDACIÓN FALLIDA:', validation.errors);
       
-      // Sugerir horarios alternativos si es problema de horario
+      // Obtener reservas existentes del día para evitar conflictos
+      let existingReservations = [];
+      try {
+        const allReservations = await reservationRepository.findByDate(reservationData.date);
+        existingReservations = allReservations.filter(r => 
+          r.status !== 'cancelled' && r.status !== 'rejected'
+        );
+        console.log('[AURORA-PROCESS] 📅 Reservas del día:', existingReservations.length);
+      } catch (error) {
+        console.error('[AURORA-PROCESS] ⚠️ Error obteniendo reservas:', error);
+      }
+      
+      // Sugerir horarios alternativos considerando reservas reales
       const alternatives = suggestAlternativeSlots(
         reservationData.date,
         reservationData.startTime,
         reservationData.durationHours,
-        [] // TODO: Pasar reservas existentes aquí
+        existingReservations
       );
       
       console.log('[AURORA-PROCESS] 💡 Alternativas sugeridas:', alternatives.slice(0, 3));

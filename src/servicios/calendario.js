@@ -37,6 +37,29 @@ function minutesToTime(minutes) {
  * 🔍 Verifica disponibilidad para una fecha y horario específico
  */
 export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk') {
+  // 🌍 Validación timezone-aware: rechazar horarios pasados en Ecuador
+  const nowEcuador = new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' });
+  const currentDateTime = new Date(nowEcuador);
+  const requestedDateTime = new Date(`${date}T${startTime}:00-05:00`); // Ecuador UTC-5
+  
+  if (requestedDateTime < currentDateTime) {
+    console.log('[CALENDARIO] ⏰ Horario pasado detectado:', {
+      requested: requestedDateTime.toISOString(),
+      current: currentDateTime.toISOString()
+    });
+    
+    // Sugerir próxima hora disponible
+    const nextHour = currentDateTime.getHours() + 1;
+    const nextTime = `${nextHour.toString().padStart(2, '0')}:00`;
+    
+    return {
+      available: false,
+      reason: 'Ese horario ya pasó',
+      suggestion: `¿Qué tal ${nextTime}?`,
+      alternatives: await suggestAlternatives(date, durationHours)
+    };
+  }
+  
   const reservations = await reservationRepository.findByDate(date);
   
   const startMinutes = timeToMinutes(startTime);

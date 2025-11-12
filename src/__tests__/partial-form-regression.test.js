@@ -8,7 +8,7 @@ import { describe, test, expect, jest } from '@jest/globals';
 // Mock de reservation-state para tests unitarios
 jest.unstable_mockModule('../servicios/reservation-state.js', () => ({
   getPendingConfirmation: jest.fn(),
-  savePendingConfirmation: jest.fn(),
+  setPendingConfirmation: jest.fn(),
   clearPendingConfirmation: jest.fn()
 }));
 

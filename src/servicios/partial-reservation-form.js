@@ -14,7 +14,7 @@
  * lo que falta.
  */
 
-import { getPendingConfirmation, savePendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
+import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 
 // TTL del formulario: 15 minutos (tiempo razonable para completar reserva)
 const FORM_TTL_SECONDS = 15 * 60;
@@ -196,10 +196,10 @@ export async function getOrCreateForm(userId) {
  */
 export async function saveForm(form) {
   try {
-    await savePendingConfirmation(form.userId, {
+    await setPendingConfirmation(form.userId, {
       formData: form.toJSON(),
       type: 'partial_form'
-    }, FORM_TTL_SECONDS);
+    }, FORM_TTL_SECONDS / 60); // Convertir segundos a minutos
     
     console.log('[FORM] 💾 Formulario guardado para:', form.userId);
     return true;

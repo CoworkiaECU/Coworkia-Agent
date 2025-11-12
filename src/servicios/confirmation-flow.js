@@ -12,6 +12,7 @@ import { enqueueBackgroundTask } from './task-queue.js';
 import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
 import reservationRepository from '../database/reservationRepository.js';
+import { sendReservationNotifications } from './notification-helper.js';
 
 class ConfirmationFlowError extends Error {
   constructor(payload) {
@@ -241,41 +242,40 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         console.error('[Confirmation] ❌ Error creando evento en background:', calendarError);
       });
 
-    // 4. Si es gratis, enviar email y confirmar
+    // 4. Si es gratis, enviar email y calendar INLINE (no encolar)
     if (pendingReservation.wasFree) {
-      console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, intentando enviar email');
+      console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, enviando notificaciones INLINE');
       console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email ? 'Configurado' : 'No configurado');
       
       if (userProfile.email) {
-        console.log('[Confirmation] 📧 Encolando email de confirmación gratuita...');
-        enqueueBackgroundTask(
-          'emails',
-          'send-free-confirmation',
-          () => sendReservationConfirmation({
-            email: userProfile.email,
-            userName: userProfile.name || 'Cliente',
-            date: confirmedDate,
-            startTime: confirmedStart,
-            endTime: confirmedEnd,
-            serviceType: pendingReservation.serviceType || 'Hot Desk',
-            guestCount: pendingReservation.guestCount || 0,
-            wasFree: true,
-            durationHours: pendingReservation.durationHours || 2,
-            totalPrice: 0,
-            reservation: reservationRecord
-          }),
-          { circuitId: 'emails-confirmation' }
-        )
-          .then(result => {
-            if (result?.success) {
-              console.log('[Confirmation] ✅ Email de confirmación enviado (background)');
-            } else {
-              console.error('[Confirmation] ❌ Email reportó error:', result?.error);
-            }
-          })
-          .catch(emailError => {
-            console.error('[Confirmation] ❌ Error enviando email (background):', emailError);
+        console.log('[Confirmation] � Enviando notificaciones INLINE (email + calendar)...');
+        
+        // EJECUTAR INLINE con reintentos automáticos
+        const notificationResults = await sendReservationNotifications({
+          email: userProfile.email,
+          userName: userProfile.name || 'Cliente',
+          date: confirmedDate,
+          startTime: confirmedStart,
+          endTime: confirmedEnd,
+          serviceType: pendingReservation.serviceType || 'Hot Desk',
+          guestCount: pendingReservation.guestCount || 0,
+          wasFree: true,
+          durationHours: pendingReservation.durationHours || 2,
+          totalPrice: 0,
+          reservation: reservationRecord
+        });
+        
+        // Log detallado de resultados
+        if (notificationResults.bothSucceeded) {
+          console.log('[Confirmation] ✅ AMBAS notificaciones enviadas exitosamente (email + calendar)');
+        } else if (notificationResults.anySucceeded) {
+          console.warn('[Confirmation] ⚠️ PARCIAL: Solo algunas notificaciones se enviaron:', {
+            email: notificationResults.email.success ? 'OK' : 'FAILED',
+            calendar: notificationResults.calendar.success ? 'OK' : 'FAILED'
           });
+        } else {
+          console.error('[Confirmation] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
+        }
       } else {
         console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
       }

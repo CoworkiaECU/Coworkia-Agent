@@ -13,6 +13,7 @@ import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
 import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
+import { sendReservationNotifications } from './notification-helper.js';
 
 /**
  * 📄 Instrucciones para solicitar comprobantes de pago
@@ -135,7 +136,9 @@ export async function processPaymentReceipt(messageData, userProfile) {
 
       await clearPendingConfirmation(userProfile.userId);
       await markJustConfirmed(userProfile.userId, updatedReservation.id);
-      queueReservationNotifications(updatedReservation, userProfile, analysisResult.amount);
+      
+      // Enviar notificaciones INLINE con await para garantizar ejecución
+      await queueReservationNotifications(updatedReservation, userProfile, analysisResult.amount);
       
       return {
         success: true,
@@ -365,48 +368,47 @@ function formatServiceType(serviceType = '') {
   return serviceType;
 }
 
-function queueReservationNotifications(reservation, userProfile, paidAmount) {
-  if (userProfile.email) {
-    enqueueBackgroundTask(
-      'emails',
-      'send-paid-confirmation',
-      () => sendReservationConfirmation({
-        email: userProfile.email,
-        userName: userProfile.name || 'Cliente',
-        date: reservation.date,
-        startTime: reservation.start_time,
-        endTime: reservation.end_time,
-        serviceType: reservation.service_type,
-        guestCount: reservation.guest_count || 0,
-        wasFree: false,
-        durationHours: reservation.duration_hours,
-        totalPrice: paidAmount,
-        reservation: reservation
-      }),
-      { circuitId: 'emails-confirmation' }
-    ).catch(error => {
-      console.error('[RECEIPT] ❌ Error enviando email de confirmación (background):', error);
+async function queueReservationNotifications(reservation, userProfile, paidAmount) {
+  if (!userProfile.email) {
+    console.warn('[RECEIPT] ⚠️ Usuario sin email configurado, notificaciones no se enviarán');
+    return { email: { success: false }, calendar: { success: false } };
+  }
+  
+  console.log('[RECEIPT] 🚀 Enviando notificaciones INLINE (email + calendar) para pago confirmado...');
+  
+  // EJECUTAR INLINE con reintentos automáticos
+  const notificationResults = await sendReservationNotifications({
+    email: userProfile.email,
+    userName: userProfile.name || 'Cliente',
+    date: reservation.date,
+    startTime: reservation.start_time,
+    endTime: reservation.end_time,
+    serviceType: reservation.service_type,
+    guestCount: reservation.guest_count || 0,
+    wasFree: false,
+    durationHours: reservation.duration_hours,
+    totalPrice: paidAmount,
+    reservation: reservation
+  });
+  
+  // Log detallado de resultados
+  if (notificationResults.bothSucceeded) {
+    console.log('[RECEIPT] ✅ AMBAS notificaciones enviadas exitosamente (email + calendar)');
+  } else if (notificationResults.anySucceeded) {
+    console.warn('[RECEIPT] ⚠️ PARCIAL: Solo algunas notificaciones se enviaron:', {
+      email: notificationResults.email.success ? 'OK' : 'FAILED',
+      calendar: notificationResults.calendar.success ? 'OK' : 'FAILED'
     });
   } else {
-    console.warn('[RECEIPT] ⚠️ Email no enviado: usuario sin email configurado');
-  }
-
-  enqueueBackgroundTask(
-    'calendar-events',
-    'create-paid-event',
-    () => createCalendarEvent({
-      userName: userProfile.name || 'Cliente',
-      email: userProfile.email || 'noemail@coworkia.com',
+    console.error('[RECEIPT] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
+    console.error('[RECEIPT] 🚨 Detalles de la reserva:', {
+      reservationId: reservation.id,
+      userId: reservation.user_id,
+      email: userProfile.email,
       date: reservation.date,
-      startTime: reservation.start_time,
-      endTime: reservation.end_time,
-      serviceType: reservation.service_type,
-      duration: `${reservation.duration_hours} horas`,
-      price: paidAmount,
-      guestCount: reservation.guest_count || 0
-    }),
-    { circuitId: 'calendar-events-job' }
-  ).catch(error => {
-    console.error('[RECEIPT] ❌ Error creando evento en calendar (background):', error);
-  });
+      startTime: reservation.start_time
+    });
+  }
+  
+  return notificationResults;
 }

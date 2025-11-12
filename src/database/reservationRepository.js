@@ -254,6 +254,42 @@ class ReservationRepository {
     
     return await databaseService.all(query, params);
   }
+
+  /**
+   * 💳 Obtiene todas las reservas con pago pendiente
+   * Usado por /health/queues para monitorear reservas atascadas
+   */
+  async getPendingPaymentReservations() {
+    databaseService.ensureInitialized();
+    
+    const query = `
+      SELECT 
+        r.*,
+        u.name as user_name,
+        u.email as user_email
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone_number
+      WHERE r.payment_status = 'pending'
+        AND r.status = 'pending'
+      ORDER BY r.created_at ASC
+    `;
+    
+    const reservations = await databaseService.all(query);
+    
+    // Parsear JSON fields
+    return reservations.map(reservation => {
+      if (reservation.payment_data) {
+        try {
+          reservation.payment_data = JSON.parse(reservation.payment_data);
+        } catch (e) {
+          console.error('[RESERVATION] Error parsing payment_data:', e);
+        }
+      }
+      
+      reservation.was_free = Boolean(reservation.was_free);
+      return reservation;
+    });
+  }
 }
 
 export default new ReservationRepository();

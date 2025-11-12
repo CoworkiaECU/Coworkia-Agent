@@ -9,6 +9,7 @@
     "backup:list": "node scripts/backup-database.js list",
     "cleanup": "node scripts/cleanup-expired-data.js",
     "cleanup:dry-run": "node scripts/cleanup-expired-data.js --dry-run",
+    "audit": "node scripts/audit-reservations.js",
     "reservations": "node scripts/manage-reservations.js",
     "migrate": "node scripts/migrate-to-sqlite.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --verbose",

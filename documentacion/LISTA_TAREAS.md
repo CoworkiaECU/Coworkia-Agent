@@ -1,6 +1,11 @@
 # ✅ LISTA DE TAREAS - COWORKIA AGENT
 
-## 🎯 ESTADO ACTUAL: LISTO PARA DEPLOY FINAL
+## 🎯 ESTADO ACTUAL: v120 DEPLOYED - SISTEMA PRODUCTIVO ✅
+
+**Última actualización:** 12 Nov 2025  
+**Versión actual:** v120-v121  
+**Tests:** 160/167 passing (95.8%)  
+**Deploy:** Heroku - https://coworkia-agent-e97d15dac56f.herokuapp.com/
 
 ---
 
@@ -69,7 +74,7 @@ src/
 
 ---
 
-## 🚀 FASE 4: DEPLOY PRODUCCIÓN (EN PROCESO)
+## 🚀 FASE 4: DEPLOY PRODUCCIÓN ✅ 100% COMPLETO
 
 ### ✅ Completado:
 
@@ -97,84 +102,116 @@ src/
   - [x] Soporte WHATSAPP_BOT_NUMBER
   - [x] PORT dinámico (process.env.PORT)
 
-### ⏳ Pendiente (SIGUIENTE INMEDIATO):
+### ✅ Completado (FASE 4 LISTA):
 
-- [ ] 4.1 Conectar Git con Heroku
+- [x] 4.1 Conectar Git con Heroku ✅
   ```bash
   git remote add heroku https://git.heroku.com/coworkia-agent.git
+  # COMPLETADO - Remote configurado
   ```
 
-- [ ] 4.2 Agregar variables faltantes en Heroku
+- [x] 4.2 Agregar variables faltantes en Heroku ✅
   ```bash
   heroku config:set OPENAI_MODEL="gpt-4o-mini"
   heroku config:set ENV="production"
+  # COMPLETADO - Variables configuradas
   ```
 
-- [ ] 4.3 Deploy inicial
+- [x] 4.3 Deploy inicial + v112-v121 ✅
   ```bash
-  git add .
-  git commit -m "feat: Deploy inicial - 4 agentes + WhatsApp"
-  git push heroku main
+  # v107-v111: Deploy inicial
+  # v112-v119: Formularios inteligentes, timezone fixes, audit tools
+  # v120-v121: DEBUG logs condicional, payment stats, E2E fix
+  # COMPLETADO - Sistema productivo
   ```
 
-- [ ] 4.4 Verificar logs
+- [x] 4.4 Verificar logs ✅
   ```bash
   heroku logs --tail
-  # Buscar: "Coworkia Agent listo en..."
+  # COMPLETADO - Logs verificados, health checks OK
   ```
 
-- [ ] 4.5 Actualizar webhook en Wassenger
-  - [ ] URL: `https://coworkia-agent.herokuapp.com/webhooks/wassenger`
-  - [ ] Test Connection en Wassenger ✅
+- [x] 4.5 Actualizar webhook en Wassenger ✅
+  - [x] URL: `https://coworkia-agent-e97d15dac56f.herokuapp.com/webhooks/wassenger`
+  - [x] Test Connection en Wassenger ✅
+  # COMPLETADO - Webhook funcional
 
-- [ ] 4.6 Probar desde WhatsApp
-  - [ ] Enviar: "Hola Aurora" → Debe responder automáticamente
+- [x] 4.6 Probar desde WhatsApp ✅
+  - [x] Enviar: "Hola Aurora" → Responde automáticamente
+  # COMPLETADO - Sistema productivo verificado
 
 ---
 
 ## 📊 MÉTRICAS DEL PROYECTO
 
-**Archivos creados:** 20+  
-**Líneas de código:** ~2000+  
+**Versión actual:** v120-v121  
+**Archivos creados:** 30+  
+**Líneas de código:** ~3000+  
 **Agentes:** 4 (Aurora, Aluna, Adriana, Enzo)  
-**Endpoints:** 6  
-**Integraciones:** WhatsApp (Wassenger), OpenAI, Heroku
+**Endpoints:** 8+ (health, payment-stats, system, queues, etc)  
+**Integraciones:** WhatsApp (Wassenger), OpenAI, Heroku, Gmail SMTP  
+**Tests:** 160/167 passing (95.8%)
+- Unitarios: 149/149 ✅
+- E2E: 11/18 (61%)
+
+**Deploys realizados:**
+- v107-v111: Deploy inicial, 4 agentes
+- v112-v119: Formularios inteligentes, timezone Ecuador UTC-5, audit tools
+- v120-v121: DEBUG logs condicional, payment stats, E2E fix
 
 ---
 
-## 🎯 PRÓXIMO COMANDO A EJECUTAR:
+## 🚀 VERSIONES DEPLOYADAS (v112-v121)
 
-```bash
-# 1. Conectar remoto Heroku
-cd /Users/diegovillota/coworkia-agent
-git remote add heroku https://git.heroku.com/coworkia-agent.git
+### v112: Sistema de Formularios Inteligentes
+- ✅ PartialReservationForm con TTL 15 minutos
+- ✅ extractDataFromMessage con IA para detectar datos
+- ✅ saveForm/getOrCreateForm con SQLite persistence
+- ✅ processMessageWithForm integrando todo el flujo
 
-# 2. Agregar variables faltantes
-heroku config:set OPENAI_MODEL="gpt-4o-mini"
-heroku config:set ENV="production"
+### v113: Fixes Timezone Ecuador
+- ✅ Forzar America/Guayaquil en calendar-utils
+- ✅ getNextAvailableSlot con UTC-5
+- ✅ isSlotAvailable con timezone correcto
 
-# 3. Deploy
-git add .
-git commit -m "feat: Deploy inicial completo"
-git push heroku main
+### v114-v115: Upsell y Conflicts
+- ✅ Upsell para 3+ personas en makeReservation
+- ✅ Verificación de conflictos antes de guardar
+- ✅ Tests unitarios timezone
 
-# 4. Ver logs
-heroku logs --tail
-```
+### v116-v117: Audit Tools
+- ✅ /health/system con uptime, memory, env
+- ✅ /health/queues con estado de colas
+
+### v118-v119: E2E Testing Infrastructure
+- ✅ Suite E2E completa con 18 tests
+- ✅ Cobertura: forms, timezone, upsell, conflicts, persistence
+
+### v120-v121: Technical Debt Cleanup
+- ✅ DEBUG logs condicional (7 logs + email debug)
+- ✅ Payment statistics con /health/payment-stats
+- ✅ Fix E2E tests: 0/18 → 11/18 passing
+- ✅ README.md comprehensive documentation
+- ✅ LISTA_TAREAS.md actualizado
 
 ---
 
-## ✅ CHECKLIST FINAL
+## ✅ CHECKLIST FINAL - SISTEMA PRODUCTIVO
 
-- [x] Código organizado en español
-- [x] 4 agentes con personalidades completas
-- [x] Orquestador inteligente con contexto
-- [x] Integración WhatsApp funcionando
-- [x] App Heroku creada y configurada
-- [ ] Git conectado a Heroku ⬅️ **SIGUIENTE**
-- [ ] Deploy exitoso
-- [ ] Webhook actualizado en Wassenger
-- [ ] Test producción OK
+- [x] Código organizado en español ✅
+- [x] 4 agentes con personalidades completas ✅
+- [x] Orquestador inteligente con contexto ✅
+- [x] Integración WhatsApp funcionando ✅
+- [x] App Heroku creada y configurada ✅
+- [x] Git conectado a Heroku ✅
+- [x] Deploy exitoso v120-v121 ✅
+- [x] Webhook actualizado en Wassenger ✅
+- [x] Test producción OK ✅
+- [x] Formularios inteligentes con IA ✅
+- [x] Timezone Ecuador UTC-5 ✅
+- [x] Payment verification con stats ✅
+- [x] DEBUG logs production-ready ✅
+- [x] Documentation completa ✅
 
 ---
 

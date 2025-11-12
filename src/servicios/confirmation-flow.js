@@ -332,7 +332,17 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     if (error instanceof ConfirmationFlowError) {
       return error.payload;
     }
-    console.error('[Confirmation] Error procesando confirmación positiva:', error);
+    
+    // 🚨 LOG CRÍTICO CON CONTEXTO COMPLETO
+    console.error('[Confirmation] 🚨 ERROR CRÍTICO procesando confirmación positiva:', {
+      error: error.message,
+      stack: error.stack,
+      userId: userId || 'unknown',
+      pendingReservationExists: !!pendingReservation,
+      userProfileExists: !!userProfile,
+      timestamp: new Date().toISOString()
+    });
+    
     return {
       success: false,
       message: '❌ Error interno procesando la confirmación. Intenta nuevamente.',

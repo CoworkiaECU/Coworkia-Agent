@@ -180,7 +180,16 @@ O contáctanos al 📞 +593 99 483 7117 para verificación manual.`,
     }
     
   } catch (error) {
-    console.error('[RECEIPT] ❌ Error procesando comprobante:', error);
+    // 🚨 LOG CRÍTICO CON CONTEXTO COMPLETO
+    console.error('[RECEIPT] 🚨 ERROR CRÍTICO procesando comprobante:', {
+      error: error.message,
+      stack: error.stack,
+      userId: userId || 'unknown',
+      hasImage: !!imageUrl,
+      imageUrl: imageUrl || 'none',
+      pendingReservationId: pendingReservation?.id || 'not_found',
+      timestamp: new Date().toISOString()
+    });
     
     return {
       success: false,

@@ -226,17 +226,72 @@ Responde SOLO con un JSON en este formato:
 
 /**
  * 📊 Generar reporte de verificación de pagos
+ * Estadísticas basadas en reservaciones con pago confirmado
  */
-export function getPaymentVerificationStats() {
-  const stats = {
-    totalVerified: 0,
-    successRate: 0,
-    averageConfidence: 0,
-    commonIssues: []
-  };
+export async function getPaymentVerificationStats() {
+  const databaseService = (await import('../database/database.js')).default;
   
-  // TODO: Implementar estadísticas basadas en logs
-  return stats;
+  try {
+    // Total de pagos verificados (confirmed con pago)
+    const totalVerified = await databaseService.get(
+      `SELECT COUNT(*) as count FROM reservations 
+       WHERE payment_status IN ('paid', 'verified', 'confirmed')`
+    );
+    
+    // Pagos por método
+    const paymentMethods = await databaseService.all(
+      `SELECT payment_data, COUNT(*) as count FROM reservations 
+       WHERE payment_status IN ('paid', 'verified', 'confirmed') 
+       AND payment_data IS NOT NULL
+       GROUP BY payment_data`
+    );
+    
+    // Pagos pendientes
+    const pendingPayments = await databaseService.get(
+      `SELECT COUNT(*) as count FROM reservations 
+       WHERE payment_status = 'pending_payment'`
+    );
+    
+    // Tasa de éxito (pagados vs totales con precio > 0)
+    const totalWithPrice = await databaseService.get(
+      `SELECT COUNT(*) as count FROM reservations 
+       WHERE total_price > 0`
+    );
+    
+    const successRate = totalWithPrice.count > 0 
+      ? ((totalVerified.count / totalWithPrice.count) * 100).toFixed(2)
+      : 0;
+    
+    // Extraer métodos de pago más comunes
+    const methodStats = {};
+    for (const pm of paymentMethods) {
+      try {
+        const data = JSON.parse(pm.payment_data);
+        const method = data.method || data.bank || 'unknown';
+        methodStats[method] = (methodStats[method] || 0) + pm.count;
+      } catch (e) {
+        methodStats['unknown'] = (methodStats['unknown'] || 0) + pm.count;
+      }
+    }
+    
+    return {
+      totalVerified: totalVerified.count,
+      pendingPayments: pendingPayments.count,
+      successRate: parseFloat(successRate),
+      paymentMethods: methodStats,
+      totalWithPrice: totalWithPrice.count,
+      lastUpdated: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('[Payment Stats] Error generando estadísticas:', error);
+    return {
+      totalVerified: 0,
+      pendingPayments: 0,
+      successRate: 0,
+      paymentMethods: {},
+      error: error.message
+    };
+  }
 }
 
 export default {

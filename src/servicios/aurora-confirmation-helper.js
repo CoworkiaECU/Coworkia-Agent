@@ -53,7 +53,9 @@ export function extractReservationData(message, userProfile) {
     
     if (meetingRoomPatterns.some(pattern => pattern.test(message))) {
       serviceType = 'meetingRoom';
-      console.log('[DEBUG] 🏢 DETECTADO: Sala de Reunión solicitada');
+      if (process.env.DEBUG === 'true') {
+        console.log('[DEBUG] 🏢 DETECTADO: Sala de Reunión solicitada');
+      }
     }
 
     // 🎯 MEJORADO: Buscar patrones de fecha con más flexibilidad
@@ -94,27 +96,37 @@ export function extractReservationData(message, userProfile) {
     if (timeMatch && timeMatch.length >= 1) {
       // Normalizar primer horario detectado (SIEMPRE ES LA HORA DE INICIO)
       startTime = normalizeTimeFormat(timeMatch[0]);
-      console.log('[DEBUG] 🕐 startTime normalizado:', startTime);
+      if (process.env.DEBUG === 'true') {
+        console.log('[DEBUG] 🕐 startTime normalizado:', startTime);
+      }
       
       // 🎯 NUEVA LÓGICA: Solo mirar durationMatch, IGNORAR segundo horario
       if (durationMatch) {
         const requestedDuration = parseInt(durationMatch[1]);
-        console.log('[DEBUG] ⏱️ Duración solicitada explícitamente:', requestedDuration, 'horas');
+        if (process.env.DEBUG === 'true') {
+          console.log('[DEBUG] ⏱️ Duración solicitada explícitamente:', requestedDuration, 'horas');
+        }
         
         // SOLO permitir más de 2h si el usuario lo dice EXPLÍCITAMENTE
         if (requestedDuration > 2 && requestedDuration <= 8) {
           durationHours = requestedDuration;
-          console.log('[DEBUG] ✅ Aceptando duración explícita:', durationHours, 'horas');
+          if (process.env.DEBUG === 'true') {
+            console.log('[DEBUG] ✅ Aceptando duración explícita:', durationHours, 'horas');
+          }
         } else if (requestedDuration > 8) {
           durationHours = 2;
-          console.log('[DEBUG] ⚠️ Duración muy larga (>8h) - LIMITANDO A 2 HORAS');
+          if (process.env.DEBUG === 'true') {
+            console.log('[DEBUG] ⚠️ Duración muy larga (>8h) - LIMITANDO A 2 HORAS');
+          }
         } else {
           durationHours = requestedDuration;
         }
       } else {
         // Sin duración explícita = 2 horas por defecto
         durationHours = 2;
-        console.log('[DEBUG] 📋 Sin duración especificada - Usando 2 HORAS por defecto');
+        if (process.env.DEBUG === 'true') {
+          console.log('[DEBUG] 📋 Sin duración especificada - Usando 2 HORAS por defecto');
+        }
       }
       
       // 🎯 CALCULAR endTime desde startTime + duración validada
@@ -123,7 +135,9 @@ export function extractReservationData(message, userProfile) {
       const endHour = startHour + durationHours;
       endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
       
-      console.log('[DEBUG] 📅 Horario final:', startTime, '-', endTime, `(${durationHours}h)`);
+      if (process.env.DEBUG === 'true') {
+        console.log('[DEBUG] 📅 Horario final:', startTime, '-', endTime, `(${durationHours}h)`);
+      }
     }
 
     const reservationDate = dateMatch ? parseDate(dateMatch[1]) : tomorrow.toISOString().split('T')[0];

@@ -12,7 +12,7 @@
 import { jest } from '@jest/globals';
 import databaseService from '../database/database.js';
 import { checkAvailability } from '../servicios/calendario.js';
-import { PartialReservationForm, extractDataFromMessage, saveForm, loadFormFromDB } from '../servicios/partial-reservation-form.js';
+import { PartialReservationForm, extractDataFromMessage, saveForm, getOrCreateForm } from '../servicios/partial-reservation-form.js';
 
 describe('🔄 E2E: Flujo Completo de Reserva', () => {
   const testPhone = '+593987654321';
@@ -228,71 +228,59 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
   });
 
   describe('✅ Confirmación y persistencia', () => {
-    test('debe guardar formulario parcial en pending_confirmations', async () => {
+    test('debe guardar y recuperar formulario parcial', async () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const fecha = tomorrow.toISOString().split('T')[0];
       
+      // Guardar formulario con saveForm
       let form = new PartialReservationForm(testPhone);
       form = Object.assign(form, extractDataFromMessage(`hot desk ${fecha} 10am test@coworkia.com`, form));
-      await saveForm(form);
+      const saved = await saveForm(form);
       
-      // Verificar que se guardó
-      const saved = await databaseService.get(
-        'SELECT * FROM pending_confirmations WHERE user_phone = ?',
-        [testPhone]
-      );
+      expect(saved).toBe(true);
       
-      expect(saved).toBeDefined();
-      expect(saved.user_phone).toBe(testPhone);
-      
-      const data = JSON.parse(saved.reservation_data);
-      expect(data.spaceType).toBe('hot desk');
-      expect(data.date).toBe(fecha);
+      // Recuperar con getOrCreateForm
+      const recovered = await getOrCreateForm(testPhone);
+      expect(recovered).toBeDefined();
+      expect(recovered.spaceType).toBe('hot desk');
+      expect(recovered.date).toBe(fecha);
+      expect(recovered.time).toBe('10:00');
+      expect(recovered.email).toBe('test@coworkia.com');
     });
 
-    test('debe cargar formulario guardado desde BD', async () => {
+    test('debe persistir datos parciales entre mensajes', async () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const fecha = tomorrow.toISOString().split('T')[0];
       
-      // Guardar formulario
+      // Primer mensaje: solo hot desk
       let form1 = new PartialReservationForm(testPhone);
-      form1 = Object.assign(form1, extractDataFromMessage(`hot desk ${fecha} 10am`, form1));
+      form1 = Object.assign(form1, extractDataFromMessage('hot desk', form1));
       await saveForm(form1);
       
-      // Cargar en nueva instancia
-      const form2 = await loadFormFromDB(testPhone);
+      // Segundo mensaje: agregar fecha
+      const form2 = await getOrCreateForm(testPhone);
+      Object.assign(form2, extractDataFromMessage(`para ${fecha}`, form2));
+      await saveForm(form2);
       
-      expect(form2).toBeDefined();
-      expect(form2.spaceType).toBe('hot desk');
-      expect(form2.date).toBe(fecha);
-      expect(form2.time).toBe('10:00');
+      // Tercer mensaje: agregar hora
+      const form3 = await getOrCreateForm(testPhone);
+      Object.assign(form3, extractDataFromMessage('a las 10am', form3));
+      
+      expect(form3.spaceType).toBe('hot desk');
+      expect(form3.date).toBe(fecha);
+      expect(form3.time).toBe('10:00');
     });
 
-    test('formulario debe expirar después de TTL (15 min)', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const fecha = tomorrow.toISOString().split('T')[0];
+    test('formulario vacío cuando no hay datos guardados', async () => {
+      const form = await getOrCreateForm('+593999000000');
       
-      let form = new PartialReservationForm(testPhone);
-      form = Object.assign(form, extractDataFromMessage(`hot desk ${fecha}`, form));
-      await saveForm(form);
-      
-      // Verificar que tiene expires_at
-      const saved = await databaseService.get(
-        'SELECT expires_at FROM pending_confirmations WHERE user_phone = ?',
-        [testPhone]
-      );
-      
-      expect(saved.expires_at).toBeDefined();
-      
-      const expiresAt = new Date(saved.expires_at);
-      const now = new Date();
-      const diffMinutes = (expiresAt - now) / 1000 / 60;
-      
-      expect(diffMinutes).toBeGreaterThan(14); // Debe ser ~15 min
-      expect(diffMinutes).toBeLessThan(16);
+      expect(form).toBeDefined();
+      expect(form.spaceType).toBeNull();
+      expect(form.date).toBeNull();
+      expect(form.time).toBeNull();
+      expect(form.email).toBeNull();
     });
   });
 

@@ -344,4 +344,31 @@ router.get('/queues', async (req, res) => {
   }
 });
 
+/**
+ * 💰 Endpoint para estadísticas de verificación de pagos
+ * Muestra: total verificados, tasa éxito, métodos de pago
+ */
+router.get('/payment-stats', async (req, res) => {
+  try {
+    console.log('[HEALTH-PAYMENT] 💰 Obteniendo estadísticas de pagos...');
+    
+    const { getPaymentVerificationStats } = await import('../../servicios/payment-verification.js');
+    const stats = await getPaymentVerificationStats();
+    
+    res.status(200).json({
+      ok: true,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('[HEALTH-PAYMENT] ❌ Error obteniendo estadísticas:', error);
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 export default router;

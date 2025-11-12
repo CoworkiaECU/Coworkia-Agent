@@ -38,8 +38,8 @@ async function createEmailTransporter() {
       tls: {
         rejectUnauthorized: false
       },
-      debug: true, // Debugging habilitado
-      logger: true
+      debug: process.env.DEBUG_EMAIL === 'true',
+      logger: process.env.DEBUG_EMAIL === 'true'
     });
     
     console.log('[EMAIL] ✅ Transportador creado, verificando conexión...');

@@ -198,11 +198,10 @@ class PostgresAdapter {
    * 📝 Ejecutar query (compatible con SQLite API)
    */
   async run(sql, params = []) {
-    const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
       console.log('[POSTGRES DEBUG] run() SQL:', pgSql, 'Params:', params);
-      const result = await client.query(pgSql, params);
+      const result = await this.pool.query(pgSql, params);
       return {
         changes: result.rowCount || 0,
         lastID: result.rows[0]?.id || null
@@ -213,8 +212,6 @@ class PostgresAdapter {
       console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
       console.error('[POSTGRES ERROR] Params:', params);
       throw error;
-    } finally {
-      client.release();
     }
   }
 
@@ -222,31 +219,20 @@ class PostgresAdapter {
    * 📖 Obtener una fila (compatible con SQLite API)
    */
   async get(sql, params = []) {
-    const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
       console.log('[POSTGRES DEBUG] get() SQL:', pgSql, 'Params:', params);
       const startTime = Date.now();
-      const result = await client.query(pgSql, params);
+      const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
       console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
-      const returnValue = result.rows[0] || null;
-      console.log('[POSTGRES DEBUG] get() returning, releasing client...');
-      return returnValue;
+      return result.rows[0] || null;
     } catch (error) {
       console.error('[POSTGRES ERROR] get() failed:', error.message);
       console.error('[POSTGRES ERROR] SQL:', sql);
       console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
       console.error('[POSTGRES ERROR] Params:', params);
       throw error;
-    } finally {
-      try {
-        console.log('[POSTGRES DEBUG] get() finally block - releasing client');
-        client.release();
-        console.log('[POSTGRES DEBUG] get() client released successfully');
-      } catch (releaseError) {
-        console.error('[POSTGRES ERROR] Failed to release client:', releaseError.message);
-      }
     }
   }
 
@@ -254,12 +240,11 @@ class PostgresAdapter {
    * 📚 Obtener todas las filas (compatible con SQLite API)
    */
   async all(sql, params = []) {
-    const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
       console.log('[POSTGRES DEBUG] all() SQL:', pgSql, 'Params:', params);
       const startTime = Date.now();
-      const result = await client.query(pgSql, params);
+      const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
       console.log(`[POSTGRES DEBUG] all() completado en ${duration}ms, rows:`, result.rows.length);
       return result.rows;
@@ -269,8 +254,6 @@ class PostgresAdapter {
       console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
       console.error('[POSTGRES ERROR] Params:', params);
       throw error;
-    } finally {
-      client.release();
     }
   }
 }

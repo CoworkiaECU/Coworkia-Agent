@@ -358,9 +358,10 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 👉 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
 *🏦 TRANSFERENCIA BANCARIA:*
-👉 Banco Pichincha
-👉 Cuenta: 2207158516
-👉 Nombre: Coworkia
+👉 Produbanco Ahorros
+👉 Cuenta: 20059783069
+👉 Cédula: 1702683499
+👉 Titular: Gonzalo Villota Izurieta
 
 ⚠️ *Importante:* Después de pagar, envíame una captura de pantalla del comprobante para confirmar automáticamente.
 

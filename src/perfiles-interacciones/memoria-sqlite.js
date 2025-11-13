@@ -376,7 +376,7 @@ export function calculateReservationCost(serviceType, hours, people = 1) {
 }
 
 export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
-  const BANK_ACCOUNT = process.env.COWORKIA_BANK_ACCOUNT || 'Banco Pichincha\nCta Ahorros: 2207158516\nCoworkia Ecuador\nRUC: 1792954078001';
+  const BANK_ACCOUNT = process.env.COWORKIA_BANK_ACCOUNT || 'Produbanco\nCta Ahorros: 20059783069\nCédula: 1702683499\nGonzalo Villota Izurieta';
   const PAYMENT_LINK = 'https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA';
 
   if (!profile.freeTrialUsed) {

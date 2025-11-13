@@ -154,7 +154,7 @@ function generateConfirmationEmailHTML(reservationData) {
         </div>
         <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(245,158,11,0.2);">
           <p style="margin: 0; color: #374151; font-weight: 600;">🏦 Transferencia</p>
-          <p style="margin: 5px 0 0 0; color: #374151; font-size: 13px;">Banco Pichincha<br>Cta: 2207158516</p>
+          <p style="margin: 5px 0 0 0; color: #374151; font-size: 13px;">Produbanco Ahorros<br>Cta: 20059783069<br>CI: 1702683499</p>
         </div>
       </div>
     </div>
@@ -278,8 +278,15 @@ function generateConfirmationEmailHTML(reservationData) {
 
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
-            <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">
-              ⭐ Si tienes alguna pregunta, simplemente responde este correo.
+            <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
+              💬 ¿Tienes dudas sobre tu reserva?
+            </p>
+            <a href="https://wa.me/593994837117?text=Recib%C3%AD%20tu%20correo%20y%20tengo%20dudas" 
+               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
+              📱 Habla con Aurora por WhatsApp
+            </a>
+            <p style="color: #9ca3af; font-size: 12px; margin: 12px 0 0 0;">
+              Estoy aquí para ayudarte con cualquier cambio o pregunta 😊
             </p>
           </div>
 
@@ -322,7 +329,7 @@ export async function processPaymentReceipt(imageData, amount) {
   
   // Detectar método de pago basado en patrones comunes
   let method = 'Transferencia bancaria';
-  let bank = 'Banco Pichincha';
+  let bank = 'Produbanco';
   
   // Generar referencia única basada en timestamp
   const reference = `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
@@ -373,8 +380,8 @@ export async function sendReservationConfirmation(reservationData) {
   
   const mailOptions = {
     from: {
-      name: 'Coworkia Ecuador',
-      address: process.env.EMAIL_USER || 'noreply@coworkia.com'
+      name: 'Coworkia',
+      address: process.env.EMAIL_USER || 'coworkia.ec@gmail.com'
     },
     to: email,
     cc: 'coworkia.ec@gmail.com', // Copia a Coworkia
@@ -470,8 +477,8 @@ export async function sendReservationReminder(reservationData) {
 
   const mailOptions = {
     from: {
-      name: 'Coworkia Ecuador',
-      address: process.env.EMAIL_USER || 'noreply@coworkia.com'
+      name: 'Coworkia',
+      address: process.env.EMAIL_USER || 'coworkia.ec@gmail.com'
     },
     to: email,
     subject: `🔔 Recordatorio - Tu reserva es mañana - ${serviceType}`,
@@ -743,7 +750,7 @@ function generatePaymentConfirmationHTML(data) {
                     </a>
                     <br>
                     ` : ''}
-                    <a href="https://wa.me/593969696969" style="background: #4FD1C7; color: #1f2937; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
+                    <a href="https://wa.me/593994837117" style="background: #4FD1C7; color: #1f2937; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                         💬 Contactar Soporte
                     </a>
                 </div>
@@ -781,8 +788,8 @@ function generatePaymentConfirmationHTML(data) {
                 <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">work · connect · grow</div>
                 <p style="color: #a0aec0; margin: 0; font-size: 14px;">
                     ¡Gracias por elegir Coworkia! 🚀<br>
-                    <a href="mailto:info@coworkia.com" style="color: #4FD1C7;">info@coworkia.com</a> | 
-                    <a href="https://wa.me/593969696969" style="color: #4FD1C7;">+593 96 969 6969</a>
+                    <a href="mailto:coworkia.ec@gmail.com" style="color: #4FD1C7;">coworkia.ec@gmail.com</a> | 
+                    <a href="https://wa.me/593994837117" style="color: #4FD1C7;">+593 994837117</a>
                 </p>
             </div>
 

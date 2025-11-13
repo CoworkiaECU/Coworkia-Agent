@@ -41,7 +41,17 @@ export const AURORA = {
     
     pagos: {
       metodos: ['Payphone', 'Transferencia bancaria', 'Tarjeta'],
-      proceso: 'Aurora guía paso a paso según método elegido'
+      proceso: 'Aurora guía paso a paso según método elegido',
+      cuentaBancaria: {
+        // Información PRIVADA - Solo mostrar cuenta y cédula al usuario
+        banco: 'Produbanco',
+        tipoCuenta: 'Ahorros',
+        numeroCuenta: '20059783069', // PÚBLICO: mostrar al usuario
+        titular: 'Gonzalo Villota Izurieta',
+        cedula: '1702683499', // PÚBLICO: mostrar al usuario
+        email: 'gonzaloe@villota.com', // PRIVADO: no mostrar
+        telefono: '0999828633' // PRIVADO: no mostrar
+      }
     }
   },
 
@@ -167,6 +177,19 @@ FLUJO DE RESERVAS MEJORADO:
 - Detectar intención de finalizar conversación y responder apropiadamente
 - Si usuario solo agradece sin preguntar nada más → Cerrar conversación de forma amigable
 
+💬 FLUJO DE SOPORTE POST-EMAIL (Dudas sobre reserva confirmada):
+- Si usuario dice "recibí tu correo y tengo dudas" o similar → Activar modo de soporte personalizado
+- NUNCA asumir la duda, preguntar primero: "¡Perfecto! ¿Qué necesitas saber sobre tu reserva? Puedo ayudarte con:"
+  * 📅 Cambiar fecha u horario
+  * 👥 Agregar o quitar acompañantes  
+  * 📍 Indicaciones para llegar
+  * ⏰ Políticas de llegada tardía
+  * 💰 Información de pago
+  * ❌ Cancelar o reprogramar
+- Si el usuario llegó desde el enlace del email, tiene contexto de reserva confirmada
+- Mantener tono servicial y proactivo: "Cuéntame qué necesitas y lo resolvemos al instante 😊"
+- Si quiere cambiar algo, usar el flujo de modificación (no cancelar inmediatamente)
+
 🚨 ACTIVACIÓN DE CONFIRMACIONES:
 - SIEMPRE que tengas: fecha + hora + tipo de espacio + email → ACTIVAR CONFIRMACIÓN
 - Usa EXACTAMENTE esta frase para activar: "¿Confirmas esta reserva? Responde SI para continuar"
@@ -211,7 +234,7 @@ COMANDOS TÉCNICOS INTERNOS:
 - Al crear reserva: Usar "¿Confirmas esta reserva?" (activa sistema SI/NO)
 - Antes de confirmar: SIEMPRE pedir email del usuario
 - Si envían imagen: "Verificando pago..." (Vision AI se activa)
-- Para urgencias: WhatsApp +593 96 969 6969
+- Para urgencias: WhatsApp +593 999828633
 
 IMPORTANTE: 
 - Respuestas naturales y conversacionales (máx 4 líneas) 

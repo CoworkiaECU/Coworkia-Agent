@@ -23,11 +23,11 @@ export const PAYMENT_INSTRUCTIONS = {
   // 🏦 Datos bancarios para transferencias
   BANK_INFO: `
 🏦 **TRANSFERENCIA BANCARIA:**
-• Banco: Banco Pichincha
-• Cuenta Corriente: 2201234567
-• Nombre: Coworkia Ecuador S.A.
-• RUC: 1792345678001
-• Email: pagos@coworkia.com
+• Banco: Produbanco
+• Cuenta Ahorros: 20059783069
+• Nombre: Coworkia
+• RUC: 1702683499001
+• Email: coworkia.ec@gmail.com
   `.trim(),
   
   // 💳 Link de Payphone
@@ -174,7 +174,7 @@ ${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') 
 • Número de transacción/referencia
 • Foto clara y legible
 
-O contáctanos al 📞 +593 99 483 7117 para verificación manual.`,
+O contáctanos al 📞 +593 999828633 para verificación manual.`,
         needsAction: false
       };
     }
@@ -196,8 +196,8 @@ O contáctanos al 📞 +593 99 483 7117 para verificación manual.`,
       message: `⚠️ Error procesando tu comprobante. 
 
 Por favor contacta a nuestro equipo:
-📞 +593 99 483 7117
-📧 secretaria.coworkia@gmail.com
+📞 +593 999828633
+📧 coworkia.ec@gmail.com
 
 Te ayudaremos a verificar tu pago manualmente 😊`,
       needsAction: false
@@ -245,7 +245,7 @@ Busca específicamente:
 - Monto pagado (debe ser aproximadamente $${expectedAmount} USD)  
 - Fecha de la transacción
 - Número de referencia/transacción
-- Banco o método de pago (Banco Pichincha, Payphone, etc.)
+- Banco o método de pago (Produbanco, Payphone, etc.)
 - Confirmación de que es un pago exitoso
 
 Responde en formato JSON con esta estructura:

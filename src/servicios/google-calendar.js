@@ -150,7 +150,7 @@ export async function createCalendarEvent(reservationData) {
 
 📍 Ubicación: Whymper 403, Edificio Finistere, Quito
 🗺️ Google Maps: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
-📞 Contacto: +593 99 483 7117
+📞 Contacto: +593 999828633
 
 ¡Te esperamos! 🚀
       `.trim(),

@@ -521,7 +521,7 @@ export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
 📋 *IVA 15% si requiere factura*
 
 💳 *Pago con tarjeta:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
-🏦 *Transferencia:* Banco Pichincha, Cta 2207158516`;
+🏦 *Transferencia:* Produbanco Ahorros, Cta 20059783069, CI 1702683499`;
 
   return originalResponse + pricingInfo;
 }

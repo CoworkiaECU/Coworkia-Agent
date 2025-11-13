@@ -181,6 +181,12 @@ class DatabaseService {
    * 🔄 Wrapper para db.run con Promesas
    */
   run(query, params = []) {
+    // PostgreSQL adapter ya retorna promesas directamente
+    if (USE_POSTGRES) {
+      return this.db.run(query, params);
+    }
+    
+    // SQLite usa callbacks
     return new Promise((resolve, reject) => {
       this.db.run(query, params, function(err) {
         if (err) {
@@ -199,6 +205,12 @@ class DatabaseService {
    * 🔍 Wrapper para db.get con Promesas
    */
   get(query, params = []) {
+    // PostgreSQL adapter ya retorna promesas directamente
+    if (USE_POSTGRES) {
+      return this.db.get(query, params);
+    }
+    
+    // SQLite usa callbacks
     return new Promise((resolve, reject) => {
       this.db.get(query, params, (err, row) => {
         if (err) {
@@ -215,6 +227,12 @@ class DatabaseService {
    * 📋 Wrapper para db.all con Promesas
    */
   all(query, params = []) {
+    // PostgreSQL adapter ya retorna promesas directamente
+    if (USE_POSTGRES) {
+      return this.db.all(query, params);
+    }
+    
+    // SQLite usa callbacks
     return new Promise((resolve, reject) => {
       this.db.all(query, params, (err, rows) => {
         if (err) {

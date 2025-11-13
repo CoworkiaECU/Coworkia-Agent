@@ -9,7 +9,9 @@ class UserRepository {
    * 🔍 Busca un usuario por su número de teléfono
    */
   async findByPhone(phoneNumber) {
+    console.log('[USER-REPO DEBUG] Llamando ensureInitialized()');
     databaseService.ensureInitialized();
+    console.log('[USER-REPO DEBUG] ensureInitialized() completado');
     
     const query = `
       SELECT * FROM users 

@@ -1,19 +1,25 @@
 /**
- * 🗄️ SQLite Database Service para Coworkia Agent
- * Maneja conexión, esquema y operaciones básicas de base de datos
+ * 🗄️ Database Service para Coworkia Agent
+ * Usa PostgreSQL en producción (Heroku) y SQLite en desarrollo
  */
 
 import sqlite3 from 'sqlite3';
 import { promises as fs } from 'fs';
 import path from 'path';
+import postgresAdapter from './postgres-adapter.js';
 
-// Configuración de la base de datos
-// Usar SQLITE_PATH si está definido, sino usar path local
-// DATABASE_URL se reserva para Postgres en producción futura
+// Detectar entorno
+const USE_POSTGRES = process.env.DATABASE_URL && process.env.NODE_ENV === 'production';
+
+// Configuración de la base de datos SQLite
 const DB_PATH = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'coworkia.db');
 const DATA_DIR = path.dirname(DB_PATH);
 
-console.log(`[DATABASE] 📁 Ruta SQLite: ${DB_PATH}`);
+if (USE_POSTGRES) {
+  console.log(`[DATABASE] 🐘 Usando PostgreSQL en producción`);
+} else {
+  console.log(`[DATABASE] 📁 Usando SQLite: ${DB_PATH}`);
+}
 
 // Asegurar que existe la carpeta data/
 try {
@@ -35,6 +41,15 @@ class DatabaseService {
    * 🚀 Inicializa la conexión a la base de datos
    */
   async initialize() {
+    // Si estamos en producción con DATABASE_URL, usar PostgreSQL
+    if (USE_POSTGRES) {
+      await postgresAdapter.initialize();
+      this.db = postgresAdapter; // Usar el adapter como interfaz
+      this.isInitialized = true;
+      return;
+    }
+
+    // En desarrollo, usar SQLite
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(DB_PATH, (err) => {
         if (err) {

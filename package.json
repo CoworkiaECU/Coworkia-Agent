@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --config nodemon.json src/express-servidor/index.js",
+    "dev:local": "NODE_ENV=development FORCE_SQLITE=true nodemon --config nodemon.json src/express-servidor/index.js",
     "start": "node src/express-servidor/index.js",
+    "test:aurora": "node scripts/test-aurora-local.js",
+    "test:conversation": "node scripts/test-aurora-local.js --conversation",
+    "test:cancel": "node scripts/test-aurora-local.js --cancel",
     "backup": "node scripts/backup-database.js",
     "backup:list": "node scripts/backup-database.js list",
     "cleanup": "node scripts/cleanup-expired-data.js",

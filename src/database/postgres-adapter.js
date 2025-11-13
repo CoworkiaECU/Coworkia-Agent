@@ -249,8 +249,18 @@ class PostgresAdapter {
     const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
+      console.log('[POSTGRES DEBUG] all() SQL:', pgSql, 'Params:', params);
+      const startTime = Date.now();
       const result = await client.query(pgSql, params);
+      const duration = Date.now() - startTime;
+      console.log(`[POSTGRES DEBUG] all() completado en ${duration}ms, rows:`, result.rows.length);
       return result.rows;
+    } catch (error) {
+      console.error('[POSTGRES ERROR] all() failed:', error.message);
+      console.error('[POSTGRES ERROR] SQL:', sql);
+      console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
+      console.error('[POSTGRES ERROR] Params:', params);
+      throw error;
     } finally {
       client.release();
     }

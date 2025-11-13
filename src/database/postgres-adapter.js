@@ -81,8 +81,8 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS pending_confirmations (
           id SERIAL PRIMARY KEY,
-          user_id TEXT UNIQUE NOT NULL,
-          data JSONB NOT NULL,
+          user_phone TEXT UNIQUE NOT NULL,
+          reservation_data JSONB NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP
         )
@@ -91,7 +91,7 @@ class PostgresAdapter {
       // Tabla de flags justConfirmed
       await client.query(`
         CREATE TABLE IF NOT EXISTS just_confirmed (
-          user_id TEXT PRIMARY KEY,
+          user_phone TEXT PRIMARY KEY,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP
         )
@@ -101,7 +101,7 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS reservations (
           id SERIAL PRIMARY KEY,
-          user_id TEXT NOT NULL,
+          user_phone TEXT NOT NULL,
           date DATE NOT NULL,
           start_time TEXT NOT NULL,
           end_time TEXT NOT NULL,
@@ -118,7 +118,7 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS interactions (
           id SERIAL PRIMARY KEY,
-          user_id TEXT NOT NULL,
+          user_phone TEXT NOT NULL,
           agent TEXT NOT NULL,
           agent_name TEXT,
           intent_reason TEXT,
@@ -143,7 +143,7 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS conversation_history (
           id SERIAL PRIMARY KEY,
-          user_id TEXT NOT NULL,
+          user_phone TEXT NOT NULL,
           role TEXT NOT NULL,
           content TEXT NOT NULL,
           agent TEXT,
@@ -154,9 +154,9 @@ class PostgresAdapter {
       // Índices para mejorar performance
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-        CREATE INDEX IF NOT EXISTS idx_reservations_user_date ON reservations(user_id, date);
-        CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_id);
-        CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_id);
+        CREATE INDEX IF NOT EXISTS idx_reservations_user_date ON reservations(user_phone, date);
+        CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_phone);
       `);
 
       await client.query('COMMIT');

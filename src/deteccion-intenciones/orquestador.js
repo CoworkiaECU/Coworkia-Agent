@@ -41,6 +41,20 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 4. 🧠 Construir contexto de formulario parcial
   const contextoFormulario = formData ? construirContextoFormulario(formData) : '';
 
+  // 🔍 DEBUG: Log del contexto construido
+  console.log('[DEBUG-CONTEXTO] 🧠 Contexto para Aurora:', {
+    tieneHistorial: historial && historial.length > 0,
+    mensajesHistorial: historial ? historial.length : 0,
+    tienePendingConfirmation: !!(perfil.pendingConfirmation),
+    pendingData: perfil.pendingConfirmation ? {
+      date: perfil.pendingConfirmation.date,
+      startTime: perfil.pendingConfirmation.startTime
+    } : null,
+    tieneFormData: !!formData,
+    primeraVisita: perfil.firstVisit,
+    tieneEmail: !!perfil.email
+  });
+
   // 5. Construir prompt completo con contexto
   const prompt = `
 ${contextoUsuario}
@@ -140,6 +154,18 @@ function construirContextoPerfil(perfil = {}) {
     } else {
       lineas.push(`- Día gratis disponible: SÍ → Puede usarlo gratis`);
     }
+  }
+
+  // 🔄 RESERVA EN CURSO (pendingConfirmation)
+  if (perfil.pendingConfirmation) {
+    lineas.push(`\n🔔 RESERVA EN CURSO - ESPERANDO CONFIRMACIÓN:`);
+    lineas.push(`- Fecha: ${perfil.pendingConfirmation.date || 'No definida'}`);
+    lineas.push(`- Hora: ${perfil.pendingConfirmation.startTime || 'No definida'} - ${perfil.pendingConfirmation.endTime || 'No definida'}`);
+    lineas.push(`- Servicio: ${perfil.pendingConfirmation.serviceType || 'No definido'}`);
+    lineas.push(`- Email: ${perfil.pendingConfirmation.email || '❌ FALTA'}`);
+    lineas.push(`- Acompañantes: ${perfil.pendingConfirmation.guestCount || 0}`);
+    lineas.push(`- Gratis: ${perfil.pendingConfirmation.wasFree ? 'SÍ 🎉' : 'NO - Pago requerido'}`);
+    lineas.push(`\n⚠️ IMPORTANTE: Si usuario cambia de tema, NO borres esta reserva. Guárdala y retómala después.`);
   }
 
   // 🆕 Historial de reservas

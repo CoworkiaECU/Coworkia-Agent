@@ -409,6 +409,23 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Guardar perfil actualizado
     await saveProfile(userId, profile);
 
+    // 🔍 DEBUG: Log del perfil completo
+    console.log('[DEBUG-PERFIL] 📊 Perfil cargado:', {
+      userId: profile.userId,
+      name: profile.name,
+      email: profile.email,
+      firstVisit: profile.firstVisit,
+      freeTrialUsed: profile.freeTrialUsed,
+      conversationCount: profile.conversationCount,
+      hasPendingConfirmation: !!profile.pendingConfirmation,
+      pendingConfirmationData: profile.pendingConfirmation ? {
+        date: profile.pendingConfirmation.date,
+        startTime: profile.pendingConfirmation.startTime,
+        serviceType: profile.pendingConfirmation.serviceType,
+        email: profile.pendingConfirmation.email ? 'Sí' : 'No'
+      } : 'No hay'
+    });
+
     // 🧹 Limpiar flag temporal "justConfirmed" si han pasado más de 10 minutos
     if (profile.justConfirmed && profile.justConfirmedUntil) {
       const expiresAt = new Date(profile.justConfirmedUntil).getTime();

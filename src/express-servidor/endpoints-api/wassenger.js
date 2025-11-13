@@ -515,13 +515,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 `.trim();
     }
 
-    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS PRIMERO
+    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS (SOLO PRIMERA VISITA)
     const campaignCheck = detectCampaignMessage(text);
     let reply;
     let resultado = null;
     
-    if (campaignCheck.detected) {
-      console.log('[WASSENGER] 🎯 Campaña publicitaria detectada:', campaignCheck.campaign);
+    // Solo usar respuestas de campaña para usuarios nuevos (firstVisit: true)
+    if (campaignCheck.detected && profile.firstVisit) {
+      console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
       reply = personalizeCampaignResponse(campaignCheck.template, profile);
       // Simular resultado para campaña
       resultado = { 

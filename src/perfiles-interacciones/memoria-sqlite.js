@@ -89,6 +89,7 @@ export async function loadProfile(userId) {
   await ensureDbInitialized();
   
   try {
+    console.log('[MEMORIA DEBUG] Llamando userRepository.findByPhone...');
     const user = await userRepository.findByPhone(userId);
     console.log('[MEMORIA DEBUG] findByPhone completado, user:', user ? 'FOUND' : 'NULL');
     

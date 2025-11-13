@@ -182,11 +182,18 @@ class PostgresAdapter {
     const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
+      console.log('[POSTGRES DEBUG] run() SQL:', pgSql, 'Params:', params);
       const result = await client.query(pgSql, params);
       return {
         changes: result.rowCount || 0,
         lastID: result.rows[0]?.id || null
       };
+    } catch (error) {
+      console.error('[POSTGRES ERROR] run() failed:', error.message);
+      console.error('[POSTGRES ERROR] SQL:', sql);
+      console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
+      console.error('[POSTGRES ERROR] Params:', params);
+      throw error;
     } finally {
       client.release();
     }
@@ -199,8 +206,15 @@ class PostgresAdapter {
     const client = await this.pool.connect();
     try {
       const pgSql = this.convertPlaceholders(sql);
+      console.log('[POSTGRES DEBUG] get() SQL:', pgSql, 'Params:', params);
       const result = await client.query(pgSql, params);
       return result.rows[0] || null;
+    } catch (error) {
+      console.error('[POSTGRES ERROR] get() failed:', error.message);
+      console.error('[POSTGRES ERROR] SQL:', sql);
+      console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
+      console.error('[POSTGRES ERROR] Params:', params);
+      throw error;
     } finally {
       client.release();
     }

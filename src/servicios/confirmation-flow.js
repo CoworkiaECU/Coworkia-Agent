@@ -103,6 +103,9 @@ export function isNegativeResponse(message) {
     /abandonar/,
     /eliminar/,
     /borrar/,
+    /^no gracias$/,
+    /^no, gracias$/,
+    /^gracias pero no$/,
     // Emojis de negación
     /👎/,
     /❌/,
@@ -446,6 +449,32 @@ Déjame saber cómo te gustaría proceder. 😊`,
 export function processAmbiguousResponse(userProfile, message) {
   const userName = userProfile.name ? `, ${userProfile.name}` : '';
   
+  // Incrementar contador de intentos ambiguos
+  const ambiguousAttempts = (userProfile.pendingConfirmation?.ambiguousAttempts || 0) + 1;
+  
+  // Si ya intentó 3 veces, auto-cancelar
+  if (ambiguousAttempts >= 3) {
+    clearPendingConfirmation(userProfile.userId);
+    return {
+      success: false,
+      message: `Entiendo que prefieres no confirmar ahora${userName}.
+
+✅ He cancelado la reserva pendiente.
+
+¿Quieres agendar para otra fecha u horario? Avísame cuando quieras 😊`,
+      needsAction: false,
+      actionType: 'auto_cancelled_after_attempts'
+    };
+  }
+  
+  // Actualizar contador en pending confirmation
+  const db = databaseService.getConnection();
+  db.prepare(`
+    UPDATE pending_confirmations 
+    SET data = json_set(data, '$.ambiguousAttempts', ?)
+    WHERE user_id = ?
+  `).run(ambiguousAttempts, userProfile.userId);
+  
   return {
     success: false,
     message: `No estoy seguro de tu respuesta${userName} 🤔
@@ -457,7 +486,9 @@ Por favor responde claramente:
 
 Tu mensaje: "${message}"
 
-¿Confirmas la reserva? 👍`,
+¿Confirmas la reserva? 👍
+
+_(Intento ${ambiguousAttempts}/3)_`,
     needsAction: true,
     actionType: 'confirmation_clarification'
   };

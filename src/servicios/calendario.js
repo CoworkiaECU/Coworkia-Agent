@@ -59,18 +59,39 @@ function minutesToTime(minutes) {
 }
 
 /**
- * 🔍 Verifica disponibilidad para una fecha y horario específico
+ * 🌍 Obtiene la fecha/hora actual en Ecuador (America/Guayaquil UTC-5)
+ * 
+ * IMPORTANTE: Esta función devuelve el timestamp UTC actual (sin cambios),
+ * para que la comparación con requestedDateTime (que también está en UTC) funcione.
+ * 
+ * @param {Date} [baseTime] - Timestamp base (útil para testing con fake timers)
+ * @returns {Date} Date object con el timestamp UTC actual
  */
-export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk') {
-  // 🌍 Validación timezone-aware: rechazar horarios pasados en Ecuador
-  const nowEcuador = new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' });
-  const currentDateTime = new Date(nowEcuador);
-  const requestedDateTime = new Date(`${date}T${startTime}:00-05:00`); // Ecuador UTC-5
+export function getNowInGuayaquil(baseTime = null) {
+  // Simplemente devolver el timestamp actual (o el baseTime para testing)
+  // La comparación se hace en UTC, y requestedDateTime ya tiene el offset correcto
+  return baseTime || new Date();
+}
+
+/**
+ * 🔍 Verifica disponibilidad para una fecha y horario específico
+ * 
+ * IMPORTANTE: Todas las validaciones de "horario pasado" se hacen
+ * usando la hora de Quito/Ecuador (UTC-5), NO la hora del servidor.
+ * 
+ * @param {Date} baseTime - (Opcional) Tiempo base para testing con fake timers
+ */
+export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk', baseTime = null) {
+  // 🌍 Obtener hora actual en Ecuador de forma robusta
+  const currentDateTime = getNowInGuayaquil(baseTime);
+  
+  // Construir fecha solicitada con offset explícito de Ecuador
+  const requestedDateTime = new Date(`${date}T${startTime}:00-05:00`);
   
   if (requestedDateTime < currentDateTime) {
-    console.log('[CALENDARIO] ⏰ Horario pasado detectado:', {
+    console.log('[CALENDARIO] ⏰ Horario pasado detectado (hora Ecuador):', {
       requested: requestedDateTime.toISOString(),
-      current: currentDateTime.toISOString()
+      currentEcuador: currentDateTime.toISOString()
     });
     
     // Sugerir próxima hora disponible

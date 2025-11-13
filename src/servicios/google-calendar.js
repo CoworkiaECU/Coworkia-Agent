@@ -99,13 +99,24 @@ export async function createCalendarEvent(reservationData) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Crear objetos Date para inicio y fin en zona horaria de Ecuador
-    // ⚠️ IMPORTANTE: NO restar 5 horas manualmente - Google Calendar maneja el timezone automáticamente
-    const startDateTime = new Date(date);
-    startDateTime.setHours(startHour, startMinute, 0, 0);
+    // Crear objetos Date para inicio y fin en zona horaria de Ecuador (UTC-5)
+    // 🎯 IMPORTANTE: Google Calendar espera ISO strings en UTC, pero debemos
+    // especificar explícitamente el offset -05:00 para Ecuador
+    const dateStr = date; // formato: "2025-11-13"
     
-    const endDateTime = new Date(date);
-    endDateTime.setHours(endHour, endMinute, 0, 0);
+    // Construir ISO strings CON el offset de Ecuador (-05:00)
+    // Ejemplo: "2025-11-13T15:00:00-05:00" = 3pm Ecuador = 8pm UTC
+    const startDateTimeStr = `${dateStr}T${startTime}:00-05:00`;
+    const endDateTimeStr = `${dateStr}T${endTime}:00-05:00`;
+    
+    const startDateTime = new Date(startDateTimeStr);
+    const endDateTime = new Date(endDateTimeStr);
+
+    console.log('[CALENDAR] 🔧 DEBUG Timezone Ecuador:');
+    console.log(`  - Input: ${dateStr} ${startTime} (Ecuador UTC-5)`);
+    console.log(`  - Start con offset: ${startDateTimeStr}`);
+    console.log(`  - Start ISO (UTC): ${startDateTime.toISOString()}`);
+    console.log(`  - End ISO (UTC): ${endDateTime.toISOString()}`);
 
     // 🎯 Formato del título con nombres correctos de servicios
     const guestCount = reservationData.guestCount || 0;

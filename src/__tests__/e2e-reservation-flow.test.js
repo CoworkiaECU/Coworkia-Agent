@@ -80,17 +80,36 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
   });
 
   describe('⏰ Validación timezone-aware Ecuador', () => {
-    test('debe rechazar horario en el pasado (timezone Ecuador)', async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const result = await checkAvailability(today, '08:00', 2, 'hotDesk');
+    test('debe rechazar horario en el pasado', async () => {
+      // 🕐 Usar fake timers para fijar el tiempo a 2025-11-12 15:00 UTC (10:00am Ecuador)
+      jest.useFakeTimers();
+      const mockTime = new Date('2025-11-12T15:00:00Z'); // 10:00am Ecuador
+      jest.setSystemTime(mockTime);
       
-      // Si son más de las 8am en Ecuador, debe rechazar
-      const nowEcuador = new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' });
-      const currentHour = new Date(nowEcuador).getHours();
-      
-      if (currentHour >= 8) {
+      try {
+        const today = '2025-11-12';
+        const result = await checkAvailability(today, '08:00', 2, 'hotDesk', mockTime);
+        
+        // Como son las 10am en Ecuador, 8am ya pasó
         expect(result.available).toBe(false);
         expect(result.reason).toContain('pasó');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('debe aceptar horario futuro válido', async () => {
+      // 🕐 Usar fake timers para consistencia
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2025-11-12T15:00:00Z')); // 10:00am Ecuador
+      
+      try {
+        const tomorrow = '2025-11-13';
+        const result = await checkAvailability(tomorrow, '10:00', 2, 'hotDesk');
+        
+        expect(result.available).toBe(true);
+      } finally {
+        jest.useRealTimers();
       }
     });
 

@@ -96,6 +96,13 @@ export function isNegativeResponse(message) {
     /^d[eé]jame pensar$/,
     /^mejor otro momento$/,
     /^no por ahora$/,
+    /olv[ií]dalo/,
+    /olvidalo/,
+    /ya no quiero/,
+    /no me interesa/,
+    /abandonar/,
+    /eliminar/,
+    /borrar/,
     // Emojis de negación
     /👎/,
     /❌/,
@@ -105,6 +112,37 @@ export function isNegativeResponse(message) {
   ];
   
   return negativePatterns.some(pattern => pattern.test(text));
+}
+
+/**
+ * 🔄 Detecta intención de modificar/cambiar reserva (no cancelar)
+ */
+export function isModificationRequest(message) {
+  if (!message || typeof message !== 'string') return false;
+  
+  const text = message.toLowerCase().trim();
+  
+  // Patrones que indican que quiere mantener la reserva pero modificarla
+  const modificationPatterns = [
+    /cambiar/,
+    /modificar/,
+    /editar/,
+    /ajustar/,
+    /otro horario/,
+    /otra hora/,
+    /otra fecha/,
+    /diferente hora/,
+    /diferente fecha/,
+    /puedo.*otro/,
+    /mejor.*otro/,
+    /prefiero.*otro/,
+    /en vez de/,
+    /en lugar de/,
+    /más tarde/,
+    /más temprano/
+  ];
+  
+  return modificationPatterns.some(pattern => pattern.test(text));
 }
 
 /**
@@ -214,33 +252,37 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const confirmedStart = reservationRecord?.startTime || pendingReservation.startTime;
     const confirmedEnd = reservationRecord?.endTime || pendingReservation.endTime;
 
-    // 2. Crear evento en Google Calendar (fuera de la transacción)
-    enqueueBackgroundTask(
-      'calendar-events',
-      'create-reservation',
-      () => createCalendarEvent({
-        userName: pendingReservation.userName,
-        email: userProfile.email || 'noemail@coworkia.com',
-        date: confirmedDate,
-        startTime: confirmedStart,
-        endTime: confirmedEnd,
-        serviceType: pendingReservation.serviceType,
-        duration: `${pendingReservation.durationHours} horas`,
-        price: pendingReservation.totalPrice,
-        guestCount: pendingReservation.guestCount || 0
-      }),
-      { circuitId: 'calendar-events-job' }
-    )
-      .then(calendarEvent => {
-        if (calendarEvent?.success) {
-          console.log('[Confirmation] ✅ Evento en Google Calendar en background:', calendarEvent.eventUrl);
-        } else {
-          console.error('[Confirmation] ❌ Calendario reportó error:', calendarEvent?.error || 'Unknown');
-        }
-      })
-      .catch(calendarError => {
-        console.error('[Confirmation] ❌ Error creando evento en background:', calendarError);
-      });
+    // 2. Crear evento en Google Calendar (SOLO UNA VEZ)
+    // ⚠️ NO duplicar: sendReservationNotifications ya crea el evento inline
+    // Solo encolar si NO es gratis (las gratis se envían inline abajo)
+    if (!pendingReservation.wasFree) {
+      enqueueBackgroundTask(
+        'calendar-events',
+        'create-reservation',
+        () => createCalendarEvent({
+          userName: pendingReservation.userName,
+          email: userProfile.email || 'noemail@coworkia.com',
+          date: confirmedDate,
+          startTime: confirmedStart,
+          endTime: confirmedEnd,
+          serviceType: pendingReservation.serviceType,
+          duration: `${pendingReservation.durationHours} horas`,
+          price: pendingReservation.totalPrice,
+          guestCount: pendingReservation.guestCount || 0
+        }),
+        { circuitId: 'calendar-events-job' }
+      )
+        .then(calendarEvent => {
+          if (calendarEvent?.success) {
+            console.log('[Confirmation] ✅ Evento en Google Calendar en background:', calendarEvent.eventUrl);
+          } else {
+            console.error('[Confirmation] ❌ Calendario reportó error:', calendarEvent?.error || 'Unknown');
+          }
+        })
+        .catch(calendarError => {
+          console.error('[Confirmation] ❌ Error creando evento en background:', calendarError);
+        });
+    }
 
     // 4. Si es gratis, enviar email y calendar INLINE (no encolar)
     if (pendingReservation.wasFree) {
@@ -354,13 +396,30 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 /**
  * ❌ Procesa confirmación negativa
  */
-export async function processNegativeConfirmation(userProfile) {
+export async function processNegativeConfirmation(userProfile, message = '') {
   const userName = userProfile.name ? `, ${userProfile.name}` : '';
+  
+  // Detectar si quiere cambiar o realmente cancelar
+  const wantsToModify = isModificationRequest(message);
   
   // Limpiar confirmación pendiente
   await updateUser(userProfile.userId, {
     pendingConfirmation: null
   });
+
+  if (wantsToModify) {
+    return {
+      success: true,
+      message: `Entiendo${userName}. Si decides continuar con tu reserva, ¿qué espacio necesitas? Tenemos:
+
+📍 Hot Desk ($10/2h)
+🏢 Sala de Reuniones (3-4 personas, $29/2h)
+
+Déjame saber cómo te gustaría proceder. 😊`,
+      needsAction: false,
+      actionType: 'reservation_modification'
+    };
+  }
 
   return {
     success: true,
@@ -424,7 +483,7 @@ export async function processConfirmationResponse(message, userProfile) {
     }
     
     if (isNegativeResponse(message)) {
-      return processNegativeConfirmation(userProfile);
+      return processNegativeConfirmation(userProfile, message);
     }
     
     // Respuesta ambigua

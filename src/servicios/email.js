@@ -175,10 +175,10 @@ function generateConfirmationEmailHTML(reservationData) {
         <!-- Header limpio con colores corporativos Coworkia -->
         <div style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); text-align: center; padding: 40px 20px;">
           <!-- Solo texto, sin logos -->
-          <div style="color: white; font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px;">
+          <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 12px;">
             Coworkia
           </div>
-          <div style="color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
+          <div style="color: rgba(255,255,255,0.9); font-size: 18px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
             work · connect · grow
           </div>
           <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -303,7 +303,7 @@ function generateConfirmationEmailHTML(reservationData) {
         </div>
         <div style="color: #6B7280; font-size: 12px; line-height: 1.6;">
           © 2025 Coworkia Ecuador - Espacios que inspiran<br>
-          Whymper 403, Quito | RUC: 1792954078001
+          Whymper 403, Edificio Finistere - Planta Baja, Quito
         </div>
       </div>
     </body>
@@ -377,6 +377,7 @@ export async function sendReservationConfirmation(reservationData) {
       address: process.env.EMAIL_USER || 'noreply@coworkia.com'
     },
     to: email,
+    cc: 'coworkia.ec@gmail.com', // Copia a Coworkia
     subject: `✅ Reserva Confirmada - ${serviceType} ${date} ${startTime} - Coworkia`,
     html: emailHTML,
     text: `
@@ -426,32 +427,15 @@ Equipo Coworkia
     }
     
     // 📅 CREAR EVENTO EN GOOGLE CALENDAR AUTOMÁTICAMENTE
-    console.log('[EMAIL] 📅 Creando evento en Google Calendar para reserva...');
-    const calendarResult = await createCalendarEvent({
-      userName,
-      email,
-      date,
-      startTime,
-      endTime: reservationData.endTime,
-      serviceType: serviceType || 'Hot Desk',
-      duration: wasFree ? '2 horas' : `${reservationData.durationHours || 2} horas`,
-      price: wasFree ? 0 : reservationData.total
-    });
-    
-    if (calendarResult.success) {
-      console.log('[EMAIL] ✅ Evento de calendario creado exitosamente para reserva!');
-      console.log('[EMAIL] 🔗 URL del evento:', calendarResult.eventUrl);
-    } else {
-      console.error('[EMAIL] ⚠️ No se pudo crear evento de calendario para reserva:', calendarResult.error);
-    }
+    // ⚠️ NOTA: El evento de Google Calendar se crea desde confirmation-flow.js
+    // NO duplicar la creación aquí para evitar eventos múltiples
     
     return {
       success: true,
       messageId: result.messageId,
       accepted: result.accepted,
       rejected: result.rejected,
-      message: 'Email de confirmación enviado exitosamente',
-      calendarEvent: calendarResult // Incluir resultado del calendario
+      message: 'Email de confirmación enviado exitosamente'
     };
     
   } catch (error) {

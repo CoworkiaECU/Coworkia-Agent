@@ -416,14 +416,14 @@ export async function processNegativeConfirmation(userProfile, message = '') {
     await databaseService.initialize();
     // Borrar registro existente primero
     await databaseService.run(
-      `DELETE FROM just_confirmed WHERE user_id = ?`,
+      `DELETE FROM just_confirmed WHERE user_phone = ?`,
       [userProfile.userId]
     );
     // Calcular timestamp de expiración (5 minutos desde ahora)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Insertar nuevo registro con expiración en 5 minutos
     await databaseService.run(
-      `INSERT INTO just_confirmed (user_id, expires_at) 
+      `INSERT INTO just_confirmed (user_phone, expires_at) 
        VALUES (?, ?)`,
       [userProfile.userId, expiresAt]
     );
@@ -481,14 +481,14 @@ export async function processAmbiguousResponse(userProfile, message) {
       await databaseService.initialize();
       // Borrar registro existente primero
       await databaseService.run(
-        `DELETE FROM just_confirmed WHERE user_id = ?`,
+        `DELETE FROM just_confirmed WHERE user_phone = ?`,
         [userProfile.userId]
       );
       // Calcular timestamp de expiración (5 minutos desde ahora)
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
       // Insertar nuevo registro con expiración en 5 minutos
       await databaseService.run(
-        `INSERT INTO just_confirmed (user_id, expires_at) 
+        `INSERT INTO just_confirmed (user_phone, expires_at) 
          VALUES (?, ?)`,
         [userProfile.userId, expiresAt]
       );
@@ -511,13 +511,12 @@ export async function processAmbiguousResponse(userProfile, message) {
   // Actualizar contador en pending confirmation
   try {
     await databaseService.initialize();
-    // Usar jsonb_set para PostgreSQL o json_set para SQLite
-    await databaseService.run(
-      `UPDATE pending_confirmations 
-       SET data = jsonb_set(data::jsonb, '{ambiguousAttempts}', ?::text::jsonb)
-       WHERE user_id = ?`,
-      [ambiguousAttempts.toString(), userProfile.userId]
-    );
+    // Actualizar el contador de intentos ambiguos en la confirmación pendiente
+    const pending = await getPendingConfirmation(userProfile.userId);
+    if (pending) {
+      const updatedData = { ...pending, ambiguousAttempts };
+      await setPendingConfirmation(userProfile.userId, updatedData, pending.expiresAt);
+    }
   } catch (err) {
     console.error('[Confirmation] Error actualizando contador:', err);
   }

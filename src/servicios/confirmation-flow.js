@@ -412,12 +412,22 @@ export async function processNegativeConfirmation(userProfile, message = '') {
   });
   
   // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
-  await databaseService.initDatabase();
-  databaseService.db.run(
-    `INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
-     VALUES (?, datetime('now'), datetime('now', '+5 minutes'))`,
-    [userProfile.userId]
-  );
+  try {
+    await databaseService.initialize();
+    // Borrar registro existente primero
+    await databaseService.run(
+      `DELETE FROM just_confirmed WHERE user_id = ?`,
+      [userProfile.userId]
+    );
+    // Insertar nuevo registro con expiración en 5 minutos
+    await databaseService.run(
+      `INSERT INTO just_confirmed (user_id, expires_at) 
+       VALUES (?, datetime('now', '+5 minutes'))`,
+      [userProfile.userId]
+    );
+  } catch (err) {
+    console.error('[Confirmation] Error marcando justConfirmed en cancelación:', err);
+  }
 
   if (wantsToModify) {
     return {
@@ -465,12 +475,22 @@ export async function processAmbiguousResponse(userProfile, message) {
     clearPendingConfirmation(userProfile.userId);
     
     // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
-    await databaseService.initDatabase();
-    databaseService.db.run(
-      `INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
-       VALUES (?, datetime('now'), datetime('now', '+5 minutes'))`,
-      [userProfile.userId]
-    );
+    try {
+      await databaseService.initialize();
+      // Borrar registro existente primero
+      await databaseService.run(
+        `DELETE FROM just_confirmed WHERE user_id = ?`,
+        [userProfile.userId]
+      );
+      // Insertar nuevo registro con expiración en 5 minutos
+      await databaseService.run(
+        `INSERT INTO just_confirmed (user_id, expires_at) 
+         VALUES (?, datetime('now', '+5 minutes'))`,
+        [userProfile.userId]
+      );
+    } catch (err) {
+      console.error('[Confirmation] Error marcando justConfirmed:', err);
+    }
     
     return {
       success: false,
@@ -485,13 +505,18 @@ export async function processAmbiguousResponse(userProfile, message) {
   }
   
   // Actualizar contador en pending confirmation
-  await databaseService.initDatabase();
-  databaseService.db.run(
-    `UPDATE pending_confirmations 
-     SET data = json_set(data, '$.ambiguousAttempts', ?)
-     WHERE user_id = ?`,
-    [ambiguousAttempts, userProfile.userId]
-  );
+  try {
+    await databaseService.initialize();
+    // Usar jsonb_set para PostgreSQL o json_set para SQLite
+    await databaseService.run(
+      `UPDATE pending_confirmations 
+       SET data = jsonb_set(data::jsonb, '{ambiguousAttempts}', ?::text::jsonb)
+       WHERE user_id = ?`,
+      [ambiguousAttempts.toString(), userProfile.userId]
+    );
+  } catch (err) {
+    console.error('[Confirmation] Error actualizando contador:', err);
+  }
   
   return {
     success: false,

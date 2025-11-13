@@ -168,13 +168,25 @@ class PostgresAdapter {
   }
 
   /**
+   * 🔄 Convertir placeholders ? a $1, $2, $3... para PostgreSQL
+   */
+  convertPlaceholders(sql) {
+    let index = 1;
+    return sql.replace(/\?/g, () => `$${index++}`);
+  }
+
+  /**
    * 📝 Ejecutar query (compatible con SQLite API)
    */
   async run(sql, params = []) {
     const client = await this.pool.connect();
     try {
-      const result = await client.query(sql, params);
-      return result;
+      const pgSql = this.convertPlaceholders(sql);
+      const result = await client.query(pgSql, params);
+      return {
+        changes: result.rowCount || 0,
+        lastID: result.rows[0]?.id || null
+      };
     } finally {
       client.release();
     }
@@ -186,7 +198,8 @@ class PostgresAdapter {
   async get(sql, params = []) {
     const client = await this.pool.connect();
     try {
-      const result = await client.query(sql, params);
+      const pgSql = this.convertPlaceholders(sql);
+      const result = await client.query(pgSql, params);
       return result.rows[0] || null;
     } finally {
       client.release();
@@ -199,7 +212,8 @@ class PostgresAdapter {
   async all(sql, params = []) {
     const client = await this.pool.connect();
     try {
-      const result = await client.query(sql, params);
+      const pgSql = this.convertPlaceholders(sql);
+      const result = await client.query(pgSql, params);
       return result.rows;
     } finally {
       client.release();

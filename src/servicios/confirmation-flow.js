@@ -419,11 +419,13 @@ export async function processNegativeConfirmation(userProfile, message = '') {
       `DELETE FROM just_confirmed WHERE user_id = ?`,
       [userProfile.userId]
     );
+    // Calcular timestamp de expiración (5 minutos desde ahora)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Insertar nuevo registro con expiración en 5 minutos
     await databaseService.run(
       `INSERT INTO just_confirmed (user_id, expires_at) 
-       VALUES (?, datetime('now', '+5 minutes'))`,
-      [userProfile.userId]
+       VALUES (?, ?)`,
+      [userProfile.userId, expiresAt]
     );
   } catch (err) {
     console.error('[Confirmation] Error marcando justConfirmed en cancelación:', err);
@@ -482,11 +484,13 @@ export async function processAmbiguousResponse(userProfile, message) {
         `DELETE FROM just_confirmed WHERE user_id = ?`,
         [userProfile.userId]
       );
+      // Calcular timestamp de expiración (5 minutos desde ahora)
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
       // Insertar nuevo registro con expiración en 5 minutos
       await databaseService.run(
         `INSERT INTO just_confirmed (user_id, expires_at) 
-         VALUES (?, datetime('now', '+5 minutes'))`,
-        [userProfile.userId]
+         VALUES (?, ?)`,
+        [userProfile.userId, expiresAt]
       );
     } catch (err) {
       console.error('[Confirmation] Error marcando justConfirmed:', err);

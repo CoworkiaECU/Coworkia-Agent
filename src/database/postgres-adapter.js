@@ -16,6 +16,11 @@ class PostgresAdapter {
    * 🚀 Inicializa conexión a PostgreSQL
    */
   async initialize() {
+    // Ya está inicializado - return early
+    if (this.isInitialized) {
+      return;
+    }
+
     const databaseUrl = process.env.DATABASE_URL;
     
     if (!databaseUrl) {
@@ -29,8 +34,12 @@ class PostgresAdapter {
       },
       max: 20, // Máximo de conexiones
       connectionTimeoutMillis: 10000, // Timeout al obtener conexión
-      idleTimeoutMillis: 30000, // Tiempo antes de cerrar conexión idle
-      statement_timeout: 15000 // Timeout de queries (15 segundos)
+      idleTimeoutMillis: 30000 // Tiempo antes de cerrar conexión idle
+    });
+
+    // Configurar statement_timeout para todas las conexiones
+    this.pool.on('connect', (client) => {
+      client.query('SET statement_timeout = 15000'); // 15 segundos
     });
 
     console.log('[POSTGRES] ✅ Pool de conexiones creado');
@@ -159,6 +168,10 @@ class PostgresAdapter {
     } finally {
       client.release();
     }
+
+    // Marcar como inicializado
+    this.isInitialized = true;
+    console.log('[POSTGRES] ✅ Base de datos inicializada');
   }
 
   /**

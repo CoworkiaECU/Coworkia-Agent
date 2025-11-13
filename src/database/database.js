@@ -41,6 +41,11 @@ class DatabaseService {
    * 🚀 Inicializa la conexión a la base de datos
    */
   async initialize() {
+    // Ya está inicializado - return early
+    if (this.isInitialized) {
+      return;
+    }
+
     // Si estamos en producción con DATABASE_URL, usar PostgreSQL
     if (USE_POSTGRES) {
       await postgresAdapter.initialize();

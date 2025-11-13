@@ -90,8 +90,10 @@ export async function loadProfile(userId) {
   
   try {
     const user = await userRepository.findByPhone(userId);
+    console.log('[MEMORIA DEBUG] findByPhone completado, user:', user ? 'FOUND' : 'NULL');
     
     if (!user) {
+      console.log('[MEMORIA DEBUG] Usuario no encontrado, retornando null');
       return null;
     }
     

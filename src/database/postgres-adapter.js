@@ -26,7 +26,11 @@ class PostgresAdapter {
       connectionString: databaseUrl,
       ssl: {
         rejectUnauthorized: false // Heroku Postgres requiere SSL
-      }
+      },
+      max: 20, // Máximo de conexiones
+      connectionTimeoutMillis: 10000, // Timeout al obtener conexión
+      idleTimeoutMillis: 30000, // Tiempo antes de cerrar conexión idle
+      statement_timeout: 15000 // Timeout de queries (15 segundos)
     });
 
     console.log('[POSTGRES] ✅ Pool de conexiones creado');

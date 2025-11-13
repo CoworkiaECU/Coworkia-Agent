@@ -9,7 +9,7 @@ import path from 'path';
 import postgresAdapter from './postgres-adapter.js';
 
 // Detectar entorno
-const USE_POSTGRES = process.env.DATABASE_URL && process.env.NODE_ENV === 'production';
+const USE_POSTGRES = process.env.DATABASE_URL && process.env.NODE_ENV === 'production' && !process.env.FORCE_SQLITE;
 
 // Configuración de la base de datos SQLite
 const DB_PATH = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'coworkia.db');

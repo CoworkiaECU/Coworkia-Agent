@@ -230,7 +230,9 @@ class PostgresAdapter {
       const result = await client.query(pgSql, params);
       const duration = Date.now() - startTime;
       console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
-      return result.rows[0] || null;
+      const returnValue = result.rows[0] || null;
+      console.log('[POSTGRES DEBUG] get() returning, releasing client...');
+      return returnValue;
     } catch (error) {
       console.error('[POSTGRES ERROR] get() failed:', error.message);
       console.error('[POSTGRES ERROR] SQL:', sql);
@@ -238,7 +240,13 @@ class PostgresAdapter {
       console.error('[POSTGRES ERROR] Params:', params);
       throw error;
     } finally {
-      client.release();
+      try {
+        console.log('[POSTGRES DEBUG] get() finally block - releasing client');
+        client.release();
+        console.log('[POSTGRES DEBUG] get() client released successfully');
+      } catch (releaseError) {
+        console.error('[POSTGRES ERROR] Failed to release client:', releaseError.message);
+      }
     }
   }
 

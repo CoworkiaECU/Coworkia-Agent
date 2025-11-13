@@ -226,7 +226,10 @@ class PostgresAdapter {
     try {
       const pgSql = this.convertPlaceholders(sql);
       console.log('[POSTGRES DEBUG] get() SQL:', pgSql, 'Params:', params);
+      const startTime = Date.now();
       const result = await client.query(pgSql, params);
+      const duration = Date.now() - startTime;
+      console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
       return result.rows[0] || null;
     } catch (error) {
       console.error('[POSTGRES ERROR] get() failed:', error.message);

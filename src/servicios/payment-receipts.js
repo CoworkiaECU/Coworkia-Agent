@@ -174,7 +174,7 @@ ${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') 
 • Número de transacción/referencia
 • Foto clara y legible
 
-O contáctanos al 📞 +593 999828633 para verificación manual.`,
+O contáctanos al 📞 +593 99 483 7117 para verificación manual.`,
         needsAction: false
       };
     }
@@ -196,8 +196,8 @@ O contáctanos al 📞 +593 999828633 para verificación manual.`,
       message: `⚠️ Error procesando tu comprobante. 
 
 Por favor contacta a nuestro equipo:
-📞 +593 999828633
-📧 coworkia.ec@gmail.com
+📞 +593 99 483 7117
+📧 secretaria.coworkia@gmail.com
 
 Te ayudaremos a verificar tu pago manualmente 😊`,
       needsAction: false

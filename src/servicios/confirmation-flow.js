@@ -380,7 +380,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     console.error('[Confirmation] 🚨 ERROR CRÍTICO procesando confirmación positiva:', {
       error: error.message,
       stack: error.stack,
-      userId: userId || 'unknown',
+      userId: userProfile?.userId || 'unknown',
       pendingReservationExists: !!pendingReservation,
       userProfileExists: !!userProfile,
       timestamp: new Date().toISOString()

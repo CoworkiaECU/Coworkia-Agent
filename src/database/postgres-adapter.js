@@ -168,11 +168,13 @@ class PostgresAdapter {
   }
 
   /**
-   * 🔄 Convertir placeholders ? a $1, $2, $3... para PostgreSQL
+   * 🔄 Convertir placeholders ? a $1, $2, $3...
    */
   convertPlaceholders(sql) {
     let index = 1;
-    return sql.replace(/\?/g, () => `$${index++}`);
+    // Normalizar espacios en blanco y saltos de línea
+    const normalizedSql = sql.replace(/\s+/g, ' ').trim();
+    return normalizedSql.replace(/\?/g, () => `$${index++}`);
   }
 
   /**

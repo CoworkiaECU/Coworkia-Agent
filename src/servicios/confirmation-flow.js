@@ -412,11 +412,12 @@ export async function processNegativeConfirmation(userProfile, message = '') {
   });
   
   // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
-  const db = databaseService.getConnection();
-  db.prepare(`
-    INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
-    VALUES (?, datetime('now'), datetime('now', '+5 minutes'))
-  `).run(userProfile.userId);
+  await databaseService.initDatabase();
+  databaseService.db.run(
+    `INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
+     VALUES (?, datetime('now'), datetime('now', '+5 minutes'))`,
+    [userProfile.userId]
+  );
 
   if (wantsToModify) {
     return {
@@ -453,7 +454,7 @@ Déjame saber cómo te gustaría proceder. 😊`,
 /**
  * 🤔 Maneja respuestas ambiguas o no reconocidas
  */
-export function processAmbiguousResponse(userProfile, message) {
+export async function processAmbiguousResponse(userProfile, message) {
   const userName = userProfile.name ? `, ${userProfile.name}` : '';
   
   // Incrementar contador de intentos ambiguos
@@ -464,11 +465,12 @@ export function processAmbiguousResponse(userProfile, message) {
     clearPendingConfirmation(userProfile.userId);
     
     // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
-    const db = databaseService.getConnection();
-    db.prepare(`
-      INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
-      VALUES (?, datetime('now'), datetime('now', '+5 minutes'))
-    `).run(userProfile.userId);
+    await databaseService.initDatabase();
+    databaseService.db.run(
+      `INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
+       VALUES (?, datetime('now'), datetime('now', '+5 minutes'))`,
+      [userProfile.userId]
+    );
     
     return {
       success: false,
@@ -483,12 +485,13 @@ export function processAmbiguousResponse(userProfile, message) {
   }
   
   // Actualizar contador en pending confirmation
-  const db = databaseService.getConnection();
-  db.prepare(`
-    UPDATE pending_confirmations 
-    SET data = json_set(data, '$.ambiguousAttempts', ?)
-    WHERE user_id = ?
-  `).run(ambiguousAttempts, userProfile.userId);
+  await databaseService.initDatabase();
+  databaseService.db.run(
+    `UPDATE pending_confirmations 
+     SET data = json_set(data, '$.ambiguousAttempts', ?)
+     WHERE user_id = ?`,
+    [ambiguousAttempts, userProfile.userId]
+  );
   
   return {
     success: false,
@@ -530,11 +533,11 @@ export async function processConfirmationResponse(message, userProfile) {
     }
     
     if (isNegativeResponse(message)) {
-      return processNegativeConfirmation(userProfile, message);
+      return await processNegativeConfirmation(userProfile, message);
     }
     
     // Respuesta ambigua
-    return processAmbiguousResponse(userProfile, message);
+    return await processAmbiguousResponse(userProfile, message);
 
   } catch (error) {
     console.error('[Confirmation] Error procesando respuesta:', error);

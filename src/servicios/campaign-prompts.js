@@ -30,7 +30,7 @@ Solo necesito esos dos datos y tu email para enviarte la confirmación 😊`
     trigger: "espacio privado.*locker.*mensual",
     response: `¡Hola {nombre}, soy Aurora! 👩🏼‍💼✨
 
-Perfecto, entiendo que buscas un espacio privado con todo incluido. Para planes mensuales con lockers, te puedo conectar con *Aluna*, ella es nuestra especialista en membresías y te va a dar todos los detalles 👱🏼‍♀️
+Perfecto, entiendo que buscas un espacio privado con todo incluido. Para planes mensuales con locker, te puedo conectar con *Aluna*, ella es nuestra especialista en membresías y te va a dar todos los detalles 👱🏼‍♀️
 
 Y mira, como es tu primera vez, también tienes 2 horas gratis para que conozcas Coworkia antes de decidirte 🎉
 

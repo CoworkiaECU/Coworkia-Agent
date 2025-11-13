@@ -515,13 +515,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 `.trim();
     }
 
-    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS (SOLO PRIMERA VISITA)
+    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS (SOLO PRIMERA VISITA Y NO ACABA DE CANCELAR)
     const campaignCheck = detectCampaignMessage(text);
     let reply;
     let resultado = null;
     
-    // Solo usar respuestas de campaña para usuarios nuevos (firstVisit: true)
-    if (campaignCheck.detected && profile.firstVisit) {
+    // Solo usar respuestas de campaña para usuarios nuevos (firstVisit: true) 
+    // Y que NO acaben de cancelar una reserva (evita re-trigger de campañas)
+    if (campaignCheck.detected && profile.firstVisit && !profile.justConfirmed) {
       console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
       reply = personalizeCampaignResponse(campaignCheck.template, profile);
       // Simular resultado para campaña

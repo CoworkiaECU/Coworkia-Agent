@@ -410,6 +410,13 @@ export async function processNegativeConfirmation(userProfile, message = '') {
   await updateUser(userProfile.userId, {
     pendingConfirmation: null
   });
+  
+  // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
+  const db = databaseService.getConnection();
+  db.prepare(`
+    INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
+    VALUES (?, datetime('now'), datetime('now', '+5 minutes'))
+  `).run(userProfile.userId);
 
   if (wantsToModify) {
     return {
@@ -455,6 +462,14 @@ export function processAmbiguousResponse(userProfile, message) {
   // Si ya intentó 3 veces, auto-cancelar
   if (ambiguousAttempts >= 3) {
     clearPendingConfirmation(userProfile.userId);
+    
+    // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
+    const db = databaseService.getConnection();
+    db.prepare(`
+      INSERT OR REPLACE INTO just_confirmed (user_id, created_at, expires_at)
+      VALUES (?, datetime('now'), datetime('now', '+5 minutes'))
+    `).run(userProfile.userId);
+    
     return {
       success: false,
       message: `Entiendo que prefieres no confirmar ahora${userName}.

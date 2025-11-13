@@ -352,11 +352,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // Perfil/memoria
+    console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
     const current = await loadProfile(userId) || {};
+    console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
     
     // 🆕 Cargar historial de conversación (últimos 10 mensajes)
+    console.log('[DEBUG-FLOW] 3️⃣ Iniciando loadConversationHistory...');
     const conversationHistory = await loadConversationHistory(userId, 10);
+    console.log('[DEBUG-FLOW] 4️⃣ loadConversationHistory completado, mensajes:', conversationHistory?.length || 0);
     
     // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
     let detectedName = current.name || null;
@@ -407,7 +411,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     };
     
     // Guardar perfil actualizado
+    console.log('[DEBUG-FLOW] 5️⃣ Iniciando saveProfile...');
     await saveProfile(userId, profile);
+    console.log('[DEBUG-FLOW] 6️⃣ saveProfile completado');
 
     // 🔍 DEBUG: Log del perfil completo
     console.log('[DEBUG-PERFIL] 📊 Perfil cargado:', {
@@ -438,10 +444,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 🆕 Guardar mensaje del usuario en historial
+    console.log('[DEBUG-FLOW] 7️⃣ Iniciando saveConversationMessage...');
     await saveConversationMessage(userId, {
       role: 'user',
       content: text
     });
+    console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
 
     // 🔄 SISTEMA DE CONFIRMACIONES SI/NO
     if (hasPendingConfirmation(profile)) {

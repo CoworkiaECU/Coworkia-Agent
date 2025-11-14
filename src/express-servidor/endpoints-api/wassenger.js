@@ -451,9 +451,26 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     });
     console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
 
-    // 🔄 SISTEMA DE CONFIRMACIONES SI/NO
-    if (hasPendingConfirmation(profile)) {
-      console.log('[WASSENGER] Usuario tiene confirmación pendiente, procesando respuesta SI/NO');
+    // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente (PRIMERO)
+    console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
+    const formResult = await processMessageWithForm(userId, text);
+    
+    if (formResult.updates && Object.keys(formResult.updates).length > 0) {
+      console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
+      
+      // Actualizar perfil con datos detectados
+      if (formResult.updates.email && !profile.email) {
+        profile.email = formResult.updates.email;
+        await saveProfile(userId, profile);
+      }
+    }
+
+    // 🔄 SISTEMA DE CONFIRMACIONES SI/NO (DESPUÉS de actualizar formulario)
+    // Solo procesar SI/NO si el formulario está completo o es una respuesta clara SI/NO
+    const isConfirmationAnswer = /^(si|sí|no|confirmo|cancelo|ok)$/i.test(text.trim());
+    
+    if (hasPendingConfirmation(profile) && (formResult.form.isComplete() || isConfirmationAnswer)) {
+      console.log('[WASSENGER] Usuario tiene confirmación pendiente Y (formulario completo O respuesta SI/NO)');
       
       const confirmationResult = await processConfirmationResponse(text, profile);
       
@@ -493,19 +510,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       });
     }
 
-    // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente
-    console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
-    const formResult = await processMessageWithForm(userId, text);
-    
-    if (formResult.updates && Object.keys(formResult.updates).length > 0) {
-      console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
-      
-      // Actualizar perfil con datos detectados
-      if (formResult.updates.email && !profile.email) {
-        profile.email = formResult.updates.email;
-        await saveProfile(userId, profile);
-      }
-    }
+    // Si el formulario NO está completo, continuar con Aurora para que pida datos faltantes
+    console.log('[WASSENGER] Formulario incompleto o respuesta no es SI/NO, continuando con Aurora...');
     
     // 💡 LÓGICA DE UPSELL: Si mencionó personas y pidió hot desk, sugerir sala
     let upsellMessage = null;

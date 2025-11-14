@@ -224,8 +224,31 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   if (perfil.lastMessageAt) lineas.push(`- Última interacción: ${perfil.lastMessageAt}`);
 
   if (extraFlags.postEmailSupport) {
-    lineas.push(`- 🛟 Usuario llegó desde enlace post-confirmación: responder dudas SIN reiniciar flujo`);
+    lineas.push(`\n🛟 MODO SOPORTE POST-CONFIRMACIÓN ACTIVADO:`);
+    lineas.push(`- Usuario llegó desde enlace de confirmación por correo`);
+    lineas.push(`- NO reiniciar flujo de reservas ni pedir datos nuevamente`);
     lineas.push(`- Solo reactivar reserva si menciona: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}`);
+    
+    // 🎯 MOSTRAR ÚLTIMA RESERVA CONFIRMADA
+    if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
+      const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
+      lineas.push(`\n📋 RESERVA CONFIRMADA DEL USUARIO (usar estos datos para responder):`);
+      lineas.push(`- Espacio: ${ultimaReserva.type || 'Hot Desk'}`);
+      lineas.push(`- Fecha de la visita: ${ultimaReserva.date || 'No disponible'}`);
+      
+      // Extraer hora de inicio y fin del campo time si existe
+      if (ultimaReserva.time) {
+        lineas.push(`- Hora de llegada: ${ultimaReserva.time}`);
+      } else if (ultimaReserva.startTime && ultimaReserva.endTime) {
+        lineas.push(`- Hora de llegada: ${ultimaReserva.startTime} - ${ultimaReserva.endTime}`);
+      }
+      
+      lineas.push(`- Estado: ${ultimaReserva.status || 'confirmada'}`);
+      lineas.push(`- Precio: ${ultimaReserva.wasFree ? 'GRATIS (primera vez)' : 'Pagado'}`);
+      lineas.push(`\n✅ USA ESTOS DATOS para responder cualquier pregunta sobre su reserva`);
+    } else {
+      lineas.push(`\n⚠️ No se encontró historial de reservas - pedir al usuario que aclare su consulta`);
+    }
   }
   
   return lineas.join('\n');

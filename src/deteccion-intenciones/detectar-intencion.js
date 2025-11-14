@@ -17,8 +17,19 @@ const AURORA_KEYWORDS = [
   'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
 ];
 
+const POST_EMAIL_SUPPORT_PATTERNS = [
+  /recibi.*correo.*dud/,
+  /recibi.*confirmacion/,
+  /confirmacion.*dud/,
+  /enlace.*confirmacion/,
+  /link.*confirmacion/
+];
+
 export function detectarIntencion(inputRaw = '') {
   const text = String(inputRaw || '').toLowerCase().trim();
+  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
 
   // 1) Enzo explícito
   if (/@enzo/.test(text)) {
@@ -28,6 +39,15 @@ export function detectarIntencion(inputRaw = '') {
   // 2) Adriana solo con @adriana explícito
   if (/@adriana/.test(text)) {
     return { agent: 'ADRIANA', reason: 'trigger @Adriana' };
+  }
+
+  // 2.5) Usuario llega desde el enlace del correo post-confirmación
+  if (isPostEmailSupport) {
+    return {
+      agent: 'AURORA',
+      reason: 'post-email support link',
+      flags: { postEmailSupport: true }
+    };
   }
 
   // 3) Aluna por palabras clave de planes/membresías

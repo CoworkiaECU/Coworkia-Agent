@@ -15,6 +15,21 @@ export const AGENTES = {
   ENZO
 };
 
+const POST_EMAIL_REACTIVATION_KEYWORDS = [
+  'cancelar',
+  'cancelación',
+  'cancelacion',
+  'cambiar fecha',
+  'cambiar hora',
+  'modificar reserva',
+  'reprogramar',
+  'reagendar',
+  'otra fecha',
+  'otra hora',
+  'nueva reserva',
+  'reservar'
+];
+
 /**
  * Selecciona el agente apropiado y construye el prompt completo
  * @param {string} mensaje - Mensaje del usuario
@@ -27,13 +42,14 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 1. Detectar intención y agente apropiado
   const intencion = detectarIntencion(mensaje);
   const agente = AGENTES[intencion.agent];
+  const esSoportePostEmail = Boolean(intencion.flags?.postEmailSupport || perfil.justConfirmed);
 
   if (!agente) {
     throw new Error(`Agente ${intencion.agent} no encontrado`);
   }
 
   // 2. Construir contexto de perfil
-  const contextoUsuario = construirContextoPerfil(perfil);
+  const contextoUsuario = construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail });
 
   // 3. Construir contexto de historial
   const contextoHistorial = construirContextoHistorial(historial);
@@ -52,10 +68,17 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     } : null,
     tieneFormData: !!formData,
     primeraVisita: perfil.firstVisit,
-    tieneEmail: !!perfil.email
+    tieneEmail: !!perfil.email,
+    modoSoportePostEmail: esSoportePostEmail
   });
 
   // 5. Construir prompt completo con contexto
+  const instruccionesPostEmail = esSoportePostEmail ? `
+- 🛟 MODO SOPORTE POST-CONFIRMACIÓN: Usa los datos de la reserva confirmada para responder dudas específicas.
+- 🚫 NO reinicies el flujo de reservas ni vuelvas a pedir datos, a menos que el usuario escriba explícitamente alguno de estos keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}.
+- ✅ Si menciona esas palabras clave, entonces sí guía el flujo adecuado (cancelar, reprogramar o nueva reserva).` : '';
+  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail;
+
   const prompt = `
 ${contextoUsuario}
 
@@ -71,10 +94,11 @@ INSTRUCCIONES:
 - Usa el contexto del perfil y el historial para personalizar
 ${formData ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
 ${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
-- Si es primera visita, menciona el día gratis (solo Aurora)
-- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente
-- Máximo 4-5 líneas, excepto casos que requieran más detalle
-- Siempre termina con siguiente paso claro o pregunta de seguimiento
+${esPrimeraVisita ? '- Si es primera visita, menciona el día gratis (solo Aurora)' : ''}
+${esSoportePostEmail ? '- Ya tiene reserva confirmada: ofrece soporte sin vender ni reiniciar flujos' : '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente'}
+${esSoportePostEmail ? '- Responde de forma directa y breve, resolviendo la duda puntual' : '- Máximo 4-5 líneas, excepto casos que requieran más detalle'}
+${esSoportePostEmail ? '- Cierra confirmando que sigues atento si necesita algo más' : '- Siempre termina con siguiente paso claro o pregunta de seguimiento'}
+${instruccionesPostEmail}
   `.trim();
 
   return {
@@ -100,8 +124,10 @@ ${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQues
       conversationContext: {
         hasHistory: historial && historial.length > 0,
         messageCount: historial ? historial.length : 0,
-        isFirstMessage: !historial || historial.length === 0
-      }
+        isFirstMessage: !historial || historial.length === 0,
+        postEmailSupport: esSoportePostEmail
+      },
+      postEmailSupport: esSoportePostEmail
     }
   };
 }
@@ -109,7 +135,7 @@ ${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQues
 /**
  * Construye contexto legible del perfil del usuario
  */
-function construirContextoPerfil(perfil = {}) {
+function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   if (!perfil || Object.keys(perfil).length === 0) {
     return 'PERFIL USUARIO: Usuario nuevo sin perfil registrado. Es primera vez.';
   }
@@ -196,6 +222,11 @@ function construirContextoPerfil(perfil = {}) {
   }
   
   if (perfil.lastMessageAt) lineas.push(`- Última interacción: ${perfil.lastMessageAt}`);
+
+  if (extraFlags.postEmailSupport) {
+    lineas.push(`- 🛟 Usuario llegó desde enlace post-confirmación: responder dudas SIN reiniciar flujo`);
+    lineas.push(`- Solo reactivar reserva si menciona: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}`);
+  }
   
   return lineas.join('\n');
 }

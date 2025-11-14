@@ -346,7 +346,11 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     }
 
     // 4. Si requiere pago, enviar datos de pago
-    const paymentInfo = getPaymentInfo();
+    const paymentInfo = getPaymentInfo(
+      userProfile, 
+      pendingReservation.serviceType, 
+      pendingReservation.durationHours
+    );
     
     return {
       success: true,

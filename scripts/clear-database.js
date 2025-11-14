@@ -23,7 +23,11 @@ async function clearDatabase() {
     
     for (const table of tables) {
       console.log(`   Limpiando tabla: ${table}`);
-      await databaseService.run(`DELETE FROM ${table}`);
+      try {
+        await databaseService.run(`DELETE FROM ${table}`);
+      } catch (error) {
+        console.log(`   ⚠️  Tabla ${table} no existe o ya está vacía`);
+      }
     }
     
     console.log('✅ Base de datos limpiada exitosamente');

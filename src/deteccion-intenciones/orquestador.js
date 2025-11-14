@@ -42,12 +42,17 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 1. Detectar intención y agente apropiado
   const intencion = detectarIntencion(mensaje);
   const agente = AGENTES[intencion.agent];
-  // 🛟 SOPORTE POST-EMAIL: activar si detectamos patrón O si justConfirmed está activo O si tiene reservas recientes
-  const tieneReservasRecientes = perfil.reservationHistory && perfil.reservationHistory.length > 0;
+  
+  // 🛟 SOPORTE POST-EMAIL: activar si:
+  // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
+  // - O si justConfirmed está activo
+  // - O si tiene reservas Y NO tiene pendingConfirmation (ya confirmó antes)
+  const tieneReservasConfirmadas = perfil.reservationHistory && perfil.reservationHistory.length > 0;
+  const sinReservaPendiente = !perfil.pendingConfirmation;
   const esSoportePostEmail = Boolean(
     intencion.flags?.postEmailSupport || 
     perfil.justConfirmed || 
-    (tieneReservasRecientes && !perfil.pendingConfirmation && historial && historial.length < 3)
+    (tieneReservasConfirmadas && sinReservaPendiente)
   );
 
   if (!agente) {
@@ -75,7 +80,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     tieneFormData: !!formData,
     primeraVisita: perfil.firstVisit,
     tieneEmail: !!perfil.email,
-    modoSoportePostEmail: esSoportePostEmail
+    modoSoportePostEmail: esSoportePostEmail,
+    tieneReservasConfirmadas: perfil.reservationHistory && perfil.reservationHistory.length > 0,
+    cantidadReservas: perfil.reservationHistory ? perfil.reservationHistory.length : 0
   });
 
   // 5. Construir prompt completo con contexto
@@ -98,12 +105,22 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esSoportePostEmail ? `
+🚨 MODO SOPORTE ACTIVADO - NO VENDER NI INICIAR RESERVAS:
+- El usuario YA TIENE una reserva confirmada (ver sección RESERVA CONFIRMADA arriba)
+- Tu rol es SOLO responder preguntas sobre esa reserva existente
+- NO ofrezcas Hot Desk, Sala de Reuniones ni preguntes qué espacio necesita
+- NO inicies nuevo flujo de reserva
+- Responde directamente usando los datos de su RESERVA CONFIRMADA
+- Si pregunta por cambios/cancelación, usa keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}
+` : ''}
 ${formData ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
 ${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
 ${esPrimeraVisita ? '- Si es primera visita, menciona el día gratis (solo Aurora)' : ''}
-${esSoportePostEmail ? '- Ya tiene reserva confirmada: ofrece soporte sin vender ni reiniciar flujos' : '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente'}
-${esSoportePostEmail ? '- Responde de forma directa y breve, resolviendo la duda puntual' : '- Máximo 4-5 líneas, excepto casos que requieran más detalle'}
-${esSoportePostEmail ? '- Cierra confirmando que sigues atento si necesita algo más' : '- Siempre termina con siguiente paso claro o pregunta de seguimiento'}
+${!esSoportePostEmail ? '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente' : ''}
+${!esSoportePostEmail ? '- Máximo 4-5 líneas, excepto casos que requieran más detalle' : ''}
+${!esSoportePostEmail ? '- Siempre termina con siguiente paso claro o pregunta de seguimiento' : ''}
+${esSoportePostEmail ? '- Responde brevemente y cierra confirmando que estás disponible para más consultas' : ''}
 ${instruccionesPostEmail}
   `.trim();
 

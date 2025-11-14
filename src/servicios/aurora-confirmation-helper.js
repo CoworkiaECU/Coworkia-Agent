@@ -156,6 +156,7 @@ export function extractReservationData(message, userProfile) {
     
     const ecuadorParts = ecuadorFormatter.formatToParts(now);
     const ecuadorHour = parseInt(ecuadorParts.find(p => p.type === 'hour').value);
+    const ecuadorMinute = parseInt(ecuadorParts.find(p => p.type === 'minute').value);
     const ecuadorDate = `${ecuadorParts.find(p => p.type === 'year').value}-${ecuadorParts.find(p => p.type === 'month').value}-${ecuadorParts.find(p => p.type === 'day').value}`;
     
     console.log('[VALIDATION] Hora Ecuador actual:', ecuadorHour, '- Fecha:', ecuadorDate);
@@ -163,9 +164,14 @@ export function extractReservationData(message, userProfile) {
     
     // Solo validar si es el mismo día
     if (reservationDate === ecuadorDate) {
-      const requestedHour = parseInt(startTime.split(':')[0]);
-      
-      if (requestedHour <= ecuadorHour) {
+      const [requestedHourRaw, requestedMinutesRaw = '0'] = startTime.split(':');
+      const requestedHour = parseInt(requestedHourRaw, 10);
+      const requestedMinutes = parseInt(requestedMinutesRaw, 10);
+
+      const isPastHour = requestedHour < ecuadorHour;
+      const isSameHourPastMinutes = requestedHour === ecuadorHour && requestedMinutes <= ecuadorMinute;
+
+      if (isPastHour || isSameHourPastMinutes) {
         console.warn('[VALIDATION] Horario en el pasado detectado Ecuador:', startTime, 'actual Ecuador:', ecuadorHour);
         // Ajustar a próxima hora disponible en Ecuador
         const nextHour = ecuadorHour + 1;

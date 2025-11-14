@@ -22,7 +22,15 @@ const POST_EMAIL_SUPPORT_PATTERNS = [
   /recibi.*confirmacion/,
   /confirmacion.*dud/,
   /enlace.*confirmacion/,
-  /link.*confirmacion/
+  /link.*confirmacion/,
+  /detalles.*reserva/,
+  /mi\s+reserva/,
+  /tengo\s+dud/,
+  /dud.*reserva/,
+  /info.*reserva/,
+  /hora.*llegada/,
+  /cambiar.*hora/,
+  /modificar.*reserva/
 ];
 
 export function detectarIntencion(inputRaw = '') {

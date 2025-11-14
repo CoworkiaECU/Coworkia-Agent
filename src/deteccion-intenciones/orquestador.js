@@ -42,7 +42,13 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 1. Detectar intención y agente apropiado
   const intencion = detectarIntencion(mensaje);
   const agente = AGENTES[intencion.agent];
-  const esSoportePostEmail = Boolean(intencion.flags?.postEmailSupport || perfil.justConfirmed);
+  // 🛟 SOPORTE POST-EMAIL: activar si detectamos patrón O si justConfirmed está activo O si tiene reservas recientes
+  const tieneReservasRecientes = perfil.reservationHistory && perfil.reservationHistory.length > 0;
+  const esSoportePostEmail = Boolean(
+    intencion.flags?.postEmailSupport || 
+    perfil.justConfirmed || 
+    (tieneReservasRecientes && !perfil.pendingConfirmation && historial && historial.length < 3)
+  );
 
   if (!agente) {
     throw new Error(`Agente ${intencion.agent} no encontrado`);

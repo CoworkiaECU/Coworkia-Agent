@@ -196,6 +196,8 @@ async function getReservationHistory(userId) {
     
     return reservations.map(reservation => ({
       date: reservation.date,
+      startTime: reservation.start_time,
+      endTime: reservation.end_time,
       time: `${reservation.start_time}-${reservation.end_time}`,
       type: reservation.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones',
       status: reservation.status,

@@ -150,7 +150,22 @@ function construirContextoPerfil(perfil = {}) {
   // 🆕 Información sobre uso del día gratis
   if (perfil.freeTrialUsed !== undefined) {
     if (perfil.freeTrialUsed) {
-      lineas.push(`- Día gratis usado: SÍ (${perfil.freeTrialDate || 'fecha anterior'}) → **DEBE PAGAR**`);
+      lineas.push(`- Día gratis usado: SÍ → **DEBE PAGAR**`);
+      if (perfil.freeTrialDate) {
+        lineas.push(`  * Fecha de uso: ${perfil.freeTrialDate}`);
+      }
+      if (perfil.email) {
+        lineas.push(`  * Email de confirmación enviado a: ${perfil.email}`);
+      }
+      // Mostrar detalles de la última reserva si existe
+      if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
+        const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
+        if (ultimaReserva.wasFree) {
+          lineas.push(`  * Espacio usado: ${ultimaReserva.type || 'Hot Desk'}`);
+          lineas.push(`  * Horario: ${ultimaReserva.startTime || 'N/A'} - ${ultimaReserva.endTime || 'N/A'}`);
+        }
+      }
+      lineas.push(`  ⚠️ Si usuario INSISTE que nunca vino, agendar como excepción SIN PAGO`);
     } else {
       lineas.push(`- Día gratis disponible: SÍ → Puede usarlo gratis`);
     }

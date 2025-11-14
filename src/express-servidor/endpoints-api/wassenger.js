@@ -466,48 +466,51 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 🔄 SISTEMA DE CONFIRMACIONES SI/NO (DESPUÉS de actualizar formulario)
-    // Solo procesar SI/NO si el formulario está completo o es una respuesta clara SI/NO
-    const isConfirmationAnswer = /^(si|sí|no|confirmo|cancelo|ok)$/i.test(text.trim());
-    
-    if (hasPendingConfirmation(profile) && (formResult.form.isComplete() || isConfirmationAnswer)) {
-      console.log('[WASSENGER] Usuario tiene confirmación pendiente Y (formulario completo O respuesta SI/NO)');
+    // Solo procesar SI/NO si hay confirmación pendiente Y la respuesta es explícitamente SI/NO
+    if (hasPendingConfirmation(profile)) {
+      const isPositive = isPositiveResponse(text);
+      const isNegative = isNegativeResponse(text);
       
-      const confirmationResult = await processConfirmationResponse(text, profile);
+      if (isPositive || isNegative) {
+        console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
+        
+        const confirmationResult = await processConfirmationResponse(text, profile);
       
-      // Enviar respuesta de confirmación
-      await enviarWhatsApp(userId, confirmationResult.message);
-      
-      // Guardar interacción de confirmación
-      await saveInteraction({
-        userId,
-        agent: 'aurora',
-        agentName: 'Aurora',
-        intentReason: 'confirmation_response',
-        input: text,
-        output: confirmationResult.message,
-        meta: {
-          route: '/webhooks/wassenger',
-          via: 'whatsapp',
-          confirmationSuccess: confirmationResult.success,
-          actionType: confirmationResult.actionType,
-          needsAction: confirmationResult.needsAction
-        }
-      });
+        // Enviar respuesta de confirmación
+        await enviarWhatsApp(userId, confirmationResult.message);
+        
+        // Guardar interacción de confirmación
+        await saveInteraction({
+          userId,
+          agent: 'aurora',
+          agentName: 'Aurora',
+          intentReason: 'confirmation_response',
+          input: text,
+          output: confirmationResult.message,
+          meta: {
+            route: '/webhooks/wassenger',
+            via: 'whatsapp',
+            confirmationSuccess: confirmationResult.success,
+            actionType: confirmationResult.actionType,
+            needsAction: confirmationResult.needsAction
+          }
+        });
 
-      // Guardar respuesta en historial
-      await saveConversationMessage(userId, {
-        role: 'assistant',
-        content: confirmationResult.message,
-        agent: 'Aurora'
-      });
-      
-      return res.json({ 
-        ok: true, 
-        processed: true,
-        type: 'confirmation_response',
-        success: confirmationResult.success,
-        needsAction: confirmationResult.needsAction
-      });
+        // Guardar respuesta en historial
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: confirmationResult.message,
+          agent: 'Aurora'
+        });
+        
+        return res.json({ 
+          ok: true, 
+          processed: true,
+          type: 'confirmation_response',
+          success: confirmationResult.success,
+          needsAction: confirmationResult.needsAction
+        });
+      }
     }
 
     // Si el formulario NO está completo, continuar con Aurora para que pida datos faltantes

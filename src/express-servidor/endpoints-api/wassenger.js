@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
-import { processConfirmationResponse, hasPendingConfirmation } from '../../servicios/confirmation-flow.js';
+import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';

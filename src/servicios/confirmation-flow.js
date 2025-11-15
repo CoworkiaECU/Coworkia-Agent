@@ -224,6 +224,12 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const userName = userProfile.name ? `, ${userProfile.name}` : '';
     let reservationRecord = null;
     
+    // 🚨 CRÍTICO: Asegurar que pendingReservation tenga el user_phone
+    if (!pendingReservation.userPhone && userProfile.userId) {
+      pendingReservation.userPhone = userProfile.userId;
+      console.log('[Confirmation] 🔧 user_phone agregado desde userProfile:', pendingReservation.userPhone);
+    }
+    
     // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción
     await databaseService.transaction(async () => {
       const reservationResult = await createReservation(pendingReservation);

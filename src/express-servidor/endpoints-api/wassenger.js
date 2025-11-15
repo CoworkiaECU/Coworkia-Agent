@@ -749,7 +749,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     
     if (resultado.agenteKey === 'AURORA') {
       console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
-      const enhancement = await enhanceAuroraResponse(reply, profile);
+      console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
+      const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
       console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
       
       if (enhancement.enhanced) {

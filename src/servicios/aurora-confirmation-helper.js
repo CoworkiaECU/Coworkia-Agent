@@ -322,18 +322,56 @@ function parseDate(dateStr) {
 /**
  * 🎯 Procesa y activa confirmación desde respuesta de Aurora
  */
-export async function processAuroraConfirmationRequest(originalMessage, userProfile) {
+export async function processAuroraConfirmationRequest(originalMessage, userProfile, formResult = null) {
   try {
     console.log('[AURORA-PROCESS] 🎯 Iniciando procesamiento de confirmación');
     console.log('[AURORA-PROCESS] 👤 Usuario:', userProfile.userId);
     console.log('[AURORA-PROCESS] 📨 Mensaje:', originalMessage.substring(0, 150) + '...');
+    console.log('[AURORA-PROCESS] 📋 FormResult disponible:', formResult ? 'SÍ' : 'NO');
     
-    // 1. Extraer datos de la reserva del mensaje de Aurora
-    const reservationData = extractReservationData(originalMessage, userProfile);
+    // 1. PRIORIDAD: Usar datos del formulario parcial si están disponibles
+    let reservationData = null;
+    
+    if (formResult && formResult.form) {
+      const form = formResult.form;
+      console.log('[AURORA-PROCESS] 📝 Usando datos del formulario parcial:', {
+        spaceType: form.spaceType,
+        date: form.date,
+        time: form.time,
+        email: form.email
+      });
+      
+      // Construir reservationData desde el formulario
+      if (form.date && form.time && form.spaceType) {
+        const [hour, minutes = '0'] = form.time.split(':');
+        const endHour = parseInt(hour) + (form.durationHours || 2);
+        
+        reservationData = {
+          date: form.date,
+          startTime: form.time,
+          endTime: `${endHour.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`,
+          durationHours: form.durationHours || 2,
+          serviceType: form.spaceType === 'meetingRoom' ? 'meetingRoom' : 'hotDesk',
+          email: form.email || userProfile.email,
+          numPeople: form.numPeople || 1,
+          totalPrice: 0, // Se calculará después
+          wasFree: !userProfile.freeTrialUsed
+        };
+        
+        console.log('[AURORA-PROCESS] ✅ Datos construidos desde formulario:', reservationData);
+      }
+    }
+    
+    // 2. Fallback: Intentar extraer del mensaje si no hay formulario
+    if (!reservationData) {
+      console.log('[AURORA-PROCESS] 📨 Intentando extraer datos del mensaje (fallback)...');
+      reservationData = extractReservationData(originalMessage, userProfile);
+    }
     
     if (!reservationData) {
-      console.error('[AURORA-PROCESS] ❌ FALLO: No se pudieron extraer datos de reserva');
-      console.error('[AURORA-PROCESS] 💡 Mensaje completo:', originalMessage);
+      console.error('[AURORA-PROCESS] ❌ FALLO: No se pudieron obtener datos de reserva');
+      console.error('[AURORA-PROCESS] 💡 Mensaje:', originalMessage.substring(0, 200));
+      console.error('[AURORA-PROCESS] 💡 Formulario:', formResult ? 'disponible pero incompleto' : 'no disponible');
       
       // 🎯 RESPUESTA AMIGABLE: Explica qué falta
       return {
@@ -357,6 +395,68 @@ Por favor, intenta así:
       duration: reservationData.durationHours,
       serviceType: reservationData.serviceType
     });
+
+    // 1.5. 🕐 VALIDACIÓN PREVIA: Verificar que fecha/hora no estén en el pasado
+    const now = new Date();
+    const ecuadorFormatter = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    const ecuadorParts = ecuadorFormatter.formatToParts(now);
+    const currentEcuadorDate = `${ecuadorParts.find(p => p.type === 'year').value}-${ecuadorParts.find(p => p.type === 'month').value}-${ecuadorParts.find(p => p.type === 'day').value}`;
+    const currentEcuadorHour = parseInt(ecuadorParts.find(p => p.type === 'hour').value);
+    const currentEcuadorMinute = parseInt(ecuadorParts.find(p => p.type === 'minute').value);
+    
+    // Comparar fechas
+    const requestedDate = new Date(reservationData.date + 'T00:00:00');
+    const ecuadorCurrentDate = new Date(currentEcuadorDate + 'T00:00:00');
+    
+    if (requestedDate < ecuadorCurrentDate) {
+      // Fecha en el pasado
+      console.warn('[AURORA-PROCESS] 📅 Fecha en el pasado:', reservationData.date, 'vs', currentEcuadorDate);
+      return {
+        success: false,
+        error: 'past_date',
+        userMessage: `⚠️ Esa fecha ya pasó en el calendario, Diego 😅
+
+📅 La fecha que mencionaste es: ${reservationData.date}
+🗓️ Hoy es: ${currentEcuadorDate}
+
+Por favor, verifica la fecha de tu reserva e intenta nuevamente. ¿Para qué día quieres venir? 😊`
+      };
+    } else if (requestedDate.getTime() === ecuadorCurrentDate.getTime()) {
+      // Mismo día - verificar hora
+      const [reqHour, reqMin = '0'] = reservationData.startTime.split(':');
+      const requestedHour = parseInt(reqHour);
+      const requestedMinute = parseInt(reqMin);
+      
+      const isPast = requestedHour < currentEcuadorHour || 
+                     (requestedHour === currentEcuadorHour && requestedMinute <= currentEcuadorMinute);
+      
+      if (isPast) {
+        console.warn('[AURORA-PROCESS] ⏰ Hora en el pasado:', reservationData.startTime, 'vs', `${currentEcuadorHour}:${currentEcuadorMinute}`);
+        
+        // Sugerir próxima hora disponible
+        const nextAvailableHour = currentEcuadorHour + 1;
+        
+        return {
+          success: false,
+          error: 'past_time',
+          userMessage: `⏰ Esa hora ya pasó, Diego 😅
+
+🕐 La hora que mencionaste: ${reservationData.startTime}
+🕐 Hora actual en Ecuador: ${currentEcuadorHour.toString().padStart(2, '0')}:${currentEcuadorMinute.toString().padStart(2, '0')}
+
+¿Qué tal si reservas para las ${nextAvailableHour.toString().padStart(2, '0')}:00 o más tarde? 😊`
+        };
+      }
+    }
 
     // 2. ✅ VALIDACIONES MEJORADAS: Duración, horario laboral, ventana de reserva
     const validation = validateReservation(
@@ -535,7 +635,7 @@ export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
 /**
  * 🧠 Modifica respuesta de Aurora para incluir confirmación si es necesario
  */
-export async function enhanceAuroraResponse(originalResponse, userProfile) {
+export async function enhanceAuroraResponse(originalResponse, userProfile, formResult = null) {
   try {
     // 1. Primero, mejorar respuesta para usuarios recurrentes
     let enhancedResponse = enhanceRecurrentUserResponse(originalResponse, userProfile);
@@ -549,8 +649,9 @@ export async function enhanceAuroraResponse(originalResponse, userProfile) {
     }
 
     console.log('[Confirmation Helper] Aurora quiere activar confirmación, procesando...');
+    console.log('[Confirmation Helper] FormResult disponible:', formResult ? 'SÍ' : 'NO');
 
-    const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile);
+    const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile, formResult);
 
     if (!confirmationResult.success) {
       console.log('[Confirmation Helper] ❌ Error:', confirmationResult.error);

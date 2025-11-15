@@ -19,6 +19,26 @@ import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmatio
 // TTL del formulario: 15 minutos (tiempo razonable para completar reserva)
 const FORM_TTL_SECONDS = 15 * 60;
 
+// 🎉 Lista de feriados nacionales de Ecuador (2025-2026)
+const FERIADOS_ECUADOR = [
+  '2025-01-01', '2025-02-10', '2025-02-11', '2025-03-28', '2025-05-01',
+  '2025-05-24', '2025-07-24', '2025-08-10', '2025-10-09', '2025-11-02',
+  '2025-11-03', '2025-12-25', '2025-12-31',
+  '2026-01-01', '2026-02-23', '2026-02-24', '2026-04-10', '2026-05-01',
+  '2026-05-24', '2026-07-24', '2026-08-10', '2026-10-09', '2026-11-02',
+  '2026-11-03', '2026-12-25', '2026-12-31'
+];
+
+const NOMBRES_FERIADOS = {
+  '01-01': 'Año Nuevo', '12-25': 'Navidad', '12-31': 'Fin de Año',
+  '05-01': 'Día del Trabajo', '05-24': 'Batalla de Pichincha',
+  '07-24': 'Natalicio de Simón Bolívar', '08-10': 'Primer Grito de Independencia',
+  '10-09': 'Independencia de Guayaquil', '11-02': 'Día de los Difuntos',
+  '11-03': 'Independencia de Cuenca', '02-10': 'Carnaval', '02-11': 'Carnaval',
+  '02-23': 'Carnaval', '02-24': 'Carnaval', '03-28': 'Viernes Santo',
+  '04-10': 'Viernes Santo'
+};
+
 /**
  * 🎯 Clase que representa un formulario parcial de reserva
  */
@@ -404,7 +424,7 @@ export function extractDataFromMessage(message, currentForm) {
 
 /**
  * 🤖 Procesa mensaje y actualiza formulario automáticamente
- * Retorna: { form, updates, nextQuestion, needsMoreInfo }
+ * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
 export async function processMessageWithForm(userId, message) {
   // 1. Obtener o crear formulario
@@ -421,7 +441,74 @@ export async function processMessageWithForm(userId, message) {
 
   // 4. Verificar si está completo
   const isComplete = form.isComplete();
-  const nextQuestion = isComplete ? null : form.getNextQuestion();
+  
+  // 🚨 5. VALIDAR DOMINGOS Y FERIADOS SI EL FORMULARIO ESTÁ COMPLETO
+  let validationError = null;
+  
+  if (isComplete && form.date) {
+    const requestedDate = new Date(form.date + 'T00:00:00-05:00');
+    const dayOfWeek = requestedDate.getDay();
+    
+    // Validar domingo (day === 0)
+    if (dayOfWeek === 0) {
+      // Calcular próximo lunes
+      const nextMonday = new Date(requestedDate);
+      nextMonday.setDate(requestedDate.getDate() + 1);
+      const nextMondayStr = nextMonday.toISOString().split('T')[0];
+      
+      validationError = {
+        type: 'closed_sunday',
+        message: `🚫 Los domingos Coworkia está cerrado, lo siento 😊
+
+Estamos abiertos:
+📅 Lunes a viernes: 8:30 AM - 6:00 PM
+📅 Sábado: 9:00 AM - 2:00 PM
+
+¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️`,
+        suggestedDate: nextMondayStr
+      };
+      
+      console.log('[FORM] 🚫 Validación: Domingo detectado -', form.date);
+    }
+    // Validar feriado
+    else if (FERIADOS_ECUADOR.includes(form.date)) {
+      const monthDay = form.date.substring(5);
+      const nombreFeriado = NOMBRES_FERIADOS[monthDay] || 'Feriado';
+      
+      // Buscar próximo día hábil (no domingo, no feriado)
+      let nextWorkingDay = new Date(requestedDate);
+      let daysToAdd = 1;
+      
+      while (daysToAdd <= 7) {
+        nextWorkingDay.setDate(requestedDate.getDate() + daysToAdd);
+        const nextDateStr = nextWorkingDay.toISOString().split('T')[0];
+        const nextDayOfWeek = nextWorkingDay.getDay();
+        
+        // Si no es domingo Y no es feriado, es día hábil
+        if (nextDayOfWeek !== 0 && !FERIADOS_ECUADOR.includes(nextDateStr)) {
+          validationError = {
+            type: 'closed_holiday',
+            message: `🎉 ${nombreFeriado} - Coworkia está cerrado ese día 😊
+
+Estamos abiertos:
+📅 Lunes a viernes: 8:30 AM - 6:00 PM
+📅 Sábado: 9:00 AM - 2:00 PM
+
+¿Qué tal si reservas para el ${nextDateStr}? 🗓️`,
+            suggestedDate: nextDateStr,
+            holidayName: nombreFeriado
+          };
+          break;
+        }
+        
+        daysToAdd++;
+      }
+      
+      console.log('[FORM] 🎉 Validación: Feriado detectado -', nombreFeriado, form.date);
+    }
+  }
+  
+  const nextQuestion = (isComplete || validationError) ? null : form.getNextQuestion();
 
   return {
     form,
@@ -429,6 +516,7 @@ export async function processMessageWithForm(userId, message) {
     nextQuestion,
     needsMoreInfo: !isComplete,
     summary: form.getSummary(),
-    userMessage: message // Para detectar frustración
+    userMessage: message, // Para detectar frustración
+    validationError // 🆕 Error de validación si el día está cerrado
   };
 }

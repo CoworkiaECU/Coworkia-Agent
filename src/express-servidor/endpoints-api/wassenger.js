@@ -7,7 +7,7 @@ import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
-import { processMessageWithForm } from '../../servicios/partial-reservation-form.js';
+import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -474,6 +474,51 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     
     // Pasar el mensaje del usuario al formResult para detección de frustración
     formResult.userMessage = text;
+    
+    // 🚨 VALIDACIÓN CRÍTICA: Si hay error de validación (domingo/feriado), responder inmediatamente
+    if (formResult.validationError) {
+      console.log('[WASSENGER] 🚫 Error de validación detectado:', formResult.validationError.type);
+      
+      const errorMessage = formResult.validationError.message;
+      
+      // Enviar mensaje de error al usuario
+      await enviarWhatsApp(userId, errorMessage);
+      
+      // Guardar interacción
+      await saveInteraction({
+        userId,
+        agent: 'aurora',
+        agentName: 'Aurora',
+        intentReason: 'validation_error',
+        input: text,
+        output: errorMessage,
+        meta: {
+          route: '/webhooks/wassenger',
+          via: 'whatsapp',
+          errorType: formResult.validationError.type,
+          suggestedDate: formResult.validationError.suggestedDate
+        }
+      });
+      
+      // Guardar en historial
+      await saveConversationMessage(userId, {
+        role: 'assistant',
+        content: errorMessage,
+        agent: 'Aurora'
+      });
+      
+      // Limpiar el formulario para que pueda intentar otra fecha
+      await clearPartialForm(userId);
+      
+      console.log('[WASSENGER] ✅ Error de validación enviado - formulario limpiado');
+      
+      return res.json({ 
+        ok: true, 
+        processed: true,
+        type: 'validation_error',
+        errorType: formResult.validationError.type
+      });
+    }
     
     if (formResult.updates && Object.keys(formResult.updates).length > 0) {
       console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);

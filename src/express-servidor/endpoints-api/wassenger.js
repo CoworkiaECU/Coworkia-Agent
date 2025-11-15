@@ -567,21 +567,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     let reply;
     let resultado = null;
     
-    // Solo usar respuestas de campaña para usuarios nuevos (firstVisit: true) 
-    // Y que NO acaben de cancelar una reserva (evita re-trigger de campañas)
-    if (campaignCheck.detected && profile.firstVisit && !profile.justConfirmed) {
-      console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
-      reply = personalizeCampaignResponse(campaignCheck.template, profile);
-      // Simular resultado para campaña
-      resultado = { 
-        agenteKey: 'AURORA', 
-        agente: 'Aurora',
-        razonSeleccion: `campana_${campaignCheck.campaign}`,
-        metadata: {
-          rol: 'asistente_coworking'
-        }
-      };
-    } else {
+    // SIEMPRE procesar con orquestador primero (necesario para handoffs y validaciones)
+    {
       // 🔍 DEBUG: Verificar perfil antes de enviar al orquestador
       console.log(`[WASSENGER] 🔍 DEBUGGING NOMBRE - Perfil antes del orquestador:`, {
         userId: profile.userId,
@@ -723,6 +710,10 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           max_tokens: 300,
           system: resultado.systemPrompt
         });
+      } else if (campaignCheck.detected && profile.firstVisit && !profile.justConfirmed) {
+        // 🎯 Respuesta de campaña para primera visita
+        console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
+        reply = personalizeCampaignResponse(campaignCheck.template, profile);
       } else {
         // Flujo normal - generar respuesta
         console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {

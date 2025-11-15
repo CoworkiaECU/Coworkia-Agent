@@ -97,6 +97,7 @@ class DatabaseService {
         free_trial_date DATE,
         conversation_count INTEGER DEFAULT 0,
         last_message_at DATETIME,
+        active_agent TEXT DEFAULT 'AURORA',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,

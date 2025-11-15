@@ -444,6 +444,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
+    // 🚦 VALIDAR AGENTE ACTIVO - Solo responde el agente que está activo
+    const activeAgent = profile.activeAgent || 'AURORA';
+    const isAgentMention = /@(aurora|enzo|adriana|aluna)/i.test(text);
+    
+    // Si NO menciona a ningún agente Y el agente activo no es el que detectamos, ignorar
+    if (!isAgentMention) {
+      const { detectarIntencion } = await import('../../deteccion-intenciones/detectar-intencion.js');
+      const intencionDetectada = detectarIntencion(text);
+      
+      // Si el agente detectado NO es el activo, no responder
+      if (intencionDetectada.agent !== activeAgent) {
+        console.log(`[WASSENGER] ⏸️ Mensaje ignorado - Agente activo: ${activeAgent}, Detectado: ${intencionDetectada.agent}`);
+        return res.json({ success: true, ignored: true, reason: 'agent_mismatch' });
+      }
+    }
+
     // 🆕 Guardar mensaje del usuario en historial
     console.log('[DEBUG-FLOW] 7️⃣ Iniciando saveConversationMessage...');
     await saveConversationMessage(userId, {
@@ -592,19 +608,135 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         await clearJustConfirmed(userId);
         console.log('[WASSENGER] 🧹 Estados de reserva limpiados');
       }
-      
-      console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
-        promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
-        perfilNombre: profile.name,
-        esCancelacion: resultado.metadata.cancelacion
-      });
 
-      // Generar respuesta con OpenAI
-      reply = await complete(resultado.prompt, {
-        temperature: 0.4,
-        max_tokens: 300,
-        system: resultado.systemPrompt
-      });
+      // 🤝 MANEJAR HANDOFF - Cambio de agente
+      if (resultado.metadata.agentHandoff) {
+        console.log('[WASSENGER] 🤝 Handoff detectado hacia:', resultado.metadata.targetAgent);
+        
+        // Generar mensaje de handoff desde agente actual
+        reply = await complete(resultado.prompt, {
+          temperature: 0.4,
+          max_tokens: 200,
+          system: resultado.systemPrompt
+        });
+
+        // Enviar mensaje de handoff
+        await dispatchHttpRequest(WASSENGER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${WASSENGER_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phone: from,
+            message: reply
+          })
+        });
+
+        // Guardar mensaje de handoff en historial
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: reply,
+          agent: resultado.agente
+        });
+
+        // Esperar 10 segundos antes de que entre el nuevo agente
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        // Actualizar agente activo en perfil
+        await saveProfile(userId, {
+          ...profile,
+          activeAgent: resultado.metadata.targetAgent
+        });
+
+        // Obtener mensaje de entrada del nuevo agente
+        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+        const nuevoAgente = AGENTES[resultado.metadata.targetAgent];
+        const mensajeEntrada = nuevoAgente.mensajes.entrada;
+
+        // Enviar mensaje de entrada del nuevo agente
+        await dispatchHttpRequest(WASSENGER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${WASSENGER_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phone: from,
+            message: mensajeEntrada
+          })
+        });
+
+        // Guardar mensaje de entrada en historial
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: mensajeEntrada,
+          agent: nuevoAgente.nombre
+        });
+
+        console.log('[WASSENGER] ✅ Handoff completado');
+        return res.json({ success: true, handoff: true });
+      }
+
+      // 👋 MANEJAR RETORNO - Usuario vuelve a un agente
+      if (resultado.metadata.returningToAurora) {
+        console.log('[WASSENGER] 👋 Usuario retorna a Aurora desde otro agente');
+        
+        // Enviar mensaje de despedida del agente anterior
+        const agenteAnterior = profile.activeAgent;
+        if (agenteAnterior && agenteAnterior !== 'AURORA') {
+          const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+          const agenteObj = AGENTES[agenteAnterior];
+          if (agenteObj && agenteObj.mensajes.despedida) {
+            await dispatchHttpRequest(WASSENGER_API_URL, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${WASSENGER_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                phone: from,
+                message: agenteObj.mensajes.despedida
+              })
+            });
+
+            await saveConversationMessage(userId, {
+              role: 'assistant',
+              content: agenteObj.mensajes.despedida,
+              agent: agenteObj.nombre
+            });
+
+            // Delay de 5 segundos
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
+
+        // Actualizar agente activo
+        await saveProfile(userId, {
+          ...profile,
+          activeAgent: 'AURORA'
+        });
+
+        // Aurora responde con su mensaje de entrada
+        reply = await complete(resultado.prompt, {
+          temperature: 0.4,
+          max_tokens: 300,
+          system: resultado.systemPrompt
+        });
+      } else {
+        // Flujo normal - generar respuesta
+        console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
+          promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
+          perfilNombre: profile.name,
+          esCancelacion: resultado.metadata.cancelacion
+        });
+
+        reply = await complete(resultado.prompt, {
+          temperature: 0.4,
+          max_tokens: 300,
+          system: resultado.systemPrompt
+        });
+      }
     }
 
     // � Agregar mensaje de upsell si aplica (ANTES de Aurora response)

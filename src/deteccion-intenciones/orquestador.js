@@ -109,20 +109,33 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
 
   const instruccionesRelevo = esRelevoHaciaOtro ? `
-🤝 RELEVO A OTRO AGENTE:
-- El usuario mencionó ${intencion.agent === 'ENZO' ? '@Enzo' : '@Adriana'}
-- Haz un relevo ELEGANTE y BREVE:
-  "¡Perfecto! Te conecto con ${intencion.agent === 'ENZO' ? 'Enzo 🚀' : 'Adriana 🛡️'} para esa consulta."
-- Agrega: "Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
-- NO des detalles sobre lo que ${intencion.agent === 'ENZO' ? 'Enzo' : 'Adriana'} hace
-- Máximo 2 líneas en el relevo` : '';
+🤝 RELEVO A OTRO AGENTE - MENSAJE PERSONALIZADO:
+- El usuario mencionó ${intencion.agent === 'ENZO' ? '@Enzo' : intencion.agent === 'ADRIANA' ? '@Adriana' : '@Aluna'}
+- DEBES usar este mensaje EXACTO según el contexto:
+
+SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
+"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[intencion.agent].nombre} 🚀, tu ${AGENTES[intencion.agent].descripcionCorta}.
+
+Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
+
+SI ESTÁ EN MEDIO DE CONVERSACIÓN:
+"Listo ${perfil.whatsappDisplayName || perfil.name || 'amigo/a'}, te comunico de inmediato con ${AGENTES[intencion.agent].nombre}.
+
+Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
+
+- Usa EXACTAMENTE uno de estos dos mensajes según el contexto
+- NO agregues nada más, NO improvises` : '';
 
   const instruccionesRetorno = esRetornoAurora ? `
-👋 RETORNO DE USUARIO A AURORA:
+👋 RETORNO DE USUARIO A AURORA - MENSAJE DE ENTRADA:
 - El usuario mencionó @Aurora - está volviendo después de hablar con otro agente
-- Saluda brevemente: "¡Hola de nuevo! 😊"
-- Resume cualquier dato de reserva que tengas (ver sección FORMULARIO PARCIAL arriba)
-- Si hay formulario parcial, pregunta: "¿Quieres continuar con tu reserva o prefieres empezar de nuevo?"
+- PRIMERO el otro agente debe despedirse (esto ya fue enviado antes)
+- AHORA TÚ (Aurora) debes usar este mensaje de entrada:
+
+"¡Hola ${perfil.whatsappDisplayName || perfil.name || 'de nuevo'}! Te asisto en Coworkia a partir de ahora 😊"
+
+- DESPUÉS del saludo, resume datos de reserva si existen (ver FORMULARIO PARCIAL)
+- Si hay formulario parcial, pregunta: "¿Quieres continuar con tu reserva?"
 - NO menciones conversaciones con otros agentes
 - Enfócate SOLO en reservas y servicios de Coworkia` : '';
   

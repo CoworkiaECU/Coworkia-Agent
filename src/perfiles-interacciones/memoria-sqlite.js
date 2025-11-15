@@ -116,6 +116,7 @@ export async function loadProfile(userId) {
       lastMessageAt: user.last_message_at,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
+      activeAgent: user.active_agent || 'AURORA', // Agente activo actual
       reservationHistory,
       pendingConfirmation,
       justConfirmed: justState.isActive,
@@ -155,7 +156,8 @@ export async function saveProfile(userId, partialProfile = {}) {
       free_trial_used: partialProfile.freeTrialUsed,
       free_trial_date: partialProfile.freeTrialDate,
       conversation_count: partialProfile.conversationCount,
-      last_message_at: partialProfile.lastMessageAt || new Date().toISOString()
+      last_message_at: partialProfile.lastMessageAt || new Date().toISOString(),
+      active_agent: partialProfile.activeAgent
     };
     
     // Remover campos undefined

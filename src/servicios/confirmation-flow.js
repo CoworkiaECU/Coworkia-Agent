@@ -224,15 +224,15 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const userName = userProfile.name ? `, ${userProfile.name}` : '';
     let reservationRecord = null;
     
-    console.log('[Confirmation] 🔍 DEBUG - pendingReservation recibido:', JSON.stringify(pendingReservation));
-    console.log('[Confirmation] 🔍 DEBUG - userProfile.userId:', userProfile.userId);
+    // 🚨 CRÍTICO: Asegurar que pendingReservation tenga el userId (usado como user_phone)
+    if (!pendingReservation.userId && userProfile.userId) {
+      pendingReservation.userId = userProfile.userId;
+      console.log('[Confirmation] ✅ userId agregado desde userProfile:', pendingReservation.userId);
+    }
     
-    // 🚨 CRÍTICO: Asegurar que pendingReservation tenga el user_phone
-    if (!pendingReservation.userPhone && userProfile.userId) {
-      pendingReservation.userPhone = userProfile.userId;
-      console.log('[Confirmation] ✅ user_phone agregado desde userProfile:', pendingReservation.userPhone);
-    } else {
-      console.log('[Confirmation] ⚠️ userPhone YA existe o userId no disponible:', pendingReservation.userPhone);
+    // Agregar userName si existe
+    if (!pendingReservation.userName && userProfile.name) {
+      pendingReservation.userName = userProfile.name;
     }
     
     // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción

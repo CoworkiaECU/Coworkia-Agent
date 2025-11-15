@@ -16,6 +16,76 @@ const CALENDAR_CONFIG = {
   availableSpaces: ['hotDesk1', 'hotDesk2', 'hotDesk3', 'hotDesk4', 'meetingRoom1', 'privateOffice1']
 };
 
+/**
+ * 🎉 Feriados de Ecuador (actualizados anualmente)
+ * Formato: 'YYYY-MM-DD'
+ */
+const FERIADOS_ECUADOR = [
+  // 2025
+  '2025-01-01', // Año Nuevo
+  '2025-02-10', // Carnaval (lunes)
+  '2025-02-11', // Carnaval (martes)
+  '2025-03-28', // Viernes Santo
+  '2025-05-01', // Día del Trabajo
+  '2025-05-24', // Batalla de Pichincha
+  '2025-07-24', // Natalicio de Simón Bolívar
+  '2025-08-10', // Primer Grito de Independencia
+  '2025-10-09', // Independencia de Guayaquil
+  '2025-11-02', // Día de los Difuntos
+  '2025-11-03', // Independencia de Cuenca
+  '2025-12-25', // Navidad
+  '2025-12-31', // Fin de Año
+  
+  // 2026 (adelantarse para no tener problemas)
+  '2026-01-01', // Año Nuevo
+  '2026-02-16', // Carnaval (lunes)
+  '2026-02-17', // Carnaval (martes)
+  '2026-04-03', // Viernes Santo
+  '2026-05-01', // Día del Trabajo
+  '2026-05-24', // Batalla de Pichincha
+  '2026-07-24', // Natalicio de Simón Bolívar
+  '2026-08-10', // Primer Grito de Independencia
+  '2026-10-09', // Independencia de Guayaquil
+  '2026-11-02', // Día de los Difuntos
+  '2026-11-03', // Independencia de Cuenca
+  '2026-12-25', // Navidad
+  '2026-12-31'  // Fin de Año
+];
+
+/**
+ * 🎉 Verifica si una fecha es feriado en Ecuador
+ */
+function esFeriado(dateString) {
+  return FERIADOS_ECUADOR.includes(dateString);
+}
+
+/**
+ * 📅 Obtiene el nombre del feriado si aplica
+ */
+function getNombreFeriado(dateString) {
+  const feriados = {
+    '01-01': 'Año Nuevo',
+    '02-10': 'Carnaval',
+    '02-11': 'Carnaval',
+    '02-16': 'Carnaval',
+    '02-17': 'Carnaval',
+    '03-28': 'Viernes Santo',
+    '04-03': 'Viernes Santo',
+    '05-01': 'Día del Trabajo',
+    '05-24': 'Batalla de Pichincha',
+    '07-24': 'Natalicio de Simón Bolívar',
+    '08-10': 'Primer Grito de Independencia',
+    '10-09': 'Independencia de Guayaquil',
+    '11-02': 'Día de los Difuntos',
+    '11-03': 'Independencia de Cuenca',
+    '12-25': 'Navidad',
+    '12-31': 'Fin de Año'
+  };
+  
+  const monthDay = dateString.substring(5); // Extrae MM-DD de YYYY-MM-DD
+  return feriados[monthDay] || 'Feriado';
+}
+
 const SERVICE_NAMES = {
   hotDesk: 'Hot Desk',
   meetingRoom: 'Sala de Reuniones',
@@ -87,6 +157,31 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
   
   // Construir fecha solicitada con offset explícito de Ecuador
   const requestedDateTime = new Date(`${date}T${startTime}:00-05:00`);
+  
+  // 📅 VALIDAR DÍA DE LA SEMANA - Domingo cerrado
+  const dayOfWeek = requestedDateTime.getDay(); // 0 = domingo, 6 = sábado
+  
+  if (dayOfWeek === 0) {
+    console.log('[CALENDARIO] 🚫 Domingo detectado - Coworkia está CERRADO');
+    return {
+      available: false,
+      reason: '🚫 Los domingos Coworkia está cerrado',
+      suggestion: 'Estamos abiertos de lunes a sábado',
+      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+    };
+  }
+  
+  // 🎉 VALIDAR FERIADOS - Cerrado en días festivos
+  if (esFeriado(date)) {
+    const nombreFeriado = getNombreFeriado(date);
+    console.log('[CALENDARIO] 🎉 Feriado detectado:', nombreFeriado, '-', date);
+    return {
+      available: false,
+      reason: `🎉 ${nombreFeriado} - Coworkia está cerrado`,
+      suggestion: 'Estamos cerrados en feriados',
+      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+    };
+  }
   
   if (requestedDateTime < currentDateTime) {
     console.log('[CALENDARIO] ⏰ Horario pasado detectado (hora Ecuador):', {

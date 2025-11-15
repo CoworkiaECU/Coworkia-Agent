@@ -417,6 +417,84 @@ Por favor, intenta así:
     const requestedDate = new Date(reservationData.date + 'T00:00:00');
     const ecuadorCurrentDate = new Date(currentEcuadorDate + 'T00:00:00');
     
+    // 🚫 VALIDAR DÍA DE LA SEMANA - Domingo cerrado
+    const dayOfWeek = requestedDate.getDay(); // 0 = domingo, 6 = sábado
+    
+    if (dayOfWeek === 0) {
+      console.warn('[AURORA-PROCESS] 🚫 Domingo detectado - Coworkia CERRADO');
+      
+      // Sugerir lunes siguiente
+      const nextMonday = new Date(requestedDate);
+      nextMonday.setDate(nextMonday.getDate() + 1); // Domingo + 1 = Lunes
+      const nextMondayStr = nextMonday.toISOString().split('T')[0];
+      
+      return {
+        success: false,
+        error: 'closed_sunday',
+        userMessage: `🚫 Los domingos Coworkia está cerrado, Diego 😊
+
+Estamos abiertos:
+📅 Lunes a viernes: 8:30 AM - 6:00 PM
+📅 Sábado: 9:00 AM - 2:00 PM
+
+¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️`
+      };
+    }
+    
+    // 🎉 VALIDAR FERIADOS - Cerrado en días festivos
+    const FERIADOS_ECUADOR = [
+      '2025-01-01', '2025-02-10', '2025-02-11', '2025-03-28', '2025-05-01', 
+      '2025-05-24', '2025-07-24', '2025-08-10', '2025-10-09', '2025-11-02', 
+      '2025-11-03', '2025-12-25', '2025-12-31',
+      '2026-01-01', '2026-02-16', '2026-02-17', '2026-04-03', '2026-05-01',
+      '2026-05-24', '2026-07-24', '2026-08-10', '2026-10-09', '2026-11-02',
+      '2026-11-03', '2026-12-25', '2026-12-31'
+    ];
+    
+    const NOMBRES_FERIADOS = {
+      '01-01': 'Año Nuevo', '02-10': 'Carnaval', '02-11': 'Carnaval',
+      '02-16': 'Carnaval', '02-17': 'Carnaval', '03-28': 'Viernes Santo',
+      '04-03': 'Viernes Santo', '05-01': 'Día del Trabajo', 
+      '05-24': 'Batalla de Pichincha', '07-24': 'Natalicio de Simón Bolívar',
+      '08-10': 'Primer Grito de Independencia', '10-09': 'Independencia de Guayaquil',
+      '11-02': 'Día de los Difuntos', '11-03': 'Independencia de Cuenca',
+      '12-25': 'Navidad', '12-31': 'Fin de Año'
+    };
+    
+    if (FERIADOS_ECUADOR.includes(reservationData.date)) {
+      const monthDay = reservationData.date.substring(5);
+      const nombreFeriado = NOMBRES_FERIADOS[monthDay] || 'Feriado';
+      console.warn('[AURORA-PROCESS] 🎉 Feriado detectado:', nombreFeriado);
+      
+      // Buscar siguiente día hábil
+      let nextWorkingDay = new Date(requestedDate);
+      let daysToAdd = 1;
+      
+      while (daysToAdd < 7) {
+        nextWorkingDay.setDate(nextWorkingDay.getDate() + 1);
+        const nextDateStr = nextWorkingDay.toISOString().split('T')[0];
+        const nextDayOfWeek = nextWorkingDay.getDay();
+        
+        // Si no es domingo ni feriado, es día hábil
+        if (nextDayOfWeek !== 0 && !FERIADOS_ECUADOR.includes(nextDateStr)) {
+          break;
+        }
+        daysToAdd++;
+      }
+      
+      const nextWorkingDayStr = nextWorkingDay.toISOString().split('T')[0];
+      
+      return {
+        success: false,
+        error: 'closed_holiday',
+        userMessage: `🎉 ${nombreFeriado} - Coworkia está cerrado, Diego 😊
+
+Los feriados no atendemos, pero puedes reservar para el próximo día hábil.
+
+¿Qué tal si reservas para el ${nextWorkingDayStr}? 📅`
+      };
+    }
+    
     if (requestedDate < ecuadorCurrentDate) {
       // Fecha en el pasado
       console.warn('[AURORA-PROCESS] 📅 Fecha en el pasado:', reservationData.date, 'vs', currentEcuadorDate);

@@ -472,6 +472,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
     const formResult = await processMessageWithForm(userId, text);
     
+    // Pasar el mensaje del usuario al formResult para detección de frustración
+    formResult.userMessage = text;
+    
     if (formResult.updates && Object.keys(formResult.updates).length > 0) {
       console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
       

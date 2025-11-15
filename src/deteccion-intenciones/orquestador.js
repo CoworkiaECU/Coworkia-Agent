@@ -394,7 +394,7 @@ function construirContextoFormulario(formData) {
     return '';
   }
 
-  const { form, summary, needsMoreInfo, nextQuestion, resumeMessage } = formData;
+  const { form, summary, needsMoreInfo, nextQuestion, resumeMessage, userMessage } = formData;
   const lineas = ['🧠 FORMULARIO PARCIAL DE RESERVA (datos ya proporcionados):'];
 
   if (summary) {
@@ -415,8 +415,21 @@ function construirContextoFormulario(formData) {
     });
   }
 
+  // 🚨 DETECCIÓN DE FRUSTRACIÓN: Usuario dice "ya te dije", "te dije", "ya lo dije"
+  if (userMessage && /\b(ya\s+(te\s+)?dij[eé]|te\s+dij[eé]|ya\s+lo\s+dij[eé])\b/i.test(userMessage)) {
+    lineas.push('\n⚠️ FRUSTRACIÓN DETECTADA - Usuario repitió información:');
+    lineas.push('- El usuario está frustrado porque ya dio este dato antes');
+    lineas.push('- DEBES:');
+    lineas.push('  1. Pedir disculpas por el despiste: "¡Disculpa! Tienes razón, ya me lo dijiste" 🙏');
+    lineas.push('  2. Mostrar RESUMEN COMPLETO de TODOS los datos que tienes:');
+    lineas.push('     ' + summary);
+    lineas.push('  3. Confirmar con el usuario: "¿Todo esto está correcto?"');
+    lineas.push('  4. Solo preguntar por lo que REALMENTE falta');
+    lineas.push('- NO vuelvas a preguntar por datos que ya tienes');
+    lineas.push('- SÉ AMABLE y reconoce el error');
+  }
   // 🔄 INSTRUCCIÓN ESPECIAL: Usuario retoma reserva
-  if (resumeMessage) {
+  else if (resumeMessage) {
     lineas.push('\n🔄 RETOMANDO RESERVA:');
     lineas.push('- El usuario tiene datos previos de una reserva en proceso');
     lineas.push('- DEBES usar exactamente este mensaje de resumen:');
@@ -427,7 +440,12 @@ function construirContextoFormulario(formData) {
     lineas.push('- Si confirma los datos, continúa con lo que falta');
     lineas.push('- Si quiere cambiar algo, actualiza y confirma los cambios');
   } else if (needsMoreInfo && nextQuestion) {
-    lineas.push(`\n💡 PREGUNTA SIGUIENTE: ${nextQuestion}`);
+    lineas.push(`\n💡 INSTRUCCIONES DE FORMULARIO:`);
+    lineas.push('- REVISA los datos que YA TIENES (arriba) antes de preguntar');
+    lineas.push('- SOLO pregunta por lo que REALMENTE falta');
+    lineas.push('- NO repitas preguntas si ya tienes el dato');
+    lineas.push('- Sé NATURAL y amigable al pedir información');
+    lineas.push(`- Pregunta sugerida: ${nextQuestion}`);
   } else if (!needsMoreInfo) {
     lineas.push('\n✅ FORMULARIO COMPLETO - Proceder con validación y confirmación');
   }

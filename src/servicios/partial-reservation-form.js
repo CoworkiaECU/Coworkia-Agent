@@ -286,6 +286,14 @@ export function extractDataFromMessage(message, currentForm) {
     const relativeMatch = lowerMsg.match(/\b(hoy|ma[ñn]ana)\b/);
     const isoMatch = message.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
     const shortMatch = message.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+    
+    // 🆕 Detectar formato "18 de noviembre", "18 noviembre"
+    const monthNames = {
+      'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+      'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+      'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+    };
+    const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(\w+)/);
 
     if (relativeMatch) {
       const keyword = relativeMatch[1];
@@ -296,12 +304,29 @@ export function extractDataFromMessage(message, currentForm) {
         tomorrow.setDate(tomorrow.getDate() + 1);
         updates.date = tomorrow.toISOString().split('T')[0];
       }
-      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+      console.log('[FORM] 📅 Detectado fecha relativa:', updates.date);
+    } else if (namedDateMatch) {
+      const [, dayStr, monthName] = namedDateMatch;
+      const month = monthNames[monthName.toLowerCase()];
+      if (month) {
+        const day = parseInt(dayStr, 10);
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+        
+        // Si el mes ya pasó este año, usar año siguiente
+        let year = currentYear;
+        if (month < currentMonth || (month === currentMonth && day < today.getDate())) {
+          year = currentYear + 1;
+        }
+        
+        updates.date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        console.log('[FORM] 📅 Detectado fecha con nombre de mes:', updates.date);
+      }
     } else if (isoMatch) {
       const [, year, month, day] = isoMatch;
       const normalizedYear = year.padStart(4, '0');
       updates.date = `${normalizedYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+      console.log('[FORM] 📅 Detectado fecha ISO:', updates.date);
     } else if (shortMatch) {
       const [, day, month, yearPart] = shortMatch;
       let year = yearPart;
@@ -312,7 +337,7 @@ export function extractDataFromMessage(message, currentForm) {
         year = `2${yearPart.padStart(3, '0')}`;
       }
       updates.date = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      console.log('[FORM] 📅 Detectado fecha:', updates.date);
+      console.log('[FORM] 📅 Detectado fecha con barras:', updates.date);
     }
   }
 
@@ -403,6 +428,7 @@ export async function processMessageWithForm(userId, message) {
     updates,
     nextQuestion,
     needsMoreInfo: !isComplete,
-    summary: form.getSummary()
+    summary: form.getSummary(),
+    userMessage: message // Para detectar frustración
   };
 }

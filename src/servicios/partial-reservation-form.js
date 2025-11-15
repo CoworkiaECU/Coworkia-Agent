@@ -141,6 +141,38 @@ export class PartialReservationForm {
   }
 
   /**
+   * 🔄 Genera resumen con pregunta de confirmación al retomar
+   */
+  getResumeMessage() {
+    const missing = this.getMissingFields();
+    const hasSomeData = this.spaceType || this.date || this.time || this.email;
+    
+    if (!hasSomeData) {
+      return null; // No hay datos para resumir
+    }
+
+    let message = '¡Perfecto! Veo que tenías una reserva en proceso. Déjame verificar los datos:\n\n';
+    message += this.getSummary();
+    
+    if (missing.length > 0) {
+      message += '\n\n';
+      const missingNames = missing.map(f => {
+        switch(f) {
+          case 'spaceType': return 'tipo de espacio';
+          case 'date': return 'fecha';
+          case 'time': return 'hora';
+          case 'email': return 'email';
+          default: return f;
+        }
+      });
+      message += `❓ Falta: ${missingNames.join(', ')}`;
+    }
+    
+    message += '\n\n¿Deseas mantener estos datos o hacer algún cambio?';
+    return message;
+  }
+
+  /**
    * 💾 Convierte a objeto plano para almacenamiento
    */
   toJSON() {

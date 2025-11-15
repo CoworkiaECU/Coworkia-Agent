@@ -46,6 +46,10 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 🚫 CANCELACIÓN DETECTADA
   const esCancelacion = Boolean(intencion.flags?.cancelacion);
   
+  // 🔄 RELEVO ENTRE AGENTES
+  const esRelevoHaciaOtro = Boolean(intencion.flags?.agentHandoff);
+  const esRetornoAurora = Boolean(intencion.flags?.returningToAurora);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -103,6 +107,24 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - Ofrece ayuda conversacional: "¿En qué más puedo ayudarte?"
 - Mantente disponible para responder preguntas generales sobre Coworkia
 - Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
+
+  const instruccionesRelevo = esRelevoHaciaOtro ? `
+🤝 RELEVO A OTRO AGENTE:
+- El usuario mencionó ${intencion.agent === 'ENZO' ? '@Enzo' : '@Adriana'}
+- Haz un relevo ELEGANTE y BREVE:
+  "¡Perfecto! Te conecto con ${intencion.agent === 'ENZO' ? 'Enzo 🚀' : 'Adriana 🛡️'} para esa consulta."
+- Agrega: "Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
+- NO des detalles sobre lo que ${intencion.agent === 'ENZO' ? 'Enzo' : 'Adriana'} hace
+- Máximo 2 líneas en el relevo` : '';
+
+  const instruccionesRetorno = esRetornoAurora ? `
+👋 RETORNO DE USUARIO A AURORA:
+- El usuario mencionó @Aurora - está volviendo después de hablar con otro agente
+- Saluda brevemente: "¡Hola de nuevo! 😊"
+- Resume cualquier dato de reserva que tengas (ver sección FORMULARIO PARCIAL arriba)
+- Si hay formulario parcial, pregunta: "¿Quieres continuar con tu reserva o prefieres empezar de nuevo?"
+- NO menciones conversaciones con otros agentes
+- Enfócate SOLO en reservas y servicios de Coworkia` : '';
   
   const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion;
 
@@ -119,6 +141,8 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esRelevoHaciaOtro ? instruccionesRelevo : ''}
+${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}
 ${esSoportePostEmail ? `
 🚨 MODO SOPORTE ACTIVADO - NO VENDER NI INICIAR RESERVAS:
@@ -168,6 +192,9 @@ ${instruccionesPostEmail}
       },
       postEmailSupport: esSoportePostEmail,
       cancelacion: esCancelacion,
+      agentHandoff: esRelevoHaciaOtro,
+      returningToAurora: esRetornoAurora,
+      targetAgent: esRelevoHaciaOtro ? intencion.agent : null,
       // 🚫 Flag para indicar si se debe guardar formulario parcial
       shouldSavePartialForm: esCancelacion && formData && Object.keys(formData).length > 0
     }
@@ -354,7 +381,7 @@ function construirContextoFormulario(formData) {
     return '';
   }
 
-  const { form, summary, needsMoreInfo, nextQuestion } = formData;
+  const { form, summary, needsMoreInfo, nextQuestion, resumeMessage } = formData;
   const lineas = ['🧠 FORMULARIO PARCIAL DE RESERVA (datos ya proporcionados):'];
 
   if (summary) {
@@ -375,7 +402,18 @@ function construirContextoFormulario(formData) {
     });
   }
 
-  if (needsMoreInfo && nextQuestion) {
+  // 🔄 INSTRUCCIÓN ESPECIAL: Usuario retoma reserva
+  if (resumeMessage) {
+    lineas.push('\n🔄 RETOMANDO RESERVA:');
+    lineas.push('- El usuario tiene datos previos de una reserva en proceso');
+    lineas.push('- DEBES usar exactamente este mensaje de resumen:');
+    lineas.push('---');
+    lineas.push(resumeMessage);
+    lineas.push('---');
+    lineas.push('- NO agregues nada más, solo espera respuesta del usuario');
+    lineas.push('- Si confirma los datos, continúa con lo que falta');
+    lineas.push('- Si quiere cambiar algo, actualiza y confirma los cambios');
+  } else if (needsMoreInfo && nextQuestion) {
     lineas.push(`\n💡 PREGUNTA SIGUIENTE: ${nextQuestion}`);
   } else if (!needsMoreInfo) {
     lineas.push('\n✅ FORMULARIO COMPLETO - Proceder con validación y confirmación');

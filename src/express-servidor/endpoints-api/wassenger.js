@@ -466,6 +466,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
+    // 🔄 RETOMANDO RESERVA - Verificar si hay datos previos y usuario usa keywords de reserva
+    const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio'];
+    const isReservationIntent = reservationKeywords.some(kw => text.toLowerCase().includes(kw));
+    const hasPartialData = formResult.form.spaceType || formResult.form.date || formResult.form.time;
+    
+    if (isReservationIntent && hasPartialData && formResult.form.getResumeMessage) {
+      const resumeMessage = formResult.form.getResumeMessage();
+      if (resumeMessage) {
+        console.log('[WASSENGER] 📋 Usuario retoma reserva con datos previos - enviando resumen');
+        formResult.resumeMessage = resumeMessage;
+      }
+    }
+
     // 🔄 SISTEMA DE CONFIRMACIONES SI/NO (DESPUÉS de actualizar formulario)
     // Solo procesar SI/NO si hay confirmación pendiente Y la respuesta es explícitamente SI/NO
     if (hasPendingConfirmation(profile)) {

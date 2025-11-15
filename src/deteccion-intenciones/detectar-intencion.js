@@ -87,12 +87,17 @@ export function detectarIntencion(inputRaw = '') {
 
   // 1) Enzo explícito
   if (/@enzo/.test(text)) {
-    return { agent: 'ENZO', reason: 'trigger @Enzo' };
+    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: 'AURORA' } };
   }
 
   // 2) Adriana solo con @adriana explícito
   if (/@adriana/.test(text)) {
-    return { agent: 'ADRIANA', reason: 'trigger @Adriana' };
+    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA' } };
+  }
+
+  // 2.1) Aurora explícito - usuario retoma con Aurora
+  if (/@aurora/.test(text)) {
+    return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
   }
 
   // 2.5) Usuario llega desde el enlace del correo post-confirmación

@@ -482,15 +482,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
-    // 🔄 RETOMANDO RESERVA - Verificar si hay datos previos y usuario usa keywords de reserva
+    // 🔄 RETOMANDO RESERVA - Solo si existe partial_form guardado (de cancelación previa)
     const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio'];
     const isReservationIntent = reservationKeywords.some(kw => text.toLowerCase().includes(kw));
-    const hasPartialData = formResult.form.spaceType || formResult.form.date || formResult.form.time;
     
-    if (isReservationIntent && hasPartialData && formResult.form.getResumeMessage) {
+    // Verificar si hay un partial_form guardado en DB (solo se guarda cuando hay cancelación)
+    const { getPartialForm } = await import('../../perfiles-interacciones/memoria-sqlite.js');
+    const savedPartialForm = await getPartialForm(userId);
+    
+    if (isReservationIntent && savedPartialForm && formResult.form.getResumeMessage) {
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) {
-        console.log('[WASSENGER] 📋 Usuario retoma reserva con datos previos - enviando resumen');
+        console.log('[WASSENGER] 📋 Usuario retoma reserva cancelada anteriormente - enviando resumen');
         formResult.resumeMessage = resumeMessage;
       }
     }
@@ -714,6 +717,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         // 🎯 Respuesta de campaña para primera visita
         console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
         reply = personalizeCampaignResponse(campaignCheck.template, profile);
+        console.log('[WASSENGER] 📝 Reply de campaña generado:', reply ? 'SI' : 'NO', '- Length:', reply?.length || 0);
       } else {
         // Flujo normal - generar respuesta
         console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
@@ -736,11 +740,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     }
 
     // �🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
+    console.log('[WASSENGER] 🔍 Antes de finalReply - reply:', reply ? 'EXISTE' : 'NULL/UNDEFINED');
     let finalReply = reply;
     let confirmationActivated = false;
     
     if (resultado.agenteKey === 'AURORA') {
+      console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
       const enhancement = await enhanceAuroraResponse(reply, profile);
+      console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
       
       if (enhancement.enhanced) {
         finalReply = enhancement.finalMessage;
@@ -750,11 +757,13 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     }
 
     // 🆕 Guardar respuesta del asistente en historial
+    console.log('[WASSENGER] 💾 Guardando mensaje en historial - finalReply length:', finalReply?.length || 0);
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
       agent: resultado.agente
     });
+    console.log('[WASSENGER] ✅ Mensaje guardado en historial');
 
     // 🔧 MARCAR PRIMERA VISITA COMO COMPLETADA después de respuesta de Aurora
     if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
@@ -794,10 +803,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     });
 
     // Enviar respuesta a WhatsApp
+    console.log('[WASSENGER] 📤 Enviando mensaje a WhatsApp - finalReply:', finalReply ? 'EXISTE' : 'NULL/UNDEFINED', '- Length:', finalReply?.length || 0);
     const envio = await enviarWhatsApp(userId, finalReply);
 
+    console.log('[WASSENGER] 📬 Resultado del envío - ok:', envio.ok);
     if (!envio.ok) {
-      console.error('[WASSENGER] Error al enviar respuesta:', envio.error);
+      console.error('[WASSENGER] ❌ Error al enviar respuesta:', envio.error);
+    } else {
+      console.log('[WASSENGER] ✅ Mensaje enviado correctamente');
     }
 
     // Responder al webhook (ACK)

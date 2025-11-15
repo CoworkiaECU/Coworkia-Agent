@@ -150,6 +150,14 @@ class DatabaseService {
         last_reservation_id TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_phone) REFERENCES users(phone_number)
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS partial_forms (
+        user_phone TEXT PRIMARY KEY,
+        form_data TEXT NOT NULL,
+        form_type TEXT,
+        cancelled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_phone) REFERENCES users(phone_number)
       )`
     ];
 
@@ -162,6 +170,7 @@ class DatabaseService {
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type)',
       'CREATE INDEX IF NOT EXISTS idx_pending_confirmations_expires ON pending_confirmations(expires_at)',
       'CREATE INDEX IF NOT EXISTS idx_reservation_state_just_confirmed ON reservation_state(just_confirmed_until)',
+      'CREATE INDEX IF NOT EXISTS idx_partial_forms_cancelled ON partial_forms(cancelled_at)',
       'CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone)',
       'CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp)'
     ];

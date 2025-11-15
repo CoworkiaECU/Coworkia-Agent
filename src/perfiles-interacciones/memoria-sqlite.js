@@ -328,6 +328,65 @@ export async function updateReservationHistory(userId, reservation) {
   return await loadProfile(userId);
 }
 
+/**
+ * 💾 Guardar formulario parcial cuando usuario cancela
+ */
+export async function savePartialForm(userId, formData, formType = 'reservation') {
+  await ensureDbInitialized();
+  try {
+    await databaseService.run(
+      `INSERT INTO partial_forms (user_phone, form_data, form_type, cancelled_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(user_phone) DO UPDATE SET
+         form_data = excluded.form_data,
+         form_type = excluded.form_type,
+         cancelled_at = CURRENT_TIMESTAMP`,
+      [userId, JSON.stringify(formData), formType]
+    );
+    console.log('[MEMORIA] ✅ Formulario parcial guardado:', { userId, formType });
+    return true;
+  } catch (error) {
+    console.error('[MEMORIA] ❌ Error guardando formulario parcial:', error);
+    return false;
+  }
+}
+
+/**
+ * 📋 Obtener último formulario parcial guardado
+ */
+export async function getPartialForm(userId) {
+  await ensureDbInitialized();
+  try {
+    const row = await databaseService.get(
+      'SELECT form_data, form_type, cancelled_at FROM partial_forms WHERE user_phone = ?',
+      [userId]
+    );
+    if (!row) return null;
+    return {
+      formData: JSON.parse(row.form_data),
+      formType: row.form_type,
+      cancelledAt: row.cancelled_at
+    };
+  } catch (error) {
+    console.error('[MEMORIA] Error obteniendo formulario parcial:', error);
+    return null;
+  }
+}
+
+/**
+ * 🗑️ Eliminar formulario parcial
+ */
+export async function clearPartialForm(userId) {
+  await ensureDbInitialized();
+  try {
+    await databaseService.run('DELETE FROM partial_forms WHERE user_phone = ?', [userId]);
+    return true;
+  } catch (error) {
+    console.error('[MEMORIA] Error eliminando formulario parcial:', error);
+    return false;
+  }
+}
+
 export function calculateReservationCost(serviceType, hours, people = 1) {
   // HOT DESK: $10 por primeras 2 horas, luego $10 por hora adicional
   // SALA REUNIONES: $29 por sala (2h, 3-4 personas), luego $15 por hora adicional

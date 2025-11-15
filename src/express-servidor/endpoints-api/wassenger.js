@@ -15,10 +15,11 @@ import {
   loadConversationHistory, 
   saveConversationMessage,
   getPaymentInfo,
-  calculateReservationCost
+  calculateReservationCost,
+  savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
-import { clearJustConfirmed } from '../../servicios/reservation-state.js';
+import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
 
 const router = Router();
 
@@ -563,9 +564,26 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       // Procesar mensaje con orquestador (ahora con historial + formulario)
       resultado = procesarMensaje(text, profile, conversationHistory, formResult);
       
+      // 🚫 MANEJAR CANCELACIÓN
+      if (resultado.metadata.cancelacion) {
+        console.log('[WASSENGER] 🚫 Cancelación detectada');
+        
+        // Guardar formulario parcial si existe
+        if (resultado.metadata.shouldSavePartialForm) {
+          await savePartialForm(userId, formResult, 'reservation');
+          console.log('[WASSENGER] 💾 Formulario parcial guardado');
+        }
+        
+        // Limpiar estados activos
+        await clearPendingConfirmation(userId);
+        await clearJustConfirmed(userId);
+        console.log('[WASSENGER] 🧹 Estados de reserva limpiados');
+      }
+      
       console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
         promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
-        perfilNombre: profile.name
+        perfilNombre: profile.name,
+        esCancelacion: resultado.metadata.cancelacion
       });
 
       // Generar respuesta con OpenAI

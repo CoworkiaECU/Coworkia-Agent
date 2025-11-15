@@ -33,11 +33,57 @@ const POST_EMAIL_SUPPORT_PATTERNS = [
   /modificar.*reserva/
 ];
 
+const CANCELACION_PATTERNS = [
+  /^cancela$/,
+  /^cancelar$/,
+  /^cancel$/,
+  /cancela.*reserva/,
+  /cancelar.*reserva/,
+  /ya\s+no\s+quiero/,
+  /mejor\s+no/,
+  /olvida/,
+  /olvidalo/,
+  /olv[ií]dalo/,
+  /dejalo/,
+  /d[eé]jalo/,
+  /no\s+importa/,
+  /no\s+sigo/,
+  /no\s+continuo/,
+  /no\s+contin[uú]o/,
+  /prefiero\s+no/,
+  /no\s+gracias.*ya/,
+  /no.*por\s+ahora/,
+  /cambio.*de\s+opinión/,
+  /cambio.*de\s+opinion/,
+  /cambié.*de\s+opinión/,
+  /cambi[eé].*de\s+opinion/
+];
+
+/**
+ * Detecta si el usuario quiere cancelar un flujo activo
+ * @param {string} text - Mensaje del usuario normalizado
+ * @returns {boolean} true si es una cancelación
+ */
+export function detectarCancelacion(text) {
+  const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return CANCELACION_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
 export function detectarIntencion(inputRaw = '') {
   const text = String(inputRaw || '').toLowerCase().trim();
   const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
+  const isCancelacion = detectarCancelacion(normalized);
+
+  // 0) Cancelación detectada - mantener agente actual pero marcar flag
+  if (isCancelacion) {
+    return {
+      agent: 'AURORA',
+      reason: 'user cancellation request',
+      flags: { cancelacion: true }
+    };
+  }
 
   // 1) Enzo explícito
   if (/@enzo/.test(text)) {

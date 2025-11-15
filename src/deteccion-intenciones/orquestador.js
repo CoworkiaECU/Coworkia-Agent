@@ -43,6 +43,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   const intencion = detectarIntencion(mensaje);
   const agente = AGENTES[intencion.agent];
   
+  // 🚫 CANCELACIÓN DETECTADA
+  const esCancelacion = Boolean(intencion.flags?.cancelacion);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -90,7 +93,18 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - 🛟 MODO SOPORTE POST-CONFIRMACIÓN: Usa los datos de la reserva confirmada para responder dudas específicas.
 - 🚫 NO reinicies el flujo de reservas ni vuelvas a pedir datos, a menos que el usuario escriba explícitamente alguno de estos keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}.
 - ✅ Si menciona esas palabras clave, entonces sí guía el flujo adecuado (cancelar, reprogramar o nueva reserva).` : '';
-  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail;
+  
+  const instruccionesCancelacion = esCancelacion ? `
+🚫 CANCELACIÓN DETECTADA:
+- El usuario quiere CANCELAR el flujo actual de reserva
+- NO sigas preguntando datos de la reserva
+- NO intentes completar el formulario
+- Confirma que has cancelado el proceso
+- Ofrece ayuda conversacional: "¿En qué más puedo ayudarte?"
+- Mantente disponible para responder preguntas generales sobre Coworkia
+- Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
+  
+  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion;
 
   const prompt = `
 ${contextoUsuario}
@@ -105,6 +119,7 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esCancelacion ? instruccionesCancelacion : ''}
 ${esSoportePostEmail ? `
 🚨 MODO SOPORTE ACTIVADO - NO VENDER NI INICIAR RESERVAS:
 - El usuario YA TIENE una reserva confirmada (ver sección RESERVA CONFIRMADA arriba)
@@ -114,13 +129,13 @@ ${esSoportePostEmail ? `
 - Responde directamente usando los datos de su RESERVA CONFIRMADA
 - Si pregunta por cambios/cancelación, usa keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}
 ` : ''}
-${formData ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
-${formData && formData.needsMoreInfo ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
+${formData && !esCancelacion ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
+${formData && formData.needsMoreInfo && !esCancelacion ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
 ${esPrimeraVisita ? '- Si es primera visita, menciona el día gratis (solo Aurora)' : ''}
-${!esSoportePostEmail ? '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente' : ''}
-${!esSoportePostEmail ? '- Máximo 4-5 líneas, excepto casos que requieran más detalle' : ''}
-${!esSoportePostEmail ? '- Siempre termina con siguiente paso claro o pregunta de seguimiento' : ''}
-${esSoportePostEmail ? '- Responde brevemente y cierra confirmando que estás disponible para más consultas' : ''}
+${!esSoportePostEmail && !esCancelacion ? '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente' : ''}
+${!esSoportePostEmail && !esCancelacion ? '- Máximo 4-5 líneas, excepto casos que requieran más detalle' : ''}
+${!esSoportePostEmail && !esCancelacion ? '- Siempre termina con siguiente paso claro o pregunta de seguimiento' : ''}
+${esSoportePostEmail && !esCancelacion ? '- Responde brevemente y cierra confirmando que estás disponible para más consultas' : ''}
 ${instruccionesPostEmail}
   `.trim();
 
@@ -148,9 +163,13 @@ ${instruccionesPostEmail}
         hasHistory: historial && historial.length > 0,
         messageCount: historial ? historial.length : 0,
         isFirstMessage: !historial || historial.length === 0,
-        postEmailSupport: esSoportePostEmail
+        postEmailSupport: esSoportePostEmail,
+        cancelacion: esCancelacion
       },
-      postEmailSupport: esSoportePostEmail
+      postEmailSupport: esSoportePostEmail,
+      cancelacion: esCancelacion,
+      // 🚫 Flag para indicar si se debe guardar formulario parcial
+      shouldSavePartialForm: esCancelacion && formData && Object.keys(formData).length > 0
     }
   };
 }

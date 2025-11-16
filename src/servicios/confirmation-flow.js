@@ -365,25 +365,28 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     
     return {
       success: true,
-      message: `✅ *¡Reserva confirmada${userName}!*
+      message: `✅ *¡Reserva confirmada${userName}!* 🎉
 
-💳 *DATOS PARA EL PAGO:*
+📅 *${confirmedDate}*
+⏰ *${confirmedStart} - ${confirmedEnd}*
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
 
-💰 *Total:* $${pendingReservation.totalPrice} USD
+💰 *Total a pagar:* $${pendingReservation.totalPrice}
 🔢 *Referencia:* ${reservationRecord.id}
 
-*💳 PAYPHONE (recomendado):*
-👉 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+*Opciones de pago:*
 
-*🏦 TRANSFERENCIA BANCARIA:*
-👉 Produbanco Ahorros
-👉 Cuenta: 20059783069
-👉 Cédula: 1702683499
-👉 Titular: Gonzalo Villota Izurieta
+💳 *PAYPHONE* (inmediato):
+https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
-⚠️ *Importante:* Después de pagar, envíame una captura de pantalla del comprobante para confirmar automáticamente.
+🏦 *TRANSFERENCIA:*
+Produbanco 20059783069
+Gonzalo Villota (1702683499)
 
-¿Listo para pagar? 🚀`,
+📲 Envíame tu comprobante y confirmo automáticamente.
+
+📍 Whymper 403, Edificio Finistere
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
       needsAction: true,
       actionType: 'payment_pending',
       reservation: reservationRecord

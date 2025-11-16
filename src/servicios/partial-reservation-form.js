@@ -426,14 +426,20 @@ export function extractDataFromMessage(message, currentForm) {
  * 🤖 Procesa mensaje y actualiza formulario automáticamente
  * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
-export async function processMessageWithForm(userId, message) {
+export async function processMessageWithForm(userId, message, userProfile = null) {
   // 1. Obtener o crear formulario
   const form = await getOrCreateForm(userId);
 
-  // 2. Extraer datos del mensaje
+  // 2. Si el perfil tiene email y el formulario no, auto-completar
+  if (userProfile?.email && !form.email) {
+    form.email = userProfile.email;
+    console.log('[FORM] 📧 Email auto-completado desde perfil:', userProfile.email);
+  }
+
+  // 3. Extraer datos del mensaje
   const updates = extractDataFromMessage(message, form);
 
-  // 3. Actualizar formulario si hay datos nuevos
+  // 4. Actualizar formulario si hay datos nuevos
   if (Object.keys(updates).length > 0) {
     form.updateFields(updates);
     await saveForm(form);

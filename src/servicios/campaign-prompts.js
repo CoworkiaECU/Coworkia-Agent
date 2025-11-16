@@ -223,7 +223,7 @@ export function generateConsolidatedTicket(reservations) {
   
   // Agregar total
   if (total > 0) {
-    ticket += `\n💰 *TOTAL A PAGAR: $${total.00}*\n\n`;
+    ticket += `\n💰 *TOTAL A PAGAR: $${total.toFixed(2)}*\n\n`;
     
     // Calcular recargo 5% para tarjeta
     const totalConRecargo = (total * 1.05).toFixed(2);

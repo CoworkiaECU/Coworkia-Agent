@@ -28,9 +28,61 @@ const POST_EMAIL_SUPPORT_PATTERNS = [
   /tengo\s+dud/,
   /dud.*reserva/,
   /info.*reserva/,
-  /hora.*llegada/,
+  /hora.*llegada/
+];
+
+const MODIFICACION_RESERVA_PATTERNS = [
   /cambiar.*hora/,
-  /modificar.*reserva/
+  /cambiar.*fecha/,
+  /cambiar.*dia/,
+  /cambiar.*d[ií]a/,
+  /modificar.*reserva/,
+  /modificar.*la/,
+  /corrige.*la/,
+  /corregir.*la/,
+  /corrige.*para/,
+  /corregir.*para/,
+  /ajusta.*hora/,
+  /ajustar.*hora/,
+  /reprograma/,
+  /reprogramar/,
+  /reagenda/,
+  /reagendar/,
+  /mueve.*la/,
+  /mover.*la/,
+  /te\s+equivocaste/,
+  /esta.*mal/,
+  /está.*mal/,
+  /no.*es.*esa.*hora/,
+  /otra.*hora/,
+  /error.*hora/,
+  /error.*fecha/,
+  /mal.*hora/,
+  /mal.*fecha/
+];const MODIFICACION_RESERVA_PATTERNS = [
+  /cambiar.*hora/,
+  /cambiar.*fecha/,
+  /cambiar.*dia/,
+  /cambiar.*d[ií]a/,
+  /modificar.*reserva/,
+  /modificar.*la/,
+  /corrige.*la/,
+  /corregir.*la/,
+  /corrige.*para/,
+  /corregir.*para/,
+  /ajusta.*hora/,
+  /ajustar.*hora/,
+  /reprograma/,
+  /reprogramar/,
+  /reagenda/,
+  /reagendar/,
+  /mueve.*la/,
+  /mover.*la/,
+  /te\s+equivocaste/,
+  /esta.*mal/,
+  /est[aá].*mal/,
+  /no.*es.*esa.*hora/,
+  /otra.*hora/
 ];
 
 const CANCELACION_PATTERNS = [
@@ -74,8 +126,8 @@ export function detectarIntencion(inputRaw = '') {
   const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
+  const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
   const isCancelacion = detectarCancelacion(normalized);
-
   // 0) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
     return {
@@ -100,7 +152,25 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
   }
 
-  // 2.5) Usuario llega desde el enlace del correo post-confirmación
+  // 2.5) Usuario quiere modificar una reserva existente
+  if (isModificacionReserva) {
+    return {
+      agent: 'AURORA',
+      reason: 'modification of existing reservation',
+      flags: { modificacionReserva: true, postEmailSupport: true }
+    };
+  }
+
+  // 2.5) Usuario quiere modificar una reserva existente
+  if (isModificacionReserva) {
+    return {
+      agent: 'AURORA',
+      reason: 'modification of existing reservation',
+      flags: { modificacionReserva: true, postEmailSupport: true }
+    };
+  }
+
+  // 2.6) Usuario llega desde el enlace del correo post-confirmación
   if (isPostEmailSupport) {
     return {
       agent: 'AURORA',

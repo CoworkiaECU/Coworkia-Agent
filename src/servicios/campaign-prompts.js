@@ -69,3 +69,30 @@ export function personalizeCampaignResponse(template, userProfile) {
   const userName = userProfile?.name || 'nuevo usuario';
   return template.replace(/{nombre}/g, userName);
 }
+
+/**
+ * 🔍 Genera respuesta especial si ya usó el trial gratis
+ */
+export function getTrialUsedResponse(userProfile) {
+  const userName = userProfile?.name || '';
+  const lastReservation = userProfile?.lastReservation;
+  
+  if (!lastReservation) {
+    return null;
+  }
+  
+  const fecha = lastReservation.date || 'fecha anterior';
+  const hora = lastReservation.startTime || '';
+  const email = userProfile.email || 'tu email';
+  const serviceType = lastReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+  
+  return `¡Hola${userName ? ' ' + userName : ''}, soy Aurora! 👩🏼‍💼✨
+
+Veo que ya disfrutaste tu visita gratis el *${fecha}* a las *${hora}* 🎉 Te enviamos la confirmación a ${email}.
+
+Para tu siguiente reserva, los precios son:
+📍 *Hot Desk:* $10 por 2 horas
+🏢 *Sala de Reuniones:* $29 por 2 horas (3-4 personas)
+
+¿Cuál deseas que te reserve? También dime qué día y hora prefieres 😊`;
+}

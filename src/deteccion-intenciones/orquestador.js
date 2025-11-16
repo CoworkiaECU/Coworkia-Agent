@@ -50,6 +50,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   const esRelevoHaciaOtro = Boolean(intencion.flags?.agentHandoff);
   const esRetornoAurora = Boolean(intencion.flags?.returningToAurora);
   
+  // 🔄 MODIFICACIÓN DE RESERVA DETECTADA
+  const esModificacionReserva = Boolean(intencion.flags?.modificacionReserva);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -88,11 +91,21 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     primeraVisita: perfil.firstVisit,
     tieneEmail: !!perfil.email,
     modoSoportePostEmail: esSoportePostEmail,
+    esModificacionReserva: esModificacionReserva,
     tieneReservasConfirmadas: perfil.reservationHistory && perfil.reservationHistory.length > 0,
     cantidadReservas: perfil.reservationHistory ? perfil.reservationHistory.length : 0
   });
 
   // 5. Construir prompt completo con contexto
+  const instruccionesModificacion = esModificacionReserva ? `
+🔄 MODIFICACIÓN DE RESERVA DETECTADA:
+- El usuario quiere MODIFICAR/CAMBIAR una reserva existente, NO crear una nueva
+- Usuario dijo: "${mensaje}"
+- Busca en el contexto cuál reserva quiere modificar (puede decir "la del lunes", "la de las 12", "la que te dije")
+- NO ofrezcas crear nueva reserva - él quiere cambiar la existente
+- Pregunta: "¿A qué fecha y hora prefieres cambiar tu reserva?"
+- Una vez obtenida nueva fecha/hora, confirma: "Perfecto! Cambio tu reserva a [nueva info]. ¿Confirmas?"` : '';
+  
   const instruccionesPostEmail = esSoportePostEmail ? `
 - 🛟 MODO SOPORTE POST-CONFIRMACIÓN: Usa los datos de la reserva confirmada para responder dudas específicas.
 - 🚫 NO reinicies el flujo de reservas ni vuelvas a pedir datos, a menos que el usuario escriba explícitamente alguno de estos keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}.
@@ -157,6 +170,7 @@ INSTRUCCIONES:
 ${esRelevoHaciaOtro ? instruccionesRelevo : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}
+${esModificacionReserva ? instruccionesModificacion : ''}
 ${esSoportePostEmail ? `
 🚨 MODO SOPORTE ACTIVADO - NO VENDER NI INICIAR RESERVAS:
 - El usuario YA TIENE una reserva confirmada (ver sección RESERVA CONFIRMADA arriba)
@@ -262,17 +276,25 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
       if (perfil.freeTrialDate) {
         lineas.push(`  * Fecha de uso: ${perfil.freeTrialDate}`);
       }
-      if (perfil.email) {
-        lineas.push(`  * Email de confirmación enviado a: ${perfil.email}`);
-      }
-      // Mostrar detalles de la última reserva si existe
-      if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
+      
+      // Mostrar lastReservation si existe (más confiable que reservationHistory)
+      if (perfil.lastReservation) {
+        const lastRes = perfil.lastReservation;
+        lineas.push(`  * Última visita: ${lastRes.date || 'fecha desconocida'} a las ${lastRes.startTime || 'N/A'}`);
+        const tipoEspacio = lastRes.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+        lineas.push(`  * Espacio usado: ${tipoEspacio}`);
+        if (perfil.email) {
+          lineas.push(`  * Confirmación enviada a: ${perfil.email}`);
+        }
+      } else if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
+        // Fallback a reservationHistory si lastReservation no existe
         const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
         if (ultimaReserva.wasFree) {
           lineas.push(`  * Espacio usado: ${ultimaReserva.type || 'Hot Desk'}`);
           lineas.push(`  * Horario: ${ultimaReserva.startTime || 'N/A'} - ${ultimaReserva.endTime || 'N/A'}`);
         }
       }
+      
       lineas.push(`  ⚠️ Si usuario INSISTE que nunca vino, agendar como excepción SIN PAGO`);
     } else {
       lineas.push(`- Día gratis disponible: SÍ → Puede usarlo gratis`);

@@ -5,7 +5,7 @@ import { complete } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { detectCampaignMessage, personalizeCampaignResponse } from '../../servicios/campaign-prompts.js';
+import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { 
@@ -761,11 +761,27 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           max_tokens: 300,
           system: resultado.systemPrompt
         });
-      } else if (campaignCheck.detected && profile.firstVisit && !profile.justConfirmed) {
-        // 🎯 Respuesta de campaña para primera visita
-        console.log('[WASSENGER] 🎯 Campaña publicitaria detectada (primera visita):', campaignCheck.campaign);
-        reply = personalizeCampaignResponse(campaignCheck.template, profile);
-        console.log('[WASSENGER] 📝 Reply de campaña generado:', reply ? 'SI' : 'NO', '- Length:', reply?.length || 0);
+      } else if (campaignCheck.detected && !profile.justConfirmed) {
+        // 🎯 Respuesta de campaña
+        if (profile.freeTrialUsed && profile.lastReservation) {
+          // Usuario YA usó su trial gratis
+          console.log('[WASSENGER] 🎯 Campaña detectada - Usuario YA usó trial gratis:', campaignCheck.campaign);
+          reply = getTrialUsedResponse(profile);
+          console.log('[WASSENGER] 📝 Reply para usuario con trial usado generado');
+        } else if (profile.firstVisit) {
+          // Primera visita - ofrecer trial gratis
+          console.log('[WASSENGER] 🎯 Campaña detectada - Primera visita:', campaignCheck.campaign);
+          reply = personalizeCampaignResponse(campaignCheck.template, profile);
+          console.log('[WASSENGER] 📝 Reply de campaña para primera visita generado');
+        } else {
+          // Ya no es primera visita pero no ha usado trial - flujo normal
+          console.log('[WASSENGER] 📝 Usuario conocido sin trial - flujo normal con Aurora');
+          reply = await complete(resultado.prompt, {
+            temperature: 0.4,
+            max_tokens: 300,
+            system: resultado.systemPrompt
+          });
+        }
       } else {
         // Flujo normal - generar respuesta
         console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {

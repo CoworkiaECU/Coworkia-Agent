@@ -809,7 +809,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     }
 
     // 💳 DETECTAR SI USUARIO RECURRENTE ELIGIÓ ESPACIO Y ENVIAR LINK DE PAGO
-    const paymentCheck = shouldSendPaymentLink(messageBody, profile);
+    const paymentCheck = shouldSendPaymentLink(text, profile);
     if (paymentCheck && resultado.agenteKey === 'AURORA') {
       console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
       console.log('[WASSENGER] 💳 Enviando link de pago automáticamente');

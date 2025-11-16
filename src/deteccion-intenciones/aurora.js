@@ -443,3 +443,4 @@ IMPORTANTE:
     informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n📍 Whymper 403, Edificio Finistere, Quito\n⏰ Lun-Vie 8:30-18:00 | Sáb 9:00-14:00\n💻 Hot Desk: $10 (2 horas)\n🏢 Sala Reuniones: $29 (2h, 3-4 personas)\n☕ WiFi + Café incluido\n📋 Precios + IVA 15% si requiere factura\n\n🗺️ Ubicación: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66'
   }
 };
+// Force rebuild Sat Nov 15 21:34:10 -05 2025

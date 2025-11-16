@@ -252,6 +252,7 @@ function normalizeTimeFormat(timeStr) {
  */
 function parseDate(dateStr) {
   // Obtener fecha actual en timezone Ecuador
+  // 🔧 FIX: Usar fecha local de Ecuador consistentemente
   const formatter = new Intl.DateTimeFormat('es-EC', {
     timeZone: 'America/Guayaquil',
     year: 'numeric',
@@ -265,31 +266,42 @@ function parseDate(dateStr) {
   const day = parts.find(p => p.type === 'day').value;
   const today = `${year}-${month}-${day}`;
   
-  // Calcular mañana
-  const tomorrowDate = new Date(`${today}T12:00:00`);
+  // 🔧 FIX: Calcular mañana usando Date object correctamente
+  const todayDate = new Date(`${year}-${month}-${day}T12:00:00-05:00`); // Ecuador timezone
+  const tomorrowDate = new Date(todayDate);
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  const tomorrow = tomorrowDate.toISOString().split('T')[0];
+  
+  // Formatear mañana manteniendo timezone
+  const tomorrowParts = formatter.formatToParts(tomorrowDate);
+  const tomorrow = `${tomorrowParts.find(p => p.type === 'year').value}-${tomorrowParts.find(p => p.type === 'month').value}-${tomorrowParts.find(p => p.type === 'day').value}`;
 
   // Manejar términos relativos
   if (/mañana/i.test(dateStr)) {
+    console.log(`[PARSE-DATE] 🗓️ "mañana" detectado → ${tomorrow}`);
     return tomorrow;
   }
   
   if (/hoy/i.test(dateStr)) {
+    console.log(`[PARSE-DATE] 🗓️ "hoy" detectado → ${today}`);
     return today;
   }
 
-  // Manejar días de la semana (simplificado - próximo día)
+  // 🔧 FIX: Manejar días de la semana correctamente
   const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const dayMatch = dayNames.findIndex(day => 
     dateStr.toLowerCase().includes(day)
   );
   
   if (dayMatch !== -1) {
-    const targetDay = new Date(today);
-    const daysAhead = (dayMatch - today.getDay() + 7) % 7;
-    targetDay.setDate(today.getDate() + (daysAhead === 0 ? 7 : daysAhead));
-    return targetDay.toISOString().split('T')[0];
+    const currentDayIndex = todayDate.getDay();
+    const daysAhead = (dayMatch - currentDayIndex + 7) % 7;
+    const targetDay = new Date(todayDate);
+    targetDay.setDate(targetDay.getDate() + (daysAhead === 0 ? 7 : daysAhead));
+    
+    const targetParts = formatter.formatToParts(targetDay);
+    const targetDateStr = `${targetParts.find(p => p.type === 'year').value}-${targetParts.find(p => p.type === 'month').value}-${targetParts.find(p => p.type === 'day').value}`;
+    console.log(`[PARSE-DATE] 🗓️ Día "${dayNames[dayMatch]}" detectado → ${targetDateStr}`);
+    return targetDateStr;
   }
 
   // Manejar formatos DD/MM/YYYY, DD-MM-YYYY
@@ -310,13 +322,18 @@ function parseDate(dateStr) {
       
       if (year < 100) year += 2000; // Convert 2-digit year
       
-      const date = new Date(year, month, day);
-      return date.toISOString().split('T')[0];
+      // 🔧 FIX: Crear fecha en timezone de Ecuador
+      const date = new Date(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T12:00:00-05:00`);
+      const dateParts = formatter.formatToParts(date);
+      const dateStr = `${dateParts.find(p => p.type === 'year').value}-${dateParts.find(p => p.type === 'month').value}-${dateParts.find(p => p.type === 'day').value}`;
+      console.log(`[PARSE-DATE] 🗓️ Fecha manual "${part1}/${part2}/${part3}" → ${dateStr}`);
+      return dateStr;
     }
   }
 
-  // Fallback a mañana
-  return tomorrow.toISOString().split('T')[0];
+  // 🔧 FIX: Fallback a mañana usando variable ya calculada
+  console.log(`[PARSE-DATE] ⚠️ Fecha no reconocida "${dateStr}", fallback → mañana ${tomorrow}`);
+  return tomorrow;
 }
 
 /**

@@ -313,11 +313,29 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`\n⚠️ IMPORTANTE: Si usuario cambia de tema, NO borres esta reserva. Guárdala y retómala después.`);
   }
 
-  // 🆕 Historial de reservas
+  // 🆕 Historial COMPLETO de reservas con precios
   if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
-    const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
-    lineas.push(`- Última reserva: ${ultimaReserva.date} - ${ultimaReserva.type} (${ultimaReserva.status})`);
-    lineas.push(`- Total reservas: ${perfil.reservationHistory.length}`);
+    lineas.push(`\n📋 HISTORIAL COMPLETO DE RESERVAS (${perfil.reservationHistory.length} total):`);
+    
+    perfil.reservationHistory.forEach((reserva, index) => {
+      const numero = index + 1;
+      const fecha = reserva.date || 'fecha desconocida';
+      const hora = reserva.startTime || 'N/A';
+      const tipo = reserva.serviceType === 'hotDesk' ? 'Hot Desk' : 
+                   reserva.serviceType === 'meetingRoom' ? 'Sala de Reuniones' : 
+                   reserva.type || 'Hot Desk';
+      
+      // Determinar si fue gratis o pagado
+      const esGratis = reserva.wasFree === true;
+      const precio = esGratis ? 'GRATIS 🎉' : 
+                     tipo === 'Hot Desk' ? '$10' : 
+                     tipo === 'Sala de Reuniones' ? '$29' : 
+                     reserva.price ? `$${reserva.price}` : 'PAGADO';
+      
+      lineas.push(`${numero}. ${fecha} ${hora} - ${tipo} - ${precio}`);
+    });
+    
+    lineas.push(`\n💡 Si usuario pregunta por sus reservas, muéstrale este historial con precios claros`);
   }
 
   // 🆕 Conteo de mensajes para personalización

@@ -59,30 +59,6 @@ const MODIFICACION_RESERVA_PATTERNS = [
   /error.*fecha/,
   /mal.*hora/,
   /mal.*fecha/
-];const MODIFICACION_RESERVA_PATTERNS = [
-  /cambiar.*hora/,
-  /cambiar.*fecha/,
-  /cambiar.*dia/,
-  /cambiar.*d[ií]a/,
-  /modificar.*reserva/,
-  /modificar.*la/,
-  /corrige.*la/,
-  /corregir.*la/,
-  /corrige.*para/,
-  /corregir.*para/,
-  /ajusta.*hora/,
-  /ajustar.*hora/,
-  /reprograma/,
-  /reprogramar/,
-  /reagenda/,
-  /reagendar/,
-  /mueve.*la/,
-  /mover.*la/,
-  /te\s+equivocaste/,
-  /esta.*mal/,
-  /est[aá].*mal/,
-  /no.*es.*esa.*hora/,
-  /otra.*hora/
 ];
 
 const CANCELACION_PATTERNS = [

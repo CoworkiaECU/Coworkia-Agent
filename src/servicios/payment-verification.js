@@ -57,6 +57,7 @@ He registrado:
 📅 Fecha: ${paymentData.date || 'No detectada'}
 💳 Método: ${paymentData.paymentMethod || 'No especificado'}${paymentData.bank ? ` - ${paymentData.bank}` : ''}
 ${paymentData.transactionNumber ? `🔢 Referencia: ${paymentData.transactionNumber}` : ''}
+${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` : ''}
 
 ¿Los datos son correctos?`;
 

@@ -113,7 +113,7 @@ export async function analyzePaymentReceipt(imageUrl) {
   const prompt = `Analiza este comprobante de pago y extrae la siguiente información en formato JSON:
 
 {
-  "transactionNumber": "número de transacción/referencia",
+  "transactionNumber": "número de transacción/referencia/comprobante",
   "amount": "monto en números (ej: 8.40)",
   "currency": "moneda (USD, EUR, etc)",
   "date": "fecha en formato YYYY-MM-DD",
@@ -121,11 +121,15 @@ export async function analyzePaymentReceipt(imageUrl) {
   "bank": "nombre del banco o método de pago",
   "paymentMethod": "transferencia/payphone/tarjeta/etc",
   "recipient": "nombre del destinatario/empresa",
+  "receiptNumber": "número de comprobante si existe (ej: Comprobante Nro. 590709020900)",
   "isValid": true/false,
   "confidence": "porcentaje de confianza (0-100)"
 }
 
 IMPORTANTE:
+- El "transactionNumber" es el ID de la transacción bancaria
+- El "receiptNumber" es el número del comprobante/voucher físico
+- Si encuentras solo uno, ponlo en el campo más apropiado
 - Si no encuentras algún dato, usa null
 - Solo extrae información que esté claramente visible
 - isValid debe ser true solo si es un comprobante legítimo

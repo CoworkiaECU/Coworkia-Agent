@@ -2,9 +2,12 @@
 
 Sistema de agente conversacional inteligente con múltiples personalidades para gestión de coworking, ventas, seguros y marketing. Integrado con WhatsApp vía Wassenger y OpenAI GPT-4.
 
+**Versión Actual**: v193 (16 Nov 2025)
+
 [![Heroku](https://img.shields.io/badge/deployed-heroku-430098)](https://coworkia-agent-e97d15dac56f.herokuapp.com/)
 [![Tests](https://img.shields.io/badge/tests-160%2F167%20passing-success)](src/__tests__)
 [![Node](https://img.shields.io/badge/node-20.x-brightgreen)](package.json)
+[![Features](https://img.shields.io/badge/features-múltiples%20reservas-blue)](documentacion/ESTADO_ACTUAL.md)
 
 ---
 
@@ -13,24 +16,49 @@ Sistema de agente conversacional inteligente con múltiples personalidades para 
 ### 💬 **Sistema Multi-Agente Inteligente**
 - **4 Agentes Especializados**: Aurora, Aluna, Adriana, Enzo
 - **Cambio Contextual**: Transición inteligente entre agentes según necesidades
-- **Memoria Conversacional**: Mantiene contexto de usuario e historial
+- **Memoria Conversacional**: Mantiene contexto de usuario e historial completo
+- **Reconocimiento Recurrente**: Detecta usuarios previos automáticamente
+
+### 🎫 **Múltiples Reservas en Una Transacción (v193)** 🆕
+- **Detección inteligente**: "quiero hacer 2 reservas más"
+- **Ticket consolidado**: Resumen con todas las reservas
+- **Cálculo automático**: Total + opciones de pago (transferencia vs tarjeta +5%)
+- **Transcripción de comprobantes**: Vision API extrae y confirma datos
+- **Ejemplo:**
+  ```
+  📋 RESUMEN:
+  1️⃣ Mar 18 nov - Hot Desk (solo tú) = GRATIS 🎉
+  2️⃣ Jue 20 nov - Hot Desk (2 personas) = $20
+  3️⃣ Vie 21 nov - Sala (3 personas) = $29
+  💰 TOTAL: $49 | Tarjeta: $51.45 (+5%)
+  ```
 
 ### 📝 **Formulario Inteligente de Reservas**
 - Detecta datos en **cualquier orden** del mensaje
 - Recuerda información parcial entre mensajes (TTL 15 min)
 - Validación **timezone-aware** Ecuador (UTC-5)
+- **Parsing inteligente de fechas**: "mañana", "lunes", "15/11"
 - Upsell automático: 3+ personas → sugerencia sala reunión
+- **Cálculo por persona**: Hot Desk $10/persona, Sala $29 fija
+
+### 📸 **Verificación Inteligente de Pagos (v193)** 🆕
+- **Vision API**: Extrae monto, fecha, método, referencia
+- **Transcripción automática**: Confirma datos antes de procesar
+- **Validación de monto**: Compara vs total esperado
+- **Asociación múltiple**: Un pago para varias reservas
 
 ### ⚡ **Sistema Robusto**
 - **Circuit Breakers**: OpenAI + Wassenger
 - **Cron Jobs**: Limpieza automática, recordatorios
 - **Task Queue**: Procesamiento inline eficiente
 - **SQLite**: Base de datos persistente
+- **Campaign Detection**: Meta campaigns con flujo automático
 
 ### 🧪 **Testing Completo**
 - 149 tests unitarios (100%)
 - 11 tests E2E (flujo completo reservas)
 - **160/167 tests passing** (95.8%)
+- Tests de múltiples reservas y transcripción
 
 ---
 
@@ -40,17 +68,42 @@ Sistema de agente conversacional inteligente con múltiples personalidades para 
 **Activación:** Por defecto (bot principal)
 
 **Funciones:**
-- 📅 Reservas Hot Desk y Salas de Reunión
-- 💳 Verificación de pagos (comprobantes)
-- 🎁 Gestión día gratis (primer uso)
-- ⏰ Validación horarios 7am-8pm Ecuador
-- 📧 Confirmaciones por email
-- 📆 Integración Google Calendar
+- 📅 **Reservas simples y múltiples**: Hot Desk y Salas de Reunión
+- 🎫 **Ticket consolidado**: Múltiples reservas en una transacción
+- 💳 **Verificación de pagos**: Vision API + transcripción automática
+- 🎁 **Gestión día gratis**: Primera visita GRATIS (solo Hot Desk)
+- 👥 **Cálculo por persona**: $10/persona Hot Desk, $29 Sala fija
+- 🔄 **Reconocimiento recurrente**: Detecta visitas previas + historial
+- ⏰ **Validación horarios**: 7am-8pm Ecuador (UTC-5)
+- 📧 **Confirmaciones por email**: Con detalles de pago
+- 📆 **Integración Google Calendar**: Eventos automáticos
 
-**Ejemplo:**
+**Ejemplos:**
+
+**Reserva Simple:**
 ```
 Usuario: "Necesito hot desk mañana a las 2pm"
 Aurora: "¡Perfecto! Te reservo hot desk para [fecha] 14:00-16:00..."
+```
+
+**Múltiples Reservas:**
+```
+Usuario: "quiero hacer 3 reservas"
+Aurora: "Perfecto! Voy a agendarte 3 reservas. 
+         Reserva 1: ¿Qué día y hora?"
+Usuario: "martes 18 a las 10am, jueves 20 a las 3pm, viernes 21 a las 11am"
+Aurora: [Genera ticket consolidado con total y opciones de pago]
+```
+
+**Transcripción de Comprobante:**
+```
+Usuario: [Envía imagen de comprobante]
+Aurora: "📸 He registrado:
+         💵 Monto: $49.00
+         📅 Fecha: 15 nov 2025
+         💳 Método: Transferencia Bancuador
+         🔢 Referencia: 1234567890
+         ¿Los datos son correctos?"
 ```
 
 ---

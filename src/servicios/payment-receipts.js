@@ -14,6 +14,7 @@ import { createCalendarEvent } from './google-calendar.js';
 import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
 import { sendReservationNotifications } from './notification-helper.js';
+import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 
 /**
  * 📄 Instrucciones para solicitar comprobantes de pago
@@ -107,24 +108,44 @@ export async function processPaymentReceipt(messageData, userProfile) {
   console.log('[RECEIPT] 🔍 Procesando comprobante de pago...');
   
   try {
+    // 🔍 SIEMPRE analizar imagen primero con Vision API
+    console.log('[RECEIPT] 🤖 Analizando comprobante con Vision API...');
+    const analysisResult = await analyzeReceiptImage(messageData, null); // null = sin monto esperado
+    
+    // Transcribir datos extraídos
+    const transcription = `📸 ¡Perfecto! Recibí tu comprobante
+
+He registrado:
+💵 Monto: $${analysisResult.amount || 'No detectado'}
+📅 Fecha: ${analysisResult.date || 'No detectada'}
+💳 Método: ${analysisResult.paymentMethod || 'No especificado'}
+${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''}
+
+¿Los datos son correctos?`;
+
+    // Buscar reserva pendiente
     const pendingReservation = await reservationRepository.findPendingByUser(userProfile.userId);
 
     if (!pendingReservation || pendingReservation.status !== 'pending_payment' || pendingReservation.payment_status === 'paid') {
       return {
         success: false,
-        message: `📄 Recibí tu imagen, pero no encuentro reservas pendientes de pago en tu cuenta.
-        
+        message: `${transcription}
+
+⚠️ No encuentro reservas pendientes de pago en tu cuenta.
+
 ¿Necesitas agendar otra fecha? Solo dime cuándo quieres venir 😊`,
-        needsAction: false
+        needsAction: false,
+        data: analysisResult
       };
     }
     
     const expectedAmount = Number(pendingReservation.total_price || 0);
     
-    console.log('[RECEIPT] 🤖 Analizando comprobante con IA...');
-    const analysisResult = await analyzeReceiptImage(messageData, expectedAmount);
+    // Validar monto con reserva existente
+    const amountDifference = Math.abs(analysisResult.amount - expectedAmount);
+    const isAmountValid = amountDifference <= 0.50; // Tolerancia $0.50
     
-    if (analysisResult.isValid) {
+    if (analysisResult.amount && isAmountValid) {
       console.log('[RECEIPT] ✅ Pago válido detectado, confirmando reserva en SQLite...');
 
       const updatedReservation = await updateReservationPayment(pendingReservation.id, {
@@ -161,21 +182,26 @@ export async function processPaymentReceipt(messageData, userProfile) {
       };
       
     } else {
-      return {
-        success: false,
-        message: `❌ No pude verificar tu comprobante automáticamente.
+      // Transcribir datos pero indicar problema
+      const transcriptionWithIssue = `${transcription}
+
+⚠️ **ADVERTENCIA:** El monto no coincide
+💰 Esperado: $${expectedAmount.toFixed(2)}
+💳 Detectado: $${analysisResult.amount ? analysisResult.amount.toFixed(2) : 'No detectado'}
 
 🔍 **Posibles problemas:**
-${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') : '• Imagen no clara o incompleta'}
+${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') : '• Imagen no clara o monto incorrecto'}
 
-📱 **Por favor, envía una nueva foto que incluya:**
-• Monto completo: $${expectedAmount} USD
-• Fecha y hora del pago
-• Número de transacción/referencia
-• Foto clara y legible
-
-O contáctanos al 📞 +593 99 483 7117 para verificación manual.`,
-        needsAction: false
+📱 **Por favor:**
+• Verifica el monto pagado
+• Envía una foto más clara si es necesario
+• O contáctanos: 📞 +593 99 483 7117`;
+      
+      return {
+        success: false,
+        message: transcriptionWithIssue,
+        needsAction: false,
+        data: analysisResult
       };
     }
     
@@ -209,109 +235,98 @@ Te ayudaremos a verificar tu pago manualmente 😊`,
  * 🤖 Analiza imagen de comprobante con OpenAI Vision API
  */
 async function analyzeReceiptImage(messageData, expectedAmount) {
-  console.log('[RECEIPT] 🤖 Analizando comprobante con OpenAI Vision...');
+  console.log('[RECEIPT] 🤖 Analizando comprobante con Vision API...');
   
   try {
-    // Importar OpenAI dinámicamente
-    const { default: OpenAI } = await import('openai');
-    
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn('[RECEIPT] ⚠️ OpenAI API Key no configurada, usando análisis simulado');
-      return await simulateReceiptAnalysis(expectedAmount);
-    }
-    
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
-    
     // Verificar si tenemos datos de imagen
     if (!messageData.media || !messageData.media.url) {
       console.log('[RECEIPT] ❌ No hay imagen en el mensaje');
-      return { isValid: false, reason: 'No se encontró imagen válida' };
+      return { 
+        isValid: false, 
+        amount: null,
+        reason: 'No se encontró imagen válida' 
+      };
     }
     
-    // Analizar imagen con GPT-4 Vision
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analiza este comprobante de pago y extrae la información clave. 
-              
-Busca específicamente:
-- Monto pagado (debe ser aproximadamente $${expectedAmount} USD)  
-- Fecha de la transacción
-- Número de referencia/transacción
-- Banco o método de pago (Produbanco, Payphone, etc.)
-- Confirmación de que es un pago exitoso
-
-Responde en formato JSON con esta estructura:
-{
-  "isValid": true/false,
-  "amount": numero_encontrado,
-  "reference": "referencia_encontrada", 
-  "paymentMethod": "método_detectado",
-  "date": "fecha_encontrada",
-  "confidence": 0.0-1.0,
-  "reason": "explicación si no es válido"
-}`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: messageData.media.url
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 500
-    });
+    // Usar la función de openai.js con Vision API
+    const imageUrl = messageData.media.url;
+    console.log('[RECEIPT] 📸 URL de imagen:', imageUrl);
     
-    const analysisText = response.choices[0]?.message?.content;
-    console.log('[RECEIPT] 🔍 Respuesta de OpenAI:', analysisText);
+    const analysisResult = await analyzePaymentReceipt(imageUrl);
     
-    // Parsear respuesta JSON
-    let analysis;
-    try {
-      analysis = JSON.parse(analysisText);
-    } catch (parseError) {
-      console.error('[RECEIPT] ❌ Error parseando respuesta JSON:', parseError);
-      return await simulateReceiptAnalysis(expectedAmount);
+    if (!analysisResult.success) {
+      console.error('[RECEIPT] ❌ Error en Vision API:', analysisResult.error);
+      return {
+        isValid: false,
+        amount: null,
+        reason: analysisResult.error || 'Error analizando comprobante'
+      };
     }
     
-    // Validar que el monto coincida (±10% tolerancia)
-    const amountDifference = Math.abs(analysis.amount - expectedAmount);
-    const tolerancePercent = 0.10; // 10% tolerancia
-    const maxDifference = expectedAmount * tolerancePercent;
+    const paymentData = analysisResult.data;
+    console.log('[RECEIPT] 📊 Datos extraídos:', paymentData);
     
-    if (analysis.isValid && amountDifference <= maxDifference) {
-      console.log('[RECEIPT] ✅ Comprobante válido confirmado por AI');
+    // Si no hay monto esperado, solo retornar datos extraídos
+    if (!expectedAmount) {
+      return {
+        isValid: paymentData.isValid || false,
+        amount: parseFloat(paymentData.amount) || null,
+        date: paymentData.date || null,
+        reference: paymentData.transactionNumber || null,
+        receiptNumber: paymentData.receiptNumber || null,
+        paymentMethod: paymentData.paymentMethod || 'No especificado',
+        bank: paymentData.bank || null,
+        confidence: paymentData.confidence || 0
+      };
+    }
+    
+    // Validar que el monto coincida (tolerancia de $0.50)
+    const detectedAmount = parseFloat(paymentData.amount) || 0;
+    const amountDifference = Math.abs(detectedAmount - expectedAmount);
+    const tolerance = 0.50; // $0.50 de tolerancia
+    
+    if (paymentData.isValid && amountDifference <= tolerance) {
+      console.log('[RECEIPT] ✅ Comprobante válido confirmado por Vision API');
       return {
         isValid: true,
-        amount: analysis.amount,
-        reference: analysis.reference || 'N/A',
-        paymentMethod: analysis.paymentMethod || 'Método no identificado',
-        confidence: analysis.confidence || 0.8,
+        amount: detectedAmount,
+        date: paymentData.date,
+        reference: paymentData.transactionNumber || 'N/A',
+        receiptNumber: paymentData.receiptNumber || null,
+        paymentMethod: paymentData.paymentMethod || 'Método no identificado',
+        bank: paymentData.bank || null,
+        confidence: paymentData.confidence || 0,
         aiAnalyzed: true
       };
     } else {
-      console.log('[RECEIPT] ❌ Comprobante no válido según AI:', analysis.reason);
+      console.log('[RECEIPT] ⚠️ Monto no coincide:', {
+        esperado: expectedAmount,
+        detectado: detectedAmount,
+        diferencia: amountDifference
+      });
       return {
         isValid: false,
-        reason: analysis.reason || `Monto esperado $${expectedAmount} no coincide con $${analysis.amount}`,
-        confidence: analysis.confidence || 0.5,
-        aiAnalyzed: true
+        amount: detectedAmount,
+        date: paymentData.date,
+        reference: paymentData.transactionNumber,
+        receiptNumber: paymentData.receiptNumber,
+        paymentMethod: paymentData.paymentMethod,
+        bank: paymentData.bank,
+        reason: `Monto esperado $${expectedAmount.toFixed(2)} no coincide con $${detectedAmount.toFixed(2)}`,
+        confidence: paymentData.confidence || 0.5,
+        aiAnalyzed: true,
+        issues: [`Diferencia de $${amountDifference.toFixed(2)} detectada`]
       };
     }
     
   } catch (error) {
-    console.error('[RECEIPT] ❌ Error con OpenAI Vision:', error);
-    console.log('[RECEIPT] 🔄 Usando análisis simulado como fallback...');
-    return await simulateReceiptAnalysis(expectedAmount);
+    console.error('[RECEIPT] ❌ Error con Vision API:', error);
+    return {
+      isValid: false,
+      amount: null,
+      reason: `Error analizando imagen: ${error.message}`,
+      confidence: 0
+    };
   }
 }
 

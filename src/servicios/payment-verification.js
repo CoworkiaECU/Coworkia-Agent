@@ -48,21 +48,34 @@ export async function processPaymentReceipt(imageUrl, userPhone) {
       };
     }
 
-    // 4. Validar monto
-    const expectedAmount = pendingReservation.total;
+    // 4. Transcribir datos del comprobante para confirmación del usuario
     const paidAmount = parseFloat(paymentData.amount);
+    const transcription = `📸 ¡Perfecto! Recibí tu comprobante
+
+He registrado:
+💵 Monto: $${paidAmount.toFixed(2)}
+📅 Fecha: ${paymentData.date || 'No detectada'}
+💳 Método: ${paymentData.paymentMethod || 'No especificado'}${paymentData.bank ? ` - ${paymentData.bank}` : ''}
+${paymentData.transactionNumber ? `🔢 Referencia: ${paymentData.transactionNumber}` : ''}
+
+¿Los datos son correctos?`;
+
+    // 5. Validar monto
+    const expectedAmount = pendingReservation.total;
     
     if (Math.abs(paidAmount - expectedAmount) > 0.50) { // Tolerancia de $0.50
       return {
         success: false,
-        message: `❌ El monto no coincide. 
-        
-💰 **Esperado:** $${expectedAmount}
-💳 **Pagado:** $${paidAmount}
+        message: `${transcription}
 
-Por favor, verifica el monto o contacta a soporte.`,
+⚠️ **ADVERTENCIA:** El monto no coincide
+💰 Esperado: $${expectedAmount}
+💳 Pagado: $${paidAmount}
+
+¿Puedes verificar? Si el monto es correcto, responde SI para continuar`,
         data: paymentData,
-        reservation: pendingReservation
+        reservation: pendingReservation,
+        requiresConfirmation: true
       };
     }
 
@@ -127,11 +140,15 @@ Por favor, verifica el monto o contacta a soporte.`,
       console.warn('[Payment Verification] Usuario no tiene email registrado');
       return {
         success: true,
-        message: `✅ *¡Pago confirmado!*
+        message: `${transcription}
+
+✅ *¡Pago verificado y confirmado!*
 
 🎉 Tu reserva está lista:
 📅 *Fecha:* ${pendingReservation.date}
 ⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
+🏢 *Espacio:* ${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}
+💵 *Pagado:* $${paidAmount.toFixed(2)}
 
 ⚠️ *Nota:* No pude enviar email de confirmación porque no tienes email registrado.
 
@@ -139,7 +156,8 @@ Por favor, verifica el monto o contacta a soporte.`,
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Te esperamos! 🚀`,
-        data: updatedReservation
+        data: updatedReservation,
+        transcription
       };
     }
     
@@ -156,27 +174,29 @@ Por favor, verifica el monto o contacta a soporte.`,
       console.error('[Payment Verification] Stack trace:', emailError.stack);
     }
 
-    // 9. Respuesta de éxito
+    // 9. Respuesta de éxito con transcripción
     return {
       success: true,
-      message: `✅ *¡Pago confirmado!*
+      message: `${transcription}
 
-🎉 Tu reserva está lista:
+✅ *¡Pago verificado y confirmado!*
+
+🎉 Tu reserva está confirmada:
 
 📅 *Fecha:* ${pendingReservation.date}
 ⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
-🏢 *Espacio:* ${pendingReservation.spaceType}
-💰 *Total:* $${expectedAmount}
-💳 *Referencia:* ${paymentData.transactionNumber}
+🏢 *Espacio:* ${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}
+💵 *Total pagado:* $${paidAmount.toFixed(2)}
 
-📧 Te he enviado la confirmación por email.
+📧 Te envié la confirmación completa por email.
 
-📍 *Ubicación:* Whymper 403, Edificio Finistere
+📍 *Ubicación:* Whymper 403, Edificio Finistere, Piso 4
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Nos vemos en Coworkia! 🚀`,
       data: paymentData,
-      reservation: updatedReservation
+      reservation: updatedReservation,
+      transcription
     };
 
   } catch (error) {

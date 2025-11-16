@@ -821,7 +821,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         price: paymentCheck.price,
         timestamp: new Date().toISOString()
       };
-      await saveProfile(profile);
+      await saveProfile(userId, profile); // FIX: Pasar userId correctamente
     }
 
     // 🎯 Agregar mensaje de upsell si aplica (ANTES de Aurora response)

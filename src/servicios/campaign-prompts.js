@@ -170,3 +170,88 @@ Cuando hayas pagado, envíame la captura del comprobante 📸 y te agendo de inm
   
   return null;
 }
+
+/**
+ * 🎫 Genera ticket consolidado para múltiples reservas
+ */
+export function generateConsolidatedTicket(reservations) {
+  if (!reservations || reservations.length === 0) return null;
+  
+  let ticket = `📋 *RESUMEN DE TUS RESERVAS:*\n\n`;
+  let total = 0;
+  let hasFreeReservation = false;
+  
+  reservations.forEach((res, index) => {
+    const num = index + 1;
+    const emoji = num === 1 ? '1️⃣' : num === 2 ? '2️⃣' : num === 3 ? '3️⃣' : `${num}️⃣`;
+    
+    // Formatear fecha
+    const fecha = res.date || 'Fecha pendiente';
+    const hora = res.time || res.startTime || 'Hora pendiente';
+    
+    // Determinar tipo de espacio
+    const espacio = res.serviceType === 'hotDesk' ? 'Hot Desk' :
+                    res.serviceType === 'meetingRoom' ? 'Sala de Reuniones' :
+                    res.spaceType === 'hotDesk' ? 'Hot Desk' :
+                    res.spaceType === 'meetingRoom' ? 'Sala de Reuniones' : 'Hot Desk';
+    
+    // Determinar número de personas
+    const personas = res.numPeople || res.guestCount || 1;
+    const personasTexto = personas === 1 ? 'solo tú' : `${personas} personas`;
+    
+    // Calcular precio
+    let precio;
+    if (res.wasFree || res.isFree) {
+      precio = 'GRATIS 🎉';
+      hasFreeReservation = true;
+    } else {
+      // Lógica de precios
+      if (espacio === 'Hot Desk') {
+        precio = `$${personas * 10}`;
+        total += personas * 10;
+      } else if (espacio === 'Sala de Reuniones') {
+        precio = '$29';
+        total += 29;
+      } else {
+        precio = res.price ? `$${res.price}` : 'Precio pendiente';
+        if (res.price) total += res.price;
+      }
+    }
+    
+    ticket += `${emoji} ${fecha} ${hora} - ${espacio} (${personasTexto}) = ${precio}\n`;
+  });
+  
+  // Agregar total
+  if (total > 0) {
+    ticket += `\n💰 *TOTAL A PAGAR: $${total.00}*\n\n`;
+    
+    // Calcular recargo 5% para tarjeta
+    const totalConRecargo = (total * 1.05).toFixed(2);
+    
+    ticket += `💳 *FORMAS DE PAGO:*\n`;
+    ticket += `• Transferencia/Payphone: *$${total.toFixed(2)}*\n`;
+    ticket += `• Tarjeta débito/crédito: *$${totalConRecargo}* (+5% recargo)\n\n`;
+    
+    ticket += `📸 Envíame el comprobante cuando hayas pagado`;
+  } else if (hasFreeReservation && reservations.length === 1) {
+    ticket += `\n🎉 ¡Tu primera visita es totalmente gratis!\n`;
+    ticket += `Solo necesito confirmar tu email y estarás listo`;
+  }
+  
+  return ticket;
+}
+
+/**
+ * 📊 Calcula precio individual de una reserva
+ */
+export function calculateReservationPrice(serviceType, numPeople = 1, wasFree = false) {
+  if (wasFree) return 0;
+  
+  if (serviceType === 'hotDesk') {
+    return numPeople * 10; // $10 por persona
+  } else if (serviceType === 'meetingRoom') {
+    return 29; // $29 fijo por sala
+  }
+  
+  return 0;
+}

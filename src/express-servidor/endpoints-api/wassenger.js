@@ -5,7 +5,7 @@ import { complete } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse } from '../../servicios/campaign-prompts.js';
+import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse, shouldSendPaymentLink } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { 
@@ -763,19 +763,29 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         });
       } else if (campaignCheck.detected && !profile.justConfirmed) {
         // 🎯 Respuesta de campaña
-        if (profile.freeTrialUsed && profile.lastReservation) {
-          // Usuario YA usó su trial gratis
-          console.log('[WASSENGER] 🎯 Campaña detectada - Usuario YA usó trial gratis:', campaignCheck.campaign);
+        // VERIFICAR: Usuario tiene reservas confirmadas (historial) O freeTrialUsed está activo
+        const tieneReservasAnteriores = profile.reservationHistory && profile.reservationHistory.length > 0;
+        const yaUsoTrial = profile.freeTrialUsed || tieneReservasAnteriores;
+        
+        if (yaUsoTrial && profile.lastReservation) {
+          // Usuario YA usó su trial gratis - FLUJO DE PAGO
+          console.log('[WASSENGER] 🎯 Campaña detectada - Usuario RECURRENTE (ya usó trial):', campaignCheck.campaign);
+          console.log('[WASSENGER] 📊 Estado usuario:', {
+            freeTrialUsed: profile.freeTrialUsed,
+            tieneHistorial: tieneReservasAnteriores,
+            cantidadReservas: profile.reservationHistory?.length || 0,
+            ultimaReserva: profile.lastReservation?.date
+          });
           reply = getTrialUsedResponse(profile);
-          console.log('[WASSENGER] 📝 Reply para usuario con trial usado generado');
+          console.log('[WASSENGER] 📝 Reply para usuario RECURRENTE generado (flujo con pago)');
         } else if (profile.firstVisit) {
           // Primera visita - ofrecer trial gratis
           console.log('[WASSENGER] 🎯 Campaña detectada - Primera visita:', campaignCheck.campaign);
           reply = personalizeCampaignResponse(campaignCheck.template, profile);
           console.log('[WASSENGER] 📝 Reply de campaña para primera visita generado');
         } else {
-          // Ya no es primera visita pero no ha usado trial - flujo normal
-          console.log('[WASSENGER] 📝 Usuario conocido sin trial - flujo normal con Aurora');
+          // Caso edge: no es primera visita pero no tiene historial - flujo normal con Aurora
+          console.log('[WASSENGER] 📝 Usuario conocido sin historial claro - flujo normal con Aurora');
           reply = await complete(resultado.prompt, {
             temperature: 0.4,
             max_tokens: 300,
@@ -798,12 +808,28 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // � Agregar mensaje de upsell si aplica (ANTES de Aurora response)
-    if (upsellMessage && !campaignCheck.detected) {
+    // 💳 DETECTAR SI USUARIO RECURRENTE ELIGIÓ ESPACIO Y ENVIAR LINK DE PAGO
+    const paymentCheck = shouldSendPaymentLink(messageBody, profile);
+    if (paymentCheck && resultado.agenteKey === 'AURORA') {
+      console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
+      console.log('[WASSENGER] 💳 Enviando link de pago automáticamente');
+      reply = paymentCheck.message;
+      
+      // Guardar en perfil que está esperando comprobante
+      profile.awaitingPaymentReceipt = {
+        serviceType: paymentCheck.serviceType,
+        price: paymentCheck.price,
+        timestamp: new Date().toISOString()
+      };
+      await saveProfile(profile);
+    }
+
+    // 🎯 Agregar mensaje de upsell si aplica (ANTES de Aurora response)
+    if (upsellMessage && !campaignCheck.detected && !paymentCheck) {
       reply = `${reply}\n\n${upsellMessage}`;
     }
 
-    // �🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
+    // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
     console.log('[WASSENGER] 🔍 Antes de finalReply - reply:', reply ? 'EXISTE' : 'NULL/UNDEFINED');
     let finalReply = reply;
     let confirmationActivated = false;

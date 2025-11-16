@@ -72,6 +72,7 @@ export function personalizeCampaignResponse(template, userProfile) {
 
 /**
  * 🔍 Genera respuesta especial si ya usó el trial gratis
+ * FLUJO PERSUASIVO: Reconocer → Informar → Cobrar → Validar → Agendar
  */
 export function getTrialUsedResponse(userProfile) {
   const userName = userProfile?.name || '';
@@ -85,14 +86,87 @@ export function getTrialUsedResponse(userProfile) {
   const hora = lastReservation.startTime || '';
   const email = userProfile.email || 'tu email';
   const serviceType = lastReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+  const wasFree = lastReservation.wasFree;
   
-  return `¡Hola${userName ? ' ' + userName : ''}, soy Aurora! 👩🏼‍💼✨
+  return `¡Hola${userName ? ' ' + userName : ''}, soy Aurora! 😊
 
-Veo que ya disfrutaste tu visita gratis el *${fecha}* a las *${hora}* 🎉 Te enviamos la confirmación a ${email}.
+Qué bueno verte de nuevo. Veo que el *${fecha}* a las *${hora}* disfrutaste tu *${serviceType}${wasFree ? ' GRATIS* 🎉' : '*'}
 
-Para tu siguiente reserva, los precios son:
-📍 *Hot Desk:* $10 por 2 horas
-🏢 *Sala de Reuniones:* $29 por 2 horas (3-4 personas)
+📋 *Para tu próxima visita:*
 
-¿Cuál deseas que te reserve? También dime qué día y hora prefieres 😊`;
+📍 *Hot Desk* → $10 por 2 horas
+🏢 *Sala de Reuniones* → $29 por 2 horas (3-4 personas)
+
+¿Cuál prefieres?
+
+Te envío el link de pago 💳 y cuando me muestres tu comprobante, te agendo de inmediato 😊`;
+}
+
+/**
+ * 💳 Detecta si usuario recurrente eligió espacio y debe recibir link de pago
+ */
+export function shouldSendPaymentLink(message, profile) {
+  // Solo para usuarios recurrentes que ya usaron trial
+  const hasHistory = profile?.reservationHistory?.length > 0;
+  const usedTrial = profile?.freeTrialUsed || hasHistory;
+  
+  if (!usedTrial) return null;
+
+  const msgLower = message.toLowerCase().trim();
+  
+  // Patrones de elección de Hot Desk
+  const hotDeskPatterns = [
+    'hot desk',
+    'hotdesk',
+    'escritorio',
+    'hot-desk',
+    'el hot',
+    'prefiero hot',
+    'quiero hot'
+  ];
+  
+  // Patrones de elección de Sala
+  const meetingRoomPatterns = [
+    'sala',
+    'reunion',
+    'reunión',
+    'meeting',
+    'la sala',
+    'prefiero sala',
+    'quiero sala'
+  ];
+  
+  // Detectar elección de Hot Desk
+  if (hotDeskPatterns.some(p => msgLower.includes(p))) {
+    return {
+      serviceType: 'hotDesk',
+      price: 10,
+      message: `¡Perfecto! 😊
+
+📍 *Hot Desk* (2 horas) = *$10*
+
+💳 *Paga aquí:*
+https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+
+Cuando hayas pagado, envíame la captura del comprobante 📸 y te agendo de inmediato`
+    };
+  }
+  
+  // Detectar elección de Sala
+  if (meetingRoomPatterns.some(p => msgLower.includes(p))) {
+    return {
+      serviceType: 'meetingRoom',
+      price: 29,
+      message: `¡Perfecto! 😊
+
+🏢 *Sala de Reuniones* (2 horas, 3-4 personas) = *$29*
+
+💳 *Paga aquí:*
+https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+
+Cuando hayas pagado, envíame la captura del comprobante 📸 y te agendo de inmediato`
+    };
+  }
+  
+  return null;
 }

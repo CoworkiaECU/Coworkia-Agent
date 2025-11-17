@@ -384,23 +384,20 @@ function construirContextoHistorial(historial = []) {
     return 'HISTORIAL: Primera interacción - sin mensajes previos.';
   }
 
-  const lineas = ['HISTORIAL CONVERSACIÓN:'];
+  const lineas = ['HISTORIAL CONVERSACIÓN (últimos mensajes):'];
   
-  // Tomar últimos 5 mensajes máximo para no saturar el contexto
-  const recientes = historial.slice(-5);
+  // Tomar últimos 10 mensajes para mejor contexto
+  const recientes = historial.slice(-10);
   
   recientes.forEach((item, index) => {
     const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '';
     
     if (item.role === 'user') {
-      lineas.push(`${timestamp} Usuario: "${item.content}"`);
+      lineas.push(`  Usuario: "${item.content}"`);
     } else if (item.role === 'assistant') {
-      const agentInfo = item.agent ? ` (${item.agent})` : '';
-      // Limitar respuesta a 80 caracteres para no saturar
-      const shortResponse = item.content.length > 80 ? 
-        item.content.substring(0, 80) + '...' : 
-        item.content;
-      lineas.push(`${timestamp} Bot${agentInfo}: "${shortResponse}"`);
+      const agentInfo = item.agent ? ` [${item.agent}]` : '';
+      // Mantener respuesta completa para mejor contexto
+      lineas.push(`  Aurora${agentInfo}: "${item.content}"`);
     }
   });
 

@@ -115,6 +115,7 @@ export class PartialReservationForm {
 
   /**
    * 💵 Calcula el total con impuestos según método de pago
+   * IMPORTANTE: IVA se aplica sobre el subtotal (base + ISD) en tarjetas
    */
   calculateTotalWithTaxes() {
     const basePrice = this.getBasePrice();
@@ -127,21 +128,24 @@ export class PartialReservationForm {
     const taxes = {};
 
     if (this.paymentMethod === 'transferencia') {
-      // Transferencia: +15% IVA
+      // Transferencia: +15% IVA sobre base
       const iva = basePrice * 0.15;
-      taxes.iva = iva;
-      total = basePrice + iva;
+      taxes.iva = parseFloat(iva.toFixed(2));
+      total = basePrice + taxes.iva;
     } else if (this.paymentMethod === 'tarjeta') {
-      // Tarjeta: +5% ISD +15% IVA
+      // Tarjeta: +5% ISD, luego +15% IVA sobre (base + ISD)
       const isd = basePrice * 0.05;
-      const iva = basePrice * 0.15;
-      taxes.isd = isd;
-      taxes.iva = iva;
-      total = basePrice + isd + iva;
+      taxes.isd = parseFloat(isd.toFixed(2));
+      
+      const subtotalConISD = basePrice + taxes.isd;
+      const iva = subtotalConISD * 0.15;
+      taxes.iva = parseFloat(iva.toFixed(2));
+      
+      total = basePrice + taxes.isd + taxes.iva;
     }
 
     return {
-      base: basePrice,
+      base: parseFloat(basePrice.toFixed(2)),
       total: parseFloat(total.toFixed(2)),
       taxes
     };

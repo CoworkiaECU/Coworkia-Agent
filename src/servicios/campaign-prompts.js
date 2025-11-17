@@ -64,9 +64,34 @@ export function detectCampaignMessage(message) {
 
 /**
  * 🎨 Personaliza respuesta de campaña con nombre del usuario
+ * 🔍 Detecta si es cliente recurrente y NO ofrece trial gratis
  */
 export function personalizeCampaignResponse(template, userProfile) {
   const userName = userProfile?.name || 'nuevo usuario';
+  
+  // 🔍 VERIFICAR SI ES CLIENTE RECURRENTE
+  const hasHistory = userProfile?.reservationHistory?.length > 0;
+  const usedTrial = userProfile?.freeTrialUsed || hasHistory;
+  const isFirstVisit = userProfile?.firstVisit !== false;
+  
+  // Si es cliente recurrente (ya usó trial o tiene historial)
+  if (usedTrial || !isFirstVisit) {
+    console.log('[CAMPAIGN] 🔄 Cliente recurrente detectado - NO ofrecer trial gratis');
+    
+    return `¡Hola ${userName}, qué bueno que estás de vuelta! 😊
+
+Como eres cliente recurrente, ya no aplica la prueba gratis. Tus opciones son:
+
+📍 *Hot Desk* → $10 por 2 horas (1-2 personas)
+🏢 *Sala Reuniones* → $29 por 2 horas (3-4 personas)
+
+¿Cuál te reservo? 
+
+Te envío el link de pago 💳 y cuando me muestres tu comprobante, te agendo de inmediato 😊`;
+  }
+  
+  // Cliente nuevo - aplicar campaña normal
+  console.log('[CAMPAIGN] ✨ Cliente nuevo detectado - Aplicar trial gratis');
   return template.replace(/{nombre}/g, userName);
 }
 

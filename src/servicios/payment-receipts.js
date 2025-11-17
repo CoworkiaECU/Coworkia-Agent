@@ -11,7 +11,7 @@ import { updateReservationPayment } from './calendario.js';
 import { enqueueBackgroundTask } from './task-queue.js';
 import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
-import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { clearPendingConfirmation, setPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
@@ -146,8 +146,9 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
     const isAmountValid = amountDifference <= 0.50; // Tolerancia $0.50
     
     if (analysisResult.amount && isAmountValid) {
-      console.log('[RECEIPT] ✅ Pago válido detectado, confirmando reserva en SQLite...');
+      console.log('[RECEIPT] ✅ Pago válido detectado, guardando info de pago...');
 
+      // Guardar información del pago PERO NO confirmar aún
       const updatedReservation = await updateReservationPayment(pendingReservation.id, {
         paymentMethod: analysisResult.paymentMethod,
         reference: analysisResult.reference,
@@ -155,47 +156,64 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
         date: new Date().toISOString()
       });
 
-      await clearPendingConfirmation(userProfile.userId);
-      await markJustConfirmed(userProfile.userId, updatedReservation.id);
+      // NO limpiar pending confirmation - esperamos respuesta SI/NO del usuario
+      // await clearPendingConfirmation(userProfile.userId); // COMENTADO
       
-      // Enviar notificaciones INLINE con await para garantizar ejecución
-      await queueReservationNotifications(updatedReservation, userProfile, analysisResult.amount);
+      // Guardar datos del pago en pending confirmation para usarlos después del SI
+      await setPendingConfirmation(userProfile.userId, {
+        reservationId: updatedReservation.id,
+        paymentVerified: true,
+        paymentReceipt: {
+          method: analysisResult.paymentMethod,
+          reference: analysisResult.reference,
+          amount: analysisResult.amount,
+          date: new Date().toISOString(),
+          bank: analysisResult.bank || 'No especificado'
+        },
+        type: 'payment_verification'
+      }, 15); // 15 minutos para confirmar
       
       return {
         success: true,
-        message: `✅ **¡Pago verificado y reserva confirmada!** 🎉
+        message: `${transcription}
 
-📋 **Detalles confirmados:**
+✅ **¡Pago verificado!** 💰
+
+📋 **Tu reserva:**
 📅 ${updatedReservation.date}
 🕐 ${updatedReservation.start_time} - ${updatedReservation.end_time} 
 🏢 ${formatServiceType(updatedReservation.service_type)}
 💰 $${analysisResult.amount} USD ✅
 
-📧 Te envío la confirmación completa por email
-📍 **Ubicación:** Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+**¿Confirmas esta reserva?**
 
-¡Te esperamos! 🚀`,
+Responde **SI** para agendar o **NO** si necesitas cambiar fecha/hora 😊`,
         reservation: updatedReservation,
-        needsAction: true, // Para enviar email de confirmación
-        actionType: 'SEND_CONFIRMATION_EMAIL'
+        needsConfirmation: true, // Activar flujo SI/NO
+        actionType: 'AWAIT_FINAL_CONFIRMATION',
+        data: analysisResult
       };
       
     } else {
-      // Transcribir datos pero indicar problema
+      // Transcribir datos pero indicar problema de monto
+      const serviceType = pendingReservation.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
       const transcriptionWithIssue = `${transcription}
 
-⚠️ **ADVERTENCIA:** El monto no coincide
-💰 Esperado: $${expectedAmount.toFixed(2)}
-💳 Detectado: $${analysisResult.amount ? analysisResult.amount.toFixed(2) : 'No detectado'}
+⚠️ **EL MONTO NO COINCIDE**
 
-🔍 **Posibles problemas:**
-${analysisResult.issues ? analysisResult.issues.map(i => `• ${i}`).join('\n') : '• Imagen no clara o monto incorrecto'}
+Tu reserva es:
+🏢 ${serviceType}
+💰 Total a pagar: **$${expectedAmount.toFixed(2)}**
+💳 Monto detectado en tu comprobante: **$${analysisResult.amount ? analysisResult.amount.toFixed(2) : 'No detectado'}**
 
-📱 **Por favor:**
-• Verifica el monto pagado
-• Envía una foto más clara si es necesario
-• O contáctanos: 📞 +593 99 483 7117`;
+❌ Diferencia: $${Math.abs(expectedAmount - (analysisResult.amount || 0)).toFixed(2)}
+
+📸 **Por favor:**
+• Verifica que pagaste el monto correcto ($${expectedAmount.toFixed(2)})
+• Si pagaste menos, completa la diferencia
+• Envía el comprobante correcto o más claro
+
+¿Necesitas ayuda? Escríbeme 😊`;
       
       return {
         success: false,

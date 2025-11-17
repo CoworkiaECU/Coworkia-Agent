@@ -406,13 +406,23 @@ export function extractDataFromMessage(message, currentForm) {
   const peoplePatterns = [
     /(?:somos|vamos|iremos|voy con)\s+(\d+)/i,
     /(\d+)\s+personas?/i,
-    /con\s+(\d+)\s+(?:personas?|acompa[ñn]antes?)/i
+    /con\s+(\d+)\s+(?:personas?|acompa[ñn]antes?)/i,
+    /(?:yo y|para)\s+(\d+)\s+(?:m[aá]s|personas?)/i,  // "yo y 3 más", "para 4 personas"
+    /(\d+)\s+en total/i,  // "4 en total"
+    /(?:reservar? para|necesito para)\s+(\d+)/i  // "reservar para 4"
   ];
 
   for (const pattern of peoplePatterns) {
     const match = message.match(pattern);
     if (match) {
-      const num = parseInt(match[1]);
+      let num = parseInt(match[1]);
+      
+      // Si dice "yo y X más", sumar 1 (el usuario + los demás)
+      if (/yo y\s+\d+\s+m[aá]s/i.test(message)) {
+        num = num + 1;
+        console.log('[FORM] 👥 Detectado "yo y X más", ajustando total:', num);
+      }
+      
       updates.numPeople = num;
       console.log('[FORM] 👥 Detectado personas:', num);
       break;

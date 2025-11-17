@@ -128,7 +128,8 @@ function generateConfirmationEmailHTML(reservationData) {
   // Solo Hot Desk puede ser gratis, sala de reuniones NUNCA
   const isActuallyFree = wasFree && serviceType === 'Hot Desk';
   
-  const priceSection = isActuallyFree ? `
+  // Si ya pagó (paymentReceipt existe), NO mostrar sección de pago
+  const priceSection = paymentReceipt ? '' : (isActuallyFree ? `
     <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; box-shadow: 0 4px 12px rgba(78,205,196,0.2);">
       <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
         <span style="color: #4ECDC4; font-size: 28px; margin-right: 10px;">🎉</span>
@@ -158,7 +159,7 @@ function generateConfirmationEmailHTML(reservationData) {
         </div>
       </div>
     </div>
-  `;
+  `);
 
   return `
     <!DOCTYPE html>

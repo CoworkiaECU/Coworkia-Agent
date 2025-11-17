@@ -763,29 +763,33 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         });
       } else if (campaignCheck.detected && !profile.justConfirmed) {
         // 🎯 Respuesta de campaña
-        // VERIFICAR: Usuario tiene reservas confirmadas (historial) O freeTrialUsed está activo
+        // VERIFICAR: Usuario tiene reservas confirmadas (historial) O freeTrialUsed está activo O firstVisit: false
         const tieneReservasAnteriores = profile.reservationHistory && profile.reservationHistory.length > 0;
-        const yaUsoTrial = profile.freeTrialUsed || tieneReservasAnteriores;
+        const noEsPrimeraVez = profile.firstVisit === false;
+        const yaUsoTrial = profile.freeTrialUsed || tieneReservasAnteriores || noEsPrimeraVez;
         
-        if (yaUsoTrial && profile.lastReservation) {
-          // Usuario YA usó su trial gratis - FLUJO DE PAGO
+        if (yaUsoTrial) {
+          // Usuario YA usó su trial gratis O no es primera visita - FLUJO DE PAGO
           console.log('[WASSENGER] 🎯 Campaña detectada - Usuario RECURRENTE (ya usó trial):', campaignCheck.campaign);
           console.log('[WASSENGER] 📊 Estado usuario:', {
             freeTrialUsed: profile.freeTrialUsed,
+            firstVisit: profile.firstVisit,
             tieneHistorial: tieneReservasAnteriores,
             cantidadReservas: profile.reservationHistory?.length || 0,
             ultimaReserva: profile.lastReservation?.date
           });
-          reply = getTrialUsedResponse(profile);
+          
+          // Usar personalizeCampaignResponse que ya tiene la lógica correcta
+          reply = personalizeCampaignResponse(campaignCheck.template, profile);
           console.log('[WASSENGER] 📝 Reply para usuario RECURRENTE generado (flujo con pago)');
-        } else if (profile.firstVisit) {
-          // Primera visita - ofrecer trial gratis
+        } else if (profile.firstVisit === true || profile.firstVisit === undefined) {
+          // Primera visita real - ofrecer trial gratis
           console.log('[WASSENGER] 🎯 Campaña detectada - Primera visita:', campaignCheck.campaign);
           reply = personalizeCampaignResponse(campaignCheck.template, profile);
           console.log('[WASSENGER] 📝 Reply de campaña para primera visita generado');
         } else {
-          // Caso edge: no es primera visita pero no tiene historial - flujo normal con Aurora
-          console.log('[WASSENGER] 📝 Usuario conocido sin historial claro - flujo normal con Aurora');
+          // Caso edge: flujo normal con Aurora
+          console.log('[WASSENGER] 📝 Usuario - flujo normal con Aurora');
           reply = await complete(resultado.prompt, {
             temperature: 0.4,
             max_tokens: 300,

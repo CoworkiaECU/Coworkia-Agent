@@ -71,12 +71,16 @@ export function personalizeCampaignResponse(template, userProfile) {
   
   // 🔍 VERIFICAR SI ES CLIENTE RECURRENTE
   const hasHistory = userProfile?.reservationHistory?.length > 0;
-  const usedTrial = userProfile?.freeTrialUsed || hasHistory;
-  const isFirstVisit = userProfile?.firstVisit !== false;
+  const notFirstVisit = userProfile?.firstVisit === false;
+  const usedTrial = userProfile?.freeTrialUsed;
   
-  // Si es cliente recurrente (ya usó trial o tiene historial)
-  if (usedTrial || !isFirstVisit) {
-    console.log('[CAMPAIGN] 🔄 Cliente recurrente detectado - NO ofrecer trial gratis');
+  // Si NO es primera visita O ya usó trial O tiene historial → Cliente recurrente
+  if (notFirstVisit || usedTrial || hasHistory) {
+    console.log('[CAMPAIGN] 🔄 Cliente recurrente detectado - NO ofrecer trial gratis', {
+      notFirstVisit,
+      usedTrial,
+      hasHistory
+    });
     
     return `¡Hola ${userName}, qué bueno que estás de vuelta! 😊
 
@@ -85,9 +89,7 @@ Como eres cliente recurrente, ya no aplica la prueba gratis. Tus opciones son:
 📍 *Hot Desk* → $10 por 2 horas (1-2 personas)
 🏢 *Sala Reuniones* → $29 por 2 horas (3-4 personas)
 
-¿Cuál te reservo? 
-
-Te envío el link de pago 💳 y cuando me muestres tu comprobante, te agendo de inmediato 😊`;
+¿Cuál te reservo?`;
   }
   
   // Cliente nuevo - aplicar campaña normal

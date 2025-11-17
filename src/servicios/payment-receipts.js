@@ -11,8 +11,8 @@ import { updateReservationPayment } from './calendario.js';
 import { enqueueBackgroundTask } from './task-queue.js';
 import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
-import { clearPendingConfirmation, setPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
-import { markJustConfirmed } from './reservation-state.js';
+import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { markJustConfirmed, setPendingConfirmation } from './reservation-state.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 

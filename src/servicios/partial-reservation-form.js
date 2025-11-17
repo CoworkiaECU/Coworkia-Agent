@@ -51,6 +51,7 @@ export class PartialReservationForm {
     this.email = existingData.email || null;              // 'yo@diegovillota.com'
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
+    this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta'
     this.updatedAt = new Date();
   }
 
@@ -88,6 +89,7 @@ export class PartialReservationForm {
     if (!this.date) missing.push('date');
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
+    if (!this.paymentMethod) missing.push('paymentMethod');
     
     return missing;
   }
@@ -97,6 +99,78 @@ export class PartialReservationForm {
    */
   isComplete() {
     return this.getMissingFields().length === 0;
+  }
+
+  /**
+   * 💰 Calcula el precio base según tipo de espacio
+   */
+  getBasePrice() {
+    if (this.spaceType === 'hotDesk') {
+      return 10; // $10 por 2 horas
+    } else if (this.spaceType === 'meetingRoom') {
+      return 29; // $29 por 2 horas
+    }
+    return 0;
+  }
+
+  /**
+   * 💵 Calcula el total con impuestos según método de pago
+   */
+  calculateTotalWithTaxes() {
+    const basePrice = this.getBasePrice();
+    
+    if (!this.paymentMethod) {
+      return { base: basePrice, total: basePrice, taxes: {} };
+    }
+
+    let total = basePrice;
+    const taxes = {};
+
+    if (this.paymentMethod === 'transferencia') {
+      // Transferencia: +15% IVA
+      const iva = basePrice * 0.15;
+      taxes.iva = iva;
+      total = basePrice + iva;
+    } else if (this.paymentMethod === 'tarjeta') {
+      // Tarjeta: +5% ISD +15% IVA
+      const isd = basePrice * 0.05;
+      const iva = basePrice * 0.15;
+      taxes.isd = isd;
+      taxes.iva = iva;
+      total = basePrice + isd + iva;
+    }
+
+    return {
+      base: basePrice,
+      total: parseFloat(total.toFixed(2)),
+      taxes
+    };
+  }
+
+  /**
+   * 📋 Genera resumen de pago completo con impuestos
+   */
+  getPaymentSummary() {
+    if (!this.spaceType || !this.paymentMethod) {
+      return null;
+    }
+
+    const spaceName = this.spaceType === 'hotDesk' ? '📍 Hot Desk' : '🏢 Sala de Reuniones';
+    const pricing = this.calculateTotalWithTaxes();
+    
+    let summary = `${spaceName} (${this.durationHours}h)\\n`;
+    summary += `Subtotal: $${pricing.base.toFixed(2)}\\n`;
+
+    if (this.paymentMethod === 'transferencia') {
+      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
+      summary += `\\n💵 Total a pagar: $${pricing.total.toFixed(2)}`;
+    } else if (this.paymentMethod === 'tarjeta') {
+      summary += `ISD (5%): $${pricing.taxes.isd.toFixed(2)}\\n`;
+      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
+      summary += `\\n💳 Total a pagar: $${pricing.total.toFixed(2)}`;
+    }
+
+    return summary;
   }
 
   /**
@@ -124,6 +198,9 @@ export class PartialReservationForm {
       
       case 'email':
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
+      
+      case 'paymentMethod':
+        return `¿Cómo deseas pagar?\n\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "tarjeta" o "transferencia"`;
       
       default:
         return `¿Podrías darme más detalles sobre tu reserva${userName}?`;
@@ -204,6 +281,7 @@ export class PartialReservationForm {
       email: this.email,
       numPeople: this.numPeople,
       durationHours: this.durationHours,
+      paymentMethod: this.paymentMethod,
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -218,7 +296,8 @@ export class PartialReservationForm {
       time: data.time,
       email: data.email,
       numPeople: data.numPeople,
-      durationHours: data.durationHours
+      durationHours: data.durationHours,
+      paymentMethod: data.paymentMethod
     });
   }
 }
@@ -399,6 +478,18 @@ export function extractDataFromMessage(message, currentForm) {
     if (emailMatch) {
       updates.email = emailMatch[1];
       console.log('[FORM] 📧 Detectado email:', updates.email);
+    }
+  }
+
+  // 💳 Detectar método de pago
+  if (!currentForm.paymentMethod) {
+    const lowerMsg = message.toLowerCase();
+    if (lowerMsg.includes('tarjeta') || lowerMsg.includes('credito') || lowerMsg.includes('debito')) {
+      updates.paymentMethod = 'tarjeta';
+      console.log('[FORM] 💳 Detectado método: tarjeta');
+    } else if (lowerMsg.includes('transferencia') || lowerMsg.includes('transfer')) {
+      updates.paymentMethod = 'transferencia';
+      console.log('[FORM] 🏦 Detectado método: transferencia');
     }
   }
 

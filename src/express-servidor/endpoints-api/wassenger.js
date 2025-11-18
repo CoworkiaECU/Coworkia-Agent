@@ -237,7 +237,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // Extraer datos (compatibilidad con diferentes formatos de Wassenger)
     const userId = (data.fromNumber || data.from || '').trim();
-    const text = (data.body || data.message || '').trim();
+    let text = (data.body || data.message || '').trim();
     // 🔧 FIX: Extraer nombre desde la estructura correcta de Wassenger
     const name = data.chat?.name || data.contact?.name || data.fromName || data.name || '';
     const messageType = data.type || 'text';
@@ -307,6 +307,41 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           type: 'image_not_receipt' 
         });
       }
+    }
+
+    // 🎤 PROCESAMIENTO DE MENSAJES DE VOZ
+    if (messageType === 'audio' || messageType === 'voice' || messageType === 'ptt') {
+      console.log('[WASSENGER] 🎤 Procesando mensaje de voz...');
+      
+      if (!mediaUrl) {
+        console.log('[WASSENGER] ❌ No se encontró URL de audio');
+        return res.json({ ok: true, ignored: true, reason: 'no_audio_url' });
+      }
+
+      // Importar función de transcripción
+      const { transcribeAudio } = await import('../../servicios-ia/openai.js');
+      
+      // Transcribir audio
+      const transcription = await transcribeAudio(mediaUrl);
+      
+      if (!transcription.success) {
+        await enviarWhatsApp(userId, 
+          '🎤 Lo siento, no pude procesar tu mensaje de voz. ¿Podrías escribirlo por texto? 😊'
+        );
+        return res.json({ 
+          ok: true, 
+          processed: true, 
+          type: 'audio_transcription_failed' 
+        });
+      }
+
+      console.log('[WASSENGER] ✅ Audio transcrito:', transcription.text);
+      
+      // Actualizar el texto con la transcripción
+      text = transcription.text;
+      
+      // Notificar al usuario que se procesó el audio
+      console.log('[WASSENGER] 🎤→📝 Procesando como texto:', text);
     }
 
     // Continuar con procesamiento normal de texto

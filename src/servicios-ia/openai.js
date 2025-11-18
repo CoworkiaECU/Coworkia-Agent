@@ -215,3 +215,53 @@ Responde SOLO con el JSON, sin texto adicional.`;
     };
   }
 }
+
+/**
+ * 🎤 Transcribe audio usando Whisper
+ * @param {string} audioUrl - URL del archivo de audio
+ * @returns {Promise<{success: boolean, text: string, error?: string}>}
+ */
+export async function transcribeAudio(audioUrl) {
+  try {
+    console.log('[Whisper] 🎤 Transcribiendo audio...');
+    console.log('[Whisper] URL:', audioUrl);
+
+    // Descargar el audio desde la URL
+    const response = await fetch(audioUrl);
+    if (!response.ok) {
+      throw new Error(`Error descargando audio: ${response.status}`);
+    }
+
+    // Obtener el buffer del audio
+    const audioBuffer = await response.arrayBuffer();
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });
+    
+    // Crear un File object (Whisper requiere File, no Blob)
+    const audioFile = new File([audioBlob], 'audio.ogg', { type: 'audio/ogg' });
+
+    console.log('[Whisper] Tamaño del audio:', audioBuffer.byteLength, 'bytes');
+
+    // Transcribir con Whisper
+    const transcription = await client.audio.transcriptions.create({
+      file: audioFile,
+      model: 'whisper-1',
+      language: 'es', // Español
+      response_format: 'text'
+    });
+
+    console.log('[Whisper] ✅ Transcripción exitosa:', transcription.substring(0, 100) + '...');
+
+    return {
+      success: true,
+      text: transcription
+    };
+
+  } catch (error) {
+    console.error('[Whisper] ❌ Error transcribiendo:', error);
+    return {
+      success: false,
+      text: '',
+      error: error.message
+    };
+  }
+}

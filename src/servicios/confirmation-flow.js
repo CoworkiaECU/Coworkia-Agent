@@ -539,7 +539,7 @@ export async function processNegativeConfirmation(userProfile, message = '') {
       success: true,
       message: `Entiendo${userName}. Si decides continuar con tu reserva, ¿qué espacio necesitas? Tenemos:
 
-📍 Hot Desk ($10/2h)
+📍 Hot Desk
 🏢 Sala de Reuniones (3-4 personas, $29/2h)
 
 Déjame saber cómo te gustaría proceder. 😊`,

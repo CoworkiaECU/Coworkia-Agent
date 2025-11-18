@@ -222,7 +222,7 @@ export class PartialReservationForm {
 
     switch(field) {
       case 'spaceType':
-        return `¿Qué espacio necesitas${userName}? Tenemos:\n\n📍 Hot Desk ($10/2h)\n🏢 Sala de Reuniones (3-4 personas, $29/2h)`;
+        return `¿Qué espacio necesitas${userName}? Tenemos:\n\n📍 Hot Desk\n🏢 Sala de Reuniones (3-4 personas, $29/2h)`;
       
       case 'date':
         return `¿Para qué día${userName}? Puedes decir "hoy", "mañana" o una fecha específica 📅`;

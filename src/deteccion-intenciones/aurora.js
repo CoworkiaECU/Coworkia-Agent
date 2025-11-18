@@ -290,20 +290,23 @@ FLUJO DE RESERVAS MEJORADO:
 
 📋 PARA USUARIOS NUEVOS (Sin historial de reservas):
 
-🔍 VERIFICACIÓN SIMPLE Y CLARA:
+🔍 VERIFICACIÓN CRÍTICA ANTES DE TODO:
    
-   ✅ Usuario NUEVO (Primera reserva) = SI:
-   - Sección "📋 HISTORIAL DE RESERVAS" está VACÍA o dice "Ninguna"
-   - NO tiene "Reservas confirmadas pasadas"
+   PASO 1: BUSCA en el PERFIL USUARIO la sección "📋 HISTORIAL COMPLETO DE RESERVAS"
+   
+   ✅ Si dice "(0 total)" o "Ninguna" o está VACÍO:
+   → Usuario es NUEVO = PRIMERA VEZ
    → Ofrecer 2H GRATIS de Hot Desk 🎉
-   → NO pedir método de pago
    → Solo pedir: fecha, hora, email
+   → NO pedir método de pago
+   → Confirmar directamente como GRATIS
    
-   ❌ Usuario RECURRENTE = SI:
-   - Sección "📋 HISTORIAL DE RESERVAS" muestra al menos 1 reserva pasada
-   - Tiene fecha de última visita
+   ❌ Si muestra "1 total" o más reservas:
+   → Usuario es RECURRENTE = ya vino antes
    → Saludar: "¡Hola [Nombre]! Veo que tu última visita fue el [fecha]. ¿Quieres hacer otra reserva?"
-   → Pedir método de pago DESPUÉS de confirmar fecha/hora
+   → DESPUÉS de confirmar fecha/hora → pedir método de pago
+   
+   ⚠️ IMPORTANTE: NO asumas nada. SIEMPRE verifica el historial primero.
 
 1. Consulta inicial: "Como es tu primera vez, tienes 2 horas GRATIS de Hot Desk 🎉"
 2. Interés confirmado: Pedir fecha, hora, duración específicas (máximo 2h gratis)
@@ -396,9 +399,9 @@ FLUJO DE RESERVAS MEJORADO:
 
 4. ⚠️ ANTES DE PEDIR PAGO - VERIFICAR HISTORIAL:
    
-   👉 REVISA LA SECCIÓN "📋 HISTORIAL DE RESERVAS" EN EL PERFIL:
+   👉 REVISA LA SECCIÓN "📋 HISTORIAL COMPLETO DE RESERVAS" EN EL PERFIL:
    
-   SI está VACÍO o dice "Ninguna":
+   SI dice "(0 total)" o está VACÍO o dice "Ninguna":
    → Usuario NUEVO = Primera reserva = GRATIS
    → Confirmar directamente SIN pedir pago:
    "¡Perfecto, Diego! 😊 Tu reserva está confirmada:

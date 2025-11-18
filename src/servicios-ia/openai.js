@@ -126,14 +126,42 @@ export async function analyzePaymentReceipt(imageUrl) {
   "confidence": "porcentaje de confianza (0-100)"
 }
 
-IMPORTANTE:
-- El "transactionNumber" es el ID de la transacción bancaria
-- El "receiptNumber" es el número del comprobante/voucher físico
-- Si encuentras solo uno, ponlo en el campo más apropiado
+FORMATOS DE COMPROBANTES RECONOCIDOS:
+
+1. PAYPHONE (Ecuador):
+   - Tiene logo naranja de Payphone arriba
+   - Dice "PAGO APROBADO" o "Aprobada" en verde
+   - Monto grande en el centro (ej: "USD 12.08")
+   - Sección "Detalle de transacción" abajo con:
+     * Fecha (formato: DD/MM/YYYY HH:MM)
+     * No. Transacción (ej: 7061340)
+     * No. Autorización (ej: W7061340)
+     * Persona (nombre del pagador)
+   - Descripción puede decir "Coworkia hoy desk", "Coworkia sala", etc.
+   - Logos de pago: Verified by VISA, MasterCard SecureCode, PCI DSS
+   - Dice "Powered by payphone" abajo
+   - ES UN COMPROBANTE 100% VÁLIDO Y OFICIAL
+
+2. TRANSFERENCIAS BANCARIAS:
+   - Logo del banco
+   - "Comprobante de transferencia"
+   - Monto, fecha, cuenta origen/destino
+   - Número de referencia bancaria
+
+3. TARJETAS DE CRÉDITO/DÉBITO:
+   - Terminal de pago (POS)
+   - Últimos 4 dígitos de tarjeta
+   - Código de autorización
+   - Monto y fecha
+
+REGLAS CRÍTICAS:
+- Si ves logo de PAYPHONE + "PAGO APROBADO" → ES VÁLIDO (isValid: true, confidence: 95)
+- El "transactionNumber" puede estar como "No. Transacción" o "No. Autorización"
+- El "receiptNumber" es el número visible del comprobante digital
+- Para Payphone: paymentMethod = "payphone", bank = "Payphone"
 - Si no encuentras algún dato, usa null
 - Solo extrae información que esté claramente visible
-- isValid debe ser true solo si es un comprobante legítimo
-- confidence indica qué tan seguro estás de los datos extraídos
+- Fecha de Payphone viene en formato DD/MM/YYYY HH:MM, conviértela a YYYY-MM-DD
 
 Responde SOLO con el JSON, sin texto adicional.`;
 

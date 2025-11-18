@@ -26,13 +26,31 @@ export async function processPaymentReceipt(imageUrl, userPhone) {
     console.log('[Payment Verification] Datos extraídos:', paymentData);
 
     // 2. Validar que es un comprobante válido
-    if (!paymentData.isValid || paymentData.confidence < 70) {
+    // Payphone es confiable, aceptar con confidence >= 70 O si es Payphone explícitamente
+    const isPayphoneReceipt = paymentData.paymentMethod?.toLowerCase() === 'payphone' || 
+                              paymentData.bank?.toLowerCase() === 'payphone';
+    
+    if (!paymentData.isValid && !isPayphoneReceipt) {
       return {
         success: false,
-        message: '❌ El comprobante no parece ser válido o la imagen no es clara. Por favor, envía un comprobante legible.',
+        message: '❌ El comprobante no parece ser válido. Por favor, envía un comprobante legible.',
         data: paymentData
       };
     }
+    
+    if (paymentData.confidence < 70 && !isPayphoneReceipt) {
+      return {
+        success: false,
+        message: '❌ La imagen no es clara. Por favor, envía una foto más nítida del comprobante.',
+        data: paymentData
+      };
+    }
+    
+    console.log('[Payment Verification] ✅ Comprobante validado:', {
+      isValid: paymentData.isValid,
+      confidence: paymentData.confidence,
+      isPayphone: isPayphoneReceipt
+    });
 
     // 3. Buscar reserva pendiente del usuario
     const userProfile = await loadProfile(userPhone);

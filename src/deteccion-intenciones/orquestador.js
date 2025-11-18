@@ -265,8 +265,12 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 
   // 🆕 Flag de reserva recién confirmada (temporal)
   if (perfil.justConfirmed) {
-    lineas.push(`- RESERVA RECIÉN CONFIRMADA: SÍ → NO iniciar nuevo flujo, conversación completada exitosamente`);
+    lineas.push(`- RESERVA RECIÉN CONFIRMADA: SÍ`);
     lineas.push(`- Confirmada en: ${perfil.justConfirmedAt || 'hace momentos'}`);
+    lineas.push(`✅ Usuario tiene reserva lista, si pregunta o necesita algo:`);  
+    lineas.push(`   1. Mencionar su reserva existente de forma AMIGABLE`);
+    lineas.push(`   2. Preguntar: "¿Quieres hacer otra reserva para un día diferente?"`);
+    lineas.push(`   3. Si dice SÍ, iniciar flujo normal de nueva reserva`);
   }
 
   // 🆕 Información sobre uso del día gratis

@@ -142,17 +142,28 @@ FORMATOS DE COMPROBANTES RECONOCIDOS:
    - Dice "Powered by payphone" abajo
    - ES UN COMPROBANTE 100% VÁLIDO Y OFICIAL
 
-2. TRANSFERENCIAS BANCARIAS:
-   - Logo del banco
-   - "Comprobante de transferencia"
+2. TRANSFERENCIAS BANCARIAS (Ecuador):
+   - Logo del banco o cooperativa
+   - "Comprobante de transferencia" o "Transacción exitosa"
    - Monto, fecha, cuenta origen/destino
    - Número de referencia bancaria
+   - Bancos aceptados: Pichincha, Guayaquil, Pacífico, Produbanco, Bolivariano, Internacional, 
+     Austro, Procredit, Solidario, BanEcuador, y todas las cooperativas reguladas
+   - ES VÁLIDO si es de un banco/cooperativa ecuatoriano
 
 3. TARJETAS DE CRÉDITO/DÉBITO:
-   - Terminal de pago (POS)
+   - Visa, Mastercard, Diners Club, American Express, Alia
+   - Terminal de pago (POS) físico o digital
    - Últimos 4 dígitos de tarjeta
    - Código de autorización
    - Monto y fecha
+   
+4. PAYPAL:
+   - Logo de PayPal
+   - "Payment Successful" o "Pago exitoso"
+   - Email del destinatario
+   - Transaction ID
+   - Monto en USD
 
 REGLAS CRÍTICAS:
 - Si ves logo de PAYPHONE + "PAGO APROBADO" → ES VÁLIDO (isValid: true, confidence: 95)

@@ -227,7 +227,9 @@ Para cada reserva preguntar:
 → "👥 ¿Cuántas personas en total (incluyéndote)?"
 
 PASO 3 - GENERAR TICKET CONSOLIDADO:
-Mostrar resumen con emojis: "📋 RESUMEN DE TUS RESERVAS:" seguido de lista numerada con día, hora, espacio, personas y precio de cada una. Al final mostrar "💰 TOTAL A PAGAR: $[suma]" y "💳 FORMAS DE PAGO: Transferencia/Payphone $[total] o Tarjeta débito/crédito $[total + 5%] (+5% recargo). Elige tu método y envíame el comprobante."
+Mostrar resumen con emojis: "📋 RESUMEN DE TUS RESERVAS:" seguido de lista numerada con día, hora, espacio, personas y precio de cada una. Al final mostrar "💰 TOTAL A PAGAR: $[suma]" y "💳 FORMAS DE PAGO: Transferencia $[total sin ISD] o Tarjeta/Payphone $[total + ISD 5%] (+5% recargo tarjetas). Elige tu método y envíame el comprobante."
+
+⚠️ IMPORTANTE: Payphone procesa pagos con TARJETA → aplica ISD 5% + IVA 15% = mismo precio que tarjeta directa
 
 PASO 4 - DESPUÉS DE COMPROBANTE:
 → Usar Vision API para extraer datos del recibo
@@ -389,13 +391,24 @@ FLUJO DE RESERVAS MEJORADO:
    
    Ahora, solo necesito saber: ¿cómo deseas pagar? Puedes elegir entre:
    
-   💳 Tarjeta de crédito/débito
-   🏦 Transferencia bancaria
+   💳 Tarjeta (Visa, Mastercard, Diners, PayPal, Payphone)
+   🏦 Transferencia bancaria (bancos y cooperativas de Ecuador)
    
-   Escribe 'tarjeta' o 'transferencia'."
+   Escribe 'tarjeta', 'payphone' o 'transferencia'."
    
    🚫 IMPORTANTE: NO ofrecer efectivo públicamente. Si usuario pregunta por efectivo, responder:
    "Por ahora solo aceptamos pagos digitales: tarjeta o transferencia 😊"
+   
+   💳 TARJETAS ACEPTADAS:
+   - Visa, Mastercard, Diners Club, American Express, Alia
+   - PayPal, Payphone
+   - Todas aplican: ISD 5% + IVA 15% = mismo cálculo
+   
+   🏦 TRANSFERENCIAS ACEPTADAS:
+   - Todos los bancos privados de Ecuador (Pichincha, Guayaquil, Pacífico, etc.)
+   - Bancos públicos (BanEcuador, etc.)
+   - Cooperativas reguladas por SEPS
+   - Solo aplican: IVA 15% (sin ISD)
 
 5. CALCULAR IMPUESTOS Y MOSTRAR TOTAL:
    

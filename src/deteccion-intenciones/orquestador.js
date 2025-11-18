@@ -361,6 +361,11 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`- Cuando usuario solicite nueva reserva, REVISAR si fecha/hora coincide con estas`);
     lineas.push(`- Si hay conflicto: "Ya tienes [espacio] reservado para [fecha] [hora]. ¿Quieres cambiarla o hacer otra diferente?"`);
     lineas.push(`- Si usuario pregunta "¿qué reservas tengo?": Mostrar esta lista formateada`);
+  } else {
+    lineas.push(`\n📅 RESERVAS CONFIRMADAS FUTURAS: Ninguna`);
+    lineas.push(`\n⚠️ Este usuario NO tiene reservas confirmadas todavía.`);
+    lineas.push(`- Si pregunta "¿qué reservas tengo?" → Responder: "No tienes reservas confirmadas aún. ¿Te gustaría hacer una reserva?"`);
+    lineas.push(`- NO inventes fechas ni horarios que no existen en el sistema.`);
   }
 
   // 🆕 Conteo de mensajes para personalización

@@ -127,22 +127,34 @@ export class PartialReservationForm {
     let total = basePrice;
     const taxes = {};
 
-    if (this.paymentMethod === 'transferencia') {
-      // Transferencia: +15% IVA sobre base
-      const iva = basePrice * 0.15;
-      taxes.iva = parseFloat(iva.toFixed(2));
-      total = basePrice + taxes.iva;
-    } else if (this.paymentMethod === 'tarjeta') {
-      // Tarjeta: +5% ISD, luego +15% IVA sobre (base + ISD)
+    // Normalizar método de pago para cálculo de impuestos
+    const metodoPago = this.paymentMethod?.toLowerCase();
+    
+    // Métodos de pago con TARJETA (aplican ISD 5% + IVA 15%)
+    const esPagoConTarjeta = [
+      'tarjeta', 'payphone', 'visa', 'mastercard', 'diners', 'paypal',
+      'credito', 'debito', 'american express', 'amex', 'alia'
+    ].some(metodo => metodoPago?.includes(metodo));
+    
+    if (esPagoConTarjeta) {
+      // TARJETAS (Visa, Mastercard, Diners, PayPal, Payphone, etc.)
+      // +5% ISD (Impuesto Salida Divisas), luego +15% IVA sobre (base + ISD)
       const isd = basePrice * 0.05;
       taxes.isd = parseFloat(isd.toFixed(2));
       
       const subtotalConISD = basePrice + taxes.isd;
       const iva = subtotalConISD * 0.15;
-      // Redondeo correcto: 1.575 debe ser 1.58 (redondear a centavo más cercano)
       taxes.iva = Math.round(iva * 100) / 100;
       
       total = basePrice + taxes.isd + taxes.iva;
+      console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + ISD $${taxes.isd} + IVA $${taxes.iva} = $${total}`);
+    } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
+      // TRANSFERENCIAS BANCARIAS (Ecuador - sin ISD)
+      // Solo +15% IVA sobre base
+      const iva = basePrice * 0.15;
+      taxes.iva = parseFloat(iva.toFixed(2));
+      total = basePrice + taxes.iva;
+      console.log(`[FORM] 🏦 Transferencia bancaria: Base $${basePrice} + IVA $${taxes.iva} = $${total}`);
     } else if (this.paymentMethod === 'efectivo') {
       // 🔓 BYPASS TEMPORAL: Efectivo sin impuestos (para testing)
       // TODO: Remover cuando no se necesite más el bypass
@@ -171,13 +183,21 @@ export class PartialReservationForm {
     let summary = `${spaceName} (${this.durationHours}h)\\n`;
     summary += `Subtotal: $${pricing.base.toFixed(2)}\\n`;
 
-    if (this.paymentMethod === 'transferencia') {
-      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
-      summary += `\\n💵 Total a pagar: $${pricing.total.toFixed(2)}`;
-    } else if (this.paymentMethod === 'tarjeta') {
+    const metodoPago = this.paymentMethod?.toLowerCase();
+    const esPagoConTarjeta = [
+      'tarjeta', 'payphone', 'visa', 'mastercard', 'diners', 'paypal',
+      'credito', 'debito', 'american express', 'amex', 'alia'
+    ].some(metodo => metodoPago?.includes(metodo));
+    
+    if (esPagoConTarjeta) {
+      // Pagos con tarjeta (incluye Payphone, Visa, Mastercard, etc.)
       summary += `ISD (5%): $${pricing.taxes.isd.toFixed(2)}\\n`;
       summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
       summary += `\\n💳 Total a pagar: $${pricing.total.toFixed(2)}`;
+    } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
+      // Transferencias bancarias Ecuador
+      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
+      summary += `\\n🏦 Total a pagar: $${pricing.total.toFixed(2)}`;
     } else if (this.paymentMethod === 'efectivo') {
       // 🔓 BYPASS TEMPORAL para testing
       summary += `\\n💵 Pago en efectivo: $${pricing.total.toFixed(2)}`;

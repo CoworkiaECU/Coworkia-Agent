@@ -146,10 +146,11 @@ ${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` :
 ✅ *¡Pago verificado y confirmado!*
 
 🎉 Tu reserva está lista:
+
 📅 *Fecha:* ${pendingReservation.date}
 ⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
 🏢 *Espacio:* ${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}
-💵 *Pagado:* $${paidAmount.toFixed(2)}
+💰 *Total pagado:* $${paidAmount.toFixed(2)} ✅
 
 ⚠️ *Nota:* No pude enviar email de confirmación porque no tienes email registrado.
 
@@ -180,6 +181,9 @@ ${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` :
       success: true,
       message: `${transcription}
 
+      success: true,
+      message: `${transcription}
+
 ✅ *¡Pago verificado y confirmado!*
 
 🎉 Tu reserva está confirmada:
@@ -187,14 +191,18 @@ ${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` :
 📅 *Fecha:* ${pendingReservation.date}
 ⏰ *Hora:* ${pendingReservation.startTime} - ${pendingReservation.endTime}
 🏢 *Espacio:* ${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}
-💵 *Total pagado:* $${paidAmount.toFixed(2)}
+💰 *Total pagado:* $${paidAmount.toFixed(2)} ✅
 
-📧 Te envié la confirmación completa por email.
+📧 Te envíé la confirmación completa por email.
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere, Piso 4
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Nos vemos en Coworkia! 🚀`,
+      data: paymentData,
+      reservation: updatedReservation,
+      transcription
+    };`,
       data: paymentData,
       reservation: updatedReservation,
       transcription

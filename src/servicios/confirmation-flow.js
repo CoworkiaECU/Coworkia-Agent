@@ -377,6 +377,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 📅 *${confirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
+💰 *Precio:* ¡GRATIS! (primera visita)
 
 📧 Te he enviado la confirmación por email.
 
@@ -425,10 +426,9 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 📅 *${confirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
+💰 *Pago pendiente:* $${pendingReservation.totalPrice} (efectivo en Coworkia)
 
-💵 *Pago en efectivo:* $${pendingReservation.totalPrice}
-
-✅ Pagarás directamente en Coworkia
+✅ Pagarás directamente al llegar
 
 📧 Te he enviado la confirmación por email.
 

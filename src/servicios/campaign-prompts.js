@@ -9,19 +9,16 @@ export const CAMPAIGN_PROMPTS = {
   // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
   PROBAR_SERVICIO: {
     trigger: "quiero probar el servicio",
-    response: `¡Hola {nombre}, soy Aurora! 👩🏼‍💼✨
+    response: `¡Hola {nombre}! 👋🏼 Soy Aurora y estoy aquí para ayudarte a probar nuestro servicio. 🎉 
 
-Qué bueno que quieres conocer Coworkia. Como es tu primera vez, te regalo 2 horas gratis para que pruebes el espacio 🎉
+Como es tu primera visita, te regalo 2 horas GRATIS un hot desk. 
 
-📋 *Tus 2 horas gratis incluyen:*
-🪑 Hot Desk (espacio compartido)
-📶 WiFi de alta velocidad
-☕ Café ilimitado
+¿Qué espacio necesitas? Tenemos:
 
-¿Qué día te gustaría venir?
-¿A qué hora prefieres llegar?
+📍 Hot Desk (gratis 2h)
+🏢 Sala de Reuniones (3-4 personas, $29 por 2h)
 
-Solo necesito esos dos datos y tu email para enviarte la confirmación 😊`
+¡Cuéntame cuál prefieres y avanzamos con los detalles! 😊`
   },
 
   // Mensaje 2: ¡Hola coWorkia! Quiero un espacio privado, con locker propio y pago mensual
@@ -81,14 +78,12 @@ export function personalizeCampaignResponse(template, userProfile) {
       hasHistory
     });
     
-    return `¡Hola ${userName}, qué bueno que estás de vuelta! 😊
+    return `¡Hola ${userName}, qué bueno que estés de vuelta! 😊
 
-Como eres cliente recurrente, ya no aplica la prueba gratis. Tus opciones son:
+¿Que espacio te reservo?:
 
-📍 *Hot Desk* → $10 por 2 horas (1-2 personas)
-🏢 *Sala Reuniones* → $29 por 2 horas (3-4 personas)
-
-¿Cuál te reservo?`;
+📍 *Hot Desk* → $10 por 2 horas
+🏢 *Sala Reuniones* → $29 por 2 horas`;
   }
   
   // Cliente nuevo - aplicar campaña normal
@@ -123,9 +118,7 @@ Qué bueno verte de nuevo. Veo que el *${fecha}* a las *${hora}* disfrutaste tu 
 📍 *Hot Desk* → $10 por 2 horas
 🏢 *Sala de Reuniones* → $29 por 2 horas (3-4 personas)
 
-¿Cuál prefieres?
-
-Te envío el link de pago 💳 y cuando me muestres tu comprobante, te agendo de inmediato 😊`;
+¿Cuál prefieres? te agendo de inmediato 😊`;
 }
 
 /**

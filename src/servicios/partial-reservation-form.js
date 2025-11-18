@@ -139,7 +139,8 @@ export class PartialReservationForm {
       
       const subtotalConISD = basePrice + taxes.isd;
       const iva = subtotalConISD * 0.15;
-      taxes.iva = parseFloat(iva.toFixed(2));
+      // Redondeo correcto: 1.575 debe ser 1.58 (redondear a centavo más cercano)
+      taxes.iva = Math.round(iva * 100) / 100;
       
       total = basePrice + taxes.isd + taxes.iva;
     }

@@ -368,9 +368,9 @@ FLUJO DE RESERVAS MEJORADO:
    "📍 Hot Desk (2h)
    Subtotal: $10.00
    ISD (5%): $0.50
-   IVA (15%): $1.50
+   IVA (15% sobre subtotal con ISD): $1.58
    
-   💳 Total a pagar: $12.00
+   💳 Total a pagar: $12.08
    
    💳 Paga aquí: https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
    

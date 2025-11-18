@@ -4,18 +4,14 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --config nodemon.json src/express-servidor/index.js",
-    "dev:local": "NODE_ENV=development FORCE_SQLITE=true nodemon --config nodemon.json src/express-servidor/index.js",
     "start": "node src/express-servidor/index.js",
     "test:aurora": "node scripts/test-aurora-local.js",
     "test:conversation": "node scripts/test-aurora-local.js --conversation",
     "test:cancel": "node scripts/test-aurora-local.js --cancel",
-    "backup": "node scripts/backup-database.js",
-    "backup:list": "node scripts/backup-database.js list",
     "cleanup": "node scripts/cleanup-expired-data.js",
     "cleanup:dry-run": "node scripts/cleanup-expired-data.js --dry-run",
     "audit": "node scripts/audit-reservations.js",
     "reservations": "node scripts/manage-reservations.js",
-    "migrate": "node scripts/migrate-to-sqlite.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --verbose",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
@@ -31,8 +27,7 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.7",
     "openai": "^6.7.0",
-    "pg": "^8.16.3",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",

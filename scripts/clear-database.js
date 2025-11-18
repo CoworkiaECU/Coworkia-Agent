@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * Script para limpiar toda la base de datos
+ * Script para limpiar PostgreSQL en Heroku (ÚNICA BASE DE DATOS)
  * Uso: node scripts/clear-database.js
+ * 
+ * ⚠️ LIMPIA LA BASE DE DATOS EN HEROKU - USAR CON PRECAUCIÓN
  */
 
 import databaseService from '../src/database/database.js';
@@ -14,14 +16,15 @@ const __dirname = path.dirname(__filename);
 
 async function clearDatabase() {
   try {
-    console.log('🗑️  Limpiando base de datos...');
+    console.log('🗑️  Limpiando PostgreSQL en Heroku...');
+    console.log('⚠️  Esta operación limpia la ÚNICA base de datos de producción');
     
     await databaseService.initialize();
     
     const tables = [
-      'interactions',
-      'conversation_history',
+      'partial_forms',
       'reservation_state',
+      'interactions',
       'pending_confirmations',
       'reservations',
       'users'
@@ -32,23 +35,23 @@ async function clearDatabase() {
       try {
         await databaseService.run(`DELETE FROM ${table}`);
       } catch (error) {
-        console.log(`   ⚠️  Tabla ${table} no existe o ya está vacía`);
+        console.log(`   ⚠️  Error limpiando ${table}:`, error.message);
       }
     }
     
-    // 🗑️ Limpiar archivo interactions.jsonl
+    // 🗑️ Limpiar archivo interactions.jsonl (si existe localmente)
     const interactionsFile = path.join(__dirname, '../data/interactions.jsonl');
     if (fs.existsSync(interactionsFile)) {
-      console.log('   Limpiando archivo: interactions.jsonl');
+      console.log('   Limpiando archivo local: interactions.jsonl');
       fs.writeFileSync(interactionsFile, '', 'utf-8');
       console.log('   ✅ interactions.jsonl vaciado');
     }
     
-    console.log('✅ Base de datos limpiada exitosamente');
-    console.log('📊 Todas las tablas vaciadas:');
+    console.log('✅ PostgreSQL limpiado exitosamente');
+    console.log('📊 Todas las tablas vaciadas en Heroku:');
     tables.forEach(t => console.log(`   - ${t}`));
-    console.log('   - interactions.jsonl');
     
+    await databaseService.close();
     process.exit(0);
   } catch (error) {
     console.error('❌ Error limpiando base de datos:', error);

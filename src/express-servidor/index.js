@@ -4,12 +4,20 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// 🚨 VALIDAR DATABASE_URL ANTES DE INICIAR
+if (!process.env.DATABASE_URL) {
+  console.error('❌ ERROR CRÍTICO: DATABASE_URL no está configurado');
+  console.error('   Esta aplicación usa ÚNICA base de datos: PostgreSQL en Heroku');
+  console.error('   Configura DATABASE_URL para conectarte a la base de datos en Heroku');
+  process.exit(1);
+}
+
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 
-// 🗄️ Inicializar SQLite Database
+// 🗄️ Inicializar PostgreSQL Database (ÚNICA BASE DE DATOS)
 import databaseService from '../database/database.js';
 
 // 🕐 Scheduler para tareas programadas
@@ -167,7 +175,7 @@ async function startServer() {
   try {
     console.log('🗄️ Inicializando base de datos SQLite...');
     await databaseService.initialize();
-    console.log('✅ Base de datos SQLite inicializada correctamente');
+    console.log('✅ Base de datos PostgreSQL inicializada correctamente');
     
     // Iniciar tareas programadas
     console.log('⏰ Iniciando tareas programadas...');
@@ -176,7 +184,7 @@ async function startServer() {
     // Arrancar servidor después de DB
     app.listen(PORT, () => {
       console.log(`> Coworkia Agent listo en http://localhost:${PORT}`);
-      console.log(`> SQLite Database: ${process.env.DATABASE_URL || './data/coworkia.db'}`);
+      console.log(`> PostgreSQL Database: HEROKU (única base de datos)`);
       console.log(`> Cron Jobs: ACTIVOS`);
     });
     

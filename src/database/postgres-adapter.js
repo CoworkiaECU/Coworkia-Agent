@@ -52,7 +52,7 @@ class PostgresAdapter {
   }
 
   /**
-   * 🏗️ Crea las tablas si no existen
+   * 🏗️ Crea las tablas si no existen (ALINEADO CON SQLite)
    */
   async createTables() {
     const client = await this.pool.connect();
@@ -60,7 +60,7 @@ class PostgresAdapter {
     try {
       await client.query('BEGIN');
 
-      // Tabla de usuarios
+      // Tabla de usuarios (COMPLETA - incluye active_agent)
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           phone_number TEXT PRIMARY KEY,
@@ -72,45 +72,34 @@ class PostgresAdapter {
           free_trial_date TIMESTAMP,
           conversation_count INTEGER DEFAULT 0,
           last_message_at TIMESTAMP,
+          active_agent TEXT DEFAULT 'AURORA',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
-      // Tabla de confirmaciones pendientes
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS pending_confirmations (
-          id SERIAL PRIMARY KEY,
-          user_phone TEXT UNIQUE NOT NULL,
-          reservation_data JSONB NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          expires_at TIMESTAMP
-        )
-      `);
-
-      // Tabla de flags justConfirmed
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS just_confirmed (
-          user_phone TEXT PRIMARY KEY,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          expires_at TIMESTAMP
-        )
-      `);
-
-      // Tabla de reservas
+      // Tabla de reservas (COMPLETA - todas las columnas de SQLite)
       await client.query(`
         CREATE TABLE IF NOT EXISTS reservations (
-          id SERIAL PRIMARY KEY,
+          id TEXT PRIMARY KEY,
           user_phone TEXT NOT NULL,
+          service_type TEXT NOT NULL,
           date DATE NOT NULL,
           start_time TEXT NOT NULL,
           end_time TEXT NOT NULL,
-          service_type TEXT NOT NULL,
-          total_price DECIMAL(10, 2),
+          duration_hours INTEGER NOT NULL,
+          guest_count INTEGER DEFAULT 0,
+          total_price DECIMAL(10,2) DEFAULT 0,
+          was_free BOOLEAN DEFAULT FALSE,
           status TEXT DEFAULT 'pending',
+          payment_status TEXT DEFAULT 'pending',
+          payment_data TEXT,
+          payment_method TEXT,
+          hot_desk_number INTEGER,
+          calendar_event_id TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           confirmed_at TIMESTAMP,
-          cancelled_at TIMESTAMP
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
         )
       `);
 
@@ -119,23 +108,47 @@ class PostgresAdapter {
         CREATE TABLE IF NOT EXISTS interactions (
           id SERIAL PRIMARY KEY,
           user_phone TEXT NOT NULL,
-          agent TEXT NOT NULL,
+          agent TEXT,
           agent_name TEXT,
           intent_reason TEXT,
           input TEXT,
           output TEXT,
-          meta JSONB,
-          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          meta TEXT,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
         )
       `);
 
-      // Tabla de formularios temporales
+      // Tabla de confirmaciones pendientes (ALINEADA CON SQLite)
       await client.query(`
-        CREATE TABLE IF NOT EXISTS form_data (
-          user_id TEXT PRIMARY KEY,
-          data JSONB NOT NULL,
+        CREATE TABLE IF NOT EXISTS pending_confirmations (
+          user_phone TEXT PRIMARY KEY,
+          reservation_data TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          expires_at TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
+        )
+      `);
+
+      // Tabla de estado de reservas (justConfirmed flag)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS reservation_state (
+          user_phone TEXT PRIMARY KEY,
+          just_confirmed_until TIMESTAMP,
+          last_reservation_id TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
+        )
+      `);
+
+      // Tabla de formularios parciales guardados (para cancelaciones)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS partial_forms (
+          user_phone TEXT PRIMARY KEY,
+          form_data TEXT NOT NULL,
+          form_type TEXT,
+          cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
         )
       `);
 
@@ -154,13 +167,20 @@ class PostgresAdapter {
       // Índices para mejorar performance
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-        CREATE INDEX IF NOT EXISTS idx_reservations_user_date ON reservations(user_phone, date);
+        CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(date);
+        CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+        CREATE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type);
+        CREATE INDEX IF NOT EXISTS idx_pending_confirmations_expires ON pending_confirmations(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_reservation_state_just_confirmed ON reservation_state(just_confirmed_until);
+        CREATE INDEX IF NOT EXISTS idx_partial_forms_cancelled ON partial_forms(cancelled_at);
         CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_phone);
       `);
 
       await client.query('COMMIT');
-      console.log('[POSTGRES] ✅ Esquema de tablas creado');
+      console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('[POSTGRES] ❌ Error creando tablas:', error);
@@ -168,10 +188,6 @@ class PostgresAdapter {
     } finally {
       client.release();
     }
-
-    // Marcar como inicializado
-    this.isInitialized = true;
-    console.log('[POSTGRES] ✅ Base de datos inicializada');
   }
 
   /**

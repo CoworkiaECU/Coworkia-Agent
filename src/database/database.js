@@ -171,7 +171,8 @@ class DatabaseService {
       'CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_phone)',
       'CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(date)',
       'CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status)',
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type)',
+      // Cambio: Ya NO es UNIQUE porque ahora permitimos múltiples Hot Desks en mismo slot (max 6)
+      'CREATE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type)',
       'CREATE INDEX IF NOT EXISTS idx_pending_confirmations_expires ON pending_confirmations(expires_at)',
       'CREATE INDEX IF NOT EXISTS idx_reservation_state_just_confirmed ON reservation_state(just_confirmed_until)',
       'CREATE INDEX IF NOT EXISTS idx_partial_forms_cancelled ON partial_forms(cancelled_at)',

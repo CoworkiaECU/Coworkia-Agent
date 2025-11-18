@@ -56,21 +56,26 @@ class ReservationRepository {
       was_free = false,
       status = 'pending',
       payment_status = 'pending',
-      payment_data = null
+      payment_data = null,
+      hot_desk_number = null, // Nuevo: número de Hot Desk (1-6)
+      payment_method = null, // Nuevo: método de pago
+      calendar_event_id = null // Nuevo: ID de evento en Google Calendar
     } = reservationData;
 
     const query = `
       INSERT INTO reservations (
         id, user_phone, service_type, date, start_time, end_time,
         duration_hours, guest_count, total_price, was_free,
-        status, payment_status, payment_data
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        status, payment_status, payment_data, hot_desk_number,
+        payment_method, calendar_event_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       id, user_phone, service_type, date, start_time, end_time,
       duration_hours, guest_count, total_price, was_free ? 1 : 0,
-      status, payment_status, payment_data ? JSON.stringify(payment_data) : null
+      status, payment_status, payment_data ? JSON.stringify(payment_data) : null,
+      hot_desk_number, payment_method, calendar_event_id
     ];
 
     await databaseService.run(query, params);
@@ -374,7 +379,7 @@ class ReservationRepository {
     databaseService.ensureInitialized();
     
     const query = `
-      SELECT COUNT(*) as count, GROUP_CONCAT(hot_desk_number) as occupied_numbers
+      SELECT hot_desk_number
       FROM reservations
       WHERE service_type = 'hotDesk'
         AND status = 'confirmed'
@@ -384,19 +389,18 @@ class ReservationRepository {
           OR (start_time >= ? AND start_time < ?)
           OR (start_time <= ? AND end_time > ?)
         )
+        AND hot_desk_number IS NOT NULL
     `;
     
-    const result = await databaseService.get(query, [
+    const results = await databaseService.all(query, [
       date,
       endTime, startTime,
       startTime, endTime,
       startTime, startTime
     ]);
     
-    const occupiedCount = result?.count || 0;
-    const occupiedNumbers = result?.occupied_numbers 
-      ? result.occupied_numbers.split(',').map(n => parseInt(n)).filter(n => !isNaN(n))
-      : [];
+    const occupiedNumbers = results.map(r => r.hot_desk_number).filter(n => n != null);
+    const occupiedCount = occupiedNumbers.length;
     
     return {
       occupiedCount,

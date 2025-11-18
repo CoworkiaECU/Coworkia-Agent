@@ -181,9 +181,6 @@ ${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` :
       success: true,
       message: `${transcription}
 
-      success: true,
-      message: `${transcription}
-
 ✅ *¡Pago verificado y confirmado!*
 
 🎉 Tu reserva está confirmada:
@@ -199,10 +196,6 @@ ${paymentData.receiptNumber ? `📝 Comprobante: ${paymentData.receiptNumber}` :
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¡Nos vemos en Coworkia! 🚀`,
-      data: paymentData,
-      reservation: updatedReservation,
-      transcription
-    };`,
       data: paymentData,
       reservation: updatedReservation,
       transcription

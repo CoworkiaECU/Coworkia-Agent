@@ -352,7 +352,9 @@ export async function createReservation(reservationData) {
     wasFree = false,
     email = null,
     total = 0,
-    guestCount = 0
+    guestCount = 0,
+    hotDeskNumber = null, // Nuevo campo: número de Hot Desk asignado
+    paymentMethod = null // Nuevo campo: método de pago
   } = reservationData;
   
   // Verificar disponibilidad primero
@@ -380,7 +382,9 @@ export async function createReservation(reservationData) {
       was_free: wasFree,
       status: 'pending',
       payment_status: wasFree ? 'waived' : 'pending',
-      payment_data: email ? { email } : null
+      payment_data: email ? { email } : null,
+      payment_method: paymentMethod, // Guardar método de pago
+      hot_desk_number: hotDeskNumber // Guardar número de Hot Desk
     });
     
     return {
@@ -399,9 +403,11 @@ export async function createReservation(reservationData) {
         email,
         total,
         guestCount,
+        hotDeskNumber,
+        paymentMethod,
         createdAt: newReservation.created_at
       },
-      message: `Reserva creada: ${date} de ${startTime} a ${endTime} (${durationHours}h)`
+      message: `Reserva creada: ${date} de ${startTime} a ${endTime} (${durationHours}h)${hotDeskNumber ? ` - Hot Desk ${hotDeskNumber}/6` : ''}`
     };
   } catch (error) {
     console.error('[CALENDARIO] Error creando reserva:', error);
@@ -652,6 +658,45 @@ export async function getDayStats(date) {
   };
 }
 
+/**
+ * 🔍 Verifica disponibilidad de Hot Desks para un slot específico
+ * Retorna información detallada para validación y mensajes de Aurora
+ * 
+ * @param {string} date - Fecha en formato YYYY-MM-DD
+ * @param {string} startTime - Hora de inicio HH:MM
+ * @param {string} endTime - Hora de fin HH:MM
+ * @returns {Object} Estado de disponibilidad con detalles
+ */
+export async function checkHotDeskAvailability(date, startTime, endTime) {
+  const availability = await reservationRepository.countOccupiedHotDesks(date, startTime, endTime);
+  
+  const message = availability.isFull
+    ? '❌ Lo siento, todos los Hot Desks están reservados para ese horario.'
+    : `✅ Hay ${availability.availableCount} Hot Desk${availability.availableCount !== 1 ? 's' : ''} disponible${availability.availableCount !== 1 ? 's' : ''}.`;
+  
+  return {
+    available: !availability.isFull,
+    occupiedCount: availability.occupiedCount,
+    availableCount: availability.availableCount,
+    occupiedNumbers: availability.occupiedNumbers,
+    maxCapacity: 6,
+    message
+  };
+}
+
+/**
+ * 🔢 Asigna número de Hot Desk para una reserva
+ * Utiliza el repository para obtener el siguiente número disponible
+ * 
+ * @param {string} date - Fecha de la reserva
+ * @param {string} startTime - Hora de inicio
+ * @param {string} endTime - Hora de fin
+ * @returns {number|null} Número asignado (1-6) o null si no hay disponibles
+ */
+export async function assignHotDeskNumber(date, startTime, endTime) {
+  return await reservationRepository.assignHotDeskNumber(date, startTime, endTime);
+}
+
 export { CALENDAR_CONFIG, SERVICE_CAPACITY };
 
 export default {
@@ -665,6 +710,8 @@ export default {
   updateReservationPayment,
   getReservationByPaymentInfo,
   getDayStats,
+  checkHotDeskAvailability,
+  assignHotDeskNumber,
   CALENDAR_CONFIG,
   SERVICE_CAPACITY
 };

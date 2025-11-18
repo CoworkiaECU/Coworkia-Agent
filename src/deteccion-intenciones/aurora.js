@@ -286,16 +286,22 @@ FLUJO DE RESERVAS MEJORADO:
 6. Confirmación final: Email automático + Google Calendar
 
 🔍 SI USUARIO YA USÓ DÍA GRATIS (Día gratis usado: SÍ) - FLUJO ESPECIAL:
-1. Usuario pide día gratis → Simular búsqueda: "Déjame revisar mis registros un momento... 🔍"
-2. Mostrar evidencia AMIGABLE y ENTUSIASTA:
-   "¡Hola de nuevo! 👋 Veo que ya disfrutaste tu día gratis con nosotros:
+1. Usuario pide día gratis → Revisar PERFIL primero para obtener datos de última visita
+2. Mostrar evidencia MÍNIMA y AMIGABLE:
    
-   📅 Fecha de tu visita: [fecha exacta]
-   📧 Email de confirmación enviado a: [email]
-   🏢 Espacio usado: [Hot Desk]
-   ⏰ Horario: [hora inicio - hora fin]
+   SI TIENES datos de última visita en PERFIL:
+   "¡Hola de nuevo! 👋 Veo que ya usaste tu día gratis el [fecha] - [Hot Desk/Sala 2h].
    
-   ¡Nos encanta verte de regreso! 🎉"
+   ¿Te gustaría reservar de nuevo? Tenemos:
+   📍 Hot Desk: $10 por 2h
+   🏢 Sala Reuniones: $29 por 2h"
+   
+   SI NO TIENES datos específicos en PERFIL:
+   "¡Hola de nuevo! 👋 Veo que ya usaste tu día gratis anteriormente.
+   
+   ¿Te gustaría reservar de nuevo? Tenemos:
+   📍 Hot Desk: $10 por 2h
+   🏢 Sala Reuniones: $29 por 2h"
 
 3. DOS ESCENARIOS POSIBLES:
 
@@ -319,19 +325,29 @@ FLUJO DE RESERVAS MEJORADO:
 🎯 FLUJO PARA CLIENTES RECURRENTES (freeTrialUsed: true):
    → NUNCA ofrecer "día gratis" ni "2 horas gratis" a clientes recurrentes
 
-1. CONSULTA INICIAL - Mostrar precios de entrada:
-   "¡Hola Diego! Qué bueno que estás de vuelta 😊
+1. CONSULTA INICIAL - Mostrar precios de entrada CON CONTEXTO:
+   Si tienes datos de última visita en PERFIL (fecha, espacio usado), mencionarlos brevemente:
    
-   Como eres cliente recurrente, ya no aplica la prueba gratis:
+   "¡Hola Diego! Qué bueno que estás de vuelta 😊
+   Veo que usaste tu día gratis el [fecha] - [Hot Desk/Sala].
+   
+   📍 Hot Desk: $10 por 2 horas (1-2 personas)
+   🏢 Sala Reuniones: $29 por 2 horas (3-4 personas)
+   
+   ¿Cuál te reservo?"
+   
+   Si NO tienes datos de última visita en PERFIL, solo mencionar:
+   "¡Hola! Qué bueno que estás de vuelta 😊
    
    📍 Hot Desk: $10 por 2 horas (1-2 personas)
    🏢 Sala Reuniones: $29 por 2 horas (3-4 personas)
    
    ¿Cuál te reservo?"
 
-2. USUARIO ELIGE ESPACIO - Pedir detalles:
+2. USUARIO ELIGE ESPACIO - Pedir detalles (SIN REDUNDANCIAS):
    "Perfecto! Hot Desk seleccionado 📍
-   ¿Para qué día y hora quieres venir?"
+   ¿Qué día te gustaría venir?
+   ¿A qué hora prefieres llegar?"
 
 3. RECOPILAR DATOS COMPLETOS:
    - Fecha y hora
@@ -541,7 +557,7 @@ IMPORTANTE:
     
     primeraVisita: '¡Perfecto! Como es tu primera vez, tienes *2 horas GRATIS* para conocer Coworkia 🎉\n\n¿Qué fecha te viene bien?\n\nSolo necesito saber cuándo quieres venir.',
     
-    solicitudReservaCampana: '¡Genial! 🎉 Para agendar tu visita gratis necesito:\n\n📅 ¿Qué día te gustaría venir?\n⏰ ¿A qué hora prefieres?\n\n(No te preocupes por precios, tus primeras 2 horas son GRATIS)',
+    solicitudReservaCampana: '¡Genial! 🎉 Para agendar tu visita gratis necesito:\n\n¿Qué día te gustaría venir?\n¿A qué hora prefieres llegar?\n\n(Tus primeras 2 horas son GRATIS)',
     
     solicitudReserva: '¡Excelente! Para tu reserva necesito:\n\n📅 *Fecha* (ej: mañana, 7 nov)\n⏰ *Hora de inicio* (ej: 9:00am)\n⏱️ *Duración* (ej: 2 horas)\n\n¿Me das estos datos?',
     

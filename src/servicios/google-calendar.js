@@ -130,20 +130,38 @@ export async function createCalendarEvent(reservationData) {
     };
     
     const serviceName = serviceNames[serviceType] || serviceType;
-    const eventTitle = `${serviceName} ${userName}${guestSuffix}`;
+    
+    // 🔢 Agregar número de Hot Desk al título si está disponible
+    const hotDeskNumber = reservationData.hotDeskNumber;
+    const hotDeskSuffix = (serviceType === 'hotDesk' || serviceType === 'Hot Desk') && hotDeskNumber 
+      ? ` ${hotDeskNumber}/6` 
+      : '';
+    
+    const eventTitle = `${serviceName}${hotDeskSuffix} ${userName}${guestSuffix}`;
+    
+    // 💳 Formato de método de pago
+    const paymentMethod = reservationData.paymentMethod;
+    const paymentDisplay = paymentMethod
+      ? {
+          'tarjeta': 'Tarjeta Online',
+          'transferencia': 'Transferencia Online',
+          'efectivo': 'Efectivo Presencial'
+        }[paymentMethod] || 'Pendiente'
+      : 'Pendiente';
     
     // Definir el evento (Google generará ID automáticamente)
     const event = {
-      summary: eventTitle, // Ejemplo: "Hot Desk Diego Villota +2"
+      summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"
       description: `
 🎯 Reserva confirmada en Coworkia
 
 👤 Cliente: ${userName}
 📧 Email: ${email}
-🏢 Espacio: ${serviceName}
+🏢 Espacio: ${serviceName}${hotDeskSuffix}
 👥 Personas: ${1 + guestCount} (cliente + ${guestCount} acompañantes)
 ⏱️ Duración: ${duration || '2 horas'}
 💰 Precio: ${price ? `$${price} USD` : 'GRATIS (primera vez)'}
+💳 Pago: ${paymentDisplay}
 
 📅 Fecha: ${date}
 🕐 Horario: ${startTime} - ${endTime}

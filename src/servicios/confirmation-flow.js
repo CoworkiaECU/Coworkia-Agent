@@ -235,6 +235,39 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       pendingReservation.userName = userProfile.name;
     }
     
+    // 🔍 VALIDACIÓN: Verificar disponibilidad de Hot Desks ANTES de confirmar
+    if (pendingReservation.serviceType === 'hotDesk') {
+      const { checkHotDeskAvailability, assignHotDeskNumber } = await import('./calendario.js');
+      
+      const availability = await checkHotDeskAvailability(
+        pendingReservation.date,
+        pendingReservation.startTime,
+        pendingReservation.endTime
+      );
+      
+      if (!availability.available) {
+        console.log('[Confirmation] ❌ Hot Desks agotados:', availability);
+        
+        // TODO: Aurora debe ofrecer alternativas (siguiente slot disponible o día siguiente)
+        throw new ConfirmationFlowError({
+          success: false,
+          message: `${availability.message}\n\nDéjame revisar otros horarios disponibles...`,
+          needsAction: true,
+          actionType: 'check_alternatives'
+        });
+      }
+      
+      // Asignar número de Hot Desk automáticamente
+      const hotDeskNumber = await assignHotDeskNumber(
+        pendingReservation.date,
+        pendingReservation.startTime,
+        pendingReservation.endTime
+      );
+      
+      pendingReservation.hotDeskNumber = hotDeskNumber;
+      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/6`);
+    }
+    
     // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción
     await databaseService.transaction(async () => {
       const reservationResult = await createReservation(pendingReservation);

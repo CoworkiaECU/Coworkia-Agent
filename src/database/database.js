@@ -117,6 +117,9 @@ class DatabaseService {
         status TEXT DEFAULT 'pending',
         payment_status TEXT DEFAULT 'pending',
         payment_data TEXT, -- JSON stringified
+        payment_method TEXT, -- tarjeta/transferencia/efectivo
+        hot_desk_number INTEGER, -- 1-6 para Hot Desk, NULL para Salas
+        calendar_event_id TEXT, -- ID del evento en Google Calendar
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         confirmed_at DATETIME,
         FOREIGN KEY (user_phone) REFERENCES users(phone_number)

@@ -324,6 +324,87 @@ class ReservationRepository {
       return reservation;
     });
   }
+
+  /**
+   * 🔢 Asigna número de Hot Desk automáticamente (1-6)
+   * Consulta reservas confirmadas en el mismo slot y asigna el siguiente disponible
+   */
+  async assignHotDeskNumber(date, startTime, endTime) {
+    databaseService.ensureInitialized();
+    
+    const query = `
+      SELECT hot_desk_number
+      FROM reservations
+      WHERE service_type = 'hotDesk'
+        AND status = 'confirmed'
+        AND date = ?
+        AND (
+          (start_time < ? AND end_time > ?)
+          OR (start_time >= ? AND start_time < ?)
+          OR (start_time <= ? AND end_time > ?)
+        )
+        AND hot_desk_number IS NOT NULL
+      ORDER BY hot_desk_number ASC
+    `;
+    
+    const occupiedDesks = await databaseService.all(query, [
+      date,
+      endTime, startTime, // Overlap: starts before end, ends after start
+      startTime, endTime, // Overlap: starts within slot
+      startTime, startTime // Overlap: starts at or before start, ends after start
+    ]);
+    
+    const occupiedNumbers = occupiedDesks.map(r => r.hot_desk_number);
+    
+    // Buscar primer número disponible (1-6)
+    for (let i = 1; i <= 6; i++) {
+      if (!occupiedNumbers.includes(i)) {
+        return i;
+      }
+    }
+    
+    return null; // Todos ocupados
+  }
+
+  /**
+   * 📊 Cuenta cuántos Hot Desks están ocupados en un slot específico
+   * Retorna información para validación de disponibilidad
+   */
+  async countOccupiedHotDesks(date, startTime, endTime) {
+    databaseService.ensureInitialized();
+    
+    const query = `
+      SELECT COUNT(*) as count, GROUP_CONCAT(hot_desk_number) as occupied_numbers
+      FROM reservations
+      WHERE service_type = 'hotDesk'
+        AND status = 'confirmed'
+        AND date = ?
+        AND (
+          (start_time < ? AND end_time > ?)
+          OR (start_time >= ? AND start_time < ?)
+          OR (start_time <= ? AND end_time > ?)
+        )
+    `;
+    
+    const result = await databaseService.get(query, [
+      date,
+      endTime, startTime,
+      startTime, endTime,
+      startTime, startTime
+    ]);
+    
+    const occupiedCount = result?.count || 0;
+    const occupiedNumbers = result?.occupied_numbers 
+      ? result.occupied_numbers.split(',').map(n => parseInt(n)).filter(n => !isNaN(n))
+      : [];
+    
+    return {
+      occupiedCount,
+      availableCount: 6 - occupiedCount,
+      occupiedNumbers,
+      isFull: occupiedCount >= 6
+    };
+  }
 }
 
 export default new ReservationRepository();

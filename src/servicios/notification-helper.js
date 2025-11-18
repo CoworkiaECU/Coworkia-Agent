@@ -158,7 +158,9 @@ export async function sendReservationNotifications(notificationData) {
       guestCount,
       price: totalPrice,
       duration: `${durationHours} horas`,
-      reservationId: reservation?.id
+      reservationId: reservation?.id,
+      hotDeskNumber: reservation?.hot_desk_number || reservation?.hotDeskNumber, // Número de Hot Desk
+      paymentMethod: reservation?.payment_method || reservation?.paymentMethod // Método de pago
     })
   ]);
   

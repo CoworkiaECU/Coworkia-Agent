@@ -492,6 +492,97 @@ export async function getUserReservations(userId) {
 }
 
 /**
+ * 📅 Obtiene reservas confirmadas futuras de un usuario
+ * Retorna formato legible para mostrar en conversación
+ */
+export async function getUpcomingReservations(userId) {
+  const reservations = await reservationRepository.findUpcomingByUser(userId);
+  
+  if (reservations.length === 0) {
+    return {
+      hasReservations: false,
+      count: 0,
+      summary: 'No tienes reservas confirmadas próximas.',
+      reservations: []
+    };
+  }
+  
+  const formatted = reservations.map((r, index) => {
+    const spaceName = r.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+    const price = r.was_free ? 'GRATIS' : `$${parseFloat(r.total_amount).toFixed(2)}`;
+    const people = r.num_people > 1 ? ` (${r.num_people} personas)` : '';
+    
+    return {
+      index: index + 1,
+      date: r.date,
+      time: `${r.start_time} - ${r.end_time}`,
+      space: spaceName,
+      people: r.num_people,
+      price: price,
+      formatted: `${index + 1}. ${r.date} ${r.start_time}-${r.end_time} - ${spaceName}${people} - ${price}`
+    };
+  });
+  
+  const summary = formatted.map(r => r.formatted).join('\n');
+  
+  return {
+    hasReservations: true,
+    count: reservations.length,
+    summary: `📋 TUS PRÓXIMAS RESERVAS:\n${summary}`,
+    reservations: formatted
+  };
+}
+
+/**
+ * 🔍 Detecta conflictos de horario con reservas existentes del usuario
+ */
+export async function checkUserConflicts(userId, requestedDate, requestedTime, durationHours = 2) {
+  const upcoming = await reservationRepository.findUpcomingByUser(userId);
+  
+  // Convertir hora solicitada a minutos
+  const [reqHour, reqMin] = requestedTime.split(':').map(Number);
+  const reqStartMinutes = reqHour * 60 + reqMin;
+  const reqEndMinutes = reqStartMinutes + (durationHours * 60);
+  
+  // Buscar conflictos en la misma fecha
+  const conflicts = upcoming.filter(r => {
+    if (r.date !== requestedDate) return false;
+    
+    const [startHour, startMin] = r.start_time.split(':').map(Number);
+    const [endHour, endMin] = r.end_time.split(':').map(Number);
+    
+    const existingStart = startHour * 60 + startMin;
+    const existingEnd = endHour * 60 + endMin;
+    
+    // Hay conflicto si los rangos se sobreponen
+    return (reqStartMinutes < existingEnd && reqEndMinutes > existingStart);
+  });
+  
+  if (conflicts.length === 0) {
+    return {
+      hasConflict: false,
+      conflicts: []
+    };
+  }
+  
+  const conflictDetails = conflicts.map(c => {
+    const spaceName = c.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+    return {
+      date: c.date,
+      time: `${c.start_time} - ${c.end_time}`,
+      space: spaceName,
+      message: `Ya tienes ${spaceName} reservado para ${c.date} de ${c.start_time} a ${c.end_time}`
+    };
+  });
+  
+  return {
+    hasConflict: true,
+    conflicts: conflictDetails,
+    message: conflictDetails.map(c => c.message).join('. ')
+  };
+}
+
+/**
  * 💳 Actualiza información de pago de una reserva
  */
 export async function updateReservationPayment(reservationId, paymentInfo) {
@@ -569,6 +660,8 @@ export default {
   confirmReservation,
   cancelReservation,
   getUserReservations,
+  getUpcomingReservations,
+  checkUserConflicts,
   updateReservationPayment,
   getReservationByPaymentInfo,
   getDayStats,

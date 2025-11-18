@@ -338,6 +338,27 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`\n💡 Si usuario pregunta por sus reservas, muéstrale este historial con precios claros`);
   }
 
+  // 🆕 RESERVAS CONFIRMADAS FUTURAS (para detectar conflictos y mostrar agenda)
+  if (perfil.upcomingReservations && perfil.upcomingReservations.length > 0) {
+    lineas.push(`\n📅 RESERVAS CONFIRMADAS FUTURAS (${perfil.upcomingReservations.length} próximas):`);
+    
+    perfil.upcomingReservations.forEach((reserva, index) => {
+      const numero = index + 1;
+      const fecha = reserva.date;
+      const tiempo = reserva.time || `${reserva.start_time || 'N/A'}-${reserva.end_time || 'N/A'}`;
+      const espacio = reserva.space || (reserva.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones');
+      const personas = reserva.people > 1 ? ` (${reserva.people} personas)` : '';
+      const precio = reserva.price || (reserva.was_free ? 'GRATIS' : 'PAGADO');
+      
+      lineas.push(`${numero}. ${fecha} ${tiempo} - ${espacio}${personas} - ${precio}`);
+    });
+    
+    lineas.push(`\n⚠️ IMPORTANTE - DETECCIÓN DE CONFLICTOS:`);
+    lineas.push(`- Cuando usuario solicite nueva reserva, REVISAR si fecha/hora coincide con estas`);
+    lineas.push(`- Si hay conflicto: "Ya tienes [espacio] reservado para [fecha] [hora]. ¿Quieres cambiarla o hacer otra diferente?"`);
+    lineas.push(`- Si usuario pregunta "¿qué reservas tengo?": Mostrar esta lista formateada`);
+  }
+
   // 🆕 Conteo de mensajes para personalización
   if (perfil.conversationCount) {
     lineas.push(`- Mensajes enviados: ${perfil.conversationCount}`);

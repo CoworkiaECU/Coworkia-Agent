@@ -100,6 +100,7 @@ export async function loadProfile(userId) {
     
     // Convertir formato SQLite a formato esperado por la aplicación
     const reservationHistory = await getReservationHistory(userId);
+    const upcomingReservations = await getUpcomingReservations(userId);
     const pendingConfirmation = await dbGetPendingConfirmation(userId);
     const justState = await getJustConfirmedState(userId);
 
@@ -118,6 +119,7 @@ export async function loadProfile(userId) {
       updatedAt: user.updated_at,
       activeAgent: user.active_agent || 'AURORA', // Agente activo actual
       reservationHistory,
+      upcomingReservations, // 🆕 Reservas confirmadas futuras
       pendingConfirmation,
       justConfirmed: justState.isActive,
       justConfirmedUntil: justState.until
@@ -202,12 +204,37 @@ async function getReservationHistory(userId) {
       endTime: reservation.end_time,
       time: `${reservation.start_time}-${reservation.end_time}`,
       type: reservation.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones',
+      serviceType: reservation.service_type,
       status: reservation.status,
       wasFree: reservation.was_free,
       createdAt: reservation.created_at
     }));
   } catch (error) {
     console.error('[MEMORIA] Error obteniendo historial de reservas:', error);
+    return [];
+  }
+}
+
+/**
+ * 📅 Obtiene reservas confirmadas futuras de un usuario
+ */
+async function getUpcomingReservations(userId) {
+  try {
+    const reservations = await reservationRepository.findUpcomingByUser(userId);
+    
+    return reservations.map(reservation => ({
+      date: reservation.date,
+      start_time: reservation.start_time,
+      end_time: reservation.end_time,
+      time: `${reservation.start_time}-${reservation.end_time}`,
+      space: reservation.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones',
+      service_type: reservation.service_type,
+      people: reservation.num_people || 1,
+      price: reservation.was_free ? 'GRATIS' : `$${parseFloat(reservation.total_amount).toFixed(2)}`,
+      was_free: reservation.was_free
+    }));
+  } catch (error) {
+    console.error('[MEMORIA] Error obteniendo reservas futuras:', error);
     return [];
   }
 }

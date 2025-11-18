@@ -19,7 +19,7 @@ const BUSINESS_CONFIG = {
   
   // Ventana de reserva
   minAdvanceHours: 2,    // Mínimo 2 horas de anticipación
-  maxAdvanceDays: 30,    // Máximo 30 días adelante
+  maxAdvanceDays: 90,    // Máximo 90 días adelante (3 meses)
   
   // Break de almuerzo
   lunchBreakStart: '12:30',

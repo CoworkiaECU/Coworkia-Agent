@@ -149,6 +149,40 @@ class ReservationRepository {
   }
 
   /**
+   * 📅 Obtiene reservas confirmadas futuras de un usuario
+   * Útil para detectar conflictos y mostrar agenda
+   */
+  async findUpcomingByUser(phoneNumber) {
+    databaseService.ensureInitialized();
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    const query = `
+      SELECT * FROM reservations 
+      WHERE user_phone = ?
+        AND status = 'confirmed'
+        AND date >= ?
+      ORDER BY date ASC, start_time ASC
+    `;
+    
+    const reservations = await databaseService.all(query, [phoneNumber, today]);
+    
+    // Procesar resultados
+    return reservations.map(reservation => {
+      if (reservation.payment_data) {
+        try {
+          reservation.payment_data = JSON.parse(reservation.payment_data);
+        } catch (e) {
+          console.error('[RESERVATION] Error parsing payment_data:', e);
+        }
+      }
+      
+      reservation.was_free = Boolean(reservation.was_free);
+      return reservation;
+    });
+  }
+
+  /**
    * 📅 Obtiene reservas por fecha
    */
   async findByDate(date, serviceType = null) {

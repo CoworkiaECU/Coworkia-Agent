@@ -628,6 +628,7 @@ Estamos abiertos:
     needsMoreInfo: !isComplete,
     summary: form.getSummary(),
     userMessage: message, // Para detectar frustración
-    validationError // 🆕 Error de validación si el día está cerrado
+    validationError, // 🆕 Error de validación si el día está cerrado
+    canPauseAndResume: true // 🆕 Indica que el formulario soporta pausar/reanudar
   };
 }

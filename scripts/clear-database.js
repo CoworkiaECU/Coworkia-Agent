@@ -5,6 +5,12 @@
  */
 
 import databaseService from '../src/database/database.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function clearDatabase() {
   try {
@@ -30,9 +36,18 @@ async function clearDatabase() {
       }
     }
     
+    // 🗑️ Limpiar archivo interactions.jsonl
+    const interactionsFile = path.join(__dirname, '../data/interactions.jsonl');
+    if (fs.existsSync(interactionsFile)) {
+      console.log('   Limpiando archivo: interactions.jsonl');
+      fs.writeFileSync(interactionsFile, '', 'utf-8');
+      console.log('   ✅ interactions.jsonl vaciado');
+    }
+    
     console.log('✅ Base de datos limpiada exitosamente');
     console.log('📊 Todas las tablas vaciadas:');
     tables.forEach(t => console.log(`   - ${t}`));
+    console.log('   - interactions.jsonl');
     
     process.exit(0);
   } catch (error) {

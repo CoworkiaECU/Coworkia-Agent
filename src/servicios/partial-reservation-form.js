@@ -51,7 +51,7 @@ export class PartialReservationForm {
     this.email = existingData.email || null;              // 'yo@diegovillota.com'
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
-    this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta'
+    this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
     this.updatedAt = new Date();
   }
 
@@ -143,6 +143,11 @@ export class PartialReservationForm {
       taxes.iva = Math.round(iva * 100) / 100;
       
       total = basePrice + taxes.isd + taxes.iva;
+    } else if (this.paymentMethod === 'efectivo') {
+      // 🔓 BYPASS TEMPORAL: Efectivo sin impuestos (para testing)
+      // TODO: Remover cuando no se necesite más el bypass
+      total = basePrice;
+      console.log('[FORM] 🔓 Bypass efectivo activado - sin impuestos');
     }
 
     return {
@@ -173,6 +178,10 @@ export class PartialReservationForm {
       summary += `ISD (5%): $${pricing.taxes.isd.toFixed(2)}\\n`;
       summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
       summary += `\\n💳 Total a pagar: $${pricing.total.toFixed(2)}`;
+    } else if (this.paymentMethod === 'efectivo') {
+      // 🔓 BYPASS TEMPORAL para testing
+      summary += `\\n💵 Pago en efectivo: $${pricing.total.toFixed(2)}`;
+      summary += `\\n\\n✅ Pagarás directamente en Coworkia`;
     }
 
     return summary;
@@ -495,6 +504,10 @@ export function extractDataFromMessage(message, currentForm) {
     } else if (lowerMsg.includes('transferencia') || lowerMsg.includes('transfer')) {
       updates.paymentMethod = 'transferencia';
       console.log('[FORM] 🏦 Detectado método: transferencia');
+    } else if (lowerMsg.includes('efectivo') || lowerMsg.includes('cash')) {
+      // 🔓 BYPASS TEMPORAL para testing
+      updates.paymentMethod = 'efectivo';
+      console.log('[FORM] 💵 Detectado método: efectivo (bypass)');
     }
   }
 

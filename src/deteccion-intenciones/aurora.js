@@ -375,8 +375,16 @@ FLUJO DE RESERVAS MEJORADO:
    💳 Paga aquí: https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
    
    Envíame la constancia del pago para confirmar tu reserva 📸"
+   
+   🔓 SI DICE "EFECTIVO" (BYPASS TEMPORAL - NO OFRECER):
+   "📍 Hot Desk (2h)
+   💵 Pago en efectivo: $10.00
+   
+   ✅ Pagarás directamente en Coworkia
+   
+   ¿Confirmas tu reserva para [fecha] [hora]? Responde SI para confirmar"
 
-6. ESPERAR COMPROBANTE:
+6. ESPERAR COMPROBANTE (solo transferencia/tarjeta):
    - Usuario envía imagen
    - Sistema valida automáticamente
    - Confirmar resultado

@@ -356,6 +356,58 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       };
     }
 
+    // 🔓 BYPASS: Si es efectivo, confirmar directamente sin pagar (temporal)
+    if (pendingReservation.paymentMethod === 'efectivo') {
+      console.log('[Confirmation] 🔓 BYPASS: Efectivo detectado, confirmando sin pago');
+      
+      // Marcar como pagado directamente
+      await reservationRepository.markAsPaid(reservationRecord.id, {
+        payment_method: 'efectivo',
+        payment_reference: 'PAGO_EN_COWORKIA',
+        payment_amount: pendingReservation.totalPrice,
+        payment_date: new Date().toISOString()
+      });
+      
+      // Enviar notificaciones
+      if (userProfile.email) {
+        await sendReservationNotifications({
+          email: userProfile.email,
+          userName: userProfile.name || 'Cliente',
+          date: confirmedDate,
+          startTime: confirmedStart,
+          endTime: confirmedEnd,
+          serviceType: pendingReservation.serviceType || 'Hot Desk',
+          guestCount: pendingReservation.guestCount || 0,
+          wasFree: false,
+          durationHours: pendingReservation.durationHours || 2,
+          totalPrice: pendingReservation.totalPrice,
+          reservation: reservationRecord
+        });
+      }
+      
+      return {
+        success: true,
+        message: `✅ *¡Reserva confirmada${userName}!* 🎉
+
+📅 *${confirmedDate}*
+⏰ *${confirmedStart} - ${confirmedEnd}*
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
+
+💵 *Pago en efectivo:* $${pendingReservation.totalPrice}
+
+✅ Pagarás directamente en Coworkia
+
+📧 Te he enviado la confirmación por email.
+
+📍 *Ubicación:* Whymper 403, Edificio Finistere
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+
+¡Te esperamos! 🚀`,
+        needsAction: false,
+        reservation: reservationRecord
+      };
+    }
+    
     // 4. Si requiere pago, enviar datos de pago
     const paymentInfo = getPaymentInfo(
       userProfile, 

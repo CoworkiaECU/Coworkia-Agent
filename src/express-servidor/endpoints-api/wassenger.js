@@ -762,12 +762,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           system: resultado.systemPrompt
         });
       } else if (campaignCheck.detected && !profile.justConfirmed) {
-        // 🎯 Respuesta de campaña
+        // 🎯 Respuesta de campaña - SOLO para usuarios RECURRENTES
         // VERIFICAR: Usuario tiene reservas confirmadas (historial) O freeTrialUsed está activo O firstVisit: false
         const tieneReservasAnteriores = profile.reservationHistory && profile.reservationHistory.length > 0;
         const noEsPrimeraVez = profile.firstVisit === false;
         const yaUsoTrial = profile.freeTrialUsed || tieneReservasAnteriores || noEsPrimeraVez;
         
+        // 🔍 SOLO intercept campaign para usuarios RECURRENTES
+        // Usuarios nuevos (firstVisit: true) pasan directo a Aurora para manejo natural
         if (yaUsoTrial) {
           // Usuario YA usó su trial gratis O no es primera visita - FLUJO DE PAGO
           console.log('[WASSENGER] 🎯 Campaña detectada - Usuario RECURRENTE (ya usó trial):', campaignCheck.campaign);
@@ -782,14 +784,10 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           // Usar personalizeCampaignResponse que ya tiene la lógica correcta
           reply = personalizeCampaignResponse(campaignCheck.template, profile);
           console.log('[WASSENGER] 📝 Reply para usuario RECURRENTE generado (flujo con pago)');
-        } else if (profile.firstVisit === true || profile.firstVisit === undefined) {
-          // Primera visita real - ofrecer trial gratis
-          console.log('[WASSENGER] 🎯 Campaña detectada - Primera visita:', campaignCheck.campaign);
-          reply = personalizeCampaignResponse(campaignCheck.template, profile);
-          console.log('[WASSENGER] 📝 Reply de campaña para primera visita generado');
         } else {
-          // Caso edge: flujo normal con Aurora
-          console.log('[WASSENGER] 📝 Usuario - flujo normal con Aurora');
+          // Primera visita (firstVisit: true o undefined) → NO interceptar con campaign
+          // Dejar que Aurora maneje con su contexto completo y conversación natural
+          console.log('[WASSENGER] 🆕 Usuario NUEVO detectado - Bypassing campaign, Aurora manejará naturalmente');
           reply = await complete(resultado.prompt, {
             temperature: 0.4,
             max_tokens: 300,

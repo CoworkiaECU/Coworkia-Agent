@@ -14,13 +14,12 @@ export const CAMPAIGN_PROMPTS = {
 Qué bueno que quieres conocer Coworkia. Como es tu primera vez, te regalo 2 horas gratis para que pruebes el espacio 🎉
 
 📋 *Tus 2 horas gratis incluyen:*
-• Hot Desk (espacio compartido)
-• WiFi de alta velocidad
-• Café ilimitado ☕
-• Acceso a todas nuestras instalaciones
+🪑 Hot Desk (espacio compartido)
+📶 WiFi de alta velocidad
+☕ Café ilimitado
 
-¿Qué día te gustaría venir? (lunes a sábado)
-¿A qué hora prefieres llegar? (8am-6pm)
+¿Qué día te gustaría venir?
+¿A qué hora prefieres llegar?
 
 Solo necesito esos dos datos y tu email para enviarte la confirmación 😊`
   },

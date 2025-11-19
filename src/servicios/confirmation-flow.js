@@ -287,42 +287,39 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/6`);
     }
     
-    // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción
-    console.log('[Confirmation] 📍 PASO 2: Iniciando transacción de base de datos...');
-    await databaseService.transaction(async () => {
-      console.log('[Confirmation] 📍 PASO 2.1: Llamando createReservation...');
-      const reservationResult = await createReservation(pendingReservation);
-      
-      console.log('[Confirmation] 📊 Resultado de createReservation:', reservationResult);
-      
-      if (!reservationResult.success) {
-        console.error('[Confirmation] ❌ createReservation falló:', reservationResult.error);
-        throw new ConfirmationFlowError({
-          success: false,
-          message: `❌ ${reservationResult.error}`,
-          needsAction: false,
-          alternatives: reservationResult.alternatives
-        });
-      }
-
-      reservationRecord = reservationResult.reservation;
-      console.log('[Confirmation] ✅ Reserva creada con ID:', reservationRecord?.id);
-
-       if (!pendingReservation.wasFree) {
-        console.log('[Confirmation] 📍 PASO 2.2: Actualizando estado a pending_payment...');
-        reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'pending_payment');
-      }
-
-      console.log('[Confirmation] 📍 PASO 2.3: Limpiando confirmación pendiente...');
-      await clearPendingConfirmation(userProfile.userId);
-      
-      console.log('[Confirmation] 📍 PASO 2.4: Actualizando perfil de usuario...');
-      await updateUser(userProfile.userId, {
-        lastReservation: reservationRecord
+    // 🔄 Crear reserva
+    console.log('[Confirmation] 📍 PASO 2: Creando reserva...');
+    const reservationResult = await createReservation(pendingReservation);
+    
+    console.log('[Confirmation] 📊 Resultado de createReservation:', reservationResult);
+    
+    if (!reservationResult.success) {
+      console.error('[Confirmation] ❌ createReservation falló:', reservationResult.error);
+      throw new ConfirmationFlowError({
+        success: false,
+        message: `❌ ${reservationResult.error}`,
+        needsAction: false,
+        alternatives: reservationResult.alternatives
       });
-      
-      console.log('[Confirmation] ✅ Transacción completada exitosamente');
+    }
+
+    reservationRecord = reservationResult.reservation;
+    console.log('[Confirmation] ✅ Reserva creada con ID:', reservationRecord?.id);
+
+    if (!pendingReservation.wasFree) {
+      console.log('[Confirmation] 📍 PASO 2.2: Actualizando estado a pending_payment...');
+      reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'pending_payment');
+    }
+
+    console.log('[Confirmation] 📍 PASO 2.3: Limpiando confirmación pendiente...');
+    await clearPendingConfirmation(userProfile.userId);
+    
+    console.log('[Confirmation] 📍 PASO 2.4: Actualizando perfil de usuario...');
+    await updateUser(userProfile.userId, {
+      lastReservation: reservationRecord
     });
+    
+    console.log('[Confirmation] ✅ Operaciones completadas exitosamente');
 
     console.log('[Confirmation] 📍 PASO 3: Marcando como confirmado recientemente...');
     await markJustConfirmed(userProfile.userId, reservationRecord?.id);

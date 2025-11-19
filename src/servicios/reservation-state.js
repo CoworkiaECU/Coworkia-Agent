@@ -91,7 +91,28 @@ export async function getPendingConfirmation(userPhone) {
   }
 
   try {
-    return JSON.parse(row.reservation_data);
+    const data = JSON.parse(row.reservation_data);
+    
+    // 🔧 Si los datos vienen del formulario parcial, convertir formato
+    if (data.formData && data.type === 'partial_form') {
+      const form = data.formData;
+      return {
+        userId: form.userId,
+        userName: form.userName,
+        date: form.date,
+        startTime: form.time,  // ← Convertir 'time' a 'startTime'
+        serviceType: form.spaceType,  // ← Convertir 'spaceType' a 'serviceType'
+        durationHours: form.durationHours || 2,
+        email: form.email,
+        guestCount: form.numPeople ? form.numPeople - 1 : 0,
+        totalPrice: form.totalPrice || 0,
+        wasFree: form.wasFree !== undefined ? form.wasFree : null,
+        paymentMethod: form.paymentMethod
+      };
+    }
+    
+    // Formato directo de reserva
+    return data;
   } catch {
     return null;
   }

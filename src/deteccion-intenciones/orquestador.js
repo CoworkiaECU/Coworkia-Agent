@@ -302,13 +302,16 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 
   // 🔄 RESERVA EN CURSO (pendingConfirmation)
   if (perfil.pendingConfirmation) {
+    // 🚨 CALCULAR wasFree basándose en free_trial_used del usuario, NO del formulario
+    const esGratisPorFreeTrial = !perfil.freeTrialUsed;
+    
     lineas.push(`\n🔔 RESERVA EN CURSO - ESPERANDO CONFIRMACIÓN:`);
     lineas.push(`- Fecha: ${perfil.pendingConfirmation.date || 'No definida'}`);
     lineas.push(`- Hora: ${perfil.pendingConfirmation.startTime || 'No definida'} - ${perfil.pendingConfirmation.endTime || 'No definida'}`);
     lineas.push(`- Servicio: ${perfil.pendingConfirmation.serviceType || 'No definido'}`);
     lineas.push(`- Email: ${perfil.pendingConfirmation.email || '❌ FALTA'}`);
     lineas.push(`- Acompañantes: ${perfil.pendingConfirmation.guestCount || 0}`);
-    lineas.push(`- Gratis: ${perfil.pendingConfirmation.wasFree ? 'SÍ 🎉' : 'NO - Pago requerido'}`);
+    lineas.push(`- Gratis: ${esGratisPorFreeTrial ? 'SÍ 🎉 - Free trial disponible' : 'NO - Pago requerido'}`);
     lineas.push(`\n⚠️ IMPORTANTE: Si usuario cambia de tema, NO borres esta reserva. Guárdala y retómala después.`);
   }
 

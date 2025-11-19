@@ -252,21 +252,7 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   if (perfil.email) lineas.push(`- Email: ${perfil.email}`);
   if (perfil.channel) lineas.push(`- Canal: ${perfil.channel}`);
   
-  // 🆕 Información de primera visita vs cliente recurrente
-  if (perfil.firstVisit !== undefined) {
-    if (perfil.firstVisit) {
-      lineas.push(`\n🎉 PRIMERA VISITA DETECTADA:`);
-      lineas.push(`- HOT DESK GRATIS (2 horas)`);
-      lineas.push(`- NO mencionar precio $10`);
-      lineas.push(`- NO pedir pago hasta confirmar`);
-      lineas.push(`- Decir: "Como es tu primera vez, tienes 2h GRATIS 🎉"`);
-    } else {
-      lineas.push(`\n💼 CLIENTE RECURRENTE:`);
-      lineas.push(`- Ya conoce Coworkia`);
-      lineas.push(`- Hot Desk: $10 por 2h`);
-      lineas.push(`- Pedir pago después de confirmar`);
-    }
-  }
+  // 🆕 ELIMINADO: firstVisit es redundante, usamos solo free_trial_used
 
   // 🆕 Flag de reserva recién confirmada (temporal)
   if (perfil.justConfirmed) {
@@ -278,10 +264,12 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`   3. Si dice SÍ, iniciar flujo normal de nueva reserva`);
   }
 
-  // 🆕 Información sobre uso del día gratis
+  // 🎯 FUENTE DE VERDAD: free_trial_used (campo autoritativo)
   if (perfil.freeTrialUsed !== undefined) {
     if (perfil.freeTrialUsed) {
+      lineas.push(`\n💼 CLIENTE RECURRENTE:`);
       lineas.push(`- Día gratis usado: SÍ → **DEBE PAGAR**`);
+      lineas.push(`- Hot Desk: $10 por 2h`);
       if (perfil.freeTrialDate) {
         lineas.push(`  * Fecha de uso: ${perfil.freeTrialDate}`);
       }
@@ -306,7 +294,9 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
       
       lineas.push(`  ⚠️ Si usuario INSISTE que nunca vino, agendar como excepción SIN PAGO`);
     } else {
-      lineas.push(`- Día gratis disponible: SÍ → Puede usarlo gratis`);
+      lineas.push(`\n🎉 CLIENTE NUEVO:`);
+      lineas.push(`- Día gratis disponible: SÍ → 2h GRATIS`);
+      lineas.push(`- NO pedir pago, NO mencionar precio`);
     }
   }
 
@@ -346,10 +336,9 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     
     lineas.push(`\n💡 Si usuario pregunta por sus reservas, muéstrale este historial con precios claros`);
   } else {
-    // CRÍTICO: Siempre mostrar (0 total) para usuarios nuevos
+    // Historial vacío (informativo, no determina elegibilidad)
     lineas.push(`\n📋 HISTORIAL COMPLETO DE RESERVAS (0 total):`);
-    lineas.push(`- Sin reservas previas`);
-    lineas.push(`- ✅ ELEGIBLE PARA 2H GRATIS de Hot Desk`);
+    lineas.push(`- Sin reservas confirmadas aún`);
   }
 
   // 🆕 RESERVAS CONFIRMADAS FUTURAS (para detectar conflictos y mostrar agenda)

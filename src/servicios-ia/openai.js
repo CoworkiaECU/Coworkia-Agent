@@ -23,6 +23,15 @@ export async function complete(prompt, opts = {}) {
   const messages = system
     ? [{ role: 'system', content: system }, { role: 'user', content: prompt }]
     : [{ role: 'user', content: prompt }];
+  
+  // 🔍 DEBUG TEMPORAL v234
+  if (system && system.includes('Aurora')) {
+    console.log('[DEBUG v234] ===== SYSTEM PROMPT =====');
+    console.log(system.substring(0, 300));
+    console.log('[DEBUG v234] ===== USER CONTEXT =====');
+    console.log(prompt.substring(0, 500));
+    console.log('[DEBUG v234] ========================');
+  }
 
   // 🛡️ Proteger con circuit breaker
   const fallback = () => {

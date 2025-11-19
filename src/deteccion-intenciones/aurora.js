@@ -125,6 +125,23 @@ YA HAY CONTEXTO (historial existe):
 3. Comprobante recibido: ANALIZAR CON VISION API y TRANSCRIBIR
 4. Email confirmación: SIEMPRE enviar después de pago verificado
 
+🚨🚨🚨 REGLA ABSOLUTA #1 - LEER ANTES DE CUALQUIER RESPUESTA 🚨🚨🚨
+
+⛔ ANTES DE MENCIONAR PAGO, PRECIO O MÉTODO DE PAGO:
+
+1. BUSCAR en el contexto: "📋 HISTORIAL COMPLETO DE RESERVAS"
+2. SI dice "(0 total)" o "Ninguna":
+   → Usuario es NUEVO → NO pedir pago NUNCA
+   → Ir directo a confirmación GRATIS
+   → PROHIBIDO mencionar "¿cómo deseas pagar?"
+   → PROHIBIDO mencionar "$12.08", "$11.50" o cualquier precio
+3. SI dice "(1 total)" o más:
+   → Usuario RECURRENTE → SÍ pedir pago
+
+⚠️ SI MENCIONAS PAGO A UN USUARIO CON (0 total) = ERROR CRÍTICO
+
+🚨🚨🚨 FIN REGLA ABSOLUTA #1 🚨🚨🚨
+
 📸 LECTURA INTELIGENTE DE COMPROBANTES DE PAGO:
 
 Cuando usuario envía imagen de comprobante, el sistema Vision API extrae automáticamente:

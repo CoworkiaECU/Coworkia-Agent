@@ -250,6 +250,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
     if (messageType === 'image' || messageType === 'document') {
       console.log('[WASSENGER] 📸 Procesando imagen/documento...');
+      console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
+      console.log('[WASSENGER] 📸 DEBUG - Data completo:', JSON.stringify(data, null, 2));
       
       const messageData = { type: messageType, media: { url: mediaUrl } };
       
@@ -816,7 +818,10 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // 💳 DETECTAR SI USUARIO RECURRENTE ELIGIÓ ESPACIO Y ENVIAR LINK DE PAGO
+    // 💳 BYPASS DESHABILITADO - Aurora maneja el flujo completo con confirmación
+    // El bypass causaba: 1) Skip de confirmación, 2) No cálculo de precio, 3) No muestra opciones de pago
+    // Mantener este código comentado - Aurora ahora gestiona reservas de principio a fin
+    /*
     const paymentCheck = shouldSendPaymentLink(text, profile);
     if (paymentCheck && resultado.agenteKey === 'AURORA') {
       console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
@@ -831,6 +836,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       };
       await saveProfile(userId, profile); // FIX: Pasar userId correctamente
     }
+    */
 
     // 🎯 Agregar mensaje de upsell si aplica (ANTES de Aurora response)
     if (upsellMessage && !campaignCheck.detected && !paymentCheck) {

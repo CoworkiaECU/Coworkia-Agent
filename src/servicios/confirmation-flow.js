@@ -315,9 +315,18 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     await clearPendingConfirmation(userProfile.userId);
     
     console.log('[Confirmation] 📍 PASO 2.4: Actualizando perfil de usuario...');
-    await updateUser(userProfile.userId, {
+    const userUpdates = {
       lastReservation: reservationRecord
-    });
+    };
+    
+    // 🎁 Si es primera reserva gratis, marcar trial usado
+    if (pendingReservation.wasFree) {
+      console.log('[Confirmation] 🎁 Marcando trial gratis como usado');
+      userUpdates.free_trial_used = true;
+      userUpdates.free_trial_date = new Date().toISOString();
+    }
+    
+    await updateUser(userProfile.userId, userUpdates);
     
     console.log('[Confirmation] ✅ Operaciones completadas exitosamente');
 

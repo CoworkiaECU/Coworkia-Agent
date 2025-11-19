@@ -90,8 +90,14 @@ export class PartialReservationForm {
     if (!this.date) missing.push('date');
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
-    // 🎉 NO pedir paymentMethod si el usuario tiene free trial disponible (freeTrialUsed === false)
-    if (!this.paymentMethod && this.freeTrialUsed !== false) missing.push('paymentMethod');
+    
+    // 🎉 LÓGICA CORRECTA:
+    // - Cliente NUEVO (freeTrialUsed === false): NO pedir paymentMethod (es gratis)
+    // - Cliente RECURRENTE (freeTrialUsed === true): SÍ pedir paymentMethod (debe pagar)
+    if (!this.paymentMethod && this.freeTrialUsed === true) {
+      missing.push('paymentMethod');
+      console.log('[FORM] ⚠️ Cliente recurrente sin método de pago');
+    }
     
     return missing;
   }
@@ -299,6 +305,7 @@ export class PartialReservationForm {
           case 'date': return 'fecha';
           case 'time': return 'hora';
           case 'email': return 'email';
+          case 'paymentMethod': return 'método de pago';
           default: return f;
         }
       });
@@ -310,11 +317,52 @@ export class PartialReservationForm {
   }
 
   /**
+   * 📋 Genera mensaje de confirmación con precio ANTES de pedir método de pago
+   */
+  getConfirmationMessage() {
+    const missing = this.getMissingFields();
+    
+    // Si solo falta paymentMethod, mostrar resumen completo con precio
+    if (missing.length === 1 && missing[0] === 'paymentMethod') {
+      const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+      const basePrice = this.getBasePrice();
+      
+      let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
+      message += `🏢 Espacio: ${spaceName}\n`;
+      message += `📅 Fecha: ${this.date}\n`;
+      message += `⏰ Hora: ${this.time}\n`;
+      message += `📧 Email: ${this.email}\n`;
+      message += `⏱️ Duración: ${this.durationHours}h\n`;
+      message += `💰 Precio base: $${basePrice}\n\n`;
+      message += `¿Cómo deseas pagar?\n\n`;
+      message += `💳 *Tarjeta* - $${(basePrice * 1.208).toFixed(2)} (incluye ISD 5% + IVA 15%)\n`;
+      message += `🏦 *Transferencia* - $${(basePrice * 1.15).toFixed(2)} (incluye IVA 15%)\n\n`;
+      message += `Escribe "tarjeta" o "transferencia" 👍`;
+      
+      return message;
+    }
+    
+    return null;
+  }
+
+  /**
    * 💾 Convierte a objeto plano para almacenamiento
    */
   toJSON() {
-    // Calcular precio con impuestos si hay método de pago
-    const pricing = this.paymentMethod ? this.calculateTotalWithTaxes() : { total: 0 };
+    // Calcular precio con impuestos:
+    // - Cliente nuevo (freeTrialUsed = false): totalPrice = 0
+    // - Cliente recurrente (freeTrialUsed = true): calcular con impuestos
+    let pricing = { total: 0 };
+    
+    if (this.freeTrialUsed === false) {
+      // Cliente nuevo - GRATIS
+      pricing = { total: 0 };
+      console.log('[FORM] 💰 Cliente nuevo - Precio: GRATIS');
+    } else if (this.paymentMethod) {
+      // Cliente recurrente con método de pago
+      pricing = this.calculateTotalWithTaxes();
+      console.log('[FORM] 💰 Cliente recurrente - Precio calculado:', pricing.total);
+    }
     
     return {
       userId: this.userId,
@@ -623,6 +671,18 @@ export async function processMessageWithForm(userId, message, userProfile = null
 
   // 4. Verificar si está completo
   const isComplete = form.isComplete();
+  const missingFields = form.getMissingFields();
+  
+  console.log('[FORM] 📊 Estado del formulario:', {
+    isComplete,
+    missingFields,
+    freeTrialUsed: form.freeTrialUsed,
+    hasPaymentMethod: !!form.paymentMethod,
+    spaceType: form.spaceType,
+    date: form.date,
+    time: form.time,
+    email: form.email
+  });
   
   // 🚨 5. VALIDAR DOMINGOS Y FERIADOS SI EL FORMULARIO ESTÁ COMPLETO
   let validationError = null;
@@ -690,16 +750,29 @@ Estamos abiertos:
     }
   }
   
-  const nextQuestion = (isComplete || validationError) ? null : form.getNextQuestion();
+  // 🎯 Generar pregunta siguiente o mensaje de confirmación
+  let nextQuestion = null;
+  let confirmationMessage = null;
+  
+  if (!isComplete && !validationError) {
+    // Si solo falta paymentMethod, mostrar confirmación con precios
+    confirmationMessage = form.getConfirmationMessage();
+    
+    if (!confirmationMessage) {
+      // Preguntar por otros campos faltantes
+      nextQuestion = form.getNextQuestion();
+    }
+  }
 
   return {
     form,
     updates,
-    nextQuestion,
+    nextQuestion: confirmationMessage || nextQuestion,  // Usar confirmationMessage si existe
     needsMoreInfo: !isComplete,
     summary: form.getSummary(),
     userMessage: message, // Para detectar frustración
     validationError, // 🆕 Error de validación si el día está cerrado
+    confirmationMessage, // 🆕 Mensaje especial de confirmación con precios
     canPauseAndResume: true // 🆕 Indica que el formulario soporta pausar/reanudar
   };
 }

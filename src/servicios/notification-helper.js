@@ -58,6 +58,14 @@ export async function createConfirmationCalendarEvent(calendarData) {
   
   try {
     console.log(`${logPrefix} 📅 Creando evento en Google Calendar...`);
+    console.log(`${logPrefix} 📊 Datos del evento:`, {
+      email: calendarData.email,
+      userName: calendarData.userName,
+      date: calendarData.date,
+      startTime: calendarData.startTime,
+      endTime: calendarData.endTime,
+      serviceType: calendarData.serviceType
+    });
     
     const result = await runWithRetry(
       'calendar-event',
@@ -73,13 +81,14 @@ export async function createConfirmationCalendarEvent(calendarData) {
     
     console.log(`${logPrefix} ✅ Evento creado exitosamente:`, {
       eventId: result?.eventId,
-      eventLink: result?.eventLink
+      eventLink: result?.eventLink,
+      htmlLink: result?.htmlLink
     });
     
     return { 
       success: true, 
       eventId: result?.eventId,
-      eventLink: result?.eventLink 
+      eventLink: result?.eventLink || result?.htmlLink
     };
     
   } catch (error) {

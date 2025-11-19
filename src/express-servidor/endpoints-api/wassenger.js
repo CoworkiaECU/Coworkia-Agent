@@ -851,8 +851,14 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       if (enhancement.enhanced) {
         finalReply = enhancement.finalMessage;
         confirmationActivated = true;
-        console.log('[WASSENGER] Aurora activó sistema de confirmación');
+        console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
+      } else {
+        // Si no hubo enhancement, usar la respuesta original de Aurora
+        finalReply = reply;
       }
+    } else {
+      // Otros agentes usan su respuesta directamente
+      finalReply = reply;
     }
 
     // 🆕 Guardar respuesta del asistente en historial

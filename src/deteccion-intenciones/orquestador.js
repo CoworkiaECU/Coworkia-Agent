@@ -255,11 +255,16 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   // 🆕 Información de primera visita vs cliente recurrente
   if (perfil.firstVisit !== undefined) {
     if (perfil.firstVisit) {
-      lineas.push(`- Primera visita: SÍ → Solo SI ES SALUDO INICIAL usa presentación como Aurora`);
-      lineas.push(`- Ofrecer día gratis SOLO si pregunta por servicios (no agresivamente)`);
+      lineas.push(`\n🎉 PRIMERA VISITA DETECTADA:`);
+      lineas.push(`- HOT DESK GRATIS (2 horas)`);
+      lineas.push(`- NO mencionar precio $10`);
+      lineas.push(`- NO pedir pago hasta confirmar`);
+      lineas.push(`- Decir: "Como es tu primera vez, tienes 2h GRATIS 🎉"`);
     } else {
-      lineas.push(`- Cliente recurrente: Ya me conoce, NO saludos repetitivos`);
-      lineas.push(`- Ve directo al grano, NO ofrecer día gratis (ya lo usó antes)`);
+      lineas.push(`\n💼 CLIENTE RECURRENTE:`);
+      lineas.push(`- Ya conoce Coworkia`);
+      lineas.push(`- Hot Desk: $10 por 2h`);
+      lineas.push(`- Pedir pago después de confirmar`);
     }
   }
 
@@ -340,6 +345,11 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     });
     
     lineas.push(`\n💡 Si usuario pregunta por sus reservas, muéstrale este historial con precios claros`);
+  } else {
+    // CRÍTICO: Siempre mostrar (0 total) para usuarios nuevos
+    lineas.push(`\n📋 HISTORIAL COMPLETO DE RESERVAS (0 total):`);
+    lineas.push(`- Sin reservas previas`);
+    lineas.push(`- ✅ ELEGIBLE PARA 2H GRATIS de Hot Desk`);
   }
 
   // 🆕 RESERVAS CONFIRMADAS FUTURAS (para detectar conflictos y mostrar agenda)

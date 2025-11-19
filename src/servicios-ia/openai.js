@@ -8,15 +8,15 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
 
 export const client = new OpenAI({ apiKey });
 
 export async function complete(prompt, opts = {}) {
   const {
     system = null,
-    temperature = 0.4,
-    max_tokens = 280,
+    temperature = 0.6,
+    max_tokens = 400,
     model = MODEL,
   } = opts;
 

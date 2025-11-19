@@ -9,16 +9,14 @@ export const CAMPAIGN_PROMPTS = {
   // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
   PROBAR_SERVICIO: {
     trigger: "quiero probar el servicio",
-    response: `¡Hola {nombre}! 👋🏼 Soy Aurora y estoy aquí para ayudarte a probar nuestro servicio. 🎉 
+    response: `¡Hola {nombre}! 👋🏼 Soy Aurora, la recepcionista de Coworkia.
 
-Como es tu primera visita, te regalo 2 horas GRATIS un hot desk. 
+¿Qué espacio te gustaría?
 
-¿Qué espacio necesitas? Tenemos:
-
-📍 Hot Desk (gratis 2h)
+📍 Hot Desk
 🏢 Sala de Reuniones (3-4 personas, $29 por 2h)
 
-¡Cuéntame cuál prefieres y avanzamos con los detalles! 😊`
+Dime cuál prefieres y te doy más detalles 😊`
   },
 
   // Mensaje 2: ¡Hola coWorkia! Quiero un espacio privado, con locker propio y pago mensual
@@ -28,11 +26,11 @@ Como es tu primera visita, te regalo 2 horas GRATIS un hot desk.
 
 Perfecto, entiendo que buscas un espacio privado con todo incluido. Para planes mensuales con locker, te puedo conectar con *Aluna*, ella es nuestra especialista en membresías y te va a dar todos los detalles 👱🏼‍♀️
 
-Y mira, como es tu primera vez, también tienes 2 horas gratis para que conozcas Coworkia antes de decidirte 🎉
+Si prefieres, también puedes probar el espacio primero antes de decidirte.
 
 ¿Qué prefieres?
 • Hablar con Aluna sobre planes mensuales
-• Probar gratis primero (solo dime cuándo quieres venir)
+• Conocer el espacio primero (dime cuándo quieres venir)
 
 Como gustes, estoy para ayudarte 😊`
   }
@@ -63,31 +61,11 @@ export function detectCampaignMessage(message) {
  * 🔍 Detecta si es cliente recurrente y NO ofrece trial gratis
  */
 export function personalizeCampaignResponse(template, userProfile) {
-  const userName = userProfile?.name || 'nuevo usuario';
+  const userName = userProfile?.name || '';
   
-  // 🔍 VERIFICAR SI ES CLIENTE RECURRENTE
-  const hasHistory = userProfile?.reservationHistory?.length > 0;
-  const notFirstVisit = userProfile?.firstVisit === false;
-  const usedTrial = userProfile?.freeTrialUsed;
-  
-  // Si NO es primera visita O ya usó trial O tiene historial → Cliente recurrente
-  if (notFirstVisit || usedTrial || hasHistory) {
-    console.log('[CAMPAIGN] 🔄 Cliente recurrente detectado - NO ofrecer trial gratis', {
-      notFirstVisit,
-      usedTrial,
-      hasHistory
-    });
-    
-    return `¡Hola ${userName}, qué bueno que estés de vuelta! 😊
-
-¿Que espacio te reservo?:
-
-📍 *Hot Desk* → $10 por 2 horas
-🏢 *Sala Reuniones* → $29 por 2 horas`;
-  }
-  
-  // Cliente nuevo - aplicar campaña normal
-  console.log('[CAMPAIGN] ✨ Cliente nuevo detectado - Aplicar trial gratis');
+  // Simplemente reemplazar el nombre en el template, SIN lógica adicional
+  // Aurora maneja el contexto completo (primera visita, recurrente, etc.)
+  console.log('[CAMPAIGN] 🎯 Template personalizado para:', userName || 'usuario sin nombre');
   return template.replace(/{nombre}/g, userName);
 }
 

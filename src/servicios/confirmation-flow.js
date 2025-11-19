@@ -184,20 +184,20 @@ export function generateConfirmationMessage(reservationData, userProfile) {
     `👥 *Personas:* Solo tú`;
   
   if (isActuallyFree) {
-    return `¡Perfecto${userName}! 🎉
+    return `Perfecto${userName}! 👍
 
-📋 *CONFIRMA TUS 2 HORAS GRATIS:*
+📋 *Resumen de tu visita:*
 
-📅 *Fecha:* ${formattedDate}
-⏰ *Horario:* ${startTime} - ${endTime} 
-🏢 *Espacio:* ${serviceName}
+📅 ${formattedDate}
+⏰ ${startTime} - ${endTime} 
+🏢 ${serviceName}
 ${peopleInfo}
-⏱️ *Duración:* ${durationHours} hora${durationHours > 1 ? 's' : ''}
-💰 *Precio:* ¡GRATIS! (primera vez)
+⏱️ ${durationHours} hora${durationHours > 1 ? 's' : ''}
+💰 Sin costo (primera visita)
 
-¿*Confirmas esta reserva?*
+¿Te viene bien este horario?
 
-Responde *SI* para confirmar o *NO* para cancelar 👍`;
+Responde *SI* para confirmar o *NO* si prefieres otro horario.`;
   }
 
   return `¡Perfecto${userName}! 🎉
@@ -221,6 +221,22 @@ Responde *SI* para continuar con el pago o *NO* para cancelar 👍`;
  */
 export async function processPositiveConfirmation(userProfile, pendingReservation) {
   try {
+    console.log('[Confirmation] 🔍 INICIO - processPositiveConfirmation con datos:', {
+      userProfile: {
+        userId: userProfile?.userId,
+        name: userProfile?.name,
+        email: userProfile?.email
+      },
+      pendingReservation: {
+        userId: pendingReservation?.userId,
+        date: pendingReservation?.date,
+        startTime: pendingReservation?.startTime,
+        serviceType: pendingReservation?.serviceType,
+        wasFree: pendingReservation?.wasFree,
+        paymentMethod: pendingReservation?.paymentMethod
+      }
+    });
+    
     const userName = userProfile.name ? `, ${userProfile.name}` : '';
     let reservationRecord = null;
     
@@ -237,6 +253,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     
     // 🔍 VALIDACIÓN: Verificar disponibilidad de Hot Desks ANTES de confirmar
     if (pendingReservation.serviceType === 'hotDesk') {
+      console.log('[Confirmation] 📍 PASO 1: Verificando disponibilidad de Hot Desk...');
       const { checkHotDeskAvailability, assignHotDeskNumber } = await import('./calendario.js');
       
       const availability = await checkHotDeskAvailability(
@@ -244,6 +261,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         pendingReservation.startTime,
         pendingReservation.endTime
       );
+      
+      console.log('[Confirmation] 📊 Disponibilidad verificada:', availability);
       
       if (!availability.available) {
         console.log('[Confirmation] ❌ Hot Desks agotados:', availability);
@@ -269,10 +288,15 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     }
     
     // 🔄 Ejecutar reserva + actualización de perfil dentro de transacción
+    console.log('[Confirmation] 📍 PASO 2: Iniciando transacción de base de datos...');
     await databaseService.transaction(async () => {
+      console.log('[Confirmation] 📍 PASO 2.1: Llamando createReservation...');
       const reservationResult = await createReservation(pendingReservation);
       
+      console.log('[Confirmation] 📊 Resultado de createReservation:', reservationResult);
+      
       if (!reservationResult.success) {
+        console.error('[Confirmation] ❌ createReservation falló:', reservationResult.error);
         throw new ConfirmationFlowError({
           success: false,
           message: `❌ ${reservationResult.error}`,
@@ -282,22 +306,32 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       }
 
       reservationRecord = reservationResult.reservation;
+      console.log('[Confirmation] ✅ Reserva creada con ID:', reservationRecord?.id);
 
        if (!pendingReservation.wasFree) {
+        console.log('[Confirmation] 📍 PASO 2.2: Actualizando estado a pending_payment...');
         reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'pending_payment');
       }
 
+      console.log('[Confirmation] 📍 PASO 2.3: Limpiando confirmación pendiente...');
       await clearPendingConfirmation(userProfile.userId);
+      
+      console.log('[Confirmation] 📍 PASO 2.4: Actualizando perfil de usuario...');
       await updateUser(userProfile.userId, {
         lastReservation: reservationRecord
       });
+      
+      console.log('[Confirmation] ✅ Transacción completada exitosamente');
     });
 
+    console.log('[Confirmation] 📍 PASO 3: Marcando como confirmado recientemente...');
     await markJustConfirmed(userProfile.userId, reservationRecord?.id);
 
     const confirmedDate = reservationRecord?.date || pendingReservation.date;
     const confirmedStart = reservationRecord?.startTime || pendingReservation.startTime;
     const confirmedEnd = reservationRecord?.endTime || pendingReservation.endTime;
+    
+    console.log('[Confirmation] 📋 Datos confirmados:', { confirmedDate, confirmedStart, confirmedEnd });
 
     // 2. Crear evento en Google Calendar (SOLO UNA VEZ)
     // ⚠️ NO duplicar: sendReservationNotifications ya crea el evento inline
@@ -489,12 +523,19 @@ Gonzalo Villota (1702683499)
       userId: userProfile?.userId || 'unknown',
       pendingReservationExists: !!pendingReservation,
       userProfileExists: !!userProfile,
+      pendingReservationDetails: pendingReservation ? {
+        date: pendingReservation.date,
+        time: pendingReservation.startTime,
+        serviceType: pendingReservation.serviceType,
+        email: pendingReservation.email,
+        wasFree: pendingReservation.wasFree
+      } : 'none',
       timestamp: new Date().toISOString()
     });
     
     return {
       success: false,
-      message: '❌ Error interno procesando la confirmación. Intenta nuevamente.',
+      message: `❌ Hubo un problema al procesar tu confirmación.\n\n⚠️ Error: ${error.message}\n\n¿Puedes intentar de nuevo escribiendo *SI*?`,
       needsAction: false
     };
   }

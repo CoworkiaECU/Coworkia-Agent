@@ -287,7 +287,7 @@ export class PartialReservationForm {
       return null; // No hay datos para resumir
     }
 
-    let message = '¡Perfecto! Veo que tenías una reserva en proceso. Déjame verificar los datos:\n\n';
+    let message = '¡Perfecto! Ya tengo algunos datos de tu reserva:\n\n';
     message += this.getSummary();
     
     if (missing.length > 0) {
@@ -301,10 +301,10 @@ export class PartialReservationForm {
           default: return f;
         }
       });
-      message += `❓ Falta: ${missingNames.join(', ')}`;
+      message += `❓ Solo necesito: ${missingNames.join(', ')}`;
     }
     
-    message += '\n\n¿Deseas mantener estos datos o hacer algún cambio?';
+    message += '\n\n¿Te viene bien o prefieres cambiar algo?';
     return message;
   }
 

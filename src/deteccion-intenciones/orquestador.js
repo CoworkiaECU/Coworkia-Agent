@@ -152,7 +152,9 @@ Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Esta
 - NO menciones conversaciones con otros agentes
 - Enfócate SOLO en reservas y servicios de Coworkia` : '';
   
-  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion;
+  // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
+  const tieneResumeMessage = formData && formData.resumeMessage;
+  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion && !tieneResumeMessage;
 
   const prompt = `
 ${contextoUsuario}
@@ -182,7 +184,7 @@ ${esSoportePostEmail ? `
 ` : ''}
 ${formData && !esCancelacion ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
 ${formData && formData.needsMoreInfo && !esCancelacion ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
-${esPrimeraVisita ? '- Si es primera visita, menciona el día gratis (solo Aurora)' : ''}
+${esPrimeraVisita ? '- El usuario es nuevo, menciona naturalmente el beneficio de primera visita cuando sea relevante' : ''}
 ${!esSoportePostEmail && !esCancelacion ? '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente' : ''}
 ${!esSoportePostEmail && !esCancelacion ? '- Máximo 4-5 líneas, excepto casos que requieran más detalle' : ''}
 ${!esSoportePostEmail && !esCancelacion ? '- Siempre termina con siguiente paso claro o pregunta de seguimiento' : ''}

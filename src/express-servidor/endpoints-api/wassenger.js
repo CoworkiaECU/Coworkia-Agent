@@ -796,45 +796,16 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           max_tokens: 300,
           system: resultado.systemPrompt
         });
-      } else if (campaignCheck.detected && !profile.justConfirmed) {
-        // 🎯 Respuesta de campaña - SOLO para usuarios RECURRENTES
-        // VERIFICAR: Usuario tiene reservas confirmadas (historial) O freeTrialUsed está activo O firstVisit: false
-        const tieneReservasAnteriores = profile.reservationHistory && profile.reservationHistory.length > 0;
-        const noEsPrimeraVez = profile.firstVisit === false;
-        const yaUsoTrial = profile.freeTrialUsed || tieneReservasAnteriores || noEsPrimeraVez;
-        
-        // 🔍 SOLO intercept campaign para usuarios RECURRENTES
-        // Usuarios nuevos (firstVisit: true) pasan directo a Aurora para manejo natural
-        if (yaUsoTrial) {
-          // Usuario YA usó su trial gratis O no es primera visita - FLUJO DE PAGO
-          console.log('[WASSENGER] 🎯 Campaña detectada - Usuario RECURRENTE (ya usó trial):', campaignCheck.campaign);
-          console.log('[WASSENGER] 📊 Estado usuario:', {
-            freeTrialUsed: profile.freeTrialUsed,
-            firstVisit: profile.firstVisit,
-            tieneHistorial: tieneReservasAnteriores,
-            cantidadReservas: profile.reservationHistory?.length || 0,
-            ultimaReserva: profile.lastReservation?.date
-          });
-          
-          // Usar personalizeCampaignResponse que ya tiene la lógica correcta
-          reply = personalizeCampaignResponse(campaignCheck.template, profile);
-          console.log('[WASSENGER] 📝 Reply para usuario RECURRENTE generado (flujo con pago)');
-        } else {
-          // Primera visita (firstVisit: true o undefined) → NO interceptar con campaign
-          // Dejar que Aurora maneje con su contexto completo y conversación natural
-          console.log('[WASSENGER] 🆕 Usuario NUEVO detectado - Bypassing campaign, Aurora manejará naturalmente');
-          reply = await complete(resultado.prompt, {
-            temperature: 0.4,
-            max_tokens: 300,
-            system: resultado.systemPrompt
-          });
-        }
       } else {
-        // Flujo normal - generar respuesta
+        // 🎯 Campañas DESACTIVADAS - Aurora maneja TODO con contexto completo
+        // Aurora tiene acceso a firstVisit, freeTrialUsed, historial, etc.
+        // y puede responder naturalmente según el contexto del usuarioerar respuesta con contexto completo
         console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
           promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
           perfilNombre: profile.name,
-          esCancelacion: resultado.metadata.cancelacion
+          esCancelacion: resultado.metadata.cancelacion,
+          firstVisit: profile.firstVisit,
+          freeTrialUsed: profile.freeTrialUsed
         });
 
         reply = await complete(resultado.prompt, {

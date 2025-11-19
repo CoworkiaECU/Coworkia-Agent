@@ -89,7 +89,8 @@ export class PartialReservationForm {
     if (!this.date) missing.push('date');
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
-    if (!this.paymentMethod) missing.push('paymentMethod');
+    // 🎉 NO pedir paymentMethod si el usuario tiene free trial disponible (freeTrialUsed === false)
+    if (!this.paymentMethod && this.freeTrialUsed !== false) missing.push('paymentMethod');
     
     return missing;
   }
@@ -234,6 +235,10 @@ export class PartialReservationForm {
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
       
       case 'paymentMethod':
+        // 🎉 Si tiene free trial disponible, no pedir método de pago
+        if (this.freeTrialUsed === false) {
+          return '✅ ¡Tu reserva será GRATIS! 🎉';
+        }
         return `¿Cómo deseas pagar?\n\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "tarjeta" o "transferencia"`;
       
       default:
@@ -323,7 +328,7 @@ export class PartialReservationForm {
   /**
    * 📂 Crea formulario desde objeto almacenado
    */
-  static fromJSON(data) {
+  static fromJSON(data, freeTrialUsed = false) {
     return new PartialReservationForm(data.userId, {
       spaceType: data.spaceType,
       date: data.date,
@@ -332,27 +337,27 @@ export class PartialReservationForm {
       numPeople: data.numPeople,
       durationHours: data.durationHours,
       paymentMethod: data.paymentMethod
-    });
+    }, freeTrialUsed);
   }
 }
 
 /**
  * 🔍 Obtiene o crea formulario parcial para un usuario
  */
-export async function getOrCreateForm(userId) {
+export async function getOrCreateForm(userId, freeTrialUsed = false) {
   try {
     const existing = await getPendingConfirmation(userId);
     
     if (existing && existing.formData) {
       console.log('[FORM] 📂 Formulario existente cargado para:', userId);
-      return PartialReservationForm.fromJSON(existing.formData);
+      return PartialReservationForm.fromJSON(existing.formData, freeTrialUsed);
     }
     
     console.log('[FORM] ✨ Nuevo formulario creado para:', userId);
-    return new PartialReservationForm(userId);
+    return new PartialReservationForm(userId, {}, freeTrialUsed);
   } catch (error) {
     console.error('[FORM] ❌ Error obteniendo formulario:', error);
-    return new PartialReservationForm(userId);
+    return new PartialReservationForm(userId, {}, freeTrialUsed);
   }
 }
 
@@ -566,8 +571,9 @@ export function extractDataFromMessage(message, currentForm) {
  * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
 export async function processMessageWithForm(userId, message, userProfile = null) {
-  // 1. Obtener o crear formulario
-  const form = await getOrCreateForm(userId);
+  // 1. Obtener o crear formulario (pasando si tiene free trial disponible)
+  const freeTrialUsed = userProfile?.free_trial_used ?? false;
+  const form = await getOrCreateForm(userId, freeTrialUsed);
 
   // 2. Si el perfil tiene email y el formulario no, auto-completar
   if (userProfile?.email && !form.email) {

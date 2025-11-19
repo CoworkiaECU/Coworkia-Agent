@@ -16,8 +16,8 @@
 
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 
-// TTL del formulario: 15 minutos (tiempo razonable para completar reserva)
-const FORM_TTL_SECONDS = 15 * 60;
+// TTL del formulario: 2 horas (usuarios pueden distraerse, atender llamadas, etc.)
+const FORM_TTL_SECONDS = 2 * 60 * 60;
 
 // 🎉 Lista de feriados nacionales de Ecuador (2025-2026)
 const FERIADOS_ECUADOR = [

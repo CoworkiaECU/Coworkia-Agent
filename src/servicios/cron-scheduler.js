@@ -17,9 +17,9 @@ export function initScheduler() {
   console.log(`[CRON] 🔧 Modo: ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'}`);
   
   // ✅ Limpieza de confirmaciones expiradas y flags justConfirmed
-  // Cada hora
+  // Cada 2 horas
   const cleanupFlagsJob = new CronJob(
-    '0 * * * *', // Cada hora en punto
+    '0 */2 * * *', // Cada 2 horas
     async () => {
       try {
         console.log('[CRON] 🧹 Ejecutando limpieza de confirmaciones expiradas...');
@@ -39,7 +39,7 @@ export function initScheduler() {
   );
   
   jobs.push(cleanupFlagsJob);
-  console.log('[CRON] 📅 Limpieza de confirmaciones/flags: cada 60 minutos');
+  console.log('[CRON] 📅 Limpieza de confirmaciones/flags: cada 120 minutos');
   
   // ✅ Limpieza de interacciones antiguas
   // Una vez al día a las 3 AM Ecuador

@@ -61,7 +61,7 @@ export async function cleanupExpiredConfirmations() {
   return result?.changes || 0;
 }
 
-export async function setPendingConfirmation(userPhone, reservationData, ttlMinutes = 30) {
+export async function setPendingConfirmation(userPhone, reservationData, ttlMinutes = 120) {
   await ensureUserExists(userPhone, reservationData);
   await cleanupExpiredConfirmations();
   const expiresAt = futureIso(ttlMinutes);

@@ -505,7 +505,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente (PRIMERO)
     console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
-    const formResult = await processMessageWithForm(userId, text, profile);
+    const formResult = await processMessageWithForm(userId, text, profile, profile.freeTrialUsed);
     
     // Pasar el mensaje del usuario al formResult para detección de frustración
     formResult.userMessage = text;

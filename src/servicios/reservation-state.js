@@ -76,6 +76,19 @@ export async function setPendingConfirmation(userPhone, reservationData, ttlMinu
   );
 }
 
+/**
+ * 📋 Obtiene confirmación pendiente
+ * 
+ * CONTRATO: Siempre devuelve este formato consistente:
+ * {
+ *   // Datos normalizados para createReservation()
+ *   userId, userName, date, startTime, serviceType, durationHours,
+ *   email, guestCount, totalPrice, wasFree, paymentMethod,
+ *   
+ *   // Datos originales del formulario (para debugging/UI)
+ *   _formData: { spaceType, time, numPeople, ... }
+ * }
+ */
 export async function getPendingConfirmation(userPhone) {
   await cleanupExpiredConfirmations();
   const row = await databaseService.get(
@@ -96,7 +109,12 @@ export async function getPendingConfirmation(userPhone) {
     // 🔧 Si los datos vienen del formulario parcial, convertir formato
     if (data.formData && data.type === 'partial_form') {
       const form = data.formData;
-      return {
+      
+      // 💰 CALCULAR wasFree: Si freeTrialUsed === false, la reserva es GRATIS
+      const wasFree = form.freeTrialUsed === false;
+      
+      // Normalizar datos para createReservation()
+      const normalized = {
         userId: form.userId,
         userName: form.userName,
         date: form.date,
@@ -105,15 +123,31 @@ export async function getPendingConfirmation(userPhone) {
         durationHours: form.durationHours || 2,
         email: form.email,
         guestCount: form.numPeople ? form.numPeople - 1 : 0,
-        totalPrice: form.totalPrice || 0,
-        wasFree: form.wasFree !== undefined ? form.wasFree : null,
-        paymentMethod: form.paymentMethod
+        totalPrice: wasFree ? 0 : (form.totalPrice || 0),  // ← Si es gratis, precio = 0
+        wasFree: wasFree,  // ← Propagar correctamente
+        paymentMethod: wasFree ? null : form.paymentMethod,  // ← Si es gratis, no hay método de pago
+        
+        // Adjuntar formData original para referencia
+        _formData: form,
+        _type: 'partial_form'
       };
+      
+      console.log('[RESERVATION-STATE] 💰 Conversión partial_form → normalizado:', {
+        freeTrialUsed: form.freeTrialUsed,
+        wasFree: normalized.wasFree,
+        totalPrice: normalized.totalPrice
+      });
+      
+      return normalized;
     }
     
-    // Formato directo de reserva
-    return data;
-  } catch {
+    // Formato directo de reserva - ya normalizado
+    return {
+      ...data,
+      _type: 'direct'
+    };
+  } catch (error) {
+    console.error('[RESERVATION-STATE] Error parseando pending confirmation:', error);
     return null;
   }
 }

@@ -43,7 +43,7 @@ const NOMBRES_FERIADOS = {
  * 🎯 Clase que representa un formulario parcial de reserva
  */
 export class PartialReservationForm {
-  constructor(userId, existingData = {}) {
+  constructor(userId, existingData = {}, freeTrialUsed = false) {
     this.userId = userId;
     this.spaceType = existingData.spaceType || null;      // 'hotDesk' | 'meetingRoom'
     this.date = existingData.date || null;                // '2025-11-12'
@@ -52,6 +52,7 @@ export class PartialReservationForm {
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
     this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
+    this.freeTrialUsed = freeTrialUsed;                   // ← Estado del free trial del usuario
     this.updatedAt = new Date();
   }
 
@@ -312,6 +313,9 @@ export class PartialReservationForm {
    * 💾 Convierte a objeto plano para almacenamiento
    */
   toJSON() {
+    // Calcular precio con impuestos si hay método de pago
+    const pricing = this.paymentMethod ? this.calculateTotalWithTaxes() : { total: 0 };
+    
     return {
       userId: this.userId,
       spaceType: this.spaceType,
@@ -321,6 +325,8 @@ export class PartialReservationForm {
       numPeople: this.numPeople,
       durationHours: this.durationHours,
       paymentMethod: this.paymentMethod,
+      totalPrice: pricing.total,  // ← Calcular total con impuestos
+      freeTrialUsed: this.freeTrialUsed,  // ← Preservar estado del free trial
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -337,22 +343,48 @@ export class PartialReservationForm {
       numPeople: data.numPeople,
       durationHours: data.durationHours,
       paymentMethod: data.paymentMethod
-    }, freeTrialUsed);
+    }, data.freeTrialUsed !== undefined ? data.freeTrialUsed : freeTrialUsed);  // ← Preferir valor almacenado
   }
 }
 
 /**
  * 🔍 Obtiene o crea formulario parcial para un usuario
+ * 
+ * IMPORTANTE: Detecta si pending_confirmations contiene datos normalizados
+ * (formato {date, startTime, serviceType}) y los convierte a formato de formulario
+ * para preservar información ya capturada.
  */
 export async function getOrCreateForm(userId, freeTrialUsed = false) {
   try {
     const existing = await getPendingConfirmation(userId);
     
-    if (existing && existing.formData) {
-      console.log('[FORM] 📂 Formulario existente cargado para:', userId);
-      return PartialReservationForm.fromJSON(existing.formData, freeTrialUsed);
+    // 🔄 CASO 1: Ya existe un formulario parcial guardado
+    if (existing && existing._type === 'partial_form' && existing._formData) {
+      console.log('[FORM] 📂 Formulario parcial existente cargado para:', userId);
+      return PartialReservationForm.fromJSON(existing._formData, freeTrialUsed);
     }
     
+    // 🔄 CASO 2: Hay datos normalizados (de confirmación previa) - convertir a formulario
+    if (existing && existing._type === 'direct') {
+      console.log('[FORM] 🔄 Detectado formato normalizado, convirtiendo a formulario...');
+      
+      const formData = {
+        userId: existing.userId,
+        spaceType: existing.serviceType,        // serviceType → spaceType
+        date: existing.date,
+        time: existing.startTime,               // startTime → time
+        email: existing.email,
+        numPeople: (existing.guestCount || 0) + 1,  // guestCount → numPeople
+        durationHours: existing.durationHours || 2,
+        paymentMethod: existing.paymentMethod,
+        freeTrialUsed: existing.wasFree !== null ? existing.wasFree : freeTrialUsed
+      };
+      
+      console.log('[FORM] ✅ Datos preservados:', Object.keys(formData).filter(k => formData[k]));
+      return PartialReservationForm.fromJSON(formData, formData.freeTrialUsed);
+    }
+    
+    // 🆕 CASO 3: No hay datos previos - crear formulario nuevo
     console.log('[FORM] ✨ Nuevo formulario creado para:', userId);
     return new PartialReservationForm(userId, {}, freeTrialUsed);
   } catch (error) {
@@ -570,9 +602,8 @@ export function extractDataFromMessage(message, currentForm) {
  * 🤖 Procesa mensaje y actualiza formulario automáticamente
  * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
-export async function processMessageWithForm(userId, message, userProfile = null) {
+export async function processMessageWithForm(userId, message, userProfile = null, freeTrialUsed = false) {
   // 1. Obtener o crear formulario (pasando si tiene free trial disponible)
-  const freeTrialUsed = userProfile?.free_trial_used ?? false;
   const form = await getOrCreateForm(userId, freeTrialUsed);
 
   // 2. Si el perfil tiene email y el formulario no, auto-completar

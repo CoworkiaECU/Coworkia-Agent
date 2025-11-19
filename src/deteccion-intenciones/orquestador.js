@@ -468,8 +468,15 @@ function construirContextoFormulario(formData) {
   const { form, summary, needsMoreInfo, nextQuestion, resumeMessage, userMessage } = formData;
   const lineas = ['🧠 FORMULARIO PARCIAL DE RESERVA (datos ya proporcionados):'];
 
+  // 💰 Calcular si es gratis basado en freeTrialUsed
+  const esGratis = form.freeTrialUsed === false;
+  
   if (summary) {
-    lineas.push(summary);
+    // Agregar indicador de precio gratis si aplica
+    const summaryConPrecio = esGratis ? 
+      `${summary}\n💰 Precio: GRATIS 🎉 (Primera visita)` : 
+      summary;
+    lineas.push(summaryConPrecio);
   }
 
   const missing = form.getMissingFields();

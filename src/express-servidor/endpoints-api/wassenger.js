@@ -441,11 +441,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
-      firstVisit: current.firstVisit !== undefined ? current.firstVisit : true, // 🔧 Solo true para usuarios completamente nuevos
-      conversationCount: (current.conversationCount || 0) + 1,
-      freeTrialUsed: current.freeTrialUsed || false,
-      freeTrialDate: current.freeTrialDate || null,
-      reservationHistory: current.reservationHistory || []
+      conversationCount: (current.conversationCount || 0) + 1
+      // ⚠️ CRÍTICO: NO sobrescribir firstVisit, freeTrialUsed, freeTrialDate
+      // Esos campos solo se actualizan en confirmation-flow.js
+      // Si los pasamos aquí, se sobrescriben en cada mensaje
     };
     
     // Guardar perfil actualizado

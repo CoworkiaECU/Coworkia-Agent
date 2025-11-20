@@ -521,14 +521,21 @@ export async function loadConversationHistory(userId, limit = 10) {
  */
 export async function saveConversationMessage(userId, message, role = 'user') {
   try {
+    // Si message es objeto con role, content, agent - extraer datos
+    const isObjectMessage = typeof message === 'object' && message.content;
+    const content = isObjectMessage ? message.content : message;
+    const actualRole = isObjectMessage ? message.role : role;
+    const agentName = isObjectMessage && message.agent ? message.agent : 'Aurora';
+    const agentKey = agentName.toLowerCase();
+    
     await saveInteraction({
-      userId: userId,  // Corregido: usar userId en lugar de user_phone
-      agent: 'aurora',
-      agentName: 'Aurora',
+      userId: userId,
+      agent: agentKey,
+      agentName: agentName,
       intentReason: 'conversation',
-      input: role === 'user' ? message : '',
-      output: role === 'assistant' ? message : '',
-      meta: { role, timestamp: new Date().toISOString() }
+      input: actualRole === 'user' ? content : '',
+      output: actualRole === 'assistant' ? content : '',
+      meta: { role: actualRole, timestamp: new Date().toISOString() }
     });
     return true;
   } catch (error) {

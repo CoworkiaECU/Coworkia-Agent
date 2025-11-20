@@ -41,14 +41,28 @@ const POST_EMAIL_REACTIVATION_KEYWORDS = [
 export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = null) {
   // 1. Detectar intención y agente apropiado
   const intencion = detectarIntencion(mensaje);
-  const agente = AGENTES[intencion.agent];
+  
+  // 🎯 RESPETAR AGENTE ACTIVO: Si hay un agente activo y NO se menciona cambio explícito,
+  // usar el agente activo en lugar del detectado
+  const activeAgent = perfil.activeAgent || 'AURORA';
+  const isAgentHandoff = Boolean(intencion.flags?.agentHandoff);
+  const isReturningToAurora = Boolean(intencion.flags?.returningToAurora);
+  
+  // Si NO hay handoff ni retorno, usar el agente activo
+  let agenteKey = intencion.agent;
+  if (!isAgentHandoff && !isReturningToAurora) {
+    agenteKey = activeAgent;
+    console.log(`[ORQUESTADOR] 🎯 Usando agente activo: ${activeAgent} (detectado fue: ${intencion.agent})`);
+  }
+  
+  const agente = AGENTES[agenteKey];
   
   // 🚫 CANCELACIÓN DETECTADA
   const esCancelacion = Boolean(intencion.flags?.cancelacion);
   
   // 🔄 RELEVO ENTRE AGENTES
-  const esRelevoHaciaOtro = Boolean(intencion.flags?.agentHandoff);
-  const esRetornoAurora = Boolean(intencion.flags?.returningToAurora);
+  const esRelevoHaciaOtro = isAgentHandoff;
+  const esRetornoAurora = isReturningToAurora;
   
   // 🔄 MODIFICACIÓN DE RESERVA DETECTADA
   const esModificacionReserva = Boolean(intencion.flags?.modificacionReserva);
@@ -66,7 +80,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   );
 
   if (!agente) {
-    throw new Error(`Agente ${intencion.agent} no encontrado`);
+    throw new Error(`Agente ${agenteKey} no encontrado`);
   }
 
   // 2. Construir contexto de perfil
@@ -121,18 +135,21 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - Mantente disponible para responder preguntas generales sobre Coworkia
 - Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
 
+  // Para el handoff, necesitamos el agente DESTINO (el detectado), no el activo
+  const targetAgentKey = intencion.flags?.targetAgent || intencion.agent;
+  
   const instruccionesRelevo = esRelevoHaciaOtro ? `
-🤝 RELEVO A OTRO AGENTE - MENSAJE PERSONALIZADO:
-- El usuario mencionó ${intencion.agent === 'ENZO' ? '@Enzo' : intencion.agent === 'ADRIANA' ? '@Adriana' : '@Aluna'}
+👋 RELEVO ENTRE AGENTES - MENSAJE DE TRANSICIÓN:
+- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : '@Aluna'}
 - DEBES usar este mensaje EXACTO según el contexto:
 
 SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
-"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[intencion.agent].nombre} 🚀, tu ${AGENTES[intencion.agent].descripcionCorta}.
+"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[targetAgentKey].nombre} 🚀, tu ${AGENTES[targetAgentKey].descripcionCorta}.
 
 Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
 
 SI ESTÁ EN MEDIO DE CONVERSACIÓN:
-"Listo ${perfil.whatsappDisplayName || perfil.name || 'amigo/a'}, te comunico de inmediato con ${AGENTES[intencion.agent].nombre}.
+"Listo ${perfil.whatsappDisplayName || perfil.name || 'amigo/a'}, te comunico de inmediato con ${AGENTES[targetAgentKey].nombre}.
 
 Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
 
@@ -194,7 +211,7 @@ ${instruccionesPostEmail}
 
   return {
     agente: agente.nombre,
-    agenteKey: intencion.agent,
+    agenteKey: agenteKey,
     razonSeleccion: intencion.reason,
     systemPrompt: agente.systemPrompt,
     prompt,
@@ -223,7 +240,7 @@ ${instruccionesPostEmail}
       cancelacion: esCancelacion,
       agentHandoff: esRelevoHaciaOtro,
       returningToAurora: esRetornoAurora,
-      targetAgent: esRelevoHaciaOtro ? intencion.agent : null,
+      targetAgent: esRelevoHaciaOtro ? targetAgentKey : null,
       // 🚫 Flag para indicar si se debe guardar formulario parcial
       shouldSavePartialForm: esCancelacion && formData && Object.keys(formData).length > 0
     }

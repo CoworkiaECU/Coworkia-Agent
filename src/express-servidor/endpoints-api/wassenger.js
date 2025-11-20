@@ -484,17 +484,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const activeAgent = profile.activeAgent || 'AURORA';
     const isAgentMention = /@(aurora|enzo|adriana|aluna)/i.test(text);
     
-    // Si NO menciona a ningún agente Y el agente activo no es el que detectamos, ignorar
-    if (!isAgentMention) {
-      const { detectarIntencion } = await import('../../deteccion-intenciones/detectar-intencion.js');
-      const intencionDetectada = detectarIntencion(text);
-      
-      // Si el agente detectado NO es el activo, no responder
-      if (intencionDetectada.agent !== activeAgent) {
-        console.log(`[WASSENGER] ⏸️ Mensaje ignorado - Agente activo: ${activeAgent}, Detectado: ${intencionDetectada.agent}`);
-        return res.json({ success: true, ignored: true, reason: 'agent_mismatch' });
-      }
-    }
+    // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo
+    // Solo validamos si detectamos mención explícita de cambio de agente
+    // Esto permite que después de un handoff, todos los mensajes vayan al nuevo agente
+    console.log(`[WASSENGER] 🎯 Agente activo: ${activeAgent}, Mención detectada: ${isAgentMention}`);
 
     // 🆕 Guardar mensaje del usuario en historial
     console.log('[DEBUG-FLOW] 7️⃣ Iniciando saveConversationMessage...');

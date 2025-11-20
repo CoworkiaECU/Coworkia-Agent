@@ -115,12 +115,12 @@ export function detectarIntencion(inputRaw = '') {
 
   // 1) Enzo explícito
   if (/@enzo/.test(text)) {
-    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: 'AURORA' } };
+    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ENZO' } };
   }
 
   // 2) Adriana solo con @adriana explícito
   if (/@adriana/.test(text)) {
-    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA' } };
+    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ADRIANA' } };
   }
 
   // 2.1) Aurora explícito - usuario retoma con Aurora

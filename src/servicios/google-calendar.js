@@ -150,18 +150,24 @@ export async function createCalendarEvent(reservationData) {
       : 'Pendiente';
     
     // Definir el evento (Google generará ID automáticamente)
+    const wasFree = !price || price === 0;
+    const reservationType = wasFree ? '🎁 GRATIS (Primera visita)' : `💳 PAGADA - ${paymentDisplay}`;
+    
     const event = {
       summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"
       description: `
 🎯 Reserva confirmada en Coworkia
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${reservationType}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👤 Cliente: ${userName}
 📧 Email: ${email}
 🏢 Espacio: ${serviceName}${hotDeskSuffix}
 👥 Personas: ${1 + guestCount} (cliente + ${guestCount} acompañantes)
 ⏱️ Duración: ${duration || '2 horas'}
-💰 Precio: ${price ? `$${price} USD` : 'GRATIS (primera vez)'}
-💳 Pago: ${paymentDisplay}
+💰 Monto: ${wasFree ? 'Sin costo' : `$${price} USD`}
 
 📅 Fecha: ${date}
 🕐 Horario: ${startTime} - ${endTime}

@@ -3,7 +3,8 @@
  * Maneja flujos de confirmación de reservas antes del pago
  */
 
-import { loadProfile, saveProfile, updateUser, getPaymentInfo } from '../perfiles-interacciones/memoria-sqlite.js';
+import { loadProfile, saveProfile, updateUser } from '../perfiles-interacciones/memoria-sqlite.js';
+import { getPaymentInfo } from './payment-calculator.js';
 import { createReservation } from './calendario.js';
 import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';

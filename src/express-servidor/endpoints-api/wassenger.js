@@ -14,10 +14,9 @@ import {
   saveInteraction, 
   loadConversationHistory, 
   saveConversationMessage,
-  getPaymentInfo,
-  calculateReservationCost,
   savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
+import { getPaymentInfo, calculateReservationCost } from '../../servicios/payment-calculator.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
 

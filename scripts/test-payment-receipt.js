@@ -5,7 +5,7 @@
  */
 
 import { analyzePaymentReceipt } from '../src/servicios-ia/openai.js';
-import { processPaymentReceipt } from '../src/servicios/payment-verification.js';
+import { processPaymentReceipt } from '../src/servicios/payment-receipts.js';
 
 const imageUrl = process.argv[2];
 

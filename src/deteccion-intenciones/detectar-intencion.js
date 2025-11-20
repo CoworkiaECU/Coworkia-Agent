@@ -128,16 +128,9 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
   }
 
-  // 2.5) Usuario quiere modificar una reserva existente
-  if (isModificacionReserva) {
-    return {
-      agent: 'AURORA',
-      reason: 'modification of existing reservation',
-      flags: { modificacionReserva: true, postEmailSupport: true }
-    };
-  }
-
-  // 2.5) Usuario quiere modificar una reserva existente
+  // 2.5) 🔄 MODIFICACIÓN DE RESERVA EXISTENTE
+  // Usuario quiere cambiar fecha/hora de una reserva ya confirmada
+  // Detectado por: "cambiar reserva", "modificar mi reserva", "reprogramar", etc.
   if (isModificacionReserva) {
     return {
       agent: 'AURORA',

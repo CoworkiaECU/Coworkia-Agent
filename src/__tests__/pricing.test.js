@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from '@jest/globals';
-import { calculateReservationCost } from '../perfiles-interacciones/memoria-sqlite.js';
+import { calculateReservationCost } from '../servicios/payment-calculator.js';
 
 describe('💰 Cálculo de Precios', () => {
   
@@ -100,8 +100,8 @@ describe('💰 Cálculo de Precios', () => {
 
     test('personas = 0 debe manejarse correctamente', () => {
       const result = calculateReservationCost('hotDesk', 2, 0);
-      expect(parseFloat(result.basePrice)).toBeGreaterThanOrEqual(10);
-      expect(result).toBeDefined();
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Número de personas debe ser al menos 1');
     });
   });
 });

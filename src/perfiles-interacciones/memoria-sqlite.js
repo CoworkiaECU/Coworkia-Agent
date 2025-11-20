@@ -14,6 +14,7 @@ import {
   clearPendingConfirmation as dbClearPendingConfirmation,
   getJustConfirmedState
 } from '../servicios/reservation-state.js';
+import { calculateReservationCost, getPaymentInfo } from '../servicios/payment-calculator.js';
 
 // Mantener compatibilidad con archivos JSON durante transición
 const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -416,87 +417,9 @@ export async function clearPartialForm(userId) {
   }
 }
 
-export function calculateReservationCost(serviceType, hours, people = 1) {
-  // HOT DESK: $10 por primeras 2 horas, luego $10 por hora adicional
-  // SALA REUNIONES: $29 por sala (2h, 3-4 personas), luego $15 por hora adicional
-  
-  let basePrice = 0;
-  let serviceName = '';
-  
-  if (serviceType === 'hotDesk') {
-    serviceName = 'Hot Desk';
-    // Mínimo 2 horas = $10
-    if (hours <= 2) {
-      basePrice = 10.00;
-    } else {
-      // $10 por primeras 2h + $10 por cada hora adicional
-      const additionalHours = hours - 2;
-      basePrice = 10.00 + (additionalHours * 10.00);
-    }
-  } else if (serviceType === 'meetingRoom') {
-    serviceName = 'Sala de Reuniones';
-    // Validar personas (mínimo 3, máximo 4)
-    if (people < 3) {
-      return { error: 'Sala de reuniones requiere mínimo 3 personas' };
-    }
-    if (people > 4) {
-      return { error: 'Sala de reuniones tiene capacidad máxima de 4 personas' };
-    }
-    
-    // $29 por primeras 2h, luego $15 por hora adicional
-    if (hours <= 2) {
-      basePrice = 29.00;
-    } else {
-      const additionalHours = hours - 2;
-      basePrice = 29.00 + (additionalHours * 15.00);
-    }
-  } else {
-    return { error: `Tipo de servicio no válido: ${serviceType}` };
-  }
-
-  const payphoneFee = basePrice * 0.05; // 5% fee
-  const totalPrice = basePrice + payphoneFee;
-
-  return {
-    service: serviceName,
-    hours,
-    people,
-    basePrice: basePrice.toFixed(2),
-    payphoneFee: payphoneFee.toFixed(2),
-    totalPrice: totalPrice.toFixed(2),
-    currency: 'USD'
-  };
-}
-
-export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
-  const BANK_ACCOUNT = process.env.COWORKIA_BANK_ACCOUNT || 'Produbanco\nCta Ahorros: 20059783069\nCédula: 1702683499\nGonzalo Villota Izurieta';
-  const PAYMENT_LINK = 'https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA';
-
-  if (!profile.freeTrialUsed) {
-    return null; // No necesita pagar aún
-  }
-
-  const costInfo = calculateReservationCost(serviceType, hours);
-  
-  if (costInfo.error) {
-    return {
-      error: costInfo.error,
-      message: `❌ ${costInfo.error}`
-    };
-  }
-
-  const paymentMessage = `✅ Ya usaste tu día gratis el ${profile.freeTrialDate || 'anteriormente'}.\n\n🧾 Costo de tu reserva:\n• ${costInfo.service}: ${costInfo.hours}h × $${costInfo.pricePerHour} = $${costInfo.basePrice}\n• Fee Payphone (5%): $${costInfo.payphoneFee}\n• TOTAL A PAGAR: $${costInfo.totalPrice} USD\n\n💳 **PAGO FÁCIL CON TARJETA:**\n${PAYMENT_LINK}\n• Ingresa → Coloca número de tarjeta → Paga $${costInfo.totalPrice}\n\n🏦 **Transferencia Bancaria:**\n${BANK_ACCOUNT}\n\nEnvía tu comprobante para confirmar ✅`;
-
-  return {
-    message: paymentMessage,
-    freeTrialDate: profile.freeTrialDate,
-    costBreakdown: costInfo,
-    paymentMethods: {
-      payphone: PAYMENT_LINK,
-      bank: BANK_ACCOUNT
-    }
-  };
-}
+// 🗑️ REMOVIDO: calculateReservationCost y getPaymentInfo movidas a payment-calculator.js
+// Re-exportadas automáticamente en línea 16 para compatibilidad
+export { calculateReservationCost, getPaymentInfo } from '../servicios/payment-calculator.js';
 
 /**
  * 📜 Carga historial de conversación (stub temporal)

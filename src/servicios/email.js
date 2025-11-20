@@ -319,32 +319,7 @@ function generateConfirmationEmailHTML(reservationData) {
   `;
 }
 
-/**
- * � Procesa imagen de comprobante de pago y extrae información
- */
-export async function processPaymentReceipt(imageData, amount) {
-  // En una implementación real, aquí iría OCR o análisis de imagen
-  // Por ahora, simulamos extracción de datos básicos
-  
-  const currentDate = new Date().toLocaleDateString('es-EC');
-  
-  // Detectar método de pago basado en patrones comunes
-  let method = 'Transferencia bancaria';
-  let bank = 'Produbanco';
-  
-  // Generar referencia única basada en timestamp
-  const reference = `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-  
-  return {
-    method,
-    bank,
-    reference,
-    amount: amount,
-    date: currentDate,
-    verified: true, // En producción, esto sería resultado del análisis
-    imageProcessed: true
-  };
-}
+// 🗑️ REMOVIDO: processPaymentReceipt stub (versión real está en payment-receipts.js)
 
 /**
  * �📧 Envía email de confirmación de reserva

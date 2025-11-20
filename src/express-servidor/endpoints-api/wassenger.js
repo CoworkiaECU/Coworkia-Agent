@@ -248,19 +248,82 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
-    if (messageType === 'image' || messageType === 'document') {
+    if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {
       console.log('[WASSENGER] 📸 Procesando imagen/documento...');
       console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
-      console.log('[WASSENGER] 📸 DEBUG - Data completo:', JSON.stringify(data, null, 2));
       
       const messageData = { type: messageType, media: { url: mediaUrl } };
       
-      // Verificar si es un comprobante de pago
-      if (isReceiptImage(messageData)) {
-        console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
+      // Cargar perfil para saber el agente activo
+      const userProfile = await loadProfile(userId);
+      const activeAgent = userProfile?.activeAgent || 'AURORA';
+      
+      // 🎯 SI ES ENZO/ADRIANA/ALUNA: Análisis de documento con Vision AI
+      if (['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {
+        console.log(`[WASSENGER] 🧠 ${activeAgent} analizando documento/imagen...`);
         
-        // Cargar perfil del usuario
-        const userProfile = await loadProfile(userId);
+        const { analyzeImage } = await import('../../servicios-ia/openai.js');
+        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+        const agente = AGENTES[activeAgent];
+        
+        try {
+          // Prompt según el tipo de archivo y agente
+          const fileType = messageType === 'document' ? 'documento/PDF' : 'imagen';
+          const analysisPrompt = `Analiza este ${fileType} que el Sensei acaba de enviar. 
+          
+Contexto: Eres ${agente.nombre}, ${agente.rol}.
+Tarea: Identifica insights clave, datos importantes, oportunidades o problemas según tu expertise.
+
+Responde en tu estilo característico con:
+- Análisis rápido de lo que viste
+- Insights accionables
+- Recomendaciones específicas
+- Usa emojis estratégicos`;
+
+          const analysisResult = await analyzeImage(mediaUrl, analysisPrompt, {
+            max_tokens: 800,
+            temperature: 0.7
+          });
+          
+          if (analysisResult.success) {
+            const reply = analysisResult.content;
+            
+            // Enviar respuesta
+            await enviarWhatsApp(userId, reply);
+            
+            // Guardar interacción
+            await saveInteraction({
+              userId,
+              agent: activeAgent.toLowerCase(),
+              agentName: agente.nombre,
+              intentReason: 'document_analysis',
+              input: `[${fileType.toUpperCase()}]`,
+              output: reply,
+              meta: {
+                route: '/webhooks/wassenger',
+                via: 'whatsapp',
+                mediaUrl,
+                fileType: messageType
+              }
+            });
+            
+            return res.json({ 
+              ok: true, 
+              processed: true, 
+              type: 'document_analysis',
+              agent: activeAgent
+            });
+          }
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error analizando documento:', error);
+          await enviarWhatsApp(userId, 'Gomen Sensei 🙏 Tuve un problema analizando tu archivo. ¿Puedes intentar de nuevo?');
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
+      // 💳 SI ES AURORA: Verificar si es comprobante de pago
+      if (activeAgent === 'AURORA' && isReceiptImage(messageData)) {
+        console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
         
         if (!userProfile) {
           await enviarWhatsApp(userId, '❌ No encontré tu perfil. ¿Puedes intentar hacer una reserva primero?');
@@ -297,16 +360,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           success: paymentResult.success 
         });
       } else {
-        // No es un comprobante de pago
+        // Imagen/documento enviado a Aurora pero no es comprobante
         await enviarWhatsApp(userId, 
-          '📷 He recibido tu imagen, pero no parece ser un comprobante de pago. ' +
-          'Si tienes una reserva pendiente, envíame la captura de pantalla o foto de tu transferencia/pago realizado.'
+          '📷 He recibido tu archivo. Si es un comprobante de pago, procesalo. ' +
+          'Si necesitas ayuda técnica, habla con @Enzo. ' +
+          'Si necesitas ayuda con seguros, habla con @Adriana.'
         );
         
         return res.json({ 
           ok: true, 
           processed: true, 
-          type: 'image_not_receipt' 
+          type: 'image_received' 
         });
       }
     }

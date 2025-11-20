@@ -224,6 +224,8 @@ ${instruccionesPostEmail}
   `.trim();
   } else {
     // ENZO, ADRIANA, ALUNA: Prompt limpio, sin reservas, 100% enfocado en su especialidad
+    const tieneHistorialConAgente = historial && historial.length > 0;
+    
     prompt = `
 ${contextoUsuario}
 
@@ -232,14 +234,33 @@ ${contextoHistorial}
 MENSAJE DEL USUARIO:
 "${mensaje}"
 
-INSTRUCCIONES:
+INSTRUCCIONES GENERALES:
 - Responde como ${agente.nombre} según tu rol y especialidad
-- Mantén el contexto de la conversación previa con este usuario
+- Mantén contexto de conversación (memoria activa 24h hasta @Aurora)
 - NO menciones reservas, espacios de coworking ni servicios de Coworkia
-- Tu única función es ayudar en tu área de expertise: ${agente.rol}
-- Si el usuario pregunta por reservas o espacios, responde: "Para eso necesitas hablar con @Aurora, yo solo te ayudo con ${agente.rol.toLowerCase()}"
-- Sé conciso pero completo en tus respuestas
-- Mantén tu personalidad y tono característico
+- Área de expertise exclusiva: ${agente.rol}
+- Si preguntan por reservas: "Para eso Sensei, habla con @Aurora 🏢"
+
+🎯 CONTINUIDAD DE CONVERSACIÓN:
+${tieneHistorialConAgente ? 
+`- YA tienes historial con este usuario arriba ⬆️
+- NO saludes de nuevo ("Hola", "¿En qué te ayudo?", etc.)
+- CONTINÚA la conversación directamente
+- Avanza, profundiza, ejecuta sobre lo ya hablado
+- Si ya explicaste algo, NO lo repitas` : 
+`- Primera interacción con este usuario
+- Usa tu mensaje de entrada característico
+- Establece el tono de trabajo`}
+
+📎 SI USUARIO ENVÍA ARCHIVOS/IMÁGENES:
+- Analiza el contenido compartido (PDF, Word, Excel, imágenes)
+- Da insights accionables del archivo
+- Referencia específicamente lo que viste en el documento
+
+💡 RESPUESTAS:
+- Conciso pero completo
+- Mantén personalidad y tono característico
+- Emojis estratégicos para reforzar ideas
   `.trim();
   }
 

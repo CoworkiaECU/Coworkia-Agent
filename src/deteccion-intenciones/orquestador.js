@@ -83,17 +83,26 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     throw new Error(`Agente ${agenteKey} no encontrado`);
   }
 
-  // 2. Construir contexto de perfil
-  const contextoUsuario = construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail });
+  // 2. Construir contexto según el agente
+  // 🎯 CONTEXTO ESPECÍFICO POR AGENTE:
+  // - Aurora: Recibe TODO (perfil, historial, reservas, formularios)
+  // - Enzo/Adriana/Aluna: Solo nombre, historial de CONVERSACIÓN (no reservas)
+  
+  const esAurora = agenteKey === 'AURORA';
+  
+  // Contexto de perfil: Aurora recibe todo, otros solo básico
+  const contextoUsuario = esAurora 
+    ? construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail })
+    : construirContextoPerfilBasico(perfil);
 
-  // 3. Construir contexto de historial
-  const contextoHistorial = construirContextoHistorial(historial);
+  // Contexto de historial: Filtrar por agente activo
+  const contextoHistorial = construirContextoHistorial(historial, agenteKey);
 
-  // 4. 🧠 Construir contexto de formulario parcial
-  const contextoFormulario = formData ? construirContextoFormulario(formData) : '';
+  // 4. 🧠 Contexto de formulario: SOLO AURORA
+  const contextoFormulario = (esAurora && formData) ? construirContextoFormulario(formData) : '';
 
   // 🔍 DEBUG: Log del contexto construido
-  console.log('[DEBUG-CONTEXTO] 🧠 Contexto para Aurora:', {
+  console.log(`[DEBUG-CONTEXTO] 🧠 Contexto para ${agenteKey}:`, {
     tieneHistorial: historial && historial.length > 0,
     mensajesHistorial: historial ? historial.length : 0,
     tienePendingConfirmation: !!(perfil.pendingConfirmation),
@@ -173,7 +182,12 @@ Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Esta
   const tieneResumeMessage = formData && formData.resumeMessage;
   const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion && !tieneResumeMessage;
 
-  const prompt = `
+  // 🎯 PROMPT DIFERENTE SEGÚN AGENTE
+  let prompt;
+  
+  if (esAurora) {
+    // AURORA: Prompt completo con reservas, formularios, instrucciones específicas
+    prompt = `
 ${contextoUsuario}
 
 ${contextoHistorial}
@@ -208,6 +222,26 @@ ${!esSoportePostEmail && !esCancelacion ? '- Siempre termina con siguiente paso 
 ${esSoportePostEmail && !esCancelacion ? '- Responde brevemente y cierra confirmando que estás disponible para más consultas' : ''}
 ${instruccionesPostEmail}
   `.trim();
+  } else {
+    // ENZO, ADRIANA, ALUNA: Prompt limpio, sin reservas, 100% enfocado en su especialidad
+    prompt = `
+${contextoUsuario}
+
+${contextoHistorial}
+
+MENSAJE DEL USUARIO:
+"${mensaje}"
+
+INSTRUCCIONES:
+- Responde como ${agente.nombre} según tu rol y especialidad
+- Mantén el contexto de la conversación previa con este usuario
+- NO menciones reservas, espacios de coworking ni servicios de Coworkia
+- Tu única función es ayudar en tu área de expertise: ${agente.rol}
+- Si el usuario pregunta por reservas o espacios, responde: "Para eso necesitas hablar con @Aurora, yo solo te ayudo con ${agente.rol.toLowerCase()}"
+- Sé conciso pero completo en tus respuestas
+- Mantén tu personalidad y tono característico
+  `.trim();
+  }
 
   return {
     agente: agente.nombre,
@@ -431,17 +465,60 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 }
 
 /**
- * Construye contexto del historial reciente
+ * Construye contexto BÁSICO del perfil para agentes NO-Aurora
+ * Solo incluye nombre y datos mínimos, sin reservas ni formularios
  */
-function construirContextoHistorial(historial = []) {
+function construirContextoPerfilBasico(perfil = {}) {
+  if (!perfil || Object.keys(perfil).length === 0) {
+    return 'USUARIO: Primera interacción';
+  }
+
+  const lineas = ['USUARIO:'];
+  
+  if (perfil.name) {
+    lineas.push(`- Nombre: ${perfil.name}`);
+  } else if (perfil.whatsappDisplayName) {
+    lineas.push(`- Nombre: ${perfil.whatsappDisplayName}`);
+  }
+  
+  // Información mínima, sin reservas ni detalles de Coworkia
+  if (perfil.conversationCount && perfil.conversationCount > 1) {
+    lineas.push(`- Han conversado ${perfil.conversationCount} veces antes`);
+  }
+  
+  return lineas.join('\n');
+}
+
+/**
+ * Construye contexto del historial reciente
+ * Si se especifica agenteKey, filtra solo mensajes relevantes para ese agente
+ */
+function construirContextoHistorial(historial = [], agenteKey = null) {
   if (!historial || historial.length === 0) {
     return 'HISTORIAL: Primera interacción - sin mensajes previos.';
   }
 
   const lineas = ['HISTORIAL CONVERSACIÓN (últimos mensajes):'];
   
-  // Tomar últimos 10 mensajes para mejor contexto
-  const recientes = historial.slice(-10);
+  // 🎯 FILTRADO POR AGENTE: Si NO es Aurora, solo mostrar conversaciones con ese agente
+  let recientes = historial.slice(-10);
+  
+  if (agenteKey && agenteKey !== 'AURORA') {
+    // Filtrar solo mensajes del usuario Y respuestas de este agente específico
+    recientes = recientes.filter(item => {
+      if (item.role === 'user') return true;
+      if (item.role === 'assistant') {
+        // Verificar si el mensaje es de este agente
+        const messageAgent = item.agent?.toUpperCase() || 'AURORA';
+        return messageAgent === agenteKey;
+      }
+      return false;
+    });
+    
+    if (recientes.length === 0) {
+      return `HISTORIAL: Primera conversación con ${agenteKey}. No hay mensajes previos con este agente.`;
+    }
+  }
   
   recientes.forEach((item, index) => {
     const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '';
@@ -449,9 +526,8 @@ function construirContextoHistorial(historial = []) {
     if (item.role === 'user') {
       lineas.push(`  Usuario: "${item.content}"`);
     } else if (item.role === 'assistant') {
-      const agentInfo = item.agent ? ` [${item.agent}]` : '';
-      // Mantener respuesta completa para mejor contexto
-      lineas.push(`  Aurora${agentInfo}: "${item.content}"`);
+      const agentName = item.agent || 'Aurora';
+      lineas.push(`  ${agentName}: "${item.content}"`);
     }
   });
 

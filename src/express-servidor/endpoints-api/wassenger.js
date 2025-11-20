@@ -829,7 +829,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           
           console.log('[WASSENGER] ✅ Agente activo actualizado a: AURORA');
 
-          // Aurora responde con su mensaje de entrada
+          // Aurora responde con su mensaje de entrada (siempre AURORA aquí)
           reply = await complete(resultado.prompt, {
             temperature: 0.4,
             max_tokens: 300,
@@ -844,7 +844,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
             activeAgent: 'AURORA'
           });
           
-          // Aurora responde normalmente
+          // Aurora responde normalmente (siempre AURORA en catch)
           reply = await complete(resultado.prompt, {
             temperature: 0.4,
             max_tokens: 300,
@@ -863,9 +863,13 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           freeTrialUsed: profile.freeTrialUsed
         });
 
+        // 🎯 Configuración según agente activo
+        const activeAgent = profile.activeAgent || 'AURORA';
+        const isSpecializedAgent = ['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent);
+        
         reply = await complete(resultado.prompt, {
-          temperature: 0.4,
-          max_tokens: 300,
+          temperature: isSpecializedAgent ? 0.7 : 0.4,  // Agentes especializados más creativos
+          max_tokens: isSpecializedAgent ? 800 : 300,   // Agentes especializados sin límites
           system: resultado.systemPrompt
         });
       }

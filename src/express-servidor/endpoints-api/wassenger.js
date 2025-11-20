@@ -685,118 +685,179 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 
       // 🤝 MANEJAR HANDOFF - Cambio de agente
       if (resultado.metadata.agentHandoff) {
-        console.log('[WASSENGER] 🤝 Handoff detectado hacia:', resultado.metadata.targetAgent);
+        const targetAgent = resultado.metadata.targetAgent;
+        console.log('[WASSENGER] 🤝 Handoff detectado hacia:', targetAgent);
         
-        // Generar mensaje de handoff desde agente actual
-        reply = await complete(resultado.prompt, {
-          temperature: 0.4,
-          max_tokens: 200,
-          system: resultado.systemPrompt
-        });
+        try {
+          // 1. Generar mensaje de transición desde agente actual
+          const handoffMessage = await complete(resultado.prompt, {
+            temperature: 0.4,
+            max_tokens: 200,
+            system: resultado.systemPrompt
+          });
 
-        // Enviar mensaje de handoff
-        await dispatchHttpRequest(WASSENGER_API_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${WASSENGER_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            phone: from,
-            message: reply
-          })
-        });
+          console.log('[WASSENGER] 📤 Enviando mensaje de transición...');
+          
+          // 2. Enviar mensaje de transición
+          const handoffResult = await enviarWhatsApp(userId, handoffMessage);
+          if (!handoffResult.ok) {
+            throw new Error(`Error enviando mensaje de transición: ${handoffResult.error}`);
+          }
 
-        // Guardar mensaje de handoff en historial
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: reply,
-          agent: resultado.agente
-        });
+          // 3. Guardar mensaje de transición en historial
+          await saveConversationMessage(userId, {
+            role: 'assistant',
+            content: handoffMessage,
+            agent: resultado.agente
+          });
 
-        // Esperar 10 segundos antes de que entre el nuevo agente
-        await new Promise(resolve => setTimeout(resolve, 10000));
+          console.log('[WASSENGER] ⏳ Esperando 10 segundos antes de que entre el nuevo agente...');
+          await new Promise(resolve => setTimeout(resolve, 10000));
 
-        // Actualizar agente activo en perfil
-        await saveProfile(userId, {
-          ...profile,
-          activeAgent: resultado.metadata.targetAgent
-        });
+          // 4. Obtener configuración del nuevo agente
+          const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+          const nuevoAgente = AGENTES[targetAgent];
+          
+          if (!nuevoAgente) {
+            throw new Error(`Agente ${targetAgent} no encontrado en configuración`);
+          }
 
-        // Obtener mensaje de entrada del nuevo agente
-        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const nuevoAgente = AGENTES[resultado.metadata.targetAgent];
-        const mensajeEntrada = nuevoAgente.mensajes.entrada;
+          // 5. Actualizar agente activo en perfil (ANTES de enviar mensaje de entrada)
+          await saveProfile(userId, {
+            activeAgent: targetAgent
+          });
+          
+          console.log('[WASSENGER] 👤 Agente activo actualizado a:', targetAgent);
 
-        // Enviar mensaje de entrada del nuevo agente
-        await dispatchHttpRequest(WASSENGER_API_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${WASSENGER_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            phone: from,
-            message: mensajeEntrada
-          })
-        });
+          // 6. Enviar mensaje de entrada del nuevo agente
+          const mensajeEntrada = nuevoAgente.mensajes?.entrada || `Hola, soy ${nuevoAgente.nombre}. ¿En qué puedo ayudarte?`;
+          
+          console.log('[WASSENGER] 📤 Enviando mensaje de entrada del nuevo agente...');
+          const entradaResult = await enviarWhatsApp(userId, mensajeEntrada);
+          
+          if (!entradaResult.ok) {
+            throw new Error(`Error enviando mensaje de entrada: ${entradaResult.error}`);
+          }
 
-        // Guardar mensaje de entrada en historial
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: mensajeEntrada,
-          agent: nuevoAgente.nombre
-        });
+          // 7. Guardar mensaje de entrada en historial
+          await saveConversationMessage(userId, {
+            role: 'assistant',
+            content: mensajeEntrada,
+            agent: nuevoAgente.nombre
+          });
 
-        console.log('[WASSENGER] ✅ Handoff completado');
-        return res.json({ success: true, handoff: true });
+          console.log('[WASSENGER] ✅ Handoff completado exitosamente');
+          
+          // Guardar interacción del handoff
+          await saveInteraction({
+            userId,
+            agent: targetAgent.toLowerCase(),
+            agentName: nuevoAgente.nombre,
+            intentReason: 'agent_handoff',
+            input: text,
+            output: `Handoff desde ${resultado.agente} a ${nuevoAgente.nombre}`,
+            meta: {
+              route: '/webhooks/wassenger',
+              via: 'whatsapp',
+              handoff: true,
+              fromAgent: resultado.agente,
+              toAgent: targetAgent
+            }
+          });
+
+          return res.json({ success: true, handoff: true, targetAgent });
+          
+        } catch (handoffError) {
+          console.error('[WASSENGER] ❌ Error durante handoff:', handoffError);
+          
+          // Enviar mensaje de error al usuario
+          await enviarWhatsApp(
+            userId, 
+            'Disculpa, hubo un problema al conectarte con el especialista. Por favor, intenta de nuevo o escribe "ayuda".'
+          );
+          
+          // Guardar error en interacciones
+          await saveInteraction({
+            userId,
+            agent: 'system',
+            agentName: 'System',
+            intentReason: 'handoff_error',
+            input: text,
+            output: `Error en handoff: ${handoffError.message}`,
+            meta: {
+              route: '/webhooks/wassenger',
+              via: 'whatsapp',
+              error: handoffError.message,
+              targetAgent
+            }
+          });
+          
+          return res.json({ success: false, error: 'handoff_failed', message: handoffError.message });
+        }
       }
 
       // 👋 MANEJAR RETORNO - Usuario vuelve a un agente
       if (resultado.metadata.returningToAurora) {
         console.log('[WASSENGER] 👋 Usuario retorna a Aurora desde otro agente');
         
-        // Enviar mensaje de despedida del agente anterior
-        const agenteAnterior = profile.activeAgent;
-        if (agenteAnterior && agenteAnterior !== 'AURORA') {
-          const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-          const agenteObj = AGENTES[agenteAnterior];
-          if (agenteObj && agenteObj.mensajes.despedida) {
-            await dispatchHttpRequest(WASSENGER_API_URL, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${WASSENGER_API_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                phone: from,
-                message: agenteObj.mensajes.despedida
-              })
-            });
+        try {
+          // Enviar mensaje de despedida del agente anterior
+          const agenteAnterior = profile.activeAgent;
+          
+          if (agenteAnterior && agenteAnterior !== 'AURORA') {
+            const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+            const agenteObj = AGENTES[agenteAnterior];
+            
+            if (agenteObj && agenteObj.mensajes?.despedida) {
+              console.log('[WASSENGER] 👋 Enviando despedida de:', agenteObj.nombre);
+              
+              const despedidaResult = await enviarWhatsApp(userId, agenteObj.mensajes.despedida);
+              
+              if (despedidaResult.ok) {
+                await saveConversationMessage(userId, {
+                  role: 'assistant',
+                  content: agenteObj.mensajes.despedida,
+                  agent: agenteObj.nombre
+                });
 
-            await saveConversationMessage(userId, {
-              role: 'assistant',
-              content: agenteObj.mensajes.despedida,
-              agent: agenteObj.nombre
-            });
-
-            // Delay de 5 segundos
-            await new Promise(resolve => setTimeout(resolve, 5000));
+                // Delay de 5 segundos
+                console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de entrada de Aurora...');
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              } else {
+                console.warn('[WASSENGER] ⚠️ No se pudo enviar despedida:', despedidaResult.error);
+              }
+            }
           }
+
+          // Actualizar agente activo a Aurora
+          await saveProfile(userId, {
+            activeAgent: 'AURORA'
+          });
+          
+          console.log('[WASSENGER] ✅ Agente activo actualizado a: AURORA');
+
+          // Aurora responde con su mensaje de entrada
+          reply = await complete(resultado.prompt, {
+            temperature: 0.4,
+            max_tokens: 300,
+            system: resultado.systemPrompt
+          });
+          
+        } catch (returnError) {
+          console.error('[WASSENGER] ❌ Error durante retorno a Aurora:', returnError);
+          
+          // Forzar actualización a Aurora y continuar
+          await saveProfile(userId, {
+            activeAgent: 'AURORA'
+          });
+          
+          // Aurora responde normalmente
+          reply = await complete(resultado.prompt, {
+            temperature: 0.4,
+            max_tokens: 300,
+            system: resultado.systemPrompt
+          });
         }
-
-        // Actualizar agente activo
-        await saveProfile(userId, {
-          ...profile,
-          activeAgent: 'AURORA'
-        });
-
-        // Aurora responde con su mensaje de entrada
-        reply = await complete(resultado.prompt, {
-          temperature: 0.4,
-          max_tokens: 300,
-          system: resultado.systemPrompt
-        });
       } else {
         // 🎯 Campañas DESACTIVADAS - Aurora maneja TODO con contexto completo
         // Aurora tiene acceso a firstVisit, freeTrialUsed, historial, etc.

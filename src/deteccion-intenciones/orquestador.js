@@ -267,6 +267,9 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   }
 
   // 🎯 FUENTE DE VERDAD: free_trial_used (campo autoritativo)
+  console.log('[ORQUESTADOR] 🔍 DEBUG freeTrialUsed:', perfil.freeTrialUsed, 'Type:', typeof perfil.freeTrialUsed);
+  console.log('[ORQUESTADOR] 🔍 DEBUG reservationHistory length:', perfil.reservationHistory?.length || 0);
+  
   if (perfil.freeTrialUsed !== undefined) {
     if (perfil.freeTrialUsed) {
       lineas.push(`\n💼 CLIENTE RECURRENTE:`);

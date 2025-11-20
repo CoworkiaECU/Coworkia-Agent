@@ -138,24 +138,27 @@ export async function saveProfile(userId, partialProfile = {}) {
   
   try {
     // Convertir formato de aplicación a formato SQLite
+    // 🔧 Soportar AMBOS formatos: camelCase y snake_case para máxima compatibilidad
     const sqliteData = {
       name: partialProfile.name,
       email: partialProfile.email,
-      whatsapp_display_name: partialProfile.whatsappDisplayName,
-      first_visit: partialProfile.firstVisit,
-      free_trial_used: partialProfile.freeTrialUsed,
-      free_trial_date: partialProfile.freeTrialDate,
-      conversation_count: partialProfile.conversationCount,
-      last_message_at: partialProfile.lastMessageAt || new Date().toISOString(),
-      active_agent: partialProfile.activeAgent
+      whatsapp_display_name: partialProfile.whatsappDisplayName || partialProfile.whatsapp_display_name,
+      first_visit: partialProfile.firstVisit ?? partialProfile.first_visit,
+      free_trial_used: partialProfile.freeTrialUsed ?? partialProfile.free_trial_used,
+      free_trial_date: partialProfile.freeTrialDate || partialProfile.free_trial_date,
+      conversation_count: partialProfile.conversationCount ?? partialProfile.conversation_count,
+      last_message_at: partialProfile.lastMessageAt || partialProfile.last_message_at || new Date().toISOString(),
+      active_agent: partialProfile.activeAgent || partialProfile.active_agent
     };
     
-    // Remover campos undefined
+    // Remover campos undefined (pero preservar false y 0)
     Object.keys(sqliteData).forEach(key => {
       if (sqliteData[key] === undefined) {
         delete sqliteData[key];
       }
     });
+    
+    console.log('[MEMORIA] 💾 Guardando datos en DB:', sqliteData);
     
     await userRepository.createOrUpdate(userId, sqliteData);
     

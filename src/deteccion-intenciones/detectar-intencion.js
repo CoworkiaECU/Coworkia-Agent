@@ -150,7 +150,7 @@ export function detectarIntencion(inputRaw = '') {
 
   // 3) Aluna por palabras clave de planes/membresías
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
-    return { agent: 'ALUNA', reason: 'keywords membresías/planes' };
+    return { agent: 'ALUNA', reason: 'keywords membresías/planes', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };
   }
 
   // 4) Aurora por defecto o por keywords de reservas/pagos

@@ -310,6 +310,11 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     if (!pendingReservation.wasFree) {
       console.log('[Confirmation] 📍 PASO 2.2: Actualizando estado a pending_payment...');
       reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'pending_payment');
+    } else {
+      // 🎁 Reserva gratis: marcar como confirmada inmediatamente
+      console.log('[Confirmation] 📍 PASO 2.2: Reserva gratis - actualizando estado a confirmed...');
+      reservationRecord = await reservationRepository.updateStatus(reservationRecord.id, 'confirmed');
+      console.log('[Confirmation] ✅ Reserva gratis confirmada automáticamente');
     }
 
     console.log('[Confirmation] 📍 PASO 2.3: Limpiando confirmación pendiente...');

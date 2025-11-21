@@ -8,6 +8,7 @@
     "test:aurora": "node scripts/test-aurora-local.js",
     "test:conversation": "node scripts/test-aurora-local.js --conversation",
     "test:cancel": "node scripts/test-aurora-local.js --cancel",
+    "test:followup": "node scripts/test-follow-up-local.js",
     "cleanup": "node scripts/cleanup-expired-data.js",
     "cleanup:dry-run": "node scripts/cleanup-expired-data.js --dry-run",
     "audit": "node scripts/audit-reservations.js",

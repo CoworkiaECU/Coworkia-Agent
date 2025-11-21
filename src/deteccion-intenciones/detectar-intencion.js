@@ -123,6 +123,11 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ADRIANA' } };
   }
 
+  // 2.05) Aluna explícito - planes mensuales/membresías
+  if (/@aluna/.test(text)) {
+    return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };
+  }
+
   // 2.1) Aurora explícito - usuario retoma con Aurora
   if (/@aurora/.test(text)) {
     return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };

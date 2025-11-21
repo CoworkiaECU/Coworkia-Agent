@@ -375,36 +375,50 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     // 4. Si es gratis, enviar email y calendar INLINE (no encolar)
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, enviando notificaciones INLINE');
-      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email ? 'Configurado' : 'No configurado');
+      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);
+      console.log('[Confirmation] 🔍 DEBUG: Datos reserva:', {
+        date: confirmedDate,
+        startTime: confirmedStart,
+        endTime: confirmedEnd,
+        serviceType: pendingReservation.serviceType,
+        wasFree: true
+      });
       
       if (userProfile.email) {
-        console.log('[Confirmation] � Enviando notificaciones INLINE (email + calendar)...');
+        console.log('[Confirmation] 📧 Enviando notificaciones INLINE (email + calendar)...');
         
-        // EJECUTAR INLINE con reintentos automáticos
-        const notificationResults = await sendReservationNotifications({
-          email: userProfile.email,
-          userName: userProfile.name || 'Cliente',
-          date: confirmedDate,
-          startTime: confirmedStart,
-          endTime: confirmedEnd,
-          serviceType: pendingReservation.serviceType || 'Hot Desk',
-          guestCount: pendingReservation.guestCount || 0,
-          wasFree: true,
-          durationHours: pendingReservation.durationHours || 2,
-          totalPrice: 0,
-          reservation: reservationRecord
-        });
-        
-        // Log detallado de resultados
-        if (notificationResults.bothSucceeded) {
-          console.log('[Confirmation] ✅ AMBAS notificaciones enviadas exitosamente (email + calendar)');
-        } else if (notificationResults.anySucceeded) {
-          console.warn('[Confirmation] ⚠️ PARCIAL: Solo algunas notificaciones se enviaron:', {
-            email: notificationResults.email.success ? 'OK' : 'FAILED',
-            calendar: notificationResults.calendar.success ? 'OK' : 'FAILED'
+        try {
+          // EJECUTAR INLINE con reintentos automáticos
+          const notificationResults = await sendReservationNotifications({
+            email: userProfile.email,
+            userName: userProfile.name || 'Cliente',
+            date: confirmedDate,
+            startTime: confirmedStart,
+            endTime: confirmedEnd,
+            serviceType: pendingReservation.serviceType || 'hotDesk',
+            guestCount: pendingReservation.guestCount || 0,
+            wasFree: true,
+            durationHours: pendingReservation.durationHours || 2,
+            totalPrice: 0,
+            reservation: reservationRecord
           });
-        } else {
-          console.error('[Confirmation] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
+          
+          // Log detallado de resultados
+          console.log('[Confirmation] 📊 Resultado notificaciones:', JSON.stringify(notificationResults, null, 2));
+          
+          if (notificationResults.bothSucceeded) {
+            console.log('[Confirmation] ✅ AMBAS notificaciones enviadas exitosamente (email + calendar)');
+          } else if (notificationResults.anySucceeded) {
+            console.warn('[Confirmation] ⚠️ PARCIAL: Solo algunas notificaciones se enviaron:', {
+              email: notificationResults.email?.success ? 'OK' : 'FAILED',
+              calendar: notificationResults.calendar?.success ? 'OK' : 'FAILED'
+            });
+          } else {
+            console.error('[Confirmation] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
+          }
+        } catch (notifError) {
+          console.error('[Confirmation] ❌ ERROR al enviar notificaciones:', notifError.message);
+          console.error('[Confirmation] Stack:', notifError.stack);
         }
       } else {
         console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');

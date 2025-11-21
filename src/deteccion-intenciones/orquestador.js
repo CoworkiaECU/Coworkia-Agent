@@ -439,7 +439,11 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`\n⚠️ IMPORTANTE - DETECCIÓN DE CONFLICTOS:`);
     lineas.push(`- Cuando usuario solicite nueva reserva, REVISAR si fecha/hora coincide con estas`);
     lineas.push(`- Si hay conflicto: "Ya tienes [espacio] reservado para [fecha] [hora]. ¿Quieres cambiarla o hacer otra diferente?"`);
-    lineas.push(`- Si usuario pregunta "¿qué reservas tengo?": Mostrar esta lista formateada`);
+    lineas.push(`\n📋 Si usuario pregunta "¿qué reservas tengo?" o "cuántas reservas tengo?", responde EXACTAMENTE así:`);
+    lineas.push(`"Tienes ${perfil.upcomingReservations.length} reserva${perfil.upcomingReservations.length > 1 ? 's' : ''} confirmada${perfil.upcomingReservations.length > 1 ? 's' : ''}: 📅\n\n" + [lista con formato]`);
+    lineas.push(`\nFORMATO DE LISTA (usa emojis y líneas separadas):`);
+    lineas.push(`${perfil.upcomingReservations.length === 1 ? '"' : ''}📅 [Fecha]\n⏰ [Hora inicio] - [Hora fin]\n🏢 [Tipo de espacio]${perfil.upcomingReservations.length === 1 ? '\n💰 [Precio o GRATIS]"' : ''}`);
+    lineas.push(`Si son múltiples reservas, separar cada una con línea en blanco.`);
   } else {
     lineas.push(`\n📅 RESERVAS CONFIRMADAS FUTURAS: Ninguna`);
     lineas.push(`\n⚠️ Este usuario NO tiene reservas confirmadas todavía.`);

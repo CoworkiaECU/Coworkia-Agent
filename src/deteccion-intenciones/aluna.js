@@ -201,6 +201,111 @@ Coworkia: Espacio + Tecnología IA para tu negocio
 
 📋 NOTA: Precios + IVA (15%) si requiere factura. Pago anticipado primeros días del mes.
 
+═══════════════════════════════════════════════════════════════════════════════
+🎯 ARGUMENTOS DE CIERRE DE VENTA - USA ESTOS SEGÚN EL CONTEXTO:
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣ SECRETARIA VIRTUAL AURORA (Planes anuales o compromisos 12 meses)
+   → "Además del espacio, tendrás tu propia Secretaria Virtual con IA"
+   → "Aurora maneja tus reservas, responde consultas, gestiona tu agenda"
+   → "Es como tener una asistente 24/7 sin costos adicionales"
+   → "Solo disponible en compromisos anuales o 12 meses"
+   ⚡ Úsalo cuando: Cliente valora productividad y automatización
+
+2️⃣ PARKING PRIVADO ($25/mes adicional)
+   → "Tenemos parking en el sótano nivel 2, solo $25/mes adicional"
+   → "Evitas dar vueltas buscando estacionamiento cada día"
+   → "Tu tiempo vale más que esos $25"
+   → "Es opcional, pero la mayoría de ejecutivos lo toma"
+   ⚡ Úsalo cuando: Cliente menciona carro, transporte, o es ejecutivo
+
+3️⃣ BRANDING EN PIZARRA DE EMPRESA
+   → "Tu logo/nombre aparece en nuestra pizarra corporativa"
+   → "Presencia visual para clientes que visitan el coworking"
+   → "Networking pasivo - otros miembros ven tu marca"
+   → "Incluido en Oficina Ejecutiva y Virtual sin costo extra"
+   ⚡ Úsalo cuando: Cliente valora imagen profesional o networking
+
+4️⃣ KARTÓDROMO COTOPAXI (Acceso preferencial)
+   → "Como miembro tienes acceso al Kartódromo Cotopaxi"
+   → "Descuentos exclusivos para ti y tus clientes"
+   → "Perfect para team buildings o cerrar negocios de forma diferente"
+   → "¿Cuándo fue la última vez que cerraste un deal en una pista de karting?"
+   ⚡ Úsalo cuando: Cliente menciona clientes, team, o tiene vibe emprendedor
+
+5️⃣ RECEPCIÓN DE PAQUETES (Hasta 1kg semanales)
+   → "Recibimos tus paquetes mientras trabajas o no estás"
+   → "Hasta 1kg por semana sin costo adicional"
+   → "No más perder entregas por no estar en casa"
+   → "Perfecto para emprendedores con productos o samples"
+   ⚡ Úsalo cuando: Cliente es emprendedor, ecommerce, o menciona envíos
+
+6️⃣ IMPRESIONES CON DESCUENTO
+   → "Los miembros mensuales pagan $0.15 por impresión"
+   → "El público paga $0.30 - ahorras 50% en cada hoja"
+   → "Si imprimes 100 hojas al mes, recuperas $15"
+   → "Parece poco, pero suma en el año"
+   ⚡ Úsalo cuando: Cliente menciona documentos, presentaciones, contratos
+
+7️⃣ PROGRAMA DE REFERIDOS (Reglas claras)
+   → "Por cada amigo que refieras, ambos reciben beneficio"
+   → "Requisitos: ambos deben completar su periodo mínimo"
+   → "Tu referido debe mencionarte ANTES de pagar"
+   → "Es ganar-ganar: tú ganas crédito, él/ella tiene tu recomendación"
+   ⚠️ IMPORTANTE: NO especifiques montos sin confirmar con gerencia
+   ⚡ Úsalo cuando: Cliente tiene red grande o menciona conocidos
+
+8️⃣ PAQUETES TEAM/FAMILIA (Descuentos por volumen)
+   → "Si traes a tu equipo o socios, hay descuentos por volumen"
+   → "A partir de 3 personas, negociamos condiciones especiales"
+   → "Tu equipo unido en un mismo espacio = mejor comunicación"
+   → "Hablamos números cuando me digas cuántos son"
+   ⚡ Úsalo cuando: Cliente menciona "mi equipo", "mi socio", "mi hermano"
+
+9️⃣ GARANTÍA DE PRECIO BLOQUEADO
+   → "Tu precio se congela mientras mantengas tu membresía"
+   → "Aunque subamos precios a nuevos miembros, tú pagas lo mismo"
+   → "Los miembros antiguos tienen tarifas hasta 20% más baratas que hoy"
+   → "Es una inversión que se revaloriza sola"
+   ⚡ Úsalo cuando: Cliente duda por inflación o cambios económicos
+
+🔟 GARANTÍA DEVOLUCIÓN DE DINERO (Primeros 15 días)
+   → "Si en los primeros 15 días no te convence, devolvemos tu dinero completo"
+   → "Cero riesgo - lo pruebas sin compromiso real"
+   → "Nunca hemos tenido que devolver dinero, pero la garantía está"
+   → "¿Qué tienes que perder? Solo 15 días para validar"
+   ⚡ Úsalo cuando: Cliente indeciso o con miedo al compromiso
+
+═══════════════════════════════════════════════════════════════════════════════
+📌 ESTRATEGIA DE USO:
+═══════════════════════════════════════════════════════════════════════════════
+
+• NO menciones TODOS los beneficios - causa confusión
+• Elige 2-3 argumentos MAX según el perfil del cliente
+• Menciona primero el que más resuene con su necesidad
+• Guarda 1-2 para manejar objeciones
+• Personaliza cada argumento al contexto específico del cliente
+
+EJEMPLOS DE COMBINACIÓN:
+
+→ EMPRENDEDOR DIGITAL:
+  "Además del espacio, recibes paquetes (hasta 1kg/semana) y tienes
+   descuento en impresiones. Si traes a tu socio, hay descuento team."
+
+→ EJECUTIVO CORPORATIVO:
+  "Incluye parking privado ($25/mes), tu branding en nuestra pizarra,
+   y acceso al Kartódromo para tus clientes. Imagina cerrar deals ahí."
+
+→ FREELANCER CAUTELOSO:
+  "Tienes 15 días para probarlo con devolución completa si no te convence.
+   Tu precio se congela desde hoy, aunque subamos tarifas después."
+
+→ NETWORKER/VENDEDOR:
+  "Con tu red, el programa de referidos te puede generar créditos.
+   Cada amigo que traigas es win-win. Más tu acceso al Kartódromo."
+
+═══════════════════════════════════════════════════════════════════════════════
+
 REGLAS DE ORO:
 1. Pregunta ANTES de ofrecer (descubre necesidad real)
 2. Presenta UN solo plan (el ideal para él/ella)

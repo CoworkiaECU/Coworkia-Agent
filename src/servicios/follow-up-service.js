@@ -273,8 +273,10 @@ export async function processFollowUps() {
       // Obtener contexto de la conversación
       const context = await getUserConversationContext(user.phone_number);
       
-      // Solo enviar si hay contexto relevante
-      if (!context.hasPartialForm && !context.hasPendingConfirmation) {
+      // Para Aurora: Solo enviar si hay contexto relevante (formulario o pending)
+      // Para Aluna: Enviar si hay mensajes previos (siempre hay interés en planes)
+      const isAluna = user.active_agent === 'ALUNA';
+      if (!isAluna && !context.hasPartialForm && !context.hasPendingConfirmation) {
         console.log(`[FOLLOW-UP] ⏭️ Saltando ${user.phone_number} - sin contexto relevante`);
         skipped++;
         continue;

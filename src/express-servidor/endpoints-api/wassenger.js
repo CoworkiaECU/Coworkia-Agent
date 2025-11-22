@@ -8,6 +8,7 @@ import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helpe
 import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse, shouldSendPaymentLink } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
+import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { 
   loadProfile, 
   saveProfile, 
@@ -552,17 +553,34 @@ Responde en tu estilo característico con:
     // Esto permite que después de un handoff, todos los mensajes vayan al nuevo agente
     console.log(`[WASSENGER] 🎯 Agente activo: ${activeAgent}, Mención detectada: ${isAgentMention}`);
 
+    // 🔄 DETECTAR CONTEXTO DE REPLY (mensajes citados)
+    console.log('[DEBUG-FLOW] 7️⃣ Analizando contexto de reply...');
+    const replyContext = buildReplyContext(text, body, conversationHistory);
+    
+    if (replyContext.hasReplyContext) {
+      console.log('[REPLY-CONTEXT] ✅ Contexto de reply detectado:', {
+        type: replyContext.contextType,
+        source: replyContext.source,
+        confidence: replyContext.confidence,
+        quotedPreview: replyContext.quotedMessage?.substring(0, 50) + '...'
+      });
+    }
+    
+    // Si detectamos contexto de reply, usar el mensaje enriquecido
+    const processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : text;
+    
     // 🆕 Guardar mensaje del usuario en historial
-    console.log('[DEBUG-FLOW] 7️⃣ Iniciando saveConversationMessage...');
+    console.log('[DEBUG-FLOW] 8️⃣ Iniciando saveConversationMessage...');
     await saveConversationMessage(userId, {
       role: 'user',
-      content: text
+      content: processedText
     });
     console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
 
     // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente (PRIMERO)
     console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
-    const formResult = await processMessageWithForm(userId, text, profile, profile.freeTrialUsed);
+    // Usar processedText (con contexto de reply si existe) en lugar de text original
+    const formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
     
     // Pasar el mensaje del usuario al formResult para detección de frustración
     formResult.userMessage = text;
@@ -720,8 +738,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         firstVisit: profile.firstVisit
       });
       
-      // Procesar mensaje con orquestador (ahora con historial + formulario)
-      resultado = procesarMensaje(text, profile, conversationHistory, formResult);
+      // Procesar mensaje con orquestador (ahora con historial + formulario + contexto de reply)
+      resultado = procesarMensaje(processedText, profile, conversationHistory, formResult);
       
       // 🚫 MANEJAR CANCELACIÓN
       if (resultado.metadata.cancelacion) {
@@ -1029,7 +1047,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         rol: resultado.metadata.rol,
         freeTrialUsed: profile.freeTrialUsed,
         conversationCount: profile.conversationCount,
-        confirmationActivated: confirmationActivated
+        confirmationActivated: confirmationActivated,
+        replyContext: getReplyContextMetadata(replyContext)
       }
     });
 

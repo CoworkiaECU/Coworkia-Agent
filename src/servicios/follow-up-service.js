@@ -1,7 +1,7 @@
 // src/servicios/follow-up-service.js
 // 🔔 Sistema de seguimiento automático para conversaciones abandonadas
 
-import { databaseService } from '../database/database.js';
+import databaseService from '../database/database.js';
 
 /**
  * ⏰ Verifica si estamos en horario permitido para enviar mensajes (6am - 10pm Ecuador)

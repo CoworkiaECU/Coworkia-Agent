@@ -299,6 +299,22 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/6`);
     }
     
+    // 🧹 LIMPIAR RESERVAS CONFLICTIVAS DEL MISMO USUARIO
+    // Cancelar reservas pendientes del usuario en la misma fecha/hora para evitar duplicados
+    console.log('[Confirmation] 🧹 Limpiando reservas conflictivas del usuario...');
+    const { default: reservationRepository } = await import('../database/reservationRepository.js');
+    const conflictingReservations = await reservationRepository.findByUserAndDate(
+      pendingReservation.userId,
+      pendingReservation.date
+    );
+    
+    for (const existing of conflictingReservations) {
+      if (existing.status === 'pending' && existing.start_time === pendingReservation.startTime) {
+        console.log(`[Confirmation] 🗑️ Cancelando reserva duplicada: ${existing.id}`);
+        await reservationRepository.updateStatus(existing.id, 'cancelled');
+      }
+    }
+    
     // 🔄 Crear reserva
     console.log('[Confirmation] 📍 PASO 2: Creando reserva...');
     const reservationResult = await createReservation(pendingReservation);

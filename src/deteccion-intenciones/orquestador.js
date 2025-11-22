@@ -213,6 +213,13 @@ ${esSoportePostEmail ? `
 - Responde directamente usando los datos de su RESERVA CONFIRMADA
 - Si pregunta por cambios/cancelación, usa keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}
 ` : ''}
+${formData && formData.form && formData.form.wasFree ? `
+🎉 PRIMERA VISITA GRATIS:
+- Este usuario tiene día gratis disponible
+- 🚫 NO menciones precio ($10, $25, etc.)
+- 🚫 NO preguntes método de pago
+- ✅ Siempre di "GRATIS" o "sin costo por ser tu primera visita"
+` : ''}
 ${formData && !esCancelacion ? '- IMPORTANTE: Ya tengo algunos datos de su reserva (ver arriba), NO los vuelvas a preguntar' : ''}
 ${formData && formData.needsMoreInfo && !esCancelacion ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
 ${esPrimeraVisita ? '- El usuario es nuevo, menciona naturalmente el beneficio de primera visita cuando sea relevante' : ''}
@@ -646,7 +653,28 @@ function construirContextoFormulario(formData) {
     lineas.push('- Sé NATURAL y amigable al pedir información');
     lineas.push(`- Pregunta sugerida: ${nextQuestion}`);
   } else if (!needsMoreInfo) {
-    lineas.push('\n✅ FORMULARIO COMPLETO - Proceder con validación y confirmación');
+    lineas.push('\n✅ FORMULARIO COMPLETO - MOSTRAR RESUMEN Y PEDIR CONFIRMACIÓN:');
+    lineas.push('');
+    lineas.push('IMPORTANTE: Usa este formato EXACTO para el resumen:');
+    lineas.push('');
+    lineas.push('"Tu reserva para el *[ESPACIO]* está lista:');
+    lineas.push('📅 Fecha: [DÍA NOMBRE] [DD/MM]');
+    lineas.push('🕐 Hora: [HH:MM] ([X] horas)');
+    lineas.push('📧 Email: [email]');
+    if (form.wasFree || (form.totalPrice === 0 && summary.includes('GRATIS'))) {
+      lineas.push('💰 Precio: GRATIS 🎉 (primera visita)');
+    } else {
+      lineas.push('💰 Precio: $[XX]');
+      lineas.push('💳 Pago: [MÉTODO]');
+    }
+    lineas.push('');
+    lineas.push('¿Confirmas estos datos? Responde SI para confirmar o NO si quieres cambiar algo."');
+    lineas.push('');
+    lineas.push('🚨 CRÍTICO:');
+    lineas.push('- NO preguntes por más datos');
+    lineas.push('- NO menciones "completar formulario"');
+    lineas.push('- SOLO muestra el resumen y pide SI/NO');
+    lineas.push('- Si hay datos adicionales del usuario, ignóralos hasta que confirme');
   }
 
   return lineas.join('\n');

@@ -255,6 +255,17 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     // 🔍 VALIDACIÓN: Verificar disponibilidad de Hot Desks ANTES de confirmar
     if (pendingReservation.serviceType === 'hotDesk') {
       console.log('[Confirmation] 📍 PASO 1: Verificando disponibilidad de Hot Desk...');
+      
+      // 🕐 Calcular endTime y durationHours si no existen (2h por defecto para Hot Desk)
+      if (!pendingReservation.endTime && pendingReservation.startTime) {
+        const durationHours = 2; // Hot Desk siempre 2 horas
+        const [hours, minutes] = pendingReservation.startTime.split(':').map(Number);
+        const endHours = hours + durationHours;
+        pendingReservation.endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        pendingReservation.durationHours = durationHours;
+        console.log(`[Confirmation] 🕐 Calculado: ${pendingReservation.startTime} + ${durationHours}h = ${pendingReservation.endTime}`);
+      }
+      
       const { checkHotDeskAvailability, assignHotDeskNumber } = await import('./calendario.js');
       
       const availability = await checkHotDeskAvailability(

@@ -49,13 +49,13 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   const isReturningToAurora = Boolean(intencion.flags?.returningToAurora);
   
   // Si NO hay handoff ni retorno, usar el agente activo
-  let agenteKey = intencion.agent;
+  let agenteKey = intencion.agent.toLowerCase(); // Normalizar a minúsculas para consistencia DB
   if (!isAgentHandoff && !isReturningToAurora) {
-    agenteKey = activeAgent;
+    agenteKey = activeAgent.toLowerCase(); // Normalizar también el agente activo
     console.log(`[ORQUESTADOR] 🎯 Usando agente activo: ${activeAgent} (detectado fue: ${intencion.agent})`);
   }
   
-  const agente = AGENTES[agenteKey];
+  const agente = AGENTES[agenteKey.toUpperCase()]; // AGENTES usa claves en mayúsculas
   
   // 🚫 CANCELACIÓN DETECTADA
   const esCancelacion = Boolean(intencion.flags?.cancelacion);

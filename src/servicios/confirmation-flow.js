@@ -301,7 +301,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     }
     
     // 🧹 LIMPIAR RESERVAS CONFLICTIVAS DEL MISMO USUARIO
-    // Cancelar reservas pendientes del usuario en la misma fecha/hora para evitar duplicados
+    // Cancelar TODAS las reservas del usuario en la misma fecha/hora para evitar duplicados
     console.log('[Confirmation] 🧹 Limpiando reservas conflictivas del usuario...');
     const { default: reservationRepository } = await import('../database/reservationRepository.js');
     const allReservationsOnDate = await reservationRepository.findByDate(pendingReservation.date);
@@ -310,8 +310,9 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const userReservations = allReservationsOnDate.filter(r => r.user_phone === pendingReservation.userId);
     
     for (const existing of userReservations) {
-      if (existing.status === 'pending' && existing.start_time === pendingReservation.startTime) {
-        console.log(`[Confirmation] 🗑️ Cancelando reserva duplicada: ${existing.id}`);
+      // Cancelar si es la misma hora Y NO está ya cancelada
+      if (existing.status !== 'cancelled' && existing.start_time === pendingReservation.startTime) {
+        console.log(`[Confirmation] 🗑️ Cancelando reserva conflictiva: ${existing.id} (status: ${existing.status})`);
         await reservationRepository.updateStatus(existing.id, 'cancelled');
       }
     }

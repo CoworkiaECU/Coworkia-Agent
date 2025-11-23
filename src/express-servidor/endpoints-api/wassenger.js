@@ -640,10 +640,75 @@ Responde en tu estilo característico con:
       }
     }
 
-    // 🔄 RETOMANDO RESERVA - Solo si existe partial_form guardado (de cancelación previa)
+    // 🚫 BLOQUEO: Si hay reservas con pago pendiente, no permitir nuevas reservas
     const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio'];
     const isReservationIntent = reservationKeywords.some(kw => text.toLowerCase().includes(kw));
     
+    if (isReservationIntent) {
+      console.log('[WASSENGER] 🔍 Detectado intent de reserva - verificando pagos pendientes...');
+      
+      const { default: reservationRepository } = await import('../../database/reservationRepository.js');
+      const allUserReservations = await reservationRepository.findByUser(userId);
+      const pendingPayments = allUserReservations.filter(r => 
+        r.status === 'pending_payment' && r.payment_status === 'pending'
+      );
+      
+      if (pendingPayments.length > 0) {
+        console.log(`[WASSENGER] 🚫 Usuario tiene ${pendingPayments.length} reserva(s) sin pagar`);
+        
+        const pendingList = pendingPayments.map((r, idx) => {
+          const date = new Date(r.date).toLocaleDateString('es-EC', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          return `${idx + 1}. ${date} | ${r.start_time}-${r.end_time} | $${r.total_price}`;
+        }).join('\n');
+        
+        const blockMessage = `⚠️ *Tienes ${pendingPayments.length} reserva(s) pendiente(s) de pago:*
+
+${pendingList}
+
+Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar una nueva. 🙏
+
+¿Cómo prefieres pagar?
+💳 *Tarjeta* (Payphone - online)
+🏦 *Transferencia* bancaria`;
+
+        await enviarWhatsApp(userId, blockMessage);
+        
+        await saveInteraction({
+          userId,
+          agent: 'aurora',
+          agentName: 'Aurora',
+          intentReason: 'blocked_pending_payments',
+          input: text,
+          output: blockMessage,
+          meta: {
+            route: '/webhooks/wassenger',
+            via: 'whatsapp',
+            pendingCount: pendingPayments.length,
+            pendingIds: pendingPayments.map(r => r.id)
+          }
+        });
+        
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: blockMessage,
+          agent: 'Aurora'
+        });
+        
+        return res.json({ 
+          ok: true, 
+          processed: true,
+          type: 'blocked_pending_payments',
+          pendingCount: pendingPayments.length
+        });
+      }
+    }
+    
+    // 🔄 RETOMANDO RESERVA - Solo si existe partial_form guardado (de cancelación previa)
     // Verificar si hay un partial_form guardado en DB (solo se guarda cuando hay cancelación)
     const { getPartialForm } = await import('../../perfiles-interacciones/memoria-sqlite.js');
     const savedPartialForm = await getPartialForm(userId);

@@ -32,16 +32,18 @@ const PRICING = {
   }
 };
 
-const PAYPHONE_FEE_PERCENTAGE = 0.05; // 5%
+const IVA_PERCENTAGE = 0.15; // 15% IVA Ecuador
+const PAYPHONE_FEE_PERCENTAGE = 0.05; // 5% comisión Payphone (sobre subtotal + IVA)
 
 /**
  * 💰 Calcula el costo de una reserva
  * @param {string} serviceType - 'hotDesk' o 'meetingRoom'
  * @param {number} hours - Duración en horas (mínimo 2)
  * @param {number} people - Número de personas (default: 1)
+ * @param {string} paymentMethod - 'payphone' o 'transferencia' (default: 'payphone')
  * @returns {Object} Breakdown completo del costo o error
  */
-export function calculateReservationCost(serviceType, hours, people = 1) {
+export function calculateReservationCost(serviceType, hours, people = 1, paymentMethod = 'payphone') {
   // Validar tipo de servicio
   const config = PRICING[serviceType];
   if (!config) {
@@ -65,7 +67,7 @@ export function calculateReservationCost(serviceType, hours, people = 1) {
     };
   }
 
-  // Calcular precio base
+  // Calcular precio base (sin impuestos)
   let basePrice = 0;
   if (hours <= config.baseHours) {
     basePrice = config.basePrice;
@@ -74,9 +76,17 @@ export function calculateReservationCost(serviceType, hours, people = 1) {
     basePrice = config.basePrice + (additionalHours * config.additionalHourPrice);
   }
 
-  // Calcular fee de Payphone (5%)
-  const payphoneFee = basePrice * PAYPHONE_FEE_PERCENTAGE;
-  const totalPrice = basePrice + payphoneFee;
+  // Calcular IVA (15% sobre precio base)
+  const iva = basePrice * IVA_PERCENTAGE;
+  const subtotalWithIVA = basePrice + iva;
+
+  // Calcular comisión Payphone (5% sobre subtotal + IVA) SOLO si paga con tarjeta
+  let payphoneFee = 0;
+  if (paymentMethod === 'payphone' || paymentMethod === 'tarjeta') {
+    payphoneFee = subtotalWithIVA * PAYPHONE_FEE_PERCENTAGE;
+  }
+
+  const totalPrice = subtotalWithIVA + payphoneFee;
 
   // Calcular precio por hora efectivo
   const pricePerHour = (basePrice / hours).toFixed(2);
@@ -85,10 +95,13 @@ export function calculateReservationCost(serviceType, hours, people = 1) {
     service: serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones',
     hours,
     people,
-    basePrice: basePrice.toFixed(2),
-    payphoneFee: payphoneFee.toFixed(2),
-    totalPrice: totalPrice.toFixed(2),
-    pricePerHour,
+    basePrice: parseFloat(basePrice.toFixed(2)),
+    iva: parseFloat(iva.toFixed(2)),
+    subtotalWithIVA: parseFloat(subtotalWithIVA.toFixed(2)),
+    payphoneFee: parseFloat(payphoneFee.toFixed(2)),
+    totalPrice: parseFloat(totalPrice.toFixed(2)),
+    pricePerHour: parseFloat(pricePerHour),
+    paymentMethod,
     currency: 'USD'
   };
 }
@@ -116,8 +129,8 @@ export function getPaymentInfo(profile, serviceType = 'hotDesk', hours = 2) {
     };
   }
 
-  // Construir mensaje de pago
-  const paymentMessage = `✅ Ya usaste tu día gratis el ${profile.freeTrialDate || 'anteriormente'}.\n\n🧾 Costo de tu reserva:\n• ${costInfo.service}: ${costInfo.hours}h × $${costInfo.pricePerHour} = $${costInfo.basePrice}\n• Fee Payphone (5%): $${costInfo.payphoneFee}\n• TOTAL A PAGAR: $${costInfo.totalPrice} USD\n\n💳 **PAGO FÁCIL CON TARJETA:**\n${PAYMENT_LINK}\n• Ingresa → Coloca número de tarjeta → Paga $${costInfo.totalPrice}\n\n🏦 **Transferencia Bancaria:**\n${BANK_ACCOUNT}\n\nEnvía tu comprobante para confirmar ✅`;
+  // Construir mensaje de pago (con desglose claro)
+  const paymentMessage = `✅ Ya usaste tu día gratis el ${profile.freeTrialDate || 'anteriormente'}.\n\n🧾 *Desglose de tu reserva:*\n\n• ${costInfo.service} (${costInfo.hours}h): $${costInfo.basePrice.toFixed(2)}\n• IVA (15%): $${costInfo.iva.toFixed(2)}\n• Subtotal: $${costInfo.subtotalWithIVA.toFixed(2)}${costInfo.payphoneFee > 0 ? `\n• Comisión Payphone (5%): $${costInfo.payphoneFee.toFixed(2)}` : ''}\n\n💰 *TOTAL:* $${costInfo.totalPrice.toFixed(2)} USD\n\n💳 *PAGO CON TARJETA (Payphone):*\n${PAYMENT_LINK}\n• Total: $${costInfo.totalPrice.toFixed(2)}\n\n🏦 *Transferencia Bancaria:*\n${BANK_ACCOUNT}\n• Total: $${(costInfo.basePrice + costInfo.iva).toFixed(2)} (sin comisión)\n\n📸 Envía tu comprobante para confirmar ✅`;
 
   return {
     message: paymentMessage,

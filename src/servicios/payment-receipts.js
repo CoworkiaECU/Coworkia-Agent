@@ -102,6 +102,41 @@ export function isReceiptImage(messageData) {
 }
 
 /**
+ * 💬 Detecta si el usuario menciona que pagó (sin enviar imagen)
+ * Útil para casos donde el usuario dice "ya pagué" o envía número de transacción
+ */
+export function detectPaymentMention(text) {
+  if (!text) return { mentioned: false };
+  
+  const lowerText = text.toLowerCase();
+  
+  // Patrones de "ya pagué"
+  const paymentKeywords = [
+    'pagué', 'pague', 'ya pague', 'ya pagué',
+    'hice el pago', 'realicé el pago', 'transferí',
+    'envié el dinero', 'pagado', 'ya transferí'
+  ];
+  
+  const mentionedPayment = paymentKeywords.some(kw => lowerText.includes(kw));
+  
+  // Detectar números que podrían ser referencias de transacción
+  // Formato típico: 6-10 dígitos
+  const transactionPattern = /\b\d{6,10}\b/;
+  const possibleReference = text.match(transactionPattern);
+  
+  if (mentionedPayment || possibleReference) {
+    return {
+      mentioned: true,
+      hasReference: !!possibleReference,
+      reference: possibleReference ? possibleReference[0] : null,
+      type: mentionedPayment ? 'keyword' : 'reference_only'
+    };
+  }
+  
+  return { mentioned: false };
+}
+
+/**
  * 🔍 Procesa comprobante de pago automáticamente
  */
 export async function processPaymentReceipt(messageData, userProfile) {
@@ -251,6 +286,18 @@ Te ayudaremos a verificar tu pago manualmente 😊`,
 
 /**
  * 🤖 Analiza imagen de comprobante con OpenAI Vision API
+ * 
+ * Soporta:
+ * - Payphone (ej: $12.08 USD aprobado)
+ * - Transferencias bancarias (Produbanco, Pichincha, etc.)
+ * - Screenshots de apps bancarias
+ * 
+ * Extrae:
+ * - Monto (amount)
+ * - Fecha (date)
+ * - Número de transacción (reference)
+ * - Método de pago (paymentMethod)
+ * - Banco (bank)
  */
 async function analyzeReceiptImage(messageData, expectedAmount) {
   console.log('[RECEIPT] 🤖 Analizando comprobante con Vision API...');

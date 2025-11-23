@@ -529,12 +529,31 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       };
     }
     
-    // 4. Si requiere pago, enviar datos de pago
-    const paymentInfo = getPaymentInfo(
-      userProfile, 
-      pendingReservation.serviceType, 
-      pendingReservation.durationHours
+    // 4. Si requiere pago, calcular desglose y enviar datos de pago
+    const { calculateReservationCost } = await import('./payment-calculator.js');
+    
+    // Calcular con método de pago específico si está disponible
+    const paymentMethod = pendingReservation.paymentMethod === 'transferencia' ? 'transferencia' : 'payphone';
+    const costBreakdown = calculateReservationCost(
+      pendingReservation.serviceType,
+      pendingReservation.durationHours || 2,
+      pendingReservation.guestCount || 1,
+      paymentMethod
     );
+    
+    let priceBreakdown = '';
+    if (!costBreakdown.error) {
+      priceBreakdown = `
+🧾 *Desglose:*
+• Servicio: $${costBreakdown.basePrice.toFixed(2)}
+• IVA (15%): $${costBreakdown.iva.toFixed(2)}${costBreakdown.payphoneFee > 0 ? `
+• Comisión tarjeta (5%): $${costBreakdown.payphoneFee.toFixed(2)}` : ''}
+━━━━━━━━━━━━━━━━
+💰 *TOTAL: $${costBreakdown.totalPrice.toFixed(2)} USD*
+`;
+    } else {
+      priceBreakdown = `💰 *Total: $${pendingReservation.totalPrice} USD*`;
+    }
     
     return {
       success: true,
@@ -543,20 +562,22 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 📅 *${confirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
-
-💰 *Total a pagar:* $${pendingReservation.totalPrice}
+${priceBreakdown}
 🔢 *Referencia:* ${reservationRecord.id}
 
 *Opciones de pago:*
 
-💳 *PAYPHONE* (inmediato):
+💳 *PAYPHONE* (tarjeta débito/crédito):
 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.totalPrice.toFixed(2)}
 
-🏦 *TRANSFERENCIA:*
-Produbanco 20059783069
-Gonzalo Villota (1702683499)
+🏦 *TRANSFERENCIA BANCARIA:*
+Produbanco - Cta Ahorros: 20059783069
+Cédula: 1702683499
+Titular: Gonzalo Villota Izurieta
+Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.subtotalWithIVA.toFixed(2)} (sin comisión)
 
-📲 Envíame tu comprobante y confirmo automáticamente.
+📲 Envíame tu comprobante para confirmar automáticamente ✅
 
 📍 Whymper 403, Edificio Finistere
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,

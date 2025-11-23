@@ -567,7 +567,7 @@ Responde en tu estilo característico con:
     }
     
     // Si detectamos contexto de reply, usar el mensaje enriquecido
-    const processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : text;
+    let processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : text;
     
     // 🆕 Guardar mensaje del usuario en historial
     console.log('[DEBUG-FLOW] 8️⃣ Iniciando saveConversationMessage...');
@@ -665,6 +665,10 @@ Responde en tu estilo característico con:
       if (isPositive || isNegative) {
         console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
         
+        // Detectar si hay contexto adicional después del SI (ej: "Si, pero quiero hacer otra reserva")
+        const hasAdditionalContext = text.match(/^s[ií][,.\s]+(.+)/i);
+        const additionalText = hasAdditionalContext ? hasAdditionalContext[1].trim() : null;
+        
         const confirmationResult = await processConfirmationResponse(text, profile);
       
         // Enviar respuesta de confirmación
@@ -683,7 +687,8 @@ Responde en tu estilo característico con:
             via: 'whatsapp',
             confirmationSuccess: confirmationResult.success,
             actionType: confirmationResult.actionType,
-            needsAction: confirmationResult.needsAction
+            needsAction: confirmationResult.needsAction,
+            hasAdditionalContext: !!additionalText
           }
         });
 
@@ -694,13 +699,31 @@ Responde en tu estilo característico con:
           agent: 'Aurora'
         });
         
-        return res.json({ 
-          ok: true, 
-          processed: true,
-          type: 'confirmation_response',
-          success: confirmationResult.success,
-          needsAction: confirmationResult.needsAction
-        });
+        // Si confirmó exitosamente Y tiene contexto adicional, continuar procesando con Aurora
+        if (confirmationResult.success && additionalText) {
+          console.log(`[WASSENGER] ✅ Confirmación exitosa + contexto adicional detectado: "${additionalText}"`);
+          console.log('[WASSENGER] 🔄 Continuando con Aurora para procesar: ', additionalText);
+          
+          // Pequeño delay para que vea el mensaje de confirmación primero
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Recargar perfil actualizado post-confirmación
+          profile = await loadProfile(userId, data.data.fromNumber.name || data.data.senderName);
+          conversationHistory = await loadConversationHistory(userId);
+          
+          // Procesar el contexto adicional con Aurora (caerá al flujo normal más abajo)
+          processedText = additionalText;
+          // NO hacer return aquí - continuar al flujo de Aurora
+        } else {
+          // Confirmación normal sin contexto adicional o negativa - terminar
+          return res.json({ 
+            ok: true, 
+            processed: true,
+            type: 'confirmation_response',
+            success: confirmationResult.success,
+            needsAction: confirmationResult.needsAction
+          });
+        }
       }
     }
 

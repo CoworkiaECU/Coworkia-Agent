@@ -33,6 +33,7 @@ export function isPositiveResponse(message) {
   // Respuestas afirmativas comunes en español
   const positivePatterns = [
     /^s[ií]$/,
+    /^s[ií][,.\s]/,  // "Si," o "Si." o "Si " (permite contexto después)
     /^ok$/,
     /^okay$/,
     /^perfecto$/,

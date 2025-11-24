@@ -23,6 +23,24 @@ class ConfirmationFlowError extends Error {
 }
 
 /**
+ * 📅 Formatea una fecha para mostrar al usuario
+ * @param {string|Date} date - Fecha en formato '2025-11-26' o Date object
+ * @returns {string} - Fecha formateada como "Miércoles 26/11/2025"
+ */
+function formatUserDate(date) {
+  const dateObj = typeof date === 'string' ? new Date(date + 'T00:00:00') : new Date(date);
+  
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const dayName = dayNames[dateObj.getUTCDay()];
+  
+  const day = String(dateObj.getUTCDate()).padStart(2, '0');
+  const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+  const year = dateObj.getUTCFullYear();
+  
+  return `${dayName} ${day}/${month}/${year}`;
+}
+
+/**
  * ✅ Detecta respuestas afirmativas del usuario
  */
 export function isPositiveResponse(message) {
@@ -372,7 +390,15 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const confirmedStart = reservationRecord?.startTime || pendingReservation.startTime;
     const confirmedEnd = reservationRecord?.endTime || pendingReservation.endTime;
     
-    console.log('[Confirmation] 📋 Datos confirmados:', { confirmedDate, confirmedStart, confirmedEnd });
+    // 🆕 v283: Formatear fecha para mensajes al usuario
+    const formattedConfirmedDate = formatUserDate(confirmedDate);
+    
+    console.log('[Confirmation] 📋 Datos confirmados:', { 
+      confirmedDate, 
+      formattedConfirmedDate,
+      confirmedStart, 
+      confirmedEnd 
+    });
 
     // 2. Crear evento en Google Calendar (SOLO UNA VEZ)
     // ⚠️ NO duplicar: sendReservationNotifications ya crea el evento inline
@@ -464,7 +490,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 🎉 Tus 2 horas gratis están listas:
 
-📅 *${confirmedDate}*
+📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 💰 *Precio:* ¡GRATIS! (primera visita)
 
@@ -512,7 +538,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         success: true,
         message: `✅ *¡Reserva confirmada${userName}!* 🎉
 
-📅 *${confirmedDate}*
+📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
 💰 *Pago pendiente:* $${pendingReservation.totalPrice} (efectivo en Coworkia)
@@ -556,29 +582,38 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       priceBreakdown = `💰 *Total: $${pendingReservation.totalPrice} USD*`;
     }
     
-    return {
-      success: true,
-      message: `✅ *¡Reserva confirmada${userName}!* 🎉
-
-📅 *${confirmedDate}*
-⏰ *${confirmedStart} - ${confirmedEnd}*
-🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
-${priceBreakdown}
-🔢 *Referencia:* ${reservationRecord.id}
-
-*Opciones de pago:*
-
-💳 *PAYPHONE* (tarjeta débito/crédito):
-https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
-Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.totalPrice.toFixed(2)}
-
+    // 🆕 v283: Mostrar solo el método de pago seleccionado
+    let paymentInstructions = '';
+    
+    if (paymentMethod === 'transferencia') {
+      paymentInstructions = `
 🏦 *TRANSFERENCIA BANCARIA:*
 Produbanco - Cta Ahorros: 20059783069
 Cédula: 1702683499
 Titular: Gonzalo Villota Izurieta
-Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.subtotalWithIVA.toFixed(2)} (sin comisión)
+💰 Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.subtotalWithIVA.toFixed(2)}
 
-📲 Envíame tu comprobante para confirmar automáticamente ✅
+📲 Envíame tu comprobante para confirmar automáticamente ✅`;
+    } else {
+      // Default: tarjeta/payphone
+      paymentInstructions = `
+💳 *PAGO CON TARJETA (Payphone):*
+https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+💰 Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.totalPrice.toFixed(2)}
+
+📲 Envíame tu comprobante para confirmar automáticamente ✅`;
+    }
+
+    return {
+      success: true,
+      message: `✅ *¡Reserva confirmada${userName}!* 🎉
+
+📅 *${formattedConfirmedDate}*
+⏰ *${confirmedStart} - ${confirmedEnd}*
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
+${priceBreakdown}
+🔢 *Referencia:* ${reservationRecord.id}
+${paymentInstructions}
 
 📍 Whymper 403, Edificio Finistere
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,

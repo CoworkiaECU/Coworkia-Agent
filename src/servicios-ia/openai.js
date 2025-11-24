@@ -118,6 +118,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
 /**
  * 💳 Analiza comprobante de pago específicamente
  */
+// 🆕 v283: Updated Payphone format recognition based on actual ppls.me receipts
 export async function analyzePaymentReceipt(imageUrl) {
   const prompt = `Analiza este comprobante de pago y extrae la siguiente información en formato JSON:
 
@@ -137,19 +138,33 @@ export async function analyzePaymentReceipt(imageUrl) {
 
 FORMATOS DE COMPROBANTES RECONOCIDOS:
 
-1. PAYPHONE (Ecuador):
-   - Tiene logo naranja de Payphone arriba
-   - Dice "PAGO APROBADO" o "Aprobada" en verde
-   - Monto grande en el centro (ej: "USD 12.08")
-   - Sección "Detalle de transacción" abajo con:
-     * Fecha (formato: DD/MM/YYYY HH:MM)
-     * No. Transacción (ej: 7061340)
-     * No. Autorización (ej: W7061340)
-     * Persona (nombre del pagador)
-   - Descripción puede decir "Coworkia hoy desk", "Coworkia sala", etc.
-   - Logos de pago: Verified by VISA, MasterCard SecureCode, PCI DSS
-   - Dice "Powered by payphone" abajo
-   - ES UN COMPROBANTE 100% VÁLIDO Y OFICIAL
+1. PAYPHONE (Ecuador) - FORMATO OFICIAL ppls.me:
+   CARACTERÍSTICAS VISUALES EXACTAS:
+   - Logo "payphone" en la parte superior
+   - Estado de la transacción: "Aprobada" en color VERDE (es texto verde, no un banner)
+   - Monto: "USD 12.08" (o cualquier valor) en grande, centrado
+   - Descripción principal: "PAGO APROBADO" en texto grande
+   - Descripción secundaria: "Coworkia hoy desk" o "Coworkia sala" (el concepto de pago)
+   
+   SECCIÓN "Detalle de transacción":
+   - Fecha: formato "DD/MM/YYYY HH:MM" (ej: "18/11/2025 14:12")
+   - No. Transacción: número de 8 dígitos (ej: "70613140")
+   - No. Autorización: empieza con "W" + número (ej: "W70613140")
+   - Persona: nombre del pagador en mayúsculas (ej: "DIEGO VILLOTA")
+   
+   PIE DE PÁGINA:
+   - Logos de seguridad: Verified by VISA, MasterCard SecureCode, PCI DSS
+   - Texto: "Powered by payphone" al final
+   
+   REGLAS DE VALIDACIÓN:
+   - Si ves "Aprobada" (en verde) + monto "USD X.XX" + "PAGO APROBADO" → ES 100% VÁLIDO
+   - transactionNumber = el valor de "No. Transacción" (8 dígitos)
+   - receiptNumber = el valor de "No. Autorización" (W + 8 dígitos)
+   - paymentMethod = "payphone"
+   - bank = "Payphone"
+   - isValid = true
+   - confidence = 95
+   - Fecha debe convertirse de DD/MM/YYYY a YYYY-MM-DD
 
 2. TRANSFERENCIAS BANCARIAS (Ecuador):
    - Logo del banco o cooperativa

@@ -56,7 +56,32 @@ export const AURORA = {
     }
   },
 
-  systemPrompt: `Eres Aurora, recepcionista de Coworkia 👩🏼‍💼✨
+  /**
+   * Genera el system prompt dinámicamente basado en el estado del usuario
+   * @param {boolean} freeTrialUsed - Si el usuario ya usó su día gratis
+   * @returns {string} System prompt personalizado
+   */
+  getSystemPrompt: function(freeTrialUsed = false) {
+    // Mensaje de servicios con o sin mención de primera visita gratis
+    const hotDeskInfo = freeTrialUsed 
+      ? `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • WiFi de alta velocidad + café ☕`
+      : `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • WiFi de alta velocidad + café ☕
+   • Primera visita GRATIS 🎁`;
+
+    const informacionGeneralHotDesk = freeTrialUsed
+      ? `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • WiFi + café ☕`
+      : `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • Primera visita GRATIS 🎁
+   • WiFi + café ☕`;
+
+    return `Eres Aurora, recepcionista de Coworkia 👩🏼‍💼✨
 
 🏢 SERVICIOS DE COWORKIA
 ━━━━━━━━━━━━━━━━━━━━━━━━
@@ -65,10 +90,7 @@ Si te preguntan QUÉ OFRECEMOS, responde así:
 
 "¡Tenemos varios espacios! 😊
 
-💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • WiFi de alta velocidad + café ☕
-   • Primera visita GRATIS 🎁
+${hotDeskInfo}
 
 🏢 *Sala de Reuniones* (Privada)
    • 2 horas: $29 (3-4 personas)
@@ -138,7 +160,13 @@ LUEGO busca esta línea exacta:
 • Marketing/IA → "@enzo"
 • Seguros → "@adriana"
 
-IMPORTANTE: Si SOLO preguntan servicios, NO inicies reserva.`,
+IMPORTANTE: Si SOLO preguntan servicios, NO inicies reserva.`;
+  },
+
+  // Mantener compatibilidad con código existente que espera .systemPrompt
+  get systemPrompt() {
+    return this.getSystemPrompt(false);
+  },
 
   ejemplos: {
     bienvenida: '¡Hola! Soy Aurora 👩🏼‍💼✨\n\n¿Te puedo ayudar con información de nuestros espacios o hacer una reserva?',
@@ -149,6 +177,41 @@ IMPORTANTE: Si SOLO preguntan servicios, NO inicies reserva.`,
     
     pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/Nqy6YeGuxo3czEt66',
     
-    informacionGeneral: '🏢 *Coworkia* - Espacios que inspiran\n\n*¿Qué ofrecemos?*\n\n💻 *Hot Desk* (Escritorio Compartido)\n   • 2 horas: $10\n   • Primera visita GRATIS 🎁\n   • WiFi + café ☕\n\n🏢 *Sala de Reuniones* (Privada)\n   • 2 horas: $29 (3-4 personas)\n   • Pizarra, proyector, WiFi\n\n📅 *Planes Mensuales*\n   • Pregunta por "membresía" para más info\n\n📍 *Ubicación:*\n   Whymper 403, Edificio Finistere, Quito\n   ⏰ Lun-Vie 8:30-18h | Sáb 9-14h\n   🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n\n¿Qué espacio te interesa?'
+    // Esta función genera el mensaje de información general dinámicamente
+    getInformacionGeneral: function(freeTrialUsed = false) {
+      const hotDeskInfo = freeTrialUsed
+        ? `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • WiFi + café ☕`
+        : `💻 *Hot Desk* (Escritorio Compartido)
+   • 2 horas: $10
+   • Primera visita GRATIS 🎁
+   • WiFi + café ☕`;
+
+      return `🏢 *Coworkia* - Espacios que inspiran
+
+*¿Qué ofrecemos?*
+
+${hotDeskInfo}
+
+🏢 *Sala de Reuniones* (Privada)
+   • 2 horas: $29 (3-4 personas)
+   • Pizarra, proyector, WiFi
+
+📅 *Planes Mensuales*
+   • Pregunta por "membresía" para más info
+
+📍 *Ubicación:*
+   Whymper 403, Edificio Finistere, Quito
+   ⏰ Lun-Vie 8:30-18h | Sáb 9-14h
+   🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+
+¿Qué espacio te interesa?`;
+    },
+
+    // Mantener compatibilidad: acceso directo para clientes nuevos
+    get informacionGeneral() {
+      return this.getInformacionGeneral(false);
+    }
   }
 };

@@ -276,11 +276,16 @@ ${tieneHistorialConAgente ?
   `.trim();
   }
 
+  // 🆕 v283: Generate dynamic system prompt for Aurora based on user's free trial status
+  const systemPrompt = (agenteKey === 'AURORA' && typeof agente.getSystemPrompt === 'function')
+    ? agente.getSystemPrompt(perfil.freeTrialUsed || false)
+    : agente.systemPrompt;
+
   return {
     agente: agente.nombre,
     agenteKey: agenteKey,
     razonSeleccion: intencion.reason,
-    systemPrompt: agente.systemPrompt,
+    systemPrompt: systemPrompt,
     prompt,
     metadata: {
       rol: agente.rol,

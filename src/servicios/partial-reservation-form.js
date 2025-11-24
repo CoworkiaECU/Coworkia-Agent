@@ -559,57 +559,57 @@ export function extractDataFromMessage(message, currentForm) {
     }
   }
 
-  // ⏰ Detectar hora
-  if (!currentForm.time) {
-    const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
-    let detectedTime = null;
+  // ⏰ Detectar hora (SIEMPRE intentar, incluso si ya hay un time - permite cambiar hora)
+  const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  let detectedTime = null;
 
-    console.log('[FORM-TIME] 🕐 Buscando hora en mensaje:', message);
+  console.log('[FORM-TIME] 🕐 Buscando hora en mensaje:', message);
+  console.log('[FORM-TIME] 📋 Hora actual en formulario:', currentForm.time);
 
-    for (const match of message.matchAll(timeRegex)) {
-      const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
-      const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
-      const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
-      const isTimeContext = Boolean(prefix);
+  for (const match of message.matchAll(timeRegex)) {
+    const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
+    const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
+    const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
+    const isTimeContext = Boolean(prefix);
 
-      console.log('[FORM-TIME] 📊 Match encontrado:', {
-        fullMatch,
-        hourStr,
-        minuteStr,
-        meridiemRaw,
-        meridiem,
-        hasExplicitMinutes,
-        isTimeContext
-      });
+    console.log('[FORM-TIME] 📊 Match encontrado:', {
+      fullMatch,
+      hourStr,
+      minuteStr,
+      meridiemRaw,
+      meridiem,
+      hasExplicitMinutes,
+      isTimeContext
+    });
 
-      if (!isTimeContext && !meridiem && !hasExplicitMinutes) {
-        console.log('[FORM-TIME] ⏭️ Saltando match (no es hora válida)');
-        continue; // Evitar confundir números de personas con horas
-      }
+    if (!isTimeContext && !meridiem && !hasExplicitMinutes) {
+      console.log('[FORM-TIME] ⏭️ Saltando match (no es hora válida)');
+      continue; // Evitar confundir números de personas con horas
+    }
 
-      let hour = parseInt(hourStr, 10);
-      if (Number.isNaN(hour)) continue;
-      const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
+    let hour = parseInt(hourStr, 10);
+    if (Number.isNaN(hour)) continue;
+    const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
 
-      console.log('[FORM-TIME] 🔄 Antes de conversión: hour=%d, minute=%d, meridiem=%s', hour, minute, meridiem);
+    console.log('[FORM-TIME] 🔄 Antes de conversión: hour=%d, minute=%d, meridiem=%s', hour, minute, meridiem);
 
-      if (meridiem === 'pm' && hour < 12) hour += 12;
-      if (meridiem === 'am' && hour === 12) hour = 0;
+    if (meridiem === 'pm' && hour < 12) hour += 12;
+    if (meridiem === 'am' && hour === 12) hour = 0;
 
-      console.log('[FORM-TIME] ✅ Después de conversión: hour=%d', hour);
+    console.log('[FORM-TIME] ✅ Después de conversión: hour=%d', hour);
 
       detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       console.log('[FORM-TIME] ✨ Tiempo detectado:', detectedTime);
       break;
     }
 
-    if (detectedTime) {
-      updates.time = detectedTime;
-      console.log('[FORM] ⏰ Detectado hora:', updates.time);
-    }
-  }
-
-  // 📧 Detectar email
+  if (detectedTime) {
+    updates.time = detectedTime;
+    console.log('[FORM] ⏰ Detectado hora:', updates.time);
+    console.log('[FORM] 🔄 Sobrescribiendo hora anterior:', currentForm.time, '→', detectedTime);
+  } else {
+    console.log('[FORM-TIME] ❌ No se detectó hora en el mensaje');
+  }  // 📧 Detectar email
   if (!currentForm.email) {
     const emailMatch = message.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
     if (emailMatch) {

@@ -151,7 +151,7 @@ export function getNowInGuayaquil(baseTime = null) {
  * 
  * @param {Date} baseTime - (Opcional) Tiempo base para testing con fake timers
  */
-export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk', baseTime = null) {
+export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk', baseTime = null, userId = null) {
   // 🌍 Obtener hora actual en Ecuador de forma robusta
   const currentDateTime = getNowInGuayaquil(baseTime);
   
@@ -221,6 +221,12 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
   // Contar espacios ocupados en ese momento
   const overlappingReservations = reservations.filter(res => {
     if (res.status === 'cancelled') return false;
+    
+    // 🔧 FIX: Ignorar reservas 'pending' del MISMO usuario (evita conflicto con nueva reserva)
+    if (res.status === 'pending' && userId && res.user_phone === userId) {
+      console.log('[CALENDARIO] ⏭️ Ignorando reserva pending del mismo usuario:', res.id);
+      return false;
+    }
     
     const resStart = timeToMinutes(res.start_time);
     const resEnd = timeToMinutes(res.end_time);
@@ -357,8 +363,8 @@ export async function createReservation(reservationData) {
     paymentMethod = null // Nuevo campo: método de pago
   } = reservationData;
   
-  // Verificar disponibilidad primero
-  const availability = await checkAvailability(date, startTime, durationHours, serviceType);
+  // Verificar disponibilidad primero (pasando userId para ignorar sus propias reservas pending)
+  const availability = await checkAvailability(date, startTime, durationHours, serviceType, null, userId);
   if (!availability.available) {
     return {
       success: false,

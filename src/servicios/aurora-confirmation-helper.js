@@ -66,10 +66,11 @@ export function extractReservationData(message, userProfile) {
     console.log('[AURORA-EXTRACT] 📅 dateMatch:', dateMatch ? dateMatch[1] : 'NO DETECTADO');
     
     // 🎯 MEJORADO: Detectar horarios con múltiples formatos naturales
-    // Patrones: "10am", "10 am", "10:00", "10:30am", "3pm", "15:00"
-    const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)?/g) || 
-                     message.match(/(\d{1,2}:\d{2})/g) ||
-                     message.match(/(\d{1,2})\s*(am|pm|AM|PM)/gi);
+    // Patrones: "10am", "10 am", "10:00", "10:30am", "3pm", "15:00", "6pm"
+    // PRIORIDAD: Primero buscar con am/pm (más específico), luego formato 24h
+    const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/gi) ||  // "6pm", "10:30am"
+                     message.match(/(\d{1,2}:\d{2})/g) ||                        // "14:30", "9:00"
+                     message.match(/(\d{1,2})\s+(am|pm|AM|PM)/gi);               // "6 pm" con espacio
     console.log('[AURORA-EXTRACT] 🕐 timeMatch:', timeMatch ? timeMatch : 'NO DETECTADO');
     
     const priceMatch = message.match(/\$(\d+\.?\d*)/);
@@ -220,31 +221,44 @@ function normalizeTimeFormat(timeStr) {
   // Limpiar y normalizar
   timeStr = timeStr.toLowerCase().trim();
   
+  console.log('[NORMALIZE-TIME] 🕐 Input:', timeStr);
+  
   // Si ya está en formato HH:MM, verificar y retornar
   if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
-    return timeStr.padStart(5, '0');
+    const normalized = timeStr.padStart(5, '0');
+    console.log('[NORMALIZE-TIME] ✅ Formato HH:MM detectado →', normalized);
+    return normalized;
   }
   
-  // Extraer componentes
-  const match = timeStr.match(/(\d{1,2}):?(\d{0,2})\s*(am|pm)?/);
-  if (!match) return '09:00';
+  // Extraer componentes (mejorado para capturar am/pm sin espacio)
+  const match = timeStr.match(/(\d{1,2}):?(\d{0,2})\s*(am|pm)?/i);
+  if (!match) {
+    console.log('[NORMALIZE-TIME] ❌ No match, usando default 09:00');
+    return '09:00';
+  }
   
   let hour = parseInt(match[1]);
   let minutes = parseInt(match[2] || '0');
   const period = match[3];
   
+  console.log('[NORMALIZE-TIME] 📊 Parsed: hour=', hour, 'minutes=', minutes, 'period=', period);
+  
   // Convertir AM/PM a formato 24h
   if (period === 'pm' && hour !== 12) {
     hour += 12;
+    console.log('[NORMALIZE-TIME] 🔄 Converted PM: hour=', hour);
   } else if (period === 'am' && hour === 12) {
     hour = 0;
+    console.log('[NORMALIZE-TIME] 🔄 Converted 12AM: hour=', hour);
   }
   
   // Asegurar formato válido
   if (hour > 23) hour = 23;
   if (minutes > 59) minutes = 0;
   
-  return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  const result = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  console.log('[NORMALIZE-TIME] ✅ Result:', result);
+  return result;
 }
 
 /**

@@ -357,8 +357,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     // 🎁 Si es primera reserva gratis, marcar trial usado
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🎁 Marcando trial gratis como usado');
-      userUpdates.free_trial_used = true;
-      userUpdates.free_trial_date = new Date().toISOString();
+      userUpdates.freeTrialUsed = true; // ← camelCase para saveProfile
+      userUpdates.freeTrialDate = new Date().toISOString(); // ← camelCase
     }
     
     await updateUser(userProfile.userId, userUpdates);

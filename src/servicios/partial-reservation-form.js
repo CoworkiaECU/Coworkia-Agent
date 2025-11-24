@@ -505,22 +505,47 @@ export function extractDataFromMessage(message, currentForm) {
     }
   }
 
-  // 📅 Detectar fecha
-  if (!currentForm.date) {
-    const today = new Date();
-    const relativeMatch = lowerMsg.match(/\b(hoy|ma[ñn]ana)\b/);
-    const isoMatch = message.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    const shortMatch = message.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
-    
-    // 🆕 Detectar formato "18 de noviembre", "18 noviembre"
-    const monthNames = {
-      'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
-      'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
-      'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
-    };
-    const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(\w+)/);
+  // 📅 Detectar fecha (SIEMPRE intentar, permite cambiar fecha)
+  const today = new Date();
+  const relativeMatch = lowerMsg.match(/\b(hoy|ma[ñn]ana|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo|lunes|martes)\b/);
+  const isoMatch = message.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  const shortMatch = message.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+  
+  console.log('[FORM-DATE] 🕐 Buscando fecha en mensaje:', message);
+  console.log('[FORM-DATE] 📋 Fecha actual en formulario:', currentForm.date);
+  
+  // 🆕 Detectar formato "18 de noviembre", "18 noviembre"
+  const monthNames = {
+    'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+    'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+    'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+  };
+  const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(\w+)/);
+  
+  // Detectar día de la semana + número (ej: "miércoles 26")
+  const dayOfWeekMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\b/);
 
-    if (relativeMatch) {
+  if (dayOfWeekMatch) {
+    const [, dayName, dayNum] = dayOfWeekMatch;
+    const day = parseInt(dayNum, 10);
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    
+    // Asumir mes actual, si el día ya pasó usar mes siguiente
+    let month = currentMonth;
+    let year = currentYear;
+    
+    if (day < today.getDate()) {
+      month = currentMonth + 1;
+      if (month > 12) {
+        month = 1;
+        year = currentYear + 1;
+      }
+    }
+    
+    updates.date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    console.log('[FORM-DATE] 📅 Detectado día de semana + número:', updates.date);
+  } else if (relativeMatch) {
       const keyword = relativeMatch[1];
       if (keyword === 'hoy') {
         updates.date = today.toISOString().split('T')[0];
@@ -564,6 +589,11 @@ export function extractDataFromMessage(message, currentForm) {
       updates.date = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       console.log('[FORM] 📅 Detectado fecha con barras:', updates.date);
     }
+  
+  if (updates.date) {
+    console.log('[FORM-DATE] 🔄 Sobrescribiendo fecha anterior:', currentForm.date, '→', updates.date);
+  } else {
+    console.log('[FORM-DATE] ❌ No se detectó fecha en el mensaje');
   }
 
   // ⏰ Detectar hora (SIEMPRE intentar, incluso si ya hay un time - permite cambiar hora)

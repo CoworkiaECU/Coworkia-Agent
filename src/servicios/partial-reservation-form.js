@@ -484,6 +484,13 @@ export async function clearForm(userId) {
  * - Número de personas: "voy con 2 personas", "somos 3"
  */
 export function extractDataFromMessage(message, currentForm) {
+  console.log('[FORM-EXTRACT] 🚀 INICIANDO extractDataFromMessage - mensaje:', message);
+  console.log('[FORM-EXTRACT] 📋 Formulario actual:', { 
+    time: currentForm.time, 
+    date: currentForm.date,
+    spaceType: currentForm.spaceType 
+  });
+  
   const updates = {};
   const lowerMsg = message.toLowerCase();
 
@@ -661,6 +668,9 @@ export function extractDataFromMessage(message, currentForm) {
     }
   }
 
+  console.log('[FORM-EXTRACT] ✅ FIN extractDataFromMessage - updates:', updates);
+  console.log('[FORM-EXTRACT] 📊 Campos detectados:', Object.keys(updates));
+  
   return updates;
 }
 

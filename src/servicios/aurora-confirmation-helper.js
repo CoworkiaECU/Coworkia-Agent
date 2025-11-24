@@ -621,12 +621,14 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
       console.log('[Validation] ⚠️ Advertencias:', validation.warnings);
     }
 
-    // 3. Verificar disponibilidad
+    // 3. Verificar disponibilidad (pasando userId para ignorar reservas pending propias)
     const availability = await checkAvailability(
       reservationData.date,
       reservationData.startTime,
       reservationData.durationHours,
-      reservationData.serviceType
+      reservationData.serviceType,
+      null, // baseTime
+      userProfile.userId // userId para ignorar sus propias reservas pending
     );
 
     if (!availability.available) {

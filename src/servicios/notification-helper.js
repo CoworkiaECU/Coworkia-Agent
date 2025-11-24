@@ -79,6 +79,16 @@ export async function createConfirmationCalendarEvent(calendarData) {
       }
     );
     
+    // Verificar si el resultado es exitoso
+    if (!result || result.success === false) {
+      console.error(`${logPrefix} ❌ createCalendarEvent retornó error:`, result);
+      return {
+        success: false,
+        error: result?.error || 'Calendar event creation failed',
+        details: result?.details
+      };
+    }
+    
     console.log(`${logPrefix} ✅ Evento creado exitosamente:`, {
       eventId: result?.eventId,
       eventLink: result?.eventLink,

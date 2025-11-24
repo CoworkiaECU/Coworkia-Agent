@@ -253,7 +253,24 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       pendingReservation.userName = userProfile.name;
     }
     
-    // 🔍 VALIDACIÓN: Verificar disponibilidad de Hot Desks ANTES de confirmar
+    // 🧹 PASO 0: LIMPIAR RESERVAS CONFLICTIVAS DEL MISMO USUARIO PRIMERO
+    // Cancelar TODAS las reservas del usuario en la misma fecha/hora ANTES de validar disponibilidad
+    console.log('[Confirmation] 🧹 PASO 0: Limpiando reservas conflictivas del usuario...');
+    const { default: reservationRepository } = await import('../database/reservationRepository.js');
+    const allReservationsOnDate = await reservationRepository.findByDate(pendingReservation.date);
+    
+    // Filtrar solo las del usuario actual
+    const userReservations = allReservationsOnDate.filter(r => r.user_phone === pendingReservation.userId);
+    
+    for (const existing of userReservations) {
+      // Cancelar si es la misma hora Y NO está ya cancelada
+      if (existing.status !== 'cancelled' && existing.start_time === pendingReservation.startTime) {
+        console.log(`[Confirmation] 🗑️ Cancelando reserva conflictiva: ${existing.id} (status: ${existing.status})`);
+        await reservationRepository.updateStatus(existing.id, 'cancelled');
+      }
+    }
+    
+    // 🔍 PASO 1: Verificar disponibilidad de Hot Desks DESPUÉS de limpiar
     if (pendingReservation.serviceType === 'hotDesk') {
       console.log('[Confirmation] 📍 PASO 1: Verificando disponibilidad de Hot Desk...');
       
@@ -298,23 +315,6 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       
       pendingReservation.hotDeskNumber = hotDeskNumber;
       console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/6`);
-    }
-    
-    // 🧹 LIMPIAR RESERVAS CONFLICTIVAS DEL MISMO USUARIO
-    // Cancelar TODAS las reservas del usuario en la misma fecha/hora para evitar duplicados
-    console.log('[Confirmation] 🧹 Limpiando reservas conflictivas del usuario...');
-    const { default: reservationRepository } = await import('../database/reservationRepository.js');
-    const allReservationsOnDate = await reservationRepository.findByDate(pendingReservation.date);
-    
-    // Filtrar solo las del usuario actual
-    const userReservations = allReservationsOnDate.filter(r => r.user_phone === pendingReservation.userId);
-    
-    for (const existing of userReservations) {
-      // Cancelar si es la misma hora Y NO está ya cancelada
-      if (existing.status !== 'cancelled' && existing.start_time === pendingReservation.startTime) {
-        console.log(`[Confirmation] 🗑️ Cancelando reserva conflictiva: ${existing.id} (status: ${existing.status})`);
-        await reservationRepository.updateStatus(existing.id, 'cancelled');
-      }
     }
     
     // 🔄 Crear reserva

@@ -564,13 +564,26 @@ export function extractDataFromMessage(message, currentForm) {
     const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
     let detectedTime = null;
 
+    console.log('[FORM-TIME] 🕐 Buscando hora en mensaje:', message);
+
     for (const match of message.matchAll(timeRegex)) {
-      const [, prefix, hourStr, minuteStr, meridiemRaw] = match;
+      const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
       const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
       const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
       const isTimeContext = Boolean(prefix);
 
+      console.log('[FORM-TIME] 📊 Match encontrado:', {
+        fullMatch,
+        hourStr,
+        minuteStr,
+        meridiemRaw,
+        meridiem,
+        hasExplicitMinutes,
+        isTimeContext
+      });
+
       if (!isTimeContext && !meridiem && !hasExplicitMinutes) {
+        console.log('[FORM-TIME] ⏭️ Saltando match (no es hora válida)');
         continue; // Evitar confundir números de personas con horas
       }
 
@@ -578,10 +591,15 @@ export function extractDataFromMessage(message, currentForm) {
       if (Number.isNaN(hour)) continue;
       const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
 
+      console.log('[FORM-TIME] 🔄 Antes de conversión: hour=%d, minute=%d, meridiem=%s', hour, minute, meridiem);
+
       if (meridiem === 'pm' && hour < 12) hour += 12;
       if (meridiem === 'am' && hour === 12) hour = 0;
 
+      console.log('[FORM-TIME] ✅ Después de conversión: hour=%d', hour);
+
       detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      console.log('[FORM-TIME] ✨ Tiempo detectado:', detectedTime);
       break;
     }
 

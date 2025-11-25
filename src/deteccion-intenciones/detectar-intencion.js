@@ -17,6 +17,21 @@ const AURORA_KEYWORDS = [
   'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
 ];
 
+const PAYMENT_LINK_REQUEST_PATTERNS = [
+  /link.*pago/,
+  /enlace.*pago/,
+  /dame.*link/,
+  /envía.*link/,
+  /envia.*link/,
+  /me.*das.*link/,
+  /cómo.*pago/,
+  /como.*pago/,
+  /donde.*pago/,
+  /dónde.*pago/,
+  /quiero.*pagar/,
+  /necesito.*pagar/
+];
+
 const POST_EMAIL_SUPPORT_PATTERNS = [
   /recibi.*correo.*dud/,
   /recibi.*confirmacion/,
@@ -144,7 +159,17 @@ export function detectarIntencion(inputRaw = '') {
     };
   }
 
-  // 2.6) Usuario llega desde el enlace del correo post-confirmación
+  // 2.6) 💳 Usuario pide link de pago para reserva confirmada
+  const isPaymentLinkRequest = PAYMENT_LINK_REQUEST_PATTERNS.some(pattern => pattern.test(normalized));
+  if (isPaymentLinkRequest) {
+    return {
+      agent: 'AURORA',
+      reason: 'payment link request for confirmed reservation',
+      flags: { paymentLinkRequest: true }
+    };
+  }
+
+  // 2.7) Usuario llega desde el enlace del correo post-confirmación
   if (isPostEmailSupport) {
     return {
       agent: 'AURORA',

@@ -67,6 +67,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 🔄 MODIFICACIÓN DE RESERVA DETECTADA
   const esModificacionReserva = Boolean(intencion.flags?.modificacionReserva);
   
+  // 💳 SOLICITUD DE LINK DE PAGO DETECTADA
+  const esPaymentLinkRequest = Boolean(intencion.flags?.paymentLinkRequest);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -144,6 +147,28 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - Mantente disponible para responder preguntas generales sobre Coworkia
 - Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
 
+  const instruccionesPaymentLink = esPaymentLinkRequest ? `
+💳 SOLICITUD DE LINK DE PAGO DETECTADA:
+- El usuario pidió el link de pago (dijo: "${mensaje}")
+- Busca en "RESERVAS CONFIRMADAS FUTURAS" su reserva con status pending_payment
+- NO reinicies el flujo ni preguntes qué espacio necesita
+- Responde: "¡Claro! Te envío el link de pago para tu reserva del [FECHA] a las [HORA]"
+- Luego muestra INMEDIATAMENTE:
+  
+  💳 *PAGO CON TARJETA (Payphone):*
+  https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+  💰 Total: $[MONTO]
+  
+  🏦 *TRANSFERENCIA BANCARIA:*
+  Produbanco - Cta Ahorros: 20059783069
+  Cédula: 1702683499
+  Titular: Gonzalo Villota Izurieta
+  💰 Total: $[MONTO sin comisión]
+  
+  📲 Envíame tu comprobante para confirmar automáticamente ✅
+
+- Si NO tiene reservas confirmadas, di: "Aún no tienes una reserva confirmada. ¿Te gustaría hacer una?"` : '';
+
   // Para el handoff, necesitamos el agente DESTINO (el detectado), no el activo
   const targetAgentKey = intencion.flags?.targetAgent || intencion.agent;
   
@@ -200,6 +225,7 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
 ${esRelevoHaciaOtro ? instruccionesRelevo : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}
@@ -449,13 +475,26 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
       const espacio = reserva.space || (reserva.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones');
       const personas = reserva.people > 1 ? ` (${reserva.people} personas)` : '';
       const precio = reserva.price || (reserva.was_free ? 'GRATIS' : 'PAGADO');
+      const status = reserva.status || 'unknown';
+      const statusLabel = status === 'pending_payment' ? '⏳ PAGO PENDIENTE' : '✅ CONFIRMADO';
       
-      lineas.push(`${numero}. ${fecha} ${tiempo} - ${espacio}${personas} - ${precio}`);
+      lineas.push(`${numero}. ${fecha} ${tiempo} - ${espacio}${personas} - ${precio} - ${statusLabel}`);
     });
     
     lineas.push(`\n⚠️ IMPORTANTE - DETECCIÓN DE CONFLICTOS:`);
     lineas.push(`- Cuando usuario solicite nueva reserva, REVISAR si fecha/hora coincide con estas`);
     lineas.push(`- Si hay conflicto: "Ya tienes [espacio] reservado para [fecha] [hora]. ¿Quieres cambiarla o hacer otra diferente?"`);
+    
+    // 💳 Detectar si hay reservas con pago pendiente
+    const reservasConPagoPendiente = perfil.upcomingReservations.filter(r => r.status === 'pending_payment');
+    if (reservasConPagoPendiente.length > 0) {
+      lineas.push(`\n💳 RESERVAS CON PAGO PENDIENTE (${reservasConPagoPendiente.length}):`);
+      reservasConPagoPendiente.forEach(r => {
+        lineas.push(`- ${r.date} ${r.start_time || r.time} - ${r.space || 'Hot Desk'} - $${r.price || '10'}`);
+      });
+      lineas.push(`\n⚠️ Si usuario pide "link de pago" o "cómo pago", enviar INMEDIATAMENTE el link sin reiniciar flujo.`);
+    }
+    
     lineas.push(`\n📋 Si usuario pregunta "¿qué reservas tengo?" o "cuántas reservas tengo?", responde EXACTAMENTE así:`);
     lineas.push(`"Tienes ${perfil.upcomingReservations.length} reserva${perfil.upcomingReservations.length > 1 ? 's' : ''} confirmada${perfil.upcomingReservations.length > 1 ? 's' : ''}: 📅\n\n" + [lista con formato]`);
     lineas.push(`\nFORMATO DE LISTA (usa emojis y líneas separadas):`);

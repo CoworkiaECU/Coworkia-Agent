@@ -1189,9 +1189,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 });
 
 /**
- * GET /webhooks/wassenger - Verificación de webhook
+ * GET /webhooks/wassenger/status - Verificación de estado (sin auth)
  */
-router.get('/webhooks/wassenger', (req, res) => {
+router.get('/webhooks/wassenger/status', (req, res) => {
   res.json({ 
     ok: true, 
     message: 'Wassenger Webhook activo',
@@ -1199,6 +1199,13 @@ router.get('/webhooks/wassenger', (req, res) => {
     status: wassengerEnabled ? '✅ ACTIVO' : '⏸️ PAUSADO',
     timestamp: new Date().toISOString()
   });
+});
+
+/**
+ * GET /webhooks/wassenger - Verificación de webhook (para Wassenger)
+ */
+router.get('/webhooks/wassenger', (req, res) => {
+  res.send('ok');
 });
 
 /**

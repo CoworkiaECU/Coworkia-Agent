@@ -5,7 +5,7 @@
 
 ACTION=${1:-status}
 HEROKU_APP="coworkia-agent"
-API_URL="https://${HEROKU_APP}-e97d15dac56f.herokuapp.com/api/webhooks/wassenger"
+API_URL="https://${HEROKU_APP}-e97d15dac56f.herokuapp.com/webhooks/wassenger"
 
 case $ACTION in
   enable)
@@ -22,7 +22,7 @@ case $ACTION in
     ;;
   status)
     echo "📊 Consultando estado de Wassenger..."
-    curl -X GET "${API_URL}" | jq
+    curl -s -X GET "${API_URL}/status" | jq
     ;;
   *)
     echo "❌ Acción inválida. Uso: $0 [enable|disable|status]"

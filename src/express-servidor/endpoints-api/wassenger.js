@@ -210,8 +210,22 @@ async function enviarWhatsApp(numero, mensaje) {
  *   }
  * }
  */
+// 🔧 Estado global para activar/desactivar Wassenger temporalmente
+let wassengerEnabled = true;
+
 router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
   try {
+    // 🚫 CONTROL: Desactivación temporal de Wassenger
+    if (!wassengerEnabled) {
+      console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
+      return res.json({ 
+        ok: true, 
+        ignored: true, 
+        reason: 'wassenger_disabled',
+        message: 'Wassenger está temporalmente desactivado'
+      });
+    }
+
     const body = req.body || {};
     const evt = body.event || '';
     const data = body.data || {};
@@ -1181,8 +1195,44 @@ router.get('/webhooks/wassenger', (req, res) => {
   res.json({ 
     ok: true, 
     message: 'Wassenger Webhook activo',
+    enabled: wassengerEnabled,
+    status: wassengerEnabled ? '✅ ACTIVO' : '⏸️ PAUSADO',
     timestamp: new Date().toISOString()
   });
+});
+
+/**
+ * POST /webhooks/wassenger/control - Activar/Desactivar Wassenger
+ * Body: { "action": "enable" | "disable" }
+ */
+router.post('/webhooks/wassenger/control', (req, res) => {
+  const { action } = req.body || {};
+  
+  if (action === 'enable') {
+    wassengerEnabled = true;
+    console.log('[WASSENGER] ✅ ACTIVADO manualmente');
+    return res.json({ 
+      ok: true, 
+      enabled: true,
+      message: 'Wassenger ACTIVADO - Los mensajes se procesarán normalmente',
+      timestamp: new Date().toISOString()
+    });
+  } else if (action === 'disable') {
+    wassengerEnabled = false;
+    console.log('[WASSENGER] ⏸️ DESACTIVADO manualmente');
+    return res.json({ 
+      ok: true, 
+      enabled: false,
+      message: 'Wassenger DESACTIVADO - Los mensajes serán ignorados temporalmente',
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    return res.status(400).json({ 
+      ok: false, 
+      error: 'INVALID_ACTION',
+      message: 'Acción debe ser "enable" o "disable"'
+    });
+  }
 });
 
 export default router;

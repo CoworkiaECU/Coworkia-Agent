@@ -210,12 +210,11 @@ async function enviarWhatsApp(numero, mensaje) {
  *   }
  * }
  */
-// 🔧 Estado global para activar/desactivar Wassenger temporalmente
-let wassengerEnabled = true;
-
 router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
   try {
-    // 🚫 CONTROL: Desactivación temporal de Wassenger
+    // 🚫 CONTROL: Desactivación temporal de Wassenger vía variable de entorno
+    const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
+    
     if (!wassengerEnabled) {
       console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
       return res.json({ 
@@ -1192,6 +1191,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
  * GET /webhooks/wassenger/status - Verificación de estado (sin auth)
  */
 router.get('/webhooks/wassenger/status', (req, res) => {
+  const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
   res.json({ 
     ok: true, 
     message: 'Wassenger Webhook activo',
@@ -1211,35 +1211,19 @@ router.get('/webhooks/wassenger', (req, res) => {
 /**
  * POST /webhooks/wassenger/control - Activar/Desactivar Wassenger
  * Body: { "action": "enable" | "disable" }
+ * Nota: Esto solo funciona si usas un comando de Heroku CLI para cambiar config vars
  */
 router.post('/webhooks/wassenger/control', (req, res) => {
-  const { action } = req.body || {};
-  
-  if (action === 'enable') {
-    wassengerEnabled = true;
-    console.log('[WASSENGER] ✅ ACTIVADO manualmente');
-    return res.json({ 
-      ok: true, 
-      enabled: true,
-      message: 'Wassenger ACTIVADO - Los mensajes se procesarán normalmente',
-      timestamp: new Date().toISOString()
-    });
-  } else if (action === 'disable') {
-    wassengerEnabled = false;
-    console.log('[WASSENGER] ⏸️ DESACTIVADO manualmente');
-    return res.json({ 
-      ok: true, 
-      enabled: false,
-      message: 'Wassenger DESACTIVADO - Los mensajes serán ignorados temporalmente',
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    return res.status(400).json({ 
-      ok: false, 
-      error: 'INVALID_ACTION',
-      message: 'Acción debe ser "enable" o "disable"'
-    });
-  }
+  return res.json({ 
+    ok: false, 
+    error: 'NOT_IMPLEMENTED',
+    message: 'Use Heroku CLI para cambiar WASSENGER_ENABLED',
+    help: {
+      disable: 'heroku config:set WASSENGER_ENABLED=false --app coworkia-agent',
+      enable: 'heroku config:set WASSENGER_ENABLED=true --app coworkia-agent',
+      status: 'heroku config:get WASSENGER_ENABLED --app coworkia-agent'
+    }
+  });
 });
 
 export default router;

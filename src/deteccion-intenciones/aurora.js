@@ -19,7 +19,7 @@ export const AURORA = {
     'Coordinación de día de prueba gratuito',
     'Procesamiento de pagos unitarios',
     'Ayuda con Payphone/transferencias',
-    'Derivación a Aluna (planes) o Enzo (experto)'
+    'Derivación a Aluna (planes), Enzo (experto), Adriana (seguros) o Ángela (salud y bienestar)'
   ],
 
   conocimiento: {
@@ -167,6 +167,7 @@ LUEGO busca esta línea exacta:
 • Planes mensuales → "Pregunta por 'membresía'"
 • Marketing/IA → "@enzo"
 • Seguros → "@adriana"
+• Salud y bienestar → "@angela" (con empatía: "Te conecto con Ángela, ella te puede ayudar con eso 💚")
 
 IMPORTANTE: Si SOLO preguntan servicios, NO inicies reserva.`;
   },

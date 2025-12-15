@@ -138,6 +138,11 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ADRIANA' } };
   }
 
+  // 2.02) Ángela solo con @ángela o @angela explícito
+  if (/@ángela/.test(text) || /@angela/.test(text)) {
+    return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ANGELA' } };
+  }
+
   // 2.05) Aluna explícito - planes mensuales/membresías
   if (/@aluna/.test(text)) {
     return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };

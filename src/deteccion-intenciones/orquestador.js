@@ -1,10 +1,11 @@
 // Cerebro Principal: Orquestador de Agentes de Coworkia
-// Integra Aurora, Aluna, Adriana y Enzo con memoria contextual
+// Integra Aurora, Aluna, Adriana, Enzo y Ángela con memoria contextual
 
 import { AURORA } from './aurora.js';
 import { ALUNA } from './aluna.js';
 import { ADRIANA } from './adriana.js';
 import { ENZO } from './enzo.js';
+import { ANGELA } from './angela.js';
 import { detectarIntencion } from './detectar-intencion.js';
 
 // Configuración de agentes
@@ -12,7 +13,8 @@ export const AGENTES = {
   AURORA,
   ALUNA,
   ADRIANA,
-  ENZO
+  ENZO,
+  ANGELA
 };
 
 const POST_EMAIL_REACTIVATION_KEYWORDS = [
@@ -174,9 +176,21 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   
   const instruccionesRelevo = esRelevoHaciaOtro ? `
 👋 RELEVO ENTRE AGENTES - MENSAJE DE TRANSICIÓN:
-- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : '@Aluna'}
+- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : targetAgentKey === 'ALUNA' ? '@Aluna' : targetAgentKey === 'ANGELA' ? '@Ángela' : targetAgentKey}
 - DEBES usar este mensaje EXACTO según el contexto:
 
+${targetAgentKey === 'ANGELA' ? `
+PARA ÁNGELA (mensaje cálido y empático):
+SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
+"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 💚 Te conecto con Ángela, tu asistente médica.
+
+Ella está aquí para ayudarte con tu bienestar 24/7. Si en cualquier momento necesitas volver para reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí para ti! 😊"
+
+SI ESTÁ EN MEDIO DE CONVERSACIÓN:
+"Con gusto te comunico con Ángela 💚, ella te puede ayudar con eso.
+
+Está disponible 24/7 para tu bienestar. Si necesitas volver para reservas, menciona @Aurora y tu pregunta. ¡Aquí estaré! 😊"
+` : `
 SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
 "¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[targetAgentKey].nombre} 🚀, tu ${AGENTES[targetAgentKey].descripcionCorta}.
 
@@ -185,7 +199,7 @@ Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Esta
 SI ESTÁ EN MEDIO DE CONVERSACIÓN:
 "Listo ${perfil.whatsappDisplayName || perfil.name || 'amigo/a'}, te comunico de inmediato con ${AGENTES[targetAgentKey].nombre}.
 
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
+Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"`}
 
 - Usa EXACTAMENTE uno de estos dos mensajes según el contexto
 - NO agregues nada más, NO improvises` : '';

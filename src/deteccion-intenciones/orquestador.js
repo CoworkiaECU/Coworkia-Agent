@@ -317,9 +317,15 @@ ${tieneHistorialConAgente ?
   }
 
   // 🆕 v283: Generate dynamic system prompt for Aurora based on user's free trial status and language
-  const systemPrompt = (agenteKey === 'AURORA' && typeof agente.getSystemPrompt === 'function')
-    ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es')
-    : agente.systemPrompt;
+  // 🆕 v293: Extended to all agents for multilanguage support
+  let systemPrompt;
+  if (agenteKey === 'AURORA' && typeof agente.getSystemPrompt === 'function') {
+    systemPrompt = agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es');
+  } else if (typeof agente.getSystemPrompt === 'function') {
+    systemPrompt = agente.getSystemPrompt(perfil.preferredLanguage || 'es');
+  } else {
+    systemPrompt = agente.systemPrompt;
+  }
 
   return {
     agente: agente.nombre,

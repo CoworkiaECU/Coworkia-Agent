@@ -68,7 +68,9 @@ const LANGUAGE_PATTERNS = {
     commonWords: [
       'allinllachu', 'allin', 'ima', 'may', 'maypi', 'mayman', 'imayna',
       'ñuqa', 'qam', 'pay', 'ari', 'mana', 'yachani', 'munani',
-      'tukuy', 'kunan', 'paqarin', 'qayna', 'wasi', 'llaqta', 'pacha'
+      'tukuy', 'kunan', 'paqarin', 'qayna', 'wasi', 'llaqta', 'pacha',
+      'llank', 'wasikunamanta', 'hayk', 'qullqi', 'tiyan', 'p\'unchaypaq',
+      'sapalla', 'ufisinata', 'reservay', 'tantakuna', 'kanchu', 'runasimi'
     ],
     specialChars: /[ñqkw]/i,
     weight: 1.2 // Peso ligeramente mayor por ser menos común
@@ -80,7 +82,9 @@ const LANGUAGE_PATTERNS = {
       'bonjour', 'merci', 'sil', 'vous', 'plaît', 'comment', 'quoi', 'quand',
       'où', 'veux', 'besoin', 'peux', 'suis', 'avez', 'avec', 'pour',
       'mais', 'aussi', 'ici', 'maintenant', 'demain', 'aujourd', 'réservation',
-      'information', 'aide', 'prix', 'est', 'sont'
+      'information', 'aide', 'prix', 'est', 'sont', 'jai', 'coûte', 'bureau',
+      'partagé', 'jour', 'réserver', 'privé', 'salles', 'réunion', 'disponibles',
+      'des', 'les', 'sur', 'espaces', 'combien'
     ],
     specialChars: /[àâäæçéèêëïîôùûüÿœ]/i,
     weight: 1.0
@@ -92,7 +96,9 @@ const LANGUAGE_PATTERNS = {
       'ciao', 'buongiorno', 'grazie', 'prego', 'come', 'cosa', 'quando',
       'dove', 'voglio', 'bisogno', 'posso', 'sono', 'siamo', 'hanno',
       'con', 'per', 'anche', 'qui', 'adesso', 'domani', 'oggi',
-      'prenotazione', 'informazione', 'aiuto', 'prezzo'
+      'prenotazione', 'informazione', 'aiuto', 'prezzo', 'quanto', 'costa',
+      'postazione', 'condivisa', 'giorno', 'prenotare', 'ufficio', 'privato',
+      'avete', 'sale', 'riunioni', 'disponibili', 'sugli', 'spazi'
     ],
     specialChars: /[àèéìòù]/i,
     weight: 1.0
@@ -245,7 +251,7 @@ export function detectLanguageCommand(message) {
     { patterns: [/cambiar?\s+(a|al)?\s*español/i, /habla(r)?\s+español/i, /switch\s+to\s+spanish/i], lang: SUPPORTED_LANGUAGES.SPANISH },
     { patterns: [/cambiar?\s+(a|al)?\s*japonés/i, /habla(r)?\s+japonés/i, /switch\s+to\s+japanese/i, /日本語で/i], lang: SUPPORTED_LANGUAGES.JAPANESE },
     { patterns: [/cambiar?\s+(a|al)?\s*quechua/i, /habla(r)?\s+quechua/i, /runasimita/i], lang: SUPPORTED_LANGUAGES.QUECHUA },
-    { patterns: [/cambiar?\s+(a|al)?\s*francés/i, /habla(r)?\s+francés/i, /switch\s+to\s+french/i, /parler\s+français/i], lang: SUPPORTED_LANGUAGES.FRENCH },
+    { patterns: [/cambiar?\s+(a|al)?\s*francés/i, /habla(r)?\s+francés/i, /switch\s+to\s+french/i, /parler?\s+(en\s+)?français/i, /passer\s+au\s+français/i], lang: SUPPORTED_LANGUAGES.FRENCH },
     { patterns: [/cambiar?\s+(a|al)?\s*italiano/i, /habla(r)?\s+italiano/i, /switch\s+to\s+italian/i, /parlare\s+italiano/i], lang: SUPPORTED_LANGUAGES.ITALIAN }
   ];
 

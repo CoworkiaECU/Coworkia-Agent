@@ -762,6 +762,26 @@ export async function enhanceAuroraResponse(originalResponse, userProfile, formR
     console.log('[Confirmation Helper] Aurora quiere activar confirmación, procesando...');
     console.log('[Confirmation Helper] FormResult disponible:', formResult ? 'SÍ' : 'NO');
 
+    // 🚨 GUARD: Si el usuario acaba de confirmar o ya tiene una confirmación pendiente,
+    // evitar re-activar el sistema de confirmación para prevenir loops.
+    if (userProfile?.justConfirmed) {
+      console.log('[Confirmation Helper] ⚠️ Usuario en ventana justConfirmed - no reactivar confirmación');
+      return {
+        enhanced: false,
+        finalMessage: enhancedResponse,
+        note: 'skipped_due_to_justConfirmed'
+      };
+    }
+
+    if (userProfile?.pendingConfirmation) {
+      console.log('[Confirmation Helper] ⚠️ Ya existe pendingConfirmation - evitando re-activación');
+      return {
+        enhanced: false,
+        finalMessage: enhancedResponse,
+        note: 'skipped_due_to_existing_pending'
+      };
+    }
+
     const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile, formResult);
 
     if (!confirmationResult.success) {

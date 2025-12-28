@@ -119,6 +119,7 @@ export async function loadProfile(userId) {
       createdAt: user.created_at,
       updatedAt: user.updated_at,
       activeAgent: user.active_agent || 'AURORA', // Agente activo actual
+      preferredLanguage: user.preferred_language || 'es', // 🌍 Idioma preferido
       reservationHistory,
       upcomingReservations, // 🆕 Reservas confirmadas futuras
       pendingConfirmation,
@@ -160,7 +161,8 @@ export async function saveProfile(userId, partialProfile = {}) {
       free_trial_date: partialProfile.freeTrialDate,
       conversation_count: partialProfile.conversationCount,
       last_message_at: partialProfile.lastMessageAt || new Date().toISOString(),
-      active_agent: partialProfile.activeAgent
+      active_agent: partialProfile.activeAgent,
+      preferred_language: partialProfile.preferredLanguage // 🌍 Idioma preferido
     };
     
     // Remover campos undefined
@@ -463,6 +465,40 @@ export async function saveConversationMessage(userId, message, role = 'user') {
     return true;
   } catch (error) {
     console.error('[MEMORIA-SQLITE] Error guardando mensaje:', error);
+    return false;
+  }
+}
+
+/**
+ * 🌍 Obtiene el idioma preferido del usuario
+ * @param {string} userId - ID del usuario
+ * @returns {string} Código de idioma (es, en, ja, qu, fr, it) o 'es' por defecto
+ */
+export async function getUserPreferredLanguage(userId) {
+  await ensureDbInitialized();
+  try {
+    const user = await userRepository.findByPhone(userId);
+    return user?.preferred_language || 'es';
+  } catch (error) {
+    console.error('[MEMORIA] Error obteniendo idioma preferido:', error);
+    return 'es';
+  }
+}
+
+/**
+ * 🌍 Actualiza el idioma preferido del usuario
+ * @param {string} userId - ID del usuario
+ * @param {string} language - Código de idioma (es, en, ja, qu, fr, it)
+ * @returns {boolean} true si se guardó exitosamente
+ */
+export async function setUserPreferredLanguage(userId, language) {
+  await ensureDbInitialized();
+  try {
+    await saveProfile(userId, { preferredLanguage: language });
+    console.log(`[MEMORIA] ✅ Idioma preferido actualizado para ${userId}: ${language}`);
+    return true;
+  } catch (error) {
+    console.error('[MEMORIA] Error actualizando idioma preferido:', error);
     return false;
   }
 }

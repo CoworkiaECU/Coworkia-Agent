@@ -60,7 +60,7 @@ class PostgresAdapter {
     try {
       await client.query('BEGIN');
 
-      // Tabla de usuarios (COMPLETA - incluye active_agent)
+      // Tabla de usuarios (COMPLETA - incluye active_agent + preferred_language)
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           phone_number TEXT PRIMARY KEY,
@@ -73,9 +73,23 @@ class PostgresAdapter {
           conversation_count INTEGER DEFAULT 0,
           last_message_at TIMESTAMP,
           active_agent TEXT DEFAULT 'AURORA',
+          preferred_language TEXT DEFAULT 'es',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+      `);
+      
+      // Agregar columna preferred_language si no existe (migración)
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'preferred_language'
+          ) THEN
+            ALTER TABLE users ADD COLUMN preferred_language TEXT DEFAULT 'es';
+          END IF;
+        END $$;
       `);
 
       // Tabla de reservas (COMPLETA - todas las columnas de SQLite)

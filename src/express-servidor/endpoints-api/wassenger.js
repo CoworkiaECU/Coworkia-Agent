@@ -9,11 +9,12 @@ import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedRespons
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
+import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
 import { 
-  loadProfile, 
-  saveProfile, 
-  saveInteraction, 
-  loadConversationHistory, 
+  loadProfile,
+  saveProfile,
+  saveInteraction,
+  loadConversationHistory,
   saveConversationMessage,
   savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
@@ -828,6 +829,48 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     const campaignCheck = detectCampaignMessage(text);
     let reply;
     let resultado = null;
+    
+    // 🌍 DETECTAR Y PROCESAR CAMBIO DE IDIOMA
+    const languageCommand = detectLanguageCommand(text);
+    if (languageCommand) {
+      console.log('[WASSENGER] 🌍 Comando de cambio de idioma detectado:', languageCommand);
+      
+      // Actualizar idioma preferido del usuario
+      await saveProfile(userId, { preferredLanguage: languageCommand });
+      
+      // Enviar mensaje de confirmación
+      const confirmationMsg = getLanguageChangeConfirmation(languageCommand);
+      await enviarWhatsApp(userId, confirmationMsg);
+      
+      // Guardar en historial
+      await saveConversationMessage(userId, {
+        role: 'assistant',
+        content: confirmationMsg,
+        agent: 'Aurora'
+      });
+      
+      console.log('[WASSENGER] ✅ Idioma actualizado y confirmación enviada');
+      return res.status(200).json({ status: 'ok', action: 'language_changed', language: languageCommand });
+    }
+    
+    // 🌍 DETECTAR IDIOMA DEL MENSAJE (auto-detección)
+    const currentLanguage = profile.preferredLanguage || 'es';
+    const detectedLanguage = getUserLanguage(text, currentLanguage);
+    
+    // Si el idioma detectado es diferente al preferido con alta confianza, actualizar
+    if (detectedLanguage.confidence > 0.8 && detectedLanguage.language !== currentLanguage && detectedLanguage.source === 'auto_detected_high_confidence') {
+      console.log('[WASSENGER] 🌍 Cambio de idioma auto-detectado:', {
+        anterior: currentLanguage,
+        nuevo: detectedLanguage.language,
+        confianza: detectedLanguage.confidence
+      });
+      
+      // Actualizar idioma preferido
+      await saveProfile(userId, { preferredLanguage: detectedLanguage.language });
+      profile.preferredLanguage = detectedLanguage.language;
+      
+      console.log('[WASSENGER] ✅ Idioma actualizado automáticamente');
+    }
     
     // SIEMPRE procesar con orquestador primero (necesario para handoffs y validaciones)
     {

@@ -65,7 +65,7 @@ export const ANGELA = {
         ]
       },
       medicoVirtual: {
-        url: 'https://demoi.doctorone.com/home/#',
+        url: 'https://demo.doctorone.com/home/#',
         descripcion: 'Consultas médicas virtuales con doctores reales',
         activacion: 'Sugerir después de al menos 3 interacciones'
       }
@@ -169,7 +169,7 @@ CAPACIDADES:
 FORMATO:
 - Respuestas completas y claras, sin cortar el texto
 - Usa hasta 600 tokens si es necesario
-- Después de al menos 3 interacciones, sugiere el médico virtual: https://demoi.doctorone.com/home/#
+- Después de al menos 3 interacciones, sugiere el médico virtual: https://demo.doctorone.com/home/#
 - Si el usuario insiste en hablar con un médico antes, ofrece el enlace inmediatamente
 
 SERVICIOS MEDBENEFICIOS:

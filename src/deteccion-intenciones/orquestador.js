@@ -316,9 +316,9 @@ ${tieneHistorialConAgente ?
   `.trim();
   }
 
-  // 🆕 v283: Generate dynamic system prompt for Aurora based on user's free trial status
+  // 🆕 v283: Generate dynamic system prompt for Aurora based on user's free trial status and language
   const systemPrompt = (agenteKey === 'AURORA' && typeof agente.getSystemPrompt === 'function')
-    ? agente.getSystemPrompt(perfil.freeTrialUsed || false)
+    ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es')
     : agente.systemPrompt;
 
   return {

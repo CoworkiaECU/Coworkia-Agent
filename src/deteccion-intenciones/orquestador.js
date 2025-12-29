@@ -391,7 +391,10 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   if (perfil.email) lineas.push(`- Email: ${perfil.email}`);
   if (perfil.channel) lineas.push(`- Canal: ${perfil.channel}`);
   
-  // 🆕 ELIMINADO: firstVisit es redundante, usamos solo free_trial_used
+  // 🆕 firstVisit flag para lógica de saludo inicial
+  if (perfil.firstVisit !== undefined) {
+    lineas.push(`- Primera interacción: ${perfil.firstVisit ? 'SÍ (primer mensaje)' : 'NO (ya conversó antes)'}`);
+  }
 
   // 🆕 Flag de reserva recién confirmada (temporal)
   if (perfil.justConfirmed) {

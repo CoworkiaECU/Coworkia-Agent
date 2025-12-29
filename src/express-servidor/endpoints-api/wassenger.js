@@ -272,6 +272,110 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userProfile = await loadProfile(userId);
       const activeAgent = userProfile?.activeAgent || 'AURORA';
       
+      // 🚗 SI ES AXEL: Análisis de vehículo dañado con Vision AI especializado
+      if (activeAgent === 'AXEL' && mediaUrl) {
+        console.log('[WASSENGER] 🚗 AXEL analizando daño de vehículo...');
+        
+        const { analyzeVehicleDamage } = await import('../../servicios-ia/openai.js');
+        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+        const AXEL = AGENTES['AXEL'];
+        
+        try {
+          // Analizar imagen con Vision AI especializado
+          const analysisResult = await analyzeVehicleDamage(mediaUrl);
+          
+          if (!analysisResult.success) {
+            await enviarWhatsApp(userId, 
+              '⚠️ Hubo un problema al analizar la imagen. ¿Podrías enviarla de nuevo? Asegúrate de que tenga buena luz y enfoque. 📸'
+            );
+            return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          }
+          
+          const analysis = analysisResult.analysis;
+          
+          // VALIDAR CALIDAD DE IMAGEN
+          if (!analysis.imageQuality?.isAcceptable) {
+            const response = AXEL.disclaimers.imagenDefectuosa;
+            await enviarWhatsApp(userId, response);
+            
+            await saveInteraction({
+              userId,
+              agent: 'axel',
+              agentName: 'Axel',
+              intentReason: 'poor_image_quality',
+              input: '[IMAGEN: Vehículo - calidad insuficiente]',
+              output: response,
+              meta: {
+                route: '/webhooks/wassenger',
+                via: 'whatsapp',
+                mediaUrl,
+                imageQuality: analysis.imageQuality
+              }
+            });
+            
+            return res.json({ ok: true, processed: true, type: 'poor_image_quality' });
+          }
+          
+          // GENERAR COTIZACIÓN CON EL ANÁLISIS
+          const systemPrompt = AXEL.getSystemPrompt(userProfile?.preferredLanguage || 'es');
+          
+          const cotizacionPrompt = `Has recibido una imagen de un vehículo dañado. Aquí está el análisis técnico:
+
+${JSON.stringify(analysis, null, 2)}
+
+TAREA:
+1. Presenta el análisis de daños de forma clara al cliente
+2. Genera una cotización referencial usando el tarifario de PaintBull
+3. SIEMPRE incluir rangos de precio (mínimo-máximo)
+4. Mencionar posibles daños ocultos si aplica
+5. Incluir disclaimers apropiados según el caso
+6. Ofrecer inspección física como siguiente paso
+
+Responde ahora como Axel de PaintBull:`;
+
+          const { complete } = await import('../../servicios-ia/openai.js');
+          const cotizacion = await complete(cotizacionPrompt, {
+            temperature: 0.4,
+            max_tokens: 800,
+            system: systemPrompt
+          });
+          
+          // Enviar cotización al cliente
+          await enviarWhatsApp(userId, cotizacion);
+          
+          // Guardar interacción
+          await saveInteraction({
+            userId,
+            agent: 'axel',
+            agentName: 'Axel',
+            intentReason: 'vehicle_damage_analysis',
+            input: '[IMAGEN: Análisis de daño vehicular]',
+            output: cotizacion,
+            meta: {
+              route: '/webhooks/wassenger',
+              via: 'whatsapp',
+              mediaUrl,
+              damageAnalysis: analysis,
+              imageQuality: analysis.imageQuality
+            }
+          });
+          
+          return res.json({ 
+            ok: true, 
+            processed: true, 
+            type: 'vehicle_damage_analysis',
+            analysis: analysis
+          });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en análisis de Axel:', error);
+          await enviarWhatsApp(userId, 
+            '⚠️ Hubo un error al analizar la imagen. Por favor, intenta nuevamente o contacta directamente con nosotros.'
+          );
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
       // 🎯 SI ES ENZO/ADRIANA/ALUNA: Análisis de documento con Vision AI
       if (['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {
         console.log(`[WASSENGER] 🧠 ${activeAgent} analizando documento/imagen...`);

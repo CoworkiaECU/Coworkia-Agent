@@ -1,11 +1,12 @@
 // Cerebro Principal: Orquestador de Agentes de Coworkia
-// Integra Aurora, Aluna, Adriana, Enzo y Ángela con memoria contextual
+// Integra Aurora, Aluna, Adriana, Enzo, Ángela y Axel con memoria contextual
 
 import { AURORA } from './aurora.js';
 import { ALUNA } from './aluna.js';
 import { ADRIANA } from './adriana.js';
 import { ENZO } from './enzo.js';
 import { ANGELA } from './angela.js';
+import { AXEL } from './axel.js';
 import { detectarIntencion } from './detectar-intencion.js';
 
 // Configuración de agentes
@@ -14,7 +15,8 @@ export const AGENTES = {
   ALUNA,
   ADRIANA,
   ENZO,
-  ANGELA
+  ANGELA,
+  AXEL
 };
 
 const POST_EMAIL_REACTIVATION_KEYWORDS = [

@@ -143,6 +143,11 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ANGELA' } };
   }
 
+  // 2.03) Axel solo con @axel explícito - especialista enderezada y pintura
+  if (/@axel/.test(text)) {
+    return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'AXEL' } };
+  }
+
   // 2.05) Aluna explícito - planes mensuales/membresías
   if (/@aluna/.test(text)) {
     return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };

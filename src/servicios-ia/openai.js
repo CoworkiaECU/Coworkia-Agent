@@ -289,3 +289,119 @@ export async function transcribeAudio(audioUrl) {
     };
   }
 }
+
+/**
+ * 🚗 Analiza imagen de vehículo dañado para cotización de enderezada/pintura
+ * Identifica daños visibles, evalúa calidad de imagen y genera estructura para cotización
+ */
+export async function analyzeVehicleDamage(imageUrl, opts = {}) {
+  const {
+    temperature = 0.2,
+    max_tokens = 800,
+    model = 'gpt-4o'
+  } = opts;
+
+  const prompt = `Eres un experto técnico en análisis de daños automotrices con 15 años de experiencia en enderezada y pintura.
+
+Analiza esta imagen de vehículo y proporciona un análisis técnico estructurado en formato JSON:
+
+{
+  "imageQuality": {
+    "isAcceptable": true/false,
+    "score": 0-10,
+    "issues": ["lista de problemas: borrosa, oscura, ángulo malo, muy lejana, etc"],
+    "recommendation": "qué mejorar si la calidad es mala"
+  },
+  "vehicleInfo": {
+    "type": "tipo de vehículo (sedán, SUV, camioneta, etc)",
+    "color": "color aproximado",
+    "visibleParts": ["partes visibles en la foto"]
+  },
+  "damageAnalysis": {
+    "visibleDamages": [
+      {
+        "part": "nombre de pieza (puerta, capó, parachoques, etc)",
+        "damageType": "tipo (abolladura, rayón, rotura, deformación)",
+        "severity": "leve/moderada/severa",
+        "approximateArea": "área afectada en cm o descripción",
+        "description": "descripción técnica detallada del daño",
+        "paintAffected": true/false
+      }
+    ],
+    "hiddenDamageRisks": [
+      {
+        "area": "zona donde puede haber daño oculto",
+        "risk": "tipo de daño potencial",
+        "reason": "por qué existe este riesgo"
+      }
+    ]
+  },
+  "estimationFactors": {
+    "complexity": "simple/moderada/compleja",
+    "requiresDisassembly": true/false,
+    "structuralConcerns": true/false,
+    "electricalRisk": true/false,
+    "specialPaintType": "estándar/metalizado/perlado/mate"
+  },
+  "recommendations": {
+    "needsPhysicalInspection": true/false,
+    "additionalPhotosNeeded": ["qué fotos adicionales se necesitan"],
+    "urgencyLevel": "bajo/medio/alto"
+  },
+  "technicalNotes": "observaciones técnicas adicionales importantes"
+}
+
+REGLAS CRÍTICAS:
+1. Si la imagen es borrosa, oscura o de mala calidad: marca imageQuality.isAcceptable = false
+2. Solo identifica daños CLARAMENTE VISIBLES en la foto
+3. Para daños cerca de estructura/motor/chasis: marcar structuralConcerns = true
+4. Si no puedes ver bien el alcance del daño: incluir en hiddenDamageRisks
+5. Sé conservador en el análisis - mejor subestimar que sobreestimar
+6. Si la foto no muestra un vehículo dañado: indicarlo claramente
+
+Analiza la imagen ahora:`;
+
+  try {
+    const result = await analyzeImage(imageUrl, prompt, { temperature, max_tokens, model, detail: 'high' });
+    
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error,
+        analysis: null
+      };
+    }
+
+    // Intentar parsear el JSON de la respuesta
+    let analysis = null;
+    try {
+      // Extraer JSON de la respuesta (puede venir con texto adicional)
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        // Si no hay JSON, devolver el contenido como texto
+        analysis = { rawResponse: result.content };
+      }
+    } catch (parseError) {
+      console.warn('[Vehicle Analysis] No se pudo parsear JSON, usando respuesta raw');
+      analysis = { rawResponse: result.content };
+    }
+
+    return {
+      success: true,
+      analysis,
+      rawContent: result.content,
+      usage: result.usage
+    };
+
+  } catch (error) {
+    console.error('[Vehicle Analysis] Error:', error);
+    return {
+      success: false,
+      error: error.message,
+      analysis: null
+    };
+  }
+}
+

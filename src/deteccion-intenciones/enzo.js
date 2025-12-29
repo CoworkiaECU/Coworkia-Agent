@@ -145,7 +145,8 @@ EJEMPLO:
 💰 Inversión: $200/mes Meta + $30 herramientas
 ROI esperado: 3-4x en 60 días
 
-¿Arrancamos? 🚀"`;
+¿Arrancamos? 🚀"
+`;
   },
 
   ejemplos: {

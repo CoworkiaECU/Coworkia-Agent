@@ -272,7 +272,28 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userProfile = await loadProfile(userId);
       const activeAgent = userProfile?.activeAgent || 'AURORA';
       
-      // 🚗 SI ES AXEL: Análisis de vehículo dañado con Vision AI especializado
+      // 🚗 SI ES AXEL SIN IMAGEN: Pedir fotos
+      if (activeAgent === 'AXEL' && !mediaUrl) {
+        console.log('[WASSENGER] 🚗 AXEL activo pero sin imagen - solicitando fotos');
+        
+        const responseText = text.toLowerCase();
+        
+        // Si usuario saluda o envía mensaje inicial
+        if (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20) {
+          await enviarWhatsApp(userId, 
+            '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
+          );
+        } else {
+          // Usuario escribió algo más largo - recordar que necesita enviar fotos
+          await enviarWhatsApp(userId, 
+            'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
+          );
+        }
+        
+        return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
+      }
+      
+      // 🚗 SI ES AXEL CON IMAGEN: Análisis de vehículo dañado con Vision AI especializado
       if (activeAgent === 'AXEL' && mediaUrl) {
         console.log('[WASSENGER] 🚗 AXEL analizando daño de vehículo...');
         

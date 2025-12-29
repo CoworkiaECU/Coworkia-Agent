@@ -962,18 +962,30 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     const detectedLanguage = getUserLanguage(text, currentLanguage);
     
     // Si el idioma detectado es diferente al preferido con alta confianza, actualizar
-    if (detectedLanguage.confidence > 0.8 && detectedLanguage.language !== currentLanguage && detectedLanguage.source === 'auto_detected_high_confidence') {
+    // Simplificamos la condición: solo requiere confidence > 0.7 y que sea diferente
+    if (detectedLanguage.confidence > 0.7 && 
+        detectedLanguage.language !== currentLanguage && 
+        detectedLanguage.source === 'auto_detected_high_confidence') {
       console.log('[WASSENGER] 🌍 Cambio de idioma auto-detectado:', {
         anterior: currentLanguage,
         nuevo: detectedLanguage.language,
-        confianza: detectedLanguage.confidence
+        confianza: detectedLanguage.confidence,
+        source: detectedLanguage.source
       });
       
       // Actualizar idioma preferido
       await saveProfile(userId, { preferredLanguage: detectedLanguage.language });
       profile.preferredLanguage = detectedLanguage.language;
       
-      console.log('[WASSENGER] ✅ Idioma actualizado automáticamente');
+      console.log('[WASSENGER] ✅ Idioma actualizado automáticamente a:', detectedLanguage.language);
+    } else {
+      console.log('[WASSENGER] 🌍 Idioma detectado:', {
+        language: detectedLanguage.language,
+        confidence: detectedLanguage.confidence,
+        source: detectedLanguage.source,
+        current: currentLanguage,
+        willUpdate: false
+      });
     }
     
     // SIEMPRE procesar con orquestador primero (necesario para handoffs y validaciones)

@@ -148,6 +148,11 @@ export function detectarIntencion(inputRaw = '') {
     return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'AXEL' } };
   }
 
+  // 2.04) Vona solo con @vona explícito - terapia de sonido
+  if (/@vona/.test(text)) {
+    return { agent: 'VONA', reason: 'trigger @Vona', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'VONA' } };
+  }
+
   // 2.05) Aluna explícito - planes mensuales/membresías
   if (/@aluna/.test(text)) {
     return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };

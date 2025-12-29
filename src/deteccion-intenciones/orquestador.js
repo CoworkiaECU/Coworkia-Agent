@@ -1,5 +1,5 @@
 // Cerebro Principal: Orquestador de Agentes de Coworkia
-// Integra Aurora, Aluna, Adriana, Enzo, Ángela y Axel con memoria contextual
+// Integra Aurora, Aluna, Adriana, Enzo, Ángela, Axel y Vona con memoria contextual
 
 import { AURORA } from './aurora.js';
 import { ALUNA } from './aluna.js';
@@ -7,6 +7,7 @@ import { ADRIANA } from './adriana.js';
 import { ENZO } from './enzo.js';
 import { ANGELA } from './angela.js';
 import { AXEL } from './axel.js';
+import { VONA } from './vona.js';
 import { detectarIntencion } from './detectar-intencion.js';
 
 // Configuración de agentes
@@ -16,7 +17,8 @@ export const AGENTES = {
   ADRIANA,
   ENZO,
   ANGELA,
-  AXEL
+  AXEL,
+  VONA
 };
 
 const POST_EMAIL_REACTIVATION_KEYWORDS = [
@@ -178,7 +180,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   
   const instruccionesRelevo = esRelevoHaciaOtro ? `
 👋 RELEVO ENTRE AGENTES - MENSAJE DE TRANSICIÓN:
-- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : targetAgentKey === 'ALUNA' ? '@Aluna' : targetAgentKey === 'ANGELA' ? '@Ángela' : targetAgentKey}
+- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : targetAgentKey === 'ALUNA' ? '@Aluna' : targetAgentKey === 'ANGELA' ? '@Ángela' : targetAgentKey === 'AXEL' ? '@Axel' : targetAgentKey === 'VONA' ? '@Vona' : targetAgentKey}
 - DEBES usar este mensaje EXACTO según el contexto:
 
 ${targetAgentKey === 'ANGELA' ? `
@@ -192,6 +194,17 @@ SI ESTÁ EN MEDIO DE CONVERSACIÓN:
 "Con gusto te comunico con Ángela 💚, ella te puede ayudar con eso.
 
 Está disponible 24/7 para tu bienestar. Si necesitas volver para reservas, menciona @Aurora y tu pregunta. ¡Aquí estaré! 😊"
+` : targetAgentKey === 'VONA' ? `
+PARA VONA (mensaje sereno y consciente):
+SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
+"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 🎵 Te conecto con Vona, especialista en terapia de sonido de VONA Sound Therapy Studio.
+
+Ella puede acompañarte en tu proceso de bienestar integral. Si necesitas volver para reservas, menciona @Aurora. ¡Estaré aquí! ✨"
+
+SI ESTÁ EN MEDIO DE CONVERSACIÓN:
+"Con gusto te comunico con Vona 🎵, especialista en terapia de sonido.
+
+Si necesitas volver para reservas, menciona @Aurora. ¡Aquí estaré! ✨"
 ` : `
 SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
 "¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[targetAgentKey].nombre} 🚀, tu ${AGENTES[targetAgentKey].descripcionCorta}.
@@ -277,7 +290,7 @@ ${esSoportePostEmail && !esCancelacion ? '- Responde brevemente y cierra confirm
 ${instruccionesPostEmail}
   `.trim();
   } else {
-    // ENZO, ADRIANA, ALUNA: Prompt limpio, sin reservas, 100% enfocado en su especialidad
+    // ENZO, ADRIANA, ALUNA, ANGELA, AXEL, VONA: Prompt limpio, sin reservas, 100% enfocado en su especialidad
     const tieneHistorialConAgente = historial && historial.length > 0;
     
     prompt = `

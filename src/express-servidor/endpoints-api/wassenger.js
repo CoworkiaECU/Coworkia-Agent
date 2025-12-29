@@ -265,12 +265,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {
       console.log('[WASSENGER] 📸 Procesando imagen/documento...');
       console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
+      console.log('[WASSENGER] 📸 DEBUG - Full data structure:', JSON.stringify(data, null, 2));
       
       const messageData = { type: messageType, media: { url: mediaUrl } };
       
       // Cargar perfil para saber el agente activo
       const userProfile = await loadProfile(userId);
       const activeAgent = userProfile?.activeAgent || 'AURORA';
+      
+      console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
       
       // 🚗 SI ES AXEL SIN IMAGEN: Pedir fotos
       if (activeAgent === 'AXEL' && !mediaUrl) {

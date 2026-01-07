@@ -1,423 +1,351 @@
-# 🔄 Sistema de Handovers Multi-Agente - Coworkia
+# 🤝 Sistema de Handovers - Documentación Actualizada
 
-## Resumen Ejecutivo
+## 📋 Overview
+Sistema que permite cambiar entre agentes especializados según la necesidad del usuario.
 
-Sistema completo de transición entre agentes (Aurora, Enzo, Adriana, Aluna) con:
-- **Mensajes personalizados** según contexto (primer mensaje vs conversación activa)
-- **Delays programados** (10 segundos para entrada, 5 segundos para despedida)
-- **Desactivación automática** del agente saliente
-- **Validación estricta**: solo el agente activo responde
-- **Mensajes de entrada/despedida** únicos por agente
+## 👥 Agentes Disponibles
 
----
+### 1. 👩🏼‍💼 Aurora (Recepcionista)
+- **Rol**: Recepcionista y coordinadora
+- **Especialidad**: Reservas, Hot Desk, Salas de Reunión, cobros unitarios
+- **Trigger**: Por defecto, o `@aurora`
 
-## 🎭 Agentes y Sus Características
+### 2. 💼 Aluna (Closer de Ventas)
+- **Rol**: Especialista en membresías y planes mensuales
+- **Especialidad**: Plan 10, Plan 20, Oficina Ejecutiva, Oficina Virtual
+- **Trigger**: 
+  - `@aluna` (explícito)
+  - Palabras clave: "membresía", "plan mensual", "plan 10", "plan 20", "oficina ejecutiva", "oficina virtual"
 
-### Aurora 🏢
-- **Rol:** Recepcionista y coordinadora de Coworkia
-- **Especialidad:** Reservas, Hot Desk, salas, pagos
-- **Mensaje retorno:** "¡Hola {nombre}! Te asisto en Coworkia a partir de ahora 😊"
+### 3. 👨‍💼 Enzo (Experto Marketing & IA)
+- **Rol**: Experto en marketing digital y ventas
+- **Especialidad**: Estrategias de marketing, IA aplicada, ventas B2B
+- **Trigger**: `@enzo` (solo explícito)
 
-### Enzo 🚀
-- **Rol:** Experto en Marketing Digital, IA y Software  
-- **Descripción:** "experto en marketing digital, IA y software"
-- **Mensaje entrada:** "Hola Sensei 🥋! ¿Qué te puedo ayudar hoy?"
-- **Mensaje despedida:** "Entendido Sensei, dejo en manos de Aurora el servicio que requieres. ¡Sayonara! 🥋"
+### 4. 🛡️ Adriana (Seguros)
+- **Rol**: Especialista en seguros Segpopular
+- **Especialidad**: Seguros de salud, vida, vehículos
+- **Trigger**: `@adriana` (solo explícito)
 
-### Adriana 🛡️
-- **Rol:** Broker de Seguros en Segpopular S.A.
-- **Descripción:** "experta en seguros de Segpopular"
-- **Mensaje entrada:** "¡Hola! Soy Adriana de Segpopular 🛡️ ¿En qué puedo asesorarte con seguros hoy?"
-- **Mensaje despedida:** "Perfecto, dejo a Aurora para que te asista con tu reserva. ¡Cualquier duda de seguros, aquí estaré! 😊"
+## 🔄 Flujos de Handover
 
-### Aluna 💼
-- **Rol:** Closer de Ventas y Especialista en Membresías
-- **Descripción:** "especialista en planes mensuales y membresías"
-- **Mensaje entrada:** "¡Hola! Soy Aluna 💼 ¿Te interesa conocer nuestros planes mensuales?"
-- **Mensaje despedida:** "Genial, te dejo con Aurora para tu reserva. ¡Cuando quieras hablar de planes, aquí estoy! 😊"
+### Aurora → Aluna
 
----
-
-## 🔀 Flujos de Handover
-
-### Escenario 1: Primer Mensaje (Usuario Nuevo)
-
-```
-Usuario: "@enzo necesito ayuda con marketing"
-
-[Aurora detecta @enzo]
-Aurora: "¡Hola Diego! 👋 Te conecto con Enzo 🚀, tu experto en marketing digital, IA y software.
-
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
-
-[Sistema actualiza: activeAgent = 'ENZO']
-[Delay de 10 segundos]
-
-Enzo: "Hola Sensei 🥋! ¿Qué te puedo ayudar hoy?"
-```
-
-**Condiciones:**
-- `firstVisit: true` O `conversationCount: 0`
-- Usa nombre del usuario si está disponible
-- Menciona rol completo del agente destino
-
----
-
-### Escenario 2: En Medio de Conversación
-
-```
-Usuario: "quiero hacer una reserva"
-Aurora: "¿Para qué fecha?"
-Usuario: "para mañana"
-Aurora: "¿A qué hora?"
-
-Usuario: "@enzo tengo pregunta de marketing"
-
-Aurora: "Listo Diego, te comunico de inmediato con Enzo.
-
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
-
-[Sistema actualiza: activeAgent = 'ENZO']
-[Delay de 10 segundos]
-
-Enzo: "Hola Sensei 🥋! ¿Qué te puedo ayudar hoy?"
-```
-
-**Condiciones:**
-- Usuario tiene conversación activa
-- Mensaje más corto y directo
-- Preserva datos del formulario parcial
-
----
-
-### Escenario 3: Retorno a Aurora
-
-```
-[Usuario está con Enzo]
-Usuario: "gracias enzo"
-Enzo: [responde]
-
-Usuario: "@aurora quiero confirmar mi reserva"
-
-Enzo: "Entendido Sensei, dejo en manos de Aurora el servicio que requieres. ¡Sayonara! 🥋"
-
-[Delay de 5 segundos]
-[Sistema actualiza: activeAgent = 'AURORA']
-
-Aurora: "¡Hola Diego! Te asisto en Coworkia a partir de ahora 😊
-
-Veo que tenías una reserva en proceso:
-🏢 Espacio: Hot Desk
-📅 Fecha: 2025-11-16
-
-¿Quieres continuar con esta reserva?"
-```
-
-**Características:**
-- Despedida del agente saliente primero
-- Delay de 5 segundos (más corto)
-- Aurora recupera contexto de reserva
-- NO menciona conversación con Enzo
-
----
-
-## 🎯 Lógica de Detección
-
-### Triggers de Handover
-
+#### Triggers:
 ```javascript
-// Detectar menciones explícitas
-@enzo    → Handoff hacia Enzo
-@adriana → Handoff hacia Adriana
-@aluna   → Handoff hacia Aluna
-@aurora  → Retorno a Aurora
+// 1. Mención explícita
+"@aluna quiero saber sobre planes mensuales"
+
+// 2. Palabras clave automáticas
+"me interesa la oficina ejecutiva"
+"tienen planes mensuales?"
+"cuál es el plan 10?"
+"membresía mensual"
 ```
 
-### Validación de Agente Activo
+#### Ejemplo de Conversación:
+```
+Usuario: "tienen oficina ejecutiva?"
+Aurora: [detecta keyword → handoff a Aluna]
 
+[10 segundos de espera]
+
+Aluna: "Sí, contamos con la Oficina Ejecutiva. Este espacio privado XL 
+te ofrece acceso ilimitado... ¿Te gustaría saber más? 🚀"
+
+[Wait 10s]
+
+Aluna: "¡Hola! Soy Aluna 💼 ¿Te interesa conocer nuestros planes mensuales?"
+```
+
+### Aurora → Enzo
+
+#### Trigger:
 ```javascript
-// Campo en perfil de usuario
-profile.activeAgent = 'AURORA' | 'ENZO' | 'ADRIANA' | 'ALUNA'
-
-// Flujo de validación
-1. Usuario envía mensaje sin @mención
-2. Sistema detecta intención → agente X
-3. Agente activo = agente Y
-4. Si X ≠ Y → IGNORAR mensaje
-5. Si X = Y → PROCESAR mensaje
+// Solo mención explícita
+"@enzo necesito ayuda con marketing digital"
 ```
 
-**Ejemplo:**
-```
-activeAgent: 'ENZO'
-Usuario: "quiero hot desk"
-Detectado: AURORA
-Acción: IGNORAR (Enzo está activo, no Aurora)
-```
+### Aurora → Adriana
 
----
-
-## ⏱️ Timing de Transiciones
-
-| Evento | Delay | Razón |
-|--------|-------|-------|
-| Mensaje handoff de agente saliente | 0s | Inmediato |
-| Entrada nuevo agente | 10s | Dar tiempo a leer handoff |
-| Despedida agente saliente (retorno) | 0s | Inmediato |
-| Entrada Aurora (retorno) | 5s | Más rápido, ya conoce el sistema |
-
----
-
-## 💾 Estructura de Base de Datos
-
-### Campo `active_agent` en tabla `users`
-
-```sql
-ALTER TABLE users 
-ADD COLUMN active_agent TEXT DEFAULT 'AURORA'
+#### Trigger:
+```javascript
+// Solo mención explícita
+"@adriana quiero información sobre seguros"
 ```
 
-**Valores posibles:**
-- `'AURORA'` - Default, reservas y servicios
-- `'ENZO'` - Marketing, IA, software
-- `'ADRIANA'` - Seguros
-- `'ALUNA'` - Planes mensuales
+### Cualquier Agente → Aurora
 
-**Actualización:**
-- Se actualiza en cada handoff exitoso
-- Persiste entre sesiones
-- Default 'AURORA' para usuarios nuevos
-
----
+#### Trigger:
+```javascript
+"@aurora quiero hacer una reserva"
+```
 
 ## 🔧 Implementación Técnica
 
-### Archivos Modificados
+### 1. Detección de Intención
+Archivo: `/src/deteccion-intenciones/detectar-intencion.js`
 
-**1. Definiciones de Agentes**
-- `src/deteccion-intenciones/enzo.js` → `mensajes.entrada`, `mensajes.despedida`
-- `src/deteccion-intenciones/adriana.js` → ídem
-- `src/deteccion-intenciones/aluna.js` → ídem
-- `src/deteccion-intenciones/aurora.js` → `mensajes.entradaRetorno`
+```javascript
+// Keywords de Aluna
+const ALUNA_KEYWORDS = [
+  'membresía', 'membresia', 'plan mensual', 'planes',
+  'plan 10', 'plan10', 'plan 20', 'plan20',
+  'oficina ejecutiva', 'oficina virtual', 'virtual office'
+];
 
-**2. Detección y Orquestación**
-- `src/deteccion-intenciones/detectar-intencion.js` → Flags de handoff
-- `src/deteccion-intenciones/orquestador.js` → Instrucciones personalizadas
+// Detección
+if (/@aluna/.test(text)) {
+  return { 
+    agent: 'ALUNA', 
+    reason: 'trigger @Aluna', 
+    flags: { 
+      agentHandoff: true, 
+      fromAgent: 'AURORA', 
+      targetAgent: 'ALUNA' 
+    } 
+  };
+}
 
-**3. Handler Principal**
-- `src/express-servidor/endpoints-api/wassenger.js`:
-  - Validación de agente activo
-  - Handoff con delays
-  - Despedida y entrada secuencial
-  - Actualización de `activeAgent`
-
-**4. Gestión de Perfil**
-- `src/perfiles-interacciones/memoria-sqlite.js` → Campo `activeAgent`
-- `src/database/database.js` → Schema de `active_agent`
-
----
-
-## 📊 Diagrama de Flujo
-
-```
-┌─────────────────────────────────────────────┐
-│  Usuario menciona @enzo                     │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│  detectarIntencion() retorna:               │
-│  agent: 'ENZO'                              │
-│  flags: { agentHandoff: true }              │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Orquestador inyecta instrucciones:         │
-│  - Mensaje según contexto (nuevo/activo)    │
-│  - Incluir nombre si disponible             │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Aurora genera mensaje handoff             │
-│  (OpenAI con prompt específico)             │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Wassenger.js:                              │
-│  1. Envía mensaje de Aurora                │
-│  2. Guarda en historial                     │
-│  3. await delay(10000)                      │
-│  4. Actualiza activeAgent = 'ENZO'          │
-│  5. Envía mensaje entrada Enzo              │
-│  6. Guarda en historial                     │
-└─────────────────────────────────────────────┘
+if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
+  return { 
+    agent: 'ALUNA', 
+    reason: 'keywords membresías/planes', 
+    flags: { 
+      agentHandoff: true, 
+      fromAgent: 'AURORA', 
+      targetAgent: 'ALUNA' 
+    } 
+  };
+}
 ```
 
----
+### 2. Procesamiento del Handover
+Archivo: `/src/express-servidor/endpoints-api/wassenger.js`
+
+```javascript
+// Flujo de handover (líneas 742-815)
+if (resultado.metadata.agentHandoff) {
+  const targetAgent = resultado.metadata.targetAgent;
+  
+  // 1. Mensaje de transición del agente actual
+  const handoffMessage = await complete(resultado.prompt, {
+    temperature: 0.4,
+    max_tokens: 200
+  });
+  await enviarWhatsApp(userId, handoffMessage);
+  
+  // 2. Esperar 10 segundos
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  
+  // 3. Actualizar agente activo
+  await saveProfile(userId, { activeAgent: targetAgent });
+  
+  // 4. Mensaje de entrada del nuevo agente
+  const mensajeEntrada = nuevoAgente.mensajes?.entrada || 
+    `Hola, soy ${nuevoAgente.nombre}. ¿En qué puedo ayudarte?`;
+  await enviarWhatsApp(userId, mensajeEntrada);
+  
+  // 5. Registrar handoff
+  await saveConversationMessage(userId, {
+    role: 'assistant',
+    content: mensajeEntrada,
+    agent: targetAgent
+  });
+}
+```
+
+### 3. Mensajes de Entrada
+
+#### Aurora
+```javascript
+mensajes: {
+  entrada: '¡Hola! Soy Aurora 👩🏼‍💼 Estoy aquí para ayudarte con tu reserva. ¿En qué te puedo asistir?'
+}
+```
+
+#### Aluna
+```javascript
+mensajes: {
+  entrada: '¡Hola! Soy Aluna 💼 ¿Te interesa conocer nuestros planes mensuales?'
+}
+```
+
+#### Enzo
+```javascript
+mensajes: {
+  entrada: '¡Hola! Soy Enzo 🚀 Experto en marketing digital y estrategias de IA. ¿En qué te puedo ayudar?'
+}
+```
+
+#### Adriana
+```javascript
+mensajes: {
+  entrada: '¡Hola! Soy Adriana 🛡️ Especialista en seguros. ¿Necesitas proteger algo importante?'
+}
+```
+
+## 📊 Contexto por Agente
+
+### Aurora (Contexto Completo)
+Recibe TODO:
+- ✅ Perfil completo del usuario
+- ✅ Historial de reservas
+- ✅ Pending confirmations
+- ✅ Formularios parciales
+- ✅ Free trial status
+- ✅ Payment methods
+
+### Aluna, Enzo, Adriana (Contexto Básico)
+Reciben SOLO:
+- ✅ Nombre del usuario
+- ✅ Historial de conversación con ese agente específico
+- ❌ NO reciben info de reservas
+- ❌ NO reciben formularios de Aurora
+
+```javascript
+// Contexto básico
+const contextoUsuario = {
+  nombre: perfil.name,
+  conversaciones: perfil.conversationCount,
+  canal: 'whatsapp'
+};
+```
+
+## 🔍 Tracking y Logs
+
+### Detección de Handover
+```
+[WASSENGER] 🤝 Handoff detectado hacia: ALUNA
+[WASSENGER] 📤 Enviando mensaje de transición...
+[WASSENGER] ⏳ Esperando 10 segundos antes de que entre el nuevo agente...
+[WASSENGER] 👤 Agente activo actualizado a: ALUNA
+[WASSENGER] 📤 Enviando mensaje de entrada del nuevo agente...
+[WASSENGER] ✅ Handoff completado exitosamente
+```
+
+### Registro en Database
+```javascript
+// Interacción de handoff
+{
+  user_phone: '+593987770788',
+  agent: 'aluna',
+  agent_name: 'Aluna',
+  intent_reason: 'agent_handoff',
+  input: 'tienen oficina ejecutiva?',
+  output: 'Handoff desde Aurora a Aluna',
+  meta: {
+    route: '/webhooks/wassenger',
+    via: 'whatsapp',
+    handoff: true,
+    fromAgent: 'Aurora',
+    toAgent: 'ALUNA'
+  }
+}
+```
 
 ## 🧪 Testing
 
-### Test 1: Handoff en Primer Mensaje
-```bash
-# Prerequisitos: Usuario nuevo sin conversación
-Usuario: "@enzo ayuda con marketing"
-
-# Verificar:
-✅ Aurora saluda con nombre
-✅ Menciona "experto en marketing digital, IA y software"
-✅ Delay de 10 segundos
-✅ Enzo entra con "Hola Sensei 🥋!"
-✅ activeAgent actualizado a 'ENZO'
-```
-
-### Test 2: Handoff en Conversación Activa
-```bash
-# Prerequisitos: Usuario con conversación activa
-Usuario: "quiero reservar"
-Aurora: "¿Para qué fecha?"
-Usuario: "@adriana pregunta de seguros"
-
-# Verificar:
-✅ Aurora mensaje corto "Listo [nombre], te comunico con Adriana"
-✅ Delay de 10 segundos
-✅ Adriana entra con mensaje de seguros
-✅ Formulario parcial preservado (fecha guardada)
-```
-
-### Test 3: Retorno a Aurora
-```bash
-# Prerequisitos: Usuario activo con Enzo
-Usuario: "@aurora confirmar reserva"
-
-# Verificar:
-✅ Enzo despedida: "Entendido Sensei, sayonara!"
-✅ Delay de 5 segundos
-✅ Aurora entra con saludo personalizado
-✅ Aurora muestra datos de reserva guardados
-✅ activeAgent actualizado a 'AURORA'
-```
-
-### Test 4: Validación de Agente Activo
-```bash
-# Prerequisitos: activeAgent = 'ENZO'
-Usuario: "quiero hot desk" (sin @aurora)
-
-# Verificar:
-✅ Mensaje ignorado
-✅ No hay respuesta de Aurora
-✅ Logs: "Mensaje ignorado - Agente activo: ENZO"
-```
-
----
-
-## 🎨 Personalización de Mensajes
-
-### Variables Disponibles
-
-En orquestador, las siguientes variables se usan para personalización:
-
+### Test de Keywords
 ```javascript
-perfil.name                  // "Diego Villota"
-perfil.whatsappDisplayName   // "Diego"
-perfil.firstVisit            // true/false
-perfil.conversationCount     // 0, 1, 2, ...
-AGENTES[target].nombre       // "Enzo"
-AGENTES[target].descripcionCorta // "experto en..."
+// Test 1: Keyword automático
+const result = detectarIntencion("me interesa el plan 10");
+// Expected: { agent: 'ALUNA', reason: 'keywords membresías/planes', ... }
+
+// Test 2: Mención explícita
+const result2 = detectarIntencion("@aluna hola");
+// Expected: { agent: 'ALUNA', reason: 'trigger @Aluna', ... }
+
+// Test 3: Keyword en medio de frase
+const result3 = detectarIntencion("cuéntame sobre la oficina ejecutiva porfavor");
+// Expected: { agent: 'ALUNA', ... }
 ```
 
-### Plantillas de Mensajes
+### Test de Flujo Completo
+```javascript
+// 1. Usuario empieza con Aurora
+"hola, quiero información" → AURORA
 
-**Handoff - Primer Mensaje:**
-```
-¡Hola {nombre}! 👋 Te conecto con {agente} 🚀, tu {descripción}.
+// 2. Menciona keyword de Aluna
+"tienen planes mensuales?" → HANDOFF a ALUNA
 
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊
-```
+// 3. Aluna responde
+"¡Hola! Soy Aluna 💼..." 
 
-**Handoff - Conversación Activa:**
-```
-Listo {nombre}, te comunico de inmediato con {agente}.
-
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊
-```
-
-**Entrada Nuevo Agente:**
-```
-[Mensaje único por agente - ver sección "Agentes"]
+// 4. Usuario regresa a Aurora
+"@aurora quiero reservar hot desk" → HANDOFF a AURORA
 ```
 
-**Retorno a Aurora:**
-```
-¡Hola {nombre}! Te asisto en Coworkia a partir de ahora 😊
-```
+## 📝 Mejores Prácticas
 
----
+### 1. Keywords Específicos
+- ✅ Usar keywords únicos por agente
+- ✅ Evitar solapamiento entre agentes
+- ✅ Mantener lista actualizada
 
-## 🚨 Manejo de Errores
+### 2. Mensajes de Transición
+- ✅ Claros y concisos
+- ✅ Mencionan al nuevo agente
+- ✅ Smooth handoff (10s wait)
 
-### Error: Delay Timeout
-**Síntoma:** Usuario envía mensaje durante delay
-**Solución:** Mensaje se procesa normalmente después del delay
+### 3. Contexto Apropiado
+- ✅ Aurora: TODO el contexto
+- ✅ Otros: Solo conversación relevante
+- ✅ No mezclar especialidades
 
-### Error: Agente No Responde
-**Síntoma:** activeAgent desincronizado
-**Solución:** Usuario menciona @aurora explícitamente para forzar cambio
+### 4. Logging
+- ✅ Log cada handoff
+- ✅ Track success/failure
+- ✅ Métricas de uso
 
-### Error: Formulario Perdido en Handoff
-**Síntoma:** Datos de reserva no aparecen al retornar
-**Solución:** Sistema preserva formulario parcial automáticamente
+## 🐛 Troubleshooting
 
----
+### Handoff no se ejecuta
+1. Verificar keyword en `ALUNA_KEYWORDS`
+2. Revisar logs: `[WASSENGER] 🤝 Handoff detectado`
+3. Verificar que `agentHandoff: true` en flags
 
-## 📈 Métricas Recomendadas
+### Mensaje duplicado
+- Sistema espera 10s entre transición y entrada
+- Si duplica, revisar timing en wassenger.js
 
-- **Tasa de handoff:** % mensajes que activan cambio de agente
-- **Tiempo promedio de transición:** Desde @mención hasta entrada nuevo agente
-- **Tasa de retorno:** % usuarios que vuelven a Aurora
-- **Pérdida de contexto:** % formularios perdidos en transición (debe ser 0%)
+### Agente no cambia
+- Verificar `saveProfile()` actualiza `activeAgent`
+- Revisar query de actualización en userRepository
 
----
+## 📈 Métricas de Uso
 
-## 🔐 Seguridad
+### KPIs a Trackear
+- Número de handoffs Aurora → Aluna por día
+- Tasa de conversión post-handoff
+- Tiempo promedio en cada agente
+- Keywords más usados
 
-- ✅ Validación estricta de agente activo
-- ✅ Solo menciones explícitas activan handoff
-- ✅ No se cruzan conversaciones entre agentes
-- ✅ Logs detallados para auditoría
-- ✅ Campo `activeAgent` con default seguro
-
----
-
-## 📝 Ejemplo de Logs
-
-```
-[WASSENGER] 🤝 Handoff detectado hacia: ENZO
-[WASSENGER] Enviando mensaje de handoff...
-[WASSENGER] Esperando 10 segundos...
-[WASSENGER] Actualizando activeAgent a ENZO
-[WASSENGER] Enviando mensaje de entrada de Enzo
-[WASSENGER] ✅ Handoff completado
-
-[Usuario envía mensaje sin @mención]
-[WASSENGER] ⏸️ Mensaje ignorado - Agente activo: ENZO, Detectado: AURORA
-
-[Usuario menciona @aurora]
-[WASSENGER] 👋 Usuario retorna a Aurora desde ENZO
-[WASSENGER] Enviando despedida de Enzo...
-[WASSENGER] Esperando 5 segundos...
-[WASSENGER] Actualizando activeAgent a AURORA
-[WASSENGER] Aurora responde con mensaje de retorno
+### Query para Estadísticas
+```sql
+SELECT 
+  agent_name,
+  COUNT(*) as handoffs,
+  DATE(timestamp) as fecha
+FROM interactions
+WHERE intent_reason = 'agent_handoff'
+  AND timestamp >= NOW() - INTERVAL '7 days'
+GROUP BY agent_name, fecha
+ORDER BY fecha DESC, handoffs DESC;
 ```
 
----
+## 🎯 Roadmap
 
-## 🚀 Releases
+### Futuras Mejoras
+- [ ] Handover inteligente basado en IA
+- [ ] Métricas en dashboard
+- [ ] A/B testing de mensajes de transición
+- [ ] Multi-handoff tracking (Aurora → Aluna → Enzo)
+- [ ] Handoff suggestions proactivos
 
-- **v175** - Sistema completo de handovers multi-agente
+## 📚 Referencias
 
----
-
-*Última actualización: 15 de noviembre, 2025*
+- Detección: `/src/deteccion-intenciones/detectar-intencion.js`
+- Orquestador: `/src/deteccion-intenciones/orquestador.js`
+- Webhook: `/src/express-servidor/endpoints-api/wassenger.js`
+- Agentes: `/src/deteccion-intenciones/[aurora|aluna|enzo|adriana].js`

@@ -14,6 +14,15 @@ async function ensureDatabaseReady() {
   }
 }
 
+async function countPastReservations() {
+  const today = new Date().toISOString().split('T')[0];
+  const row = await databaseService.get(
+    'SELECT COUNT(*) as total FROM reservations WHERE date < ?',
+    [today]
+  );
+  return row?.total || 0;
+}
+
 async function countExpiredConfirmations() {
   const row = await databaseService.get(
     'SELECT COUNT(*) as total FROM pending_confirmations WHERE expires_at IS NOT NULL AND expires_at < ?',
@@ -70,11 +79,51 @@ export async function cleanupOldInteractions({ retentionDays = DEFAULT_INTERACTI
   return result?.changes || 0;
 }
 
+export async function cleanupPastReservations({ dryRun = false } = {}) {
+  await ensureDatabaseReady();
+  if (dryRun) {
+    return await countPastReservations();
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const result = await databaseService.run(
+    'DELETE FROM reservations WHERE date < ?',
+    [today]
+  );
+  return result?.changes || 0;
+}
+
+async function cleanupPartialForms({ dryRun = false } = {}) {
+  await ensureDatabaseReady();
+  if (dryRun) {
+    const row = await databaseService.get('SELECT COUNT(*) as total FROM partial_forms');
+    return row?.total || 0;
+  }
+  const result = await databaseService.run('DELETE FROM partial_forms');
+  return result?.changes || 0;
+}
+
+async function cleanupJustConfirmedStates({ dryRun = false } = {}) {
+  await ensureDatabaseReady();
+  if (dryRun) {
+    const row = await databaseService.get(
+      'SELECT COUNT(*) as total FROM reservation_state WHERE just_confirmed_until IS NOT NULL'
+    );
+    return row?.total || 0;
+  }
+  const result = await databaseService.run(
+    'UPDATE reservation_state SET just_confirmed_until = NULL WHERE just_confirmed_until IS NOT NULL'
+  );
+  return result?.changes || 0;
+}
+
 export async function runAllCleanups({ dryRun = false, retentionDays = DEFAULT_INTERACTION_RETENTION_DAYS } = {}) {
   const confirmations = await cleanupExpiredConfirmations({ dryRun });
   const justConfirmed = await cleanupJustConfirmedFlags({ dryRun });
   const interactions = await cleanupOldInteractions({ dryRun, retentionDays });
-  return { confirmations, justConfirmed, interactions };
+  const pastReservations = await cleanupPastReservations({ dryRun });
+  const partialForms = await cleanupPartialForms({ dryRun });
+  const justConfirmedStates = await cleanupJustConfirmedStates({ dryRun });
+  return { confirmations, justConfirmed, interactions, pastReservations, partialForms, justConfirmedStates };
 }
 
 async function cli() {
@@ -89,6 +138,15 @@ async function cli() {
     console.log(`[CLEANUP] ${verb} ${summary.confirmations} confirmaciones expiradas`);
     console.log(`[CLEANUP] ${verb} ${summary.justConfirmed} flags justConfirmed`);
     console.log(`[CLEANUP] ${verb} ${summary.interactions} interacciones (> ${retentionDays} días)`);
+    console.log(`[CLEANUP] ${verb} ${summary.pastReservations} reservas pasadas`);
+    console.log(`[CLEANUP] ${verb} ${summary.partialForms} formularios parciales`);
+    console.log(`[CLEANUP] ${verb} ${summary.justConfirmedStates} estados just_confirmed`);
+    
+    const total = Object.values(summary).reduce((a, b) => a + b, 0);
+    if (total === 0) {
+      console.log(`[CLEANUP] ✅ Todo limpio`);
+    }
+    
     process.exit(0);
   } catch (error) {
     console.error('[CLEANUP] ❌ Error ejecutando limpieza:', error);

@@ -26,13 +26,22 @@ router.post('/chat', async (req, res) => {
     // Carga y actualiza perfil si hay userId
     if (userId) {
       const current = await loadProfile(userId) || {};
-      const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
+      
+      // 🔧 Detectar conversación en curso: si último mensaje fue hace < 10 min
+      const now = new Date();
+      const lastMsg = current?.lastMessageAt ? new Date(current.lastMessageAt) : null;
+      const minutesSinceLastMsg = lastMsg ? (now - lastMsg) / (1000 * 60) : Infinity;
+      const conversacionEnCurso = minutesSinceLastMsg < 10;
+      
+      const firstVisit = current?.firstVisit === undefined ? true : (current.firstVisit && !conversacionEnCurso);
+      
       persistedProfile = await saveProfile(userId, {
         ...current,
         ...profile,
         userId,
         firstVisit,
-        lastMessageAt: new Date().toISOString(),
+        conversacionEnCurso,
+        lastMessageAt: now.toISOString(),
       });
       
       // TODO: Cargar historial de interacciones desde memoria

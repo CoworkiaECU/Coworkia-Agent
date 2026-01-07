@@ -45,23 +45,50 @@ const POST_EMAIL_REACTIVATION_KEYWORDS = [
  * @returns {object} { agente, systemPrompt, prompt, metadata }
  */
 export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = null) {
-  // 1. Detectar intención y agente apropiado
-  const intencion = detectarIntencion(mensaje);
-  
-  // 🎯 RESPETAR AGENTE ACTIVO: Si hay un agente activo y NO se menciona cambio explícito,
-  // usar el agente activo en lugar del detectado
+  // 1. Obtener agente activo PRIMERO
   const activeAgent = perfil.activeAgent || 'AURORA';
+  
+  // 2. Detectar intención (pasando el agente activo como contexto)
+  const intencion = detectarIntencion(mensaje, activeAgent);
+  
+  // 3. LÓGICA DE SELECCIÓN DE AGENTE:
+  // - Si hay handoff explícito (@código): CAMBIAR al nuevo agente
+  // - Si requiere Aurora específicamente (pago, modificación): CAMBIAR a Aurora
+  // - Si es keyword match pero ya hay activeAgent: MANTENER activeAgent
+  // - Si no hay activeAgent: USAR el detectado
+  
   const isAgentHandoff = Boolean(intencion.flags?.agentHandoff);
   const isReturningToAurora = Boolean(intencion.flags?.returningToAurora);
+  const requiresAurora = Boolean(intencion.flags?.requiresAurora);
+  const isKeywordMatch = Boolean(intencion.flags?.isKeywordMatch);
+  const maintainingActive = Boolean(intencion.flags?.maintainingActive);
   
-  // Si NO hay handoff ni retorno, usar el agente activo
-  let agenteKey = intencion.agent.toLowerCase(); // Normalizar a minúsculas para consistencia DB
-  if (!isAgentHandoff && !isReturningToAurora) {
-    agenteKey = activeAgent.toLowerCase(); // Normalizar también el agente activo
-    console.log(`[ORQUESTADOR] 🎯 Usando agente activo: ${activeAgent} (detectado fue: ${intencion.agent})`);
+  let agenteKey;
+  
+  if (isAgentHandoff || isReturningToAurora) {
+    // Cambio explícito con @código
+    agenteKey = intencion.agent;
+    console.log(`[ORQUESTADOR] 🔄 Handoff explícito hacia: ${agenteKey}`);
+  } else if (requiresAurora && activeAgent !== 'AURORA') {
+    // Contexto que requiere Aurora específicamente
+    agenteKey = 'AURORA';
+    console.log(`[ORQUESTADOR] ⚠️ Contexto requiere Aurora (${intencion.reason}), cambiando desde ${activeAgent}`);
+  } else if (isKeywordMatch && activeAgent && activeAgent !== 'AURORA') {
+    // Keywords sugieren otro agente pero ya hay uno activo (NO Aurora)
+    // MANTENER el agente activo
+    agenteKey = activeAgent;
+    console.log(`[ORQUESTADOR] 🎯 Keywords sugieren ${intencion.agent}, pero manteniendo agente activo: ${activeAgent}`);
+  } else {
+    // Usar el detectado (puede ser el mismo activeAgent si maintainingActive=true)
+    agenteKey = intencion.agent;
+    if (maintainingActive) {
+      console.log(`[ORQUESTADOR] ✅ Manteniendo agente activo: ${activeAgent}`);
+    } else {
+      console.log(`[ORQUESTADOR] 📍 Usando agente detectado: ${agenteKey}`);
+    }
   }
   
-  const agente = AGENTES[agenteKey.toUpperCase()]; // AGENTES usa claves en mayúsculas
+  const agente = AGENTES[agenteKey.toUpperCase()];
   
   // 🚫 CANCELACIÓN DETECTADA
   const esCancelacion = Boolean(intencion.flags?.cancelacion);
@@ -407,6 +434,12 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   // 🆕 firstVisit flag para lógica de saludo inicial
   if (perfil.firstVisit !== undefined) {
     lineas.push(`- Primera interacción: ${perfil.firstVisit ? 'SÍ (primer mensaje)' : 'NO (ya conversó antes)'}`);
+  }
+  
+  // 🔧 Conversación en curso
+  if (perfil.conversacionEnCurso) {
+    lineas.push(`- Conversación en curso: SÍ (último mensaje hace < 10 min)`);
+    lineas.push(`- NO saludes de nuevo, continúa la conversación naturalmente`);
   }
 
   // 🆕 Flag de reserva recién confirmada (temporal)

@@ -8,7 +8,7 @@ export const AXEL = {
   descripcionCorta: 'especialista en enderezada, pintura y colisiones',
   
   mensajes: {
-    entrada: '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia. Envíame fotos de los daños y te cotizo de inmediato.',
+    entrada: 'Envíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural',
     despedida: 'Perfecto, dejo a Aurora para que te asista. ¡Cualquier golpe o rayón, aquí estoy! 🔧'
   },
   

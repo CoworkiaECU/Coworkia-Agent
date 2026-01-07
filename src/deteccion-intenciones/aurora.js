@@ -138,6 +138,7 @@ ${hotDeskInfo}
 • Ejemplo: "¡Hola! 😊 [luego continúa con tu respuesta]"
 • Si NO saludó y hay historial reciente → Ve directo al punto
 • Si es PRIMER mensaje del día SIN saludo explícito → Saluda brevemente
+• Si es CONVERSACIÓN EN CURSO (< 10 min) → NO saludes de nuevo, responde naturalmente
 
 🎯 REGLA #2 - LEER CONTEXTO DEL USUARIO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -151,6 +152,12 @@ LUEGO busca esta línea exacta:
 
 🆕 Si ves "disponible: SÍ" + historial (0 total) → CLIENTE NUEVO = TODO GRATIS
 🔄 Si ves "usado: SÍ" + historial (1+ total) → CLIENTE RECURRENTE = COBRAR
+
+🔔 CLIENTE CON RESERVA CONFIRMADA:
+• Si ves "RESERVAS CONFIRMADAS FUTURAS" en el contexto:
+  - PRIMERA interacción: Menciona brevemente "Tienes una reserva el [fecha] ✅"
+  - CONVERSACIÓN EN CURSO: NO menciones la reserva a menos que pregunten
+  - Si preguntan "qué reservas tengo" o "mis reservaciones": Muestra ticket completo con formato
 
 🔔 CLIENTE CON RESERVA RECIENTE:
 • Si ves "RESERVA RECIÉN CONFIRMADA: SÍ"
@@ -210,6 +217,9 @@ IMPORTANTE: Si SOLO preguntan servicios, NO inicies reserva.`;
     confirmacionReserva: '¡Perfecto! 📋 *CONFIRMA TU RESERVA:*\n\n📅 *Fecha:* {fecha}\n⏰ *Horario:* {inicio} - {fin}\n🏢 *Espacio:* Hot Desk\n💰 *Total:* ${precio} USD\n\n¿*Confirmas esta reserva?*\n\nResponde *SI* para continuar con el pago o *NO* para cancelar 👍',
     
     pagoConfirmado: '✅ *¡Pago verificado automáticamente!*\n\nTu reserva está confirmada:\n📅 {fecha} de {inicio} a {fin}\n\n📧 Te envié la confirmación por email\n📍 Nos vemos en Whymper 403! 🚀\n\n🗺️ Ubicación:\nhttps://maps.app.goo.gl/Nqy6YeGuxo3czEt66',
+    
+    // 🚗 Mensaje de handover a Axel
+    handoverAxel: 'Entendido, {nombre}! 😊\n\nEn este instante te dejo con *Axel*, nuestro especialista en colisiones menores y reparación de vehículos de *The PaintBull* 🚗💥\n\nSu misión es que conozcas el valor estimado de la reparación de tu vehículo antes de llevarlo al taller.\n\n*Axel*, te dejo con {nombre}, necesita de tus conocimientos avanzados para solucionar un pequeño problemita con un siniestro leve.\n\nYo me despido y te recuerdo que puedes volver a mí cuando quieras, solo tienes que decir *@Aurora* y lo que deseas que te ayude. ¡Éxitos! ✨',
     
     // Esta función genera el mensaje de información general dinámicamente
     getInformacionGeneral: function(freeTrialUsed = false) {

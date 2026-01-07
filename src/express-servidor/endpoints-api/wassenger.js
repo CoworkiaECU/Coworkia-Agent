@@ -275,120 +275,298 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
       
-      // 🚗 SI ES AXEL SIN IMAGEN: Pedir fotos
+      // 🚗 SI ES AXEL SIN IMAGEN: Verificar si tiene formulario en progreso
       if (activeAgent === 'AXEL' && !mediaUrl) {
-        console.log('[WASSENGER] 🚗 AXEL activo pero sin imagen - solicitando fotos');
+        console.log('[WASSENGER] 🚗 AXEL activo - mensaje de texto recibido');
         
         const responseText = text.toLowerCase();
         
-        // Si usuario saluda o envía mensaje inicial
-        if (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20) {
+        // Importar servicios del formulario
+        const { processAxelFormMessage, getAxelForm } = await import('../../servicios/axel-quote-form.js');
+        
+        // Verificar si tiene formulario en progreso
+        const { exists, data: currentForm } = await getAxelForm(userId);
+        
+        // Si NO tiene formulario y saluda/mensaje inicial → pedir fotos
+        if (!exists && (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20)) {
           await enviarWhatsApp(userId, 
             '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
           );
-        } else {
-          // Usuario escribió algo más largo - recordar que necesita enviar fotos
+          return res.json({ ok: true, processed: true, type: 'axel_greeting' });
+        }
+        
+        // Si NO tiene formulario y escribe algo → recordar fotos
+        if (!exists) {
           await enviarWhatsApp(userId, 
             'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
           );
+          return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
         }
         
-        return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
-      }
-      
-      // 🚗 SI ES AXEL CON IMAGEN: Análisis de vehículo dañado con Vision AI especializado
-      if (activeAgent === 'AXEL' && mediaUrl) {
-        console.log('[WASSENGER] 🚗 AXEL analizando daño de vehículo...');
+        // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
+        console.log('[WASSENGER] 📋 Procesando datos del formulario...');
+        const formResult = await processAxelFormMessage(userId, text);
         
-        const { analyzeVehicleDamage } = await import('../../servicios-ia/openai.js');
-        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const AXEL = AGENTES['AXEL'];
+        if (!formResult.success) {
+          await enviarWhatsApp(userId, 
+            '⚠️ No pude procesar tu mensaje. ¿Puedes intentar de nuevo?\n\nRecuerda enviarlo como: _Marca Modelo Año_'
+          );
+          return res.json({ ok: true, processed: true, type: 'axel_form_error' });
+        }
         
-        try {
-          // Analizar imagen con Vision AI especializado
-          const analysisResult = await analyzeVehicleDamage(mediaUrl);
+        // Si formulario completo → Generar cotización
+        if (formResult.complete) {
+          console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
           
-          if (!analysisResult.success) {
+          await enviarWhatsApp(userId, 
+            '✅ *¡Perfecto!* Ya tengo toda la información.\n\n' +
+            '🔄 Estoy preparando tu cotización personalizada...\n\n' +
+            '_Esto tomará unos segundos_ ⏱️'
+          );
+          
+          // Importar generador de cotizaciones
+          const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
+          
+          // Obtener análisis de daños del perfil
+          const damageAnalysis = profile.axelData?.damageAnalysis;
+          
+          if (!damageAnalysis) {
+            console.error('[WASSENGER] ❌ No se encontró análisis de daños en el perfil');
             await enviarWhatsApp(userId, 
-              '⚠️ Hubo un problema al analizar la imagen. ¿Podrías enviarla de nuevo? Asegúrate de que tenga buena luz y enfoque. 📸'
+              '⚠️ Hubo un problema recuperando el análisis de daños.\n\n' +
+              'Por favor, envíame nuevamente las fotos del vehículo para poder cotizar. 📸'
             );
-            return res.json({ ok: true, processed: true, type: 'analysis_error' });
+            return res.json({ ok: true, processed: true, type: 'axel_missing_analysis' });
           }
           
-          const analysis = analysisResult.analysis;
+          // Generar cotización con OpenAI
+          const quoteResult = await processQuoteGeneration({
+            userId,
+            vehicleData: formResult.data,
+            damageAnalysis: damageAnalysis,
+            photoUrls: damageAnalysis.photoUrls || []
+          });
           
-          // VALIDAR CALIDAD DE IMAGEN
-          if (!analysis.imageQuality?.isAcceptable) {
-            const response = AXEL.disclaimers.imagenDefectuosa;
-            await enviarWhatsApp(userId, response);
+          if (!quoteResult.success) {
+            console.error('[WASSENGER] ❌ Error generando cotización:', quoteResult.error);
+            await enviarWhatsApp(userId, quoteResult.fallbackMessage);
             
             await saveInteraction({
               userId,
               agent: 'axel',
               agentName: 'Axel',
-              intentReason: 'poor_image_quality',
-              input: '[IMAGEN: Vehículo - calidad insuficiente]',
-              output: response,
+              intentReason: 'quote_generation_error',
+              input: text,
+              output: quoteResult.fallbackMessage,
               meta: {
                 route: '/webhooks/wassenger',
                 via: 'whatsapp',
-                mediaUrl,
-                imageQuality: analysis.imageQuality
+                error: quoteResult.error
               }
             });
             
-            return res.json({ ok: true, processed: true, type: 'poor_image_quality' });
+            return res.json({ ok: true, processed: true, type: 'axel_quote_error' });
           }
           
-          // GENERAR COTIZACIÓN CON EL ANÁLISIS
-          const systemPrompt = AXEL.getSystemPrompt(userProfile?.preferredLanguage || 'es');
+          // Enviar cotización por WhatsApp
+          await enviarWhatsApp(userId, quoteResult.whatsappMessage);
           
-          const cotizacionPrompt = `Has recibido una imagen de un vehículo dañado. Aquí está el análisis técnico:
-
-${JSON.stringify(analysis, null, 2)}
-
-TAREA:
-1. Presenta el análisis de daños de forma clara al cliente
-2. Genera una cotización referencial usando el tarifario de PaintBull
-3. SIEMPRE incluir rangos de precio (mínimo-máximo)
-4. Mencionar posibles daños ocultos si aplica
-5. Incluir disclaimers apropiados según el caso
-6. Ofrecer inspección física como siguiente paso
-
-Responde ahora como Axel de PaintBull:`;
-
-          const { complete } = await import('../../servicios-ia/openai.js');
-          const cotizacion = await complete(cotizacionPrompt, {
-            temperature: 0.4,
-            max_tokens: 800,
-            system: systemPrompt
+          // Guardar cotización completa
+          profile.axelData = profile.axelData || {};
+          profile.axelData.latestQuote = {
+            vehicleData: formResult.data,
+            damageAnalysis: damageAnalysis,
+            quoteData: quoteResult.emailData,
+            quotedAt: new Date().toISOString()
+          };
+          await saveProfile(userId, profile);
+          
+          console.log('[WASSENGER] ✅ Cotización enviada y guardada');
+          
+          // Enviar email con cotización HTML
+          const { sendQuoteEmail } = await import('../../servicios/axel-quote-email.js');
+          const emailResult = await sendQuoteEmail({
+            customerEmail: formResult.data.email,
+            customerName: formResult.data.nombre,
+            vehicleData: formResult.data,
+            damageAnalysis: damageAnalysis,
+            quote: quoteResult.emailData.quote,
+            priceRange: quoteResult.emailData.priceRange,
+            photoUrls: damageAnalysis.photoUrls || []
           });
           
-          // Enviar cotización al cliente
-          await enviarWhatsApp(userId, cotizacion);
+          if (emailResult.success) {
+            console.log('[WASSENGER] ✅ Email de cotización enviado');
+          } else {
+            console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
+          }
           
           // Guardar interacción
           await saveInteraction({
             userId,
             agent: 'axel',
             agentName: 'Axel',
-            intentReason: 'vehicle_damage_analysis',
-            input: '[IMAGEN: Análisis de daño vehicular]',
-            output: cotizacion,
+            intentReason: 'quote_generated',
+            input: text,
+            output: quoteResult.whatsappMessage,
             meta: {
               route: '/webhooks/wassenger',
               via: 'whatsapp',
-              mediaUrl,
-              damageAnalysis: analysis,
-              imageQuality: analysis.imageQuality
+              formData: formResult.data,
+              quoteData: quoteResult.emailData,
+              emailSent: emailResult.success
             }
           });
           
           return res.json({ 
             ok: true, 
             processed: true, 
-            type: 'vehicle_damage_analysis',
-            analysis: analysis
+            type: 'axel_quote_sent',
+            quoteData: quoteResult.emailData
+          });
+        }
+        
+        // Si formulario incompleto → Enviar prompt
+        if (formResult.needsMoreInfo && formResult.prompt) {
+          await enviarWhatsApp(userId, formResult.prompt);
+          
+          await saveInteraction({
+            userId,
+            agent: 'axel',
+            agentName: 'Axel',
+            intentReason: 'quote_form_progress',
+            input: text,
+            output: formResult.prompt,
+            meta: {
+              route: '/webhooks/wassenger',
+              via: 'whatsapp',
+              currentData: formResult.currentData,
+              missingFields: formResult.missingFields
+            }
+          });
+          
+          return res.json({ ok: true, processed: true, type: 'axel_form_progress' });
+        }
+      }
+      
+      // 🚗 SI ES AXEL CON IMAGEN: Análisis de vehículo dañado con Vision AI especializado
+      if (activeAgent === 'AXEL' && mediaUrl) {
+        console.log('[WASSENGER] 🚗 AXEL activo + imagen detectada - iniciando análisis de colisión');
+        
+        try {
+          // Importar servicio de análisis de colisiones
+          const { analyzeCollisionPhoto } = await import('../../servicios/collision-analysis.js');
+          
+          // Analizar imagen con Vision AI especializado
+          const analysis = await analyzeCollisionPhoto(mediaUrl, { photoType: 'general' });
+          
+          if (!analysis.success) {
+            console.error('[WASSENGER] ❌ Error en análisis Vision:', analysis.error);
+            await enviarWhatsApp(userId,
+              '⚠️ Hubo un problema al analizar la imagen. ¿Podrías enviarla de nuevo? Asegúrate de que tenga buena luz y enfoque. 📸'
+            );
+            return res.json({ ok: true, processed: true, type: 'vision_error' });
+          }
+
+          console.log(`[WASSENGER] ✅ Análisis completado - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
+          
+          // Generar respuesta basada en el análisis
+          let response = `🔍 *ANÁLISIS COMPLETADO*\n\n`;
+          response += analysis.analysis + '\n\n';
+          
+          if (!analysis.isAcceptable) {
+            // 🚨 COLISIÓN GRAVE - Activar proceso especial con Jefe de Taller
+            console.log('[WASSENGER] 🚨 Colisión GRAVE detectada - activando proceso con Juan');
+            
+            const { handleSevereCollision } = await import('../../servicios/severe-collision-alert.js');
+            
+            // Obtener datos del vehículo del perfil (si existen)
+            const vehicleData = profile.axelData?.vehicle || null;
+            
+            // Ejecutar proceso completo: WhatsApp + Email a Juan
+            const alertResult = await handleSevereCollision({
+              userName: profile.name || 'Cliente',
+              userId: userId,
+              vehicleData: vehicleData,
+              analysis: analysis.analysis,
+              photoUrls: [mediaUrl]
+            });
+            
+            // Mensaje al usuario con enlace a Juan
+            response += `\n⚠️ *ATENCIÓN:* Este tipo de daño requiere evaluación especializada.\n\n`;
+            response += `Te voy a conectar con *Juan*, nuestro Jefe de Taller, quien tiene experiencia en este tipo de reparaciones:\n\n`;
+            response += `👉 *Contactar a Juan directamente:*\n`;
+            response += `${alertResult.contactLink}\n\n`;
+            response += `Él te responderá en breve para coordinar una inspección personalizada. 👍`;
+            
+            console.log(`[WASSENGER] ${alertResult.success ? '✅' : '⚠️'} Proceso de colisión grave completado`);
+            
+          } else {
+            // ✅ Colisión LEVE/MODERADA - iniciar formulario de cotización
+            const { processAxelFormMessage } = await import('../../servicios/axel-quote-form.js');
+            
+            // Procesar formulario con los datos del análisis inicial
+            const initialData = `Vehículo con daño ${analysis.severity.toLowerCase()}`;
+            const formResult = await processAxelFormMessage(userId, initialData);
+            
+            response += `\n✅ *Buenas noticias:* Este tipo de daño ${analysis.severity === 'LEVE' ? 'leve' : 'moderado'} SÍ lo podemos reparar.\n\n`;
+            
+            // Agregar prompt del formulario
+            if (formResult.needsMoreInfo && formResult.prompt) {
+              response += formResult.prompt;
+            } else {
+              response += `Para darte una cotización precisa, necesito:\n`;
+              response += `1️⃣ Marca y modelo del vehículo\n`;
+              response += `2️⃣ Año del vehículo\n`;
+              response += `3️⃣ Tu nombre y email\n\n`;
+              response += `Envíame estos datos 📋`;
+            }
+          }
+
+          await enviarWhatsApp(userId, response);
+          
+          // Guardar análisis en el perfil para usar en cotización posterior
+          if (!analysis.isAcceptable) {
+            // Colisión grave - no guardar análisis (ya se manejó con Juan)
+          } else {
+            // Colisión leve/moderada - guardar para cotización
+            profile.axelData = profile.axelData || {};
+            profile.axelData.damageAnalysis = {
+              severity: analysis.severity,
+              analysis: analysis.analysis,
+              damageDetails: analysis.damageDetails,
+              isAcceptable: analysis.isAcceptable,
+              photoUrls: [mediaUrl],
+              analyzedAt: new Date().toISOString()
+            };
+            await saveProfile(userId, profile);
+            console.log('[WASSENGER] 💾 Análisis guardado en perfil para cotización');
+          }
+          
+          // Guardar interacción
+          await saveInteraction({
+            userId,
+            agent: 'axel',
+            agentName: 'Axel',
+            intentReason: 'collision_photo_analysis',
+            input: '[IMAGEN: Análisis de colisión vehicular]',
+            output: response,
+            meta: {
+              route: '/webhooks/wassenger',
+              via: 'whatsapp',
+              mediaUrl,
+              severity: analysis.severity,
+              isAcceptable: analysis.isAcceptable,
+              damageDetails: analysis.damageDetails
+            }
+          });
+          
+          return res.json({ 
+            ok: true, 
+            processed: true, 
+            type: 'collision_analysis',
+            severity: analysis.severity,
+            isAcceptable: analysis.isAcceptable
           });
           
         } catch (error) {
@@ -1022,6 +1200,44 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         firstVisit: profile.firstVisit
       });
       
+      // 📧 DETECTAR SOLICITUD DE REENVÍO DE CONFIRMACIÓN
+      const { detectResendConfirmationRequest, resendLastReservationConfirmation } = 
+        await import('../../servicios/resend-confirmation.js');
+      
+      const isResendRequest = detectResendConfirmationRequest(text);
+      
+      if (isResendRequest) {
+        console.log('[WASSENGER] 📧 Detectada solicitud de reenvío de confirmación');
+        
+        const resendResult = await resendLastReservationConfirmation(userId, profile.email);
+        
+        if (resendResult.success) {
+          console.log('[WASSENGER] ✅ Confirmación reenviada exitosamente');
+          
+          await enviarWhatsApp(userId, resendResult.message);
+          
+          // Guardar en historial
+          await saveConversationMessage(userId, {
+            role: 'user',
+            content: text
+          });
+          await saveConversationMessage(userId, {
+            role: 'assistant',
+            content: resendResult.message,
+            agent: 'Aurora'
+          });
+          
+          return res.json({ 
+            ok: true, 
+            processed: true,
+            type: 'resend_confirmation'
+          });
+        } else {
+          console.log('[WASSENGER] ⚠️ No se pudo reenviar:', resendResult.error);
+          // Continuar con el flujo normal para que Aurora responda
+        }
+      }
+      
       // Procesar mensaje con orquestador (ahora con historial + formulario + contexto de reply)
       resultado = procesarMensaje(processedText, profile, conversationHistory, formResult);
       
@@ -1044,52 +1260,71 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       // 🤝 MANEJAR HANDOFF - Cambio de agente
       if (resultado.metadata.agentHandoff) {
         const targetAgent = resultado.metadata.targetAgent;
-        console.log('[WASSENGER] 🤝 Handoff detectado hacia:', targetAgent);
+        const fromAgent = activeAgent; // Agente ACTUAL antes del cambio
+        console.log(`[WASSENGER] 🤝 Handoff detectado: ${fromAgent} → ${targetAgent}`);
         
         try {
-          // 1. Generar mensaje de transición desde agente actual
-          const handoffMessage = await complete(resultado.prompt, {
-            temperature: 0.4,
-            max_tokens: 200,
-            system: resultado.systemPrompt
-          });
-
-          console.log('[WASSENGER] 📤 Enviando mensaje de transición...');
+          // 1. Obtener configuración del agente ACTUAL (quien se despide)
+          const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+          const agenteActual = AGENTES[fromAgent];
           
-          // 2. Enviar mensaje de transición
+          if (!agenteActual) {
+            console.error(`[WASSENGER] ❌ Agente actual ${fromAgent} no encontrado`);
+            throw new Error(`Agente ${fromAgent} no encontrado`);
+          }
+
+          // 2. Generar mensaje de despedida/transición desde el agente ACTUAL
+          const userName = profile.whatsappDisplayName || profile.name || 'amigo';
+          const targetAgentConfig = AGENTES[targetAgent];
+          const targetAgentName = targetAgentConfig?.nombre || targetAgent;
+          
+          // Obtener mensaje de handoff del agente actual
+          let handoffMessage;
+          if (agenteActual.rules?.handoverAxel && targetAgent === 'AXEL') {
+            // Aurora tiene mensaje específico para Axel
+            handoffMessage = agenteActual.rules.handoverAxel.replace('{nombre}', userName);
+          } else if (agenteActual.mensajes?.despedida) {
+            handoffMessage = agenteActual.mensajes.despedida;
+          } else {
+            handoffMessage = `Perfecto ${userName}, te dejo con *${targetAgentName}* quien te ayudará con esto. 👍`;
+          }
+
+          console.log(`[WASSENGER] 📤 ${fromAgent} enviando mensaje de transición...`);
+          
+          // 3. Enviar mensaje de transición
           const handoffResult = await enviarWhatsApp(userId, handoffMessage);
           if (!handoffResult.ok) {
             throw new Error(`Error enviando mensaje de transición: ${handoffResult.error}`);
           }
 
-          // 3. Guardar mensaje de transición en historial
+          // 4. Guardar mensaje de transición en historial
           await saveConversationMessage(userId, {
             role: 'assistant',
             content: handoffMessage,
-            agent: resultado.agente
+            agent: fromAgent // Usar el agente ACTUAL, no el detectado
           });
 
-          console.log('[WASSENGER] ⏳ Esperando 10 segundos antes de que entre el nuevo agente...');
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de que entre el nuevo agente...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
 
-          // 4. Obtener configuración del nuevo agente
-          const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+          // 5. Obtener configuración del nuevo agente
           const nuevoAgente = AGENTES[targetAgent];
           
           if (!nuevoAgente) {
             throw new Error(`Agente ${targetAgent} no encontrado en configuración`);
           }
 
-          // 5. Actualizar agente activo en perfil (ANTES de enviar mensaje de entrada)
+          // 6. Actualizar agente activo en perfil (ANTES de enviar mensaje de entrada)
           await saveProfile(userId, {
             activeAgent: targetAgent
           });
           
           console.log('[WASSENGER] 👤 Agente activo actualizado a:', targetAgent);
 
-          // 6. Enviar mensaje de entrada del nuevo agente
-          const mensajeEntrada = nuevoAgente.mensajes?.entrada || `Hola, soy ${nuevoAgente.nombre}. ¿En qué puedo ayudarte?`;
+          // 7. Enviar mensaje de entrada del nuevo agente (SIN saludo, Aurora ya lo presentó)
+          let mensajeEntrada = nuevoAgente.mensajes?.entrada || `¿En qué puedo ayudarte?`;
           
+          // NO reemplazar {nombre} ya que el mensaje no debe ser un saludo
           console.log('[WASSENGER] 📤 Enviando mensaje de entrada del nuevo agente...');
           const entradaResult = await enviarWhatsApp(userId, mensajeEntrada);
           
@@ -1106,19 +1341,19 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 
           console.log('[WASSENGER] ✅ Handoff completado exitosamente');
           
-          // Guardar interacción del handoff
+          // 8. Guardar interacción del handoff
           await saveInteraction({
             userId,
-            agent: targetAgent.toLowerCase(),
-            agentName: nuevoAgente.nombre,
+            agent: fromAgent.toLowerCase(),
+            agentName: fromAgent,
             intentReason: 'agent_handoff',
             input: text,
-            output: `Handoff desde ${resultado.agente} a ${nuevoAgente.nombre}`,
+            output: `Handoff desde ${fromAgent} a ${targetAgent}`,
             meta: {
               route: '/webhooks/wassenger',
               via: 'whatsapp',
               handoff: true,
-              fromAgent: resultado.agente,
+              fromAgent: fromAgent,
               toAgent: targetAgent
             }
           });

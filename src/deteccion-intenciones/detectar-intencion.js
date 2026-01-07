@@ -112,97 +112,117 @@ export function detectarCancelacion(text) {
   return CANCELACION_PATTERNS.some(pattern => pattern.test(normalized));
 }
 
-export function detectarIntencion(inputRaw = '') {
+/**
+ * Detecta intención y agente apropiado
+ * IMPORTANTE: Esta función solo detecta CAMBIOS EXPLÍCITOS de agente
+ * El orquestador es responsable de respetar el activeAgent si no hay cambio
+ * 
+ * @param {string} inputRaw - Mensaje del usuario
+ * @param {string} currentAgent - Agente actualmente activo (para contexto)
+ * @returns {object} { agent, reason, flags }
+ */
+export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   const text = String(inputRaw || '').toLowerCase().trim();
   const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
   const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
   const isCancelacion = detectarCancelacion(normalized);
+  
   // 0) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
     return {
-      agent: 'AURORA',
+      agent: currentAgent, // Mantener agente actual
       reason: 'user cancellation request',
       flags: { cancelacion: true }
     };
   }
 
-  // 1) Enzo explícito
+  // 1) CAMBIOS EXPLÍCITOS DE AGENTE (con @código)
+  // Solo estos patrones fuerzan cambio de agente
+  
   if (/@enzo/.test(text)) {
-    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ENZO' } };
+    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ENZO' } };
   }
 
-  // 2) Adriana solo con @adriana explícito
   if (/@adriana/.test(text)) {
-    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ADRIANA' } };
+    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ADRIANA' } };
   }
 
-  // 2.02) Ángela solo con @ángela o @angela explícito
   if (/@ángela/.test(text) || /@angela/.test(text)) {
-    return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ANGELA' } };
+    return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ANGELA' } };
   }
 
-  // 2.03) Axel solo con @axel explícito - especialista enderezada y pintura
   if (/@axel/.test(text)) {
-    return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'AXEL' } };
+    return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
   }
 
-  // 2.04) Vona solo con @vona explícito - terapia de sonido
   if (/@vona/.test(text)) {
-    return { agent: 'VONA', reason: 'trigger @Vona', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'VONA' } };
+    return { agent: 'VONA', reason: 'trigger @Vona', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'VONA' } };
   }
 
-  // 2.05) Aluna explícito - planes mensuales/membresías
   if (/@aluna/.test(text)) {
-    return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };
+    return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
   }
 
-  // 2.1) Aurora explícito - usuario retoma con Aurora
   if (/@aurora/.test(text)) {
     return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
   }
 
+  // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)
+  // Solo para casos donde Aurora DEBE intervenir
+  
   // 2.5) 🔄 MODIFICACIÓN DE RESERVA EXISTENTE
-  // Usuario quiere cambiar fecha/hora de una reserva ya confirmada
-  // Detectado por: "cambiar reserva", "modificar mi reserva", "reprogramar", etc.
   if (isModificacionReserva) {
     return {
       agent: 'AURORA',
       reason: 'modification of existing reservation',
-      flags: { modificacionReserva: true, postEmailSupport: true }
+      flags: { modificacionReserva: true, postEmailSupport: true, requiresAurora: true }
     };
   }
 
-  // 2.6) 💳 Usuario pide link de pago para reserva confirmada
+  // 2.6) 💳 Usuario pide link de pago
   const isPaymentLinkRequest = PAYMENT_LINK_REQUEST_PATTERNS.some(pattern => pattern.test(normalized));
   if (isPaymentLinkRequest) {
     return {
       agent: 'AURORA',
       reason: 'payment link request for confirmed reservation',
-      flags: { paymentLinkRequest: true }
+      flags: { paymentLinkRequest: true, requiresAurora: true }
     };
   }
 
-  // 2.7) Usuario llega desde el enlace del correo post-confirmación
+  // 2.7) Usuario llega desde enlace del correo post-confirmación
   if (isPostEmailSupport) {
     return {
       agent: 'AURORA',
       reason: 'post-email support link',
-      flags: { postEmailSupport: true }
+      flags: { postEmailSupport: true, requiresAurora: true }
     };
   }
 
-  // 3) Aluna por palabras clave de planes/membresías
+  // 3) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
+  // El orquestador decidirá si cambiar según activeAgent
+  
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
-    return { agent: 'ALUNA', reason: 'keywords membresías/planes', flags: { agentHandoff: true, fromAgent: 'AURORA', targetAgent: 'ALUNA' } };
+    return { 
+      agent: 'ALUNA', 
+      reason: 'keywords membresías/planes',
+      flags: { suggestedAgent: 'ALUNA', isKeywordMatch: true }
+    };
   }
 
-  // 4) Aurora por defecto o por keywords de reservas/pagos
   if (AURORA_KEYWORDS.some(k => text.includes(k))) {
-    return { agent: 'AURORA', reason: 'keywords reservas/pagos' };
+    return { 
+      agent: 'AURORA', 
+      reason: 'keywords reservas/pagos',
+      flags: { suggestedAgent: 'AURORA', isKeywordMatch: true }
+    };
   }
 
-  // Fallback: Aurora como recepcionista
-  return { agent: 'AURORA', reason: 'fallback default' };
+  // 4) Fallback: NO cambiar agente, dejar que orquestador use activeAgent
+  return { 
+    agent: currentAgent, // Mantener agente actual
+    reason: 'no explicit trigger - maintaining active agent',
+    flags: { maintainingActive: true }
+  };
 }

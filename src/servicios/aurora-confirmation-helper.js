@@ -693,60 +693,15 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
 }
 
 /**
- * 💰 Modifica respuesta de Aurora para usuarios recurrentes (ya no gratis)
- */
-export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
-  // 🚨 CRÍTICO: NO mostrar precios si acaba de confirmar reserva
-  if (userProfile.justConfirmed) {
-    console.log('[Enhancement] Usuario acaba de confirmar, NO agregar precios');
-    return originalResponse; // Confirmación reciente, no modificar
-  }
-
-  // Solo modificar si el usuario ya usó su día gratis
-  if (!userProfile.freeTrialUsed) {
-    return originalResponse; // Usuario nuevo, no modificar
-  }
-
-  // Detectar si Aurora está ofreciendo algo relacionado con reservas
-  const reservationPatterns = [
-    /reserva/i,
-    /agendar/i,
-    /espacio/i,
-    /hot\s*desk/i,
-    /sala.*reun/i,
-    /cuando.*quieres.*venir/i,
-    /disponibilidad/i,
-    /horario/i
-  ];
-
-  const isReservationRelated = reservationPatterns.some(pattern => pattern.test(originalResponse));
-  
-  if (!isReservationRelated) {
-    return originalResponse; // No es sobre reservas, no modificar
-  }
-
-  // Si ya menciona precios, no duplicar
-  if (originalResponse.includes('$') || originalResponse.includes('precio') || originalResponse.includes('pagar')) {
-    return originalResponse; // Ya menciona precios
-  }
-
-  // NO agregar precios automáticamente - Aurora decide qué incluir
-  return originalResponse;
-}
-
-/**
  * 🧠 Modifica respuesta de Aurora para incluir confirmación si es necesario
  */
 export async function enhanceAuroraResponse(originalResponse, userProfile, formResult = null) {
   try {
-    // 1. Primero, mejorar respuesta para usuarios recurrentes
-    let enhancedResponse = enhanceRecurrentUserResponse(originalResponse, userProfile);
-
-    // 2. Luego, procesar confirmaciones si es necesario
-    if (!shouldActivateConfirmation(enhancedResponse)) {
+    // Verificar si Aurora quiere activar confirmación
+    if (!shouldActivateConfirmation(originalResponse)) {
       return {
-        enhanced: enhancedResponse !== originalResponse, // True si se modificó para usuario recurrente
-        finalMessage: enhancedResponse
+        enhanced: false,
+        finalMessage: originalResponse
       };
     }
 

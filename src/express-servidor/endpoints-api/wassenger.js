@@ -281,171 +281,179 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         const responseText = text.toLowerCase();
         
-        // Importar servicios del formulario
-        const { processAxelFormMessage, getAxelForm } = await import('../../servicios/axel-quote-form.js');
-        
-        // Verificar si tiene formulario en progreso
-        const { exists, data: currentForm } = await getAxelForm(userId);
-        
-        // Si NO tiene formulario y saluda/mensaje inicial → pedir fotos
-        if (!exists && (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20)) {
-          await enviarWhatsApp(userId, 
-            '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
-          );
-          return res.json({ ok: true, processed: true, type: 'axel_greeting' });
-        }
-        
-        // Si NO tiene formulario y escribe algo → recordar fotos
-        if (!exists) {
-          await enviarWhatsApp(userId, 
-            'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
-          );
-          return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
-        }
-        
-        // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
-        console.log('[WASSENGER] 📋 Procesando datos del formulario...');
-        const formResult = await processAxelFormMessage(userId, text);
-        
-        if (!formResult.success) {
-          await enviarWhatsApp(userId, 
-            '⚠️ No pude procesar tu mensaje. ¿Puedes intentar de nuevo?\n\nRecuerda enviarlo como: _Marca Modelo Año_'
-          );
-          return res.json({ ok: true, processed: true, type: 'axel_form_error' });
-        }
-        
-        // Si formulario completo → Generar cotización
-        if (formResult.complete) {
-          console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
+        // 🚨 CRITICAL: Verificar PRIMERO si es un trigger de cambio de agente (@aurora, @enzo, etc.)
+        // Esto previene que Axel intercepte los mensajes de handoff
+        if (/@aurora|@enzo|@adriana|@aluna|@angela/i.test(text)) {
+          console.log('[WASSENGER] 🔄 Trigger de cambio de agente detectado - saltando procesamiento de Axel');
+          // Continuar al flujo normal para que el orquestador maneje el handoff
+          // NO hacer return aquí - dejar que el código continúe
+        } else {
+          // Importar servicios del formulario
+          const { processAxelFormMessage, getAxelForm } = await import('../../servicios/axel-quote-form.js');
           
-          await enviarWhatsApp(userId, 
-            '✅ *¡Perfecto!* Ya tengo toda la información.\n\n' +
-            '🔄 Estoy preparando tu cotización personalizada...\n\n' +
-            '_Esto tomará unos segundos_ ⏱️'
-          );
+          // Verificar si tiene formulario en progreso
+          const { exists, data: currentForm } = await getAxelForm(userId);
           
-          // Importar generador de cotizaciones
-          const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
-          
-          // Obtener análisis de daños del perfil
-          const damageAnalysis = profile.axelData?.damageAnalysis;
-          
-          if (!damageAnalysis) {
-            console.error('[WASSENGER] ❌ No se encontró análisis de daños en el perfil');
+          // Si NO tiene formulario y saluda/mensaje inicial → pedir fotos
+          if (!exists && (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20)) {
             await enviarWhatsApp(userId, 
-              '⚠️ Hubo un problema recuperando el análisis de daños.\n\n' +
-              'Por favor, envíame nuevamente las fotos del vehículo para poder cotizar. 📸'
+              '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
             );
-            return res.json({ ok: true, processed: true, type: 'axel_missing_analysis' });
+            return res.json({ ok: true, processed: true, type: 'axel_greeting' });
           }
           
-          // Generar cotización con OpenAI
-          const quoteResult = await processQuoteGeneration({
-            userId,
-            vehicleData: formResult.data,
-            damageAnalysis: damageAnalysis,
-            photoUrls: damageAnalysis.photoUrls || []
-          });
+          // Si NO tiene formulario y escribe algo → recordar fotos
+          if (!exists) {
+            await enviarWhatsApp(userId, 
+              'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
+            );
+            return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
+          }
           
-          if (!quoteResult.success) {
-            console.error('[WASSENGER] ❌ Error generando cotización:', quoteResult.error);
-            await enviarWhatsApp(userId, quoteResult.fallbackMessage);
+          // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
+          console.log('[WASSENGER] 📋 Procesando datos del formulario...');
+          const formResult = await processAxelFormMessage(userId, text);
+          
+          if (!formResult.success) {
+            await enviarWhatsApp(userId, 
+              '⚠️ No pude procesar tu mensaje. ¿Puedes intentar de nuevo?\n\nRecuerda enviarlo como: _Marca Modelo Año_'
+            );
+            return res.json({ ok: true, processed: true, type: 'axel_form_error' });
+          }
+          
+          // Si formulario completo → Generar cotización
+          if (formResult.complete) {
+            console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
+            
+            await enviarWhatsApp(userId, 
+              '✅ *¡Perfecto!* Ya tengo toda la información.\n\n' +
+              '🔄 Estoy preparando tu cotización personalizada...\n\n' +
+              '_Esto tomará unos segundos_ ⏱️'
+            );
+            
+            // Importar generador de cotizaciones
+            const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
+            
+            // Obtener análisis de daños del perfil
+            const damageAnalysis = profile.axelData?.damageAnalysis;
+            
+            if (!damageAnalysis) {
+              console.error('[WASSENGER] ❌ No se encontró análisis de daños en el perfil');
+              await enviarWhatsApp(userId, 
+                '⚠️ Hubo un problema recuperando el análisis de daños.\n\n' +
+                'Por favor, envíame nuevamente las fotos del vehículo para poder cotizar. 📸'
+              );
+              return res.json({ ok: true, processed: true, type: 'axel_missing_analysis' });
+            }
+            
+            // Generar cotización con OpenAI
+            const quoteResult = await processQuoteGeneration({
+              userId,
+              vehicleData: formResult.data,
+              damageAnalysis: damageAnalysis,
+              photoUrls: damageAnalysis.photoUrls || []
+            });
+            
+            if (!quoteResult.success) {
+              console.error('[WASSENGER] ❌ Error generando cotización:', quoteResult.error);
+              await enviarWhatsApp(userId, quoteResult.fallbackMessage);
+              
+              await saveInteraction({
+                userId,
+                agent: 'axel',
+                agentName: 'Axel',
+                intentReason: 'quote_generation_error',
+                input: text,
+                output: quoteResult.fallbackMessage,
+                meta: {
+                  route: '/webhooks/wassenger',
+                  via: 'whatsapp',
+                  error: quoteResult.error
+                }
+              });
+              
+              return res.json({ ok: true, processed: true, type: 'axel_quote_error' });
+            }
+            
+            // Enviar cotización por WhatsApp
+            await enviarWhatsApp(userId, quoteResult.whatsappMessage);
+            
+            // Guardar cotización completa
+            profile.axelData = profile.axelData || {};
+            profile.axelData.latestQuote = {
+              vehicleData: formResult.data,
+              damageAnalysis: damageAnalysis,
+              quoteData: quoteResult.emailData,
+              quotedAt: new Date().toISOString()
+            };
+            await saveProfile(userId, profile);
+            
+            console.log('[WASSENGER] ✅ Cotización enviada y guardada');
+            
+            // Enviar email con cotización HTML
+            const { sendQuoteEmail } = await import('../../servicios/axel-quote-email.js');
+            const emailResult = await sendQuoteEmail({
+              customerEmail: formResult.data.email,
+              customerName: formResult.data.nombre,
+              vehicleData: formResult.data,
+              damageAnalysis: damageAnalysis,
+              quote: quoteResult.emailData.quote,
+              priceRange: quoteResult.emailData.priceRange,
+              photoUrls: damageAnalysis.photoUrls || []
+            });
+            
+            if (emailResult.success) {
+              console.log('[WASSENGER] ✅ Email de cotización enviado');
+            } else {
+              console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
+            }
+            
+            // Guardar interacción
+            await saveInteraction({
+              userId,
+              agent: 'axel',
+              agentName: 'Axel',
+              intentReason: 'quote_generated',
+              input: text,
+              output: quoteResult.whatsappMessage,
+              meta: {
+                route: '/webhooks/wassenger',
+                via: 'whatsapp',
+                formData: formResult.data,
+                quoteData: quoteResult.emailData,
+                emailSent: emailResult.success
+              }
+            });
+            
+            return res.json({ 
+              ok: true, 
+              processed: true, 
+              type: 'axel_quote_sent',
+              quoteData: quoteResult.emailData
+            });
+          }
+          
+          // Si formulario incompleto → Enviar prompt
+          if (formResult.needsMoreInfo && formResult.prompt) {
+            await enviarWhatsApp(userId, formResult.prompt);
             
             await saveInteraction({
               userId,
               agent: 'axel',
               agentName: 'Axel',
-              intentReason: 'quote_generation_error',
+              intentReason: 'quote_form_progress',
               input: text,
-              output: quoteResult.fallbackMessage,
+              output: formResult.prompt,
               meta: {
                 route: '/webhooks/wassenger',
                 via: 'whatsapp',
-                error: quoteResult.error
+                currentData: formResult.currentData,
+                missingFields: formResult.missingFields
               }
             });
             
-            return res.json({ ok: true, processed: true, type: 'axel_quote_error' });
+            return res.json({ ok: true, processed: true, type: 'axel_form_progress' });
           }
-          
-          // Enviar cotización por WhatsApp
-          await enviarWhatsApp(userId, quoteResult.whatsappMessage);
-          
-          // Guardar cotización completa
-          profile.axelData = profile.axelData || {};
-          profile.axelData.latestQuote = {
-            vehicleData: formResult.data,
-            damageAnalysis: damageAnalysis,
-            quoteData: quoteResult.emailData,
-            quotedAt: new Date().toISOString()
-          };
-          await saveProfile(userId, profile);
-          
-          console.log('[WASSENGER] ✅ Cotización enviada y guardada');
-          
-          // Enviar email con cotización HTML
-          const { sendQuoteEmail } = await import('../../servicios/axel-quote-email.js');
-          const emailResult = await sendQuoteEmail({
-            customerEmail: formResult.data.email,
-            customerName: formResult.data.nombre,
-            vehicleData: formResult.data,
-            damageAnalysis: damageAnalysis,
-            quote: quoteResult.emailData.quote,
-            priceRange: quoteResult.emailData.priceRange,
-            photoUrls: damageAnalysis.photoUrls || []
-          });
-          
-          if (emailResult.success) {
-            console.log('[WASSENGER] ✅ Email de cotización enviado');
-          } else {
-            console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
-          }
-          
-          // Guardar interacción
-          await saveInteraction({
-            userId,
-            agent: 'axel',
-            agentName: 'Axel',
-            intentReason: 'quote_generated',
-            input: text,
-            output: quoteResult.whatsappMessage,
-            meta: {
-              route: '/webhooks/wassenger',
-              via: 'whatsapp',
-              formData: formResult.data,
-              quoteData: quoteResult.emailData,
-              emailSent: emailResult.success
-            }
-          });
-          
-          return res.json({ 
-            ok: true, 
-            processed: true, 
-            type: 'axel_quote_sent',
-            quoteData: quoteResult.emailData
-          });
-        }
-        
-        // Si formulario incompleto → Enviar prompt
-        if (formResult.needsMoreInfo && formResult.prompt) {
-          await enviarWhatsApp(userId, formResult.prompt);
-          
-          await saveInteraction({
-            userId,
-            agent: 'axel',
-            agentName: 'Axel',
-            intentReason: 'quote_form_progress',
-            input: text,
-            output: formResult.prompt,
-            meta: {
-              route: '/webhooks/wassenger',
-              via: 'whatsapp',
-              currentData: formResult.currentData,
-              missingFields: formResult.missingFields
-            }
-          });
-          
-          return res.json({ ok: true, processed: true, type: 'axel_form_progress' });
         }
       }
       

@@ -1,6 +1,8 @@
 // src/express-servidor/middleware/webhook-security.js
 import crypto from 'crypto';
 
+const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
+
 /**
  * 🔒 Middleware para validar firma HMAC de webhooks
  * Previene requests no autorizados al webhook
@@ -9,28 +11,24 @@ export function validateWebhookSignature(req, res, next) {
   const isProd = process.env.NODE_ENV === 'production';
   const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
   const sharedToken = process.env.WASSENGER_WEBHOOK_TOKEN || process.env.WASSENGER_TOKEN;
-  const bypassTemp = process.env.WEBHOOK_BYPASS_TEMP === 'true';
 
-  // Bypass temporal para configuración inicial
-  if (bypassTemp) {
-    console.log('[WEBHOOK-SECURITY] ⚠️ BYPASS TEMPORAL ACTIVO - Request permitido sin autenticación');
-    return next();
-  }
-
-  if (!isProd) {
-    console.log('[WEBHOOK-SECURITY] 🔐 Modo desarrollo - validación flexible');
-  }
-
-  if (!webhookSecret && !sharedToken) {
-    console.warn('[WEBHOOK-SECURITY] ⚠️ No hay secreto configurado, permitiré request solo en entornos no productivos');
-    if (isProd) {
-      return res.status(500).json({ success: false, error: 'Webhook secret not configured' });
+  // Desarrollo: validación opcional si no hay secreto
+  if (!isProd && !webhookSecret && !sharedToken) {
+    if (DEBUG_MODE) {
+      console.log('[WEBHOOK-SECURITY] 🔓 Dev mode sin secreto - permitido');
     }
     return next();
   }
 
+  // Producción: secreto requerido
+  if (isProd && !webhookSecret && !sharedToken) {
+    console.error('[WEBHOOK-SECURITY] ❌ Secreto no configurado en producción');
+    return res.status(500).json({ success: false, error: 'Webhook secret not configured' });
+  }
+
   const signatureHeader = req.headers['x-webhook-signature'] || req.headers['x-hub-signature'];
 
+  // Validación HMAC (método preferido)
   if (webhookSecret && signatureHeader) {
     try {
       const body = JSON.stringify(req.body || {});
@@ -43,6 +41,9 @@ export function validateWebhookSignature(req, res, next) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
+      if (DEBUG_MODE) {
+        console.log('[WEBHOOK-SECURITY] ✅ Firma HMAC válida');
+      }
       return next();
     } catch (error) {
       console.error('[WEBHOOK-SECURITY] ❌ Error validando firma:', error);
@@ -50,16 +51,21 @@ export function validateWebhookSignature(req, res, next) {
     }
   }
 
+  // Validación por token compartido (fallback)
   const tokenHeader = req.headers['x-wassenger-token'] || req.headers['x-webhook-secret'];
   if (sharedToken && tokenHeader) {
     if (!timingSafeCompare(tokenHeader, sharedToken)) {
-      console.error('[WEBHOOK-SECURITY] ❌ Token de webhook inválido');
+      console.error('[WEBHOOK-SECURITY] ❌ Token inválido');
       return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    if (DEBUG_MODE) {
+      console.log('[WEBHOOK-SECURITY] ✅ Token válido');
     }
     return next();
   }
 
-  console.error('[WEBHOOK-SECURITY] ❌ Request sin credenciales válidas');
+  // Sin credenciales válidas
+  console.error('[WEBHOOK-SECURITY] ❌ Request sin credenciales');
   return res.status(401).json({ success: false, error: 'Unauthorized' });
 }
 
@@ -93,7 +99,7 @@ export function rateLimitByPhone(req, res, next) {
   const recentRequests = userRequests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
   
   if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
-    console.warn(`[RATE-LIMIT] ⚠️ Usuario ${phoneNumber} excedió límite: ${recentRequests.length} requests en 1min`);
+    console.warn(`[RATE-LIMIT] ⚠️ Usuario ${phoneNumber} excedió límite: ${recentRequests.length} requests/min`);
     return res.status(429).json({
       success: false,
       error: 'Too many requests - Please slow down'
@@ -104,8 +110,8 @@ export function rateLimitByPhone(req, res, next) {
   recentRequests.push(now);
   rateLimitStore.set(phoneNumber, recentRequests);
   
-  // Limpiar store cada 5 minutos
-  if (Math.random() < 0.01) { // 1% de probabilidad
+  // Limpiar store periódicamente
+  if (Math.random() < 0.01) {
     cleanupRateLimitStore();
   }
   
@@ -129,7 +135,7 @@ function cleanupRateLimitStore() {
     }
   }
   
-  if (cleaned > 0) {
-    console.log(`[RATE-LIMIT] 🧹 Limpiados ${cleaned} usuarios del store`);
+  if (DEBUG_MODE && cleaned > 0) {
+    console.log(`[RATE-LIMIT] 🧹 Limpiados ${cleaned} usuarios`);
   }
 }

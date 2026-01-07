@@ -157,8 +157,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
     return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
   }
 
-  if (/@vona/.test(text)) {
-    return { agent: 'VONA', reason: 'trigger @Vona', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'VONA' } };
+  if (/@gabi/.test(text)) {
+    return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
   }
 
   if (/@aluna/.test(text)) {

@@ -730,17 +730,8 @@ export function enhanceRecurrentUserResponse(originalResponse, userProfile) {
     return originalResponse; // Ya menciona precios
   }
 
-  // Agregar información de precios para usuario recurrente de forma SUTIL
-  const pricingInfo = `\n\n💰 *Perfecto! Las tarifas para hoy son:*
-
-🏢 *Hot Desk:* $10 (primeras 2 horas), luego $10 por hora adicional
-🏢 *Sala Reuniones:* $29 por sala (3-4 personas, 2h mínimas), luego $15 por hora adicional
-📋 *IVA 15% si requiere factura*
-
-💳 *Pago con tarjeta:* https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
-🏦 *Transferencia:* Produbanco Ahorros, Cta 20059783069, CI 1702683499`;
-
-  return originalResponse + pricingInfo;
+  // NO agregar precios automáticamente - Aurora decide qué incluir
+  return originalResponse;
 }
 
 /**

@@ -331,9 +331,7 @@ MENSAJE DEL USUARIO:
 INSTRUCCIONES GENERALES:
 - Responde como ${agente.nombre} según tu rol y especialidad
 - Mantén contexto de conversación (memoria activa 24h hasta @Aurora)
-- NO menciones reservas, espacios de coworking ni servicios de Coworkia
 - Área de expertise exclusiva: ${agente.rol}
-- Si preguntan por reservas: "Para eso Sensei, habla con @Aurora 🏢"
 
 🎯 CONTINUIDAD DE CONVERSACIÓN:
 ${tieneHistorialConAgente ? 

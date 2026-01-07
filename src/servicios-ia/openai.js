@@ -24,13 +24,13 @@ export async function complete(prompt, opts = {}) {
     ? [{ role: 'system', content: system }, { role: 'user', content: prompt }]
     : [{ role: 'user', content: prompt }];
   
-  // 🔍 DEBUG TEMPORAL v234
-  if (system && system.includes('Aurora')) {
-    console.log('[DEBUG v234] ===== SYSTEM PROMPT =====');
+  // Debug logs solo en modo desarrollo
+  if (process.env.DEBUG_MODE === 'true' && system && system.includes('Aurora')) {
+    console.log('[DEBUG] ===== SYSTEM PROMPT =====');
     console.log(system.substring(0, 300));
-    console.log('[DEBUG v234] ===== USER CONTEXT =====');
+    console.log('[DEBUG] ===== USER CONTEXT =====');
     console.log(prompt.substring(0, 500));
-    console.log('[DEBUG v234] ========================');
+    console.log('[DEBUG] ========================');
   }
 
   // 🛡️ Proteger con circuit breaker

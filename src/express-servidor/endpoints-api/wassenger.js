@@ -217,7 +217,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
     
     if (!wassengerEnabled) {
-      console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
+      }
       return res.json({ 
         ok: true, 
         ignored: true, 
@@ -231,13 +233,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const data = body.data || {};
     const isProd = process.env.NODE_ENV === 'production';
 
-    if (isProd) {
-      console.log('[WASSENGER] Webhook recibido', {
-        event: evt,
-        from: data.fromNumber || data.from || 'unknown'
-      });
-    } else {
-      console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
+    if (process.env.DEBUG_MODE === 'true') {
+      if (isProd) {
+        console.log('[WASSENGER] Webhook recibido', {
+          event: evt,
+          from: data.fromNumber || data.from || 'unknown'
+        });
+      } else {
+        console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
+      }
     }
 
     if (!evt || !data) {
@@ -263,9 +267,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
     if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {
-      console.log('[WASSENGER] 📸 Procesando imagen/documento...');
-      console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
-      console.log('[WASSENGER] 📸 DEBUG - Full data structure:', JSON.stringify(data, null, 2));
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 📸 Procesando imagen/documento...');
+        console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
+        console.log('[WASSENGER] 📸 DEBUG - Full data structure:', JSON.stringify(data, null, 2));
+      }
       
       const messageData = { type: messageType, media: { url: mediaUrl } };
       
@@ -273,11 +279,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userProfile = await loadProfile(userId);
       const activeAgent = userProfile?.activeAgent || 'AURORA';
       
-      console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
+      }
       
       // 🚗 SI ES AXEL SIN IMAGEN: Verificar si tiene formulario en progreso
       if (activeAgent === 'AXEL' && !mediaUrl) {
-        console.log('[WASSENGER] 🚗 AXEL activo - mensaje de texto recibido');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 🚗 AXEL activo - mensaje de texto recibido');
+        }
         
         const responseText = text.toLowerCase();
         
@@ -304,7 +314,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           }
           
           // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
-          console.log('[WASSENGER] 📋 Procesando datos del formulario...');
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log('[WASSENGER] 📋 Procesando datos del formulario...');
+          }
           const formResult = await processAxelFormMessage(userId, text);
           
           if (!formResult.success) {
@@ -316,7 +328,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           // Si formulario completo → Generar cotización
           if (formResult.complete) {
-            console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
+            if (process.env.DEBUG_MODE === 'true') {
+              console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
+            }
             
             await enviarWhatsApp(userId, 
               '✅ *¡Perfecto!* Ya tengo toda la información.\n\n' +
@@ -381,7 +395,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             };
             await saveProfile(userId, profile);
             
-            console.log('[WASSENGER] ✅ Cotización enviada y guardada');
+            if (process.env.DEBUG_MODE === 'true') {
+              console.log('[WASSENGER] ✅ Cotización enviada y guardada');
+            }
             
             // Enviar email con cotización HTML
             const { sendQuoteEmail } = await import('../../servicios/axel-quote-email.js');
@@ -396,7 +412,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             });
             
             if (emailResult.success) {
-              console.log('[WASSENGER] ✅ Email de cotización enviado');
+              if (process.env.DEBUG_MODE === 'true') {
+                console.log('[WASSENGER] ✅ Email de cotización enviado');
+              }
             } else {
               console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
             }
@@ -451,7 +469,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // 🚗 SI ES AXEL CON IMAGEN: Análisis de vehículo dañado con Vision AI especializado
       if (activeAgent === 'AXEL' && mediaUrl) {
-        console.log('[WASSENGER] 🚗 AXEL activo + imagen detectada - iniciando análisis de colisión');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 🚗 AXEL activo + imagen detectada - iniciando análisis de colisión');
+        }
         
         try {
           // Importar servicio de análisis de colisiones
@@ -476,7 +496,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           if (!analysis.isAcceptable) {
             // 🚨 COLISIÓN GRAVE - Activar proceso especial con Jefe de Taller
-            console.log('[WASSENGER] 🚨 Colisión GRAVE detectada - activando proceso con Juan');
+            if (process.env.DEBUG_MODE === 'true') {
+              console.log('[WASSENGER] 🚨 Colisión GRAVE detectada - activando proceso con Juan');
+            }
             
             const { handleSevereCollision } = await import('../../servicios/severe-collision-alert.js');
             
@@ -540,7 +562,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               analyzedAt: new Date().toISOString()
             };
             await saveProfile(userId, profile);
-            console.log('[WASSENGER] 💾 Análisis guardado en perfil para cotización');
+            if (process.env.DEBUG_MODE === 'true') {
+              console.log('[WASSENGER] 💾 Análisis guardado en perfil para cotización');
+            }
           }
           
           // Guardar interacción
@@ -643,7 +667,9 @@ Responde en tu estilo característico con:
       
       // 💳 SI ES AURORA: Verificar si es comprobante de pago
       if (activeAgent === 'AURORA' && isReceiptImage(messageData)) {
-        console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
+        }
         
         if (!userProfile) {
           await enviarWhatsApp(userId, '❌ No encontré tu perfil. ¿Puedes intentar hacer una reserva primero?');
@@ -697,10 +723,14 @@ Responde en tu estilo característico con:
 
     // 🎤 PROCESAMIENTO DE MENSAJES DE VOZ
     if (messageType === 'audio' || messageType === 'voice' || messageType === 'ptt') {
-      console.log('[WASSENGER] 🎤 Procesando mensaje de voz...');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🎤 Procesando mensaje de voz...');
+      }
       
       if (!mediaUrl) {
-        console.log('[WASSENGER] ❌ No se encontró URL de audio');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ❌ No se encontró URL de audio');
+        }
         return res.json({ ok: true, ignored: true, reason: 'no_audio_url' });
       }
 
@@ -721,13 +751,17 @@ Responde en tu estilo característico con:
         });
       }
 
-      console.log('[WASSENGER] ✅ Audio transcrito:', transcription.text);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Audio transcrito:', transcription.text);
+      }
       
       // Actualizar el texto con la transcripción
       text = transcription.text;
       
       // Notificar al usuario que se procesó el audio
-      console.log('[WASSENGER] 🎤→📝 Procesando como texto:', text);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🎤→📝 Procesando como texto:', text);
+      }
     }
 
     // Continuar con procesamiento normal de texto
@@ -738,13 +772,17 @@ Responde en tu estilo característico con:
     // 🛡️ FILTRO 2: Evitar procesar el propio número del bot
     const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
     if (BOT_NUMBER && userId.includes(BOT_NUMBER.replace(/\D/g, ''))) {
-      console.log('[WASSENGER] Mensaje ignorado: es del propio bot');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] Mensaje ignorado: es del propio bot');
+      }
       return res.json({ ok: true, ignored: true, reason: 'self-message' });
     }
 
     // 🛡️ FILTRO 3: Detectar si el mensaje viene del bot (campo fromMe)
     if (data.fromMe === true || data.fromMe === 'true') {
-      console.log('[WASSENGER] Mensaje ignorado: fromMe=true');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] Mensaje ignorado: fromMe=true');
+      }
       return res.json({ ok: true, ignored: true, reason: 'message_from_bot' });
     }
 
@@ -752,7 +790,9 @@ Responde en tu estilo característico con:
     const messageTimestamp = data.timestamp || Date.now() / 1000;
     const now = Date.now() / 1000;
     if (now - messageTimestamp > 3600) { // 1 hora
-      console.log('[WASSENGER] Mensaje ignorado: muy antiguo (>1h)');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] Mensaje ignorado: muy antiguo (>1h)');
+      }
       return res.json({ ok: true, ignored: true, reason: 'old_message' });
     }
 
@@ -764,7 +804,7 @@ Responde en tu estilo característico con:
     }
 
     // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
-    if (!isProd) {
+    if (!isProd && process.env.DEBUG_MODE === 'true') {
       console.log('[WASSENGER] ✅ PROCESANDO MENSAJE VÁLIDO:');
       console.log(`- Usuario: ${userId}`);
       console.log(`- Nombre: ${name}`);
@@ -774,15 +814,23 @@ Responde en tu estilo característico con:
     }
 
     // Perfil/memoria
-    console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
+    }
     const current = await loadProfile(userId) || {};
-    console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
+    }
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
     
     // 🆕 Cargar historial de conversación (últimos 10 mensajes)
-    console.log('[DEBUG-FLOW] 3️⃣ Iniciando loadConversationHistory...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 3️⃣ Iniciando loadConversationHistory...');
+    }
     const conversationHistory = await loadConversationHistory(userId, 10);
-    console.log('[DEBUG-FLOW] 4️⃣ loadConversationHistory completado, mensajes:', conversationHistory?.length || 0);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 4️⃣ loadConversationHistory completado, mensajes:', conversationHistory?.length || 0);
+    }
     
     // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
     let detectedName = current.name || null;
@@ -832,33 +880,41 @@ Responde en tu estilo característico con:
     };
     
     // Guardar perfil actualizado
-    console.log('[DEBUG-FLOW] 5️⃣ Iniciando saveProfile...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 5️⃣ Iniciando saveProfile...');
+    }
     await saveProfile(userId, profile);
-    console.log('[DEBUG-FLOW] 6️⃣ saveProfile completado');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 6️⃣ saveProfile completado');
+    }
 
     // 🔍 DEBUG: Log del perfil completo
-    console.log('[DEBUG-PERFIL] 📊 Perfil cargado:', {
-      userId: profile.userId,
-      name: profile.name,
-      email: profile.email,
-      firstVisit: profile.firstVisit,
-      freeTrialUsed: profile.freeTrialUsed,
-      conversationCount: profile.conversationCount,
-      hasPendingConfirmation: !!profile.pendingConfirmation,
-      pendingConfirmationData: profile.pendingConfirmation ? {
-        date: profile.pendingConfirmation.date,
-        startTime: profile.pendingConfirmation.startTime,
-        serviceType: profile.pendingConfirmation.serviceType,
-        email: profile.pendingConfirmation.email ? 'Sí' : 'No'
-      } : 'No hay'
-    });
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-PERFIL] 📊 Perfil cargado:', {
+        userId: profile.userId,
+        name: profile.name,
+        email: profile.email,
+        firstVisit: profile.firstVisit,
+        freeTrialUsed: profile.freeTrialUsed,
+        conversationCount: profile.conversationCount,
+        hasPendingConfirmation: !!profile.pendingConfirmation,
+        pendingConfirmationData: profile.pendingConfirmation ? {
+          date: profile.pendingConfirmation.date,
+          startTime: profile.pendingConfirmation.startTime,
+          serviceType: profile.pendingConfirmation.serviceType,
+          email: profile.pendingConfirmation.email ? 'Sí' : 'No'
+        } : 'No hay'
+      });
+    }
 
     // 🧹 Limpiar flag temporal "justConfirmed" si han pasado más de 10 minutos
     if (profile.justConfirmed && profile.justConfirmedUntil) {
       const expiresAt = new Date(profile.justConfirmedUntil).getTime();
       const now = Date.now();
       if (now > expiresAt) {
-        console.log('[WASSENGER] 🧹 Fin de periodo justConfirmed, limpiando en DB');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 🧹 Fin de periodo justConfirmed, limpiando en DB');
+        }
         await clearJustConfirmed(userId);
         profile.justConfirmed = false;
       }
@@ -871,13 +927,17 @@ Responde en tu estilo característico con:
     // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo
     // Solo validamos si detectamos mención explícita de cambio de agente
     // Esto permite que después de un handoff, todos los mensajes vayan al nuevo agente
-    console.log(`[WASSENGER] 🎯 Agente activo: ${activeAgent}, Mención detectada: ${isAgentMention}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[WASSENGER] 🎯 Agente activo: ${activeAgent}, Mención detectada: ${isAgentMention}`);
+    }
 
     // 🔄 DETECTAR CONTEXTO DE REPLY (mensajes citados)
-    console.log('[DEBUG-FLOW] 7️⃣ Analizando contexto de reply...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 7️⃣ Analizando contexto de reply...');
+    }
     const replyContext = buildReplyContext(text, body, conversationHistory);
     
-    if (replyContext.hasReplyContext) {
+    if (replyContext.hasReplyContext && process.env.DEBUG_MODE === 'true') {
       console.log('[REPLY-CONTEXT] ✅ Contexto de reply detectado:', {
         type: replyContext.contextType,
         source: replyContext.source,
@@ -890,15 +950,21 @@ Responde en tu estilo característico con:
     let processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : text;
     
     // 🆕 Guardar mensaje del usuario en historial
-    console.log('[DEBUG-FLOW] 8️⃣ Iniciando saveConversationMessage...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 8️⃣ Iniciando saveConversationMessage...');
+    }
     await saveConversationMessage(userId, {
       role: 'user',
       content: processedText
     });
-    console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
+    }
 
     // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente (PRIMERO)
-    console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
+    }
     // Usar processedText (con contexto de reply si existe) en lugar de text original
     const formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
     
@@ -907,7 +973,9 @@ Responde en tu estilo característico con:
     
     // 🚨 VALIDACIÓN CRÍTICA: Si hay error de validación (domingo/feriado), responder inmediatamente
     if (formResult.validationError) {
-      console.log('[WASSENGER] 🚫 Error de validación detectado:', formResult.validationError.type);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🚫 Error de validación detectado:', formResult.validationError.type);
+      }
       
       const errorMessage = formResult.validationError.message;
       
@@ -940,7 +1008,9 @@ Responde en tu estilo característico con:
       // Limpiar el formulario para que pueda intentar otra fecha
       await clearPartialForm(userId);
       
-      console.log('[WASSENGER] ✅ Error de validación enviado - formulario limpiado');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Error de validación enviado - formulario limpiado');
+      }
       
       return res.json({ 
         ok: true, 
@@ -951,7 +1021,9 @@ Responde en tu estilo característico con:
     }
     
     if (formResult.updates && Object.keys(formResult.updates).length > 0) {
-      console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
+      }
       
       // Actualizar perfil con datos detectados
       if (formResult.updates.email && !profile.email) {
@@ -965,7 +1037,9 @@ Responde en tu estilo característico con:
     const isReservationIntent = reservationKeywords.some(kw => text.toLowerCase().includes(kw));
     
     if (isReservationIntent) {
-      console.log('[WASSENGER] 🔍 Detectado intent de reserva - verificando pagos pendientes...');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 Detectado intent de reserva - verificando pagos pendientes...');
+      }
       
       const { default: reservationRepository } = await import('../../database/reservationRepository.js');
       const allUserReservations = await reservationRepository.findByUser(userId);
@@ -1036,7 +1110,9 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
     if (isReservationIntent && savedPartialForm && formResult.form.getResumeMessage) {
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) {
-        console.log('[WASSENGER] 📋 Usuario retoma reserva cancelada anteriormente - enviando resumen');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 📋 Usuario retoma reserva cancelada anteriormente - enviando resumen');
+        }
         formResult.resumeMessage = resumeMessage;
       }
     }
@@ -1048,7 +1124,9 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
       const isNegative = isNegativeResponse(text);
       
       if (isPositive || isNegative) {
-        console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
+        }
         
         // Detectar si hay contexto adicional después del SI (ej: "Si, pero quiero hacer otra reserva")
         const hasAdditionalContext = text.match(/^s[ií][,.\s]+(.+)/i);
@@ -1086,8 +1164,10 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
         
         // Si confirmó exitosamente Y tiene contexto adicional, continuar procesando con Aurora
         if (confirmationResult.success && additionalText) {
-          console.log(`[WASSENGER] ✅ Confirmación exitosa + contexto adicional detectado: "${additionalText}"`);
-          console.log('[WASSENGER] 🔄 Continuando con Aurora para procesar: ', additionalText);
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log(`[WASSENGER] ✅ Confirmación exitosa + contexto adicional detectado: "${additionalText}"`);
+            console.log('[WASSENGER] 🔄 Continuando con Aurora para procesar: ', additionalText);
+          }
           
           // Pequeño delay para que vea el mensaje de confirmación primero
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1113,12 +1193,16 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
     }
 
     // Si el formulario NO está completo, continuar con Aurora para que pida datos faltantes
-    console.log('[WASSENGER] Formulario incompleto o respuesta no es SI/NO, continuando con Aurora...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] Formulario incompleto o respuesta no es SI/NO, continuando con Aurora...');
+    }
     
     // 💡 LÓGICA DE UPSELL: Si mencionó personas y pidió hot desk, sugerir sala
     let upsellMessage = null;
     if (formResult.form.spaceType === 'hotDesk' && formResult.form.numPeople >= 3) {
-      console.log('[WASSENGER] 💡 Upsell detectado: 3+ personas con hot desk');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 💡 Upsell detectado: 3+ personas con hot desk');
+      }
       upsellMessage = `
 ¡Nota! Veo que vienen ${formResult.form.numPeople} personas 👥
 
@@ -1139,7 +1223,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     // 🌍 DETECTAR Y PROCESAR CAMBIO DE IDIOMA
     const languageCommand = detectLanguageCommand(text);
     if (languageCommand) {
-      console.log('[WASSENGER] 🌍 Comando de cambio de idioma detectado:', languageCommand);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🌍 Comando de cambio de idioma detectado:', languageCommand);
+      }
       
       // Actualizar idioma preferido del usuario
       await saveProfile(userId, { preferredLanguage: languageCommand });
@@ -1155,7 +1241,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         agent: 'Aurora'
       });
       
-      console.log('[WASSENGER] ✅ Idioma actualizado y confirmación enviada');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Idioma actualizado y confirmación enviada');
+      }
       return res.status(200).json({ status: 'ok', action: 'language_changed', language: languageCommand });
     }
     
@@ -1168,26 +1256,32 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     if (detectedLanguage.confidence > 0.7 && 
         detectedLanguage.language !== currentLanguage && 
         detectedLanguage.source === 'auto_detected_high_confidence') {
-      console.log('[WASSENGER] 🌍 Cambio de idioma auto-detectado:', {
-        anterior: currentLanguage,
-        nuevo: detectedLanguage.language,
-        confianza: detectedLanguage.confidence,
-        source: detectedLanguage.source
-      });
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🌍 Cambio de idioma auto-detectado:', {
+          anterior: currentLanguage,
+          nuevo: detectedLanguage.language,
+          confianza: detectedLanguage.confidence,
+          source: detectedLanguage.source
+        });
+      }
       
       // Actualizar idioma preferido
       await saveProfile(userId, { preferredLanguage: detectedLanguage.language });
       profile.preferredLanguage = detectedLanguage.language;
       
-      console.log('[WASSENGER] ✅ Idioma actualizado automáticamente a:', detectedLanguage.language);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Idioma actualizado automáticamente a:', detectedLanguage.language);
+      }
     } else {
-      console.log('[WASSENGER] 🌍 Idioma detectado:', {
-        language: detectedLanguage.language,
-        confidence: detectedLanguage.confidence,
-        source: detectedLanguage.source,
-        current: currentLanguage,
-        willUpdate: false
-      });
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🌍 Idioma detectado:', {
+          language: detectedLanguage.language,
+          confidence: detectedLanguage.confidence,
+          source: detectedLanguage.source,
+          current: currentLanguage,
+          willUpdate: false
+        });
+      }
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1217,12 +1311,16 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     const isResendRequest = detectResendConfirmationRequest(text);
     
     if (isResendRequest) {
-      console.log('[WASSENGER] 📧 Detectada solicitud de reenvío de confirmación');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 📧 Detectada solicitud de reenvío de confirmación');
+      }
       
       const resendResult = await resendLastReservationConfirmation(userId, profile.email);
       
       if (resendResult.success) {
-        console.log('[WASSENGER] ✅ Confirmación reenviada exitosamente');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ✅ Confirmación reenviada exitosamente');
+        }
         
         await enviarWhatsApp(userId, resendResult.message);
         
@@ -1243,7 +1341,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           type: 'resend_confirmation'
         });
       } else {
-        console.log('[WASSENGER] ⚠️ No se pudo reenviar:', resendResult.error);
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ⚠️ No se pudo reenviar:', resendResult.error);
+        }
         // Continuar con el flujo normal para que Aurora responda
       }
     }
@@ -1253,25 +1353,33 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     
     // 🚫 MANEJAR CANCELACIÓN
     if (resultado.metadata.cancelacion) {
-      console.log('[WASSENGER] 🚫 Cancelación detectada');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🚫 Cancelación detectada');
+      }
       
       // Guardar formulario parcial si existe
       if (resultado.metadata.shouldSavePartialForm) {
         await savePartialForm(userId, formResult, 'reservation');
-        console.log('[WASSENGER] 💾 Formulario parcial guardado');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 💾 Formulario parcial guardado');
+        }
       }
       
       // Limpiar estados activos
       await clearPendingConfirmation(userId);
       await clearJustConfirmed(userId);
-      console.log('[WASSENGER] 🧹 Estados de reserva limpiados');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🧹 Estados de reserva limpiados');
+      }
     }
 
     // 🤝 MANEJAR HANDOFF - Cambio de agente
     if (resultado.metadata.agentHandoff) {
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = activeAgent; // Agente ACTUAL antes del cambio
-      console.log(`[WASSENGER] 🤝 Handoff detectado: ${fromAgent} → ${targetAgent}`);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log(`[WASSENGER] 🤝 Handoff detectado: ${fromAgent} → ${targetAgent}`);
+      }
       
       try {
         // 1. Obtener configuración del agente ACTUAL (quien se despide)
@@ -1299,7 +1407,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           handoffMessage = `Perfecto ${userName}, te dejo con *${targetAgentName}* quien te ayudará con esto. 👍`;
         }
 
-        console.log(`[WASSENGER] 📤 ${fromAgent} enviando mensaje de transición...`);
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log(`[WASSENGER] 📤 ${fromAgent} enviando mensaje de transición...`);
+        }
         
         // 3. Enviar mensaje de transición
         const handoffResult = await enviarWhatsApp(userId, handoffMessage);
@@ -1314,7 +1424,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           agent: fromAgent // Usar el agente ACTUAL, no el detectado
         });
 
-        console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de que entre el nuevo agente...');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de que entre el nuevo agente...');
+        }
         await new Promise(resolve => setTimeout(resolve, 5000));
 
         // 5. Obtener configuración del nuevo agente
@@ -1329,13 +1441,17 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           activeAgent: targetAgent
         });
         
-        console.log('[WASSENGER] 👤 Agente activo actualizado a:', targetAgent);
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 👤 Agente activo actualizado a:', targetAgent);
+        }
 
         // 7. Enviar mensaje de entrada del nuevo agente (SIN saludo, Aurora ya lo presentó)
         let mensajeEntrada = nuevoAgente.mensajes?.entrada || `¿En qué puedo ayudarte?`;
         
         // NO reemplazar {nombre} ya que el mensaje no debe ser un saludo
-        console.log('[WASSENGER] 📤 Enviando mensaje de entrada del nuevo agente...');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 📤 Enviando mensaje de entrada del nuevo agente...');
+        }
         const entradaResult = await enviarWhatsApp(userId, mensajeEntrada);
         
         if (!entradaResult.ok) {
@@ -1349,7 +1465,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           agent: nuevoAgente.nombre
         });
 
-        console.log('[WASSENGER] ✅ Handoff completado exitosamente');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ✅ Handoff completado exitosamente');
+        }
         
         // 9. Guardar interacción del handoff
         await saveInteraction({
@@ -1408,7 +1526,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
 
     // 👋 MANEJAR RETORNO - Usuario vuelve a un agente
     if (resultado.metadata.returningToAurora) {
-      console.log('[WASSENGER] 👋 Usuario retorna a Aurora desde otro agente');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 👋 Usuario retorna a Aurora desde otro agente');
+      }
       
       try {
         // Enviar mensaje de despedida del agente anterior
@@ -1419,7 +1539,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
             const agenteObj = AGENTES[agenteAnterior];
             
             if (agenteObj && agenteObj.mensajes?.despedida) {
-              console.log('[WASSENGER] 👋 Enviando despedida de:', agenteObj.nombre);
+              if (process.env.DEBUG_MODE === 'true') {
+                console.log('[WASSENGER] 👋 Enviando despedida de:', agenteObj.nombre);
+              }
               
               const despedidaResult = await enviarWhatsApp(userId, agenteObj.mensajes.despedida);
               
@@ -1431,7 +1553,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
                 });
 
                 // Delay de 5 segundos
-                console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de entrada de Aurora...');
+                if (process.env.DEBUG_MODE === 'true') {
+                  console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de entrada de Aurora...');
+                }
                 await new Promise(resolve => setTimeout(resolve, 5000));
               } else {
                 console.warn('[WASSENGER] ⚠️ No se pudo enviar despedida:', despedidaResult.error);
@@ -1444,7 +1568,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
             activeAgent: 'AURORA'
           });
           
-          console.log('[WASSENGER] ✅ Agente activo actualizado a: AURORA');
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log('[WASSENGER] ✅ Agente activo actualizado a: AURORA');
+          }
 
           // Aurora responde con su mensaje de entrada (siempre AURORA aquí)
           reply = await complete(resultado.prompt, {
@@ -1498,8 +1624,10 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     /*
     const paymentCheck = shouldSendPaymentLink(text, profile);
     if (paymentCheck && resultado.agenteKey === 'AURORA') {
-      console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
-      console.log('[WASSENGER] 💳 Enviando link de pago automáticamente');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
+        console.log('[WASSENGER] 💳 Enviando link de pago automáticamente');
+      }
       reply = paymentCheck.message;
       
       // Guardar en perfil que está esperando comprobante
@@ -1518,20 +1646,28 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     }
 
     // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
-    console.log('[WASSENGER] 🔍 Antes de finalReply - reply:', reply ? 'EXISTE' : 'NULL/UNDEFINED');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 🔍 Antes de finalReply - reply:', reply ? 'EXISTE' : 'NULL/UNDEFINED');
+    }
     let finalReply = reply;
     let confirmationActivated = false;
     
     if (resultado.agenteKey === 'AURORA') {
-      console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
-      console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
+        console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
+      }
       const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
-      console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
+      }
       
       if (enhancement.enhanced) {
         finalReply = enhancement.finalMessage;
         confirmationActivated = true;
-        console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
+        }
       } else {
         // Si no hubo enhancement, usar la respuesta original de Aurora
         finalReply = reply;
@@ -1542,18 +1678,24 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     }
 
     // 🆕 Guardar respuesta del asistente en historial
-    console.log('[WASSENGER] 💾 Guardando mensaje en historial - finalReply length:', finalReply?.length || 0);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 💾 Guardando mensaje en historial - finalReply length:', finalReply?.length || 0);
+    }
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
       agent: resultado.agente
     });
-    console.log('[WASSENGER] ✅ Mensaje guardado en historial');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] ✅ Mensaje guardado en historial');
+    }
 
     // 🔧 MARCAR PRIMERA VISITA COMO COMPLETADA después de respuesta de Aurora
     if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
-      console.log('[WASSENGER] 🎯 Marcando primera visita como completada para:', userId);
-      console.log('[WASSENGER] 📊 Perfil antes del cambio:', JSON.stringify(profile, null, 2));
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🎯 Marcando primera visita como completada para:', userId);
+        console.log('[WASSENGER] 📊 Perfil antes del cambio:', JSON.stringify(profile, null, 2));
+      }
       
       const updatedProfile = {
         ...profile,
@@ -1562,11 +1704,15 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       };
       
       await saveProfile(userId, updatedProfile);
-      console.log('[WASSENGER] ✅ Perfil actualizado con firstVisit: false');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Perfil actualizado con firstVisit: false');
+      }
       
       // Verificar que se guardó correctamente
       const verifiedProfile = await loadProfile(userId);
-      console.log('[WASSENGER] 🔍 Perfil verificado después del guardado:', verifiedProfile.firstVisit);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 Perfil verificado después del guardado:', verifiedProfile.firstVisit);
+      }
     }
 
     // Guardar interacción
@@ -1589,14 +1735,20 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     });
 
     // Enviar respuesta a WhatsApp
-    console.log('[WASSENGER] 📤 Enviando mensaje a WhatsApp - finalReply:', finalReply ? 'EXISTE' : 'NULL/UNDEFINED', '- Length:', finalReply?.length || 0);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 📤 Enviando mensaje a WhatsApp - finalReply:', finalReply ? 'EXISTE' : 'NULL/UNDEFINED', '- Length:', finalReply?.length || 0);
+    }
     const envio = await enviarWhatsApp(userId, finalReply);
 
-    console.log('[WASSENGER] 📬 Resultado del envío - ok:', envio.ok);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 📬 Resultado del envío - ok:', envio.ok);
+    }
     if (!envio.ok) {
       console.error('[WASSENGER] ❌ Error al enviar respuesta:', envio.error);
     } else {
-      console.log('[WASSENGER] ✅ Mensaje enviado correctamente');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ✅ Mensaje enviado correctamente');
+      }
     }
 
     // Responder al webhook (ACK)

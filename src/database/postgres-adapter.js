@@ -230,7 +230,9 @@ class PostgresAdapter {
   async run(sql, params = []) {
     try {
       const pgSql = this.convertPlaceholders(sql);
-      console.log('[POSTGRES DEBUG] run() SQL:', pgSql, 'Params:', params);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[POSTGRES DEBUG] run() SQL:', pgSql, 'Params:', params);
+      }
       const result = await this.pool.query(pgSql, params);
       return {
         changes: result.rowCount || 0,
@@ -251,11 +253,15 @@ class PostgresAdapter {
   async get(sql, params = []) {
     try {
       const pgSql = this.convertPlaceholders(sql);
-      console.log('[POSTGRES DEBUG] get() SQL:', pgSql, 'Params:', params);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[POSTGRES DEBUG] get() SQL:', pgSql, 'Params:', params);
+      }
       const startTime = Date.now();
       const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
-      console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
+      }
       return result.rows[0] || null;
     } catch (error) {
       console.error('[POSTGRES ERROR] get() failed:', error.message);
@@ -272,11 +278,15 @@ class PostgresAdapter {
   async all(sql, params = []) {
     try {
       const pgSql = this.convertPlaceholders(sql);
-      console.log('[POSTGRES DEBUG] all() SQL:', pgSql, 'Params:', params);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[POSTGRES DEBUG] all() SQL:', pgSql, 'Params:', params);
+      }
       const startTime = Date.now();
       const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
-      console.log(`[POSTGRES DEBUG] all() completado en ${duration}ms, rows:`, result.rows.length);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log(`[POSTGRES DEBUG] all() completado en ${duration}ms, rows:`, result.rows.length);
+      }
       return result.rows;
     } catch (error) {
       console.error('[POSTGRES ERROR] all() failed:', error.message);

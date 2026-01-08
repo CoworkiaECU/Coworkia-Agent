@@ -6,7 +6,7 @@ import {
   cleanupJustConfirmedFlags as cleanupJustConfirmedFlagsCore
 } from '../src/servicios/reservation-state.js';
 
-const DEFAULT_INTERACTION_RETENTION_DAYS = parseInt(process.env.INTERACTIONS_RETENTION_DAYS || '90', 10);
+const DEFAULT_INTERACTION_RETENTION_DAYS = parseInt(process.env.INTERACTIONS_RETENTION_DAYS || '30', 10);
 
 async function ensureDatabaseReady() {
   if (!databaseService.isInitialized) {

@@ -415,38 +415,18 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 
   const lineas = ['PERFIL USUARIO:'];
   
-  // 🆕 Información del nombre Y lógica de saludo
+  // Información del perfil
   if (perfil.name) {
-    lineas.push(`- Nombre detectado: ${perfil.name} ✅`);
-    if (perfil.whatsappDisplayName && perfil.whatsappDisplayName !== perfil.name) {
-      lineas.push(`- WhatsApp muestra: "${perfil.whatsappDisplayName}"`);
-    }
-  } else {
-    lineas.push(`- Nombre: No detectado`);
+    lineas.push(`- Nombre: ${perfil.name}`);
   }
-  
-  if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);
   if (perfil.email) lineas.push(`- Email: ${perfil.email}`);
+  if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);
   if (perfil.channel) lineas.push(`- Canal: ${perfil.channel}`);
   
-  // 🆕 firstVisit flag para lógica de saludo inicial
+  // Contexto de interacciones previas
   if (perfil.firstVisit !== undefined) {
     const esPrimeraInteraccion = perfil.firstVisit || (perfil.conversationCount === 0);
-    lineas.push(`- Primera interacción: ${esPrimeraInteraccion ? 'SÍ (primer mensaje)' : 'NO (ya conversó antes)'}`);
-    
-    // 🚨 INSTRUCCIONES DE SALUDO SEGÚN CONTEXTO
-    if (esPrimeraInteraccion) {
-      lineas.push(`\n🚨 SALUDO PARA PRIMERA INTERACCIÓN:`);
-      lineas.push(`- ⛔ NO uses el nombre registrado en BD (${perfil.name || 'N/A'}) - NO lo conoces aún`);
-      lineas.push(`- ✅ USA el nombre de WhatsApp: "${perfil.whatsappDisplayName || 'amigo/a'}"`);
-      lineas.push(`- ✅ Preséntate: "Hola ${perfil.whatsappDisplayName || 'amigo/a'}, ¿en qué te puedo ayudar hoy? Soy Aurora, el núcleo operativo de Coworkia, orquestadora de agentes."`);
-      lineas.push(`- 📝 Después de que el usuario dé su nombre, actualízalo en el sistema para próximas interacciones`);
-    } else {
-      lineas.push(`\n💼 SALUDO PARA CLIENTE RECURRENTE:`);
-      lineas.push(`- ✅ USA el nombre registrado: ${perfil.name}`);
-      lineas.push(`- ✅ Saludo natural: "¡Hola ${perfil.name}! ¿En qué te puedo ayudar hoy?"`);
-      lineas.push(`- ✅ Ya lo conoces, no necesitas presentarte extensamente`);
-    }
+    lineas.push(`- Primera visita: ${esPrimeraInteraccion ? 'SÍ' : 'NO'}`);
   }
   
   // 🔧 Conversación en curso

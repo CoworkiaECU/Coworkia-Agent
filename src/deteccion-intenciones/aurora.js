@@ -189,7 +189,7 @@ ${hotDeskInfo}
   },
 
   ejemplos: {
-    bienvenida: 'Hola, soy Aurora ✨\n\nCoordino Coworkia (espacios de coworking) y gestiono un ecosistema de empresas especializadas. Lo que necesites, aquí lo resolvemos.\n\n¿Qué buscas?',
+    bienvenida: 'Hola, soy Aurora ✨\n\n¿En qué te puedo ayudar?',
     
     primeraVisita: '¡Perfecto! ¿Qué día te gustaría venir?\n\nSolo necesito la fecha y hora que prefieras.',
     

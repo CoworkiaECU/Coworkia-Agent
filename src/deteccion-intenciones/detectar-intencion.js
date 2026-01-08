@@ -102,22 +102,23 @@ const CANCELACION_PATTERNS = [
   /cambie.*de\s+opinion/
 ];
 
+// Patrones FLEXIBLES para saludos casuales - detectan el saludo aunque haya otras palabras
 const CASUAL_GREETING_PATTERNS = [
-  /^hola$/,
-  /^hi$/,
-  /^hello$/,
-  /^hey$/,
-  /^buenas$/,
-  /^buenos\s+dias$/,
-  /^buenas\s+tardes$/,
-  /^buenas\s+noches$/,
-  /^buen\s+dia$/,
-  /^que\s+tal$/,
-  /^como\s+estas$/,
-  /^como\s+esta$/,
-  /^saludos$/,
-  /^hola\s+de\s+nuevo$/,
-  /^hola\s+otra\s+vez$/
+  /^hola\b/,  // hola, hola aurora, hola como estas
+  /^hi\b/,    // hi, hi there
+  /^hello\b/, // hello, hello aurora
+  /^hey\b/,   // hey, hey there
+  /^buenas\b/, // buenas, buenas tardes aurora
+  /^buenos\s+dias\b/,
+  /^buenas\s+tardes\b/,
+  /^buenas\s+noches\b/,
+  /^buen\s+dia\b/,
+  /^que\s+tal\b/,     // que tal, que tal como estas
+  /^como\s+estas\b/,  // como estas, como estas aurora
+  /^como\s+esta\b/,
+  /^saludos\b/,
+  /^hola\s+de\s+nuevo\b/,
+  /^hola\s+otra\s+vez\b/
 ];
 
 const IDENTITY_QUESTION_PATTERNS = [

@@ -1715,18 +1715,22 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       if (isCasualGreeting || isIdentityQuestion) {
         console.log(`[WASSENGER] 🛡️ POST-PROCESAMIENTO: ${isCasualGreeting ? 'saludo casual' : 'pregunta identidad'} detectado`);
         
-        // Patrones de ofertas que NO deberían aparecer
+        // Patrones MÁS AGRESIVOS de ofertas que NO deberían aparecer
         const serviceOfferPatterns = [
-          /¿qué (tipo de )?espacio necesitas\??/gi,
-          /¿qué (tipo de )?espacio (estás|estas) buscando\??/gi,
-          /tenemos hot desk (y|o) sala de reuniones/gi,
-          /¿(te |)gustaría reservar\??/gi,
-          /¿quieres reservar\??/gi,
-          /si necesitas reservar/gi,
-          /hot desk.*sala de reuniones/gi,
-          /sala de reuniones.*hot desk/gi,
-          /precios.*hot desk/gi,
-          /\$\d+.*horas/gi // Menciones de precios
+          /espacio/gi,
+          /hot\s*desk/gi,
+          /sala.*reun/gi,
+          /reun.*sala/gi,
+          /reserv/gi,
+          /\$\d+/gi,  // Cualquier precio
+          /gratis/gi,
+          /primera\s*visita/gi,
+          /tenemos/gi,
+          /ofrec/gi,
+          /necesitas/gi,
+          /gustaría/gi,
+          /quieres/gi,
+          /puedo\s*ayudarte\s*con/gi
         ];
         
         // Verificar si la respuesta contiene ofertas no deseadas
@@ -1734,46 +1738,28 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         for (const pattern of serviceOfferPatterns) {
           if (pattern.test(reply)) {
             hasUnwantedOffers = true;
-            console.log(`[WASSENGER] ⚠️ Detectada oferta no deseada (pattern): ${pattern}`);
+            console.log(`[WASSENGER] ⚠️ Detectada palabra clave no deseada: ${pattern}`);
             break;
           }
         }
         
         if (hasUnwantedOffers) {
-          // LIMPIAR la respuesta: quedarnos solo con el saludo/respuesta bomba
-          console.log('[WASSENGER] 🧹 LIMPIANDO respuesta - removiendo ofertas de servicios');
+          // FORZAR respuesta limpia sin procesar la de OpenAI
+          console.log('[WASSENGER] 🧹 FORZANDO respuesta limpia - ignorando respuesta de OpenAI');
           
           if (isCasualGreeting) {
-            // Para saludo casual: solo "¡Hola [nombre]! Soy Aurora 😊\n\n¿En qué te puedo ayudar?"
+            // Para saludo casual: SIEMPRE esta respuesta exacta
             const nombre = profile.whatsappDisplayName || profile.name || 'amigo';
             finalReply = `¡Hola ${nombre}! Soy Aurora 😊\n\n¿En qué te puedo ayudar?`;
-            console.log('[WASSENGER] ✅ Respuesta limpiada: saludo simple');
+            console.log('[WASSENGER] ✅ Respuesta FORZADA: saludo simple');
           } else if (isIdentityQuestion) {
-            // Para pregunta de identidad: solo la respuesta bomba del ecosistema
-            const lines = reply.split('\n');
-            const ecosystemEndIndex = lines.findIndex(line => 
-              line.includes('¿Qué te gustaría explorar primero?') ||
-              line.includes('¿Qué te gustaría saber más?')
-            );
-            
-            if (ecosystemEndIndex !== -1) {
-              // Tomar solo hasta la pregunta final del ecosistema (incluida)
-              finalReply = lines.slice(0, ecosystemEndIndex + 1).join('\n');
-              console.log('[WASSENGER] ✅ Respuesta limpiada: solo ecosistema');
-            } else {
-              // Si no encontramos la pregunta final, cortar en la primera mención de servicio
-              const firstOfferIndex = lines.findIndex(line => 
-                /espacio|hot desk|sala|reserv/i.test(line)
-              );
-              if (firstOfferIndex !== -1 && firstOfferIndex > 5) {
-                // Si hay al menos 5 líneas antes (el ecosistema), cortar ahí
-                finalReply = lines.slice(0, firstOfferIndex).join('\n').trim();
-                console.log('[WASSENGER] ✅ Respuesta limpiada: cortada en primera oferta');
-              }
-            }
+            // Para pregunta de identidad: respuesta bomba fija
+            const nombre = profile.whatsappDisplayName || profile.name || 'amigo';
+            finalReply = `¡Soy Aurora! 🌟 El cerebro que conecta TODO el ecosistema de Coworkia 🧠✨\n\n🏢 *Coworkia*\nEspacios de trabajo que inspiran\n\n💡 *MarketingLab* (@enzo)\nMarketing, IA y automatización\n\n💚 *MedBeneficios* (@angela)\nSalud y bienestar integral\n\n🚗 *The PaintBull* (@axel)\nReparación de vehículos express\n\n💼 *GR Consulting* (@gabi)\nFinanzas, contabilidad y asesoría legal\n\n📋 *Planes y Membresías* (@aluna)\nTu espacio perfecto\n\n───────────────────\n\n🎯 *Mi superpoder:* Entiendo lo que necesitas y te conecto AL INSTANTE con el experto correcto.\n\nUn sistema, múltiples soluciones, CERO complicaciones.\n\n¿Qué te gustaría explorar primero? 😊🚀`;
+            console.log('[WASSENGER] ✅ Respuesta FORZADA: ecosistema');
           }
         } else {
-          console.log('[WASSENGER] ✅ Respuesta ya estaba limpia - sin ofertas detectadas');
+          console.log('[WASSENGER] ✅ Respuesta limpia - usando respuesta de OpenAI');
           finalReply = reply;
         }
       } else {

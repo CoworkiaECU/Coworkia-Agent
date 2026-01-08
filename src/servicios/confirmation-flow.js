@@ -13,7 +13,7 @@ import { enqueueBackgroundTask } from './task-queue.js';
 import { 
   clearPendingConfirmation, 
   getPendingConfirmation, 
-  setPendingConfirmation 
+  savePendingConfirmation 
 } from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
 import reservationRepository from '../database/reservationRepository.js';
@@ -777,7 +777,7 @@ export async function processAmbiguousResponse(userProfile, message) {
     const pending = await getPendingConfirmation(userProfile.userId);
     if (pending) {
       const updatedData = { ...pending, ambiguousAttempts };
-      await setPendingConfirmation(userProfile.userId, updatedData, pending.expiresAt);
+      await savePendingConfirmation(userProfile.userId, updatedData);
     }
   } catch (err) {
     console.error('[Confirmation] Error actualizando contador:', err);

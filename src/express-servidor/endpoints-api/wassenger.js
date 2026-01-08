@@ -1791,7 +1791,7 @@ Responde con la presentación del ecosistema siguiendo el formato EXACTO del sys
         // 🔥 LLAMADA DEDICADA a OpenAI con prompt mini
         try {
           const dedicatedReply = await complete(dedicatedPrompt, {
-            temperature: 0.3, // Baja temperatura para consistencia
+            temperature: isCasualGreeting ? 0.8 : 0.5, // Alta para saludos variados, moderada para ecosistema
             max_tokens: isIdentityQuestion ? 400 : 100, // Más tokens para ecosistema
             system: dedicatedSystemPrompt
           });

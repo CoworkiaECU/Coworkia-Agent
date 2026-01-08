@@ -1,425 +1,414 @@
 # 🤖 Coworkia Agent
 
-Sistema de agente conversacional inteligente con múltiples personalidades para gestión de coworking, ventas, seguros y marketing. Integrado con WhatsApp vía Wassenger y OpenAI GPT-4.
+Sistema de agente conversacional multi-personalidad para Coworkia Business Center. Integración WhatsApp (Wassenger) + OpenAI GPT-4o-mini + PostgreSQL en Heroku.
 
-**Versión Actual**: v193 (16 Nov 2025)
+**Versión Actual**: v315 (Enero 2026)  
+**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado
 
 [![Heroku](https://img.shields.io/badge/deployed-heroku-430098)](https://coworkia-agent-e97d15dac56f.herokuapp.com/)
-[![Tests](https://img.shields.io/badge/tests-160%2F167%20passing-success)](src/__tests__)
-[![Node](https://img.shields.io/badge/node-20.x-brightgreen)](package.json)
-[![Features](https://img.shields.io/badge/features-múltiples%20reservas-blue)](documentacion/ESTADO_ACTUAL.md)
+[![Security](https://img.shields.io/badge/vulnerabilities-0-success)](package.json)
+[![Node](https://img.shields.io/badge/node-24.x-brightgreen)](package.json)
+[![Database](https://img.shields.io/badge/database-PostgreSQL-blue)](src/database/postgres-adapter.js)
 
 ---
 
-## 🌟 **Características Principales**
+## 🌟 Características Principales
 
-### 💬 **Sistema Multi-Agente Inteligente**
-- **4 Agentes Especializados**: Aurora, Aluna, Adriana, Enzo
-- **Cambio Contextual**: Transición inteligente entre agentes según necesidades
-- **Memoria Conversacional**: Mantiene contexto de usuario e historial completo
-- **Reconocimiento Recurrente**: Detecta usuarios previos automáticamente
+### 💬 Sistema Multi-Agente (7 Especialistas)
+- **Aurora** - Recepcionista Coworkia (secretaria central)
+- **Axel** - The PaintBull (enderezada y pintura automotriz)
+- **Enzo** - MarketingLab (marketing digital e IA)
+- **Adriana** - SegPopular (seguros)
+- **Aluna** - Membresías Coworkia
+- **Ángela** - MedBeneficios (salud y bienestar)
+- **Gabi** - Finanzas, RRHH y Legal (NEW)
 
-### 🎫 **Múltiples Reservas en Una Transacción (v193)** 🆕
-- **Detección inteligente**: "quiero hacer 2 reservas más"
-- **Ticket consolidado**: Resumen con todas las reservas
-- **Cálculo automático**: Total + opciones de pago (transferencia vs tarjeta +5%)
-- **Transcripción de comprobantes**: Vision API extrae y confirma datos
-- **Ejemplo:**
-  ```
-  📋 RESUMEN:
-  1️⃣ Mar 18 nov - Hot Desk (solo tú) = GRATIS 🎉
-  2️⃣ Jue 20 nov - Hot Desk (2 personas) = $20
-  3️⃣ Vie 21 nov - Sala (3 personas) = $29
-  💰 TOTAL: $49 | Tarjeta: $51.45 (+5%)
-  ```
+### 🎯 Handoffs Inteligentes
+- Mención explícita: `@axel`, `@enzo`, `@adriana`, etc.
+- Detección contextual automática
+- Memoria conversacional preservada
+- Transiciones fluidas entre agentes
 
-### 📝 **Formulario Inteligente de Reservas**
-- Detecta datos en **cualquier orden** del mensaje
-- Recuerda información parcial entre mensajes (TTL 15 min)
-- Validación **timezone-aware** Ecuador (UTC-5)
-- **Parsing inteligente de fechas**: "mañana", "lunes", "15/11"
-- Upsell automático: 3+ personas → sugerencia sala reunión
-- **Cálculo por persona**: Hot Desk $10/persona, Sala $29 fija
+### 🗄️ Base de Datos PostgreSQL
+- 7 tablas optimizadas (users, reservations, interactions, etc.)
+- Foreign keys e índices configurados
+- Retención automática: 30 días (interacciones)
+- Cron job diario de limpieza (3:00 AM)
+- 9.3 MB / 1 GB (saludable)
 
-### 📸 **Verificación Inteligente de Pagos (v193)** 🆕
-- **Vision API**: Extrae monto, fecha, método, referencia
-- **Transcripción automática**: Confirma datos antes de procesar
-- **Validación de monto**: Compara vs total esperado
-- **Asociación múltiple**: Un pago para varias reservas
+### 🔒 Seguridad Robusta
+- Webhook HMAC SHA-256 validation
+- Rate limiting: 10 requests/min por usuario
+- Timing-safe comparisons
+- 0 vulnerabilities npm (audit clean)
 
-### ⚡ **Sistema Robusto**
-- **Circuit Breakers**: OpenAI + Wassenger
-- **Cron Jobs**: Limpieza automática, recordatorios
-- **Task Queue**: Procesamiento inline eficiente
-- **SQLite**: Base de datos persistente
-- **Campaign Detection**: Meta campaigns con flujo automático
-
-### 🧪 **Testing Completo**
-- 149 tests unitarios (100%)
-- 11 tests E2E (flujo completo reservas)
-- **160/167 tests passing** (95.8%)
-- Tests de múltiples reservas y transcripción
+### 🌍 Multi-idioma
+- Español (default)
+- English
+- Detección automática de idioma
+- Comandos: `/lang es`, `/lang en`
 
 ---
 
-## 👥 **Agentes Disponibles**
+## 👥 Agentes Disponibles
 
-### 🌟 **Aurora** - Recepcionista Coworkia
-**Activación:** Por defecto (bot principal)
+### 🌟 Aurora - Recepcionista Coworkia
+Coordinadora central del Business Center.
 
 **Funciones:**
-- 📅 **Reservas simples y múltiples**: Hot Desk y Salas de Reunión
-- 🎫 **Ticket consolidado**: Múltiples reservas en una transacción
-- 💳 **Verificación de pagos**: Vision API + transcripción automática
-- 🎁 **Gestión día gratis**: Primera visita GRATIS (solo Hot Desk)
-- 👥 **Cálculo por persona**: $10/persona Hot Desk, $29 Sala fija
-- 🔄 **Reconocimiento recurrente**: Detecta visitas previas + historial
-- ⏰ **Validación horarios**: 7am-8pm Ecuador (UTC-5)
-- 📧 **Confirmaciones por email**: Con detalles de pago
-- 📆 **Integración Google Calendar**: Eventos automáticos
-
-**Ejemplos:**
-
-**Reserva Simple:**
-```
-Usuario: "Necesito hot desk mañana a las 2pm"
-Aurora: "¡Perfecto! Te reservo hot desk para [fecha] 14:00-16:00..."
-```
-
-**Múltiples Reservas:**
-```
-Usuario: "quiero hacer 3 reservas"
-Aurora: "Perfecto! Voy a agendarte 3 reservas. 
-         Reserva 1: ¿Qué día y hora?"
-Usuario: "martes 18 a las 10am, jueves 20 a las 3pm, viernes 21 a las 11am"
-Aurora: [Genera ticket consolidado con total y opciones de pago]
-```
-
-**Transcripción de Comprobante:**
-```
-Usuario: [Envía imagen de comprobante]
-Aurora: "📸 He registrado:
-         💵 Monto: $49.00
-         📅 Fecha: 15 nov 2025
-         💳 Método: Transferencia Bancuador
-         🔢 Referencia: 1234567890
-         ¿Los datos son correctos?"
-```
-
----
-
-### 💼 **Aluna** - Closer de Ventas
-**Activación:** Menciona "plan mensual", "membresía"
-
-**Funciones:**
-- 🎯 Planes mensuales: $199 (10 visitas) y $349 (20 visitas)
-- 🏢 Oficinas ejecutivas y virtuales
-- 💰 Cierre de ventas y seguimiento
-- 📊 Argumentación de valor
+- 📅 Reservas Hot Desk y Salas
+- 🎁 Primera visita gratis
+- 👥 Cálculo por persona
+- 📧 Confirmaciones email
+- 📆 Google Calendar sync
 
 **Ejemplo:**
 ```
-Usuario: "Quiero un plan mensual"
-Aluna: "¡Excelente decisión! Tenemos dos planes..."
+Usuario: "Necesito hot desk mañana 2pm"
+Aurora: "¡Perfecto! Te reservo..."
 ```
 
 ---
 
-### 🛡️ **Adriana** - Broker de Seguros (Segpopular S.A.)
-**Activación:** `@adriana` o menciona "seguro"
+### 🎨 Axel - The PaintBull
+Especialista en enderezada, pintura y colisiones vehiculares.
+
+**Activación:** `@axel` o "daños auto", "pintura"
 
 **Funciones:**
-- 🚗 Seguros de vehículos
-- 🏠 Seguros contra incendio
-- ❤️ Seguros de vida
-- 💼 17 años de experiencia
-- 📋 Cotizaciones personalizadas
+- 📸 Análisis visual de daños (Vision API)
+- 💰 Cotización con rangos referenciales
+- 🔍 Detección daños ocultos
+- ⚖️ Disclaimers legales
+- 🎯 15 años experiencia
+
+**Tarifas Referenciales:**
+- Rayones leves: $50-100
+- Abolladuras: $150-300
+- Pintura completa: $800-1500
+- Enderezada pesada: $1000-2000
 
 **Ejemplo:**
 ```
-Usuario: "@adriana necesito seguro para mi auto"
-Adriana: "¡Con gusto te ayudo! Para cotizar tu seguro vehicular..."
+Usuario: "@axel tengo un rayón en la puerta"
+Axel: "📸 ¿Puedes enviar fotos? Necesito ver:
+- Rayón de cerca
+- Panel completo..."
 ```
 
 ---
 
-### 🚀 **Enzo** - Experto en Marketing & IA
-**Activación:** `@enzo` o menciona "marketing", "IA"
+### 🚀 Enzo - MarketingLab
+Experto en marketing digital e implementación de IA.
+
+**Activación:** `@enzo` o "marketing", "IA"
 
 **Funciones:**
-- 📱 Estrategias marketing digital
-- 🤖 Implementación de IA
-- 🎯 Automatización de procesos
-- 📊 Campañas para mercado Ecuador
-- 💡 Consultoría tecnológica
+- 📱 Estrategias digitales
+- 🤖 Automatización IA
+- 📊 Campañas Ecuador
+- 💡 Consultoría tech
+- 🎯 ROI optimización
 
 **Ejemplo:**
 ```
 Usuario: "@enzo cómo mejoro mi presencia digital"
-Enzo: "¡Gran pregunta! Primero analicemos tu situación actual..."
+Enzo: "¡Gran pregunta! Analicemos tu situación actual..."
 ```
 
 ---
 
-## 🏗️ **Arquitectura del Sistema**
+### 🛡️ Adriana - SegPopular
+Broker de seguros (Segpopular S.A.)
+
+**Activación:** `@adriana` o "seguro"
+
+**Funciones:**
+- 🚗 Seguros vehículos
+- 🏠 Seguros incendio
+- ❤️ Seguros vida
+- 💼 17 años experiencia
+- 📋 Cotizaciones
+
+**Ejemplo:**
+```
+Usuario: "@adriana necesito seguro para mi auto"
+Adriana: "¡Con gusto! Para cotizar..."
+```
+
+---
+
+### 💼 Aluna - Membresías
+Closer de ventas para planes mensuales.
+
+**Activación:** "plan mensual", "membresía"
+
+**Funciones:**
+- 🎯 Planes $199 / $349
+- 🏢 Oficinas virtuales
+- 💰 Cierre ventas
+- 📊 Argumentación valor
+
+---
+
+### ❤️ Ángela - MedBeneficios
+Especialista en salud y bienestar corporativo.
+
+**Activación:** `@angela` o "salud", "bienestar"
+
+**Funciones:**
+- 🏥 Planes salud empresariales
+- 💊 Medicina preventiva
+- 🧘 Programas bienestar
+- 📊 Check-ups corporativos
+
+---
+
+### 💼 Gabi - Finanzas, RRHH y Legal (NEW)
+Experta administrativa para empresas del Business Center.
+
+**Activación:** `@gabi` o "finanzas", "nómina", "legal"
+
+**Funciones:**
+- 💰 Gestión financiera/contable
+- 👥 RRHH y nómina
+- ⚖️ Asesoría legal
+- 📋 Compliance
+- 🏢 Admin empresas aliadas
+
+**Empresas que atiende:**
+- MarketingLab (@enzo)
+- SegPopular (@adriana)
+- The PaintBull (@axel)
+- MedBeneficios (@angela)
+- Coworkia (@aurora)
+
+**Ejemplo:**
+```
+Usuario: "@gabi cómo calculo la nómina"
+Gabi: "Para la gestión de nómina incluye:
+💰 Cálculo nómina, décimos 13º/14º..."
+```
+
+---
+
+## 🏗️ Arquitectura
 
 ```
 src/
-├── servicios/                    # Lógica de negocio
-│   ├── aurora-confirmation-helper.js   # Flujo reservas Aurora
-│   ├── partial-reservation-form.js     # Formulario inteligente
-│   ├── calendario.js                   # Disponibilidad + timezone
-│   ├── payment-verification.js         # Verificación pagos
-│   ├── email.js                        # Notificaciones Gmail
-│   └── google-calendar.js              # Integración Calendar
-├── cerebro/                      # Motor multi-agente
-│   ├── orquestador.js                  # Coordinación agentes
-│   ├── detectar-intencion.js           # NLP intenciones
-│   └── personalidades/                 # 4 agentes
-├── database/                     # Persistencia
-│   ├── database.js                     # SQLite setup
-│   ├── reservationRepository.js
-│   └── userRepository.js
-├── express-servidor/             # API REST
-│   └── endpoints-api/
-│       ├── wassenger.js                # Webhook WhatsApp
-│       ├── health.js                   # Monitoreo
-│       └── chat.js                     # API pública
-└── __tests__/                    # Testing
-    ├── *.test.js                       # 149 unitarios
-    └── e2e-reservation-flow.test.js    # 11 E2E
+├── deteccion-intenciones/
+│   ├── orquestador.js              # Coordinador multi-agente
+│   ├── aurora.js                   # Recepcionista (212 líneas)
+│   ├── axel.js                     # The PaintBull (245 líneas) ✨ OPTIMIZADO
+│   ├── enzo.js                     # MarketingLab
+│   ├── adriana.js                  # SegPopular
+│   ├── aluna.js                    # Membresías
+│   ├── angela.js                   # MedBeneficios
+│   └── gabi.js                     # Finanzas/RRHH/Legal (92 líneas) ✨ OPTIMIZADO
+├── database/
+│   ├── postgres-adapter.js         # PostgreSQL wrapper
+│   ├── userRepository.js
+│   └── reservationRepository.js
+├── servicios/
+│   ├── cron-scheduler.js           # Limpieza automática
+│   ├── email.js                    # Gmail notifications
+│   └── google-calendar.js
+├── servicios-ia/
+│   └── openai.js                   # GPT-4o-mini client
+└── express-servidor/
+    ├── middleware/
+    │   └── webhook-security.js     # HMAC validation
+    └── endpoints-api/
+        └── wassenger.js            # WhatsApp webhook
 ```
 
 ---
 
-## 🚀 **Deploy y Configuración**
+## 🚀 Deploy Heroku
 
-### **Requisitos**
-- Node.js 20.x
-- Cuenta Heroku
+### Requisitos
+- Node.js 24.x
+- PostgreSQL (Heroku Postgres)
 - OpenAI API Key
 - Wassenger Account
-- Gmail App Password (opcional)
-- Google Calendar API (opcional)
 
-### **Variables de Entorno**
+### Variables de Entorno
 
 ```bash
+# Database
+DATABASE_URL=postgresql://...  # Auto-configurado por Heroku
+
 # OpenAI
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
 
-# Wassenger (WhatsApp)
+# Wassenger
 WASSENGER_TOKEN=...
 WASSENGER_DEVICE_ID=...
+WASSENGER_WEBHOOK_SECRET=...  # HMAC signature
 
-# Opcional: Email
-GMAIL_USER=your@gmail.com
+# Opcional
+GMAIL_USER=...
 GMAIL_APP_PASSWORD=...
-
-# Opcional: Google Calendar
 GOOGLE_CALENDAR_ID=...
-GOOGLE_CALENDAR_CREDENTIALS={"type":"service_account",...}
-
-# Debug (desarrollo)
-DEBUG=true
-DEBUG_EMAIL=true
+DEBUG_MODE=false
 ```
 
-### **Deploy Heroku**
+### Comandos
 
 ```bash
-# 1. Clonar repo
-git clone https://github.com/CoworkiaECU/Coworkia-Agent.git
-cd Coworkia-Agent
-
-# 2. Login Heroku
-heroku login
-
-# 3. Crear app
-heroku create coworkia-agent
-
-# 4. Configurar variables
-heroku config:set OPENAI_API_KEY=sk-...
-heroku config:set WASSENGER_TOKEN=...
-heroku config:set WASSENGER_DEVICE_ID=...
-heroku config:set NODE_ENV=production
-
-# 5. Deploy
+# Deploy
 git push heroku main
 
-# 6. Ver logs
+# Logs
 heroku logs --tail
 
-# 7. Verificar health
-curl https://coworkia-agent.herokuapp.com/health
+# Auditoría DB
+heroku run "node scripts/audit-database.js" --app coworkia-agent
+
+# Limpieza manual
+heroku run "node scripts/cleanup-obsolete-tables.js" --app coworkia-agent
+
+# Health check
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
 ```
-
-### **Configurar Webhook Wassenger**
-
-1. Ir a Wassenger Dashboard
-2. Settings → Webhooks
-3. URL: `https://your-app.herokuapp.com/webhooks/wassenger`
-4. Eventos: `message:in:new`
-5. Test Connection ✅
 
 ---
 
-## 📊 **Endpoints API**
+## 📊 Endpoints API
 
-### **Health & Monitoreo**
+### Health & Monitoreo
 
 ```bash
 # Health básico
 GET /health
-→ { "ok": true, "ai": "ready" }
+→ { "ok": true, "status": "healthy" }
 
 # Health detallado
 GET /health/system
-→ { health, circuitBreakers, database, scheduler }
-
-# Estadísticas pagos (v121)
-GET /health/payment-stats
-→ { totalVerified, pendingPayments, successRate, paymentMethods }
-
-# Colas y tareas
-GET /health/queues
-→ { taskQueue, pendingReservations, cronJobs }
+→ { database, scheduler, circuitBreakers }
 ```
 
-### **Webhook WhatsApp**
+### Webhook WhatsApp
 
 ```bash
-# Wassenger webhook
+# Wassenger webhook (protegido con HMAC)
 POST /webhooks/wassenger
-Body: { event, data: { fromNumber, body } }
-→ Procesamiento automático + respuesta
+Headers: { "x-webhook-signature": "sha256=..." }
+Body: { event, data: { from, body } }
+→ Procesamiento automático
 ```
 
-### **Chat API (Público)**
+---
+
+## 🗄️ Base de Datos
+
+### Tablas Activas (7)
+
+1. **users** - Perfiles de usuarios
+2. **reservations** - Reservas Coworkia
+3. **interactions** - Log conversaciones (retención 30 días)
+4. **pending_confirmations** - Confirmaciones pendientes
+5. **reservation_state** - Estado reservas
+6. **partial_forms** - Formularios cancelados
+7. **conversation_history** - Historial completo
+
+### Cron Jobs
 
 ```bash
-# Enviar mensaje
-POST /api/chat
-Body: { phoneNumber, message, agentType? }
-→ { response, agent, context }
+# Limpieza confirmaciones expiradas (cada 2h)
+cleanupExpiredConfirmations()
+
+# Limpieza interacciones >30 días (diario 3:00 AM)
+cleanupOldInteractions({ retentionDays: 30 })
+
+# Follow-up automático (cada hora 6am-10pm)
+processFollowUps()
 ```
 
 ---
 
-## 🧪 **Testing**
+## 🛠️ Scripts Disponibles
+
+### Auditoría
 
 ```bash
-# Todos los tests
-npm test
+# Auditoría completa PostgreSQL
+node scripts/audit-database.js
 
-# Solo E2E
-npm test e2e-reservation-flow
+# Auditar reservas
+node scripts/audit-reservations.js
 
-# Con cobertura
-npm test:coverage
-
-# Watch mode
-npm test:watch
+# Ver reservas usuario
+node scripts/check-user-reservations.js
 ```
 
-**Cobertura Actual:**
-- ✅ 149/149 tests unitarios
-- ✅ 11/18 tests E2E
-- 📊 **95.8% passing** (160/167)
-
----
-
-## 🛠️ **Scripts Disponibles**
+### Limpieza
 
 ```bash
-# Desarrollo
-npm run dev              # Nodemon con hot-reload
+# Limpiar datos expirados
+node scripts/cleanup-expired-data.js
 
-# Producción
-npm start                # Node directo
+# Limpiar tablas obsoletas
+node scripts/cleanup-obsolete-tables.js
 
-# Testing
-npm test                 # Jest tests
-npm run test:watch       # Watch mode
-
-# Database
-npm run backup           # Backup SQLite
-npm run backup:list      # Listar backups
-
-# Mantenimiento
-npm run cleanup          # Limpia datos expirados
-npm run cleanup:dry-run  # Simula limpieza
-npm run audit            # Auditoría reservas
-
-# Reservas
-npm run reservations     # Gestionar reservas manual
+# Reset completo DB (¡CUIDADO!)
+node scripts/clear-database.js
 ```
+
+### Gestión
+
+```bash
+# Gestionar reservas
+node scripts/manage-reservations.js
+
+# Reset usuario específico
+node scripts/reset-user-temp.js
+```
+
+Ver [scripts/README.md](scripts/README.md) para lista completa.
 
 ---
 
-## 📈 **Historial de Versiones Recientes**
+## 📈 Historial de Versiones
 
-### **v120 - Logs Limpios** (Nov 12, 2025)
-- ✅ DEBUG logs condicionales (process.env.DEBUG)
-- ✅ Producción sin logs innecesarios
-- ✅ email.js debug condicional
+### v315 (Enero 2026) - Limpieza DB ✨
+- ✅ Retención 30 días (antes 90)
+- ✅ Eliminadas tablas obsoletas (form_data, just_confirmed)
+- ✅ -370 interacciones antiguas
+- ✅ Script audit-database.js
 
-### **v121 - Payment Stats + E2E Fix** (Nov 12, 2025)
-- ✅ getPaymentVerificationStats() con BD real
-- ✅ Endpoint /health/payment-stats
-- ✅ Tests E2E ejecutándose (11/18 passing)
+### v314 (Enero 2026) - Auditoría completa
+- ✅ Script auditoría PostgreSQL
+- ✅ Análisis estructura, índices, foreign keys
+- ✅ Detección issues automática
 
-### **v117-v119 - Sistema Completo** (Nov 11, 2025)
-- ✅ Timezone-aware Ecuador (UTC-5)
-- ✅ suggestAlternativeSlots con reservas reales
-- ✅ Script audit-reservations.js
-- ✅ 18 tests E2E creados
+### v313 (Enero 2026) - Seguridad + Deps ✨
+- ✅ Webpack security endurecido
+- ✅ 7 → 0 vulnerabilidades npm
+- ✅ Axel optimizado: 429 → 245 líneas (-43%)
+- ✅ Gabi optimizado: 292 → 92 líneas (-68%)
+- ✅ .env consolidation: 5 → 3 archivos
 
-### **v112-v116 - Formulario Inteligente** (Nov 10-11, 2025)
-- ✅ Formulario parcial persistente (TTL 15 min)
-- ✅ Detección datos en cualquier orden
-- ✅ Upsell automático 3+ personas
-- ✅ 149/149 tests unitarios passing
-
----
-
-## 📝 **Funcionalidades Destacadas**
-
-### **Formulario Inteligente**
-```javascript
-// Usuario puede enviar datos en CUALQUIER orden
-"hot desk mañana"           → Detecta: spaceType, date
-"para 3 personas"           → Detecta: numPeople (trigger upsell)
-"a las 2pm"                 → Detecta: time
-"test@email.com"            → Detecta: email
-// ✅ Formulario completo → Validación automática
-```
-
-### **Validación Timezone-aware**
-```javascript
-// Ecuador UTC-5 - Rechaza horarios pasados
-checkAvailability('2025-11-12', '08:00', 2, 'hotDesk')
-// Si son las 9am Ecuador → { available: false, reason: 'Ese horario ya pasó' }
-```
-
-### **Upsell Automático**
-```javascript
-// Usuario dice: "para 4 personas"
-// Sistema detecta: numPeople >= 3
-// Aurora sugiere: "¿Qué tal una sala de reunión privada? Más cómodo..."
-```
-
-### **Circuit Breakers**
-```javascript
-// OpenAI falla 3 veces → Circuit OPEN
-// Wassenger timeout → Circuit HALF-OPEN
-// Sistema se recupera automáticamente
-```
+### v312 (Diciembre 2025) - Orquestador refactor
+- ✅ Orquestador ejecuta PRIMERO
+- ✅ Handoffs limpios sin duplicación
+- ✅ Arquitectura optimizada
 
 ---
 
-## 🔧 **Desarrollo Local**
+## 📚 Documentación
+
+- **[documentacion/README.md](documentacion/README.md)** - Índice completo documentación
+- **[scripts/README.md](scripts/README.md)** - Índice scripts disponibles
+- **[documentacion/SISTEMA_HANDOVERS.md](documentacion/SISTEMA_HANDOVERS.md)** - Multi-agente
+- **[documentacion/SISTEMA_MULTIIDIOMA.md](documentacion/SISTEMA_MULTIIDIOMA.md)** - ES/EN
+- **[documentacion/WASSENGER_SETUP.md](documentacion/WASSENGER_SETUP.md)** - WhatsApp setup
+- **[documentacion/CONEXION_HEROKU.md](documentacion/CONEXION_HEROKU.md)** - Deploy Heroku
+
+---
+
+## 🔧 Desarrollo Local
 
 ```bash
 # 1. Clonar e instalar
@@ -427,51 +416,34 @@ git clone https://github.com/CoworkiaECU/Coworkia-Agent.git
 cd Coworkia-Agent
 npm install
 
-# 2. Configurar .env
-cp .env.example .env
-# Editar .env con tus keys
+# 2. Configurar .env.local
+cp .env.example .env.local
+# Editar con tus keys
 
-# 3. Iniciar desarrollo
+# 3. Iniciar
 npm run dev
-# Servidor: http://localhost:3000
+# → http://localhost:3000
 
-# 4. Exponer con ngrok (testing WhatsApp)
+# 4. Testing WhatsApp (opcional)
 ngrok http 3000
 # Copiar URL → Wassenger webhook
 ```
 
 ---
 
-## 📚 **Documentación Adicional**
+## 📞 Contacto
 
-- [LISTA_TAREAS.md](documentacion/LISTA_TAREAS.md) - Roadmap completo
-- [WASSENGER_SETUP.md](documentacion/WASSENGER_SETUP.md) - Configuración WhatsApp
-- [GOOGLE_CALENDAR_SETUP.md](documentacion/GOOGLE_CALENDAR_SETUP.md) - Integración Calendar
-- [GMAIL_SETUP.md](documentacion/GMAIL_SETUP.md) - Configuración email
-
----
-
-## 📞 **Soporte y Contacto**
-
-- **Repositorio:** [github.com/CoworkiaECU/Coworkia-Agent](https://github.com/CoworkiaECU/Coworkia-Agent)
-- **Issues:** [GitHub Issues](https://github.com/CoworkiaECU/Coworkia-Agent/issues)
+- **Desarrollador:** Diego Villota
 - **Email:** yo@diegovillota.com
+- **GitHub:** [CoworkiaECU/Coworkia-Agent](https://github.com/CoworkiaECU/Coworkia-Agent)
 
 ---
 
-## 📄 **Licencia**
+## 📄 Licencia
 
-MIT License - Ver [LICENSE](LICENSE) para más detalles.
-
----
-
-## 🙏 **Agradecimientos**
-
-- OpenAI GPT-4 - Motor conversacional
-- Wassenger - Integración WhatsApp
-- Heroku - Hosting y deploy
-- Jest - Framework de testing
+MIT License
 
 ---
 
-**Desarrollado con ❤️ por Diego Villota para Coworkia Ecuador** 🇪🇨
+**Desarrollado con ❤️ para Coworkia Business Center** 🇪🇨  
+Sistema demo de ventas - Enero 2026

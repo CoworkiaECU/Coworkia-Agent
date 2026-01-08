@@ -245,7 +245,8 @@ export function calculateReservationPrice(serviceType, numPeople = 1, wasFree = 
   if (wasFree) return 0;
   
   if (serviceType === 'hotDesk') {
-    return numPeople * 10; // $10 por persona
+    // Hot Desk es INDIVIDUAL - solo 1 persona, precio fijo $10
+    return 10;
   } else if (serviceType === 'meetingRoom') {
     return 29; // $29 fijo por sala
   }

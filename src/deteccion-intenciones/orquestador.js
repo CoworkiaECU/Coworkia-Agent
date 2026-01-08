@@ -564,7 +564,16 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
       lineas.push(`\n⚠️ Si usuario pide "link de pago" o "cómo pago", enviar INMEDIATAMENTE el link sin reiniciar flujo.`);
     }
     
-    lineas.push(`\n📋 Si usuario pregunta "¿qué reservas tengo?" o "cuántas reservas tengo?", responde EXACTAMENTE así:`);
+    lineas.push(`\n� REGLA CRÍTICA - NO MENCIONAR RESERVAS EN SALUDOS CASUALES:`);
+    lineas.push(`- ⛔ NO menciones las reservas automáticamente en saludos como "hola", "buenos días", "qué tal", etc.`);
+    lineas.push(`- ⛔ NO seas invasiva recordando citas que el usuario no pidió ver`);
+    lineas.push(`- ✅ SOLO menciona reservas cuando:`);
+    lineas.push(`  1. Usuario pregunta explícitamente: "¿qué reservas tengo?", "cuándo es mi cita?", "tengo algo agendado?"`);
+    lineas.push(`  2. Usuario solicita nueva reserva y hay conflicto de horario`);
+    lineas.push(`  3. Usuario solicita link de pago o pregunta cómo pagar`);
+    lineas.push(`- ✅ Para saludos casuales, responde naturalmente SIN mencionar reservas: "¡Hola! ¿En qué puedo ayudarte hoy?" 😊`);
+    
+    lineas.push(`\n�📋 Si usuario pregunta "¿qué reservas tengo?" o "cuántas reservas tengo?", responde EXACTAMENTE así:`);
     lineas.push(`"Tienes ${perfil.upcomingReservations.length} reserva${perfil.upcomingReservations.length > 1 ? 's' : ''} confirmada${perfil.upcomingReservations.length > 1 ? 's' : ''}: 📅\n\n" + [lista con formato]`);
     lineas.push(`\nFORMATO DE LISTA (usa emojis y líneas separadas):`);
     lineas.push(`${perfil.upcomingReservations.length === 1 ? '"' : ''}📅 [Fecha]\n⏰ [Hora inicio] - [Hora fin]\n🏢 [Tipo de espacio]${perfil.upcomingReservations.length === 1 ? '\n💰 [Precio o GRATIS]"' : ''}`);

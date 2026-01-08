@@ -665,10 +665,13 @@ export async function processNegativeConfirmation(userProfile, message = '') {
   // Detectar si quiere cambiar o realmente cancelar
   const wantsToModify = isModificationRequest(message);
   
-  // Limpiar confirmación pendiente
+  // Limpiar confirmación pendiente (perfil en memoria)
   await updateUser(userProfile.userId, {
     pendingConfirmation: null
   });
+  
+  // Limpiar confirmación pendiente (DB PostgreSQL)
+  await clearPendingConfirmation(userProfile.userId);
   
   // Marcar que acaba de cancelar para evitar re-procesamiento de campañas
   try {

@@ -9,30 +9,32 @@ export const CAMPAIGN_PROMPTS = {
   // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
   PROBAR_SERVICIO: {
     trigger: "quiero probar el servicio",
-    response: `¡Hola {nombre}! 👋🏼 Soy Aurora, la recepcionista de Coworkia.
+    response: `¡Hola {nombre}! 👋🏼 Soy Aurora, déjame coordinar tu espacio de inmediato.
 
-¿Qué espacio te gustaría?
+¿Qué prefieres?
 
-📍 Hot Desk
+📍 Hot Desk (2 horas gratis en tu primera visita 🎁)
 🏢 Sala de Reuniones (3-4 personas, $29 por 2h)
 
-Dime cuál prefieres y te doy más detalles 😊`
+Dime cuál te interesa y agendamos 😊`
   },
 
   // Mensaje 2: ¡Hola coWorkia! Quiero un espacio privado, con locker propio y pago mensual
   ESPACIO_PRIVADO_MENSUAL: {
     trigger: "espacio privado.*locker.*mensual",
-    response: `¡Hola {nombre}, soy Aurora! 👩🏼‍💼✨
+    response: `¡Hola {nombre}! Soy Aurora 👋🏼
 
-Perfecto, entiendo que buscas un espacio privado con todo incluido. Para planes mensuales con locker, te puedo conectar con *Aluna*, ella es nuestra especialista en membresías y te va a dar todos los detalles 👱🏼‍♀️
+Entiendo que buscas un espacio privado con locker y membresía mensual.
 
-Si prefieres, también puedes probar el espacio primero antes de decidirte.
+Para planes con todo incluido, te conecto con *Aluna* 📋, nuestra especialista en membresías.
+
+O si prefieres, puedes conocer el espacio primero (tu primera visita es gratis 🎁).
 
 ¿Qué prefieres?
 • Hablar con Aluna sobre planes mensuales
-• Conocer el espacio primero (dime cuándo quieres venir)
+• Agendar una visita para conocer el espacio
 
-Como gustes, estoy para ayudarte 😊`
+Dime y coordinamos 😊`
   }
 };
 

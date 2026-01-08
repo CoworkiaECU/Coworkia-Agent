@@ -1709,8 +1709,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     
     if (resultado.agenteKey === 'AURORA') {
       // 🎯 POST-PROCESAMIENTO: Filtrar ofertas de servicios si es saludo casual o pregunta de identidad
-      const isCasualGreeting = intencion.flags?.casualGreeting === true;
-      const isIdentityQuestion = intencion.flags?.identityQuestion === true;
+      const isCasualGreeting = resultado.metadata?.casualGreeting === true;
+      const isIdentityQuestion = resultado.metadata?.identityQuestion === true;
       
       if (isCasualGreeting || isIdentityQuestion) {
         console.log(`[WASSENGER] 🛡️ POST-PROCESAMIENTO: ${isCasualGreeting ? 'saludo casual' : 'pregunta identidad'} detectado`);

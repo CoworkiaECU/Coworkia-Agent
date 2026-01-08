@@ -865,7 +865,7 @@ Responde en tu estilo característico con:
       }
     }
     
-    const profile = {
+    let profile = {
       ...current,
       userId,
       name: detectedName,
@@ -1173,7 +1173,7 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
           await new Promise(resolve => setTimeout(resolve, 2000));
           
           // Recargar perfil actualizado post-confirmación
-          profile = await loadProfile(userId, data.data.fromNumber.name || data.data.senderName);
+          profile = await loadProfile(userId, data.chat?.name || data.contact?.name || data.fromName || name);
           conversationHistory = await loadConversationHistory(userId);
           
           // Procesar el contexto adicional con Aurora (caerá al flujo normal más abajo)
@@ -1699,8 +1699,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       
       const updatedProfile = {
         ...profile,
-        firstVisit: false, // ✅ Ya no es primera visita después de que Aurora responda
-        conversationCount: (profile.conversationCount || 0) + 1 // Asegurar que se incremente
+        firstVisit: false // ✅ Ya no es primera visita después de que Aurora responda
+        // conversationCount ya se incrementó en línea 876, no duplicar
       };
       
       await saveProfile(userId, updatedProfile);

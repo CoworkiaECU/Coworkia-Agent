@@ -133,7 +133,16 @@ export function extractReservationData(message, userProfile) {
       // 🎯 CALCULAR endTime desde startTime + duración validada
       const startHour = parseInt(startTime.split(':')[0]);
       const startMinutes = parseInt(startTime.split(':')[1] || '0');
-      const endHour = startHour + durationHours;
+      let endHour = startHour + durationHours;
+      
+      // 🛡️ FIX: Validar desborde de día (ej: 23:30 + 2h → 01:30 del día siguiente)
+      if (endHour >= 24) {
+        endHour = endHour % 24; // Convertir 25:30 → 01:30
+        if (process.env.DEBUG === 'true') {
+          console.log('[DEBUG] ⚠️ Horario desbordaría día siguiente, ajustando a:', endHour);
+        }
+      }
+      
       endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
       
       if (process.env.DEBUG === 'true') {

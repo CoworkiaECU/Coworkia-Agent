@@ -1611,11 +1611,17 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       const activeAgent = profile.activeAgent || 'AURORA';
       const isSpecializedAgent = ['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent);
       
+      console.log(`[WASSENGER] 🤖 LLAMANDO A OPENAI - activeAgent: ${activeAgent}, isSpecialized: ${isSpecializedAgent}`);
+      
       reply = await complete(resultado.prompt, {
         temperature: isSpecializedAgent ? 0.7 : 0.4,  // Agentes especializados más creativos
         max_tokens: isSpecializedAgent ? 800 : 300,   // Agentes especializados sin límites
         system: resultado.systemPrompt
       });
+      
+      console.log(`[WASSENGER] ✅ RESPUESTA DE OPENAI RECIBIDA - length: ${reply?.length || 0}`);
+    } else {
+      console.log(`[WASSENGER] ⏭️ SKIP OPENAI - reply ya existe, length: ${reply?.length || 0}`);
     }
 
     // 💳 BYPASS DESHABILITADO - Aurora maneja el flujo completo con confirmación

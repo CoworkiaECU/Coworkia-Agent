@@ -425,7 +425,9 @@ export async function getOrCreateForm(userId, freeTrialUsed = false) {
         numPeople: (existing.guestCount || 0) + 1,  // guestCount → numPeople
         durationHours: existing.durationHours || 2,
         paymentMethod: existing.paymentMethod,
-        freeTrialUsed: existing.wasFree !== null ? existing.wasFree : freeTrialUsed
+        // Si wasFree existe (true/false), significa que ya hizo una reserva → trial usado
+        // Si wasFree es null, usar valor actual de freeTrialUsed del perfil
+        freeTrialUsed: existing.wasFree !== null ? true : freeTrialUsed
       };
       
       console.log('[FORM] ✅ Datos preservados:', Object.keys(formData).filter(k => formData[k]));

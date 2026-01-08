@@ -1588,12 +1588,16 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
                 console.log('[WASSENGER] 👋 Enviando despedida de:', agenteObj.nombre);
               }
               
-              const despedidaResult = await enviarWhatsApp(userId, agenteObj.mensajes.despedida);
+              // Reemplazar {nombre} con el nombre real del usuario
+              const userName = profile.whatsappDisplayName || profile.name || 'amigo';
+              const mensajeDespedida = agenteObj.mensajes.despedida.replace(/{nombre}/g, userName);
+              
+              const despedidaResult = await enviarWhatsApp(userId, mensajeDespedida);
               
               if (despedidaResult.ok) {
                 await saveConversationMessage(userId, {
                   role: 'assistant',
-                  content: agenteObj.mensajes.despedida,
+                  content: mensajeDespedida,
                   agent: activeAgent.toUpperCase() // Usar activeAgent key
                 });
 

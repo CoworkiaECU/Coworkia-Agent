@@ -596,8 +596,9 @@ export async function checkUserConflicts(userId, requestedDate, requestedTime, d
 
 /**
  * 💳 Actualiza información de pago de una reserva
+ * @param {boolean} autoConfirm - Si false, solo guarda payment info sin confirmar reserva
  */
-export async function updateReservationPayment(reservationId, paymentInfo) {
+export async function updateReservationPayment(reservationId, paymentInfo, autoConfirm = true) {
   try {
     const reservation = await reservationRepository.findById(reservationId);
     
@@ -610,7 +611,7 @@ export async function updateReservationPayment(reservationId, paymentInfo) {
       payment_reference: paymentInfo.reference || null,
       payment_amount: paymentInfo.amount || reservation.total_price,
       payment_date: paymentInfo.date || new Date().toISOString()
-    });
+    }, autoConfirm);
     
     return updated;
   } catch (error) {

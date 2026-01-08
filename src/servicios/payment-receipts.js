@@ -187,13 +187,13 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
     if (analysisResult.amount && isAmountValid) {
       console.log('[RECEIPT] ✅ Pago válido detectado, guardando info de pago...');
 
-      // Guardar información del pago PERO NO confirmar aún
+      // Guardar información del pago PERO NO confirmar aún (autoConfirm = false)
       const updatedReservation = await updateReservationPayment(pendingReservation.id, {
         paymentMethod: analysisResult.paymentMethod,
         reference: analysisResult.reference,
         amount: analysisResult.amount,
         date: new Date().toISOString()
-      });
+      }, false); // ⚠️ NO auto-confirmar, esperamos SI del usuario
 
       // NO limpiar pending confirmation - esperamos respuesta SI/NO del usuario
       // await clearPendingConfirmation(userProfile.userId); // COMENTADO

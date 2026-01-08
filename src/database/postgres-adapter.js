@@ -296,6 +296,80 @@ class PostgresAdapter {
       throw error;
     }
   }
+
+  /**
+   * 💾 Guardar confirmación pendiente
+   */
+  async savePendingConfirmation(userId, reservationData) {
+    await this.initialize();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Expira en 10 minutos
+    
+    try {
+      await this.run(
+        `INSERT INTO pending_confirmations (user_phone, reservation_data, expires_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_phone) 
+         DO UPDATE SET reservation_data = $2, expires_at = $3, created_at = CURRENT_TIMESTAMP`,
+        [userId, JSON.stringify(reservationData), expiresAt.toISOString()]
+      );
+      console.log('[POSTGRES] ✅ Confirmación pendiente guardada para:', userId);
+      return true;
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error guardando confirmación pendiente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 📖 Obtener confirmación pendiente
+   */
+  async getPendingConfirmation(userId) {
+    await this.initialize();
+    
+    try {
+      const row = await this.get(
+        `SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = ?`,
+        [userId]
+      );
+      
+      if (!row) {
+        return null;
+      }
+
+      // Verificar si expiró
+      const expiresAt = new Date(row.expires_at);
+      if (expiresAt < new Date()) {
+        // Expirada, eliminar
+        await this.clearPendingConfirmation(userId);
+        console.log('[POSTGRES] ⏰ Confirmación pendiente expirada y eliminada:', userId);
+        return null;
+      }
+
+      return JSON.parse(row.reservation_data);
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error obteniendo confirmación pendiente:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 🗑️ Limpiar confirmación pendiente
+   */
+  async clearPendingConfirmation(userId) {
+    await this.initialize();
+    
+    try {
+      await this.run(
+        `DELETE FROM pending_confirmations WHERE user_phone = ?`,
+        [userId]
+      );
+      console.log('[POSTGRES] 🗑️ Confirmación pendiente eliminada para:', userId);
+      return true;
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error eliminando confirmación pendiente:', error);
+      return false;
+    }
+  }
 }
 
 // Instancia singleton

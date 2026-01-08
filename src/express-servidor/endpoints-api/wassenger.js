@@ -1002,7 +1002,7 @@ Responde en tu estilo característico con:
       await saveConversationMessage(userId, {
         role: 'assistant',
         content: errorMessage,
-        agent: 'Aurora'
+        agent: 'AURORA'
       });
       
       // Limpiar el formulario para que pueda intentar otra fecha
@@ -1034,7 +1034,7 @@ Responde en tu estilo característico con:
 
     // 🚫 BLOQUEO: Si hay reservas con pago pendiente, no permitir nuevas reservas
     const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio'];
-    const isReservationIntent = reservationKeywords.some(kw => text.toLowerCase().includes(kw));
+    const isReservationIntent = reservationKeywords.some(kw => processedText.toLowerCase().includes(kw));
     
     if (isReservationIntent) {
       if (process.env.DEBUG_MODE === 'true') {
@@ -1090,7 +1090,7 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: blockMessage,
-          agent: 'Aurora'
+          agent: 'AURORA'
         });
         
         return res.json({ 
@@ -1159,7 +1159,7 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: confirmationResult.message,
-          agent: 'Aurora'
+          agent: 'AURORA'
         });
         
         // Si confirmó exitosamente Y tiene contexto adicional, continuar procesando con Aurora
@@ -1238,7 +1238,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       await saveConversationMessage(userId, {
         role: 'assistant',
         content: confirmationMsg,
-        agent: 'Aurora'
+        agent: 'AURORA'
       });
       
       if (process.env.DEBUG_MODE === 'true') {
@@ -1332,7 +1332,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: resendResult.message,
-          agent: 'Aurora'
+          agent: 'AURORA'
         });
         
         return res.json({ 
@@ -1421,7 +1421,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: handoffMessage,
-          agent: fromAgent // Usar el agente ACTUAL, no el detectado
+          agent: fromAgent.toUpperCase() // Normalizar a mayúsculas
         });
 
         if (process.env.DEBUG_MODE === 'true') {
@@ -1462,7 +1462,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: mensajeEntrada,
-          agent: nuevoAgente.nombre
+          agent: targetAgent.toUpperCase() // Usar key normalizada
         });
 
         if (process.env.DEBUG_MODE === 'true') {
@@ -1549,7 +1549,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
                 await saveConversationMessage(userId, {
                   role: 'assistant',
                   content: agenteObj.mensajes.despedida,
-                  agent: agenteObj.nombre
+                  agent: activeAgent.toUpperCase() // Usar activeAgent key
                 });
 
                 // Delay de 5 segundos
@@ -1690,7 +1690,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
-      agent: resultado.agente
+      agent: resultado.agenteKey
     });
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[WASSENGER] ✅ Mensaje guardado en historial');

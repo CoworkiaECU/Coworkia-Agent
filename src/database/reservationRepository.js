@@ -254,14 +254,21 @@ class ReservationRepository {
 
   /**
    * 💳 Marca reserva como pagada
+   * @param {boolean} autoConfirm - Si true, confirma automáticamente. Si false, solo guarda payment info
    */
-  async markAsPaid(reservationId, paymentData) {
-    return await this.update(reservationId, {
-      status: 'confirmed',
+  async markAsPaid(reservationId, paymentData, autoConfirm = true) {
+    const updates = {
       payment_status: 'paid',
-      payment_data: paymentData,
-      confirmed_at: new Date().toISOString()
-    });
+      payment_data: paymentData
+    };
+    
+    // Solo confirmar si autoConfirm es true (default para compatibilidad)
+    if (autoConfirm) {
+      updates.status = 'confirmed';
+      updates.confirmed_at = new Date().toISOString();
+    }
+    
+    return await this.update(reservationId, updates);
   }
 
   /**

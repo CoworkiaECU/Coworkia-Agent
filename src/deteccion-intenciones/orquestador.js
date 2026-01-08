@@ -124,7 +124,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // - Aurora: Recibe TODO (perfil, historial, reservas, formularios)
   // - Enzo/Adriana/Aluna: Solo nombre, historial de CONVERSACIÓN (no reservas)
   
-  const esAurora = agenteKey === 'aurora'; // Comparar con minúscula después de normalización
+  const esAurora = agenteKey.toUpperCase() === 'AURORA';
   
   // Contexto de perfil: Aurora recibe todo, otros solo básico
   const contextoUsuario = esAurora 

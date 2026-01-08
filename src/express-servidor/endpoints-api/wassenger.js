@@ -1708,24 +1708,95 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     let confirmationActivated = false;
     
     if (resultado.agenteKey === 'AURORA') {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
-        console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
-      }
-      const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
-      }
+      // 🎯 POST-PROCESAMIENTO: Filtrar ofertas de servicios si es saludo casual o pregunta de identidad
+      const isCasualGreeting = intencion.flags?.casualGreeting === true;
+      const isIdentityQuestion = intencion.flags?.identityQuestion === true;
       
-      if (enhancement.enhanced) {
-        finalReply = enhancement.finalMessage;
-        confirmationActivated = true;
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
+      if (isCasualGreeting || isIdentityQuestion) {
+        console.log(`[WASSENGER] 🛡️ POST-PROCESAMIENTO: ${isCasualGreeting ? 'saludo casual' : 'pregunta identidad'} detectado`);
+        
+        // Patrones de ofertas que NO deberían aparecer
+        const serviceOfferPatterns = [
+          /¿qué (tipo de )?espacio necesitas\??/gi,
+          /¿qué (tipo de )?espacio (estás|estas) buscando\??/gi,
+          /tenemos hot desk (y|o) sala de reuniones/gi,
+          /¿(te |)gustaría reservar\??/gi,
+          /¿quieres reservar\??/gi,
+          /si necesitas reservar/gi,
+          /hot desk.*sala de reuniones/gi,
+          /sala de reuniones.*hot desk/gi,
+          /precios.*hot desk/gi,
+          /\$\d+.*horas/gi // Menciones de precios
+        ];
+        
+        // Verificar si la respuesta contiene ofertas no deseadas
+        let hasUnwantedOffers = false;
+        for (const pattern of serviceOfferPatterns) {
+          if (pattern.test(reply)) {
+            hasUnwantedOffers = true;
+            console.log(`[WASSENGER] ⚠️ Detectada oferta no deseada (pattern): ${pattern}`);
+            break;
+          }
+        }
+        
+        if (hasUnwantedOffers) {
+          // LIMPIAR la respuesta: quedarnos solo con el saludo/respuesta bomba
+          console.log('[WASSENGER] 🧹 LIMPIANDO respuesta - removiendo ofertas de servicios');
+          
+          if (isCasualGreeting) {
+            // Para saludo casual: solo "¡Hola [nombre]! Soy Aurora 😊\n\n¿En qué te puedo ayudar?"
+            const nombre = profile.whatsappDisplayName || profile.name || 'amigo';
+            finalReply = `¡Hola ${nombre}! Soy Aurora 😊\n\n¿En qué te puedo ayudar?`;
+            console.log('[WASSENGER] ✅ Respuesta limpiada: saludo simple');
+          } else if (isIdentityQuestion) {
+            // Para pregunta de identidad: solo la respuesta bomba del ecosistema
+            const lines = reply.split('\n');
+            const ecosystemEndIndex = lines.findIndex(line => 
+              line.includes('¿Qué te gustaría explorar primero?') ||
+              line.includes('¿Qué te gustaría saber más?')
+            );
+            
+            if (ecosystemEndIndex !== -1) {
+              // Tomar solo hasta la pregunta final del ecosistema (incluida)
+              finalReply = lines.slice(0, ecosystemEndIndex + 1).join('\n');
+              console.log('[WASSENGER] ✅ Respuesta limpiada: solo ecosistema');
+            } else {
+              // Si no encontramos la pregunta final, cortar en la primera mención de servicio
+              const firstOfferIndex = lines.findIndex(line => 
+                /espacio|hot desk|sala|reserv/i.test(line)
+              );
+              if (firstOfferIndex !== -1 && firstOfferIndex > 5) {
+                // Si hay al menos 5 líneas antes (el ecosistema), cortar ahí
+                finalReply = lines.slice(0, firstOfferIndex).join('\n').trim();
+                console.log('[WASSENGER] ✅ Respuesta limpiada: cortada en primera oferta');
+              }
+            }
+          }
+        } else {
+          console.log('[WASSENGER] ✅ Respuesta ya estaba limpia - sin ofertas detectadas');
+          finalReply = reply;
         }
       } else {
-        // Si no hubo enhancement, usar la respuesta original de Aurora
-        finalReply = reply;
+        // No es saludo casual ni pregunta de identidad, procesar normalmente
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
+          console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
+        }
+        const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
+        }
+        
+        if (enhancement.enhanced) {
+          finalReply = enhancement.finalMessage;
+          confirmationActivated = true;
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
+          }
+        } else {
+          // Si no hubo enhancement, usar la respuesta original de Aurora
+          finalReply = reply;
+        }
       }
     } else {
       // Otros agentes usan su respuesta directamente

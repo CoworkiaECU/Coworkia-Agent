@@ -10,7 +10,11 @@ import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
 import databaseService from '../database/database.js';
 import { enqueueBackgroundTask } from './task-queue.js';
-import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { 
+  clearPendingConfirmation, 
+  getPendingConfirmation, 
+  setPendingConfirmation 
+} from '../perfiles-interacciones/memoria-sqlite.js';
 import { markJustConfirmed } from './reservation-state.js';
 import reservationRepository from '../database/reservationRepository.js';
 import { sendReservationNotifications } from './notification-helper.js';

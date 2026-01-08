@@ -120,6 +120,22 @@ const CASUAL_GREETING_PATTERNS = [
   /^hola\s+otra\s+vez$/
 ];
 
+const IDENTITY_QUESTION_PATTERNS = [
+  /quien\s+eres/,
+  /que\s+eres/,
+  /que\s+haces/,
+  /que\s+sabes\s+hacer/,
+  /que\s+puedes\s+hacer/,
+  /dime\s+quien\s+eres/,
+  /quiero\s+saber\s+quien\s+eres/,
+  /quiero\s+que\s+me\s+digas\s+quien\s+eres/,
+  /que\s+me\s+puedes\s+ofrecer/,
+  /que\s+servicios\s+tienen/,
+  /que\s+servicios\s+ofrecen/,
+  /cuales\s+son\s+tus\s+servicios/,
+  /que\s+es\s+coworkia/
+];
+
 /**
  * Detecta si el usuario quiere cancelar un flujo activo
  * @param {string} text - Mensaje del usuario normalizado
@@ -141,6 +157,16 @@ export function detectarSaludoCasual(text) {
 }
 
 /**
+ * Detecta si el usuario está preguntando sobre la identidad/servicios de Aurora
+ * @param {string} text - Mensaje del usuario normalizado
+ * @returns {boolean} true si es una pregunta de identidad
+ */
+export function detectarPreguntaIdentidad(text) {
+  const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return IDENTITY_QUESTION_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
+/**
  * Detecta intención y agente apropiado
  * IMPORTANTE: Esta función solo detecta CAMBIOS EXPLÍCITOS de agente
  * El orquestador es responsable de respetar el activeAgent si no hay cambio
@@ -157,6 +183,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
   const isCancelacion = detectarCancelacion(normalized);
   const isCasualGreeting = detectarSaludoCasual(normalized);
+  const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
   // 0) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
@@ -173,6 +200,15 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
       agent: currentAgent, // Mantener agente actual
       reason: 'casual greeting - no services offered',
       flags: { casualGreeting: true }
+    };
+  }
+
+  // 0.6) Pregunta de identidad detectada - mantener agente actual pero marcar flag
+  if (isIdentityQuestion) {
+    return {
+      agent: currentAgent, // Mantener agente actual
+      reason: 'identity question - ecosystem presentation only',
+      flags: { identityQuestion: true }
     };
   }
 

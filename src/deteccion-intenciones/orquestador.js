@@ -106,6 +106,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 💳 SOLICITUD DE LINK DE PAGO DETECTADA
   const esPaymentLinkRequest = Boolean(intencion.flags?.paymentLinkRequest);
   
+  // 🎯 PREGUNTA DE IDENTIDAD DETECTADA
+  const esPreguntaIdentidad = Boolean(intencion.flags?.identityQuestion);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -224,6 +227,32 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - ⛔ NO muestres lista de precios
 - ✅ SOLO saluda amablemente y espera
 - El usuario dirige la conversación y dirá qué necesita` : '';
+
+  const instruccionesPreguntaIdentidad = esPreguntaIdentidad ? `
+🎯 PREGUNTA DE IDENTIDAD DETECTADA:
+- El usuario preguntó: "${mensaje}"
+- RESPONDE CON LA RESPUESTA BOMBA DEL ECOSISTEMA:
+
+"¡Soy Aurora Core! 🌟 El cerebro que conecta TODO el ecosistema de Coworkia 🧠✨
+
+🏢 *Coworkia* - Espacios de trabajo que inspiran
+💡 *MarketingLab* (@enzo) - Marketing, IA y automatización
+💚 *MedBeneficios* (@angela) - Salud y bienestar integral
+🚗 *The PaintBull* (@axel) - Reparación de vehículos express
+💼 *Business Center* (@gabi) - Finanzas, contabilidad y legal
+📋 *Planes y Membresías* (@aluna) - Tu espacio perfecto
+
+🎯 *¿Mi superpoder?* Entiendo lo que necesitas y te conecto AL INSTANTE con el experto correcto. Un sistema, múltiples soluciones, CERO complicaciones.
+
+¿Qué te gustaría explorar primero? 😊🚀"
+
+⛔ CONTROL CRÍTICO - DESPUÉS DE ENVIAR RESPUESTA BOMBA:
+❌ NO agregues: "¿Qué espacio necesitas?"
+❌ NO muestres: Hot Desk, Sala de Reuniones, precios
+❌ NO ofrezcas: "¿Te gustaría reservar?"
+❌ NO preguntes por servicios específicos
+✅ SOLO la respuesta bomba y TERMINAR
+✅ El usuario dirá qué necesita en el SIGUIENTE mensaje` : '';
   
   // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
   const tieneResumeMessage = formData && formData.resumeMessage;
@@ -247,6 +276,7 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esPreguntaIdentidad ? instruccionesPreguntaIdentidad : ''}
 ${esSaludoCasual ? instruccionesSaludoCasual : ''}
 ${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}

@@ -86,7 +86,8 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
 const MAX_REQUESTS_PER_WINDOW = 10;
 
 export function rateLimitByPhone(req, res, next) {
-  const phoneNumber = req.body?.data?.from || req.body?.from;
+  // Wassenger envía fromNumber, no from
+  const phoneNumber = req.body?.data?.fromNumber || req.body?.data?.from || req.body?.fromNumber || req.body?.from;
   
   if (!phoneNumber) {
     return next(); // Si no hay teléfono, dejar pasar

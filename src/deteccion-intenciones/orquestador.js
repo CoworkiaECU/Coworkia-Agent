@@ -294,10 +294,13 @@ MENSAJE ACTUAL DEL USUARIO:
 ${mensaje}
 
 INSTRUCCIONES:
+
+🚨 PRIORIDAD ABSOLUTA - LEER PRIMERO:
+${esSaludoCasual ? instruccionesSaludoCasual : ''}
+${esPreguntaIdentidad ? instruccionesPreguntaIdentidad : ''}
+
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
-${esPreguntaIdentidad ? instruccionesPreguntaIdentidad : ''}
-${esSaludoCasual ? instruccionesSaludoCasual : ''}
 ${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}

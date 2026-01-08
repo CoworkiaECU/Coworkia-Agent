@@ -12,7 +12,7 @@ import { enqueueBackgroundTask } from './task-queue.js';
 import { sendReservationConfirmation } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
 import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
-import { markJustConfirmed, setPendingConfirmation } from './reservation-state.js';
+import { markJustConfirmed, savePendingConfirmation } from './reservation-state.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 
@@ -142,6 +142,10 @@ export function detectPaymentMention(text) {
 export async function processPaymentReceipt(messageData, userProfile) {
   console.log('[RECEIPT] 🔍 Procesando comprobante de pago...');
   
+  // Extract variables BEFORE try block so catch can access them
+  const userId = userProfile?.userId;
+  const imageUrl = messageData?.media?.url;
+  
   try {
     // 🔍 SIEMPRE analizar imagen primero con Vision API
     console.log('[RECEIPT] 🤖 Analizando comprobante con Vision API...');
@@ -195,7 +199,7 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
       // await clearPendingConfirmation(userProfile.userId); // COMENTADO
       
       // Guardar datos del pago en pending confirmation para usarlos después del SI
-      await setPendingConfirmation(userProfile.userId, {
+      await savePendingConfirmation(userProfile.userId, {
         reservationId: updatedReservation.id,
         paymentVerified: true,
         paymentReceipt: {

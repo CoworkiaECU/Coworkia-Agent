@@ -309,7 +309,7 @@ class ReservationRepository {
       FROM reservations r
       LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.payment_status = 'pending'
-        AND r.status = 'pending'
+        AND r.status = 'pending_payment'
       ORDER BY r.created_at ASC
     `;
     

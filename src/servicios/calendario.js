@@ -521,7 +521,7 @@ export async function getUpcomingReservations(userId) {
   
   const formatted = reservations.map((r, index) => {
     const spaceName = r.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-    const price = r.was_free ? 'GRATIS' : `$${parseFloat(r.total_amount).toFixed(2)}`;
+    const price = r.was_free ? 'GRATIS' : `$${parseFloat(r.total_price).toFixed(2)}`;
     const people = r.num_people > 1 ? ` (${r.num_people} personas)` : '';
     
     return {
@@ -608,7 +608,7 @@ export async function updateReservationPayment(reservationId, paymentInfo) {
     const updated = await reservationRepository.markAsPaid(reservationId, {
       payment_method: paymentInfo.paymentMethod || 'transfer',
       payment_reference: paymentInfo.reference || null,
-      payment_amount: paymentInfo.amount || reservation.total_amount,
+      payment_amount: paymentInfo.amount || reservation.total_price,
       payment_date: paymentInfo.date || new Date().toISOString()
     });
     
@@ -634,7 +634,7 @@ export async function getReservationByPaymentInfo(paymentData) {
     const matches = allReservations.filter(r => {
       if (r.status === 'cancelled' || r.payment_status === 'paid') return false;
       
-      const amountMatch = Math.abs(parseFloat(r.total_amount) - parseFloat(paymentData.amount)) < 0.50;
+      const amountMatch = Math.abs(parseFloat(r.total_price) - parseFloat(paymentData.amount)) < 0.50;
       const dateMatch = r.created_at && paymentData.date && 
                        Math.abs(new Date(r.created_at) - new Date(paymentData.date)) < 24 * 60 * 60 * 1000;
       

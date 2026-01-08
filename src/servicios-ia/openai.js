@@ -4,8 +4,9 @@ import { openaiBreaker } from '../utils/circuit-breaker.js';
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
-  console.error('[OpenAI] Falta OPENAI_API_KEY en .env');
-  process.exit(1);
+  const errorMsg = '[OpenAI] CRÍTICO: Falta OPENAI_API_KEY en .env';
+  console.error(errorMsg);
+  throw new Error(errorMsg);
 }
 
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';

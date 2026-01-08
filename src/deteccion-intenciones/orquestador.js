@@ -415,7 +415,7 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 
   const lineas = ['PERFIL USUARIO:'];
   
-  // 🆕 Información del nombre (sin saludos automáticos)
+  // 🆕 Información del nombre Y lógica de saludo
   if (perfil.name) {
     lineas.push(`- Nombre detectado: ${perfil.name} ✅`);
     if (perfil.whatsappDisplayName && perfil.whatsappDisplayName !== perfil.name) {
@@ -431,7 +431,22 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   
   // 🆕 firstVisit flag para lógica de saludo inicial
   if (perfil.firstVisit !== undefined) {
-    lineas.push(`- Primera interacción: ${perfil.firstVisit ? 'SÍ (primer mensaje)' : 'NO (ya conversó antes)'}`);
+    const esPrimeraInteraccion = perfil.firstVisit || (perfil.conversationCount === 0);
+    lineas.push(`- Primera interacción: ${esPrimeraInteraccion ? 'SÍ (primer mensaje)' : 'NO (ya conversó antes)'}`);
+    
+    // 🚨 INSTRUCCIONES DE SALUDO SEGÚN CONTEXTO
+    if (esPrimeraInteraccion) {
+      lineas.push(`\n🚨 SALUDO PARA PRIMERA INTERACCIÓN:`);
+      lineas.push(`- ⛔ NO uses el nombre registrado en BD (${perfil.name || 'N/A'}) - NO lo conoces aún`);
+      lineas.push(`- ✅ USA el nombre de WhatsApp: "${perfil.whatsappDisplayName || 'amigo/a'}"`);
+      lineas.push(`- ✅ Preséntate: "Hola ${perfil.whatsappDisplayName || 'amigo/a'}, ¿en qué te puedo ayudar hoy? Soy Aurora, el núcleo operativo de Coworkia, orquestadora de agentes."`);
+      lineas.push(`- 📝 Después de que el usuario dé su nombre, actualízalo en el sistema para próximas interacciones`);
+    } else {
+      lineas.push(`\n💼 SALUDO PARA CLIENTE RECURRENTE:`);
+      lineas.push(`- ✅ USA el nombre registrado: ${perfil.name}`);
+      lineas.push(`- ✅ Saludo natural: "¡Hola ${perfil.name}! ¿En qué te puedo ayudar hoy?"`);
+      lineas.push(`- ✅ Ya lo conoces, no necesitas presentarte extensamente`);
+    }
   }
   
   // 🔧 Conversación en curso

@@ -3,6 +3,12 @@ import crypto from 'crypto';
 
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 
+// IPs whitelisteadas de Wassenger (Google Cloud Platform)
+const WASSENGER_IPS = [
+  '34.125.216.155',
+  '35.223.0.0/16', // Rango GCP us-central1
+];
+
 /**
  * 🔒 Middleware para validar firma HMAC de webhooks
  * Previene requests no autorizados al webhook
@@ -11,6 +17,17 @@ export function validateWebhookSignature(req, res, next) {
   const isProd = process.env.NODE_ENV === 'production';
   const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
   const sharedToken = process.env.WASSENGER_WEBHOOK_TOKEN || process.env.WASSENGER_TOKEN;
+
+  // Obtener IP del cliente (Heroku usa x-forwarded-for)
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection.remoteAddress;
+
+  // Si es IP de Wassenger, permitir sin validación de headers
+  if (isWassengerIP(clientIp)) {
+    if (DEBUG_MODE) {
+      console.log(`[WEBHOOK-SECURITY] ✅ IP Wassenger whitelisteada: ${clientIp}`);
+    }
+    return next();
+  }
 
   // Desarrollo: validación opcional si no hay secreto
   if (!isProd && !webhookSecret && !sharedToken) {
@@ -76,6 +93,25 @@ function timingSafeCompare(input, expected) {
     return false;
   }
   return crypto.timingSafeEqual(a, b);
+}
+
+/**
+ * 🌐 Verifica si la IP pertenece a Wassenger (Google Cloud)
+ */
+function isWassengerIP(ip) {
+  if (!ip) return false;
+  
+  // IPs exactas
+  if (WASSENGER_IPS.includes(ip)) {
+    return true;
+  }
+  
+  // Rangos CIDR (simplificado - solo verifica prefijo)
+  if (ip.startsWith('34.125.') || ip.startsWith('35.223.')) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**

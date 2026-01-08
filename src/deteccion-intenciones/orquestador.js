@@ -202,62 +202,14 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 
 - Si NO tiene reservas confirmadas, di: "Aún no tienes una reserva confirmada. ¿Te gustaría hacer una?"` : '';
 
-  // Para el handoff, necesitamos el agente DESTINO (el detectado), no el activo
-  const targetAgentKey = intencion.flags?.targetAgent || intencion.agent;
-  
-  const instruccionesRelevo = esRelevoHaciaOtro ? `
-👋 RELEVO ENTRE AGENTES - MENSAJE DE TRANSICIÓN:
-- El usuario mencionó ${targetAgentKey === 'ENZO' ? '@Enzo' : targetAgentKey === 'ADRIANA' ? '@Adriana' : targetAgentKey === 'ALUNA' ? '@Aluna' : targetAgentKey === 'ANGELA' ? '@Ángela' : targetAgentKey === 'AXEL' ? '@Axel' : targetAgentKey === 'GABI' ? '@Gabi' : targetAgentKey}
-- DEBES usar este mensaje EXACTO según el contexto:
-
-${targetAgentKey === 'ANGELA' ? `
-PARA ÁNGELA (mensaje cálido y empático):
-SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
-"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 💚 Te conecto con Ángela, tu asistente médica.
-
-Ella está aquí para ayudarte con tu bienestar 24/7. Si en cualquier momento necesitas volver para reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí para ti! 😊"
-
-SI ESTÁ EN MEDIO DE CONVERSACIÓN:
-"Con gusto te comunico con Ángela 💚, ella te puede ayudar con eso.
-
-Está disponible 24/7 para tu bienestar. Si necesitas volver para reservas, menciona @Aurora y tu pregunta. ¡Aquí estaré! 😊"
-` : targetAgentKey === 'GABI' ? `
-PARA GABI (mensaje profesional y eficiente):
-SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
-"¡Hola ${perfil.name || perfil.whatsappDisplayName || ''}! 💼 Te conecto con Gabi, nuestra experta en finanzas, contabilidad, RRHH y legal de Coworkia Business Center.
-
-Ella puede ayudarte con temas administrativos, financieros y legales. Si necesitas volver para reservas, menciona @Aurora. ¡Aquí estaré! 😊"
-
-SI ESTÁ EN MEDIO DE CONVERSACIÓN:
-"Con gusto te comunico con Gabi 💼, experta en finanzas, contabilidad y legal.
-
-Si necesitas volver para reservas, menciona @Aurora. ¡Aquí estaré! 📋"
-` : `
-SI ES PRIMER MENSAJE (firstVisit: true O conversationCount: 0):
-"¡Hola ${perfil.name || perfil.whatsappDisplayName || 'amigo/a'}! 👋 Te conecto con ${AGENTES[targetAgentKey].nombre} 🚀, tu ${AGENTES[targetAgentKey].descripcionCorta}.
-
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"
-
-SI ESTÁ EN MEDIO DE CONVERSACIÓN:
-"Listo ${perfil.whatsappDisplayName || perfil.name || 'amigo/a'}, te comunico de inmediato con ${AGENTES[targetAgentKey].nombre}.
-
-Si necesitas volver a hablar de reservas, menciona @Aurora y tu pregunta. ¡Estaré aquí! 😊"`}
-
-- Usa EXACTAMENTE uno de estos dos mensajes según el contexto
-- NO agregues nada más, NO improvises` : '';
-
   const instruccionesRetorno = esRetornoAurora ? `
-👋 RETORNO DE USUARIO A AURORA - MENSAJE DE ENTRADA:
+👋 RETORNO DE USUARIO A AURORA:
 - El usuario mencionó @Aurora - está volviendo después de hablar con otro agente
-- PRIMERO el otro agente debe despedirse (esto ya fue enviado antes)
-- AHORA TÚ (Aurora) debes usar este mensaje de entrada:
-
-"¡Hola ${perfil.whatsappDisplayName || perfil.name || 'de nuevo'}! Te asisto en Coworkia a partir de ahora 😊"
-
-- DESPUÉS del saludo, resume datos de reserva si existen (ver FORMULARIO PARCIAL)
+- SALUDO SENCILLO: "¡Hola ${perfil.whatsappDisplayName || perfil.name || 'de nuevo'}! 😊 ¿En qué te puedo ayudar?"
 - Si hay formulario parcial, pregunta: "¿Quieres continuar con tu reserva?"
-- NO menciones conversaciones con otros agentes
-- Enfócate SOLO en reservas y servicios de Coworkia` : '';
+- Si NO hay formulario, SOLO saluda y espera que el usuario diga qué necesita
+- NO ofrezcas espacios ni servicios automáticamente
+- El usuario dirige la conversación` : '';
   
   // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
   const tieneResumeMessage = formData && formData.resumeMessage;
@@ -282,7 +234,6 @@ INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
 ${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
-${esRelevoHaciaOtro ? instruccionesRelevo : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}
 ${esModificacionReserva ? instruccionesModificacion : ''}

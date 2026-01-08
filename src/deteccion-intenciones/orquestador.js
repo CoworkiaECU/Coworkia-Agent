@@ -93,7 +93,10 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 🚫 CANCELACIÓN DETECTADA
   const esCancelacion = Boolean(intencion.flags?.cancelacion);
   
-  // 🔄 RELEVO ENTRE AGENTES
+  // � SALUDO CASUAL DETECTADO
+  const esSaludoCasual = Boolean(intencion.flags?.casualGreeting);
+  
+  // �🔄 RELEVO ENTRE AGENTES
   const esRelevoHaciaOtro = isAgentHandoff;
   const esRetornoAurora = isReturningToAurora;
   
@@ -210,6 +213,17 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
 - Si NO hay formulario, SOLO saluda y espera que el usuario diga qué necesita
 - NO ofrezcas espacios ni servicios automáticamente
 - El usuario dirige la conversación` : '';
+
+  const instruccionesSaludoCasual = esSaludoCasual ? `
+👋 SALUDO CASUAL DETECTADO:
+- El usuario solo dijo "${mensaje}" (saludo informal)
+- RESPUESTA BREVE Y CÁLIDA: "¡Hola ${perfil.whatsappDisplayName || perfil.name}! 😊 ¿En qué te puedo ayudar?"
+- ⛔ NO ofrezcas espacios (Hot Desk, Sala de Reuniones)
+- ⛔ NO menciones servicios no solicitados
+- ⛔ NO preguntes "¿Te gustaría reservar?"
+- ⛔ NO muestres lista de precios
+- ✅ SOLO saluda amablemente y espera
+- El usuario dirige la conversación y dirá qué necesita` : '';
   
   // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
   const tieneResumeMessage = formData && formData.resumeMessage;
@@ -233,6 +247,7 @@ ${mensaje}
 INSTRUCCIONES:
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar
+${esSaludoCasual ? instruccionesSaludoCasual : ''}
 ${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
 ${esRetornoAurora ? instruccionesRetorno : ''}
 ${esCancelacion ? instruccionesCancelacion : ''}
@@ -343,10 +358,12 @@ ${tieneHistorialConAgente ?
         messageCount: historial ? historial.length : 0,
         isFirstMessage: !historial || historial.length === 0,
         postEmailSupport: esSoportePostEmail,
-        cancelacion: esCancelacion
+        cancelacion: esCancelacion,
+        casualGreeting: esSaludoCasual
       },
       postEmailSupport: esSoportePostEmail,
       cancelacion: esCancelacion,
+      casualGreeting: esSaludoCasual,
       agentHandoff: esRelevoHaciaOtro,
       returningToAurora: esRetornoAurora,
       targetAgent: esRelevoHaciaOtro ? targetAgentKey : null,

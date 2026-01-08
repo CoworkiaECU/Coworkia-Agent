@@ -102,6 +102,24 @@ const CANCELACION_PATTERNS = [
   /cambie.*de\s+opinion/
 ];
 
+const CASUAL_GREETING_PATTERNS = [
+  /^hola$/,
+  /^hi$/,
+  /^hello$/,
+  /^hey$/,
+  /^buenas$/,
+  /^buenos\s+dias$/,
+  /^buenas\s+tardes$/,
+  /^buenas\s+noches$/,
+  /^buen\s+dia$/,
+  /^que\s+tal$/,
+  /^como\s+estas$/,
+  /^como\s+esta$/,
+  /^saludos$/,
+  /^hola\s+de\s+nuevo$/,
+  /^hola\s+otra\s+vez$/
+];
+
 /**
  * Detecta si el usuario quiere cancelar un flujo activo
  * @param {string} text - Mensaje del usuario normalizado
@@ -113,18 +131,38 @@ export function detectarCancelacion(text) {
 }
 
 /**
+ * Detecta si el mensaje es un saludo casual (hola, buenos días, etc.)
+ * @param {string} text - Mensaje del usuario normalizado
+ * @returns {boolean} true si es un saludo casual
+ */
+export function detectarSaludoCasual(text) {
+  const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return CASUAL_GREETING_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
+/**
  * Detecta intención y agente apropiado
  * IMPORTANTE: Esta función solo detecta CAMBIOS EXPLÍCITOS de agente
  * El orquestador es responsable de respetar el activeAgent si no hay cambio
  * 
  * @param {string} inputRaw - Mensaje del usuario
- * @param {string} currentAgent - Agente actualmente activo (para contexto)
- * @returns {object} { agent, reason, flags }
- */
-export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
-  const text = String(inputRaw || '').toLowerCase().trim();
-  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+ *const isCasualGreeting = detectarSaludoCasual(normalized);
+  
+  // 0) Cancelación detectada - mantener agente actual pero marcar flag
+  if (isCancelacion) {
+    return {
+      agent: currentAgent, // Mantener agente actual
+      reason: 'user cancellation request',
+      flags: { cancelacion: true }
+    };
+  }
 
+  // 0.5) Saludo casual detectado - mantener agente actual pero marcar flag
+  if (isCasualGreeting) {
+    return {
+      agent: currentAgent, // Mantener agente actual
+      reason: 'casual greeting - no services offered',
+      flags: { casualGreeting
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
   const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
   const isCancelacion = detectarCancelacion(normalized);

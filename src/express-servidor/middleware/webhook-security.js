@@ -110,7 +110,7 @@ function isWassengerIP(ip) {
   }
   
   // Rangos CIDR (simplificado - solo verifica prefijo)
-  if (ip.startsWith('34.125.') || ip.startsWith('35.223.')) {
+  if (ip.startsWith('34.125.') || ip.startsWith('35.223.') || ip.startsWith('34.16.')) {
     return true;
   }
   

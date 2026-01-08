@@ -918,7 +918,7 @@ Responde en tu estilo característico con:
       userId,
       name: detectedName,
       email: detectedEmail, // 🆕 Guardar email detectado automáticamente
-      whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
+      whatsappDisplayName: name || current.whatsappDisplayName || null, // ACTUALIZAR con nombre fresco de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
       conversationCount: (current.conversationCount || 0) + 1

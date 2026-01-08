@@ -1009,15 +1009,34 @@ Responde en tu estilo característico con:
       console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
     }
 
-    // 🧠 FORMULARIO PARCIAL INTELIGENTE - Detectar y extraer datos progresivamente (PRIMERO)
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente...');
-    }
-    // Usar processedText (con contexto de reply si existe) en lugar de text original
-    const formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
+    // 🔍 DETECTAR INTENCIÓN DE RESERVA PRIMERO
+    const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio', 'quiero venir', 'me gustaría'];
+    const casualGreetings = ['hola', 'hi', 'hey', 'buenas', 'buenos días', 'buenas tardes', 'qué tal', 'como estas'];
     
-    // Pasar el mensaje del usuario al formResult para detección de frustración
-    formResult.userMessage = text;
+    const isCasualGreeting = casualGreetings.some(greeting => 
+      processedText.toLowerCase().trim().startsWith(greeting)
+    );
+    
+    const isReservationIntent = !isCasualGreeting && reservationKeywords.some(kw => 
+      processedText.toLowerCase().includes(kw)
+    );
+    
+    let formResult = null;
+
+    // 🧠 FORMULARIO PARCIAL INTELIGENTE - SOLO si es intención de reserva
+    if (isReservationIntent) {
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente (intención de reserva detectada)...');
+      }
+      formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
+      formResult.userMessage = text;
+    } else {
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] ⏭️ Salteando formulario - no es intención de reserva');
+      }
+      // Crear objeto vacío para mantener compatibilidad
+      formResult = { form: null, needsMoreInfo: false, updates: {} };
+    }
     
     // 🚨 VALIDACIÓN CRÍTICA: Si hay error de validación (domingo/feriado), responder inmediatamente
     if (formResult.validationError) {
@@ -1081,9 +1100,6 @@ Responde en tu estilo característico con:
     }
 
     // 🚫 BLOQUEO: Si hay reservas con pago pendiente, no permitir nuevas reservas
-    const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio'];
-    const isReservationIntent = reservationKeywords.some(kw => processedText.toLowerCase().includes(kw));
-    
     if (isReservationIntent) {
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 🔍 Detectado intent de reserva - verificando pagos pendientes...');
@@ -1708,160 +1724,30 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
     let confirmationActivated = false;
     
     if (resultado.agenteKey === 'AURORA') {
-      // 🎯 LLAMADAS DEDICADAS A OPENAI para saludos casuales y preguntas de identidad
-      const isCasualGreeting = resultado.metadata?.casualGreeting === true;
-      const isIdentityQuestion = resultado.metadata?.identityQuestion === true;
+      // ✨ FLUJO SIMPLIFICADO - Una sola llamada a OpenAI con prompt completo
+      // El prompt ya tiene PRIORIDAD ABSOLUTA para saludos casuales y preguntas de identidad
+      // OpenAI decide basándose en las instrucciones del orquestador
       
-      if (isCasualGreeting || isIdentityQuestion) {
-        console.log(`[WASSENGER] 🤖 LLAMADA DEDICADA OpenAI: ${isCasualGreeting ? 'saludo casual' : 'pregunta identidad'}`);
-        
-        const userName = profile.whatsappDisplayName || profile.name || 'amigo';
-        let dedicatedPrompt = '';
-        let dedicatedSystemPrompt = '';
-        
-        if (isCasualGreeting) {
-          // Prompt ESPECÍFICO para saludos casuales - ultra corto y controlado
-          dedicatedSystemPrompt = `Eres Aurora, asistente de Coworkia.
-
-Responde SOLO con un saludo cálido y natural.
-
-REGLAS ABSOLUTAS:
-❌ NO menciones: espacios, hot desk, salas, reservas, servicios, precios, gratis, primera visita
-❌ NO preguntes qué necesita el usuario
-❌ NO ofrezcas ayuda específica
-✅ SOLO: saludo + presentación breve + "¿En qué te puedo ayudar?"
-
-Ejemplos CORRECTOS:
-- "¡Hola Juan! Soy Aurora 😊\n\n¿En qué te puedo ayudar?"
-- "¡Hey María! Soy Aurora ✨\n\n¿En qué te puedo ayudar?"
-- "¡Buenos días Pedro! Soy Aurora 😊\n\n¿En qué te puedo ayudar?"
-
-Nombre del usuario: ${userName}`;
-
-          dedicatedPrompt = `El usuario te saludó con: "${text}"
-
-Responde con un saludo cálido y simple. SOLO saludo + "¿En qué te puedo ayudar?"`;
-          
-        } else if (isIdentityQuestion) {
-          // Prompt ESPECÍFICO para preguntas de identidad - solo ecosistema
-          dedicatedSystemPrompt = `Eres Aurora, el cerebro de Coworkia.
-
-Responde SOLO con la presentación del ecosistema.
-
-REGLAS ABSOLUTAS:
-✅ Muestra el ecosistema completo con formato limpio
-❌ DESPUÉS del ecosistema, NO agregues: espacios, hot desk, reservas, precios, servicios específicos
-✅ Termina con: "¿Qué te gustaría explorar primero? 😊🚀"
-
-FORMATO EXACTO:
-
-¡Soy Aurora! 🌟 El cerebro que conecta TODO el ecosistema de Coworkia 🧠✨
-
-🏢 *Coworkia*
-Espacios de trabajo que inspiran
-
-💡 *MarketingLab* (@enzo)
-Marketing, IA y automatización
-
-💚 *MedBeneficios* (@angela)
-Salud y bienestar integral
-
-🚗 *The PaintBull* (@axel)
-Reparación de vehículos express
-
-💼 *GR Consulting* (@gabi)
-Finanzas, contabilidad y asesoría legal
-
-📋 *Planes y Membresías* (@aluna)
-Tu espacio perfecto
-
-───────────────────
-
-🎯 *Mi superpoder:* Entiendo lo que necesitas y te conecto AL INSTANTE con el experto correcto.
-
-Un sistema, múltiples soluciones, CERO complicaciones.
-
-¿Qué te gustaría explorar primero? 😊🚀`;
-
-          dedicatedPrompt = `El usuario preguntó: "${text}"
-
-Responde con la presentación del ecosistema siguiendo el formato EXACTO del system prompt.`;
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
+        console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
+      }
+      
+      const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
+      
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
+      }
+      
+      if (enhancement.enhanced) {
+        finalReply = enhancement.finalMessage;
+        confirmationActivated = true;
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
         }
-        
-        // 🔥 LLAMADA DEDICADA a OpenAI con prompt mini
-        try {
-          const dedicatedReply = await complete(dedicatedPrompt, {
-            temperature: isCasualGreeting ? 0.8 : 0.5, // Alta para saludos variados, moderada para ecosistema
-            max_tokens: isIdentityQuestion ? 400 : 100, // Más tokens para ecosistema
-            system: dedicatedSystemPrompt
-          });
-          
-          console.log(`[WASSENGER] ✅ Respuesta dedicada recibida - length: ${dedicatedReply?.length || 0}`);
-          
-          // 🛡️ POST-PROCESAMIENTO como red de seguridad
-          // Verificar que NO contenga palabras clave prohibidas
-          const forbiddenPatterns = [
-            /espacio/gi,
-            /hot\s*desk/gi,
-            /sala.*reun/gi,
-            /reserv/gi,
-            /\$\d+/gi,
-            /gratis/gi,
-            /primera\s*visita/gi
-          ];
-          
-          let hasForbiddenContent = false;
-          if (isCasualGreeting) {
-            // Para saludos, verificar que no tenga contenido prohibido
-            for (const pattern of forbiddenPatterns) {
-              if (pattern.test(dedicatedReply)) {
-                hasForbiddenContent = true;
-                console.log(`[WASSENGER] ⚠️ RED DE SEGURIDAD: Detectada palabra prohibida en saludo: ${pattern}`);
-                break;
-              }
-            }
-          }
-          
-          if (hasForbiddenContent) {
-            // Fallback a respuesta fija si OpenAI se desvió
-            console.log('[WASSENGER] 🛡️ FALLBACK: Usando respuesta fija por seguridad');
-            finalReply = `¡Hola ${userName}! Soy Aurora 😊\n\n¿En qué te puedo ayudar?`;
-          } else {
-            // Usar la respuesta de OpenAI
-            finalReply = dedicatedReply;
-          }
-          
-        } catch (openaiError) {
-          console.error('[WASSENGER] ❌ Error en llamada dedicada a OpenAI:', openaiError);
-          // Fallback a respuesta fija
-          if (isCasualGreeting) {
-            finalReply = `¡Hola ${userName}! Soy Aurora 😊\n\n¿En qué te puedo ayudar?`;
-          } else {
-            finalReply = `¡Soy Aurora! 🌟 El cerebro que conecta TODO el ecosistema de Coworkia 🧠✨\n\n🏢 *Coworkia*\nEspacios de trabajo que inspiran\n\n💡 *MarketingLab* (@enzo)\nMarketing, IA y automatización\n\n💚 *MedBeneficios* (@angela)\nSalud y bienestar integral\n\n🚗 *The PaintBull* (@axel)\nReparación de vehículos express\n\n💼 *GR Consulting* (@gabi)\nFinanzas, contabilidad y asesoría legal\n\n📋 *Planes y Membresías* (@aluna)\nTu espacio perfecto\n\n───────────────────\n\n🎯 *Mi superpoder:* Entiendo lo que necesitas y te conecto AL INSTANTE con el experto correcto.\n\nUn sistema, múltiples soluciones, CERO complicaciones.\n\n¿Qué te gustaría explorar primero? 😊🚀`;
-          }
-        }
-        
       } else {
-        // No es saludo casual ni pregunta de identidad, procesar normalmente
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
-          console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
-        }
-        const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
-        }
-        
-        if (enhancement.enhanced) {
-          finalReply = enhancement.finalMessage;
-          confirmationActivated = true;
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
-          }
-        } else {
-          // Si no hubo enhancement, usar la respuesta original de Aurora
-          finalReply = reply;
-        }
+        // Usar la respuesta original de Aurora (ya viene de OpenAI con prompt completo)
+        finalReply = reply;
       }
     } else {
       // Otros agentes usan su respuesta directamente

@@ -5,8 +5,10 @@ const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 
 // IPs whitelisteadas de Wassenger (Google Cloud Platform)
 const WASSENGER_IPS = [
-  '34.125.216.155',
-  '35.223.0.0/16', // Rango GCP us-central1
+  '34.125.216.155', // IP original
+  '34.16.197.77',   // Nueva IP detectada en logs
+  '35.223.0.0/16',  // Rango GCP us-central1
+  '34.16.0.0/16'    // Rango GCP us-central1 alternativo
 ];
 
 /**

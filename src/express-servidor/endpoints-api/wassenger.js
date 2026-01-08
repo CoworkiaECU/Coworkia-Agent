@@ -1171,7 +1171,7 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
     const { getPartialForm } = await import('../../perfiles-interacciones/memoria-sqlite.js');
     const savedPartialForm = await getPartialForm(userId);
     
-    if (isReservationIntent && savedPartialForm && formResult.form.getResumeMessage) {
+    if (isReservationIntent && savedPartialForm && formResult.form && formResult.form.getResumeMessage) {
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) {
         if (process.env.DEBUG_MODE === 'true') {
@@ -1263,7 +1263,7 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
     
     // 💡 LÓGICA DE UPSELL: Si mencionó personas y pidió hot desk, sugerir sala
     let upsellMessage = null;
-    if (formResult.form.spaceType === 'hotDesk' && formResult.form.numPeople >= 3) {
+    if (formResult.form && formResult.form.spaceType === 'hotDesk' && formResult.form.numPeople >= 3) {
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 💡 Upsell detectado: 3+ personas con hot desk');
       }

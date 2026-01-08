@@ -146,7 +146,17 @@ export function detectarSaludoCasual(text) {
  * El orquestador es responsable de respetar el activeAgent si no hay cambio
  * 
  * @param {string} inputRaw - Mensaje del usuario
- *const isCasualGreeting = detectarSaludoCasual(normalized);
+ * @param {string} currentAgent - Agente actualmente activo (para contexto)
+ * @returns {object} { agent, reason, flags }
+ */
+export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
+  const text = String(inputRaw || '').toLowerCase().trim();
+  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
+  const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
+  const isCancelacion = detectarCancelacion(normalized);
+  const isCasualGreeting = detectarSaludoCasual(normalized);
   
   // 0) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
@@ -162,17 +172,7 @@ export function detectarSaludoCasual(text) {
     return {
       agent: currentAgent, // Mantener agente actual
       reason: 'casual greeting - no services offered',
-      flags: { casualGreeting
-  const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
-  const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
-  const isCancelacion = detectarCancelacion(normalized);
-  
-  // 0) Cancelación detectada - mantener agente actual pero marcar flag
-  if (isCancelacion) {
-    return {
-      agent: currentAgent, // Mantener agente actual
-      reason: 'user cancellation request',
-      flags: { cancelacion: true }
+      flags: { casualGreeting: true }
     };
   }
 

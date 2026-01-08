@@ -1009,16 +1009,36 @@ Responde en tu estilo característico con:
       console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
     }
 
-    // 🔍 DETECTAR INTENCIÓN DE RESERVA PRIMERO
+    // 🔍 DETECTAR INTENCIÓN - Lógica mejorada
     const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio', 'quiero venir', 'me gustaría'];
-    const casualGreetings = ['hola', 'hi', 'hey', 'buenas', 'buenos días', 'buenas tardes', 'qué tal', 'como estas'];
+    const questionKeywords = ['servicios', 'ofrecen', 'tienen', 'precios', 'cuesta', 'quiero saber', 'información', 'ubicación', 'donde', 'horario'];
     
-    const isCasualGreeting = casualGreetings.some(greeting => 
-      processedText.toLowerCase().trim().startsWith(greeting)
+    // Saludo casual SOLO si es saludo sin preguntas o contexto adicional
+    const casualGreetingPatterns = [
+      /^hola[!.?\s]*$/i,
+      /^hi[!.?\s]*$/i,
+      /^hey[!.?\s]*$/i,
+      /^buenas[!.?\s]*$/i,
+      /^buenos días[!.?\s]*$/i,
+      /^buenas tardes[!.?\s]*$/i,
+      /^qué tal[!.?\s]*$/i,
+      /^como estas[!.?\s]*$/i,
+      /^hola aurora[!.?\s]*$/i,
+      /^hola como estas[!.?\s]*$/i
+    ];
+    
+    const isCasualGreeting = casualGreetingPatterns.some(pattern => 
+      pattern.test(processedText.toLowerCase().trim())
     );
     
-    const isReservationIntent = !isCasualGreeting && reservationKeywords.some(kw => 
+    // Es intención de reserva/info si tiene keywords de reserva O pregunta por servicios/info
+    const hasQuestionKeyword = questionKeywords.some(kw => 
       processedText.toLowerCase().includes(kw)
+    );
+    
+    const isReservationIntent = !isCasualGreeting && (
+      reservationKeywords.some(kw => processedText.toLowerCase().includes(kw)) ||
+      hasQuestionKeyword
     );
     
     let formResult = null;
@@ -1032,7 +1052,7 @@ Responde en tu estilo característico con:
       formResult.userMessage = text;
     } else {
       if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ⏭️ Salteando formulario - no es intención de reserva');
+        console.log('[WASSENGER] ⏭️ Salteando formulario - saludo casual detectado');
       }
       // Crear objeto vacío para mantener compatibilidad
       formResult = { form: null, needsMoreInfo: false, updates: {} };

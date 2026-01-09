@@ -18,12 +18,12 @@ import {
   saveConversationMessage,
   savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
-
-// 🗂️ Cache temporal en memoria para fotos pendientes de AXEL (FIX: PostgreSQL no guarda axelData)
-const axelPendingPhotos = new Map(); // userId -> { photos: [], timer: setTimeout }
 import { getPaymentInfo, calculateReservationCost } from '../../servicios/payment-calculator.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
+
+// 🗂️ Cache temporal en memoria para fotos pendientes de AXEL (FIX: PostgreSQL no guarda axelData)
+const axelPendingPhotos = new Map(); // userId -> { photos: [], timer: setTimeout }
 
 const router = Router();
 
@@ -571,11 +571,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             
             // Cargar perfil para guardar análisis
             const freshProfile = await loadProfile(userId);
-              );
-              return;
-            }
-
-            console.log(`[WASSENGER] ✅ Análisis completado de ${allPhotos.length} fotos - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
             
             // 💬 RESPUESTAS EN MÚLTIPLES MENSAJES (más natural y menos abrumador)
             

@@ -259,7 +259,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🔧 FIX: Extraer nombre desde la estructura correcta de Wassenger
     const name = data.chat?.name || data.contact?.name || data.fromName || data.name || '';
     const messageType = data.type || 'text';
-    const mediaUrl = data.mediaUrl || data.media?.url || null;
+    
+    // 🔧 FIX: Construir URL de imagen desde Wassenger API
+    let mediaUrl = data.mediaUrl || data.media?.url || null;
+    
+    // Si no hay URL directa pero hay enlace de descarga de Wassenger
+    if (!mediaUrl && data.media?.links?.download) {
+      const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+      // Convertir el path relativo a URL completa autenticada
+      mediaUrl = `https://api.wassenger.com${data.media.links.download}?token=${WASSENGER_TOKEN}`;
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[WASSENGER] 📸 URL de imagen construida desde API de Wassenger');
+      }
+    }
 
     if (!userId) {
       return res.status(200).json({ ok: true, ignored: true, reason: 'no_user_id' });

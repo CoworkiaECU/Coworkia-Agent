@@ -134,7 +134,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   
   // Contexto de perfil: Aurora recibe todo, otros solo básico
   const contextoUsuario = esAurora 
-    ? construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail })
+    ? construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail, mensaje })
     : construirContextoPerfilBasico(perfil);
 
   // Contexto de historial: Filtrar por agente activo
@@ -436,6 +436,9 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
 
   const lineas = ['PERFIL USUARIO:'];
   
+  // Extraer mensaje para detección de menciones
+  const mensajeActual = extraFlags.mensaje || '';
+  
   // Información del perfil
   if (perfil.name) {
     lineas.push(`- Nombre: ${perfil.name}`);
@@ -506,7 +509,11 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
   }
 
   // 🔄 RESERVA EN CURSO (pendingConfirmation)
-  if (perfil.pendingConfirmation) {
+  // ⚠️ REFACTORIZACIÓN: Solo incluir si el usuario pregunta EXPLÍCITAMENTE sobre reserva
+  // NO incluir automáticamente para evitar que Aurora insista agresivamente
+  const mentionsReservation = /reserva|cancelar|confirmar|pendiente|agendar|mi reserva/i.test(mensajeActual);
+  
+  if (perfil.pendingConfirmation && mentionsReservation) {
     // 🚨 CALCULAR wasFree basándose en free_trial_used del usuario, NO del formulario
     const esGratisPorFreeTrial = !perfil.freeTrialUsed;
     
@@ -517,7 +524,11 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
     lineas.push(`- Email: ${perfil.pendingConfirmation.email || '❌ FALTA'}`);
     lineas.push(`- Acompañantes: ${perfil.pendingConfirmation.guestCount || 0}`);
     lineas.push(`- Gratis: ${esGratisPorFreeTrial ? 'SÍ 🎉 - Free trial disponible' : 'NO - Pago requerido'}`);
-    lineas.push(`\n⚠️ IMPORTANTE: Si usuario cambia de tema, NO borres esta reserva. Guárdala y retómala después.`);
+    lineas.push(`\n⚠️ El usuario pregunta sobre esta reserva. Responde con los detalles.`);
+  } else if (perfil.pendingConfirmation && !mentionsReservation) {
+    // Usuario tiene pendingConfirmation PERO no pregunta sobre eso
+    // NO incluir detalles - dejar que Aurora responda lo que el usuario pregunta
+    // Aurora puede mencionar casualmente si es relevante, pero SIN INSISTIR
   }
 
   // 🆕 Historial COMPLETO de reservas con precios

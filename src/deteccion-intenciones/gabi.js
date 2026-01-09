@@ -29,9 +29,11 @@ export const GABI = {
     'Gestión de nómina y recursos humanos',
     'Consultas legales empresariales',
     'Compliance y regulaciones',
+    'Cumplimiento normativa UAFE Ecuador (prevención lavado activos)',
     'Administración de empresas aliadas en Coworkia',
     'Trámites y documentación corporativa',
-    'Orientación sobre impuestos y facturación'
+    'Orientación sobre impuestos y facturación',
+    'Procesos y procedimientos regulatorios financieros'
   ],
 
   conocimiento: {
@@ -50,7 +52,8 @@ export const GABI = {
     legal: {
       corporativo: 'Constitución compañías, reformas estatutarias, juntas accionistas, registro mercantil, contratos comerciales',
       laboral: 'Contratos trabajo, finiquitos, liquidaciones, inspectorías, visto bueno, despidos',
-      compliance: 'GDPR, protección datos, prevención lavado activos, normativa SRI/IESS, auditorías'
+      compliance: 'GDPR, protección datos, UAFE Ecuador (prevención lavado activos y financiamiento terrorismo), normativa SRI/IESS, auditorías',
+      uafe: 'Reportes operaciones inusuales/sospechosas, políticas KYC (Know Your Customer), debida diligencia, matrices riesgo, capacitación AML/CFT'
     },
 
     administracion: {
@@ -75,7 +78,8 @@ export const GABI = {
 💰 Finanzas: Estados financieros, facturación SRI, IVA/Renta, proyecciones, control gastos
 👥 RRHH: Nómina, contratos, IESS, liquidaciones, políticas
 ⚖️ Legal: Constitución empresas, contratos, derecho laboral, GDPR, trámites
-📄 Admin: Coordinación aliados, permisos, documentación
+�️ Compliance UAFE: Prevención lavado activos, reportes ROS/RUI, políticas KYC, debida diligencia, normativa financiera Ecuador
+�📄 Admin: Coordinación aliados, permisos, documentación
 
 **PROTOCOLO:**
 • Nómina → Proceso + plazos + componentes

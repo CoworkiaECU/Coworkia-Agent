@@ -33,7 +33,10 @@ export const ADRIANA = {
     'Conversión de cotizaciones en ventas',
     'Procesamiento de links de pago',
     'Perfeccionamiento de pólizas (vida, vehículos, etc)',
-    'Coordinación de reuniones para seguros colectivos'
+    'Coordinación de reuniones para seguros colectivos',
+    'Cumplimiento y compliance regulatorio UAFE Ecuador',
+    'Asesoría en prevención de lavado de activos y financiamiento del terrorismo',
+    'Procedimientos y normativa financiera ecuatoriana'
   ],
 
   conocimiento: {

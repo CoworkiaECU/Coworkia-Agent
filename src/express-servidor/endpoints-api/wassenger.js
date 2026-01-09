@@ -282,6 +282,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 📸 Procesando imagen/documento...');
         console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
+        console.log('[WASSENGER] 📸 DEBUG - MIME:', data.media?.mime);
         console.log('[WASSENGER] 📸 DEBUG - Full data structure:', JSON.stringify(data, null, 2));
       }
       
@@ -293,6 +294,26 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
+      }
+      
+      // 🚗 AXEL: Validar formato de archivo (solo imágenes, NO PDFs)
+      if (activeAgent === 'AXEL') {
+        const mimeType = data.media?.mime || '';
+        const isPDF = mimeType === 'application/pdf' || messageType === 'pdf' || messageType === 'document';
+        
+        if (isPDF) {
+          console.log('[WASSENGER] 🚗 AXEL - PDF/Documento rechazado');
+          await enviarWhatsApp(userId,
+            '⚠️ *No puedo analizar PDFs o documentos*\n\n' +
+            'Para cotizar tu vehículo necesito *fotos* del daño. 📸\n\n' +
+            '*Por favor envíame:*\n' +
+            '✅ Fotos en JPG o PNG\n' +
+            '✅ Con buena iluminación\n' +
+            '✅ Desde varios ángulos\n\n' +
+            '¿Listo? Envíame las fotos del vehículo 👍'
+          );
+          return res.json({ ok: true, ignored: true, reason: 'axel_pdf_not_supported' });
+        }
       }
       
       // 🚗 SI ES AXEL SIN IMAGEN: Verificar si tiene formulario en progreso

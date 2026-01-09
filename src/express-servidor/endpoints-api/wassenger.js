@@ -534,11 +534,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             }
 
             console.log(`[WASSENGER] ✅ Análisis completado de ${allPhotos.length} fotos - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
-            console.log(`[WASSENGER] ✅ Análisis completado de ${allPhotos.length} fotos - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
             
-            // Generar respuesta basada en el análisis
-            let response = `🔍 *ANÁLISIS COMPLETADO* (${allPhotos.length} foto${allPhotos.length > 1 ? 's' : ''})\n\n`;
-            response += analysis.analysis + '\n\n';
+            // 💬 RESPUESTAS EN MÚLTIPLES MENSAJES (más natural y menos abrumador)
+            
+            // Mensaje 1: Análisis recibido
+            await enviarWhatsApp(userId, `📸 Perfecto, recibí ${allPhotos.length} foto${allPhotos.length > 1 ? 's' : ''}. Analizando daños...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Mensaje 2: Resultado del análisis
+            await enviarWhatsApp(userId, analysis.analysis);
+            await new Promise(resolve => setTimeout(resolve, 2500));
             
             if (!analysis.isAcceptable) {
               // 🚨 COLISIÓN GRAVE - Activar proceso especial con Jefe de Taller
@@ -560,12 +565,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 photoUrls: photoUrls
               });
               
-              // Mensaje al usuario con enlace a Juan
-              response += `\n⚠️ *ATENCIÓN:* Este tipo de daño requiere evaluación especializada.\n\n`;
-              response += `Te voy a conectar con *Juan*, nuestro Jefe de Taller, quien tiene experiencia en este tipo de reparaciones:\n\n`;
-              response += `👉 *Contactar a Juan directamente:*\n`;
-              response += `${alertResult.contactLink}\n\n`;
-              response += `Él te responderá en breve para coordinar una inspección personalizada. 👍`;
+              // Mensaje 3: Advertencia
+              await enviarWhatsApp(userId, 
+                `⚠️ *ATENCIÓN:* Este tipo de daño requiere evaluación especializada.`
+              );
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              // Mensaje 4: Conexión con Juan
+              await enviarWhatsApp(userId, 
+                `Te voy a conectar con *Juan*, nuestro Jefe de Taller, quien tiene experiencia en este tipo de reparaciones:\n\n` +
+                `👉 *Contactar a Juan directamente:*\n` +
+                `${alertResult.contactLink}\n\n` +
+                `Él te responderá en breve para coordinar una inspección personalizada. 👍`
+              );
               
               console.log(`[WASSENGER] ${alertResult.success ? '✅' : '⚠️'} Proceso de colisión grave completado`);
               
@@ -577,21 +589,25 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               const initialData = `Vehículo con daño ${analysis.severity.toLowerCase()}`;
               const formResult = await processAxelFormMessage(userId, initialData);
               
-              response += `\n✅ *Buenas noticias:* Este tipo de daño ${analysis.severity === 'LEVE' ? 'leve' : 'moderado'} SÍ lo podemos reparar.\n\n`;
+              // Mensaje 3: Buenas noticias
+              await enviarWhatsApp(userId, 
+                `✅ *Buenas noticias:* Este tipo de daño ${analysis.severity === 'LEVE' ? 'leve' : 'moderado'} SÍ lo podemos reparar.`
+              );
+              await new Promise(resolve => setTimeout(resolve, 2000));
               
-              // Agregar prompt del formulario
+              // Mensaje 4: Solicitud de datos
+              let dataRequest = '';
               if (formResult.needsMoreInfo && formResult.prompt) {
-                response += formResult.prompt;
+                dataRequest = formResult.prompt;
               } else {
-                response += `Para darte una cotización precisa, necesito:\n`;
-                response += `1️⃣ Marca y modelo del vehículo\n`;
-                response += `2️⃣ Año del vehículo\n`;
-                response += `3️⃣ Tu nombre y email\n\n`;
-                response += `Envíame estos datos 📋`;
+                dataRequest = `Para darte una cotización precisa, necesito:\n`;
+                dataRequest += `1️⃣ Marca y modelo del vehículo\n`;
+                dataRequest += `2️⃣ Año del vehículo\n`;
+                dataRequest += `3️⃣ Tu nombre y email\n\n`;
+                dataRequest += `Envíame estos datos 📋`;
               }
+              await enviarWhatsApp(userId, dataRequest);
             }
-
-            await enviarWhatsApp(userId, response);
             
             // Guardar análisis en el perfil para usar en cotización posterior
             if (!analysis.isAcceptable) {
@@ -612,14 +628,20 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               }
             }
             
-            // Guardar interacción
+            // Guardar interacción (resumen de los múltiples mensajes)
+            const responsesSummary = `[RESPUESTA EN MÚLTIPLES MENSAJES]\n` +
+              `1. Confirmación recepción fotos\n` +
+              `2. Análisis de daños\n` +
+              `3. ${analysis.isAcceptable ? 'Buenas noticias sobre reparación' : 'Advertencia sobre daño grave'}\n` +
+              `4. ${analysis.isAcceptable ? 'Solicitud de datos del vehículo' : 'Conexión con Juan (Jefe Taller)'}`;
+            
             await saveInteraction({
               userId,
               agent: 'axel',
               agentName: 'Axel',
               intentReason: 'collision_photo_analysis',
               input: `[${allPhotos.length} IMÁGENES: Análisis de colisión vehicular]`,
-              output: response,
+              output: responsesSummary,
               meta: {
                 route: '/webhooks/wassenger',
                 via: 'whatsapp',
@@ -627,7 +649,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 photoUrls: photoUrls,
                 severity: analysis.severity,
                 isAcceptable: analysis.isAcceptable,
-                damageDetails: analysis.damageDetails
+                damageDetails: analysis.damageDetails,
+                multiMessageResponse: true
               }
             });
             

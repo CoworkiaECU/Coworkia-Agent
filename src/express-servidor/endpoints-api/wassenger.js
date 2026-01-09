@@ -508,30 +508,30 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         try {
           // Sistema de agrupación de fotos: esperar 4 segundos para recibir todas las fotos
-          profile.axelData = profile.axelData || {};
-          profile.axelData.pendingPhotos = profile.axelData.pendingPhotos || [];
-          profile.axelData.photoGroupTimer = profile.axelData.photoGroupTimer || null;
+          userProfile.axelData = userProfile.axelData || {};
+          userProfile.axelData.pendingPhotos = userProfile.axelData.pendingPhotos || [];
+          userProfile.axelData.photoGroupTimer = userProfile.axelData.photoGroupTimer || null;
           
           // Agregar foto actual al grupo
-          profile.axelData.pendingPhotos.push({
+          userProfile.axelData.pendingPhotos.push({
             url: mediaUrl,
             receivedAt: Date.now()
           });
           
           // Limpiar timer anterior si existe
-          if (profile.axelData.photoGroupTimer) {
-            clearTimeout(profile.axelData.photoGroupTimer);
+          if (userProfile.axelData.photoGroupTimer) {
+            clearTimeout(userProfile.axelData.photoGroupTimer);
           }
           
           if (process.env.DEBUG_MODE === 'true') {
-            console.log(`[WASSENGER] 📸 Foto agregada al grupo (${profile.axelData.pendingPhotos.length} total) - esperando 4 segundos...`);
+            console.log(`[WASSENGER] 📸 Foto agregada al grupo (${userProfile.axelData.pendingPhotos.length} total) - esperando 4 segundos...`);
           }
           
           // Guardar perfil con foto pendiente
-          await saveProfile(userId, profile);
+          await saveProfile(userId, userProfile);
           
           // Crear timer para procesar después de 4 segundos
-          profile.axelData.photoGroupTimer = setTimeout(async () => {
+          userProfile.axelData.photoGroupTimer = setTimeout(async () => {
             // Recargar perfil para obtener TODAS las fotos acumuladas
             const freshProfile = await loadProfile(userId);
             const allPhotos = freshProfile.axelData?.pendingPhotos || [];

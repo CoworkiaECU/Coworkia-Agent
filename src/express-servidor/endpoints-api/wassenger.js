@@ -1215,10 +1215,23 @@ Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar un
     // 🔄 SISTEMA DE CONFIRMACIONES SI/NO (DESPUÉS de actualizar formulario)
     // Solo procesar SI/NO si hay confirmación pendiente Y la respuesta es explícitamente SI/NO
     if (hasPendingConfirmation(profile)) {
+      // ⚠️ VALIDACIÓN: Verificar que pendingConfirmation tenga datos mínimos requeridos
+      const hasValidData = profile.pendingConfirmation && 
+                          profile.pendingConfirmation.date && 
+                          profile.pendingConfirmation.startTime;
+      
+      if (!hasValidData) {
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[WASSENGER] ⚠️ pendingConfirmation existe pero datos incompletos - limpiando');
+        }
+        await clearPendingConfirmation(userId);
+        profile.pendingConfirmation = null;
+      }
+      
       const isPositive = isPositiveResponse(text);
       const isNegative = isNegativeResponse(text);
       
-      if (isPositive || isNegative) {
+      if (hasValidData && (isPositive || isNegative)) {
         if (process.env.DEBUG_MODE === 'true') {
           console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
         }

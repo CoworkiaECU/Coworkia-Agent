@@ -298,6 +298,16 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       
       // 🕐 Calcular endTime y durationHours si no existen (2h por defecto para Hot Desk)
       if (!pendingReservation.endTime && pendingReservation.startTime) {
+        // ⚠️ VALIDACIÓN: Asegurar que startTime no sea null antes de split
+        if (typeof pendingReservation.startTime !== 'string' || !pendingReservation.startTime) {
+          throw new ConfirmationFlowError({
+            success: false,
+            message: '❌ Error: La hora de inicio no está definida correctamente. Por favor, proporciona una hora válida.',
+            needsAction: true,
+            actionType: 'request_time'
+          });
+        }
+        
         const durationHours = 2; // Hot Desk siempre 2 horas
         const [hours, minutes] = pendingReservation.startTime.split(':').map(Number);
         const endHours = hours + durationHours;

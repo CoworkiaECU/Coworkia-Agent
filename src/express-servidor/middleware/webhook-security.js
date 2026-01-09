@@ -17,6 +17,14 @@ const WASSENGER_IPS = [
  * Previene requests no autorizados al webhook
  */
 export function validateWebhookSignature(req, res, next) {
+  // 🚨 BYPASS DE SEGURIDAD (solo para desarrollo/testing)
+  if (process.env.WEBHOOK_SECURITY_BYPASS === 'true') {
+    if (DEBUG_MODE) {
+      console.log('[WEBHOOK-SECURITY] ⚠️ BYPASS ACTIVADO - Seguridad deshabilitada');
+    }
+    return next();
+  }
+
   const isProd = process.env.NODE_ENV === 'production';
   const webhookSecret = process.env.WASSENGER_WEBHOOK_SECRET;
   const sharedToken = process.env.WASSENGER_WEBHOOK_TOKEN || process.env.WASSENGER_TOKEN;

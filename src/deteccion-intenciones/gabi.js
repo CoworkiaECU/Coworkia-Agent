@@ -29,6 +29,7 @@ export const GABI = {
     'Gestión de nómina y recursos humanos',
     'Consultas legales empresariales',
     'Compliance y regulaciones',
+    'Oficial de Cumplimiento Titular certificado por UAFE conforme a la LOPDLAFT',
     'Cumplimiento normativa UAFE Ecuador (prevención lavado activos)',
     'Administración de empresas aliadas en Coworkia',
     'Trámites y documentación corporativa',
@@ -78,6 +79,7 @@ export const GABI = {
 💰 Finanzas: Estados financieros, facturación SRI, IVA/Renta, proyecciones, control gastos
 👥 RRHH: Nómina, contratos, IESS, liquidaciones, políticas
 ⚖️ Legal: Constitución empresas, contratos, derecho laboral, GDPR, trámites
+🛡️ UAFE: Oficial de Cumplimiento Titular certificado conforme a la LOPDLAFT
 �️ Compliance UAFE: Prevención lavado activos, reportes ROS/RUI, políticas KYC, debida diligencia, normativa financiera Ecuador
 �📄 Admin: Coordinación aliados, permisos, documentación
 

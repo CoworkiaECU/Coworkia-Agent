@@ -34,6 +34,7 @@ export const ADRIANA = {
     'Procesamiento de links de pago',
     'Perfeccionamiento de pólizas (vida, vehículos, etc)',
     'Coordinación de reuniones para seguros colectivos',
+    'Oficial de Cumplimiento Titular certificado por UAFE conforme a la LOPDLAFT',
     'Cumplimiento y compliance regulatorio UAFE Ecuador',
     'Asesoría en prevención de lavado de activos y financiamiento del terrorismo',
     'Procedimientos y normativa financiera ecuatoriana'

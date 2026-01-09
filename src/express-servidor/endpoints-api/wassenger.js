@@ -913,6 +913,16 @@ Responde en tu estilo característico con:
       }
     }
     
+    // 🔧 CALCULAR conversacionEnCurso: Si último mensaje fue hace menos de 10 minutos
+    const ahora = Date.now();
+    const ultimoMensaje = current.lastMessageAt ? new Date(current.lastMessageAt).getTime() : 0;
+    const minutosDesdeUltimoMensaje = (ahora - ultimoMensaje) / (1000 * 60);
+    const conversacionEnCurso = minutosDesdeUltimoMensaje < 10;
+    
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[WASSENGER] 💬 Conversación en curso: ${conversacionEnCurso} (${minutosDesdeUltimoMensaje.toFixed(1)} min desde último mensaje)`);
+    }
+    
     let profile = {
       ...current,
       userId,
@@ -921,7 +931,8 @@ Responde en tu estilo característico con:
       whatsappDisplayName: name || current.whatsappDisplayName || null, // ACTUALIZAR con nombre fresco de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: new Date().toISOString(),
-      conversationCount: (current.conversationCount || 0) + 1
+      conversationCount: (current.conversationCount || 0) + 1,
+      conversacionEnCurso // 🆕 Flag para evitar saludos repetidos
       // ⚠️ CRÍTICO: NO sobrescribir firstVisit, freeTrialUsed, freeTrialDate
       // Esos campos solo se actualizan en confirmation-flow.js
       // Si los pasamos aquí, se sobrescriben en cada mensaje

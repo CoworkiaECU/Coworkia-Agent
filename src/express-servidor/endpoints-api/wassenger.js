@@ -325,6 +325,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.log('[WASSENGER] 🚗 AXEL activo - mensaje de texto recibido');
         }
         
+        // 🚫 Si está esperando reenvío de fotos (por error anterior) y no hay texto, ignorar
+        if (userProfile.axelData?.waitingForPhotoRetry && !text.trim()) {
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log('[WASSENGER] 🚫 AXEL esperando fotos - ignorando mensaje vacío');
+          }
+          return res.json({ ok: true, ignored: true, reason: 'waiting_photo_retry' });
+        }
+        
         const responseText = text.toLowerCase();
         
         // Importar servicios del formulario
@@ -515,7 +523,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           if (!photoData) {
             photoData = { photos: [], timer: null };
-            axelPendingPhotos.set(userId, photoData);
+            axelPendingPhotos.set(userId);
+            
+            // Limpiar flag de espera si existe
+            if (userProfile.axelData?.waitingForPhotoRetry) {
+              userProfile.axelData.waitingForPhotoRetry = false;
+              await saveProfile(userId, userProfile);
+            }
           }
           
           // Agregar foto actual al grupo
@@ -564,6 +578,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               await enviarWhatsApp(userId,
                 '⚠️ Hubo un problema al analizar las imágenes. ¿Podrías enviarlas de nuevo? Asegúrate de que tengan buena luz y enfoque. 📸'
               );
+              
+              // Guardar estado: esperando reenvío de fotos
+              const errorProfile = await loadProfile(userId);
+              errorProfile.axelData = errorProfile.axelData || {};
+              errorProfile.axelData.waitingForPhotoRetry = true;
+              errorProfile.axelData.lastPhotoError = new Date().toISOString();
+              await saveProfile(userId, errorProfile);
+              
               return;
             }
 

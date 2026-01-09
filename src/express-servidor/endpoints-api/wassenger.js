@@ -18,6 +18,9 @@ import {
   saveConversationMessage,
   savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
+
+// 🗂️ Cache temporal en memoria para fotos pendientes de AXEL (FIX: PostgreSQL no guarda axelData)
+const axelPendingPhotos = new Map(); // userId -> { photos: [], timer: setTimeout }
 import { getPaymentInfo, calculateReservationCost } from '../../servicios/payment-calculator.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
@@ -507,34 +510,34 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         }
         
         try {
-          // Sistema de agrupación de fotos: esperar 4 segundos para recibir todas las fotos
-          userProfile.axelData = userProfile.axelData || {};
-          userProfile.axelData.pendingPhotos = userProfile.axelData.pendingPhotos || [];
-          userProfile.axelData.photoGroupTimer = userProfile.axelData.photoGroupTimer || null;
+          // Sistema de agrupación de fotos usando Map en memoria (FIX: PostgreSQL no guarda axelData)
+          let photoData = axelPendingPhotos.get(userId);
+          
+          if (!photoData) {
+            photoData = { photos: [], timer: null };
+            axelPendingPhotos.set(userId, photoData);
+          }
           
           // Agregar foto actual al grupo
-          userProfile.axelData.pendingPhotos.push({
+          photoData.photos.push({
             url: mediaUrl,
             receivedAt: Date.now()
           });
           
           // Limpiar timer anterior si existe
-          if (userProfile.axelData.photoGroupTimer) {
-            clearTimeout(userProfile.axelData.photoGroupTimer);
+          if (photoData.timer) {
+            clearTimeout(photoData.timer);
           }
           
           if (process.env.DEBUG_MODE === 'true') {
-            console.log(`[WASSENGER] 📸 Foto agregada al grupo (${userProfile.axelData.pendingPhotos.length} total) - esperando 4 segundos...`);
+            console.log(`[WASSENGER] 📸 Foto agregada al grupo (${photoData.photos.length} total) - esperando 4 segundos...`);
           }
           
-          // Guardar perfil con foto pendiente
-          await saveProfile(userId, userProfile);
-          
           // Crear timer para procesar después de 4 segundos
-          userProfile.axelData.photoGroupTimer = setTimeout(async () => {
-            // Recargar perfil para obtener TODAS las fotos acumuladas
-            const freshProfile = await loadProfile(userId);
-            const allPhotos = freshProfile.axelData?.pendingPhotos || [];
+          photoData.timer = setTimeout(async () => {
+            // Obtener fotos acumuladas
+            const currentPhotoData = axelPendingPhotos.get(userId);
+            const allPhotos = currentPhotoData?.photos || [];
             
             if (allPhotos.length === 0) {
               console.log('[WASSENGER] ⚠️ No hay fotos pendientes al procesar timer');
@@ -542,6 +545,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             }
             
             console.log(`[WASSENGER] 🚀 Procesando ${allPhotos.length} fotos agrupadas`);
+            
+            // Limpiar cache
+            axelPendingPhotos.delete(userId);
             
             // Importar servicio de análisis de colisiones
             const { analyzeCollisionPhoto } = await import('../../servicios/collision-analysis.js');
@@ -553,15 +559,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               additionalPhotos: photoUrls.slice(1) // Resto de fotos como contexto adicional
             });
             
-            // Limpiar fotos pendientes
-            freshProfile.axelData.pendingPhotos = [];
-            freshProfile.axelData.photoGroupTimer = null;
-            await saveProfile(userId, freshProfile);
-            
             if (!analysis.success) {
               console.error('[WASSENGER] ❌ Error en análisis Vision:', analysis.error);
               await enviarWhatsApp(userId,
                 '⚠️ Hubo un problema al analizar las imágenes. ¿Podrías enviarlas de nuevo? Asegúrate de que tengan buena luz y enfoque. 📸'
+              );
+              return;
+            }
+
+            console.log(`[WASSENGER] ✅ Análisis completado de ${allPhotos.length} fotos - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
+            
+            // Cargar perfil para guardar análisis
+            const freshProfile = await loadProfile(userId);
               );
               return;
             }

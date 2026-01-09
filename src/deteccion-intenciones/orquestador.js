@@ -419,7 +419,7 @@ ${tieneHistorialConAgente ?
       casualGreeting: esSaludoCasual,
       agentHandoff: esRelevoHaciaOtro,
       returningToAurora: esRetornoAurora,
-      targetAgent: esRelevoHaciaOtro ? targetAgentKey : null,
+      targetAgent: esRelevoHaciaOtro ? agenteKey : null,
       // 🚫 Flag para indicar si se debe guardar formulario parcial
       shouldSavePartialForm: esCancelacion && formData && Object.keys(formData).length > 0
     }

@@ -14,11 +14,10 @@ export async function saveAxelForm(userPhone, formData) {
     console.log('[AXEL-FORM] 💾 Guardando formulario:', { userPhone, formData });
 
     await databaseService.run(
-      `INSERT INTO partial_forms (user_phone, form_data, form_type, created_at, updated_at)
-       VALUES (?, ?, 'axel_quote', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `INSERT INTO partial_forms (user_phone, form_data, form_type)
+       VALUES (?, ?, 'axel_quote')
        ON CONFLICT(user_phone) DO UPDATE SET 
-         form_data = excluded.form_data,
-         updated_at = CURRENT_TIMESTAMP`,
+         form_data = excluded.form_data`,
       [userPhone, JSON.stringify(formData)]
     );
 
@@ -37,7 +36,7 @@ export async function saveAxelForm(userPhone, formData) {
 export async function getAxelForm(userPhone) {
   try {
     const row = await databaseService.get(
-      `SELECT form_data, created_at, updated_at 
+      `SELECT form_data, cancelled_at 
        FROM partial_forms 
        WHERE user_phone = ? AND form_type = 'axel_quote'`,
       [userPhone]

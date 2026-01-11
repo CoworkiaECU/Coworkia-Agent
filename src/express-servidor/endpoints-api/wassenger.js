@@ -648,11 +648,59 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
       
       // ==============================================
-      // ===== FOTOS PARA OTROS AGENTES (LEGACY) =====
+      // ===== FOTOS PARA OTROS AGENTES =====
       // ==============================================
       
-      // 🎯 SI ES ENZO/ADRIANA/ALUNA: Análisis de documento con Vision AI
-      if (['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {
+      // 🎯 SI ES ENZO: Análisis especializado de marketing visual
+      if (activeAgent === 'ENZO' && mediaUrl) {
+        console.log('[WASSENGER] 🎯 Enzo analizando material de marketing...');
+        
+        const { analyzeMarketingVisual } = await import('../../servicios/marketing-visual-analysis.js');
+        
+        try {
+          // Confirmación inmediata
+          await enviarWhatsApp(userId, 'Perfecto! 🎯 Analizando tu material de marketing...');
+          
+          // Análisis con Vision AI especializado
+          const analysisResult = await analyzeMarketingVisual(mediaUrl, message);
+          
+          if (analysisResult.success) {
+            // Respuesta con análisis profesional
+            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algo específico? 💡`;
+            
+            await enviarWhatsApp(userId, respuesta);
+            
+            // Guardar en conversación unificada
+            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
+            await conversationAdapter.saveConversationMessage(
+              userId,
+              'assistant',
+              respuesta,
+              'MARKETING',
+              {
+                agent: 'enzo',
+                visualType: analysisResult.visualType,
+                imageUrl: mediaUrl,
+                analysisTimestamp: analysisResult.timestamp
+              }
+            );
+            
+            console.log('[WASSENGER] ✅ Análisis visual de Enzo enviado');
+          } else {
+            await enviarWhatsApp(userId, '⚠️ No pude analizar la imagen. ¿Podrías reenviarla?');
+          }
+          
+          return res.json({ ok: true, processed: true, type: 'marketing_visual_analysis' });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en análisis visual:', error);
+          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame la imagen por favor.');
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
+      // 🎯 SI ES ADRIANA/ALUNA: Análisis de documento con Vision AI
+      if (['ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {
         console.log(`[WASSENGER] 🧠 ${activeAgent} analizando documento/imagen...`);
         
         const { analyzeImage } = await import('../../servicios-ia/openai.js');

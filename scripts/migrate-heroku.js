@@ -10,7 +10,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import postgresAdapter from '../src/database/postgres-adapter.js';
+import database from '../src/database/database.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -25,8 +25,10 @@ async function checkConnection() {
   console.log('🔍 Verificando conexión a PostgreSQL...');
   
   try {
-    const result = await postgresAdapter.query('SELECT version(), current_database(), current_user');
-    const info = result.rows[0];
+    await database.initialize();
+    const info = await database.get(`
+      SELECT version(), current_database(), current_user
+    `);
     
     console.log('✅ Conectado exitosamente:');
     console.log(`   Base de datos: ${info.current_database}`);
@@ -55,19 +57,19 @@ async function checkTablesExist() {
   const existingTables = [];
   
   for (const table of tables) {
-    const result = await postgresAdapter.query(`
+    const result = await database.get(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_name = $1
-      );
+      ) as exists
     `, [table]);
     
-    if (result.rows[0].exists) {
+    if (result.exists) {
       existingTables.push(table);
       
       // Contar registros
-      const countResult = await postgresAdapter.query(`SELECT COUNT(*) as count FROM ${table}`);
-      console.log(`   ⚠️  Tabla ${table} ya existe (${countResult.rows[0].count} registros)`);
+      const countResult = await database.get(`SELECT COUNT(*) as count FROM ${table}`);
+      console.log(`   ⚠️  Tabla ${table} ya existe (${countResult.count} registros)`);
     } else {
       console.log(`   ✓ Tabla ${table} no existe (se creará)`);
     }
@@ -149,8 +151,8 @@ async function verifyMigration() {
   
   for (const check of checks) {
     try {
-      const result = await postgresAdapter.query(check.query);
-      console.log(`   ✅ ${check.name}: ${result.rows.length} elementos`);
+      const result = await database.all(check.query);
+      console.log(`   ✅ ${check.name}: ${result.length} elementos`);
     } catch (error) {
       console.error(`   ❌ ${check.name}: ${error.message}`);
       allChecksPassed = false;
@@ -168,17 +170,17 @@ async function showStats() {
   
   try {
     // Contar tablas del sistema
-    const tablesResult = await postgresAdapter.query(`
+    const tablesResult = await database.get(`
       SELECT COUNT(*) as count
       FROM information_schema.tables
       WHERE table_schema = 'public'
       AND table_type = 'BASE TABLE'
     `);
     
-    console.log(`📋 Total tablas en schema public: ${tablesResult.rows[0].count}`);
+    console.log(`📋 Total tablas en schema public: ${tablesResult.count}`);
     
     // Listar tablas relacionadas con conversaciones
-    const convTablesResult = await postgresAdapter.query(`
+    const convTablesResult = await database.all(`
       SELECT 
         table_name,
         (SELECT COUNT(*) FROM information_schema.columns 
@@ -190,19 +192,19 @@ async function showStats() {
     `);
     
     console.log('\n📦 Tablas del sistema de conversaciones:');
-    convTablesResult.rows.forEach(row => {
+    convTablesResult.forEach(row => {
       console.log(`   - ${row.table_name} (${row.column_count} columnas)`);
     });
     
     // Contar índices
-    const indexesResult = await postgresAdapter.query(`
+    const indexesResult = await database.get(`
       SELECT COUNT(*) as count
       FROM pg_indexes
       WHERE schemaname = 'public'
       AND (tablename LIKE '%conversation%' OR tablename = 'active_topics')
     `);
     
-    console.log(`\n🔍 Total índices creados: ${indexesResult.rows[0].count}`);
+    console.log(`\n🔍 Total índices creados: ${indexesResult.count}`);
     
   } catch (error) {
     console.error('⚠️  Error obteniendo estadísticas:', error.message);

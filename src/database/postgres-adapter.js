@@ -166,7 +166,7 @@ class PostgresAdapter {
         )
       `);
 
-      // Tabla de historial de conversaciones
+      // Tabla de historial de conversaciones (LEGACY - se mantiene como respaldo)
       await client.query(`
         CREATE TABLE IF NOT EXISTS conversation_history (
           id SERIAL PRIMARY KEY,
@@ -176,6 +176,84 @@ class PostgresAdapter {
           agent TEXT,
           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+      `);
+
+      // ===================================================================
+      // NUEVAS TABLAS: Sistema Unificado de Conversaciones Multi-Agente
+      // ===================================================================
+
+      // Tabla de conversaciones estructuradas por tema/contexto
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS agent_conversations (
+          id SERIAL PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          agent TEXT NOT NULL,
+          conversation_topic TEXT,
+          session_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          content TEXT NOT NULL,
+          metadata JSONB DEFAULT '{}'::jsonb,
+          parent_message_id INTEGER,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE,
+          FOREIGN KEY (parent_message_id) REFERENCES agent_conversations(id) ON DELETE SET NULL
+        )
+      `);
+
+      // Tabla de archivos adjuntos (imágenes, PDFs)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS conversation_files (
+          id SERIAL PRIMARY KEY,
+          message_id INTEGER NOT NULL,
+          user_phone TEXT NOT NULL,
+          agent TEXT NOT NULL,
+          file_type TEXT NOT NULL,
+          file_url TEXT,
+          file_data TEXT,
+          processed BOOLEAN DEFAULT FALSE,
+          analysis_result JSONB,
+          uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          
+          FOREIGN KEY (message_id) REFERENCES agent_conversations(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de tracking de temas activos
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS active_topics (
+          user_phone TEXT NOT NULL,
+          agent TEXT NOT NULL,
+          topic TEXT NOT NULL,
+          session_id TEXT NOT NULL,
+          status TEXT DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed')),
+          last_interaction TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          context_summary TEXT,
+          
+          PRIMARY KEY (user_phone, agent, topic),
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Agregar columnas nuevas a users si no existen
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'active_agents'
+          ) THEN
+            ALTER TABLE users ADD COLUMN active_agents JSONB DEFAULT '[]'::jsonb;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'context_preferences'
+          ) THEN
+            ALTER TABLE users ADD COLUMN context_preferences JSONB DEFAULT '{}'::jsonb;
+          END IF;
+        END $$;
       `);
 
       // Índices para mejorar performance
@@ -191,6 +269,21 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone);
         CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_phone);
+        
+        -- Índices para nuevas tablas
+        CREATE INDEX IF NOT EXISTS idx_agent_conversations_user_agent ON agent_conversations(user_phone, agent);
+        CREATE INDEX IF NOT EXISTS idx_agent_conversations_topic ON agent_conversations(conversation_topic);
+        CREATE INDEX IF NOT EXISTS idx_agent_conversations_session ON agent_conversations(session_id);
+        CREATE INDEX IF NOT EXISTS idx_agent_conversations_timestamp ON agent_conversations(timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_agent_conversations_user_agent_topic ON agent_conversations(user_phone, agent, conversation_topic);
+        
+        CREATE INDEX IF NOT EXISTS idx_conversation_files_message ON conversation_files(message_id);
+        CREATE INDEX IF NOT EXISTS idx_conversation_files_agent ON conversation_files(agent);
+        CREATE INDEX IF NOT EXISTS idx_conversation_files_processed ON conversation_files(processed);
+        
+        CREATE INDEX IF NOT EXISTS idx_active_topics_user ON active_topics(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_active_topics_status ON active_topics(status);
+        CREATE INDEX IF NOT EXISTS idx_active_topics_last_interaction ON active_topics(last_interaction DESC);
       `);
 
       await client.query('COMMIT');

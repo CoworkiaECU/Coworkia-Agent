@@ -9,6 +9,9 @@
     "test:conversation": "node scripts/test-aurora-local.js --conversation",
     "test:cancel": "node scripts/test-aurora-local.js --cancel",
     "test:followup": "node scripts/test-follow-up-local.js",
+    "test:integration": "node scripts/test-integration.js",
+    "migrate:preview": "node scripts/migrate-heroku.js",
+    "migrate:heroku": "node scripts/migrate-heroku.js --execute",
     "cleanup": "node scripts/cleanup-expired-data.js",
     "cleanup:dry-run": "node scripts/cleanup-expired-data.js --dry-run",
     "audit": "node scripts/audit-reservations.js",
@@ -28,7 +31,8 @@
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.12",
     "openai": "^6.7.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "uuid": "^11.0.6"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",

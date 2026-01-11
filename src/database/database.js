@@ -7,7 +7,8 @@
  * USERS:
  * - phone_number, name, email, whatsapp_display_name
  * - first_visit, free_trial_used, free_trial_date
- * - conversation_count, last_message_at, active_agent
+ * - conversation_count, last_message_at, active_agent, preferred_language
+ * - active_agents (JSONB), context_preferences (JSONB)
  * - created_at, updated_at
  * 
  * RESERVATIONS:
@@ -17,7 +18,23 @@
  * - hot_desk_number, calendar_event_id
  * - created_at, confirmed_at
  * 
- * INTERACTIONS, PENDING_CONFIRMATIONS, RESERVATION_STATE, PARTIAL_FORMS
+ * AGENT_CONVERSATIONS (NUEVO - Sistema Unificado):
+ * - id, user_phone, agent, conversation_topic, session_id
+ * - role, content, metadata (JSONB), parent_message_id
+ * - timestamp
+ * 
+ * CONVERSATION_FILES (NUEVO - Archivos adjuntos):
+ * - id, message_id, user_phone, agent, file_type
+ * - file_url, file_data, processed, analysis_result (JSONB)
+ * - uploaded_at
+ * 
+ * ACTIVE_TOPICS (NUEVO - Tracking de temas):
+ * - user_phone, agent, topic, session_id, status
+ * - last_interaction, context_summary
+ * 
+ * LEGACY TABLES (se mantienen como respaldo):
+ * - INTERACTIONS, CONVERSATION_HISTORY
+ * - PENDING_CONFIRMATIONS, RESERVATION_STATE, PARTIAL_FORMS
  */
 
 import postgresAdapter from './postgres-adapter.js';

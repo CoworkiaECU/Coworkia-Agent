@@ -9,54 +9,59 @@ import { analyzeImage } from '../servicios-ia/openai.js';
  * 📸 Analiza una foto de colisión vehicular
  */
 export async function analyzeCollisionPhoto(imageUrl, context = {}) {
-  const { photoType = 'general', existingDamages = [] } = context;
+  const { photoType = 'general', additionalPhotos = [], totalPhotos = 1 } = context;
   
   const prompts = {
-    general: `Eres un experto en carrocería automotriz con 15 años de experiencia. Analiza esta foto de un vehículo y describe:
+    general: `Eres Axel, experto en carrocería con 15 años de experiencia en PaintBull. Analiza esta foto de colisión:
 
-1. **Tipo de daño:** (abolladura, rayón, golpe, rotura, deformación)
-2. **Ubicación exacta:** (parachoques delantero/trasero, puerta delantera/trasera izq/der, capó, lateral, etc.)
-3. **Severidad:** LEVE (solo pintura/abolladura superficial) | MODERADO (estructura afectada levemente) | GRAVE (estructura comprometida - RECHAZAR)
-4. **Piezas afectadas:** Lista de partes dañadas visibles
-5. **Daños adicionales visibles:** Cualquier otro daño que notes
-6. **Recomendación:** ¿Es reparable por The PaintBull? (solo colisiones leves y moderadas)
+**RESPONDE EN FORMATO NATURAL (no lista técnica):**
 
-IMPORTANTE: 
-- Si ves daño estructural severo, chasis comprometido, o vehículo volcado → Marca como GRAVE y recomienda taller especializado
-- Si no ves ningún daño claro → Indica que necesitas foto más específica
-- Sé preciso y técnico pero comprensible`,
+1. Describe el daño de forma clara y empática (como hablarías con un cliente preocupado)
+2. Indica severidad: LEVE, MODERADO o GRAVE
+3. Menciona áreas afectadas principales (máximo 3)
+4. Da estimación aproximada en $ (rangos amplios)
 
-    close_up: `Analiza esta foto de cerca del daño. Describe:
-1. Profundidad del daño
-2. Si la pintura está afectada (rayón, descascaramiento, rotura)
-3. Si hay deformación del metal
-4. Estimación de área afectada (cm² aproximados)
-5. ¿Necesita masilla, enderezado, o solo pintura?`,
+IMPORTANTE:
+- Tono cálido y humano, nada de listas numeradas
+- Si es grave (chasis, volcado, incendio) → rechaza amablemente
+- Si no ves daño claro → pide foto más específica del área dañada
+- Sé breve: 2-3 oraciones máximo`,
 
-    vin: `Extrae el número VIN (Vehicle Identification Number) o número de chasis visible en esta foto. Si no lo encuentras claramente, indícalo.`,
+    batch: `Eres Axel de PaintBull analizando ${totalPhotos} foto(s) de un mismo vehículo dañado.
 
-    context: `Esta es una foto adicional del mismo vehículo. Daños ya identificados: ${existingDamages.join(', ')}.
+**ANALIZA TODAS LAS FOTOS JUNTAS Y RESPONDE:**
+
+1. Descripción general del daño (tono empático y natural)
+2. Severidad global: LEVE | MODERADO | GRAVE
+3. Áreas dañadas principales (máximo 3 más importantes)
+4. Estimación aproximada en $ considerando TODO el daño visible
+
+IMPORTANTE:
+- Consolida TODO en una respuesta breve y clara
+- Tono cálido, nada técnico o robótico
+- Si alguna foto muestra daño grave → marca GRAVE
+- 3-4 oraciones máximo`,
+
+    context: `Foto adicional del vehículo. Daños ya vistos: ${context.existingDamages?.join(', ') || 'ninguno'}. 
     
-Analiza si ves:
-1. Daños adicionales no mencionados antes
-2. Mejor perspectiva de daños ya identificados
-3. Cualquier detalle relevante para la cotización`
+Indica brevemente:
+1. ¿Ves daños adicionales no mencionados?
+2. ¿Cambió la severidad del análisis con esta foto?`
   };
 
   const prompt = prompts[photoType] || prompts.general;
 
-  console.log(`[COLLISION ANALYSIS] 📸 Analizando foto tipo: ${photoType}`);
-  console.log(`[COLLISION ANALYSIS] 🔗 URL: ${imageUrl.substring(0, 80)}...`);
+  console.log(`[COLLISION] 📸 Analizando ${totalPhotos} foto(s) - tipo: ${photoType}`);
 
   try {
     const result = await analyzeImage(imageUrl, prompt, {
-      temperature: 0.2, // Más determinístico para análisis técnico
-      max_tokens: 600,
-      detail: 'high' // Máxima calidad para detectar detalles
+      temperature: 0.2,
+      max_tokens: 400,
+      detail: photoType === 'batch' ? 'high' : 'auto'
     });
 
     if (!result.success) {
-      console.error('[COLLISION ANALYSIS] ❌ Error en Vision API:', result.error);
+      console.error('[COLLISION] ❌ Error Vision API:', result.error);
       return {
         success: false,
         error: result.error
@@ -64,39 +69,51 @@ Analiza si ves:
     }
 
     const analysis = result.content;
-    console.log('[COLLISION ANALYSIS] ✅ Análisis completado');
-    console.log('[COLLISION ANALYSIS] 📝 Resultado:', analysis.substring(0, 200) + '...');
+    console.log('[COLLISION] ✅ Análisis OK');
 
-    // Detectar severidad
+    // Parsear respuesta para extraer datos estructurados
     const analysisLower = analysis.toLowerCase();
-    let severity = 'LEVE';
     
+    // Detectar severidad
+    let severity = 'leve';
     if (analysisLower.includes('grave') || analysisLower.includes('severo') || 
-        analysisLower.includes('estructural') || analysisLower.includes('chasis comprometido') ||
-        analysisLower.includes('volcado') || analysisLower.includes('rechazar')) {
-      severity = 'GRAVE';
-    } else if (analysisLower.includes('moderado') || analysisLower.includes('moderada') ||
-               analysisLower.includes('estructura afectada')) {
-      severity = 'MODERADO';
+        analysisLower.includes('chasis') || analysisLower.includes('estructural')) {
+      severity = 'severe';
+    } else if (analysisLower.includes('moderado') || analysisLower.includes('considerable')) {
+      severity = 'moderate';
     }
 
-    // Detectar si es apto para PaintBull
-    const isAcceptable = severity !== 'GRAVE';
+    // Extraer áreas dañadas (parsing simple)
+    const damageAreas = [];
+    const parts = ['parachoques', 'puerta', 'capó', 'guardabarro', 'lateral', 'espejo'];
+    parts.forEach(part => {
+      if (analysisLower.includes(part)) damageAreas.push(part);
+    });
+
+    // Extraer estimación de costo (buscar números después de $)
+    let estimatedCost = null;
+    const costMatch = analysis.match(/\$?\s*(\d{2,4})\s*-?\s*\$?\s*(\d{2,4})?/);
+    if (costMatch) {
+      estimatedCost = parseInt(costMatch[1]);
+    }
 
     return {
       success: true,
       analysis,
       severity,
-      isAcceptable,
+      damageAreas,
+      estimatedCost,
+      isAcceptable: severity !== 'severe',
       photoType,
+      totalPhotos,
       timestamp: new Date().toISOString()
     };
 
   } catch (error) {
-    console.error('[COLLISION ANALYSIS] ❌ Error:', error);
+    console.error('[COLLISION] ❌ Error:', error);
     return {
       success: false,
-      error: error.message || 'Error analizando imagen'
+      error: error.message || 'Error procesando fotos'
     };
   }
 }

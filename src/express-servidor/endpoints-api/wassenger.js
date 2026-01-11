@@ -511,169 +511,129 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           }
       }
       
-      // 🚗 SI ES AXEL CON IMAGEN: Agrupación y análisis de múltiples fotos
+      // 🚗 SI ES AXEL CON IMAGEN: Agrupación batch con 15 segundos
       if (activeAgent === 'AXEL' && mediaUrl) {
         if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🚗 AXEL activo + imagen detectada - iniciando agrupación de fotos');
+          console.log('[WASSENGER] 🚗 AXEL + imagen - batch processing iniciado');
         }
         
         try {
-          // Sistema de agrupación de fotos usando Map en memoria (FIX: PostgreSQL no guarda axelData)
+          // Sistema de agrupación temporal de fotos
           let photoData = axelPendingPhotos.get(userId);
           
           if (!photoData) {
-            photoData = { photos: [], timer: null };
-            axelPendingPhotos.set(userId);
+            photoData = { photos: [], timer: null, firstPhotoAt: Date.now() };
+            axelPendingPhotos.set(userId, photoData);
             
-            // Limpiar flag de espera si existe
-            if (userProfile.axelData?.waitingForPhotoRetry) {
-              userProfile.axelData.waitingForPhotoRetry = false;
-              await saveProfile(userId, userProfile);
-            }
+            // Confirmar recepción inmediata (UX)
+            await enviarWhatsApp(userId, '📸 Foto recibida. Envía todas las que tengas, las analizo juntas en un momento...');
           }
           
-          // Agregar foto actual al grupo
+          // Agregar foto al grupo
           photoData.photos.push({
             url: mediaUrl,
             receivedAt: Date.now()
           });
           
-          // Limpiar timer anterior si existe
+          // Limpiar timer anterior
           if (photoData.timer) {
             clearTimeout(photoData.timer);
           }
           
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log(`[WASSENGER] 📸 Foto agregada al grupo (${photoData.photos.length} total) - esperando 4 segundos...`);
-          }
+          console.log(`[WASSENGER] 📸 ${photoData.photos.length} foto(s) acumulada(s) - timer 15s iniciado`);
           
-          // Crear timer para procesar después de 4 segundos
+          // Timer de 15 segundos para procesar batch
           photoData.timer = setTimeout(async () => {
-            // Obtener fotos acumuladas
             const currentPhotoData = axelPendingPhotos.get(userId);
             const allPhotos = currentPhotoData?.photos || [];
             
             if (allPhotos.length === 0) {
-              console.log('[WASSENGER] ⚠️ No hay fotos pendientes al procesar timer');
+              console.log('[WASSENGER] ⚠️ Timer sin fotos pendientes');
               return;
             }
             
-            console.log(`[WASSENGER] 🚀 Procesando ${allPhotos.length} fotos agrupadas`);
+            console.log(`[WASSENGER] 🚀 Procesando BATCH de ${allPhotos.length} foto(s)`);
             
-            // Limpiar cache
+            // Limpiar cache inmediatamente
             axelPendingPhotos.delete(userId);
             
-            // Importar servicio de análisis de colisiones
+            // Importar servicio de análisis
             const { analyzeCollisionPhoto } = await import('../../servicios/collision-analysis.js');
             
-            // Analizar TODAS las fotos juntas
+            // Analizar todas las fotos juntas
             const photoUrls = allPhotos.map(p => p.url);
             const analysis = await analyzeCollisionPhoto(photoUrls[0], { 
-              photoType: 'general',
-              additionalPhotos: photoUrls.slice(1) // Resto de fotos como contexto adicional
+              photoType: 'batch',
+              additionalPhotos: photoUrls.slice(1),
+              totalPhotos: photoUrls.length
             });
             
             if (!analysis.success) {
-              console.error('[WASSENGER] ❌ Error en análisis Vision:', analysis.error);
+              console.error('[WASSENGER] ❌ Error análisis:', analysis.error);
               await enviarWhatsApp(userId,
-                '⚠️ Hubo un problema al analizar las imágenes. ¿Podrías enviarlas de nuevo? Asegúrate de que tengan buena luz y enfoque. 📸'
+                '⚠️ Ups, hubo un problema al revisar las fotos. ¿Podrías enviarlas otra vez? Con buena luz si es posible. 📸'
               );
-              
-              // Guardar estado: esperando reenvío de fotos
-              const errorProfile = await loadProfile(userId);
-              errorProfile.axelData = errorProfile.axelData || {};
-              errorProfile.axelData.waitingForPhotoRetry = true;
-              errorProfile.axelData.lastPhotoError = new Date().toISOString();
-              await saveProfile(userId, errorProfile);
-              
               return;
             }
 
-            console.log(`[WASSENGER] ✅ Análisis completado de ${allPhotos.length} fotos - Severidad: ${analysis.severity}, Apto: ${analysis.isAcceptable}`);
+            console.log(`[WASSENGER] ✅ Análisis batch OK - Severidad: ${analysis.severity}`);
             
-            // Cargar perfil para guardar análisis
+            // Cargar perfil para guardar resultado
             const freshProfile = await loadProfile(userId);
+            freshProfile.axelData = freshProfile.axelData || {};
+            freshProfile.axelData.lastAnalysis = {
+              photoCount: allPhotos.length,
+              severity: analysis.severity,
+              damageAreas: analysis.damageAreas || [],
+              estimatedCost: analysis.estimatedCost || null,
+              analyzedAt: new Date().toISOString()
+            };
+            await saveProfile(userId, freshProfile);
             
-            // 💬 RESPUESTAS EN MÚLTIPLES MENSAJES (más natural y menos abrumador)
+            // RESPUESTA CONSOLIDADA EMPÁTICA
+            let respuesta = '';
             
-            // Mensaje 1: Análisis recibido
-            await enviarWhatsApp(userId, `📸 Perfecto, recibí ${allPhotos.length} foto${allPhotos.length > 1 ? 's' : ''}. Analizando daños...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Mensaje 2: Resultado del análisis
-            await enviarWhatsApp(userId, analysis.analysis);
-            await new Promise(resolve => setTimeout(resolve, 2500));
-            
-            if (!analysis.isAcceptable) {
-              // 🚨 COLISIÓN GRAVE - Activar proceso especial con Jefe de Taller
-              if (process.env.DEBUG_MODE === 'true') {
-                console.log('[WASSENGER] 🚨 Colisión GRAVE detectada - activando proceso con Juan');
-              }
-              
-              const { handleSevereCollision } = await import('../../servicios/severe-collision-alert.js');
-              
-              // Obtener datos del vehículo del perfil (si existen)
-              const vehicleData = freshProfile.axelData?.vehicle || null;
-              
-              // Ejecutar proceso completo: WhatsApp + Email a Juan
-              const alertResult = await handleSevereCollision({
-                userName: freshProfile.name || 'Cliente',
-                userId: userId,
-                vehicleData: vehicleData,
-                analysis: analysis.analysis,
-                photoUrls: photoUrls
-              });
-              
-              // Mensaje 3: Advertencia
-              await enviarWhatsApp(userId, 
-                `⚠️ *ATENCIÓN:* Este tipo de daño requiere evaluación especializada.`
-              );
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              
-              // Mensaje 4: Conexión con Juan
-              await enviarWhatsApp(userId, 
-                `Te voy a conectar con *Juan*, nuestro Jefe de Taller, quien tiene experiencia en este tipo de reparaciones:\n\n` +
-                `👉 *Contactar a Juan directamente:*\n` +
-                `${alertResult.contactLink}\n\n` +
-                `Él te responderá en breve para coordinar una inspección personalizada. 👍`
-              );
-              
-              console.log(`[WASSENGER] ${alertResult.success ? '✅' : '⚠️'} Proceso de colisión grave completado`);
-              
+            // Intro personalizada según severidad
+            if (analysis.severity === 'severe' || analysis.severity === 'major') {
+              respuesta = `${freshProfile.nombre}, revisé las ${allPhotos.length} foto(s). El golpe sí es considerable, pero tranquilo/a que tiene arreglo. 💪\n\n`;
+            } else if (analysis.severity === 'moderate') {
+              respuesta = `${freshProfile.nombre}, vi las fotos. Es un daño moderado, de esos que vemos seguido. No te preocupes. 👍\n\n`;
             } else {
-              // ✅ Colisión LEVE/MODERADA - iniciar formulario de cotización
-              const { processAxelFormMessage } = await import('../../servicios/axel-quote-form.js');
-              
-              // Procesar formulario con los datos del análisis inicial
-              const initialData = `Vehículo con daño ${analysis.severity.toLowerCase()}`;
-              const formResult = await processAxelFormMessage(userId, initialData);
-              
-              // Mensaje 3: Buenas noticias
-              await enviarWhatsApp(userId, 
-                `✅ *Buenas noticias:* Este tipo de daño ${analysis.severity === 'LEVE' ? 'leve' : 'moderado'} SÍ lo podemos reparar.`
-              );
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              
-              // Mensaje 4: Solicitud de datos
-              let dataRequest = '';
-              if (formResult.needsMoreInfo && formResult.prompt) {
-                dataRequest = formResult.prompt;
-              } else {
-                dataRequest = `Para darte una cotización precisa, necesito:\n`;
-                dataRequest += `1️⃣ Marca y modelo del vehículo\n`;
-                dataRequest += `2️⃣ Año del vehículo\n`;
-                dataRequest += `3️⃣ Tu nombre y email\n\n`;
-                dataRequest += `Envíame estos datos 📋`;
-              }
-              await enviarWhatsApp(userId, dataRequest);
+              respuesta = `${freshProfile.nombre}, perfecto. El daño es leve, se puede solucionar sin problema. ✅\n\n`;
             }
             
-            // Guardar análisis en el perfil para usar en cotización posterior
-            if (!analysis.isAcceptable) {
-              // Colisión grave - no guardar análisis (ya se manejó con Juan)
-            } else {
-              // Colisión leve/moderada - guardar para cotización
-              freshProfile.axelData.damageAnalysis = {
+            // Áreas dañadas de forma natural
+            if (analysis.damageAreas && analysis.damageAreas.length > 0) {
+              const areas = analysis.damageAreas.slice(0, 3).join(', ');
+              respuesta += `📋 Áreas afectadas: ${areas}\n\n`;
+            }
+            
+            // Cotización con rango (siempre referencial)
+            if (analysis.estimatedCost) {
+              const min = Math.round(analysis.estimatedCost * 0.9);
+              const max = Math.round(analysis.estimatedCost * 1.2);
+              respuesta += `💰 Estimación referencial: $${min} - $${max} (sujeto a inspección física)\n\n`;
+            }
+            
+            // Call to action simple
+            respuesta += `¿Te gustaría que te envíe una cotización oficial por email? 📧`;
+            
+            await enviarWhatsApp(userId, respuesta);
+            
+            console.log('[WASSENGER] ✅ Análisis batch enviado al usuario');
+            
+          }, 15000); // 15 segundos de espera
+          
+          // No respondemos aún - esperamos que el timer procese todo junto
+          return res.json({ ok: true, processing: 'batch_pending' });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en batch processing:', error);
+          await enviarWhatsApp(userId, '⚠️ Ups, algo falló. Reenvíame las fotos por favor.');
+          axelPendingPhotos.delete(userId);
+          return res.json({ ok: false, error: error.message });
+        }
+      }
                 severity: analysis.severity,
                 analysis: analysis.analysis,
                 damageDetails: analysis.damageDetails,

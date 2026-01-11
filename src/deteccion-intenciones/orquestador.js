@@ -1,5 +1,6 @@
 // Cerebro Principal: Orquestador de Agentes de Coworkia
 // Integra Aurora, Aluna, Adriana, Enzo, Ángela, Axel y Gabi con memoria contextual
+// + Sistema de coordinación inteligente por tópicos
 
 import { AURORA } from './aurora.js';
 import { ALUNA } from './aluna.js';
@@ -9,6 +10,12 @@ import { ANGELA } from './angela.js';
 import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
 import { detectarIntencion } from './detectar-intencion.js';
+import { 
+  shouldHandover, 
+  detectTopicFromMessage, 
+  getAgentForTopic,
+  getUserActiveTopics 
+} from '../servicios/aurora-coordinator.js';
 
 // Configuración de agentes
 export const AGENTES = {

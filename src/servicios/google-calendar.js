@@ -91,7 +91,10 @@ export async function createCalendarEvent(reservationData) {
       serviceType = 'Hot Desk',
       duration,
       price,
-      isTest = false
+      isTest = false,
+      colorId = '10',              // Color personalizable
+      customDescription = null,     // Descripción personalizada
+      location: customLocation = null  // Ubicación personalizada
     } = reservationData;
 
     // Construir fechas/horas para el evento
@@ -153,9 +156,8 @@ export async function createCalendarEvent(reservationData) {
     const wasFree = !price || price === 0;
     const reservationType = wasFree ? '🎁 GRATIS (Primera visita)' : `💳 PAGADA - ${paymentDisplay}`;
     
-    const event = {
-      summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"
-      description: `
+    // Usar descripción personalizada si existe, sino generar la default
+    const eventDescription = customDescription || `
 🎯 Reserva confirmada en Coworkia
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -177,7 +179,11 @@ ${reservationType}
 📞 Contacto: +593 99 483 7117
 
 ¡Te esperamos! 🚀
-      `.trim(),
+    `.trim();
+    
+    const event = {
+      summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"
+      description: eventDescription,
       start: {
         dateTime: startDateTime.toISOString(),
         timeZone: 'America/Guayaquil' // Google Calendar ajustará automáticamente
@@ -186,7 +192,7 @@ ${reservationType}
         dateTime: endDateTime.toISOString(), 
         timeZone: 'America/Guayaquil' // Google Calendar ajustará automáticamente
       },
-      location: 'Whymper 403, Edificio Finistere, Quito, Ecuador',
+      location: customLocation || 'Whymper 403, Edificio Finistere, Quito, Ecuador',
       // NOTA: Service Accounts no pueden invitar attendees sin Domain-Wide Delegation
       // Solo creamos el evento como referencia. Las notificaciones van por email separado.
       reminders: {
@@ -195,7 +201,7 @@ ${reservationType}
           { method: 'popup', minutes: 60 }        // 1 hora antes
         ]
       },
-      colorId: '10', // Verde para reservas confirmadas
+      colorId: colorId, // Personalizable por tipo de evento
       visibility: 'public'
     };
 

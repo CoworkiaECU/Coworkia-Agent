@@ -26,6 +26,7 @@
 ### Conversación
 - **[ESCENAS_CONVERSACIONALES.md](ESCENAS_CONVERSACIONALES.md)** - Flujos UX
 - **[INSTRUCCIONES_GOOGLE_CALENDAR.md](INSTRUCCIONES_GOOGLE_CALENDAR.md)** - Calendar workflows
+- **[AURORA-MESSAGING.md](AURORA-MESSAGING.md)** ⭐ **NUEVO** - Guía de messaging y presentación de Coworkia
 
 ## 📦 Archivo
 - **[archive-nov2025/](archive-nov2025/)** - Documentos obsoletos (v120-v294)

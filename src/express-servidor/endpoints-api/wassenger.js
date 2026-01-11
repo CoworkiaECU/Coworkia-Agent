@@ -750,20 +750,71 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         }
       }
       
-      // 🎯 SI ES ALUNA: Análisis de documento con Vision AI
+      // 📋 SI ES ALUNA: Análisis especializado de documentos de contratos/membresías
       if (activeAgent === 'ALUNA' && mediaUrl) {
-        console.log('[WASSENGER] 🧠 Aluna analizando documento...');
+        console.log('[WASSENGER] 📋 Aluna analizando documento de contratos...');
+        
+        const { analyzeContractDocument } = await import('../../servicios/contract-document-analysis.js');
+        
+        try {
+          // Confirmación inmediata
+          await enviarWhatsApp(userId, 'Perfecto! 📋 Analizando tu documento...');
+          
+          // Análisis especializado con Vision AI
+          const analysisResult = await analyzeContractDocument(mediaUrl, message, {
+            fileType: messageType
+          });
+          
+          if (analysisResult.success) {
+            // Respuesta con análisis profesional
+            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algún aspecto? 😊`;
+            
+            await enviarWhatsApp(userId, respuesta);
+            
+            // Guardar en conversación unificada
+            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
+            await conversationAdapter.saveConversationMessage(
+              userId,
+              'assistant',
+              respuesta,
+              'CONTRATO',
+              {
+                agent: 'aluna',
+                documentType: analysisResult.documentType,
+                documentUrl: mediaUrl,
+                fileType: messageType,
+                analysisTimestamp: analysisResult.timestamp
+              }
+            );
+            
+            console.log('[WASSENGER] ✅ Análisis de documento de Aluna enviado');
+          } else {
+            await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
+          }
+          
+          return res.json({ ok: true, processed: true, type: 'contract_document_analysis' });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
+          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
+      // 🎯 FALLBACK: Análisis genérico si no es agente especializado
+      if (mediaUrl && !['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent)) {
+        console.log('[WASSENGER] 🧠 Análisis genérico de documento...');
         
         const { analyzeImage } = await import('../../servicios-ia/openai.js');
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const agente = AGENTES['ALUNA'];
+        const agente = AGENTES[activeAgent];
         
         try {
-          // Prompt según el tipo de archivo y agente
+          // Prompt genérico según el tipo de archivo y agente
           const fileType = messageType === 'document' ? 'documento/PDF' : 'imagen';
           const analysisPrompt = `Analiza este ${fileType} que el Sensei acaba de enviar. 
           
-Contexto: Eres ${agente.nombre}, ${agente.rol}.
+Contexto: Eres ${agente?.nombre || activeAgent}, ${agente?.rol || 'asistente'}.
 Tarea: Identifica insights clave, datos importantes, oportunidades o problemas según tu expertise.
 
 Responde en tu estilo característico con:

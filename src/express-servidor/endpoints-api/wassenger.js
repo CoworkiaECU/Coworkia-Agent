@@ -699,13 +699,64 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         }
       }
       
-      // 🎯 SI ES ADRIANA/ALUNA: Análisis de documento con Vision AI
-      if (['ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {
-        console.log(`[WASSENGER] 🧠 ${activeAgent} analizando documento/imagen...`);
+      // 🛡️ SI ES ADRIANA: Análisis especializado de documentos de seguros
+      if (activeAgent === 'ADRIANA' && mediaUrl) {
+        console.log('[WASSENGER] 🛡️ Adriana analizando documento de seguros...');
+        
+        const { analyzeInsuranceDocument } = await import('../../servicios/insurance-document-analysis.js');
+        
+        try {
+          // Confirmación inmediata
+          await enviarWhatsApp(userId, 'Perfecto! 🛡️ Analizando tu documento de seguros...');
+          
+          // Análisis especializado con Vision AI
+          const analysisResult = await analyzeInsuranceDocument(mediaUrl, message, {
+            fileType: messageType
+          });
+          
+          if (analysisResult.success) {
+            // Respuesta con análisis profesional
+            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algún punto? 😊`;
+            
+            await enviarWhatsApp(userId, respuesta);
+            
+            // Guardar en conversación unificada
+            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
+            await conversationAdapter.saveConversationMessage(
+              userId,
+              'assistant',
+              respuesta,
+              'SEGURO',
+              {
+                agent: 'adriana',
+                documentType: analysisResult.documentType,
+                documentUrl: mediaUrl,
+                fileType: messageType,
+                analysisTimestamp: analysisResult.timestamp
+              }
+            );
+            
+            console.log('[WASSENGER] ✅ Análisis de documento de Adriana enviado');
+          } else {
+            await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
+          }
+          
+          return res.json({ ok: true, processed: true, type: 'insurance_document_analysis' });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
+          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
+      // 🎯 SI ES ALUNA: Análisis de documento con Vision AI
+      if (activeAgent === 'ALUNA' && mediaUrl) {
+        console.log('[WASSENGER] 🧠 Aluna analizando documento...');
         
         const { analyzeImage } = await import('../../servicios-ia/openai.js');
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const agente = AGENTES[activeAgent];
+        const agente = AGENTES['ALUNA'];
         
         try {
           // Prompt según el tipo de archivo y agente

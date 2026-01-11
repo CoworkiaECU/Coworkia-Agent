@@ -622,6 +622,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             
             console.log('[WASSENGER] ✅ Análisis batch enviado al usuario');
             
+            // Guardar análisis en perfil
+            freshProfile.axel = freshProfile.axel || {};
+            freshProfile.axel.lastAnalysis = {
+              severity: analysis.severity,
+              analysis: analysis.analysis,
+              damageDetails: analysis.damageDetails,
+              isAcceptable: analysis.isAcceptable,
+              photoUrls: photoUrls,
+              analyzedAt: new Date().toISOString()
+            };
+            await saveProfile(userId, freshProfile);
+            
           }, 15000); // 15 segundos de espera
           
           // No respondemos aún - esperamos que el timer procese todo junto
@@ -634,63 +646,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           return res.json({ ok: false, error: error.message });
         }
       }
-                severity: analysis.severity,
-                analysis: analysis.analysis,
-                damageDetails: analysis.damageDetails,
-                isAcceptable: analysis.isAcceptable,
-                photoUrls: photoUrls,
-                analyzedAt: new Date().toISOString()
-              };
-              await saveProfile(userId, freshProfile);
-              if (process.env.DEBUG_MODE === 'true') {
-                console.log('[WASSENGER] 💾 Análisis guardado en perfil para cotización');
-              }
-            }
-            
-            // Guardar interacción (resumen de los múltiples mensajes)
-            const responsesSummary = `[RESPUESTA EN MÚLTIPLES MENSAJES]\n` +
-              `1. Confirmación recepción fotos\n` +
-              `2. Análisis de daños\n` +
-              `3. ${analysis.isAcceptable ? 'Buenas noticias sobre reparación' : 'Advertencia sobre daño grave'}\n` +
-              `4. ${analysis.isAcceptable ? 'Solicitud de datos del vehículo' : 'Conexión con Juan (Jefe Taller)'}`;
-            
-            await saveInteraction({
-              userId,
-              agent: 'axel',
-              agentName: 'Axel',
-              intentReason: 'collision_photo_analysis',
-              input: `[${allPhotos.length} IMÁGENES: Análisis de colisión vehicular]`,
-              output: responsesSummary,
-              meta: {
-                route: '/webhooks/wassenger',
-                via: 'whatsapp',
-                photoCount: allPhotos.length,
-                photoUrls: photoUrls,
-                severity: analysis.severity,
-                isAcceptable: analysis.isAcceptable,
-                damageDetails: analysis.damageDetails,
-                multiMessageResponse: true
-              }
-            });
-            
-          }, 4000); // Esperar 4 segundos para agrupar fotos
-          
-          // Responder OK inmediatamente sin procesar aún
-          return res.json({ 
-            ok: true, 
-            processed: true, 
-            type: 'photo_queued',
-            message: 'Foto agregada al grupo, esperando más fotos...'
-          });
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en agrupación de fotos:', error);
-          await enviarWhatsApp(userId, 
-            '⚠️ Hubo un error al procesar las imágenes. Por favor, intenta nuevamente o contacta directamente con nosotros.'
-          );
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
-        }
-      }
+      
+      // ==============================================
+      // ===== FOTOS PARA OTROS AGENTES (LEGACY) =====
+      // ==============================================
       
       // 🎯 SI ES ENZO/ADRIANA/ALUNA: Análisis de documento con Vision AI
       if (['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent) && mediaUrl) {

@@ -1347,8 +1347,8 @@ Responde en tu estilo característico con:
       }
     }
 
-    // 🚦 VALIDAR AGENTE ACTIVO - Ya declarado en línea 296, solo reasignamos
-    // const activeAgent ya existe desde el procesamiento de imágenes
+    // 🚦 VALIDAR AGENTE ACTIVO - Solo responde el agente que está activo
+    // activeAgent ya fue declarado anteriormente en línea 296
     const isAgentMention = /@(aurora|enzo|adriana|aluna)/i.test(text);
     
     // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo
@@ -2299,29 +2299,13 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
               if (result.success) {
                 console.log('[AXEL-SYSTEM] ✅ Cita guardada en DB:', result.appointment);
                 
-                // 🧹 LIMPIAR ESTADO POST-AGENDAMIENTO
-                console.log('[AXEL-SYSTEM] 🧹 Limpiando estado Axel después de agendar...');
-                
-                // Mantener solo datos esenciales, eliminar flags de proceso
-                profile.axelData = {
-                  // Conservar cotización final para historial
-                  lastQuoteCode: quoteCode,
-                  lastQuoteDate: new Date().toISOString(),
-                  appointmentScheduled: true,
-                  appointmentDate: appointmentDate.toISOString().split('T')[0],
-                  appointmentTime: appointmentTime,
-                  // Eliminar flags de proceso activo
-                  awaitingScheduling: false,
-                  quoteConfirmed: false,
-                  emailSent: false,
-                  // No borrar lastAnalysis por si usuario pregunta detalles después
-                  lastAnalysis: profile.axelData.lastAnalysis || null
-                };
-                
+                // Actualizar perfil local
+                profile.axelData.appointmentScheduled = true;
+                profile.axelData.appointmentDate = appointmentDate.toISOString().split('T')[0];
+                profile.axelData.appointmentTime = appointmentTime;
                 await saveProfile(userId, profile);
                 
-                console.log('[AXEL-SYSTEM] ✅ Estado limpiado: Cita agendada, proceso completado');
-                console.log('[AXEL-SYSTEM] 📊 Usuario puede iniciar nuevo análisis sin conflictos');
+                console.log('[AXEL-SYSTEM] ✅ Estado actualizado: appointmentScheduled=true');
               } else {
                 console.error('[AXEL-SYSTEM] ❌ Error guardando cita:', result.error);
               }
@@ -2340,7 +2324,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // 💼 SISTEMA GABI: Verificar contador y ofrecer reunión
+    // �💼 SISTEMA GABI: Verificar contador y ofrecer reunión
     if (resultado.agenteKey === 'GABI') {
       try {
         const { shouldOfferMeeting, generateMeetingOffer, markMeetingOffered } = await import('../../servicios/gabi-financial-system.js');
@@ -2369,9 +2353,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         // No bloquear el flujo principal si falla
       }
     }
-    
-    // Cierre del try principal
-    } // Cierre adicional
+
     // Responder al webhook (ACK)
     return res.json({ 
       ok: true, 
@@ -2380,6 +2362,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       reply: finalReply,
       confirmationActivated: confirmationActivated 
     });
+  } // Cierre del try principal
 
   } catch (err) {
     console.error('[WASSENGER WEBHOOK] Error capturado:', err);

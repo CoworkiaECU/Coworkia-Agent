@@ -187,10 +187,12 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
   // 🤖 Detectar mensaje promocional de venta de agentes virtuales
-  const isVirtualAgentSalesPromo = /aurora.*mu[eé]strame.*que.*puedes.*hacer.*agente.*virtual/i.test(text) ||
+  const isVirtualAgentSalesPromo = /aurora.*quiero.*saber.*qu[eé].*puede.*hacer.*agente.*virtual/i.test(text) ||
+                                    /aurora.*mu[eé]strame.*que.*puedes.*hacer.*agente.*virtual/i.test(text) ||
                                     /mu[eé]strame.*agente.*virtual.*para.*mi.*empresa/i.test(text) ||
                                     /sistema.*como.*tu.*para.*mi.*empresa/i.test(text) ||
-                                    /quiero.*agente.*virtual.*como.*aurora/i.test(text);
+                                    /quiero.*agente.*virtual.*como.*aurora/i.test(text) ||
+                                    /qu[eé].*puede.*hacer.*agente.*virtual.*como.*t[uú].*para.*mi.*empresa/i.test(text);
   
   // 0) PROMOCIÓN: Venta de sistema de agentes virtuales
   if (isVirtualAgentSalesPromo) {

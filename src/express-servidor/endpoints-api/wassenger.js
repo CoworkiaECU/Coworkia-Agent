@@ -2299,13 +2299,29 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
               if (result.success) {
                 console.log('[AXEL-SYSTEM] ✅ Cita guardada en DB:', result.appointment);
                 
-                // Actualizar perfil local
-                profile.axelData.appointmentScheduled = true;
-                profile.axelData.appointmentDate = appointmentDate.toISOString().split('T')[0];
-                profile.axelData.appointmentTime = appointmentTime;
+                // 🧹 LIMPIAR ESTADO POST-AGENDAMIENTO
+                console.log('[AXEL-SYSTEM] 🧹 Limpiando estado Axel después de agendar...');
+                
+                // Mantener solo datos esenciales, eliminar flags de proceso
+                profile.axelData = {
+                  // Conservar cotización final para historial
+                  lastQuoteCode: quoteCode,
+                  lastQuoteDate: new Date().toISOString(),
+                  appointmentScheduled: true,
+                  appointmentDate: appointmentDate.toISOString().split('T')[0],
+                  appointmentTime: appointmentTime,
+                  // Eliminar flags de proceso activo
+                  awaitingScheduling: false,
+                  quoteConfirmed: false,
+                  emailSent: false,
+                  // No borrar lastAnalysis por si usuario pregunta detalles después
+                  lastAnalysis: profile.axelData.lastAnalysis || null
+                };
+                
                 await saveProfile(userId, profile);
                 
-                console.log('[AXEL-SYSTEM] ✅ Estado actualizado: appointmentScheduled=true');
+                console.log('[AXEL-SYSTEM] ✅ Estado limpiado: Cita agendada, proceso completado');
+                console.log('[AXEL-SYSTEM] 📊 Usuario puede iniciar nuevo análisis sin conflictos');
               } else {
                 console.error('[AXEL-SYSTEM] ❌ Error guardando cita:', result.error);
               }

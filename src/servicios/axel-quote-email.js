@@ -229,13 +229,13 @@ ${quote}
           <div style="background: white; border: 2px solid #DC2626; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
             <h3 style="color: #DC2626; margin: 0 0 15px 0; font-size: 20px; font-weight: 700;">📍 VISÍTANOS</h3>
             <p style="color: #374151; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
-              <strong>The PaintBull</strong><br>
-              Av. De los Shyris N36-152 y Naciones Unidas<br>
-              Quito, Ecuador
+              <strong>The PaintBull - Taller de Colisiones</strong><br>
+              Calle N44-53 y, Quito 170124<br>
+              Ecuador
             </p>
             <div style="margin: 25px 0;">
-              <a href="https://maps.google.com/?q=The+PaintBull+Quito" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
-                🗺️ Ver en Google Maps
+              <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                🗺️ Cómo llegar →
               </a>
             </div>
             <p style="color: #6B7280; margin: 20px 0 0 0; font-size: 14px;">

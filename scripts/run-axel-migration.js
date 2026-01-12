@@ -4,7 +4,7 @@
  * Ejecuta la migración de base de datos para el sistema de cotizaciones
  */
 
-import databaseService from '../src/database/database.js';
+import databaseService, { getClient } from '../src/database/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,7 +19,7 @@ async function runMigration() {
 
   // Inicializar base de datos
   await databaseService.initialize();
-  const client = await databaseService.db.getClient();
+  const client = await getClient();
 
   try {
     // Leer archivo SQL

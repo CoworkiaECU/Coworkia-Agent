@@ -2023,6 +2023,36 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
+    // 💼 SISTEMA GABI: Verificar contador y ofrecer reunión
+    if (resultado.agenteKey === 'GABI') {
+      try {
+        const { shouldOfferMeeting, generateMeetingOffer, markMeetingOffered } = await import('../../servicios/gabi-financial-system.js');
+        
+        const meetingCheck = await shouldOfferMeeting(userId);
+        
+        if (meetingCheck.shouldOffer) {
+          console.log(`[GABI-SYSTEM] 🎯 Usuario ${userId} alcanzó ${meetingCheck.count} interacciones - Ofreciendo reunión`);
+          
+          // Generar mensaje personalizado
+          const meetingMessage = await generateMeetingOffer(userId, meetingCheck.count);
+          
+          // Enviar oferta de reunión
+          await enviarWhatsApp(userId, meetingMessage);
+          
+          // Marcar que se ofreció reunión
+          const conversationId = `${userId}_${Date.now()}`;
+          await markMeetingOffered(userId, conversationId);
+          
+          console.log('[GABI-SYSTEM] ✅ Reunión ofrecida exitosamente');
+        } else {
+          console.log(`[GABI-SYSTEM] ℹ️ Usuario ${userId} tiene ${meetingCheck.count} interacciones - ${meetingCheck.reason}`);
+        }
+      } catch (error) {
+        console.error('[GABI-SYSTEM] ❌ Error en sistema de reuniones:', error);
+        // No bloquear el flujo principal si falla
+      }
+    }
+
     // Responder al webhook (ACK)
     return res.json({ 
       ok: true, 

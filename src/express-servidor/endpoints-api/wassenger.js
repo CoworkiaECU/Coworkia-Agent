@@ -594,12 +594,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             let respuesta = '';
             
             // Intro personalizada según severidad
+            const nombreUsuario = freshProfile.whatsappDisplayName || freshProfile.name || 'Amigo/a';
+            
             if (analysis.severity === 'severe' || analysis.severity === 'major') {
-              respuesta = `${freshProfile.nombre}, revisé las ${allPhotos.length} foto(s). El golpe sí es considerable, pero tranquilo/a que tiene arreglo. 💪\n\n`;
+              respuesta = `${nombreUsuario}, revisé las ${allPhotos.length} foto(s). El golpe sí es considerable, pero tranquilo/a que tiene arreglo. 💪\n\n`;
             } else if (analysis.severity === 'moderate') {
-              respuesta = `${freshProfile.nombre}, vi las fotos. Es un daño moderado, de esos que vemos seguido. No te preocupes. 👍\n\n`;
+              respuesta = `${nombreUsuario}, vi las fotos. Es un daño moderado, de esos que vemos seguido. No te preocupes. 👍\n\n`;
             } else {
-              respuesta = `${freshProfile.nombre}, perfecto. El daño es leve, se puede solucionar sin problema. ✅\n\n`;
+              respuesta = `${nombreUsuario}, perfecto. El daño es leve, se puede solucionar sin problema. ✅\n\n`;
             }
             
             // Áreas dañadas de forma natural

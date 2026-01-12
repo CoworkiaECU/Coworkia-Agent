@@ -801,8 +801,89 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         }
       }
       
+      // 💚 SI ES ANGELA: Análisis especializado de documentos médicos con GPT-4V
+      if (activeAgent === 'ANGELA' && mediaUrl) {
+        console.log('[WASSENGER] 💚 Angela analizando documento médico con GPT-4V...');
+        
+        const { analyzeImage } = await import('../../servicios-ia/openai.js');
+        
+        try {
+          // Confirmación inmediata
+          await enviarWhatsApp(userId, 'Perfecto! 💚 Déjame ver tu documento médico...');
+          
+          // Prompt especializado para Angela (salud, exámenes, recetas)
+          const analysisPrompt = `Eres Ángela, asistente médica virtual de MedBeneficios en Ecuador. Analiza esta imagen/documento médico.
+
+CONTEXTO: Cliente del programa de fidelización para familias de trabajadores de instituciones financieras y tenderos.
+
+TAREA: Identifica y explica de manera SENCILLA y CÁLIDA:
+1. Tipo de documento (receta médica, examen de laboratorio, radiografía, orden médica, etc.)
+2. Información clave (diagnóstico, medicamentos, estudios solicitados, resultados)
+3. ¿Qué significa esto en términos simples? (sin términos médicos complejos)
+4. ¿Qué pasos debe seguir el paciente?
+5. ¿Hay algo que requiera atención inmediata?
+
+ESTILO DE RESPUESTA:
+- Cálida, cercana, como una amiga que trabaja en salud
+- Usa "tú" informal
+- Emojis: 💚 👩‍⚕️ 💊 📋 ✨
+- Expresiones: "Tranquilo", "Lo resolvemos", "Tu familia merece esto"
+- SIN términos médicos complicados (explica todo simple)
+
+Si NO puedes ver bien la imagen o está borrosa, di:
+"La imagen no se ve muy clara 😅 ¿Podrías reenviarla con mejor luz o más cerca? Así puedo ayudarte mejor 💚"`;
+
+          const analysisResult = await analyzeImage(mediaUrl, analysisPrompt, {
+            max_tokens: 800,
+            temperature: 0.7,
+            detail: 'high' // Alta resolución para documentos médicos
+          });
+          
+          if (analysisResult.success && analysisResult.content) {
+            const respuesta = `${analysisResult.content}\n\n¿Necesitas que te explique algo más? Aquí estoy 💚`;
+            
+            await enviarWhatsApp(userId, respuesta);
+            
+            // Guardar en conversación
+            await saveConversationMessage(userId, {
+              role: 'assistant',
+              content: respuesta,
+              agent: 'ANGELA'
+            });
+            
+            // Guardar interacción
+            await saveInteraction({
+              userId,
+              agent: 'angela',
+              agentName: 'Angela',
+              intentReason: 'medical_document_analysis',
+              input: `[DOCUMENTO MÉDICO: ${messageType}]`,
+              output: respuesta,
+              meta: {
+                route: '/webhooks/wassenger',
+                via: 'whatsapp',
+                mediaUrl,
+                fileType: messageType,
+                visionEnabled: true
+              }
+            });
+            
+            console.log('[WASSENGER] ✅ Análisis médico de Angela (GPT-4V) enviado');
+          } else {
+            await enviarWhatsApp(userId, '⚠️ No pude ver bien la imagen. ¿Podrías reenviarla con mejor luz? 💚');
+          }
+          
+          return res.json({ ok: true, processed: true, type: 'medical_document_analysis' });
+          
+        } catch (error) {
+          console.error('[WASSENGER] ❌ Error en análisis médico:', error);
+          await enviarWhatsApp(userId, '⚠️ Hubo un problema. Reenvíame el documento por favor 💚');
+          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+        }
+      }
+      
       // 🎯 FALLBACK: Análisis genérico si no es agente especializado
-      if (mediaUrl && !['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent)) {
+      if (mediaUrl && !['ENZO', 'ADRIANA', 'ALUNA', 'ANGELA'].includes(activeAgent)) {
         console.log('[WASSENGER] 🧠 Análisis genérico de documento...');
         
         const { analyzeImage } = await import('../../servicios-ia/openai.js');
@@ -906,11 +987,33 @@ Responde en tu estilo característico con:
         });
       } else {
         // Imagen/documento enviado a Aurora pero no es comprobante
-        await enviarWhatsApp(userId, 
-          '📷 He recibido tu archivo. Si es un comprobante de pago, procesalo. ' +
-          'Si necesitas ayuda técnica, habla con @Enzo. ' +
-          'Si necesitas ayuda con seguros, habla con @Adriana.'
-        );
+        // Mensaje específico según agente activo
+        let responseMessage;
+        
+        if (activeAgent === 'AURORA') {
+          responseMessage = '📷 He recibido tu archivo. Si es un comprobante de pago, procesalo. ' +
+            'Si necesitas ayuda técnica, habla con @Enzo. ' +
+            'Si necesitas ayuda con seguros, habla con @Adriana.';
+        } else if (activeAgent === 'ENZO') {
+          responseMessage = '📷 He recibido tu archivo Sensei. ¿Es material para una campaña de marketing? ' +
+            'Puedo analizar imágenes y darte feedback estratégico 🎯';
+        } else if (activeAgent === 'ADRIANA') {
+          responseMessage = '📷 He recibido tu archivo. ¿Es documentación para tu seguro? ' +
+            'Puedo revisar pólizas, siniestros o documentos relacionados 🛡️';
+        } else if (activeAgent === 'ANGELA') {
+          responseMessage = '📷 He recibido tu imagen. Actualmente estoy trabajando en mejorar mi capacidad de visión. ' +
+            'Mientras tanto, ¿puedes describirme qué necesitas que vea? 💚';
+        } else if (activeAgent === 'AXEL') {
+          responseMessage = '📷 He recibido tu foto del vehículo. Déjame analizarla para darte una cotización precisa 🚗';
+        } else if (activeAgent === 'GABI') {
+          responseMessage = '📷 He recibido tu documento. ¿Es un comprobante financiero, factura o documento contable? ' +
+            'Puedo ayudarte a procesarlo 💼';
+        } else {
+          // Fallback genérico
+          responseMessage = '📷 He recibido tu archivo. ¿En qué puedo ayudarte con esto?';
+        }
+        
+        await enviarWhatsApp(userId, responseMessage);
         
         return res.json({ 
           ok: true, 

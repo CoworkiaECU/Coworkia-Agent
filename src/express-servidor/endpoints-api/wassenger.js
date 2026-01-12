@@ -1347,8 +1347,8 @@ Responde en tu estilo característico con:
       }
     }
 
-    // 🚦 VALIDAR AGENTE ACTIVO - Solo responde el agente que está activo
-    const activeAgent = profile.activeAgent || 'AURORA';
+    // 🚦 VALIDAR AGENTE ACTIVO - Ya declarado en línea 296, solo reasignamos
+    // const activeAgent ya existe desde el procesamiento de imágenes
     const isAgentMention = /@(aurora|enzo|adriana|aluna)/i.test(text);
     
     // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo

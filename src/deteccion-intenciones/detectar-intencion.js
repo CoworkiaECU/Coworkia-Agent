@@ -186,6 +186,21 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   const isCasualGreeting = detectarSaludoCasual(normalized);
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
+  // 🤖 Detectar mensaje promocional de venta de agentes virtuales
+  const isVirtualAgentSalesPromo = /aurora.*mu[eé]strame.*que.*puedes.*hacer.*agente.*virtual/i.test(text) ||
+                                    /mu[eé]strame.*agente.*virtual.*para.*mi.*empresa/i.test(text) ||
+                                    /sistema.*como.*tu.*para.*mi.*empresa/i.test(text) ||
+                                    /quiero.*agente.*virtual.*como.*aurora/i.test(text);
+  
+  // 0) PROMOCIÓN: Venta de sistema de agentes virtuales
+  if (isVirtualAgentSalesPromo) {
+    return {
+      agent: 'AURORA',
+      reason: 'virtual agent sales promotion - MarketingLab OneMind',
+      flags: { virtualAgentSalesPromo: true, requiresAurora: true }
+    };
+  }
+  
   // 0) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
     return {

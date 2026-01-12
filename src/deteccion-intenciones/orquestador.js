@@ -116,6 +116,9 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 🎯 PREGUNTA DE IDENTIDAD DETECTADA
   const esPreguntaIdentidad = Boolean(intencion.flags?.identityQuestion);
   
+  // 🤖 PROMOCIÓN DE VENTA DE AGENTES VIRTUALES
+  const esPromocionVentaAgentes = Boolean(intencion.flags?.virtualAgentSalesPromo);
+  
   // 🛟 SOPORTE POST-EMAIL: activar si:
   // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
   // - O si justConfirmed está activo
@@ -281,6 +284,74 @@ Un sistema, múltiples soluciones, CERO complicaciones.
 ✅ SOLO la respuesta bomba y TERMINAR
 ✅ El usuario dirá qué necesita en el SIGUIENTE mensaje` : '';
   
+  const instruccionesPromocionVentaAgentes = esPromocionVentaAgentes ? `
+🤖 PROMOCIÓN: VENTA DE SISTEMA AGENTES VIRTUALES DETECTADA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+El usuario llegó desde campaña de MarketingLab OneMind y preguntó: "${mensaje}"
+
+🎯 TU MISIÓN: Demostrar tu capacidad y vender el sistema de agentes virtuales
+
+RESPONDE CON ESTE MENSAJE (personaliza según contexto):
+
+"¡Me encanta que me preguntes eso! 😊 
+
+Déjame mostrarte lo que soy capaz de hacer... 
+
+*Ahora mismo estoy:*
+• Coordinando conversaciones con múltiples usuarios simultáneamente 🎯
+• Procesando reservas sin intervención humana 📅
+• Derivando a 6 agentes especializados según el contexto 🤖
+• Gestionando pagos y confirmaciones automáticamente 💳
+• Respondiendo en español e inglés según el usuario 🌍
+
+Y esto es solo el 10% de lo que puedo hacer para tu empresa.
+
+¿Qué tipo de negocio tienes? Así te muestro cómo un agente como yo puede transformarlo 🚀"
+
+⚠️ REGLAS CRÍTICAS:
+• Tono entusiasta y confiado (demuestras seguridad en el sistema)
+• HAZ PREGUNTA sobre su negocio para personalizar
+• NO des precios (eso es para @enzo)
+• SÍ menciona beneficios: 24/7, sin errores, escalable, ROI rápido
+• Compara con humanos: recepcionista 1 cliente vs tú 100+ simultáneos
+• Después de que responda sobre su negocio, continúa con ejemplos concretos
+• SIEMPRE termina ofreciendo conectar con @enzo para detalles técnicos y precios
+
+SI YA RESPONDIÓ SOBRE SU NEGOCIO, continúa con:
+
+"Perfecto, [tipo de negocio]! 🎯
+
+Un agente virtual personalizado para ti podría:
+
+✨ *AURORA CORE* (Sistema Base)
+• Atender clientes 24/7 sin descanso
+• Responder preguntas frecuentes al instante
+• Coordinar citas/reservas automáticamente
+• Procesar pagos y enviar confirmaciones
+• Idioma automático según el cliente
+
+💡 *MARKETINGLAB + ONEMIND* (Potenciadores)
+• Generación de contenido con IA
+• Análisis de conversaciones para insights
+• Automatización de campañas según comportamiento
+• Lead nurturing inteligente
+• Integración con tus sistemas existentes
+
+🎯 *TU VENTAJA COMPETITIVA:*
+Mientras tu competencia tiene recepcionistas limitadas (8h/día, 1 cliente a la vez),
+TÚ tendrías un agente que:
+- Nunca se cansa ⚡
+- Nunca renuncia 💪
+- Nunca olvida un cliente 🧠
+- Aprende de cada conversación 📈
+- Escala sin límites 🚀
+
+💰 *INVERSIÓN:*
+No es un gasto, es un empleado que se paga solo desde el primer mes.
+
+¿Te conecto con @enzo? Él lidera *MarketingLab OneMind* y te mostrará casos reales de empresas como la tuya + inversión exacta 🎯"` : '';
+  
   // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
   const tieneResumeMessage = formData && formData.resumeMessage;
   const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion && !tieneResumeMessage;
@@ -305,6 +376,7 @@ INSTRUCCIONES:
 🚨 PRIORIDAD ABSOLUTA - LEER PRIMERO:
 ${esSaludoCasual ? instruccionesSaludoCasual : ''}
 ${esPreguntaIdentidad ? instruccionesPreguntaIdentidad : ''}
+${esPromocionVentaAgentes ? instruccionesPromocionVentaAgentes : ''}
 
 - Responde como ${agente.nombre} según tu rol y personalidad
 - Usa el contexto del perfil y el historial para personalizar

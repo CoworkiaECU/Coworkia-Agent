@@ -243,7 +243,7 @@ router.get('/queues', async (req, res) => {
       
       return {
         id: reservation.id,
-        userId: reservation.user_id,
+        userId: reservation.user_phone,
         date: reservation.date,
         startTime: reservation.start_time,
         serviceType: reservation.service_type,

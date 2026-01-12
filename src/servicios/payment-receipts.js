@@ -496,7 +496,7 @@ async function queueReservationNotifications(reservation, userProfile, paidAmoun
     console.error('[RECEIPT] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
     console.error('[RECEIPT] 🚨 Detalles de la reserva:', {
       reservationId: reservation.id,
-      userId: reservation.user_id,
+      userId: reservation.user_phone,
       email: userProfile.email,
       date: reservation.date,
       startTime: reservation.start_time

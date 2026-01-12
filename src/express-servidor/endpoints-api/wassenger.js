@@ -2340,7 +2340,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // �💼 SISTEMA GABI: Verificar contador y ofrecer reunión
+    // 💼 SISTEMA GABI: Verificar contador y ofrecer reunión
     if (resultado.agenteKey === 'GABI') {
       try {
         const { shouldOfferMeeting, generateMeetingOffer, markMeetingOffered } = await import('../../servicios/gabi-financial-system.js');
@@ -2369,7 +2369,9 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         // No bloquear el flujo principal si falla
       }
     }
-
+    
+    // Cierre del try principal
+    } // Cierre adicional
     // Responder al webhook (ACK)
     return res.json({ 
       ok: true, 

@@ -46,12 +46,14 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
               ${validPhotos.map((base64Img, idx) => `
                 <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
-                  <img src="${base64Img}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block;" />
+                  <img src="${base64Img}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block; max-height: 300px; object-fit: cover;" />
                 </div>
               `).join('')}
             </div>
           </div>
         `;
+      } else {
+        console.log('[QUOTE-EMAIL] ⚠️ No se pudieron descargar fotos, se omite sección');
       }
     } catch (error) {
       console.error('[QUOTE-EMAIL] ❌ Error procesando fotos:', error);
@@ -175,14 +177,6 @@ ${quote}
           </div>
 
           ${photosSection}
-
-          <!-- Análisis técnico -->
-          <div style="background: #FEF2F2; border-left: 4px solid #EF4444; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #7C2D12; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">🔍 ANÁLISIS TÉCNICO (Vision AI)</h3>
-            <p style="color: #991B1B; margin: 0; font-size: 14px; line-height: 1.7;">
-              ${damageAnalysis.analysis}
-            </p>
-          </div>
 
           <!-- Disclaimers importantes -->
           <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 10px; padding: 20px; margin-bottom: 30px;">

@@ -27,7 +27,7 @@ export async function getGabiInteractionCount(userId) {
     const query = `
       SELECT COUNT(*) as count
       FROM agent_conversations
-      WHERE user_id = $1 AND agent = 'GABI'
+      WHERE user_phone = $1 AND agent = 'GABI'
     `;
     
     const result = await database.get(query, [userId]);
@@ -52,10 +52,10 @@ export async function shouldOfferMeeting(userId) {
     const checkQuery = `
       SELECT metadata
       FROM agent_conversations
-      WHERE user_id = $1 
+      WHERE user_phone = $1 
         AND agent = 'GABI'
-        AND metadata LIKE '%meeting_offered%'
-      ORDER BY created_at DESC
+        AND metadata::text LIKE '%meeting_offered%'
+      ORDER BY timestamp DESC
       LIMIT 1
     `;
     
@@ -103,14 +103,15 @@ export async function markMeetingOffered(userId, conversationId) {
   try {
     const updateQuery = `
       UPDATE agent_conversations
-      SET metadata = json_set(
-        COALESCE(metadata, '{}'),
-        '$.meeting_offered',
-        'true',
-        '$.meeting_offered_at',
-        datetime('now')
-      )
-      WHERE conversation_id = $1 AND user_id = $2
+      SET metadata = COALESCE(metadata, '{}'::jsonb) || 
+        jsonb_build_object(
+          'meeting_offered', true,
+          'meeting_offered_at', NOW(),
+          'meeting_offered_count', (
+            SELECT COUNT(*) FROM agent_conversations WHERE user_phone = $2 AND agent = 'GABI'
+          )
+        )
+      WHERE session_id = $1 AND user_phone = $2
     `;
     
     await database.run(updateQuery, [conversationId, userId]);
@@ -137,19 +138,19 @@ export async function getFinancialMetrics(period = 'month') {
     
     switch (period) {
       case 'today':
-        dateFilter = "date(created_at) = date('now')";
+        dateFilter = "DATE(timestamp) = CURRENT_DATE";
         break;
       case 'week':
-        dateFilter = "date(created_at) >= date('now', '-7 days')";
+        dateFilter = "timestamp >= NOW() - INTERVAL '7 days'";
         break;
       case 'month':
-        dateFilter = "date(created_at) >= date('now', '-30 days')";
+        dateFilter = "timestamp >= NOW() - INTERVAL '30 days'";
         break;
       case 'year':
-        dateFilter = "date(created_at) >= date('now', '-365 days')";
+        dateFilter = "timestamp >= NOW() - INTERVAL '365 days'";
         break;
       default:
-        dateFilter = "date(created_at) >= date('now', '-30 days')";
+        dateFilter = "timestamp >= NOW() - INTERVAL '30 days'";
     }
     
     // Total de interacciones con Gabi (consultas financieras)
@@ -163,7 +164,7 @@ export async function getFinancialMetrics(period = 'month') {
     
     // Usuarios únicos que consultaron
     const usuariosQuery = `
-      SELECT COUNT(DISTINCT user_id) as usuarios_unicos
+      SELECT COUNT(DISTINCT user_phone) as usuarios_unicos
       FROM agent_conversations
       WHERE agent = 'GABI' AND ${dateFilter}
     `;
@@ -186,11 +187,11 @@ export async function getFinancialMetrics(period = 'month') {
     const avgQuery = `
       SELECT AVG(interaction_count) as avg_interactions
       FROM (
-        SELECT user_id, COUNT(*) as interaction_count
+        SELECT user_phone, COUNT(*) as interaction_count
         FROM agent_conversations
         WHERE agent = 'GABI' AND ${dateFilter}
-        GROUP BY user_id
-      )
+        GROUP BY user_phone
+      ) subquery
     `;
     
     const avg = await database.get(avgQuery);
@@ -227,13 +228,13 @@ export async function getTopGabiUsers(limit = 10) {
   try {
     const query = `
       SELECT 
-        user_id,
+        user_phone,
         COUNT(*) as interaction_count,
-        MAX(created_at) as last_interaction,
-        json_group_array(DISTINCT topic) as topics
+        MAX(timestamp) as last_interaction,
+        json_agg(DISTINCT conversation_topic) FILTER (WHERE conversation_topic IS NOT NULL) as topics
       FROM agent_conversations
       WHERE agent = 'GABI'
-      GROUP BY user_id
+      GROUP BY user_phone
       ORDER BY interaction_count DESC
       LIMIT $1
     `;
@@ -241,10 +242,10 @@ export async function getTopGabiUsers(limit = 10) {
     const users = await database.all(query, [limit]);
     
     return users.map(u => ({
-      userId: u.user_id,
+      userId: u.user_phone,
       interactions: u.interaction_count,
       lastInteraction: u.last_interaction,
-      topics: JSON.parse(u.topics || '[]')
+      topics: u.topics || []
     }));
     
   } catch (error) {
@@ -264,28 +265,28 @@ export async function getMeetingMetrics() {
       SELECT COUNT(*) as total_offered
       FROM agent_conversations
       WHERE agent = 'GABI' 
-        AND metadata LIKE '%meeting_offered%'
+        AND metadata::text LIKE '%meeting_offered%'
     `;
     
     const offered = await database.get(offeredQuery);
     
     // Usuarios únicos a los que se ofreció
     const uniqueQuery = `
-      SELECT COUNT(DISTINCT user_id) as unique_users
+      SELECT COUNT(DISTINCT user_phone) as unique_users
       FROM agent_conversations
       WHERE agent = 'GABI' 
-        AND metadata LIKE '%meeting_offered%'
+        AND metadata::text LIKE '%meeting_offered%'
     `;
     
     const unique = await database.get(uniqueQuery);
     
     // Últimas 5 ofertas
     const recentQuery = `
-      SELECT user_id, created_at, metadata
+      SELECT user_phone, timestamp, metadata
       FROM agent_conversations
       WHERE agent = 'GABI' 
-        AND metadata LIKE '%meeting_offered%'
-      ORDER BY created_at DESC
+        AND metadata::text LIKE '%meeting_offered%'
+      ORDER BY timestamp DESC
       LIMIT 5
     `;
     
@@ -295,9 +296,9 @@ export async function getMeetingMetrics() {
       totalOffered: offered?.total_offered || 0,
       uniqueUsers: unique?.unique_users || 0,
       recentOffers: recent.map(r => ({
-        userId: r.user_id,
-        date: r.created_at,
-        metadata: JSON.parse(r.metadata || '{}')
+        userId: r.user_phone,
+        date: r.timestamp,
+        metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata
       })),
       timestamp: Date.now()
     };
@@ -328,10 +329,10 @@ export async function generateMeetingOffer(userId, interactionCount) {
   try {
     // Obtener tópicos más consultados por el usuario
     const topicsQuery = `
-      SELECT topic, COUNT(*) as count
+      SELECT conversation_topic as topic, COUNT(*) as count
       FROM agent_conversations
-      WHERE user_id = $1 AND agent = 'GABI'
-      GROUP BY topic
+      WHERE user_phone = $1 AND agent = 'GABI' AND conversation_topic IS NOT NULL
+      GROUP BY conversation_topic
       ORDER BY count DESC
       LIMIT 3
     `;

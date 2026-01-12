@@ -385,8 +385,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             // Importar generador de cotizaciones
             const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
             
-            // Obtener análisis de daños del perfil
-            const damageAnalysis = profile.axelData?.damageAnalysis;
+            // Obtener análisis de daños del perfil (corregido: lastAnalysis)
+            const damageAnalysis = profile.axelData?.lastAnalysis;
             
             if (!damageAnalysis) {
               console.error('[WASSENGER] ❌ No se encontró análisis de daños en el perfil');
@@ -479,6 +479,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 emailSent: emailResult.success
               }
             });
+            
+            // Limpiar formulario y estado
+            const { deleteAxelForm } = await import('../../servicios/axel-quote-form.js');
+            await deleteAxelForm(userId);
+            
+            // Resetear flags en profile
+            profile.axelData.awaitingFormData = false;
+            profile.axelData.lastQuoteSentAt = new Date().toISOString();
+            await saveProfile(userId, profile);
+            
+            console.log('[WASSENGER] 🗑️ Formulario limpiado - cotización completada');
             
             return res.json({ 
               ok: true, 
@@ -617,24 +628,41 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               respuesta += `💰 Estimación referencial: $${min} - $${max} (sujeto a inspección física)\n\n`;
             }
             
-            // Call to action simple
-            respuesta += `¿Te gustaría que te envíe una cotización oficial por email? 📧`;
+            // Call to action + solicitud de datos automática
+            respuesta += `\n✅ *COTIZACIÓN OFICIAL POR EMAIL*\n`;
+            respuesta += `Para enviarte la cotización formal necesito:\n`;
+            respuesta += `🚗 Marca, modelo y año del vehículo\n`;
+            respuesta += `📋 Tu nombre completo y email\n\n`;
+            respuesta += `_Ejemplo: Toyota Corolla 2018, Carlos Pérez, carlos@gmail.com_`;
             
             await enviarWhatsApp(userId, respuesta);
             
             console.log('[WASSENGER] ✅ Análisis batch enviado al usuario');
             
             // Guardar análisis en perfil
-            freshProfile.axel = freshProfile.axel || {};
-            freshProfile.axel.lastAnalysis = {
+            freshProfile.axelData = freshProfile.axelData || {};
+            freshProfile.axelData.lastAnalysis = {
               severity: analysis.severity,
-              analysis: analysis.analysis,
-              damageDetails: analysis.damageDetails,
-              isAcceptable: analysis.isAcceptable,
+              damageAreas: analysis.damageAreas || [],
+              estimatedCost: analysis.estimatedCost || null,
               photoUrls: photoUrls,
               analyzedAt: new Date().toISOString()
             };
+            freshProfile.axelData.awaitingFormData = true; // ← Activar modo formulario
             await saveProfile(userId, freshProfile);
+            
+            // Crear formulario parcial con análisis
+            const { saveAxelForm } = await import('../../servicios/axel-quote-form.js');
+            await saveAxelForm(userId, {
+              analysisId: Date.now().toString(),
+              severity: analysis.severity,
+              damageAreas: analysis.damageAreas,
+              estimatedCost: analysis.estimatedCost,
+              photoUrls: photoUrls,
+              step: 'awaiting_vehicle_data'
+            });
+            
+            console.log('[WASSENGER] 📋 Formulario iniciado - esperando datos del usuario');
             
           }, 15000); // 15 segundos de espera
           

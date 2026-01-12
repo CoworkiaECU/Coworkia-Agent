@@ -1,27 +1,21 @@
 /**
  * 🌍 Sistema de Detección Automática de Idioma
  * Detecta el idioma del mensaje del usuario usando patrones nativos
- * Soporta: Español, Inglés, Japonés, Quechua, Francés, Italiano
+ * Soporta: Español, English, Runasimi (Quechua Ecuador)
  */
 
 // Códigos ISO 639-1 para idiomas soportados
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
-  JAPANESE: 'ja',
-  QUECHUA: 'qu',
-  FRENCH: 'fr',
-  ITALIAN: 'it'
+  QUECHUA: 'qu'
 };
 
 // Nombres legibles de idiomas
 export const LANGUAGE_NAMES = {
   es: 'Español',
   en: 'English',
-  ja: '日本語',
-  qu: 'Runasimi',
-  fr: 'Français',
-  it: 'Italiano'
+  qu: 'Runasimi'
 };
 
 /**
@@ -41,7 +35,7 @@ const LANGUAGE_PATTERNS = {
     weight: 1.0
   },
 
-  // Inglés - Palabras comunes y estructura
+  // English - Common words and structure
   en: {
     commonWords: [
       'hello', 'hi', 'good', 'morning', 'thanks', 'please', 'how', 'what', 'when',
@@ -53,17 +47,7 @@ const LANGUAGE_PATTERNS = {
     weight: 1.0
   },
 
-  // Japonés - Hiragana, Katakana, Kanji
-  ja: {
-    commonWords: [
-      'こんにちは', 'ありがとう', 'お願い', 'どう', '何', 'いつ', 'どこ',
-      'です', 'ます', 'ください', 'します', 'できます', 'わかり'
-    ],
-    specialChars: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/,
-    weight: 2.0 // Mayor peso porque los caracteres son únicos
-  },
-
-  // Quechua - Palabras comunes
+  // Quechua (Runasimi) - Palabras comunes Ecuador
   qu: {
     commonWords: [
       'allinllachu', 'allin', 'ima', 'may', 'maypi', 'mayman', 'imayna',
@@ -74,34 +58,6 @@ const LANGUAGE_PATTERNS = {
     ],
     specialChars: /[ñqkw]/i,
     weight: 1.2 // Peso ligeramente mayor por ser menos común
-  },
-
-  // Francés - Palabras comunes y acentos
-  fr: {
-    commonWords: [
-      'bonjour', 'merci', 'sil', 'vous', 'plaît', 'comment', 'quoi', 'quand',
-      'où', 'veux', 'besoin', 'peux', 'suis', 'avez', 'avec', 'pour',
-      'mais', 'aussi', 'ici', 'maintenant', 'demain', 'aujourd', 'réservation',
-      'information', 'aide', 'prix', 'est', 'sont', 'jai', 'coûte', 'bureau',
-      'partagé', 'jour', 'réserver', 'privé', 'salles', 'réunion', 'disponibles',
-      'des', 'les', 'sur', 'espaces', 'combien'
-    ],
-    specialChars: /[àâäæçéèêëïîôùûüÿœ]/i,
-    weight: 1.0
-  },
-
-  // Italiano - Palabras comunes y estructura
-  it: {
-    commonWords: [
-      'ciao', 'buongiorno', 'grazie', 'prego', 'come', 'cosa', 'quando',
-      'dove', 'voglio', 'bisogno', 'posso', 'sono', 'siamo', 'hanno',
-      'con', 'per', 'anche', 'qui', 'adesso', 'domani', 'oggi',
-      'prenotazione', 'informazione', 'aiuto', 'prezzo', 'quanto', 'costa',
-      'postazione', 'condivisa', 'giorno', 'prenotare', 'ufficio', 'privato',
-      'avete', 'sale', 'riunioni', 'disponibili', 'sugli', 'spazi'
-    ],
-    specialChars: /[àèéìòù]/i,
-    weight: 1.0
   }
 };
 
@@ -224,18 +180,8 @@ export function detectLanguageCommand(message) {
     '/english': SUPPORTED_LANGUAGES.ENGLISH,
     '/inglés': SUPPORTED_LANGUAGES.ENGLISH,
     '/ingles': SUPPORTED_LANGUAGES.ENGLISH,
-    '/japanese': SUPPORTED_LANGUAGES.JAPANESE,
-    '/japones': SUPPORTED_LANGUAGES.JAPANESE,
-    '/japonés': SUPPORTED_LANGUAGES.JAPANESE,
-    '/日本語': SUPPORTED_LANGUAGES.JAPANESE,
     '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
-    '/runasimi': SUPPORTED_LANGUAGES.QUECHUA,
-    '/french': SUPPORTED_LANGUAGES.FRENCH,
-    '/français': SUPPORTED_LANGUAGES.FRENCH,
-    '/francés': SUPPORTED_LANGUAGES.FRENCH,
-    '/frances': SUPPORTED_LANGUAGES.FRENCH,
-    '/italian': SUPPORTED_LANGUAGES.ITALIAN,
-    '/italiano': SUPPORTED_LANGUAGES.ITALIAN
+    '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
 
   // Buscar comandos con barra
@@ -249,10 +195,7 @@ export function detectLanguageCommand(message) {
   const naturalCommands = [
     { patterns: [/cambiar?\s+(a|al)?\s*inglés/i, /habla(r)?\s+inglés/i, /switch\s+to\s+english/i], lang: SUPPORTED_LANGUAGES.ENGLISH },
     { patterns: [/cambiar?\s+(a|al)?\s*español/i, /habla(r)?\s+español/i, /switch\s+to\s+spanish/i], lang: SUPPORTED_LANGUAGES.SPANISH },
-    { patterns: [/cambiar?\s+(a|al)?\s*japonés/i, /habla(r)?\s+japonés/i, /switch\s+to\s+japanese/i, /日本語で/i], lang: SUPPORTED_LANGUAGES.JAPANESE },
-    { patterns: [/cambiar?\s+(a|al)?\s*quechua/i, /habla(r)?\s+quechua/i, /runasimita/i], lang: SUPPORTED_LANGUAGES.QUECHUA },
-    { patterns: [/cambiar?\s+(a|al)?\s*francés/i, /habla(r)?\s+francés/i, /switch\s+to\s+french/i, /parler?\s+(en\s+)?français/i, /passer\s+au\s+français/i], lang: SUPPORTED_LANGUAGES.FRENCH },
-    { patterns: [/cambiar?\s+(a|al)?\s*italiano/i, /habla(r)?\s+italiano/i, /switch\s+to\s+italian/i, /parlare\s+italiano/i], lang: SUPPORTED_LANGUAGES.ITALIAN }
+    { patterns: [/cambiar?\s+(a|al)?\s*quechua/i, /habla(r)?\s+quechua/i, /runasimita/i], lang: SUPPORTED_LANGUAGES.QUECHUA }
   ];
 
   for (const { patterns, lang } of naturalCommands) {
@@ -322,10 +265,7 @@ export function getLanguageChangeConfirmation(newLanguage) {
   const confirmations = {
     es: '✅ Perfecto! Ahora te responderé en español 🇪🇸',
     en: '✅ Perfect! I will now respond in English 🇺🇸',
-    ja: '✅ 完璧！日本語で対応します 🇯🇵',
-    qu: '✅ Allinmi! Kunan runasimipi rimanayki 🏔️',
-    fr: '✅ Parfait! Je vais maintenant répondre en français 🇫🇷',
-    it: '✅ Perfetto! Ora risponderò in italiano 🇮🇹'
+    qu: '✅ Allinmi! Kunan runasimipi rimanayki 🏔️'
   };
 
   return confirmations[newLanguage] || confirmations.es;
@@ -338,10 +278,7 @@ export function testLanguageDetection() {
   const testMessages = [
     'Hola, ¿cómo estás?',
     'Hello, how are you?',
-    'こんにちは、元気ですか？',
     'Allinllachu, imaynallan kashanki?',
-    'Bonjour, comment allez-vous?',
-    'Ciao, come stai?',
     'Quiero hacer una reserva',
     'I want to make a booking',
     'Necesito ayuda',

@@ -11,13 +11,13 @@
 ### WhatsApp Link con Mensaje Pre-llenado
 
 ```
-https://wa.me/593987770788?text=Aurora%2C%20quiero%20saber%20%C2%BFqu%C3%A9%20puede%20hacer%20un%20Agente%20Virtual%20como%20t%C3%BA%20para%20mi%20empresa%3F
+https://wa.me/593994837117?text=Aurora%2C%20quiero%20saber%20%C2%BFqu%C3%A9%20puede%20hacer%20un%20Agente%20Virtual%20como%20t%C3%BA%20para%20mi%20empresa%3F
 ```
 
 **Texto decodificado:**
 > "Aurora, quiero saber ¿qué puede hacer un Agente Virtual como tú para mi empresa?"
 
-**Número Aurora:** +593 98 777 0788
+**Número Aurora:** +593 99 483 7117
 
 ---
 

@@ -8,7 +8,7 @@ import { sendEmail } from './email.js';
 /**
  * 🎨 Genera HTML del email de cotización (estilo The PaintBull)
  */
-function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoUrls = [], quoteCode }) {
+async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoUrls = [], quoteCode }) {
   const formatDate = new Date().toLocaleDateString('es-EC', {
     weekday: 'long',
     year: 'numeric',
@@ -16,24 +16,68 @@ function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quo
     day: 'numeric'
   });
 
-  // Sección de fotos
-  const photosSection = photoUrls && photoUrls.length > 0 ? `
-    <div style="margin: 30px 0;">
-      <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-        ${photoUrls.map((url, idx) => `
-          <a href="${url}" style="text-decoration: none; display: block;">
-            <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden; transition: all 0.2s;">
-              <div style="background: #F3F4F6; padding: 40px 20px; text-align: center;">
-                <p style="margin: 0; color: #6B7280; font-size: 14px;">📷 Foto ${idx + 1}</p>
-                <p style="margin: 5px 0 0 0; color: #DC2626; font-size: 12px; font-weight: 600;">Ver imagen →</p>
-              </div>
+  // Sección de fotos - convertir URLs a base64
+  let photosSection = '';
+  
+  if (photoUrls && photoUrls.length > 0) {
+    try {
+      // Importar función para descargar y convertir a base64
+      const photosBase64 = await Promise.all(
+        photoUrls.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const base64 = buffer.toString('base64');
+            return `data:image/jpeg;base64,${base64}`;
+          } catch (err) {
+            console.error('[QUOTE-EMAIL] ❌ Error descargando foto:', err.message);
+            return null;
+          }
+        })
+      );
+      
+      const validPhotos = photosBase64.filter(p => p !== null);
+      
+      if (validPhotos.length > 0) {
+        photosSection = `
+          <div style="margin: 30px 0;">
+            <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+              ${validPhotos.map((base64Img, idx) => `
+                <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+                  <img src="${base64Img}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block;" />
+                </div>
+              `).join('')}
             </div>
-          </a>
-        `).join('')}
-      </div>
-    </div>
-  ` : '';
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('[QUOTE-EMAIL] ❌ Error procesando fotos:', error);
+      // Fallback: mostrar links si falla la conversión
+      photosSection = `
+        <div style="margin: 30px 0;">
+          <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
+          <p style="color: #6B7280; font-size: 14px; margin-bottom: 15px;">
+            Fotos disponibles temporalmente (haz clic para ver):
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+            ${photoUrls.map((url, idx) => `
+              <a href="${url}" target="_blank" style="text-decoration: none; display: block;">
+                <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden; transition: all 0.2s;">
+                  <div style="background: #F3F4F6; padding: 40px 20px; text-align: center;">
+                    <p style="margin: 0; color: #6B7280; font-size: 14px;">📷 Foto ${idx + 1}</p>
+                    <p style="margin: 5px 0 0 0; color: #DC2626; font-size: 12px; font-weight: 600;">Ver imagen →</p>
+                  </div>
+                </div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
 
   // Badge de severidad
   const severityBadge = damageAnalysis.severity === 'LEVE' 
@@ -242,7 +286,7 @@ export async function sendQuoteEmail({
     console.log('[QUOTE-EMAIL] 📧 Enviando cotización por email a:', customerEmail);
     console.log('[QUOTE-EMAIL] 🔢 Código de cotización:', quoteCode);
 
-    const htmlContent = generateQuoteEmailHTML({
+    const htmlContent = await generateQuoteEmailHTML({
       customerName,
       vehicleData,
       damageAnalysis,

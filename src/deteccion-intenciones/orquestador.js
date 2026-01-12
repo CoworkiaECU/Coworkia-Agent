@@ -145,7 +145,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // Contexto de perfil: Aurora recibe todo, otros solo básico
   const contextoUsuario = esAurora 
     ? construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail, mensaje })
-    : construirContextoPerfilBasico(perfil);
+    : construirContextoPerfilBasico(perfil, agenteKey);
 
   // Contexto de historial: Filtrar por agente activo
   const contextoHistorial = construirContextoHistorial(historial, agenteKey);
@@ -741,7 +741,7 @@ function construirContextoPerfil(perfil = {}, extraFlags = {}) {
  * Construye contexto BÁSICO del perfil para agentes NO-Aurora
  * Solo incluye nombre y datos mínimos, sin reservas ni formularios
  */
-function construirContextoPerfilBasico(perfil = {}) {
+function construirContextoPerfilBasico(perfil = {}, agenteKey = null) {
   if (!perfil || Object.keys(perfil).length === 0) {
     return 'USUARIO: Primera interacción';
   }
@@ -757,6 +757,42 @@ function construirContextoPerfilBasico(perfil = {}) {
   // Información mínima, sin reservas ni detalles de Coworkia
   if (perfil.conversationCount && perfil.conversationCount > 1) {
     lineas.push(`- Han conversado ${perfil.conversationCount} veces antes`);
+  }
+  
+  // 🚗 AXEL: Agregar contexto de cotización cargada desde DB
+  if (agenteKey === 'AXEL' && perfil.axelData) {
+    const { loadedQuote, lastAnalysis, emailSent, quoteConfirmed, awaitingScheduling } = perfil.axelData;
+    
+    if (loadedQuote) {
+      lineas.push('\n📋 COTIZACIÓN RECUPERADA DESDE BASE DE DATOS:');
+      lineas.push(`- Código: ${loadedQuote.code}`);
+      lineas.push(`- Vehículo: ${loadedQuote.vehicle?.brand || ''} ${loadedQuote.vehicle?.model || ''} ${loadedQuote.vehicle?.year || ''}`);
+      lineas.push(`- Estado: ${loadedQuote.status}`);
+      lineas.push(`- Rango precio: $${loadedQuote.priceRange?.min || 0} - $${loadedQuote.priceRange?.max || 0}`);
+      if (loadedQuote.customerName) {
+        lineas.push(`- Cliente: ${loadedQuote.customerName}`);
+      }
+      if (loadedQuote.emailSent) {
+        lineas.push(`- ✅ Email de cotización ya enviado`);
+      }
+      if (loadedQuote.appointmentConfirmed) {
+        lineas.push(`- ✅ Cita ya confirmada`);
+      }
+      lineas.push('\n⚠️ IMPORTANTE: NO pidas fotos de nuevo. Ya tienes toda la información de esta cotización.');
+      lineas.push('El usuario puede estar llamando para: agendar cita, consultar precio, modificar algo.');
+    } else if (lastAnalysis && emailSent) {
+      // Cotización local (no desde DB)
+      lineas.push('\n📋 COTIZACIÓN PREVIA (sesión actual):');
+      lineas.push('- ✅ Ya analizaste fotos de este usuario');
+      lineas.push('- ✅ Cotización ya enviada por email');
+      if (quoteConfirmed) {
+        lineas.push('- Usuario confirmó interés en la cotización');
+      }
+      if (awaitingScheduling) {
+        lineas.push('- Usuario está listo para agendar cita');
+      }
+      lineas.push('\n⚠️ NO pidas fotos de nuevo. Usa el análisis previo.');
+    }
   }
   
   return lineas.join('\n');

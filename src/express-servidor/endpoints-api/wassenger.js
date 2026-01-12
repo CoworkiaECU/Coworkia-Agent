@@ -376,16 +376,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
             }
             
+            // Generar código único de cotización
+            const { generateQuoteCode } = await import('../../servicios/axel-quote-code.js');
+            const codeResult = await generateQuoteCode();
+            const quoteCode = codeResult.code;
+            
             await enviarWhatsApp(userId, 
-              '✅ *¡Perfecto!* Ya tengo toda la información.\n\n' +
-              '🔄 Estoy preparando tu cotización personalizada...\n\n' +
-              '_Esto tomará unos segundos_ ⏱️'
+              `✅ *¡Perfecto!* Ya tengo toda la información.\n\n` +
+              `🔢 Código de cotización: *${quoteCode}*\n\n` +
+              `🔄 Estoy preparando tu cotización personalizada...\n\n` +
+              `_Esto tomará unos segundos_ ⏱️`
             );
             
             // Importar generador de cotizaciones
             const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
             
-            // Obtener análisis de daños del perfil (corregido: lastAnalysis)
+            // Obtener análisis de daños del perfil (corregido: lastAnalisis)
             const damageAnalysis = profile.axelData?.lastAnalysis;
             
             if (!damageAnalysis) {
@@ -402,7 +408,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               userId,
               vehicleData: formResult.data,
               damageAnalysis: damageAnalysis,
-              photoUrls: damageAnalysis.photoUrls || []
+              photoUrls: damageAnalysis.photoUrls || [],
+              quoteCode: quoteCode
             });
             
             if (!quoteResult.success) {
@@ -452,7 +459,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               damageAnalysis: damageAnalysis,
               quote: quoteResult.emailData.quote,
               priceRange: quoteResult.emailData.priceRange,
-              photoUrls: damageAnalysis.photoUrls || []
+              photoUrls: damageAnalysis.photoUrls || [],
+              quoteCode: quoteCode
             });
             
             if (emailResult.success) {

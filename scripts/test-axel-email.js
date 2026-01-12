@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 🧪 TEST: Email de cotización de Axel
- * Envía un email de prueba a yo@diegovillota.com
+ * Envía emails de prueba a yo@diegovillota.com y villotaj71@gmail.com
  */
 
 import { sendQuoteEmail } from '../src/servicios/axel-quote-email.js';
@@ -11,11 +11,14 @@ async function testAxelEmail() {
   console.log('   TEST EMAIL COTIZACIÓN AXEL - THE PAINTBULL');
   console.log('════════════════════════════════════════════════\n');
 
+  // Lista de destinatarios
+  const recipients = [
+    { email: 'yo@diegovillota.com', name: 'Diego Villota', role: 'Cliente' },
+    { email: 'villotaj71@gmail.com', name: 'Jefe de Taller', role: 'Taller PaintBull' }
+  ];
+
   // Datos simulados basados en la conversación real con Axel
-  const testData = {
-    customerEmail: 'yo@diegovillota.com',
-    customerName: 'Diego Villota',
-    
+  const baseTestData = {
     vehicleData: {
       marca: 'Kia',
       modelo: 'Seltos',
@@ -56,9 +59,12 @@ async function testAxelEmail() {
       currency: 'USD'
     },
     
-    // URLs de las fotos (estas son las del chat - si están disponibles en producción)
+    // Código de cotización simulado
+    quoteCode: 'AXEL-2026-0001',
+    
+    // URLs de las fotos (nota: las URLs de WhatsApp son temporales)
     photoUrls: [
-      'https://example.com/photo1.jpg', // Nota: Reemplazar con URLs reales si están disponibles
+      'https://example.com/photo1.jpg',
       'https://example.com/photo2.jpg',
       'https://example.com/photo3.jpg',
       'https://example.com/photo4.jpg'
@@ -66,44 +72,58 @@ async function testAxelEmail() {
   };
 
   console.log('📋 DATOS DE LA COTIZACIÓN:');
-  console.log(`   Cliente: ${testData.customerName}`);
-  console.log(`   Email: ${testData.customerEmail}`);
-  console.log(`   Vehículo: ${testData.vehicleData.marca} ${testData.vehicleData.modelo} ${testData.vehicleData.año}`);
-  console.log(`   Severidad: ${testData.damageAnalysis.severity}`);
-  console.log(`   Áreas dañadas: ${testData.damageAnalysis.damageAreas.join(', ')}`);
-  console.log(`   Precio: $${testData.priceRange.min} - $${testData.priceRange.max}\n`);
+  console.log(`   Vehículo: ${baseTestData.vehicleData.marca} ${baseTestData.vehicleData.modelo} ${baseTestData.vehicleData.año}`);
+  console.log(`   Código: ${baseTestData.quoteCode}`);
+  console.log(`   Severidad: ${baseTestData.damageAnalysis.severity}`);
+  console.log(`   Áreas dañadas: ${baseTestData.damageAnalysis.damageAreas.join(', ')}`);
+  console.log(`   Precio: $${baseTestData.priceRange.min} - $${baseTestData.priceRange.max}`);
+  console.log(`   Destinatarios: ${recipients.length}\n`);
 
-  console.log('📧 Enviando email...\n');
-
-  const result = await sendQuoteEmail(testData);
-
-  if (result.success) {
-    console.log('✅ ════════════════════════════════════════════════');
-    console.log('   EMAIL ENVIADO EXITOSAMENTE');
-    console.log('════════════════════════════════════════════════');
-    console.log(`\n📬 Revisa tu bandeja: ${testData.customerEmail}`);
-    console.log('📁 Carpeta: Inbox o Spam');
-    console.log('📧 Asunto: 🚗 Cotización PaintBull - Kia Seltos 2020\n');
+  // Enviar a cada destinatario
+  const results = [];
+  
+  for (const recipient of recipients) {
+    console.log(`📧 Enviando a ${recipient.role}: ${recipient.email}...`);
     
-    if (result.messageId) {
-      console.log(`🆔 Message ID: ${result.messageId}`);
-    }
-  } else {
-    console.log('❌ ════════════════════════════════════════════════');
-    console.log('   ERROR ENVIANDO EMAIL');
-    console.log('════════════════════════════════════════════════');
-    console.error(`\n🚨 Error: ${result.error}\n`);
+    const testData = {
+      ...baseTestData,
+      customerEmail: recipient.email,
+      customerName: recipient.name
+    };
     
-    if (result.error.includes('credentials') || result.error.includes('authentication')) {
-      console.log('💡 POSIBLE CAUSA: Credenciales de Gmail no configuradas');
-      console.log('   Verifica las variables de entorno:');
-      console.log('   - GMAIL_USER');
-      console.log('   - GMAIL_APP_PASSWORD\n');
+    const result = await sendQuoteEmail(testData);
+    results.push({ recipient, result });
+    
+    if (result.success) {
+      console.log(`   ✅ Enviado exitosamente (ID: ${result.messageId?.substring(0, 12)}...)\n`);
+    } else {
+      console.log(`   ❌ Error: ${result.error}\n`);
     }
   }
 
+  // Resumen final
+  console.log('════════════════════════════════════════════════');
+  console.log('   RESUMEN DE ENVÍOS');
   console.log('════════════════════════════════════════════════\n');
-  process.exit(result.success ? 0 : 1);
+  
+  const successful = results.filter(r => r.result.success).length;
+  const failed = results.filter(r => !r.result.success).length;
+  
+  results.forEach(({ recipient, result }) => {
+    const status = result.success ? '✅' : '❌';
+    console.log(`${status} ${recipient.role}: ${recipient.email}`);
+    if (result.messageId) {
+      console.log(`   🆔 ${result.messageId}`);
+    }
+  });
+  
+  console.log(`\n📊 Total: ${successful} exitosos | ${failed} fallidos`);
+  console.log(`📧 Asunto: 🚗 Cotización ${baseTestData.quoteCode} - Kia Seltos 2020`);
+  console.log(`🔢 Código: ${baseTestData.quoteCode}`);
+  console.log('\n📬 Revisa las bandejas (Inbox o Spam)');
+  console.log('════════════════════════════════════════════════\n');
+  
+  process.exit(failed === 0 ? 0 : 1);
 }
 
 testAxelEmail().catch(error => {

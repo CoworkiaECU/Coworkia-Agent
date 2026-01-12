@@ -8,7 +8,7 @@ import { sendEmail } from './email.js';
 /**
  * 🎨 Genera HTML del email de cotización (estilo The PaintBull)
  */
-function generateQuoteEmailHTML({ vehicleData, damageAnalysis, quote, priceRange, photoUrls = [] }) {
+function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoUrls = [], quoteCode }) {
   const formatDate = new Date().toLocaleDateString('es-EC', {
     weekday: 'long',
     year: 'numeric',
@@ -74,7 +74,9 @@ function generateQuoteEmailHTML({ vehicleData, damageAnalysis, quote, priceRange
           <!-- Banner de cotización -->
           <div style="background: rgba(255,255,255,0.97); color: #1F2937; padding: 25px 35px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
             <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #DC2626;">💰 Cotización Personalizada</h1>
-            <p style="margin: 10px 0 0 0; color: #6B7280; font-size: 15px;">${formatDate}</p>
+            <p style="margin: 10px 0 5px 0; color: #6B7280; font-size: 15px;">${formatDate}</p>
+            <p style="margin: 5px 0 0 0; color: #111827; font-size: 14px; font-weight: 600;">Cliente: ${customerName}</p>
+            <p style="margin: 5px 0 0 0; color: #DC2626; font-size: 13px; font-weight: 700; letter-spacing: 1px;">Código: ${quoteCode}</p>
           </div>
         </div>
 
@@ -158,11 +160,11 @@ ${quote}
             </p>
             <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
               <p style="color: white; margin: 0; font-size: 18px; font-weight: 600;">
-                📱 WhatsApp: <a href="https://wa.me/593998100623" style="color: white; text-decoration: none; border-bottom: 2px solid white;">+593 99 810 0623</a>
+                📱 WhatsApp: <a href="https://wa.me/593994837117" style="color: white; text-decoration: none; border-bottom: 2px solid white;">+593 99 483 7117</a>
               </p>
             </div>
-            <a href="https://wa.me/593998100623?text=Hola,%20quiero%20confirmar%20mi%20cotización" style="display: inline-block; background: white; color: #DC2626; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-              💬 Confirmar Cotización
+            <a href="https://wa.me/593994837117?text=Hola%2C%20quiero%20confirmar%20mi%20cotizaci%C3%B3n%20${quoteCode}" style="display: inline-block; background: white; color: #DC2626; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+              💬 Confirmar Cotización ${quoteCode}
             </a>
           </div>
 
@@ -183,6 +185,24 @@ ${quote}
                 <p style="margin: 0; color: #6B7280; font-size: 13px; font-weight: 600;">Trabajo<br>profesional</p>
               </div>
             </div>
+          </div>
+
+          <!-- Ubicación -->
+          <div style="background: white; border: 2px solid #DC2626; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
+            <h3 style="color: #DC2626; margin: 0 0 15px 0; font-size: 20px; font-weight: 700;">📍 VISÍTANOS</h3>
+            <p style="color: #374151; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
+              <strong>The PaintBull</strong><br>
+              Av. De los Shyris N36-152 y Naciones Unidas<br>
+              Quito, Ecuador
+            </p>
+            <div style="margin: 25px 0;">
+              <a href="https://maps.google.com/?q=The+PaintBull+Quito" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                🗺️ Ver en Google Maps
+              </a>
+            </div>
+            <p style="color: #6B7280; margin: 20px 0 0 0; font-size: 14px;">
+              📅 <strong>Horarios:</strong> Lun-Vie 8:00-18:00 | Sáb 9:00-14:00
+            </p>
           </div>
 
           <!-- Footer -->
@@ -215,20 +235,24 @@ export async function sendQuoteEmail({
   damageAnalysis, 
   quote, 
   priceRange,
-  photoUrls = [] 
+  photoUrls = [],
+  quoteCode
 }) {
   try {
     console.log('[QUOTE-EMAIL] 📧 Enviando cotización por email a:', customerEmail);
+    console.log('[QUOTE-EMAIL] 🔢 Código de cotización:', quoteCode);
 
     const htmlContent = generateQuoteEmailHTML({
+      customerName,
       vehicleData,
       damageAnalysis,
       quote,
       priceRange,
-      photoUrls
+      photoUrls,
+      quoteCode
     });
 
-    const subject = `🚗 Cotización PaintBull - ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}`;
+    const subject = `🚗 Cotización ${quoteCode} - ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}`;
 
     const result = await sendEmail({
       to: customerEmail,

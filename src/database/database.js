@@ -129,5 +129,6 @@ export const query = async (sql, params) => {
 
 export const getClient = async () => {
   await databaseService.ensureInitialized();
-  return databaseService.db.getClient();
+  // El pool de PostgreSQL tiene el método connect() que retorna un client
+  return databaseService.db.pool.connect();
 };

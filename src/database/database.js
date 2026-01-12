@@ -117,5 +117,17 @@ class DatabaseService {
 // Instancia singleton
 const databaseService = new DatabaseService();
 
+// Exports principales
 export default databaseService;
 export { DatabaseService };
+
+// Helper exports para queries directas
+export const query = async (sql, params) => {
+  await databaseService.ensureInitialized();
+  return databaseService.db.query(sql, params);
+};
+
+export const getClient = async () => {
+  await databaseService.ensureInitialized();
+  return databaseService.db.getClient();
+};

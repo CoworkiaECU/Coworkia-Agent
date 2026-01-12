@@ -467,6 +467,31 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               if (process.env.DEBUG_MODE === 'true') {
                 console.log('[WASSENGER] ✅ Email de cotización enviado');
               }
+              
+              // 🗄️ GUARDAR EN POSTGRESQL (independiente de userId)
+              try {
+                const { saveQuote } = await import('../../servicios/axel-quote-db.js');
+                const dbResult = await saveQuote({
+                  quoteCode: quoteCode,
+                  userPhone: userId,
+                  vehicleData: formResult.data,
+                  damageAnalysis: damageAnalysis,
+                  quoteDetails: quoteResult.emailData.quote,
+                  priceRange: quoteResult.emailData.priceRange,
+                  customerName: formResult.data.nombre,
+                  customerEmail: formResult.data.email,
+                  photoUrls: damageAnalysis.photoUrls || []
+                });
+                
+                if (dbResult.success) {
+                  console.log('[WASSENGER] ✅ Cotización guardada en PostgreSQL:', quoteCode);
+                } else {
+                  console.error('[WASSENGER] ⚠️ Error guardando en PostgreSQL:', dbResult.error);
+                }
+              } catch (dbError) {
+                console.error('[WASSENGER] ❌ Error al guardar cotización:', dbError);
+              }
+              
             } else {
               console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
             }
@@ -507,33 +532,84 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             });
           }
           
-          // Si formulario incompleto → Enviar prompt
-          if (formResult.needsMoreInfo && formResult.prompt) {
-            await enviarWhatsApp(userId, formResult.prompt);
+                // DETECTAR SI USUARIO YA TIENE COTIZACIÓN ENVIADA (buscar en DB PostgreSQL)
+      if (activeAgent === 'AXEL') {
+        const quoteCodeMatch = text.match(/AXEL-\d{4}-\d{4}/);
+        const hasExistingQuote = profile.axelData?.lastAnalysis && profile.axelData?.emailSent;
+        
+        // Si usuario menciona código AXEL, buscar en base de datos PostgreSQL
+        if (quoteCodeMatch) {
+          console.log(`[WASSENGER] 🔍 Buscando código en DB: ${quoteCodeMatch[0]}`);
+          
+          try {
+            const { findQuoteByCode } = await import('../../servicios/axel-quote-db.js');
+            const dbResult = await findQuoteByCode(quoteCodeMatch[0]);
             
-            await saveInteraction({
-              userId,
-              agent: 'axel',
-              agentName: 'Axel',
-              intentReason: 'quote_form_progress',
-              input: text,
-              output: formResult.prompt,
-              meta: {
-                route: '/webhooks/wassenger',
-                via: 'whatsapp',
-                currentData: formResult.currentData,
-                missingFields: formResult.missingFields
-              }
-            });
-            
-            return res.json({ ok: true, processed: true, type: 'axel_form_progress' });
+            if (dbResult.success && dbResult.found) {
+              // Cotización encontrada en DB - cargar en perfil
+              const dbQuote = dbResult.quote;
+              console.log('[WASSENGER] ✅ Cotización encontrada en DB, cargando datos...');
+              
+              profile.axelData = profile.axelData || {};
+              profile.axelData.loadedQuote = {
+                code: dbQuote.quote_code,
+                vehicle: dbQuote.vehicle,
+                status: dbQuote.status,
+                priceRange: { min: dbQuote.price_min, max: dbQuote.price_max },
+                originalPhone: dbQuote.original_user_phone,
+                customerName: dbQuote.customer_name,
+                customerEmail: dbQuote.customer_email,
+                emailSent: dbQuote.email_sent,
+                appointmentConfirmed: dbQuote.appointment_confirmed
+              };
+              profile.axelData.quoteConfirmed = true;
+              profile.axelData.awaitingScheduling = dbQuote.status === 'sent' || dbQuote.status === 'confirmed';
+              profile.axelData.confirmedQuoteCode = dbQuote.quote_code;
+              
+              await saveProfile(userId, profile);
+              console.log('[WASSENGER] ✅ Estado actualizado con cotización DB');
+              
+            } else {
+              // Código no encontrado en DB
+              console.log('[WASSENGER] ❌ Código AXEL no encontrado en DB');
+              await enviarWhatsApp(userId,
+                `❌ No encontré la cotización con código ${quoteCodeMatch[0]}\n\n` +
+                'Verifica que el código sea correcto. Si acabas de recibir tu cotización, espera unos segundos e intenta de nuevo. 🔄'
+              );
+              return;
+            }
+          } catch (error) {
+            console.error('[WASSENGER] Error buscando código en DB:', error);
+            // Continuar con flujo normal si hay error DB
           }
+        }
+        // Si tiene cotización local (sin código), también activar modo post-cotización
+        else if (hasExistingQuote && (text.toLowerCase().includes('confirmar') || text.toLowerCase().includes('cotizaci') || text.toLowerCase().includes('agendar') || text.toLowerCase().includes('cita'))) {
+          console.log('[WASSENGER] 💡 Usuario tiene cotización local existente, modo post-cotización activado');
+          
+          profile.axelData = profile.axelData || {};
+          profile.axelData.quoteConfirmed = true;
+          profile.axelData.awaitingScheduling = true;
+          
+          await saveProfile(userId, profile);
+          console.log('[WASSENGER] ✅ Estado actualizado: quoteConfirmed=true, awaitingScheduling=true');
+        }
       }
       
-      // 🚗 SI ES AXEL CON IMAGEN: Agrupación batch con 15 segundos
+      // SI ES AXEL CON IMAGEN: Agrupación batch con 15 segundos
       if (activeAgent === 'AXEL' && mediaUrl) {
         if (process.env.DEBUG_MODE === 'true') {
           console.log('[WASSENGER] 🚗 AXEL + imagen - batch processing iniciado');
+        }
+        
+        // ⚠️ VALIDAR: Si ya tiene cotización previa, NO analizar fotos de nuevo
+        if (profile.axelData?.quoteConfirmed || (profile.axelData?.lastAnalysis && profile.axelData?.emailSent)) {
+          console.log('[WASSENGER] ⚠️ Usuario ya tiene cotización previa, ignorando nuevas fotos');
+          await enviarWhatsApp(userId,
+            'Ya tengo tu cotización anterior lista 📋\n\n' +
+            'Si necesitas un *nuevo análisis* para otro daño, dime "nuevo análisis" y empezamos de cero. 👍'
+          );
+          return res.json({ ok: true, ignored: true, reason: 'quote_already_exists' });
         }
         
         try {

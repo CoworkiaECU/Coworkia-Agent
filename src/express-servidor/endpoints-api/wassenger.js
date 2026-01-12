@@ -292,7 +292,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const messageData = { type: messageType, media: { url: mediaUrl } };
       
       // Cargar perfil para saber el agente activo
+      console.log('[WASSENGER DEBUG] 🔄 Llamando loadProfile para userId:', userId);
       const userProfile = await loadProfile(userId);
+      console.log('[WASSENGER DEBUG] ✅ loadProfile completado, profile:', userProfile ? 'FOUND' : 'NULL');
       const activeAgent = userProfile?.activeAgent || 'AURORA';
       
       if (process.env.DEBUG_MODE === 'true') {
@@ -1233,7 +1235,9 @@ Responde en tu estilo característico con:
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
     }
+    console.log('[WASSENGER DEBUG] 🔄 Llamando loadProfile para mensajes de texto, userId:', userId);
     const current = await loadProfile(userId) || {};
+    console.log('[WASSENGER DEBUG] ✅ loadProfile completado para mensajes de texto');
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
     }

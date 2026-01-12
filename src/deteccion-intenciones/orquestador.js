@@ -9,6 +9,7 @@ import { ENZO } from './enzo.js';
 import { ANGELA } from './angela.js';
 import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
+import { TOMI } from './tomi.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { 
   shouldHandover, 
@@ -25,7 +26,8 @@ export const AGENTES = {
   ENZO,
   ANGELA,
   AXEL,
-  GABI
+  GABI,
+  TOMI
 };
 
 const POST_EMAIL_REACTIVATION_KEYWORDS = [
@@ -264,6 +266,9 @@ Reparación de vehículos express
 
 💼 *GR Consulting* (@gabi)
 Finanzas, contabilidad y asesoría legal
+
+🏡 *Coworkia Real Estate* (@tomi)
+Propiedades Ecuador y República Dominicana
 
 📋 *Planes y Membresías* (@aluna)
 Tu espacio perfecto

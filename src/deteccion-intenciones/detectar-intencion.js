@@ -17,6 +17,16 @@ const AURORA_KEYWORDS = [
   'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
 ];
 
+const TOMI_KEYWORDS = [
+  'bienes raices', 'bienes raíces', 'inmobiliaria', 'propiedad', 'propiedades',
+  'casa', 'departamento', 'apartamento', 'villa', 'terreno',
+  'comprar casa', 'vender casa', 'busco casa', 'busco departamento',
+  'ecuador', 'quito', 'guayaquil', 'cuenca', 'cumbaya', 'la pradera',
+  'republica dominicana', 'república dominicana', 'punta cana', 'santo domingo',
+  'ECU-001', 'ECU-002', 'DOM-001', 'DOM-002',
+  'inversion inmobiliaria', 'inversión inmobiliaria', 'compra propiedad'
+];
+
 const PAYMENT_LINK_REQUEST_PATTERNS = [
   /link.*pago/,
   /enlace.*pago/,
@@ -253,6 +263,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
     return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
   }
 
+  if (/@tomi/i.test(text)) {
+    return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
+  }
+
   if (/@aluna/i.test(text)) {
     return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
   }
@@ -295,6 +309,14 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   // 3) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
   // El orquestador decidirá si cambiar según activeAgent
   
+  if (TOMI_KEYWORDS.some(k => text.includes(k))) {
+    return { 
+      agent: 'TOMI', 
+      reason: 'keywords bienes raíces/propiedades',
+      flags: { suggestedAgent: 'TOMI', isKeywordMatch: true }
+    };
+  }
+
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
     return { 
       agent: 'ALUNA', 

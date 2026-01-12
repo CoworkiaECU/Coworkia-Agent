@@ -2240,7 +2240,91 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // 💼 SISTEMA GABI: Verificar contador y ofrecer reunión
+    // � SISTEMA AXEL: Detectar agendamiento de cita
+    if (resultado.agenteKey === 'AXEL' && profile.axelData) {
+      try {
+        const { awaitingScheduling, quoteConfirmed, confirmedQuoteCode, loadedQuote } = profile.axelData;
+        
+        // Solo procesar si usuario está en modo post-cotización
+        if ((awaitingScheduling || quoteConfirmed) && (confirmedQuoteCode || loadedQuote)) {
+          console.log('[AXEL-SYSTEM] 🔍 Usuario en modo agendamiento, analizando mensaje...');
+          
+          // Detectar patrones de agendamiento en el mensaje del usuario
+          const schedulingPatterns = [
+            /mañana\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
+            /(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
+            /(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
+            /(\d{1,2})\/(\d{1,2})(\/\d{2,4})?\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
+            /(hoy|hoy\s+día)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i
+          ];
+          
+          let schedulingDetected = false;
+          for (const pattern of schedulingPatterns) {
+            if (pattern.test(text)) {
+              schedulingDetected = true;
+              console.log('[AXEL-SYSTEM] ✅ Patrón de agendamiento detectado:', text);
+              break;
+            }
+          }
+          
+          // También detectar confirmaciones explícitas
+          const confirmationPatterns = [
+            /\b(si|sí|confirmo|confirmado|perfecto|ok|dale|va|acepto)\b/i
+          ];
+          
+          const hasConfirmation = confirmationPatterns.some(p => p.test(text));
+          
+          if (schedulingDetected || (hasConfirmation && finalReply.toLowerCase().includes('confirmado'))) {
+            console.log('[AXEL-SYSTEM] 🎯 Agendamiento confirmado - guardando en DB...');
+            
+            const quoteCode = confirmedQuoteCode || loadedQuote?.code;
+            
+            if (quoteCode) {
+              const { scheduleAppointment } = await import('../../servicios/axel-quote-db.js');
+              
+              // Extraer fecha/hora del mensaje o usar "pendiente" si solo confirmó
+              const appointmentDate = new Date();
+              appointmentDate.setDate(appointmentDate.getDate() + 1); // Default: mañana
+              
+              const appointmentTime = '10:00:00'; // Default: 10am
+              const notes = `Agendado vía WhatsApp. Mensaje: "${text}"`;
+              
+              const result = await scheduleAppointment(
+                quoteCode,
+                appointmentDate.toISOString().split('T')[0],
+                appointmentTime,
+                notes
+              );
+              
+              if (result.success) {
+                console.log('[AXEL-SYSTEM] ✅ Cita guardada en DB:', result.appointment);
+                
+                // Actualizar perfil local
+                profile.axelData.appointmentScheduled = true;
+                profile.axelData.appointmentDate = appointmentDate.toISOString().split('T')[0];
+                profile.axelData.appointmentTime = appointmentTime;
+                await saveProfile(userId, profile);
+                
+                console.log('[AXEL-SYSTEM] ✅ Estado actualizado: appointmentScheduled=true');
+              } else {
+                console.error('[AXEL-SYSTEM] ❌ Error guardando cita:', result.error);
+              }
+            } else {
+              console.error('[AXEL-SYSTEM] ⚠️ No se encontró código de cotización para agendar');
+            }
+          } else {
+            console.log('[AXEL-SYSTEM] ℹ️ No se detectó patrón de agendamiento en este mensaje');
+          }
+        } else {
+          console.log('[AXEL-SYSTEM] ℹ️ Usuario no está en modo agendamiento');
+        }
+      } catch (error) {
+        console.error('[AXEL-SYSTEM] ❌ Error en sistema de agendamiento:', error);
+        // No bloquear el flujo principal si falla
+      }
+    }
+
+    // �💼 SISTEMA GABI: Verificar contador y ofrecer reunión
     if (resultado.agenteKey === 'GABI') {
       try {
         const { shouldOfferMeeting, generateMeetingOffer, markMeetingOffered } = await import('../../servicios/gabi-financial-system.js');

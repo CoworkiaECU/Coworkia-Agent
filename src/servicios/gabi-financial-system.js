@@ -173,10 +173,10 @@ export async function getFinancialMetrics(period = 'month') {
     
     // Tópicos más consultados
     const topicsQuery = `
-      SELECT topic, COUNT(*) as count
+      SELECT conversation_topic as topic, COUNT(*) as count
       FROM agent_conversations
-      WHERE agent = 'GABI' AND ${dateFilter}
-      GROUP BY topic
+      WHERE agent = 'GABI' AND conversation_topic IS NOT NULL AND ${dateFilter}
+      GROUP BY conversation_topic
       ORDER BY count DESC
       LIMIT 5
     `;

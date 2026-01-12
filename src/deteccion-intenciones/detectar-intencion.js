@@ -216,31 +216,31 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   // 1) CAMBIOS EXPLÍCITOS DE AGENTE (con @código)
   // Solo estos patrones fuerzan cambio de agente
   
-  if (/@enzo/.test(text)) {
+  if (/@enzo/i.test(text)) {
     return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ENZO' } };
   }
 
-  if (/@adriana/.test(text)) {
+  if (/@adriana/i.test(text)) {
     return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ADRIANA' } };
   }
 
-  if (/@ángela/.test(text) || /@angela/.test(text)) {
+  if (/@[áa]ngela/i.test(text)) {
     return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ANGELA' } };
   }
 
-  if (/@axel/.test(text)) {
+  if (/@axel/i.test(text)) {
     return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
   }
 
-  if (/@gabi/.test(text)) {
+  if (/@gabi/i.test(text)) {
     return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
   }
 
-  if (/@aluna/.test(text)) {
+  if (/@aluna/i.test(text)) {
     return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
   }
 
-  if (/@aurora/.test(text)) {
+  if (/@aurora/i.test(text)) {
     return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
   }
 

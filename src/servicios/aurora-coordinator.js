@@ -167,21 +167,26 @@ export async function shouldHandover(userId, message, currentAgent) {
 
 /**
  * 🔍 Detecta mención explícita de agente (@agente)
+ * Case-insensitive y reconoce @ángela / @angela
  */
 function detectMentionedAgent(message) {
+  const msgLower = message.toLowerCase();
+  
+  // Normalizar: convertir á → a para facilitar matching
+  const msgNormalized = msgLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
   const mentions = {
     '@aurora': 'AURORA',
     '@axel': 'AXEL',
     '@adriana': 'ADRIANA',
     '@enzo': 'ENZO',
-    '@angela': 'ANGELA',
+    '@angela': 'ANGELA',  // Funciona para @angela y @ángela (normalizado)
     '@gabi': 'GABI',
     '@aluna': 'ALUNA'
   };
   
-  const msgLower = message.toLowerCase();
   for (const [mention, agent] of Object.entries(mentions)) {
-    if (msgLower.includes(mention)) {
+    if (msgNormalized.includes(mention)) {
       return agent;
     }
   }

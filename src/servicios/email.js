@@ -324,6 +324,43 @@ function generateConfirmationEmailHTML(reservationData) {
 /**
  * �📧 Envía email de confirmación de reserva
  */
+/**
+ * 📧 Función genérica para enviar emails HTML
+ * Útil para cotizaciones de Axel y otros casos personalizados
+ */
+export async function sendEmail({ to, subject, html, from }) {
+  try {
+    console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
+    console.log(`[EMAIL] 📋 Asunto: ${subject}`);
+    
+    const transporter = await createEmailTransporter();
+    
+    if (!transporter) {
+      console.error('[EMAIL] ❌ No se pudo crear transportador');
+      return { success: false, error: 'Email transporter not configured' };
+    }
+    
+    const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
+    const fromAddress = from || `"Coworkia Agent" <${EMAIL_USER}>`;
+    
+    const mailOptions = {
+      from: fromAddress,
+      to: to,
+      subject: subject,
+      html: html
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[EMAIL] ✅ Email enviado: ${info.messageId}`);
+    
+    return { success: true, messageId: info.messageId };
+    
+  } catch (error) {
+    console.error('[EMAIL] ❌ Error enviando email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function sendReservationConfirmation(reservationData) {
   console.log('[EMAIL] 🚀 Iniciando envío de confirmación de reserva...');
   const transporter = await createEmailTransporter();

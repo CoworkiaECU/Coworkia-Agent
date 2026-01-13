@@ -2,8 +2,8 @@
 
 Sistema de agente conversacional multi-personalidad para Coworkia Business Center. Integración WhatsApp (Wassenger) + OpenAI GPT-4o-mini + PostgreSQL en Heroku.
 
-**Versión Actual**: v315 (Enero 2026)  
-**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado
+**Versión Actual**: v425 (Enero 2026)  
+**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado | Observabilidad completa
 
 [![Heroku](https://img.shields.io/badge/deployed-heroku-430098)](https://coworkia-agent-e97d15dac56f.herokuapp.com/)
 [![Security](https://img.shields.io/badge/vulnerabilities-0-success)](package.json)
@@ -206,9 +206,11 @@ src/
 │   ├── angela.js                   # MedBeneficios
 │   └── gabi.js                     # Finanzas/RRHH/Legal (92 líneas) ✨ OPTIMIZADO
 ├── database/
-│   ├── postgres-adapter.js         # PostgreSQL wrapper
+│   ├── postgres-adapter.js         # PostgreSQL wrapper (T6: transaction, pool events)
 │   ├── userRepository.js
 │   └── reservationRepository.js
+├── utils/
+│   └── observability.js            # T7: Métricas, logs, health checks (450+ líneas)
 ├── servicios/
 │   ├── cron-scheduler.js           # Limpieza automática
 │   ├── email.js                    # Gmail notifications
@@ -271,22 +273,50 @@ heroku run "node scripts/cleanup-obsolete-tables.js" --app coworkia-agent
 
 # Health check
 curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
+
+# Métricas del sistema (T7)
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/metrics | jq
+
+# Ver logs estructurados
+heroku logs --tail | grep '"level":"ERROR"'
 ```
 
 ---
 
 ## 📊 Endpoints API
 
-### Health & Monitoreo
+### 👁️ Observabilidad (v425)
 
 ```bash
-# Health básico
-GET /health
-→ { "ok": true, "status": "healthy" }
+# Métricas del sistema
+GET /metrics
+→ {
+  "requests": { "total": 1234, "success": 1200, "avgResponseTime": 245 },
+  "database": { "queriesTotal": 3456, "slowQueries": 12 },
+  "agents": { "AURORA": { "activations": 892 } },
+  "openai": { "tokensUsed": 456789 },
+  "system": { "uptime": 86400, "memoryUsage": 256 }
+}
 
-# Health detallado
-GET /health/system
-→ { database, scheduler, circuitBreakers }
+# Health checks
+GET /health
+→ {
+  "status": "healthy",
+  "checks": {
+    "database": { "status": "healthy", "responseTime": 4 },
+    "memory": { "status": "healthy", "percentUsed": "35%" }
+  }
+}
+```
+
+**Documentación completa:** [T7-OBSERVABILIDAD.md](documentacion/T7-OBSERVABILIDAD.md)
+
+### Health & Monitoreo Legacy
+
+```bash
+# Health básico (legacy)
+GET /
+→ { "ok": true, "service": "coworkia-agent", "version": "v425" }
 ```
 
 ### Webhook WhatsApp
@@ -372,6 +402,20 @@ Ver [scripts/README.md](scripts/README.md) para lista completa.
 
 ## 📈 Historial de Versiones
 
+### v425 (Enero 2026) - Observabilidad + DB Audit ✨
+- ✅ **T6**: Auditoría DB completa (8.5/10 health score)
+  - transaction() method implementado
+  - Pool event handlers (error/acquire/release)
+  - Error categorization (23505, 23503, 57014, 42P01)
+- ✅ **T7**: Sistema de observabilidad completo (450+ líneas)
+  - MetricsCollector: requests, DB, agents, OpenAI, system
+  - StructuredLogger: logs JSON con niveles
+  - HealthChecker: database + memory checks
+  - Endpoints: /metrics, /health
+  - requestTrackingMiddleware automático
+- ✅ **T8**: Suite testing E2E (66/66 tests ✓)
+- 📄 **Docs**: T6-AUDITORIA-DB.md + T7-OBSERVABILIDAD.md
+
 ### v315 (Enero 2026) - Limpieza DB ✨
 - ✅ Retención 30 días (antes 90)
 - ✅ Eliminadas tablas obsoletas (form_data, just_confirmed)
@@ -400,6 +444,8 @@ Ver [scripts/README.md](scripts/README.md) para lista completa.
 ## 📚 Documentación
 
 - **[documentacion/README.md](documentacion/README.md)** - Índice completo documentación
+- **[documentacion/T6-AUDITORIA-DB.md](documentacion/T6-AUDITORIA-DB.md)** - Auditoría PostgreSQL (v425)
+- **[documentacion/T7-OBSERVABILIDAD.md](documentacion/T7-OBSERVABILIDAD.md)** - Métricas + Logs (v425)
 - **[scripts/README.md](scripts/README.md)** - Índice scripts disponibles
 - **[documentacion/SISTEMA_HANDOVERS.md](documentacion/SISTEMA_HANDOVERS.md)** - Multi-agente
 - **[documentacion/SISTEMA_MULTIIDIOMA.md](documentacion/SISTEMA_MULTIIDIOMA.md)** - ES/EN

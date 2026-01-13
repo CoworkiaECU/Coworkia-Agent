@@ -262,6 +262,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
   // 🔄 PROCESAMIENTO EN BACKGROUND
   setImmediate(async () => {
+    // Handler para rechazos no capturados
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('[WASSENGER] ⚠️ Unhandled Promise Rejection:', reason);
+      console.error('[WASSENGER] ⚠️ Promise:', promise);
+    });
+
     try {
     console.log('[WASSENGER] 🔄 Iniciando procesamiento background...');
 

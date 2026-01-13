@@ -1157,6 +1157,8 @@ Responde en tu estilo característico con:
       }
     }
 
+    console.log('[WASSENGER] 🔍 Punto C - Después de bloque de imagen, antes de audio');
+
     // 🎤 PROCESAMIENTO DE MENSAJES DE VOZ
     if (messageType === 'audio' || messageType === 'voice' || messageType === 'ptt') {
       if (process.env.DEBUG_MODE === 'true') {

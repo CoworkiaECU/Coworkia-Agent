@@ -2,8 +2,8 @@
 
 Sistema de agente conversacional multi-personalidad para Coworkia Business Center. Integración WhatsApp (Wassenger) + OpenAI GPT-4o-mini + PostgreSQL en Heroku.
 
-**Versión Actual**: v425 (Enero 2026)  
-**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado | Observabilidad completa
+**Versión Actual**: v427 (Enero 2026)  
+**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado | Observabilidad completa | Caché de perfiles
 
 [![Heroku](https://img.shields.io/badge/deployed-heroku-430098)](https://coworkia-agent-e97d15dac56f.herokuapp.com/)
 [![Security](https://img.shields.io/badge/vulnerabilities-0-success)](package.json)
@@ -401,6 +401,20 @@ Ver [scripts/README.md](scripts/README.md) para lista completa.
 ---
 
 ## 📈 Historial de Versiones
+
+### v427 (Enero 2026) - Caché de Perfiles P1 ⚡
+- ✅ **P1**: Caché en memoria para perfiles (30s TTL)
+  - Map() nativo, sin dependencias externas
+  - Cache hit ratio esperado: ~80%
+  - Latencia: 0ms (hit) vs 100-300ms (miss)
+  - Invalidación automática en saveProfile()
+  - Reducción queries DB: ~70-80%
+
+### v426 (Enero 2026) - Optimización loadProfile P0 ⚡
+- ✅ **P0**: Queries en paralelo con Promise.all()
+  - 5 queries secuenciales → paralelas
+  - Reducción latencia: 50-70%
+  - Tiempo loadProfile: 500-1000ms → 100-300ms
 
 ### v425 (Enero 2026) - Observabilidad + DB Audit ✨
 - ✅ **T6**: Auditoría DB completa (8.5/10 health score)

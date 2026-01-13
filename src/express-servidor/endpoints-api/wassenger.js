@@ -1,8 +1,10 @@
 // src/express-servidor/endpoints-api/wassenger.js
 import { Router } from 'express';
+
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
-import { complete } from '../../servicios-ia/openai.js';
-import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
+import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
+
+import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse, shouldSendPaymentLink } from '../../servicios/campaign-prompts.js';

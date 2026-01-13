@@ -372,6 +372,34 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
+
+    // 📸 AXEL PHOTO COLLECTOR: Manejar texto durante sesión activa
+    if (profile.activeAgent === 'AXEL' && !mediaUrl && processedText) {
+      const session = getSession(userId);
+      
+      if (session && session.photoCount > 0) {
+        // Detectar comandos de finalización
+        const finalizationCommands = ['listo', 'ya', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
+        const normalizedText = processedText.toLowerCase().trim();
+        const isFinalizationCommand = finalizationCommands.some(cmd => normalizedText === cmd || normalizedText.includes(cmd));
+        
+        if (isFinalizationCommand) {
+          console.log(`[WASSENGER] ✅ Comando de finalización detectado: "${processedText}"`);
+          const result = completeSession(userId);
+          
+          if (result) {
+            await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
+            // TODO: Aquí llamar a generateQuote con result.photos
+            return;
+          }
+        } else {
+          // Es una pregunta/texto normal - dejar que Axel responda pero mantener sesión activa
+          console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa`);
+          // El flujo continúa normalmente hacia procesarMensaje, sesión se mantiene
+        }
+      }
+    }
+
     // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
     if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
       const photoStatus = addPhoto(userId, mediaUrl, type);
@@ -380,9 +408,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // Mensajes según estado
       if (photoStatus.currentCount === 1) {
-        await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nCuando termines de enviar las fotos, espera 30 segundos o escribe "listo" y proceso tu cotización.`);
+        await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 30 segundos o escribe "listo".`);
       } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
-        await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos o escribe "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
+        await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
       }
       
       // Iniciar timeout automático

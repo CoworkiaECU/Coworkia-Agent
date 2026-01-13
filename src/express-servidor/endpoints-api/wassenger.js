@@ -290,9 +290,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     console.log('[WASSENGER] 📍 userId:', userId || 'NULL', 'text:', text?.substring(0, 50) || 'NULL', 'messageType:', messageType);
 
+    try {
+      console.log('[WASSENGER] 🔍 Punto A - después de log userId');
+    } catch (e) {
+      console.error('[WASSENGER] ❌ Crash en log Punto A:', e);
+    }
+
     if (!userId) {
       console.log('[WASSENGER] ⚠️ Sin userId - ignorando mensaje');
       return; // Early exit - ya respondimos al webhook
+    }
+
+    try {
+      console.log('[WASSENGER] 🔍 Punto B - userId OK, verificando tipo...');
+    } catch (e) {
+      console.error('[WASSENGER] ❌ Crash en Punto B:', e);
     }
 
     console.log('[WASSENGER] 🔍 Verificando tipo de mensaje...');

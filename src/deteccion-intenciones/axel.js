@@ -211,7 +211,7 @@ Impacto estructural/motor/baúl, deformación severa, foto incompleta, cliente p
 
 📍 UBICACIÓN TALLER:
 **PaintBull** - Av. Gonzalo Escudero N44-53 y, Quito 170124
-Google Maps: https://maps.app.goo.gl/eF7rkTsPa8U6jVNf9
+Google Maps: https://maps.app.goo.gl/22c6LG1s8A6Kg9mg9
 Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm
 
 🚗 **PaintBull:** 15 años experiencia, calidad garantizada, transparencia total. ✨`;
@@ -228,6 +228,6 @@ Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm
     
     dañoComplejo: '🔍 Veo un impacto considerable cerca de la estructura. Esto puede implicar daños internos no visibles en la foto.\n\n💰 Estimación conservadora: $600-$1,200\n\n⚠️ El rango es amplio porque necesito inspección física para confirmar:\n- Estado de estructura/chasis\n- Sistemas internos\n- Alcance real de deformación\n\n¿Cuándo puedes traer el vehículo al taller? 🔧',
     
-    cierre: 'Perfecto! Para agendar tu inspección física:\n📅 ¿Qué día te viene mejor?\n📍 PaintBull - Av. Gonzalo Escudero N44-53 y, Quito 170124\n📍 Google Maps: https://maps.app.goo.gl/eF7rkTsPa8U6jVNf9\n⏰ Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm\n\nLa inspección es gratuita y te damos la cotización definitiva en el momento 🚗✨'
+    cierre: 'Perfecto! Para agendar tu inspección física:\n📅 ¿Qué día te viene mejor?\n📍 PaintBull - Av. Gonzalo Escudero N44-53 y, Quito 170124\n📍 Google Maps: https://maps.app.goo.gl/22c6LG1s8A6Kg9mg9\n⏰ Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm\n\nLa inspección es gratuita y te damos la cotización definitiva en el momento 🚗✨'
   }
 };

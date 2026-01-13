@@ -84,26 +84,29 @@ export async function loadAllProfiles() {
 }
 
 /**
- * 👤 Carga un perfil de usuario
+ * 👤 Carga un perfil de usuario (OPTIMIZADO v425 - queries en paralelo)
  */
 export async function loadProfile(userId) {
   await ensureDbInitialized();
   
   try {
     console.log('[MEMORIA DEBUG] Llamando userRepository.findByPhone...');
-    const user = await userRepository.findByPhone(userId);
+    
+    // ⚡ OPTIMIZACIÓN: Ejecutar queries en paralelo en lugar de secuencialmente
+    const [user, reservationHistory, upcomingReservations, pendingConfirmation, justState] = await Promise.all([
+      userRepository.findByPhone(userId),
+      getReservationHistory(userId),
+      getUpcomingReservations(userId),
+      dbGetPendingConfirmation(userId),
+      getJustConfirmedState(userId)
+    ]);
+    
     console.log('[MEMORIA DEBUG] findByPhone completado, user:', user ? 'FOUND' : 'NULL');
     
     if (!user) {
       console.log('[MEMORIA DEBUG] Usuario no encontrado, retornando null');
       return null;
     }
-    
-    // Convertir formato SQLite a formato esperado por la aplicación
-    const reservationHistory = await getReservationHistory(userId);
-    const upcomingReservations = await getUpcomingReservations(userId);
-    const pendingConfirmation = await dbGetPendingConfirmation(userId);
-    const justState = await getJustConfirmedState(userId);
 
     return {
       userId: user.phone_number,

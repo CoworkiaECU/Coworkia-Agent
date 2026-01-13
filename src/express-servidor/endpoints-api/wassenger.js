@@ -437,14 +437,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           nuevoAgente?.mensajes?.entrada?.replace(/{nombre}/g, userName)
           || `¡Hola ${userName}! ¿En qué puedo ayudarte?`;
 
+        // 🔄 SECUENCIA HANDOFF: Orden correcto con delays para experiencia natural
+        // 1. Mensaje transición (Aurora despide)
         await enviarWhatsApp(userId, mensajeTransicion);
         await saveConversationMessage(userId, { role: 'assistant', content: mensajeTransicion, agent: fromAgent });
 
-        await new Promise(r => setTimeout(r, 1500));
+        // 2. Delay antes de llamado (usuario lee transición)
+        await new Promise(r => setTimeout(r, 2000));
+        
+        // 3. Mensaje llamado (Aurora presenta al nuevo agente)
         await enviarWhatsApp(userId, mensajeLlamado);
         await saveConversationMessage(userId, { role: 'assistant', content: mensajeLlamado, agent: fromAgent });
 
+        // 4. Delay antes de entrada (nuevo agente "escribe")
         await new Promise(r => setTimeout(r, 2500));
+        
+        // 5. Mensaje entrada (nuevo agente saluda)
         await enviarWhatsApp(userId, mensajeEntrada);
         await saveConversationMessage(userId, { role: 'assistant', content: mensajeEntrada, agent: targetAgent });
 

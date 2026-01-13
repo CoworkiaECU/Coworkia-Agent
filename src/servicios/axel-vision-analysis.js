@@ -4,7 +4,7 @@
  * Detecta severidad y tipo de daños
  */
 
-import { analyzeImageWithVision } from '../servicios-ia/openai.js';
+import { analyzeImage } from '../servicios-ia/openai.js';
 
 /**
  * 🔍 Analiza múltiples fotos de colisión
@@ -43,7 +43,7 @@ CRITERIOS DE SEVERIDAD:
 Analiza las fotos y responde SOLO con el JSON solicitado:`;
 
     // Analizar con Vision AI
-    const analysisResult = await analyzeImageWithVision(photoUrls, visionPrompt);
+    const analysisResult = await analyzeImage(photoUrls[0], visionPrompt);
 
     if (!analysisResult.success) {
       console.error('[AXEL-VISION] ❌ Error en Vision API:', analysisResult.error);

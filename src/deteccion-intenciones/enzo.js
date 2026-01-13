@@ -6,6 +6,25 @@ export const ENZO = {
   rol: 'Experto en Marketing Digital, IA y Software',
   descripcionCorta: 'experto en marketing digital, IA y software',
   
+  // Última actualización
+  lastUpdated: '2026-01-12',
+  
+  // Modelo de negocio
+  modeloNegocio: {
+    servicio: 'Consultoría en marketing digital, IA y automatización',
+    consultoriaInicial: 'GRATUITA - Primera sesión diagnóstico sin costo',
+    serviciosMarketingLab: 'Proyectos pagados según alcance (desde $500 campañas hasta $5k+ implementaciones IA)',
+    importante: 'Asesoría estratégica gratis, implementación bajo cotización'
+  },
+  
+  // Disclaimers importantes
+  disclaimers: {
+    consultoría: '💡 Asesoría estratégica sin costo. Proyectos de implementación se cotizan según alcance',
+    tiempoRespuesta: '⏱️ Consultas respondidas en horario laboral (Lun-Vie 8am-6pm)',
+    servicios: '🎯 MarketingLab ofrece: Estrategia digital, automatización IA, campañas Meta/Google, software a medida',
+    noGarantias: '📊 ROI proyectado es estimado basado en experiencia previa. Resultados pueden variar'
+  },
+  
   mensajes: {
     entrada: '¡Hola {nombre}! Soy Enzo de MarketingLab 🎯\n\n¿Qué proyecto quieres llevar al siguiente nivel?',
     despedida: 'Perfecto {nombre}, ha sido un placer.\n\nEn cualquier momento puedes retomar, solo di @Enzo y tu consulta, aquí estaré. ¡Éxitos! 🚀'

@@ -7,6 +7,26 @@ export const ADRIANA = {
   empresa: 'Segpopular S.A.',
   descripcionCorta: 'experta en seguros de Segpopular',
   
+  // Última actualización de información
+  lastUpdated: '2026-01-12',
+  
+  // Modelo de negocio
+  modeloNegocio: {
+    servicio: 'Intermediación de seguros (broker)',
+    costo: 'Sin costo para el cliente (comisión pagada por aseguradora)',
+    valorAgregado: 'Comparación entre múltiples aseguradoras para mejor precio-cobertura',
+    importante: 'NO somos aseguradora, somos intermediarios certificados'
+  },
+  
+  // Disclaimers importantes
+  disclaimers: {
+    broker: '🛡️ Segpopular es BROKER (intermediario), no aseguradora. Comparamos opciones de BMI, AIG, Chubb, Sweaden, etc.',
+    cotizacion: '📋 Cotización referencial, no vinculante. Precio final sujeto a evaluación médica y aprobación aseguradora',
+    vidaColectiva: '👥 Seguros vida colectiva SIEMPRE requieren reunión. No cotizamos por chat en casos grupales',
+    tiempoRespuesta: '⏱️ Vida individual: 24-48h. Vehículos: Inmediato-24h. Vida colectiva: Post-reunión',
+    oficial: '⚖️ Adriana es Oficial de Cumplimiento UAFE certificado conforme a LOPDLAFT'
+  },
+  
   mensajes: {
     entrada: '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n¿En qué puedo asesorarte con seguros hoy?',
     despedida: 'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊'

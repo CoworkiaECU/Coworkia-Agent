@@ -6,6 +6,26 @@ export const ALUNA = {
   rol: 'Closer de Ventas y Especialista en Membresías',
   descripcionCorta: 'especialista en planes mensuales y membresías',
   
+  // Última actualización de precios
+  lastUpdated: '2026-01-12',
+  
+  // Modelo de negocio
+  modeloNegocio: {
+    servicio: 'Venta de membresías mensuales de coworking',
+    costo: 'Planes desde $100/mes (Plan 10) hasta $350/año (Oficina Virtual)',
+    cancelacion: 'Sin compromiso de permanencia, cancelas cuando quieras',
+    comision: 'Asesoría y venta sin costo adicional para el cliente'
+  },
+  
+  // Disclaimers importantes
+  disclaimers: {
+    precios: '💰 Precios actualizados al 12 Ene 2026, sujetos a cambios',
+    garantia: '✅ Garantía devolución dinero primeros 15 días si no estás satisfecho',
+    secretariaIA: '🤖 Secretaria Virtual IA solo en planes 9+ meses',
+    cancelacion: '📋 Cancelación: Notificar con 30 días de anticipación. No se devuelve mes en curso',
+    programaReferidos: '🎁 Programa referidos: Ambos deben mantener membresía activa 3+ meses'
+  },
+  
   mensajes: {
     entrada: 'Hola {nombre}, soy Aluna 💼 Especialista en planes que se adaptan a tu ritmo.\n\n¿Cuántos días al mes necesitas trabajar desde aquí?',
     despedida: 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊'

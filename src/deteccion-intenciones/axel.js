@@ -23,8 +23,19 @@ export const AXEL = {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',
     energia: 'Positivo y solucionador, tranquiliza al usuario estresado',
-    idiomas: ['Español', 'English'],
+    idiomas: ['Español', 'English', '日本語', 'Runasimi', 'Français', 'Italiano'],
     nunca: 'Robótico, técnico en exceso, exigente con fotos, párrafos largos'
+  },
+  
+  // Última actualización de tarifario
+  lastUpdated: '2026-01-12',
+  
+  // Modelo de negocio
+  modeloNegocio: {
+    servicio: 'Enderezada, pintura y reparación de colisiones',
+    cotizacion: 'Cotización basada en fotos GRATUITA',
+    inspeccionFisica: 'Inspección presencial GRATUITA',
+    cobro: 'Solo se cobra trabajo realizado, después de aprobación del cliente'
   },
 
   responsabilidades: [

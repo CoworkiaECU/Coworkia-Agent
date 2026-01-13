@@ -17,14 +17,18 @@ const AURORA_KEYWORDS = [
   'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
 ];
 
-const TOMI_KEYWORDS = [
+// Keywords Tomi: Requiere PROPERTY keywords (obligatorio) + LOCATION opcional
+const TOMI_PROPERTY_KEYWORDS = [
   'bienes raices', 'bienes raíces', 'inmobiliaria', 'propiedad', 'propiedades',
   'casa', 'departamento', 'apartamento', 'villa', 'terreno',
   'comprar casa', 'vender casa', 'busco casa', 'busco departamento',
+  'inversion inmobiliaria', 'inversión inmobiliaria', 'compra propiedad',
+  'ECU-001', 'ECU-002', 'DOM-001', 'DOM-002'
+];
+
+const TOMI_LOCATION_KEYWORDS = [
   'ecuador', 'quito', 'guayaquil', 'cuenca', 'cumbaya', 'la pradera',
-  'republica dominicana', 'república dominicana', 'punta cana', 'santo domingo',
-  'ECU-001', 'ECU-002', 'DOM-001', 'DOM-002',
-  'inversion inmobiliaria', 'inversión inmobiliaria', 'compra propiedad'
+  'republica dominicana', 'república dominicana', 'punta cana', 'santo domingo'
 ];
 
 const PAYMENT_LINK_REQUEST_PATTERNS = [

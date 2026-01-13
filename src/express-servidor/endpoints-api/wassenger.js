@@ -310,6 +310,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log('[WASSENGER] 🔍 Verificando tipo de mensaje...');
     console.log('[WASSENGER] 🔍 messageType:', messageType);
     console.log('[WASSENGER] 🔍 ¿Es imagen/doc/pdf?', (messageType === 'image' || messageType === 'document' || messageType === 'pdf'));
+    console.log('[WASSENGER] 🔍 Punto D - Después de verificar tipo, antes de IF imagen');
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
     if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {

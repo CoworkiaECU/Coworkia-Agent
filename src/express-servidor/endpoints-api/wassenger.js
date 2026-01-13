@@ -315,12 +315,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     console.log('[WASSENGER] 🔍 Verificando tipo de mensaje...');
     console.log('[WASSENGER] 🔍 messageType:', messageType);
-    console.log('[WASSENGER] 🔍 ¿Es imagen/doc/pdf?', (messageType === 'image' || messageType === 'document' || messageType === 'pdf'));
+    console.log('[WASSENGER] 🔍 messageType === "image":', messageType === 'image');
+    console.log('[WASSENGER] 🔍 messageType === "document":', messageType === 'document');
+    console.log('[WASSENGER] 🔍 messageType === "pdf":', messageType === 'pdf');
+    console.log('[WASSENGER] 🔍 Evaluación completa:', (messageType === 'image' || messageType === 'document' || messageType === 'pdf'));
     console.log('[WASSENGER] 🔍 Punto D - Después de verificar tipo, antes de IF imagen');
+    console.log('[WASSENGER] 🔍 DEBUG - Evaluando condición IF imagen...');
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
     if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {
       console.log('[WASSENGER] ➡️ Entrando a flujo de IMAGEN/DOCUMENTO');
+      console.log('[WASSENGER] 🔍 DENTRO del IF de imagen');
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 📸 Procesando imagen/documento...');
         console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
@@ -1164,6 +1169,7 @@ Responde en tu estilo característico con:
       }
     }
 
+    console.log('[WASSENGER] 🔍 Punto E - Salió del IF de imagen (o nunca entró)');
     console.log('[WASSENGER] 🔍 Punto C - Después de bloque de imagen, antes de audio');
 
     // 🎤 PROCESAMIENTO DE MENSAJES DE VOZ

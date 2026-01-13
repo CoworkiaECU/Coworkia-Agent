@@ -486,34 +486,23 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
         const userName = profile.whatsappDisplayName || profile.name || 'amigo';
 
-        const mensajeTransicion =
-          nuevoAgente?.handover?.transicion?.replace(/{nombre}/g, userName)
-          || `Entendido ${userName}. Te conecto con ${nuevoAgente?.nombre || targetAgent}.`;
-
-        const mensajeLlamado =
-          nuevoAgente?.handover?.llamado?.replace(/{nombre}/g, userName)
-          || `${nuevoAgente?.nombre || targetAgent}, te dejo con ${userName}.`;
+        const mensajeDespedida =
+          agenteActual?.handover?.llamado?.replace(/{nombre}/g, userName)
+          || `${userName}, te dejo con ${nuevoAgente?.nombre || targetAgent}.`;
 
         const mensajeEntrada =
           nuevoAgente?.mensajes?.entrada?.replace(/{nombre}/g, userName)
-          || `¡Hola ${userName}! ¿En qué puedo ayudarte?`;
+          || `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || targetAgent}. ¿En qué puedo ayudarte?`;
 
-        // 🔄 SECUENCIA HANDOFF: Orden correcto con delays para experiencia natural
-        // 1. Mensaje transición (Aurora despide)
-        await enviarWhatsApp(userId, mensajeTransicion);
-        await saveConversationMessage(userId, { role: 'assistant', content: mensajeTransicion, agent: fromAgent });
+        // 🔄 SECUENCIA HANDOFF: 2 mensajes rápidos y sincronizados
+        // 1. Agente actual despide
+        await enviarWhatsApp(userId, mensajeDespedida);
+        await saveConversationMessage(userId, { role: 'assistant', content: mensajeDespedida, agent: fromAgent });
 
-        // 2. Delay antes de llamado (usuario lee transición)
-        await new Promise(r => setTimeout(r, 2000));
+        // 2. Micro delay (solo para experiencia natural)
+        await new Promise(r => setTimeout(r, 400));
         
-        // 3. Mensaje llamado (Aurora presenta al nuevo agente)
-        await enviarWhatsApp(userId, mensajeLlamado);
-        await saveConversationMessage(userId, { role: 'assistant', content: mensajeLlamado, agent: fromAgent });
-
-        // 4. Delay antes de entrada (nuevo agente "escribe")
-        await new Promise(r => setTimeout(r, 2500));
-        
-        // 5. Mensaje entrada (nuevo agente saluda)
+        // 3. Nuevo agente saluda
         await enviarWhatsApp(userId, mensajeEntrada);
         await saveConversationMessage(userId, { role: 'assistant', content: mensajeEntrada, agent: targetAgent });
 

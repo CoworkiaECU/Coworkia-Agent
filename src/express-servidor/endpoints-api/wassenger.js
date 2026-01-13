@@ -8,6 +8,11 @@ import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-r
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout } from '../../servicios/axel-photo-collector.js';
+import { processAxelFormMessage, generateFormSummary } from '../../servicios/axel-quote-form.js';
+import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
+import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
+import { generateQuote } from '../../servicios/axel-quote-generator.js';
+import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
 
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 
@@ -153,7 +158,99 @@ function detectBotLight(data, userId) {
   if (isGroupOrBroadcast(userId)) return { detected: true, reason: 'group_or_broadcast' };
   return { detected: false, reason: null };
 }
+/* ─────────────────────────────────────────────────────────────
+   💰 AXEL QUOTE PROCESSOR
+───────────────────────────────────────────────────────────── */
+async function processAxelQuote(userId, photoUrls, profile) {
+  try {
+    console.log(`[AXEL-QUOTE] 🎯 Procesando cotización para ${userId} con ${photoUrls.length} fotos`);
+    
+    // 1. Procesar formulario - verificar si tenemos todos los datos
+    const formResult = await processAxelFormMessage(userId, '');
+    
+    if (formResult.needsMoreInfo) {
+      // Faltan datos del formulario
+      console.log('[AXEL-QUOTE] ⏳ Formulario incompleto, solicitando datos...');
+      await enviarWhatsApp(userId, `Perfecto! Ya tengo las fotos 📸\n\nAhora necesito algunos datos para preparar tu cotización:\n\n${formResult.prompt}`);
+      return { success: true, needsMoreData: true };
+    }
+    
+    // 2. Analizar fotos con Vision AI
+    await enviarWhatsApp(userId, `Analizando daños con IA... 🤖`);
+    
+    const visionAnalysis = await analyzeCollisionPhotos(photoUrls);
+    
+    if (!visionAnalysis.success) {
+      await enviarWhatsApp(userId, `Disculpa, tuve un problema analizando las fotos. ¿Podrías enviarlas nuevamente?`);
+      return { success: false, error: visionAnalysis.error };
+    }
+    
+    // 3. Generar cotización con IA
+    await enviarWhatsApp(userId, `Preparando cotización personalizada... 📋`);
+    
+    const quoteResult = await generateQuote({
+      vehicleData: formResult.data,
+      damageAnalysis: visionAnalysis,
+      photoUrls
+    });
+    
+    if (!quoteResult.success) {
+      await enviarWhatsApp(userId, `Hubo un problema generando la cotización. Déjame contactarte en un momento.`);
+      return { success: false, error: quoteResult.error };
+    }
+    
+    // 4. Generar código único
+    const { code: quoteCode } = await generateQuoteCode();
+    
+    // 5. Enviar cotización por WhatsApp
+    const whatsappMessage = `
+🎯 *COTIZACIÓN PAINTBULL*
 
+${quoteResult.quote}
+
+📋 *Código:* ${quoteCode}
+
+---
+
+📧 *Te envío copia detallada por email...*
+
+_The PaintBull - Expertos en colisiones_ 🚗💥
+    `.trim();
+    
+    await enviarWhatsApp(userId, whatsappMessage);
+    
+    // 6. Enviar email con cotización formal
+    if (formResult.data.email) {
+      const emailResult = await sendQuoteEmail({
+        customerName: formResult.data.nombre || profile.whatsappDisplayName || 'Cliente',
+        customerEmail: formResult.data.email,
+        vehicleData: formResult.data,
+        damageAnalysis: visionAnalysis.analysis,
+        quote: quoteResult.quote,
+        priceRange: quoteResult.priceRange,
+        photoUrls: photoUrls,
+        quoteCode: quoteCode
+      });
+      
+      if (emailResult.success) {
+        await enviarWhatsApp(userId, `✅ Email enviado a ${formResult.data.email}\n\nRevisa tu bandeja de entrada (y spam por si acaso).`);
+      } else {
+        console.error('[AXEL-QUOTE] ❌ Error enviando email:', emailResult.error);
+      }
+    }
+    
+    // 7. Handoff a Aurora
+    await new Promise(r => setTimeout(r, 2000));
+    await enviarWhatsApp(userId, `¿Tienes alguna pregunta sobre la cotización?\n\nSi necesitas algo más, te dejo nuevamente con Aurora escribiendo @aurora`);
+    
+    return { success: true, quoteCode };
+    
+  } catch (error) {
+    console.error('[AXEL-QUOTE] ❌ Error procesando cotización:', error);
+    await enviarWhatsApp(userId, `Hubo un problema técnico. Déjame contactarte manualmente para ayudarte.`);
+    return { success: false, error: error.message };
+  }
+}
 function isOldMessage(data) {
   const ts = Number(data.timestamp || 0);
   if (!ts) return false;
@@ -389,7 +486,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           if (result) {
             await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
-            // TODO: Aquí llamar a generateQuote con result.photos
+            await processAxelQuote(userId, result.photos, profile);
             return;
           }
         } else {
@@ -418,7 +515,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         const result = completeSession(userId);
         if (result) {
           await enviarWhatsApp(userId, `⏰ Tiempo completado. Procesando ${result.photoCount} foto(s) para tu cotización...`);
-          // TODO: Aquí llamar a generateQuote con result.photos
+          await processAxelQuote(userId, result.photos, profile);
         }
       });
       
@@ -427,7 +524,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         const result = completeSession(userId);
         if (result) {
           await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Analizando daños...`);
-          // TODO: Aquí llamar a generateQuote con result.photos
+          await processAxelQuote(userId, result.photos, profile);
         }
       }
       

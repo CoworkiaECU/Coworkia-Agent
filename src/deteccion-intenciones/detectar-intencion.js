@@ -313,14 +313,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   // 3) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
   // El orquestador decidirá si cambiar según activeAgent
   
-  if (TOMI_KEYWORDS.some(k => text.includes(k))) {
-    return { 
-      agent: 'TOMI', 
-      reason: 'keywords bienes raíces/propiedades',
-      flags: { suggestedAgent: 'TOMI', isKeywordMatch: true }
-    };
-  }
-
+  // NOTA: Tomi NO se activa por keywords, solo por @tomi (handoff explícito)
+  // Aurora/orquestador responden preguntas sobre propiedades y sugieren usar @tomi
+  
+  // Keywords Aluna (membresías)
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
     return { 
       agent: 'ALUNA', 

@@ -263,6 +263,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
   // 🔄 PROCESAMIENTO EN BACKGROUND
   setImmediate(async () => {
     try {
+    console.log('[WASSENGER] 🔄 Iniciando procesamiento background...');
 
     // Extraer datos (compatibilidad con diferentes formatos de Wassenger)
     const userId = (data.fromNumber || data.from || '').trim();
@@ -286,6 +287,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[WASSENGER] 📸 URL de imagen construida desde API de Wassenger');
       }
     }
+
+    console.log('[WASSENGER] 📍 userId:', userId || 'NULL', 'text:', text?.substring(0, 50) || 'NULL', 'messageType:', messageType);
 
     if (!userId) {
       console.log('[WASSENGER] ⚠️ Sin userId - ignorando mensaje');

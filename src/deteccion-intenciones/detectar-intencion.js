@@ -276,7 +276,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   }
 
   if (/@aurora/i.test(text)) {
-    return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { returningToAurora: true } };
+    return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', returningToAurora: true } };
   }
 
   // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)

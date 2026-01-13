@@ -17,11 +17,15 @@ const WASSENGER_IPS = [
  * Previene requests no autorizados al webhook
  */
 export function validateWebhookSignature(req, res, next) {
+  const startTime = Date.now();
+  
   // 🚨 BYPASS DE SEGURIDAD (solo para desarrollo/testing)
   if (process.env.WEBHOOK_SECURITY_BYPASS === 'true') {
     if (DEBUG_MODE) {
       console.log('[WEBHOOK-SECURITY] ⚠️ BYPASS ACTIVADO - Seguridad deshabilitada');
     }
+    const elapsedMs = Date.now() - startTime;
+    if (DEBUG_MODE) console.log(`[TIMING] validateWebhookSignature: ${elapsedMs}ms`);
     return next();
   }
 
@@ -71,6 +75,8 @@ export function validateWebhookSignature(req, res, next) {
 
       if (DEBUG_MODE) {
         console.log('[WEBHOOK-SECURITY] ✅ Firma HMAC válida');
+        const elapsedMs = Date.now() - startTime;
+        console.log(`[TIMING] validateWebhookSignature: ${elapsedMs}ms`);
       }
       return next();
     } catch (error) {
@@ -133,10 +139,16 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
 const MAX_REQUESTS_PER_WINDOW = 10;
 
 export function rateLimitByPhone(req, res, next) {
+  const startTime = Date.now();
+  
   // Wassenger envía fromNumber, no from
   const phoneNumber = req.body?.data?.fromNumber || req.body?.data?.from || req.body?.fromNumber || req.body?.from;
   
   if (!phoneNumber) {
+    if (DEBUG_MODE) {
+      const elapsedMs = Date.now() - startTime;
+      console.log(`[TIMING] rateLimitByPhone: ${elapsedMs}ms (no phone)`);
+    }
     return next(); // Si no hay teléfono, dejar pasar
   }
 
@@ -161,6 +173,11 @@ export function rateLimitByPhone(req, res, next) {
   // Limpiar store periódicamente
   if (Math.random() < 0.01) {
     cleanupRateLimitStore();
+  }
+  
+  if (DEBUG_MODE) {
+    const elapsedMs = Date.now() - startTime;
+    console.log(`[TIMING] rateLimitByPhone: ${elapsedMs}ms`);
   }
   
   next();

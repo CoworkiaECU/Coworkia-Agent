@@ -30,6 +30,7 @@ import { circuitBreakerManager } from '../utils/circuit-breaker.js';
 
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
+import healthcheckRouter from './endpoints-api/healthcheck.js';
 import aiRouter from './endpoints-api/ai.js';
 import chatRouter from './endpoints-api/chat.js';
 import agentRouter from './endpoints-api/agent.js';
@@ -161,6 +162,7 @@ app.get('/webhooks/wassenger', (_req, res) => res.status(200).send('ok'));
 
 // Rutas del proyecto
 app.use('/', healthRouter);
+app.use('/', healthcheckRouter);  // Nuevo healthcheck para dyno sleep
 app.use('/', aiRouter);
 app.use('/', chatRouter);
 app.use('/', agentRouter);

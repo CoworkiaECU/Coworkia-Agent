@@ -21,6 +21,7 @@
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
   },
   "dependencies": {
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "cron": "^4.3.4",
     "dotenv": "^16.4.5",

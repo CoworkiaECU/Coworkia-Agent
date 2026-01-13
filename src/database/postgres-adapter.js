@@ -42,6 +42,23 @@ class PostgresAdapter {
       client.query('SET statement_timeout = 15000'); // 15 segundos
     });
 
+    // Event handlers para monitoring
+    this.pool.on('error', (err, client) => {
+      console.error('[POSTGRES POOL ERROR]', err.message);
+    });
+
+    this.pool.on('acquire', (client) => {
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[POSTGRES] ⚡ Conexión adquirida del pool');
+      }
+    });
+
+    this.pool.on('release', (client) => {
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[POSTGRES] 🔓 Conexión liberada al pool');
+      }
+    });
+
     console.log('[POSTGRES] ✅ Pool de conexiones creado');
 
     // Crear tablas
@@ -306,7 +323,25 @@ class PostgresAdapter {
       console.log('[POSTGRES] ✅ Conexiones cerradas');
     }
   }
-
+  /**
+   * 🔁 Ejecutar operaciones dentro de una transacción
+   */
+  async transaction(work) {
+    const client = await this.pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      const result = await work(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('[POSTGRES TRANSACTION] Rollback ejecutado:', error.message);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
   /**
    * 🔄 Convertir placeholders ? a $1, $2, $3...
    */
@@ -332,9 +367,19 @@ class PostgresAdapter {
         lastID: result.rows[0]?.id || null
       };
     } catch (error) {
-      console.error('[POSTGRES ERROR] run() failed:', error.message);
+      // Categorizar errores comunes de PostgreSQL
+      if (error.code === '23505') {
+        throw new Error(`Duplicate key violation: ${error.detail || error.message}`);
+      } else if (error.code === '23503') {
+        throw new Error(`Foreign key violation: ${error.detail || error.message}`);
+      } else if (error.code === '57014') {
+        throw new Error('Query timeout exceeded 15s');
+      } else if (error.code === '42P01') {
+        throw new Error(`Table does not exist: ${error.message}`);
+      }
+      
+      console.error('[POSTGRES ERROR] run() failed:', error.code, error.message);
       console.error('[POSTGRES ERROR] SQL:', sql);
-      console.error('[POSTGRES ERROR] Converted SQL:', this.convertPlaceholders(sql));
       console.error('[POSTGRES ERROR] Params:', params);
       throw error;
     }

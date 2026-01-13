@@ -28,6 +28,15 @@ import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
 import { circuitBreakerManager } from '../utils/circuit-breaker.js';
 
+// 👁️ Sistema de observabilidad (T7)
+import {
+  metricsCollector,
+  logger,
+  healthChecker,
+  initializeObservability,
+  requestTrackingMiddleware
+} from '../utils/observability.js';
+
 // Endpoints API
 import healthRouter from './endpoints-api/health.js';
 import healthcheckRouter from './endpoints-api/healthcheck.js';
@@ -49,6 +58,9 @@ app.use(helmet({
 }));
 app.use(cors());
 
+// 👁️ Observabilidad (tracking de requests)
+app.use(requestTrackingMiddleware);
+
 // Body parsing
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -64,18 +76,8 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Healthchecks rápidos
-app.get('/', (_req, res) => res.json({ ok: true, service: 'coworkia-agent', env: process.env.ENV || 'local' }));
-app.get('/health', (_req, res) => res.json({ ok: true, ai: 'ready' }));
-app.get('/health/db', async (_req, res) => {
-  try {
-    await databaseService.get('SELECT 1 as ok');
-    res.json({ ok: true, db: 'ready' });
-  } catch (error) {
-    console.error('[HEALTH][DB] Error:', error);
-    res.status(500).json({ ok: false, error: 'DB_UNAVAILABLE', message: error.message });
-  }
-});
+// Healthcheck raíz
+app.get('/', (_req, res) => res.json({ ok: true, service: 'coworkia-agent', env: process.env.ENV || 'local', version: 'v425' }));
 
 // 📊 Sistema completo de salud
 app.get('/health/system', async (_req, res) => {
@@ -157,12 +159,24 @@ app.get('/health/system', async (_req, res) => {
   }
 });
 
+// 📊 Endpoints de Observabilidad (T7) - PRIORIDAD MÁXIMA
+app.get('/metrics', (req, res) => {
+  const metrics = metricsCollector.getMetrics();
+  res.json(metrics);
+});
+
+app.get('/health', async (req, res) => {
+  const health = await healthChecker.runAllChecks();
+  const statusCode = health.status === 'healthy' ? 200 : 503;
+  res.status(statusCode).json(health);
+});
+
 // Health para Wassenger (evita 404 en pruebas GET)
 app.get('/webhooks/wassenger', (_req, res) => res.status(200).send('ok'));
 
 // Rutas del proyecto
 app.use('/', healthRouter);
-app.use('/', healthcheckRouter);  // Nuevo healthcheck para dyno sleep
+app.use('/', healthcheckRouter);  // Healthcheck legacy para dyno sleep
 app.use('/', aiRouter);
 app.use('/', chatRouter);
 app.use('/', agentRouter);
@@ -177,9 +191,14 @@ app.use((req, res) => {
 // 🚀 Inicializar base de datos antes de arrancar servidor
 async function startServer() {
   try {
-    console.log('🗄️ Inicializando base de datos SQLite...');
+    console.log('🗄️ Inicializando base de datos PostgreSQL...');
     await databaseService.initialize();
     console.log('✅ Base de datos PostgreSQL inicializada correctamente');
+    
+    // Inicializar observabilidad
+    console.log('👁️ Inicializando sistema de observabilidad...');
+    initializeObservability(databaseService);
+    logger.info('Observability system ready', { version: 'v425' });
     
     // Iniciar tareas programadas
     console.log('⏰ Iniciando tareas programadas...');
@@ -190,6 +209,7 @@ async function startServer() {
       console.log(`> Coworkia Agent listo en http://localhost:${PORT}`);
       console.log(`> PostgreSQL Database: HEROKU (única base de datos)`);
       console.log(`> Cron Jobs: ACTIVOS`);
+      console.log(`> Observabilidad: /metrics, /health`);
     });
     
   } catch (error) {

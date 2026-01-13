@@ -290,10 +290,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const minutos = lastMessageAt ? (Date.now() - lastMessageAt) / (1000 * 60) : 999;
     const conversacionEnCurso = minutos < 10;
 
+    // 🔥 SINCRONIZACIÓN NOMBRE: Siempre usar whatsapp_display_name como fuente de verdad
+    const displayName = name || current.whatsappDisplayName || null;
+    const syncedName = displayName || current.name || null;
+
     const profile = {
       ...current,
       userId,
-      whatsappDisplayName: name || current.whatsappDisplayName || null,
+      name: syncedName, // 🎯 Sincronizar name con display name de WhatsApp
+      whatsappDisplayName: displayName,
       channel: 'whatsapp',
       lastMessageAt: ahoraISO,
       conversationCount: (current.conversationCount || 0) + 1,

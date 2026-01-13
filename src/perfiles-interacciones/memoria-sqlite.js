@@ -210,11 +210,15 @@ export async function saveProfile(userId, partialProfile = {}) {
   invalidateCachedProfile(userId);
   
   try {
+    // 🔥 SINCRONIZACIÓN NOMBRE: whatsapp_display_name es la fuente de verdad
+    const displayName = partialProfile.whatsappDisplayName || partialProfile.name;
+    const syncedName = displayName || null;
+
     // Convertir formato de aplicación a formato SQLite
     const sqliteData = {
-      name: partialProfile.name,
+      name: syncedName, // 🎯 Siempre sincronizado con display name
       email: partialProfile.email,
-      whatsapp_display_name: partialProfile.whatsappDisplayName,
+      whatsapp_display_name: displayName, // Guardar también el display name
       first_visit: partialProfile.firstVisit,
       free_trial_used: partialProfile.freeTrialUsed,
       free_trial_date: partialProfile.freeTrialDate,

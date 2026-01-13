@@ -7,6 +7,7 @@ import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
+import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout } from '../../servicios/axel-photo-collector.js';
 
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 
@@ -371,7 +372,39 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
-
+    // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
+    if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
+      const photoStatus = addPhoto(userId, mediaUrl, type);
+      
+      console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada para cotización`);
+      
+      // Mensajes según estado
+      if (photoStatus.currentCount === 1) {
+        await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nCuando termines de enviar las fotos, espera 30 segundos o escribe "listo" y proceso tu cotización.`);
+      } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
+        await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos o escribe "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
+      }
+      
+      // Iniciar timeout automático
+      startTimeout(userId, async (session) => {
+        const result = completeSession(userId);
+        if (result) {
+          await enviarWhatsApp(userId, `⏰ Tiempo completado. Procesando ${result.photoCount} foto(s) para tu cotización...`);
+          // TODO: Aquí llamar a generateQuote con result.photos
+        }
+      });
+      
+      // Si alcanzó el máximo, procesar inmediatamente
+      if (photoStatus.currentCount >= photoStatus.maxPhotos) {
+        const result = completeSession(userId);
+        if (result) {
+          await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Analizando daños...`);
+          // TODO: Aquí llamar a generateQuote con result.photos
+        }
+      }
+      
+      return; // No continuar con flujo normal
+    }
     // “Media event” para Aurora Core: si no hay texto pero hay media, damos un texto técnico controlado
     let auroraInput = processedText;
     if (!auroraInput && mediaUrl) {

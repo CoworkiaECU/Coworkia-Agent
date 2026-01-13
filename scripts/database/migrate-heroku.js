@@ -10,7 +10,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import database from '../src/database/database.js';
+import database from '../../src/database/database.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';

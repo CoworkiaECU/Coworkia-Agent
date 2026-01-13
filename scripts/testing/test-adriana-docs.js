@@ -8,7 +8,7 @@
  * Autor: Agente Copilot
  */
 
-import insuranceDocumentAnalysis from '../src/servicios/insurance-document-analysis.js';
+import insuranceDocumentAnalysis from '../../src/servicios/insurance-document-analysis.js';
 
 const { 
   analyzeInsuranceDocument, 

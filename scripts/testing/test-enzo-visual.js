@@ -6,7 +6,7 @@
  * Valida el funcionamiento del sistema de análisis visual
  */
 
-import { analyzeMarketingVisual, ANALYSIS_TYPES, extractActionableInsights, calculateVisualQualityScore } from '../src/servicios/marketing-visual-analysis.js';
+import { analyzeMarketingVisual, ANALYSIS_TYPES, extractActionableInsights, calculateVisualQualityScore } from '../../src/servicios/marketing-visual-analysis.js';
 
 const TEST_IMAGE_URL = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800'; // Logo genérico
 

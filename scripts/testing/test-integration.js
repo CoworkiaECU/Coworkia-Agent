@@ -14,15 +14,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import postgresAdapter from '../src/database/postgres-adapter.js';
-import { conversationAdapter } from '../src/database/conversationAdapter.js';
+import postgresAdapter from '../../src/database/postgres-adapter.js';
+import { conversationAdapter } from '../../src/database/conversationAdapter.js';
 import { 
   detectTopicFromMessage, 
   getAgentForTopic, 
   shouldHandover,
   TOPICS 
-} from '../src/servicios/aurora-coordinator.js';
-import { testCalendarIntegration } from '../src/servicios/calendar-integrator.js';
+} from '../../src/servicios/aurora-coordinator.js';
+import { testCalendarIntegration } from '../../src/servicios/calendar-integrator.js';
 
 const TEST_USER_ID = '+593999TEST123';
 const TEST_USER_NAME = 'Test Usuario';

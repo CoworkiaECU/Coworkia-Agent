@@ -10,7 +10,7 @@
  */
 
 import 'dotenv/config';
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 
 async function cleanupAllCache({ dryRun = false, userPhone = null } = {}) {
   try {

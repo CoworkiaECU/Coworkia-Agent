@@ -1,4 +1,4 @@
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 
 (async () => {
   await databaseService.initialize();

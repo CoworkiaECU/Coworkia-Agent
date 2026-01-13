@@ -3,7 +3,7 @@
  * 🧹 Script para limpiar datos de un usuario específico
  */
 
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 
 const userPhone = process.argv[2] || '+593987770788';
 

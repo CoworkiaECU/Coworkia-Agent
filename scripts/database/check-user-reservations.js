@@ -2,9 +2,9 @@
  * Script para ver reservas de un usuario específico
  */
 
-import databaseService from '../src/database/database.js';
-import reservationRepository from '../src/database/reservationRepository.js';
-import userRepository from '../src/database/userRepository.js';
+import databaseService from '../../src/database/database.js';
+import reservationRepository from '../../src/database/reservationRepository.js';
+import userRepository from '../../src/database/userRepository.js';
 
 const USER_PHONE = '+593987770788'; // Diego Villota
 

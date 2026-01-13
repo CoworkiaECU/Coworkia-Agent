@@ -9,7 +9,7 @@
  * Autor: Agente Copilot
  */
 
-import contractDocumentAnalysis from '../src/servicios/contract-document-analysis.js';
+import contractDocumentAnalysis from '../../src/servicios/contract-document-analysis.js';
 
 const { 
   analyzeContractDocument, 

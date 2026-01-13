@@ -4,8 +4,8 @@
  * Uso: node scripts/clear-pending-confirmation.js +593987770788
  */
 
-import databaseService from '../src/database/database.js';
-import { clearPendingConfirmation } from '../src/servicios/reservation-state.js';
+import databaseService from '../../src/database/database.js';
+import { clearPendingConfirmation } from '../../src/servicios/reservation-state.js';
 
 const userId = process.argv[2];
 

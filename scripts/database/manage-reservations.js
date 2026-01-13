@@ -4,9 +4,9 @@
  * Uso: node scripts/manage-reservations.js [comando] [opciones]
  */
 
-import databaseService from '../src/database/database.js';
-import reservationRepository from '../src/database/reservationRepository.js';
-import userRepository from '../src/database/userRepository.js';
+import databaseService from '../../src/database/database.js';
+import reservationRepository from '../../src/database/reservationRepository.js';
+import userRepository from '../../src/database/userRepository.js';
 
 const COMMANDS = {
   list: 'Listar reservas',

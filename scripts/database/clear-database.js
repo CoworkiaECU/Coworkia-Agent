@@ -6,7 +6,7 @@
  * ⚠️ LIMPIA LA BASE DE DATOS EN HEROKU - USAR CON PRECAUCIÓN
  */
 
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

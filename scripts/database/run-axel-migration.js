@@ -4,7 +4,7 @@
  * Ejecuta la migración de base de datos para el sistema de cotizaciones
  */
 
-import databaseService, { getClient } from '../src/database/database.js';
+import databaseService, { getClient } from '../../src/database/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

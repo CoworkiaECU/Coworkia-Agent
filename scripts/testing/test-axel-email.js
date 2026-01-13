@@ -4,7 +4,7 @@
  * Envía emails de prueba a yo@diegovillota.com y villotaj71@gmail.com
  */
 
-import { sendQuoteEmail } from '../src/servicios/axel-quote-email.js';
+import { sendQuoteEmail } from '../../src/servicios/axel-quote-email.js';
 
 async function testAxelEmail() {
   console.log('🧪 ════════════════════════════════════════════════');

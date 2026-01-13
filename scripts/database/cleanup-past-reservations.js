@@ -7,7 +7,7 @@
  */
 
 import 'dotenv/config';
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 
 async function cleanupPastReservations(dryRun = false) {
   try {

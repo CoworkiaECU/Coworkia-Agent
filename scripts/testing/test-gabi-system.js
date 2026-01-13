@@ -12,7 +12,7 @@
  * Autor: Agente Copilot
  */
 
-import gabiSystem from '../src/servicios/gabi-financial-system.js';
+import gabiSystem from '../../src/servicios/gabi-financial-system.js';
 
 const {
   getGabiInteractionCount,

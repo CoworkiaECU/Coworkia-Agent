@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { fileURLToPath } from 'url';
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 
 const COLORS = {
   reset: '\x1b[0m',

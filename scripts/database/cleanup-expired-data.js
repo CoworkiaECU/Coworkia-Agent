@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { fileURLToPath } from 'url';
-import databaseService from '../src/database/database.js';
+import databaseService from '../../src/database/database.js';
 import {
   cleanupExpiredConfirmations as cleanupExpiredConfirmationsCore,
   cleanupJustConfirmedFlags as cleanupJustConfirmedFlagsCore
-} from '../src/servicios/reservation-state.js';
+} from '../../src/servicios/reservation-state.js';
 
 const DEFAULT_INTERACTION_RETENTION_DAYS = parseInt(process.env.INTERACTIONS_RETENTION_DAYS || '30', 10);
 

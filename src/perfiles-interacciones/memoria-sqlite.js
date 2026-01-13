@@ -27,7 +27,49 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 /**
- * 🚀 Inicializar base de datos al importar el módulo
+ * � CACHÉ EN MEMORIA PARA PERFILES (P1 - v427)
+ * TTL: 30 segundos para reducir queries repetitivas
+ */
+const profileCache = new Map();
+const CACHE_TTL = 30000; // 30 segundos
+
+function getCachedProfile(userId) {
+  const cached = profileCache.get(userId);
+  if (!cached) return null;
+  
+  const now = Date.now();
+  if (now - cached.timestamp > CACHE_TTL) {
+    profileCache.delete(userId);
+    return null;
+  }
+  
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log(`[CACHE] ⚡ HIT para ${userId} (edad: ${now - cached.timestamp}ms)`);
+  }
+  
+  return cached.profile;
+}
+
+function setCachedProfile(userId, profile) {
+  profileCache.set(userId, {
+    profile,
+    timestamp: Date.now()
+  });
+  
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log(`[CACHE] 💾 SET para ${userId}`);
+  }
+}
+
+function invalidateCachedProfile(userId) {
+  profileCache.delete(userId);
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log(`[CACHE] 🗑️ INVALIDATE para ${userId}`);
+  }
+}
+
+/**
+ * �🚀 Inicializar base de datos al importar el módulo
  */
 let dbInitialized = false;
 
@@ -84,15 +126,21 @@ export async function loadAllProfiles() {
 }
 
 /**
- * 👤 Carga un perfil de usuario (OPTIMIZADO v425 - queries en paralelo)
+ * 👤 Carga un perfil de usuario (OPTIMIZADO v427 - caché + queries paralelas)
  */
 export async function loadProfile(userId) {
   await ensureDbInitialized();
   
+  // ⚡ P1: Verificar caché primero
+  const cached = getCachedProfile(userId);
+  if (cached) {
+    return cached;
+  }
+  
   try {
     console.log('[MEMORIA DEBUG] Llamando userRepository.findByPhone...');
     
-    // ⚡ OPTIMIZACIÓN: Ejecutar queries en paralelo en lugar de secuencialmente
+    // ⚡ OPTIMIZACIÓN v426: Ejecutar queries en paralelo
     const [user, reservationHistory, upcomingReservations, pendingConfirmation, justState] = await Promise.all([
       userRepository.findByPhone(userId),
       getReservationHistory(userId),
@@ -108,7 +156,7 @@ export async function loadProfile(userId) {
       return null;
     }
 
-    return {
+    const profile = {
       userId: user.phone_number,
       name: user.name,
       email: user.email,
@@ -129,6 +177,11 @@ export async function loadProfile(userId) {
       justConfirmed: justState.isActive,
       justConfirmedUntil: justState.until
     };
+    
+    // ⚡ P1: Guardar en caché
+    setCachedProfile(userId, profile);
+    
+    return profile;
   } catch (error) {
     console.error('[MEMORIA] Error cargando perfil desde SQLite:', error);
     
@@ -148,10 +201,13 @@ export async function loadProfile(userId) {
 }
 
 /**
- * 💾 Guarda un perfil de usuario
+ * 💾 Guarda un perfil de usuario (OPTIMIZADO v427 - invalidación de caché)
  */
 export async function saveProfile(userId, partialProfile = {}) {
   await ensureDbInitialized();
+  
+  // ⚡ P1: Invalidar caché al guardar
+  invalidateCachedProfile(userId);
   
   try {
     // Convertir formato de aplicación a formato SQLite

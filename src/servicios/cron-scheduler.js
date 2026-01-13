@@ -4,7 +4,7 @@ import {
   cleanupExpiredConfirmations, 
   cleanupJustConfirmedFlags,
   cleanupOldInteractions 
-} from '../../scripts/cleanup-expired-data.js';
+} from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps } from './follow-up-service.js';
 
 const jobs = [];

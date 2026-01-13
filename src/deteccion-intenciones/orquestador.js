@@ -126,12 +126,29 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
   }
 
-  const ultimos = historial.slice(-6);
-  if (ultimos.length) {
-    lineas.push('\nHISTORIAL RECIENTE:');
-    ultimos.forEach(m => {
-      lineas.push(`${m.role === 'user' ? 'Usuario' : m.agent}: ${m.content}`);
+  // 💬 MEMORIA CONVERSACIONAL: Últimos 3 intercambios (6 mensajes totales: 3 usuario + 3 asistente)
+  // Optimizado para tokens y relevancia - solo lo más reciente e importante
+  if (historial.length > 0) {
+    // Tomar últimos 6 mensajes (3 intercambios completos)
+    const ultimos = historial.slice(-6);
+    
+    lineas.push('\n💬 CONVERSACIÓN RECIENTE:');
+    
+    ultimos.forEach((m, idx) => {
+      const isUser = m.role === 'user';
+      const speaker = isUser ? '👤 Usuario' : `🤖 ${m.agent || 'Asistente'}`;
+      const prefix = isUser ? '' : '   '; // Indentar respuestas del asistente
+      
+      // Truncar mensajes muy largos (>150 chars) para optimizar tokens
+      let content = m.content;
+      if (content.length > 150) {
+        content = content.substring(0, 147) + '...';
+      }
+      
+      lineas.push(`${prefix}${speaker}: ${content}`);
     });
+    
+    lineas.push('\n📌 Usa esta conversación para contexto, pero NO repitas información que el usuario ya dio.');
   }
 
   return lineas.join('\n');

@@ -1180,10 +1180,12 @@ Responde en tu estilo característico con:
     }
 
     // Continuar con procesamiento normal de texto
+    console.log('[WASSENGER] 🔍 Verificando texto:', text ? 'PRESENTE' : 'NULL');
     if (!text) {
       console.log('[WASSENGER] ⚠️ No hay texto para procesar');
       return; // Background processing - webhook already responded
     }
+    console.log('[WASSENGER] ✅ Texto OK, continuando...');
 
     // 🛡️ FILTRO 2: Evitar procesar el propio número del bot
     const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
@@ -1213,11 +1215,13 @@ Responde en tu estilo característico con:
     }
 
     // 🛡️ FILTRO 5: Detectar y bloquear BOTS
+    console.log('[WASSENGER] 🛡️ Verificando filtro de BOTs...');
     const isBot = detectarBot(data, text, name);
     if (isBot.detected) {
       console.log(`[WASSENGER] BOT DETECTADO y bloqueado: ${isBot.reason}`);
       return; // Background processing - webhook already responded
     }
+    console.log('[WASSENGER] ✅ Todos los filtros pasados, cargando perfil...');
 
     // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
     if (!isProd && process.env.DEBUG_MODE === 'true') {
@@ -1238,6 +1242,7 @@ Responde en tu estilo característico con:
     const current = await loadProfileWithTimeout(loadProfile, userId, 5000) || {};
     const loadProfileTextMs = Date.now() - startLoadProfileText;
     console.log(`[WASSENGER DEBUG] ✅ loadProfile completado para texto en ${loadProfileTextMs}ms, fallback: ${current._fallback || false}`);
+    console.log('[WASSENGER] 🔄 Perfil cargado, activeAgent:', current?.activeAgent || 'NULL');
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
     }

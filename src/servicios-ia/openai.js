@@ -19,6 +19,7 @@ export async function complete(prompt, opts = {}) {
     temperature = 0.6,
     max_tokens = 400,
     model = MODEL,
+    timeout = 55000, // 🔥 FIX: Timeout de 55s (antes de H12 de Heroku a 30s, dejamos margen)
   } = opts;
 
   const messages = system
@@ -34,19 +35,27 @@ export async function complete(prompt, opts = {}) {
     console.log('[DEBUG] ========================');
   }
 
-  // 🛡️ Proteger con circuit breaker
+  // 🛡️ Proteger con circuit breaker + timeout
   const fallback = () => {
     console.log('[OpenAI] ⚠️ Usando respuesta de fallback');
     return 'Lo siento, estoy experimentando dificultades técnicas en este momento. Por favor, intenta de nuevo en unos momentos o contacta directamente a nuestro equipo.';
   };
 
   return await openaiBreaker.execute(async () => {
-    const res = await client.chat.completions.create({
+    // 🕐 Implementar timeout manual
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('OpenAI timeout')), timeout)
+    );
+    
+    const apiPromise = client.chat.completions.create({
       model,
       messages,
       temperature,
       max_tokens,
     });
+
+    // Race entre API call y timeout
+    const res = await Promise.race([apiPromise, timeoutPromise]);
 
     return res.choices?.[0]?.message?.content?.trim() || '';
   }, fallback);

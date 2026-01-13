@@ -216,46 +216,53 @@ async function enviarWhatsApp(numero, mensaje) {
  * }
  */
 router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
-  try {
-    // 🚫 CONTROL: Desactivación temporal de Wassenger vía variable de entorno
-    const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
-    
-    if (!wassengerEnabled) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
-      }
-      return res.json({ 
-        ok: true, 
-        ignored: true, 
-        reason: 'wassenger_disabled',
-        message: 'Wassenger está temporalmente desactivado'
-      });
-    }
-
-    const body = req.body || {};
-    const evt = body.event || '';
-    const data = body.data || {};
-    const isProd = process.env.NODE_ENV === 'production';
-
+  // 🚫 CONTROL: Desactivación temporal de Wassenger vía variable de entorno
+  const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
+  
+  if (!wassengerEnabled) {
     if (process.env.DEBUG_MODE === 'true') {
-      if (isProd) {
-        console.log('[WASSENGER] Webhook recibido', {
-          event: evt,
-          from: data.fromNumber || data.from || 'unknown'
-        });
-      } else {
-        console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
-      }
+      console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
     }
+    return res.json({ 
+      ok: true, 
+      ignored: true, 
+      reason: 'wassenger_disabled',
+      message: 'Wassenger está temporalmente desactivado'
+    });
+  }
 
-    if (!evt || !data) {
-      return res.status(400).json({ ok: false, error: 'INVALID_PAYLOAD' });
-    }
+  const body = req.body || {};
+  const evt = body.event || '';
+  const data = body.data || {};
+  const isProd = process.env.NODE_ENV === 'production';
 
-    // 🛡️ FILTRO 1: Ignorar mensajes salientes o eventos no relevantes
-    if (!evt.includes('message:in') || evt.includes('message:out')) {
-      return res.json({ ok: true, ignored: true, reason: 'not_incoming_message' });
+  if (process.env.DEBUG_MODE === 'true') {
+    if (isProd) {
+      console.log('[WASSENGER] Webhook recibido', {
+        event: evt,
+        from: data.fromNumber || data.from || 'unknown'
+      });
+    } else {
+      console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
     }
+  }
+
+  if (!evt || !data) {
+    return res.status(400).json({ ok: false, error: 'INVALID_PAYLOAD' });
+  }
+
+  // 🛡️ FILTRO 1: Ignorar mensajes salientes o eventos no relevantes
+  if (!evt.includes('message:in') || evt.includes('message:out')) {
+    return res.json({ ok: true, ignored: true, reason: 'not_incoming_message' });
+  }
+
+  // ⚡ RESPONDER INMEDIATAMENTE para evitar H12 timeout (30s)
+  // Wassenger necesita recibir 200 OK rápido, procesamos en background
+  res.json({ ok: true, processing: 'async' });
+
+  // 🔄 PROCESAMIENTO EN BACKGROUND
+  setImmediate(async () => {
+    try {
 
     // Extraer datos (compatibilidad con diferentes formatos de Wassenger)
     const userId = (data.fromNumber || data.from || '').trim();
@@ -263,6 +270,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🔧 FIX: Extraer nombre desde la estructura correcta de Wassenger
     const name = data.chat?.name || data.contact?.name || data.fromName || data.name || '';
     const messageType = data.type || 'text';
+    
+    // 🎯 DECLARACIÓN ÚNICA DE activeAgent (usado en TODOS los flujos)
+    let activeAgent = 'AURORA'; // Default, se actualizará según el perfil cargado
     
     // 🔧 FIX: Construir URL de imagen desde Wassenger API
     let mediaUrl = data.mediaUrl || data.media?.url || null;
@@ -278,7 +288,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     if (!userId) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'no_user_id' });
+      console.log('[WASSENGER] ⚠️ Sin userId - ignorando mensaje');
+      return; // Early exit - ya respondimos al webhook
     }
 
     // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
@@ -301,7 +312,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // Si no hay perfil y es fallback, usar perfil básico
       console.log('[WASSENGER DEBUG] ✅ loadProfile completado, profile:', userProfile ? 'FOUND' : 'NULL');
-      const activeAgent = userProfile?.activeAgent || 'AURORA';
+      activeAgent = userProfile?.activeAgent || 'AURORA'; // Actualizar variable global del try
       
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
@@ -323,7 +334,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             '✅ Desde varios ángulos\n\n' +
             '¿Listo? Envíame las fotos del vehículo 👍'
           );
-          return res.json({ ok: true, ignored: true, reason: 'axel_pdf_not_supported' });
+          return; // PDF not supported - early exit
         }
       }
       
@@ -338,7 +349,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           if (process.env.DEBUG_MODE === 'true') {
             console.log('[WASSENGER] 🚫 AXEL esperando fotos - ignorando mensaje vacío');
           }
-          return res.json({ ok: true, ignored: true, reason: 'waiting_photo_retry' });
+          return; // Early exit - waiting for photo retry
         }
         
         const responseText = text.toLowerCase();
@@ -354,7 +365,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, 
               '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
             );
-            return res.json({ ok: true, processed: true, type: 'axel_greeting' });
+            return; // Background processing - webhook already responded
           }
           
           // Si NO tiene formulario y escribe algo → recordar fotos
@@ -362,7 +373,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, 
               'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
             );
-            return res.json({ ok: true, processed: true, type: 'axel_awaiting_photo' });
+            return; // Background processing - webhook already responded
           }
           
           // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
@@ -375,7 +386,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, 
               '⚠️ No pude procesar tu mensaje. ¿Puedes intentar de nuevo?\n\nRecuerda enviarlo como: _Marca Modelo Año_'
             );
-            return res.json({ ok: true, processed: true, type: 'axel_form_error' });
+            return; // Background processing - webhook already responded
           }
           
           // Si formulario completo → Generar cotización
@@ -408,7 +419,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 '⚠️ Hubo un problema recuperando el análisis de daños.\n\n' +
                 'Por favor, envíame nuevamente las fotos del vehículo para poder cotizar. 📸'
               );
-              return res.json({ ok: true, processed: true, type: 'axel_missing_analysis' });
+              return; // Background processing - webhook already responded
             }
             
             // Generar cotización con OpenAI
@@ -438,21 +449,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 }
               });
               
-              return res.json({ ok: true, processed: true, type: 'axel_quote_error' });
+              return; // Background processing - webhook already responded
             }
             
             // Enviar cotización por WhatsApp
             await enviarWhatsApp(userId, quoteResult.whatsappMessage);
             
-            // Guardar cotización completa
-            profile.axelData = profile.axelData || {};
-            profile.axelData.latestQuote = {
+            // Guardar cotización completa (FIX: usar userProfile en vez de profile)
+            userProfile.axelData = userProfile.axelData || {};
+            userProfile.axelData.latestQuote = {
               vehicleData: formResult.data,
               damageAnalysis: damageAnalysis,
               quoteData: quoteResult.emailData,
               quotedAt: new Date().toISOString()
             };
-            await saveProfile(userId, profile);
+            await saveProfile(userId, userProfile);
             
             if (process.env.DEBUG_MODE === 'true') {
               console.log('[WASSENGER] ✅ Cotización enviada y guardada');
@@ -532,12 +543,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             
             console.log('[WASSENGER] 🗑️ Formulario limpiado - cotización completada');
             
-            return res.json({ 
-              ok: true, 
-              processed: true, 
-              type: 'axel_quote_sent',
-              quoteData: quoteResult.emailData
-            });
+            return; // Background processing - webhook already responded
           }
           
                 // DETECTAR SI USUARIO YA TIENE COTIZACIÓN ENVIADA (buscar en DB PostgreSQL)
@@ -617,7 +623,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             'Ya tengo tu cotización anterior lista 📋\n\n' +
             'Si necesitas un *nuevo análisis* para otro daño, dime "nuevo análisis" y empezamos de cero. 👍'
           );
-          return res.json({ ok: true, ignored: true, reason: 'quote_already_exists' });
+          return; // Background processing - webhook already responded
         }
         
         try {
@@ -759,13 +765,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           }, 15000); // 15 segundos de espera
           
           // No respondemos aún - esperamos que el timer procese todo junto
-          return res.json({ ok: true, processing: 'batch_pending' });
+          return; // Background processing - webhook already responded
           
         } catch (error) {
           console.error('[WASSENGER] ❌ Error en batch processing:', error);
           await enviarWhatsApp(userId, '⚠️ Ups, algo falló. Reenvíame las fotos por favor.');
           axelPendingPhotos.delete(userId);
-          return res.json({ ok: false, error: error.message });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -812,12 +818,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, '⚠️ No pude analizar la imagen. ¿Podrías reenviarla?');
           }
           
-          return res.json({ ok: true, processed: true, type: 'marketing_visual_analysis' });
+          return; // Background processing - webhook already responded
           
         } catch (error) {
           console.error('[WASSENGER] ❌ Error en análisis visual:', error);
           await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame la imagen por favor.');
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -863,12 +869,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
           }
           
-          return res.json({ ok: true, processed: true, type: 'insurance_document_analysis' });
+          return; // Background processing - webhook already responded
           
         } catch (error) {
           console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
           await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -914,12 +920,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
           }
           
-          return res.json({ ok: true, processed: true, type: 'contract_document_analysis' });
+          return; // Background processing - webhook already responded
           
         } catch (error) {
           console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
           await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -995,12 +1001,12 @@ Si NO puedes ver bien la imagen o está borrosa, di:
             await enviarWhatsApp(userId, '⚠️ No pude ver bien la imagen. ¿Podrías reenviarla con mejor luz? 💚');
           }
           
-          return res.json({ ok: true, processed: true, type: 'medical_document_analysis' });
+          return; // Background processing - webhook already responded
           
         } catch (error) {
           console.error('[WASSENGER] ❌ Error en análisis médico:', error);
           await enviarWhatsApp(userId, '⚠️ Hubo un problema. Reenvíame el documento por favor 💚');
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -1053,17 +1059,12 @@ Responde en tu estilo característico con:
               }
             });
             
-            return res.json({ 
-              ok: true, 
-              processed: true, 
-              type: 'document_analysis',
-              agent: activeAgent
-            });
+            return; // Background processing - webhook already responded
           }
         } catch (error) {
           console.error('[WASSENGER] ❌ Error analizando documento:', error);
           await enviarWhatsApp(userId, 'Gomen Sensei 🙏 Tuve un problema analizando tu archivo. ¿Puedes intentar de nuevo?');
-          return res.json({ ok: true, processed: true, type: 'analysis_error' });
+          return; // Background processing - webhook already responded
         }
       }
       
@@ -1075,7 +1076,7 @@ Responde en tu estilo característico con:
         
         if (!userProfile) {
           await enviarWhatsApp(userId, '❌ No encontré tu perfil. ¿Puedes intentar hacer una reserva primero?');
-          return res.json({ ok: true, processed: true, type: 'profile_error' });
+          return; // Background processing - webhook already responded
         }
         
         // Procesar comprobante de pago
@@ -1101,12 +1102,7 @@ Responde en tu estilo característico con:
           }
         });
         
-        return res.json({ 
-          ok: true, 
-          processed: true, 
-          type: 'payment_verification',
-          success: paymentResult.success 
-        });
+        return; // Background processing - webhook already responded
       } else {
         // Imagen/documento enviado a Aurora pero no es comprobante
         // Mensaje específico según agente activo
@@ -1137,11 +1133,7 @@ Responde en tu estilo característico con:
         
         await enviarWhatsApp(userId, responseMessage);
         
-        return res.json({ 
-          ok: true, 
-          processed: true, 
-          type: 'image_received' 
-        });
+        return; // Background processing - webhook already responded
       }
     }
 
@@ -1155,7 +1147,7 @@ Responde en tu estilo característico con:
         if (process.env.DEBUG_MODE === 'true') {
           console.log('[WASSENGER] ❌ No se encontró URL de audio');
         }
-        return res.json({ ok: true, ignored: true, reason: 'no_audio_url' });
+        return; // Background processing - webhook already responded
       }
 
       // Importar función de transcripción
@@ -1168,11 +1160,7 @@ Responde en tu estilo característico con:
         await enviarWhatsApp(userId, 
           '🎤 Lo siento, no pude procesar tu mensaje de voz. ¿Podrías escribirlo por texto? 😊'
         );
-        return res.json({ 
-          ok: true, 
-          processed: true, 
-          type: 'audio_transcription_failed' 
-        });
+        return; // Background processing - webhook already responded
       }
 
       if (process.env.DEBUG_MODE === 'true') {
@@ -1190,7 +1178,8 @@ Responde en tu estilo característico con:
 
     // Continuar con procesamiento normal de texto
     if (!text) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'no_text_content' });
+      console.log('[WASSENGER] ⚠️ No hay texto para procesar');
+      return; // Background processing - webhook already responded
     }
 
     // 🛡️ FILTRO 2: Evitar procesar el propio número del bot
@@ -1199,7 +1188,7 @@ Responde en tu estilo característico con:
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] Mensaje ignorado: es del propio bot');
       }
-      return res.json({ ok: true, ignored: true, reason: 'self-message' });
+      return; // Background processing - webhook already responded
     }
 
     // 🛡️ FILTRO 3: Detectar si el mensaje viene del bot (campo fromMe)
@@ -1207,7 +1196,7 @@ Responde en tu estilo característico con:
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] Mensaje ignorado: fromMe=true');
       }
-      return res.json({ ok: true, ignored: true, reason: 'message_from_bot' });
+      return; // Background processing - webhook already responded
     }
 
     // 🛡️ FILTRO 4: Ignorar mensajes muy antiguos (más de 1 hora)
@@ -1217,14 +1206,14 @@ Responde en tu estilo característico con:
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] Mensaje ignorado: muy antiguo (>1h)');
       }
-      return res.json({ ok: true, ignored: true, reason: 'old_message' });
+      return; // Background processing - webhook already responded
     }
 
     // 🛡️ FILTRO 5: Detectar y bloquear BOTS
     const isBot = detectarBot(data, text, name);
     if (isBot.detected) {
       console.log(`[WASSENGER] BOT DETECTADO y bloqueado: ${isBot.reason}`);
-      return res.json({ ok: true, ignored: true, reason: 'bot_detected', details: isBot.reason });
+      return; // Background processing - webhook already responded
     }
 
     // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
@@ -1251,16 +1240,25 @@ Responde en tu estilo característico con:
     }
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
     
-    // 🆕 Cargar historial de conversación (últimos 10 mensajes)
+    // � OBTENER AGENTE ACTIVO (FIX: declarar solo una vez al inicio del setImmediate)
+    // Variable ya declarada en flujo de imágenes (línea 312), reutilizarla
+    
+    // �🆕 Cargar historial de conversación (últimos 10 mensajes)
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 3️⃣ Iniciando loadConversationHistory...');
     }
-    const conversationHistory = await loadConversationHistory(userId, 10);
+    let conversationHistory = await loadConversationHistory(userId, 10);
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 4️⃣ loadConversationHistory completado, mensajes:', conversationHistory?.length || 0);
     }
     
-    // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
+    // � DEFINIR AGENTE ACTIVO (FIX: debe estar definido antes de usarse)
+    activeAgent = current.activeAgent || 'AURORA';
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 🤖 Agente activo del perfil:', activeAgent);
+    }
+    
+    // �🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
     let detectedName = current.name || null;
     
     // Si no tenemos nombre guardado, intentar extraerlo
@@ -1360,8 +1358,8 @@ Responde en tu estilo característico con:
     }
 
     // 🚦 VALIDAR AGENTE ACTIVO - Solo responde el agente que está activo
-    // activeAgent ya fue declarado anteriormente en línea 296
-    const isAgentMention = /@(aurora|enzo|adriana|aluna)/i.test(text);
+    // activeAgent ya fue declarado anteriormente
+    const isAgentMention = /@(aurora|enzo|adriana|aluna|angela|axel|gabi|tomi)/i.test(text);
     
     // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo
     // Solo validamos si detectamos mención explícita de cambio de agente
@@ -1732,7 +1730,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[WASSENGER] ✅ Idioma actualizado y confirmación enviada');
       }
-      return res.status(200).json({ status: 'ok', action: 'language_changed', language: languageCommand });
+      return; // Background processing - webhook already responded (language changed)
     }
     
     // 🌍 DETECTAR IDIOMA DEL MENSAJE (auto-detección)
@@ -1823,11 +1821,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           agent: 'AURORA'
         });
         
-        return res.json({ 
-          ok: true, 
-          processed: true,
-          type: 'resend_confirmation'
-        });
+        return; // Background processing - webhook already responded
       } else {
         if (process.env.DEBUG_MODE === 'true') {
           console.log('[WASSENGER] ⚠️ No se pudo reenviar:', resendResult.error);
@@ -1971,7 +1965,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           }
         });
 
-        return res.json({ success: true, handoff: true, targetAgent });
+        return; // Background processing - webhook already responded
         
       } catch (handoffError) {
         console.error('[WASSENGER] ❌ Error durante handoff:', handoffError);
@@ -1998,7 +1992,7 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
           }
         });
         
-        return res.json({ success: false, error: 'handoff_failed', message: handoffError.message });
+        return; // Background processing - webhook already responded
       }
     }
     
@@ -2096,8 +2090,8 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
         freeTrialUsed: profile.freeTrialUsed
       });
 
-      // 🎯 Configuración según agente activo
-      const activeAgent = profile.activeAgent || 'AURORA';
+      // 🎯 Configuración según agente activo (usar variable global ya actualizada)
+      activeAgent = profile.activeAgent || 'AURORA'; // Actualizar por si cambió
       const isSpecializedAgent = ['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent);
       
       console.log(`[WASSENGER] 🤖 LLAMANDO A OPENAI - activeAgent: ${activeAgent}, isSpecialized: ${isSpecializedAgent}`);
@@ -2366,28 +2360,19 @@ Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 person
       }
     }
 
-    // Responder al webhook (ACK)
-    return res.json({ 
-      ok: true, 
-      agent: resultado.agente,
-      messageSent: envio.ok,
-      reply: finalReply,
-      confirmationActivated: confirmationActivated 
-    });
-  } // Cierre del try principal
-
+    // ✅ Procesamiento completado en background
+    console.log('[WASSENGER] ✅ Procesamiento background completado');
+    
+    } // Cierre del try principal (línea 266)
   } catch (err) {
-    console.error('[WASSENGER WEBHOOK] Error capturado:', err);
+    // ❌ Error en procesamiento background (NO afecta respuesta al webhook)
+    console.error('[WASSENGER WEBHOOK] Error en procesamiento background:', err);
     console.error('[WASSENGER WEBHOOK] Stack:', err.stack);
     
-    // Responder siempre 200 OK para que Wassenger no reintente
-    return res.status(200).json({ 
-      ok: false, 
-      error: 'INTERNAL_ERROR', 
-      message: err.message,
-      handled: true 
-    });
+    // NO responder aquí - ya respondimos al webhook
+    // Solo logueamos el error para debugging
   }
+  }); // Cierre de setImmediate()
 });
 
 /**

@@ -294,9 +294,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // Cargar perfil para saber el agente activo
       console.log('[WASSENGER DEBUG] 🔄 Cargando perfil para imagen...');
-      const startLoadProfile = Date.now();
+      const startLoadProfileImage = Date.now();
       const userProfile = await loadProfileWithTimeout(loadProfile, userId, 5000);
-      const loadProfileMs = Date.now() - startLoadProfile;
+      const loadProfileMs = Date.now() - startLoadProfileImage;
       console.log(`[WASSENGER DEBUG] ✅ Perfil cargado en ${loadProfileMs}ms, fallback: ${userProfile._fallback || false}`);
       
       // Si no hay perfil y es fallback, usar perfil básico
@@ -1242,10 +1242,10 @@ Responde en tu estilo característico con:
       console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
     }
     console.log('[WASSENGER DEBUG] 🔄 Llamando loadProfile para mensajes de texto, userId:', userId);
-    const startLoadProfile = Date.now();
+    const startLoadProfileText = Date.now();
     const current = await loadProfileWithTimeout(loadProfile, userId, 5000) || {};
-    const loadProfileMs = Date.now() - startLoadProfile;
-    console.log(`[WASSENGER DEBUG] ✅ loadProfile completado para texto en ${loadProfileMs}ms, fallback: ${current._fallback || false}`);
+    const loadProfileTextMs = Date.now() - startLoadProfileText;
+    console.log(`[WASSENGER DEBUG] ✅ loadProfile completado para texto en ${loadProfileTextMs}ms, fallback: ${current._fallback || false}`);
     if (process.env.DEBUG_MODE === 'true') {
       console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
     }

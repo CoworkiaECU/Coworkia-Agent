@@ -640,6 +640,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (resultado?.metadata?.agentHandoff) {
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = profile.activeAgent || 'AURORA';
+      const userLanguage = profile.preferredLanguage || 'es';
 
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
@@ -658,12 +659,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
         const userName = profile.whatsappDisplayName || profile.name || 'amigo';
 
+        // 🌍 Mensajes de handover multiidioma
+        const handoverActual = typeof agenteActual?.getHandover === 'function' 
+          ? agenteActual.getHandover(userLanguage)
+          : agenteActual?.handover || {};
+        
+        const mensajesNuevo = typeof nuevoAgente?.getMensajes === 'function'
+          ? nuevoAgente.getMensajes(userLanguage)
+          : nuevoAgente?.mensajes || {};
+
         const mensajeDespedida =
-          agenteActual?.handover?.llamado?.replace(/{nombre}/g, userName)
+          handoverActual.llamado?.replace(/{nombre}/g, userName)
           || `${userName}, te dejo con ${nuevoAgente?.nombre || targetAgent}.`;
 
         const mensajeEntrada =
-          nuevoAgente?.mensajes?.entrada?.replace(/{nombre}/g, userName)
+          mensajesNuevo.entrada?.replace(/{nombre}/g, userName)
           || `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || targetAgent}. ¿En qué puedo ayudarte?`;
 
         // 🔄 SECUENCIA HANDOFF: 2 mensajes rápidos y sincronizados

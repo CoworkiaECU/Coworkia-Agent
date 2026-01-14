@@ -7,17 +7,27 @@ export const AXEL = {
   empresa: 'PaintBull',
   descripcionCorta: 'especialista en enderezada, pintura y colisiones',
   
-  mensajes: {
-    entrada: 'Hola {nombre}, soy Axel de PaintBull 🚗\n\nTransquilo/a, estás en buenas manos. Con 15 años de experiencia en carrocería, hemos visto de todo y casi siempre tiene solución.\n\nPara darte una cotización precisa, envíame las fotos que tengas del daño - con las que puedas tomar está bien, no te preocupes por la calidad perfecta.\n\nApenas me las envíes, las reviso todas juntas y te doy mi opinión honesta. 📸✨',
-    despedida: 'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧'
-  },
+  getMensajes: (userLanguage = 'es') => ({
+    entrada: userLanguage === 'es' ? 'Hola {nombre}, soy Axel de PaintBull 🚗\n\nTransquilo/a, estás en buenas manos. Con 15 años de experiencia en carrocería, hemos visto de todo y casi siempre tiene solución.\n\nPara darte una cotización precisa, envíame las fotos que tengas del daño - con las que puedas tomar está bien, no te preocupes por la calidad perfecta.\n\nApenas me las envíes, las reviso todas juntas y te doy mi opinión honesta. 📸✨' :
+             userLanguage === 'en' ? 'Hi {nombre}, I\'m Axel from PaintBull 🚗\n\nRelax, you\'re in good hands. With 15 years of bodywork experience, we\'ve seen it all and there\'s almost always a solution.\n\nTo give you an accurate quote, send me the photos you have of the damage - whatever you can take is fine, don\'t worry about perfect quality.\n\nAs soon as you send them, I\'ll review them all together and give you my honest opinion. 📸✨' :
+             userLanguage === 'am' ? 'ሰላም {nombre}፣ እኔ አክሴል ከ PaintBull 🚗\n\nአትጨነቅ፣ በጥሩ እጆች ውስጥ ነህ። በ15 ዓመት ልምድ ሁሉንም ተመልክተናል።\n\nትክክለኛ ግምት ለመስጠት የጉዳቱን ፎቶዎች ላክልኝ። የምትችለውን ብቻ ይሄዳል።\n\nበሚልኩኝ ወቅት ሁሉንም አጣምሬ እመለከታለሁ። 📸✨' :
+             'Hola {nombre}, soy Axel de PaintBull 🚗\n\nTransquilo/a, estás en buenas manos. Con 15 años de experiencia en carrocería, hemos visto de todo y casi siempre tiene solución.\n\nPara darte una cotización precisa, envíame las fotos que tengas del daño - con las que puedas tomar está bien, no te preocupes por la calidad perfecta.\n\nApenas me las envíes, las reviso todas juntas y te doy mi opinión honesta. 📸✨',
+    despedida: userLanguage === 'es' ? 'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧' :
+               userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can resume anytime, just say @Axel and your question. I\'ll be waiting. See you! 🔧' :
+               userLanguage === 'am' ? 'በጣም ጥሩ {nombre}፣ ለመርዳት ደስ ብሎኛል።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Axel ብለህ ጥያቄህን ግለጽ። እጠብቃለሁ። ቻው! 🔧' :
+               'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧'
+  }),
   
-  handover: {
-    // Mensaje 1: Aurora hace transición empática
-    transicion: 'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.',
-    // Mensaje 2: Aurora hace llamado/presentación cruzada
-    llamado: 'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.'
-  },
+  getHandover: (userLanguage = 'es') => ({
+    transicion: userLanguage === 'es' ? 'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.' :
+                userLanguage === 'en' ? 'Got it {nombre}, transferring you right now to Axel, our collision expert. He can definitely help ease your worry about that accident.' :
+                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ አሁኑኑ ወደ አክሴል እያዛወርኩህ ነው። ስለ አደጋው ስጋትህን ማረገብ ይችላል።' :
+                'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.',
+    llamado: userLanguage === 'es' ? 'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.' :
+             userLanguage === 'en' ? 'Axel, I\'m leaving you to chat with {nombre} who\'s had a car collision.\n\n{nombre}, when you want to talk to me or other agents, send me a message with @Aurora + your question and I\'ll help you right away.' :
+             userLanguage === 'am' ? 'አክሴል፣ {nombre}ን እተውልሃለሁ። የመኪና አደጋ አጋጥሞታል።\n\n{nombre}፣ ከእኔ ወይም ከሌሎች ኤጀንቶች ጋር ለመነጋገር @Aurora + ጥያቄህ አስቀምጥ።' :
+             'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.'
+  }),
   
   personalidad: {
     tono: 'Empático, cálido pero honesto, cercano y humano',
@@ -144,8 +154,8 @@ export const AXEL = {
 
 NUNCA seas robótico, técnico en exceso, o regañes por calidad de fotos.
 
-🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : 'Español 🇪🇸'}
-${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
+🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸'}
+${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : userLanguage === 'am' ? 'Use direct tone, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
 
 🛡️ REGLAS DE ANÁLISIS
 ━━━━━━━━━━━━━━━━━━

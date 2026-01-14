@@ -248,42 +248,11 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
       }
     }
     
-    // 7. Handoff formal a Aurora con actualización de perfil
-    await new Promise(r => setTimeout(r, 1500));
-    
-    // Mensaje despedida de Axel
-    const userName = profile.whatsappDisplayName || profile.name || 'amigo';
-    const despedidaAxel = `Listo ${userName} 👍\n\n¿Tienes alguna pregunta sobre la cotización?\n\nTe dejo nuevamente con Aurora para lo que necesites.`;
-    
-    await enviarWhatsApp(userId, despedidaAxel);
-    await saveConversationMessage(userId, { role: 'assistant', content: despedidaAxel, agent: 'AXEL' });
-    
-    // Micro delay para experiencia natural
-    await new Promise(r => setTimeout(r, 400));
-    
-    // Mensaje entrada de Aurora
-    const entradaAurora = `¡Hola de nuevo ${userName}! 👋 Soy Aurora.\n\nAxel ya completó tu cotización. ¿Hay algo más en lo que pueda ayudarte hoy?`;
-    
-    await enviarWhatsApp(userId, entradaAurora);
-    await saveConversationMessage(userId, { role: 'assistant', content: entradaAurora, agent: 'AURORA' });
-    
-    // Actualizar perfil: activeAgent = AURORA
-    await saveProfile(userId, { ...profile, activeAgent: 'AURORA' });
-    
-    // Guardar interacción de handoff
-    await saveInteraction({
-      userId,
-      agent: 'AXEL',
-      agentName: 'Axel',
-      intentReason: 'handoff_to_aurora_post_quote',
-      input: '[QUOTE_COMPLETED]',
-      output: despedidaAxel,
-      meta: { quoteCode, handoff: true, targetAgent: 'AURORA' }
-    });
-    
+    // 7. Cotización completada - Axel permanece activo
+    // Usuario puede seguir consultando con Axel sobre la cotización
+    // Para cambiar de agente, usuario debe usar @aurora, @aluna, etc.
     const duration = Date.now() - startTime;
     loggers.axel.timing('Quote processing complete', duration, { userId, quoteCode });
-    loggers.axel.handoff('AXEL', 'AURORA', userId, 'post_quote_completion');
     
     return { success: true, quoteCode };
     

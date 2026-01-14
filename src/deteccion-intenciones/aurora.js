@@ -140,20 +140,16 @@ RESPONDE CON:
 
 "¡Hola! 😊 Soy Aurora, coordino Coworkia.
 
-📍 *ESPACIOS:*
+📍 ESPACIOS:
 💻 Hot Desk - $10/2h${freeTrialUsed ? '' : ' (primera visita GRATIS 🎁)'}
 🏢 Sala Reuniones - $29/2h
 
-🤝 *NUESTROS EXPERTOS:*
+🤝 NUESTROS EXPERTOS:
 
 💡 @enzo - Marketing e IA para tu negocio
-
-🛡️ @adriana - Seguros personalizados
-
-💚 @angela - Asistencia Médica Popular
-
+🛡️ @adriana - Seguros
+💚 @angela - Asistencia médica popular
 🚗 @axel - Reparación colisiones vehiculares
-
 💼 @gabi - Finanzas, legal y cumplimiento
 
 ¿Qué necesitas hoy? 🚀"

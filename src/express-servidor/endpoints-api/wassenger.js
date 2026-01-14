@@ -622,7 +622,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
-    const resultado = procesarMensaje(auroraInput, profile, conversationHistory, {
+    const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
       envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
     });

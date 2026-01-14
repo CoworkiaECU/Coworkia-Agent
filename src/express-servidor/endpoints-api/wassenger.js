@@ -3,6 +3,7 @@ import { Router } from 'express';
 
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
+import { loggers } from '../../utils/logger.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
@@ -42,10 +43,10 @@ const router = Router();
 if (!globalThis.__AURORA_CORE_UNHANDLED__) {
   globalThis.__AURORA_CORE_UNHANDLED__ = true;
   process.on('unhandledRejection', (reason) => {
-    console.error('[AuroraCore] ⚠️ UnhandledRejection:', reason);
+    loggers.webhook.error('Unhandled promise rejection', {}, reason);
   });
   process.on('uncaughtException', (err) => {
-    console.error('[AuroraCore] ❌ UncaughtException:', err);
+    loggers.webhook.error('Uncaught exception', {}, err);
   });
 }
 
@@ -145,9 +146,14 @@ async function enviarWhatsApp(numero, mensaje) {
     });
 
     const data = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      loggers.wassenger.warn('Failed to send message', { userId: numero, status: response.status });
+    }
+    
     return { ok: response.ok, data };
   } catch (error) {
-    console.error('[WASSENGER] Error enviando mensaje:', error);
+    loggers.wassenger.error('Error sending message', { userId: numero }, error);
     return { ok: false, error: error.message };
   }
 }
@@ -162,8 +168,10 @@ function detectBotLight(data, userId) {
    💰 AXEL QUOTE PROCESSOR
 ───────────────────────────────────────────────────────────── */
 async function processAxelQuote(userId, photoUrls, profile) {
+  const startTime = Date.now();
+  
   try {
-    console.log(`[AXEL-QUOTE] 🎯 Procesando cotización para ${userId} con ${photoUrls.length} fotos`);
+    loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
     
     // 1. Procesar formulario - verificar si tenemos todos los datos
     const formResult = await processAxelFormMessage(userId, '');
@@ -178,6 +186,7 @@ async function processAxelQuote(userId, photoUrls, profile) {
     // 2. Analizar fotos con Vision AI
     await enviarWhatsApp(userId, `Analizando daños con IA... 🤖`);
     
+    loggers.axel.info('Analyzing collision photos', { userId, photoCount: photoUrls.length });
     const visionAnalysis = await analyzeCollisionPhotos(photoUrls);
     
     if (!visionAnalysis.success) {
@@ -243,10 +252,13 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
     await new Promise(r => setTimeout(r, 2000));
     await enviarWhatsApp(userId, `¿Tienes alguna pregunta sobre la cotización?\n\nSi necesitas algo más, te dejo nuevamente con Aurora escribiendo @aurora`);
     
+    const duration = Date.now() - startTime;
+    loggers.axel.timing('Quote processing complete', duration, { userId, quoteCode });
+    
     return { success: true, quoteCode };
     
   } catch (error) {
-    console.error('[AXEL-QUOTE] ❌ Error procesando cotización:', error);
+    loggers.axel.error('Quote processing failed', { userId }, error);
     await enviarWhatsApp(userId, `Hubo un problema técnico. Déjame contactarte manualmente para ayudarte.`);
     return { success: false, error: error.message };
   }
@@ -330,6 +342,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     if (!userId) return;
+
+    loggers.webhook.info('Processing incoming message', { userId, type, hasMedia: !!mediaUrl });
 
     // Filtros básicos (no destructivos)
     const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
@@ -557,6 +571,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
+    loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     const resultado = procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
       envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
@@ -575,6 +590,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (resultado?.metadata?.agentHandoff) {
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = profile.activeAgent || 'AURORA';
+
+      loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
 
       try {
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
@@ -663,6 +680,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     });
 
     await enviarWhatsApp(userId, finalReply);
+    
+    loggers.webhook.agentResponse(userId, resultado.agenteKey, true);
 
     // Marcar primera visita después de responder
     if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {

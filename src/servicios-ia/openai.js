@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import OpenAI from 'openai';
 import { openaiBreaker } from '../utils/circuit-breaker.js';
+import { loggers } from '../utils/logger.js';
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
@@ -35,9 +36,11 @@ export async function complete(prompt, opts = {}) {
     console.log('[DEBUG] ========================');
   }
 
+  const startTime = Date.now();
+
   // 🛡️ Proteger con circuit breaker + timeout
   const fallback = () => {
-    console.log('[OpenAI] ⚠️ Usando respuesta de fallback');
+    loggers.openai.warn('Using fallback response', { action: 'complete', model });
     return 'Lo siento, estoy experimentando dificultades técnicas en este momento. Por favor, intenta de nuevo en unos momentos o contacta directamente a nuestro equipo.';
   };
 
@@ -56,6 +59,9 @@ export async function complete(prompt, opts = {}) {
 
     // Race entre API call y timeout
     const res = await Promise.race([apiPromise, timeoutPromise]);
+    const duration = Date.now() - startTime;
+    
+    loggers.openai.timing('OpenAI completion', duration, { model, tokens: max_tokens });
 
     return res.choices?.[0]?.message?.content?.trim() || '';
   }, fallback);
@@ -74,7 +80,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
 
   // 🛡️ Proteger con circuit breaker
   const fallback = () => {
-    console.log('[OpenAI Vision] ⚠️ Usando respuesta de fallback');
+    loggers.openai.warn('Vision API fallback used', { action: 'analyzeImage' });
     return {
       success: false,
       error: 'Servicio temporalmente no disponible. Por favor, intenta de nuevo.',
@@ -83,6 +89,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
   };
 
   try {
+    const startTime = Date.now();
     return await openaiBreaker.execute(async () => {
       const response = await client.chat.completions.create({
         model,
@@ -108,6 +115,9 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
         max_tokens,
       });
 
+      const duration = Date.now() - startTime;
+      loggers.openai.timing('Vision API analysis', duration, { model, detail });
+
       return {
         success: true,
         content: response.choices[0]?.message?.content?.trim() || '',
@@ -116,7 +126,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
     }, fallback);
 
   } catch (error) {
-    console.error('[OpenAI Vision] Error:', error);
+    loggers.openai.error('Vision API error', { action: 'analyzeImage' }, error);
     return {
       success: false,
       error: error.message,

@@ -10,6 +10,7 @@ import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
 import { TOMI } from './tomi.js';
 import { detectarIntencion } from './detectar-intencion.js';
+import { loggers } from '../utils/logger.js';
 
 export const AGENTES = {
   AURORA,
@@ -26,10 +27,15 @@ export const AGENTES = {
  * Aurora Core decide TODO.
  */
 export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = {}) {
+  const startTime = Date.now();
   const activeAgent = perfil.activeAgent || 'AURORA';
+  const userId = perfil.userId || 'unknown';
+
+  loggers.orquestador.userMessage(userId, activeAgent, mensaje);
 
   // 1. Detectar intención
   const intent = detectarIntencion(mensaje, activeAgent);
+  loggers.orquestador.debug('Intención detectada', { userId, agent: activeAgent, intent: intent.type });
 
   // 2. Aurora Core decide a qué agente ir
   const targetAgent = decidirAgente(intent, activeAgent);
@@ -43,6 +49,10 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     userMessage: mensaje,
     timestamp: new Date().toISOString()
   } : null;
+  
+  if (isHandoff) {
+    loggers.orquestador.handoff(activeAgent, targetAgent, userId, intent.reason);
+  }
 
   // 4. Construir contexto reducido (Aurora filtra)
   const contexto = construirContexto(perfil, historial, formData, handoffContext);
@@ -68,6 +78,9 @@ INSTRUCCIONES:
     typeof agente.getSystemPrompt === 'function'
       ? agente.getSystemPrompt(perfil.preferredLanguage || 'es')
       : agente.systemPrompt;
+
+  const duration = Date.now() - startTime;
+  loggers.orquestador.timing('procesarMensaje', duration, { userId, agent: targetAgent, isHandoff });
 
   return {
     agente: agente.nombre,

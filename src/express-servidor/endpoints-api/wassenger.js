@@ -400,6 +400,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Idioma (comando explícito)
     const languageCommand = detectLanguageCommand(text);
     if (languageCommand) {
+      current.preferredLanguage = languageCommand; // 🌍 Actualizar variable local
       await saveProfile(userId, { ...current, preferredLanguage: languageCommand });
       const msg = getLanguageChangeConfirmation(languageCommand);
       await enviarWhatsApp(userId, msg);

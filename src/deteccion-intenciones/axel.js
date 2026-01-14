@@ -8,7 +8,7 @@ export const AXEL = {
   descripcionCorta: 'especialista en enderezada, pintura y colisiones',
   
   mensajes: {
-    entrada: 'Hola {nombre}, soy Axel de PaintBull 🚗\n\nTransquilo/a, estás en buenas manos. Con 15 años de experiencia en carrocería, hemos visto de todo y casi siempre tiene solución.\n\nPara darte una cotización precisa, envíame las fotos que tengas del daño - con las que puedas tomar está bien, no te preocupes por la calidad perfecta.\n\nAprenas me las envíes, las reviso todas juntas y te doy mi opinión honesta. 📸✨',
+    entrada: 'Hola {nombre}, soy Axel de PaintBull 🚗\n\nTransquilo/a, estás en buenas manos. Con 15 años de experiencia en carrocería, hemos visto de todo y casi siempre tiene solución.\n\nPara darte una cotización precisa, envíame las fotos que tengas del daño - con las que puedas tomar está bien, no te preocupes por la calidad perfecta.\n\nApenas me las envíes, las reviso todas juntas y te doy mi opinión honesta. 📸✨',
     despedida: 'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧'
   },
   

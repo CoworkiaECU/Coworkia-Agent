@@ -329,7 +329,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       if (!availability.available) {
         console.log('[Confirmation] ❌ Hot Desks agotados:', availability);
         
-        // TODO: Aurora debe ofrecer alternativas (siguiente slot disponible o día siguiente)
+        // Aurora ofrece alternativas (siguiente slot disponible o día siguiente)
         throw new ConfirmationFlowError({
           success: false,
           message: `${availability.message}\n\nDéjame revisar otros horarios disponibles...`,

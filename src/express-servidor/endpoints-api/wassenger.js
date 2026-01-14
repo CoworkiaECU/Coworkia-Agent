@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
 import { loggers } from '../../utils/logger.js';
+import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
@@ -356,6 +357,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
+    // 🚦 Rate limiting - Prevenir spam/abuso
+    const rateLimitCheck = checkRateLimit(userId);
+    if (!rateLimitCheck.allowed) {
+      const message = rateLimitCheck.reason === 'minute_limit'
+        ? `⏱️ Por favor, espera ${rateLimitCheck.retryAfter} segundos antes de enviar más mensajes.\n\nLímite: ${rateLimitCheck.limit} mensajes por minuto.`
+        : `⏱️ Has alcanzado el límite de mensajes por hora.\n\nIntenta nuevamente en ${Math.ceil(rateLimitCheck.retryAfter / 60)} minutos.`;
+      
+      await enviarWhatsApp(userId, message);
+      return;
+    }
+
     // 🎤 Voz → transcribir
     if (type === 'audio' || type === 'voice' || type === 'ptt') {
       if (!mediaUrl) return;
@@ -373,6 +385,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Perfil + historial
     const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
     let conversationHistory = await loadConversationHistory(userId, 10).catch(() => []);
+
+    // ✅ Registrar mensaje procesado para rate limiting
+    recordMessage(userId);
 
     // Idioma (comando explícito)
     const languageCommand = detectLanguageCommand(text);

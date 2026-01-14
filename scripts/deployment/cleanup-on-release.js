@@ -21,13 +21,11 @@ async function cleanupOnRelease() {
     
     const counts = {
       reservations: await databaseService.get('SELECT COUNT(*) as total FROM reservations'),
-      pendingConfirmations: await databaseService.get('SELECT COUNT(*) as total FROM pending_confirmations'),
-      interactions: await databaseService.get('SELECT COUNT(*) as total FROM interactions WHERE created_at > datetime("now", "-1 hour")')
+      pendingConfirmations: await databaseService.get('SELECT COUNT(*) as total FROM pending_confirmations')
     };
     
     console.log(`  📅 Reservas: ${counts.reservations.total}`);
-    console.log(`  ⏳ Confirmaciones pendientes: ${counts.pendingConfirmations.total}`);
-    console.log(`  💬 Interacciones última hora: ${counts.interactions.total}\n`);
+    console.log(`  ⏳ Confirmaciones pendientes: ${counts.pendingConfirmations.total}\n`);
     
     // LIMPIEZA FOCALIZADA
     console.log('🧹 Limpiando confirmaciones pendientes...');
@@ -37,12 +35,6 @@ async function cleanupOnRelease() {
     await databaseService.run(`
       DELETE FROM reservations 
       WHERE status IN ('pending', 'pending_confirmation', 'pending_payment', 'cancelled')
-    `);
-    
-    console.log('🧹 Limpiando interacciones antiguas (>24h)...');
-    await databaseService.run(`
-      DELETE FROM interactions 
-      WHERE created_at < datetime('now', '-24 hours')
     `);
     
     // RESETEAR FLAGS DE USUARIOS (para permitir nuevas interacciones)

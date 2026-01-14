@@ -271,3 +271,7 @@ export async function processFollowUps() {
   
   return {
     processed: usersNeedingFollowUp.length,
+    sent,
+    skipped
+  };
+}

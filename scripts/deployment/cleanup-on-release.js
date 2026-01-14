@@ -37,21 +37,6 @@ async function cleanupOnRelease() {
       WHERE status IN ('pending', 'pending_confirmation', 'pending_payment', 'cancelled')
     `);
     
-    // RESETEAR FLAGS DE USUARIOS (para permitir nuevas interacciones)
-    console.log('🧹 Reseteando flags de usuarios...');
-    await databaseService.run(`
-      UPDATE users 
-      SET 
-        pending_confirmation = false,
-        pending_form = false,
-        awaiting_reservation_confirmation = false,
-        transaction_started_at = NULL,
-        transaction_agent = NULL
-      WHERE pending_confirmation = true 
-         OR pending_form = true 
-         OR awaiting_reservation_confirmation = true
-    `);
-    
     console.log('\n✅ [RELEASE PHASE] Limpieza completada exitosamente');
     console.log('📊 Base de datos lista para testing\n');
     

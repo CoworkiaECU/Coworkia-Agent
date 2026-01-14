@@ -153,7 +153,7 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
       const prefix = isUser ? '' : '   '; // Indentar respuestas del asistente
       
       // Truncar mensajes muy largos (>150 chars) para optimizar tokens
-      let content = m.content;
+      let content = m.content || '';
       if (content.length > 150) {
         content = content.substring(0, 147) + '...';
       }

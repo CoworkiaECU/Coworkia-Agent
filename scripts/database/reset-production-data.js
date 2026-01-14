@@ -73,7 +73,7 @@ async function resetProductionData() {
         transaction_started_at = NULL,
         transaction_agent = NULL,
         follow_up_sent_at = NULL,
-        free_trial_used = 0,
+        free_trial_used = false,
         active_agent = 'AURORA'
     `);
     console.log('✅ Usuarios reseteados\n');

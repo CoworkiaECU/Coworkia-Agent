@@ -252,6 +252,14 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
     // 7. Cotización completada - Axel permanece activo
     // Usuario puede seguir consultando con Axel sobre la cotización
     // Para cambiar de agente, usuario debe usar @aurora, @aluna, etc.
+    
+    // ⏱️ T14: Limpiar transacción (cotización enviada exitosamente)
+    profile.transactionStartedAt = null;
+    profile.transactionAgent = null;
+    profile.followUpSentAt = null;
+    await saveProfile(userId, profile);
+    console.log('[T14] ✅ Transacción completada (cotización enviada):', { userId, quoteCode });
+    
     const duration = Date.now() - startTime;
     loggers.axel.timing('Quote processing complete', duration, { userId, quoteCode });
     
@@ -444,6 +452,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (isReservationIntent(processedText)) {
       formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
       formResult.userMessage = text;
+      
+      // ⏱️ T14: Iniciar tracking de transacción si necesita más info (inicio de reserva)
+      if (formResult.needsMoreInfo && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = 'AURORA';
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ⏱️ Transacción AURORA iniciada:', { userId, timestamp: profile.transactionStartedAt });
+      }
     }
 
     // 🚨 Validaciones del formulario (ej domingo/feriado) → respuesta inmediata
@@ -475,6 +492,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         const isNeg = isNegativeResponse(processedText);
         if (isPos || isNeg) {
           const confirmationResult = await processConfirmationResponse(processedText, profile);
+          
+          // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
+          if (confirmationResult.success && isPos) {
+            profile.transactionStartedAt = null;
+            profile.transactionAgent = null;
+            profile.followUpSentAt = null;
+            await saveProfile(userId, profile);
+            console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
+          }
+          
           await enviarWhatsApp(userId, confirmationResult.message);
           await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: 'AURORA' });
           await saveInteraction({
@@ -530,6 +557,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const photoStatus = addPhoto(userId, mediaUrl, type);
       
       console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada para cotización`);
+      
+      // ⏱️ T14: Iniciar tracking de transacción en primera foto
+      if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = 'AXEL';
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ⏱️ Transacción AXEL iniciada:', { userId, timestamp: profile.transactionStartedAt });
+      }
       
       // Mensajes según estado
       if (photoStatus.currentCount === 1) {
@@ -606,6 +642,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const fromAgent = profile.activeAgent || 'AURORA';
 
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
+      
+      // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
+      if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = targetAgent;
+        profile.followUpSentAt = null;
+        console.log('[T14] ⏱️ Transacción iniciada en handoff:', { userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt });
+      }
 
       try {
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
@@ -696,6 +740,33 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     await enviarWhatsApp(userId, finalReply);
     
     loggers.webhook.agentResponse(userId, resultado.agenteKey, true);
+    
+    // ⏱️ T14: Limpiar transacción si agente completó exitosamente su servicio
+    // Detectar keywords de finalización en respuesta del agente
+    if (profile.transactionStartedAt && profile.transactionAgent) {
+      const completionKeywords = [
+        'te envío', 'enviado', 'te envié', 'listo', 'completado',
+        'confirmada', 'confirmado', 'reserva exitosa', 'cotización enviada',
+        'hemos terminado', 'proceso completado', 'análisis finalizado',
+        'documentos listos', 'reporte enviado', 'propuesta lista'
+      ];
+      
+      const replyLower = finalReply.toLowerCase();
+      const completionDetected = completionKeywords.some(keyword => replyLower.includes(keyword));
+      
+      if (completionDetected) {
+        const completedAgent = profile.transactionAgent;
+        profile.transactionStartedAt = null;
+        profile.transactionAgent = null;
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ✅ Transacción completada (keyword detected):', { 
+          userId, 
+          agent: completedAgent, 
+          keywords: completionKeywords.filter(k => replyLower.includes(k))
+        });
+      }
+    }
 
     // Marcar primera visita después de responder
     if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {

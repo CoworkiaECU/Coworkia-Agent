@@ -69,13 +69,14 @@ export function initScheduler() {
   jobs.push(cleanupInteractionsJob);
   console.log('[CRON] 📅 Limpieza de interacciones: cada 24 horas');
   
-  // ✅ Follow-up automático de conversaciones abandonadas
-  // Cada hora (solo envía si está en horario 6am-10pm Ecuador)
+  // ✅ Follow-up automático de transacciones pendientes
+  // Cada 30 minutos (verifica si han pasado 2h desde inicio de transacción)
+  // Solo envía UNA vez por transacción, respeta horario 6am-10pm Ecuador
   const followUpJob = new CronJob(
-    '0 * * * *', // Cada hora en punto
+    '*/30 * * * *', // Cada 30 minutos
     async () => {
       try {
-        console.log('[CRON] 🔔 Ejecutando follow-up de conversaciones abandonadas...');
+        console.log('[CRON] 🔔 Verificando transacciones pendientes para follow-up...');
         const result = await processFollowUps();
         console.log(`[CRON] ✅ Follow-up completado: ${result.sent} enviados, ${result.skipped} saltados`);
       } catch (error) {
@@ -88,7 +89,7 @@ export function initScheduler() {
   );
   
   jobs.push(followUpJob);
-  console.log('[CRON] 📅 Follow-up automático: cada 60 minutos (6am-10pm)');
+  console.log('[CRON] 📅 Follow-up automático: cada 30 minutos (6am-10pm, UNA vez por transacción)');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

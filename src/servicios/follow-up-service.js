@@ -1,7 +1,9 @@
 // src/servicios/follow-up-service.js
-// 🔔 Sistema de seguimiento automático para conversaciones abandonadas
+// 🔔 Sistema de seguimiento automático - UNA vez, 2 horas post-transacción
 
 import databaseService from '../database/database.js';
+
+const TWO_HOURS_MS = 120 * 60 * 1000; // 2 horas en milisegundos
 
 /**
  * ⏰ Verifica si estamos en horario permitido para enviar mensajes (6am - 10pm Ecuador)
@@ -23,165 +25,133 @@ export function isWithinAllowedHours() {
 }
 
 /**
- * 🔍 Encuentra usuarios con conversaciones abandonadas (sin confirmar reserva > 3 horas)
+ * 🔍 Encuentra usuarios con transacciones pendientes que necesitan follow-up
+ * Criterios:
+ * - transactionStartedAt existe (hay transacción en curso)
+ * - Han pasado >= 120 minutos desde inicio
+ * - followUpSentAt es NULL (no se ha enviado follow-up)
  * @returns {Promise<Array>}
  */
-export async function findAbandonedConversations() {
+export async function findUsersNeedingFollowUp() {
   try {
-    // Buscar usuarios con última interacción hace más de 3 horas
-    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    const now = Date.now();
+    const twoHoursAgo = now - TWO_HOURS_MS;
     
+    // Buscar usuarios con transacciones >= 2h sin follow-up enviado
     const query = `
-      SELECT DISTINCT 
+      SELECT 
         u.phone_number,
         u.name,
-        u.email,
         u.active_agent,
-        u.last_message_at,
-        u.conversation_count
+        u.transaction_started_at,
+        u.transaction_agent,
+        u.follow_up_sent_at
       FROM users u
-      WHERE u.last_message_at < $1
-        AND u.last_message_at > $2
-        AND (u.active_agent = 'AURORA' OR u.active_agent = 'ALUNA')
-        AND NOT EXISTS (
-          SELECT 1 FROM reservations r 
-          WHERE r.user_phone = u.phone_number 
-          AND r.status = 'confirmed'
-          AND r.created_at > u.last_message_at
-        )
-      ORDER BY u.last_message_at ASC
+      WHERE u.transaction_started_at IS NOT NULL
+        AND u.transaction_started_at <= $1
+        AND u.follow_up_sent_at IS NULL
+      ORDER BY u.transaction_started_at ASC
       LIMIT 50
     `;
     
-    // Últimas 3-24 horas (no enviar a conversaciones muy antiguas)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const users = await databaseService.all(query, [twoHoursAgo]);
     
-    const users = await databaseService.all(query, [threeHoursAgo, twentyFourHoursAgo]);
-    
-    console.log(`[FOLLOW-UP] 🔍 Encontrados ${users.length} usuarios con conversaciones abandonadas`);
+    console.log(`[FOLLOW-UP] 🔍 Encontrados ${users.length} usuarios que necesitan follow-up`);
     
     return users;
   } catch (error) {
-    console.error('[FOLLOW-UP] ❌ Error buscando conversaciones abandonadas:', error);
+    console.error('[FOLLOW-UP] ❌ Error buscando usuarios:', error);
     return [];
   }
 }
 
 /**
- * 📝 Verifica si el usuario tiene formulario parcial o pending confirmation
- * @param {string} phoneNumber
- * @returns {Promise<Object>}
- */
-export async function getUserConversationContext(phoneNumber) {
-  try {
-    // 1. Verificar si tiene formulario parcial
-    const partialForm = await databaseService.get(
-      'SELECT form_data, form_type FROM partial_forms WHERE user_phone = $1',
-      [phoneNumber]
-    );
-    
-    // 2. Verificar pending confirmation
-    const pendingConfirmation = await databaseService.get(
-      'SELECT reservation_data FROM pending_confirmations WHERE user_phone = $1',
-      [phoneNumber]
-    );
-    
-    // 3. Obtener últimos mensajes para contexto
-    const lastMessages = await databaseService.all(
-      'SELECT input, output, agent FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT 3',
-      [phoneNumber]
-    );
-    
-    return {
-      hasPartialForm: !!partialForm,
-      formType: partialForm?.form_type,
-      formData: partialForm?.form_data ? JSON.parse(partialForm.form_data) : null,
-      hasPendingConfirmation: !!pendingConfirmation,
-      pendingData: pendingConfirmation?.reservation_data ? JSON.parse(pendingConfirmation.reservation_data) : null,
-      lastMessages
-    };
-  } catch (error) {
-    console.error('[FOLLOW-UP] ❌ Error obteniendo contexto:', error);
-    return { hasPartialForm: false, hasPendingConfirmation: false };
-  }
-}
-
-/**
- * 💬 Genera mensaje de seguimiento personalizado según contexto
+ * � Genera mensaje de seguimiento según agente especializado
  * @param {Object} user
- * @param {Object} context
  * @returns {string}
  */
-export function generateFollowUpMessage(user, context) {
+export function generateFollowUpMessage(user) {
   const name = user.name || 'Hola';
-  const activeAgent = user.active_agent || 'AURORA';
+  const agent = user.transaction_agent || user.active_agent || 'AURORA';
   
-  // Determinar agente y saludo
-  const isAluna = activeAgent === 'ALUNA';
-  const agentName = isAluna ? 'Aluna' : 'Aurora';
-  const greeting = `¡${name}! 👋 Soy ${agentName}`;
+  // Mensajes específicos por agente
+  const messages = {
+    AURORA: `Hola ${name} 👋
+
+Han pasado 2 horas desde que iniciaste tu reserva. El tiempo de espera se terminó.
+
+Cuando estés listo para una nueva reserva, solo escríbeme y con gusto te ayudo. 😊
+
+¡Hasta pronto!`,
+
+    AXEL: `Hola ${name} 🚗
+
+Han pasado 2 horas desde tu consulta de cotización. 
+
+Con todo gusto puedes retomar el servicio cuando lo necesites, solo envíame un mensaje.
+
+¡Estoy aquí para ayudarte! 🔧`,
+
+    ALUNA: `Hola ${name} ⚖️
+
+Han pasado 2 horas desde tu consulta legal.
+
+Cuando necesites asesoría nuevamente, estaré encantada de ayudarte.
+
+¡Que tengas un excelente día!`,
+
+    ADRIANA: `Hola ${name} 📄
+
+Han pasado 2 horas desde que iniciamos el proceso de constitución.
+
+Si deseas continuar en otro momento, estaré aquí para apoyarte.
+
+¡Saludos cordiales!`,
+
+    ENZO: `Hola ${name} 🎨
+
+Han pasado 2 horas desde tu consulta de marketing.
+
+Cuando quieras retomar el proyecto, con gusto te atiendo.
+
+¡Nos vemos pronto!`,
+
+    ANGELA: `Hola ${name} 💰
+
+Han pasado 2 horas desde tu consulta contable.
+
+Estoy disponible cuando necesites mis servicios nuevamente.
+
+¡Cuídate!`,
+
+    GABI: `Hola ${name} 📊
+
+Han pasado 2 horas desde tu consulta administrativa.
+
+Con gusto te ayudo cuando lo necesites.
+
+¡Hasta pronto!`,
+
+    TOMI: `Hola ${name} 💻
+
+Han pasado 2 horas desde tu consulta de soporte técnico.
+
+Si surge algo más, aquí estoy para ayudarte.
+
+¡Saludos!`
+  };
   
-  // MENSAJES PARA ALUNA (Planes Mensuales / Membresías)
-  if (isAluna) {
-    // Verificar últimos mensajes para contexto de planes
-    const lastInteraction = context.lastMessages?.[0];
-    const userInput = lastInteraction?.input?.toLowerCase() || '';
-    
-    // Si mencionó algún plan específico
-    if (userInput.includes('plan 10') || userInput.includes('plan10')) {
-      return `${greeting} 💼\n\nEstábamos conversando sobre el *Plan 10* (10 días/mes acceso a Hot Desk).\n\n¿Te gustaría conocer más detalles o tienes alguna duda? Puedo ayudarte a encontrar el plan perfecto para ti 🚀`;
-    }
-    
-    if (userInput.includes('plan 20') || userInput.includes('plan20')) {
-      return `${greeting} 💼\n\nEstábamos conversando sobre el *Plan 20* (20 días/mes acceso ilimitado).\n\n¿Continuamos? Puedo explicarte todos los beneficios y ayudarte con la contratación 🚀`;
-    }
-    
-    if (userInput.includes('oficina ejecutiva') || userInput.includes('ejecutiva')) {
-      return `${greeting} 💼\n\nEstábamos viendo la *Oficina Ejecutiva* (espacio privado XL con acceso ilimitado).\n\n¿Te interesa conocer más sobre este plan premium? 🚀`;
-    }
-    
-    if (userInput.includes('oficina virtual') || userInput.includes('virtual')) {
-      return `${greeting} 💼\n\nEstábamos conversando sobre la *Oficina Virtual* (dirección fiscal + secretaria virtual).\n\n¿Quieres que te explique cómo funciona y sus beneficios? 🚀`;
-    }
-    
-    // Mensaje genérico para Aluna
-    return `${greeting} 💼\n\nEstábamos conversando sobre nuestros planes mensuales. ¿Te gustaría que retomemos la conversación?\n\nPuedo ayudarte a encontrar el plan perfecto según tus necesidades 🚀`;
-  }
-  
-  // MENSAJES PARA AURORA (Reservas)
-  // Si tiene pending confirmation
-  if (context.hasPendingConfirmation && context.pendingData) {
-    const { spaceType, date, time } = context.pendingData;
-    return `${greeting}\n\nVeo que quedamos en una reserva para *${spaceType}* el *${date}* a las *${time}*.\n\n¿Deseas confirmarla, modificarla o cancelarla? 😊`;
-  }
-  
-  // Si tiene formulario parcial
-  if (context.hasPartialForm && context.formData) {
-    const { spaceType, date, time } = context.formData;
-    
-    if (spaceType && !date) {
-      return `${greeting}\n\nEstábamos coordinando tu reserva para *${spaceType}*. ¿Te gustaría continuar? Puedo ayudarte a elegir fecha y hora 📅`;
-    }
-    
-    if (spaceType && date && !time) {
-      return `${greeting}\n\nTenemos la fecha *${date}* para tu *${spaceType}*. ¿Quieres que veamos los horarios disponibles? ⏰`;
-    }
-    
-    return `${greeting}\n\nEstábamos en el proceso de tu reserva. ¿Deseas continuar donde lo dejamos? 😊`;
-  }
-  
-  // Mensaje genérico Aurora
-  return `${greeting}\n\nTe escribo para ver si necesitas ayuda con algo. ¿Hay algo en lo que pueda asistirte? 😊`;
+  return messages[agent] || messages.AURORA;
 }
 
 /**
  * 📤 Envía mensaje de seguimiento via Wassenger
  * @param {string} phoneNumber
  * @param {string} message
- * @param {string} activeAgent - Agente activo del usuario (AURORA o ALUNA)
+ * @param {string} agent - Agente que envía el follow-up
  * @returns {Promise<boolean>}
  */
-export async function sendFollowUpMessage(phoneNumber, message, activeAgent = 'AURORA') {
+export async function sendFollowUpMessage(phoneNumber, message, agent = 'AURORA') {
   try {
     const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
     const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
@@ -208,13 +178,7 @@ export async function sendFollowUpMessage(phoneNumber, message, activeAgent = 'A
       throw new Error(`Wassenger error: ${response.status}`);
     }
     
-    const result = await response.json();
-    console.log(`[FOLLOW-UP] ✅ Mensaje enviado a ${phoneNumber} via ${activeAgent}`);
-    
-    // Determinar agente para registro
-    const isAluna = activeAgent === 'ALUNA';
-    const agentKey = isAluna ? 'aluna' : 'aurora';
-    const agentName = isAluna ? 'Aluna' : 'Aurora';
+    console.log(`[FOLLOW-UP] ✅ Mensaje enviado a ${phoneNumber} via ${agent}`);
     
     // Registrar en interactions
     await databaseService.run(
@@ -223,18 +187,27 @@ export async function sendFollowUpMessage(phoneNumber, message, activeAgent = 'A
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         phoneNumber,
-        agentKey,
-        agentName,
-        'follow_up_automatic',
+        agent.toLowerCase(),
+        agent,
+        'follow_up_2h_timeout',
         '',
         message,
         JSON.stringify({ 
           role: 'assistant', 
           timestamp: new Date().toISOString(),
           automatic: true,
-          followUp: true
+          followUp: true,
+          type: '2h_transaction_timeout'
         })
       ]
+    );
+    
+    // Marcar follow-up como enviado
+    await databaseService.run(
+      `UPDATE users 
+       SET follow_up_sent_at = $1 
+       WHERE phone_number = $2`,
+      [Date.now(), phoneNumber]
     );
     
     return true;
@@ -246,9 +219,10 @@ export async function sendFollowUpMessage(phoneNumber, message, activeAgent = 'A
 
 /**
  * 🚀 Proceso principal de follow-up
+ * Ejecuta cada 30 minutos, envía UNA vez después de 2h de iniciar transacción
  */
 export async function processFollowUps() {
-  console.log('[FOLLOW-UP] 🚀 Iniciando proceso de seguimiento automático...');
+  console.log('[FOLLOW-UP] 🚀 Iniciando verificación de transacciones pendientes...');
   
   // 1. Verificar horario permitido
   if (!isWithinAllowedHours()) {
@@ -256,11 +230,11 @@ export async function processFollowUps() {
     return { processed: 0, sent: 0, skipped: 0 };
   }
   
-  // 2. Buscar conversaciones abandonadas
-  const abandonedUsers = await findAbandonedConversations();
+  // 2. Buscar usuarios que necesitan follow-up
+  const usersNeedingFollowUp = await findUsersNeedingFollowUp();
   
-  if (abandonedUsers.length === 0) {
-    console.log('[FOLLOW-UP] ✅ No hay conversaciones que requieran seguimiento');
+  if (usersNeedingFollowUp.length === 0) {
+    console.log('[FOLLOW-UP] ✅ No hay transacciones que requieran seguimiento');
     return { processed: 0, sent: 0, skipped: 0 };
   }
   
@@ -268,29 +242,21 @@ export async function processFollowUps() {
   let skipped = 0;
   
   // 3. Procesar cada usuario
-  for (const user of abandonedUsers) {
+  for (const user of usersNeedingFollowUp) {
     try {
-      // Obtener contexto de la conversación
-      const context = await getUserConversationContext(user.phone_number);
-      
-      // Para Aurora: Solo enviar si hay contexto relevante (formulario o pending)
-      // Para Aluna: Enviar si hay mensajes previos (siempre hay interés en planes)
-      const isAluna = user.active_agent === 'ALUNA';
-      if (!isAluna && !context.hasPartialForm && !context.hasPendingConfirmation) {
-        console.log(`[FOLLOW-UP] ⏭️ Saltando ${user.phone_number} - sin contexto relevante`);
-        skipped++;
-        continue;
-      }
-      
-      // Generar mensaje personalizado
-      const message = generateFollowUpMessage(user, context);
+      // Generar mensaje según agente
+      const message = generateFollowUpMessage(user);
       
       // Enviar mensaje
-      const success = await sendFollowUpMessage(user.phone_number, message, user.active_agent);
+      const success = await sendFollowUpMessage(
+        user.phone_number, 
+        message, 
+        user.transaction_agent || user.active_agent
+      );
       
       if (success) {
         sent++;
-        // Pequeña pausa entre mensajes para no sobrecargar
+        // Pausa entre mensajes
         await new Promise(resolve => setTimeout(resolve, 2000));
       } else {
         skipped++;
@@ -301,11 +267,7 @@ export async function processFollowUps() {
     }
   }
   
-  console.log(`[FOLLOW-UP] 📊 Resumen: ${sent} enviados, ${skipped} saltados de ${abandonedUsers.length} encontrados`);
+  console.log(`[FOLLOW-UP] 📊 Resumen: ${sent} enviados, ${skipped} saltados de ${usersNeedingFollowUp.length} encontrados`);
   
   return {
-    processed: abandonedUsers.length,
-    sent,
-    skipped
-  };
-}
+    processed: usersNeedingFollowUp.length,

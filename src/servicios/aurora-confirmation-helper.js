@@ -723,7 +723,7 @@ export async function enhanceAuroraResponse(originalResponse, userProfile, formR
       console.log('[Confirmation Helper] ⚠️ Usuario en ventana justConfirmed - no reactivar confirmación');
       return {
         enhanced: false,
-        finalMessage: enhancedResponse,
+        finalMessage: originalResponse,
         note: 'skipped_due_to_justConfirmed'
       };
     }
@@ -732,12 +732,12 @@ export async function enhanceAuroraResponse(originalResponse, userProfile, formR
       console.log('[Confirmation Helper] ⚠️ Ya existe pendingConfirmation - evitando re-activación');
       return {
         enhanced: false,
-        finalMessage: enhancedResponse,
+        finalMessage: originalResponse,
         note: 'skipped_due_to_existing_pending'
       };
     }
 
-    const confirmationResult = await processAuroraConfirmationRequest(enhancedResponse, userProfile, formResult);
+    const confirmationResult = await processAuroraConfirmationRequest(originalResponse, userProfile, formResult);
 
     if (!confirmationResult.success) {
       console.log('[Confirmation Helper] ❌ Error:', confirmationResult.error);

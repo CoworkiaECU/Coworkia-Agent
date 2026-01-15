@@ -54,8 +54,8 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
     loggers.orquestador.handoff(activeAgent, targetAgent, userId, intent.reason);
   }
 
-  // 4. Construir contexto reducido (Aurora filtra)
-  const contexto = construirContexto(perfil, historial, formData, handoffContext);
+  // 4. Construir contexto reducido (Aurora filtra según agente)
+  const contexto = construirContexto(perfil, historial, formData, handoffContext, targetAgent);
 
   // 5. Construir prompt para el agente
   const agente = AGENTES[targetAgent];
@@ -115,8 +115,10 @@ function decidirAgente(intent, activeAgent) {
 
 /**
  * Aurora resume lo que el agente necesita saber.
+ * 🎯 ARQUITECTURA: Solo AURORA y ALUNA reciben contexto de reservas.
+ * Otros agentes (Enzo, Angela, etc) operan sin contaminar con datos de coworking.
  */
-function construirContexto(perfil = {}, historial = [], formData = {}, handoffContext = null) {
+function construirContexto(perfil = {}, historial = [], formData = {}, handoffContext = null, targetAgent = 'AURORA') {
   const lineas = [];
 
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
@@ -126,8 +128,96 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     lineas.push(`Reservas futuras: ${perfil.upcomingReservations.length}`);
   }
 
-  if (formData?.summary) {
+  // 🔒 AISLAMIENTO: Solo agentes de coworking reciben contexto de reservas
+  const isCoworkingAgent = ['AURORA', 'ALUNA'].includes(targetAgent);
+  
+  // 🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
+  const isReturningToAurora = targetAgent === 'AURORA' && 
+                              handoffContext && 
+                              handoffContext.fromAgent !== 'AURORA' &&
+                              handoffContext.fromAgent !== 'ALUNA';
+  
+  if (isReturningToAurora && formData?.form && !formData.form.isComplete()) {
+    lineas.push('\n🔄 USUARIO REGRESA CON RESERVA PENDIENTE:');
+    
+    const form = formData.form;
+    const captured = [];
+    
+    if (form.spaceType) captured.push(form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones');
+    if (form.date) captured.push(`fecha: ${form.date}`);
+    if (form.time) captured.push(`hora: ${form.time}`);
+    if (form.email) captured.push(`email: ${form.email}`);
+    
+    if (captured.length > 0) {
+      lineas.push(`📋 Datos ya capturados: ${captured.join(', ')}`);
+    }
+    
+    const missing = form.getMissingFields();
+    if (missing.length > 0) {
+      lineas.push(`❌ Falta: ${missing.join(', ')}`);
+    }
+    
+    lineas.push('\n⚠️ ACCIÓN: Ya se le mostró un resumen de su reserva pendiente.');
+    lineas.push('Si el usuario quiere continuar, procede con las preguntas faltantes.');
+    lineas.push('Si quiere cambiar algo, actualiza los datos según indique.');
+  }
+  
+  if (isCoworkingAgent && formData?.summary) {
     lineas.push(`Reserva en proceso: ${formData.summary}`);
+  }
+  
+  // 📋 FORMULARIO DE RESERVA: Solo para Aurora/Aluna
+  if (isCoworkingAgent && formData?.form) {
+    const form = formData.form;
+    const completed = [];
+    const missing = [];
+    
+    // Analizar qué campos están completos y cuáles faltan
+    if (form.spaceType) {
+      const spaceLabel = form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones';
+      completed.push(`tipo (${spaceLabel})`);
+    } else {
+      missing.push('tipo de espacio');
+    }
+    
+    if (form.date) {
+      completed.push(`fecha (${form.date})`);
+    } else {
+      missing.push('fecha');
+    }
+    
+    if (form.time) {
+      completed.push(`hora (${form.time})`);
+    } else {
+      missing.push('hora');
+    }
+    
+    if (form.email) {
+      completed.push(`email (${form.email})`);
+    } else {
+      missing.push('email');
+    }
+    
+    if (form.numPeople && form.numPeople > 1) {
+      completed.push(`personas (${form.numPeople})`);
+    }
+    
+    // Construir mensaje informativo
+    lineas.push('\n📋 FORMULARIO DE RESERVA EN PROCESO:');
+    
+    if (completed.length > 0) {
+      lineas.push(`✅ Ya capturado: ${completed.join(', ')}`);
+    }
+    
+    if (missing.length > 0) {
+      lineas.push(`❌ Falta: ${missing.join(', ')}`);
+      
+      // Instrucción explícita para evitar preguntas redundantes
+      const completedFields = completed.map(c => c.split('(')[0].trim());
+      lineas.push(`\n⚠️ CRÍTICO: NO preguntes por ${completedFields.join(', ')}. Solo pregunta lo faltante: ${missing.join(', ')}`);
+    } else {
+      lineas.push('✅ Formulario completo - listo para confirmación');
+    }
   }
   
   // 🤝 CONTEXTO DE HANDOFF: Info crucial para continuidad conversacional
@@ -136,14 +226,21 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     lineas.push(`De: ${handoffContext.fromAgent}`);
     lineas.push(`Motivo: ${handoffContext.reason}`);
     lineas.push(`Mensaje que disparó handoff: "${handoffContext.userMessage}"`);
+    
+    // 🔒 NOTA: No pasamos datos de reserva a agentes externos
+    // Aurora mantiene el formulario pendiente para retomar después
+    if (!isCoworkingAgent && handoffContext.fromAgent === 'AURORA') {
+      lineas.push('\n📝 NOTA: Aurora mantendrá cualquier reserva pendiente para cuando el usuario regrese.');
+    }
+    
     lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
   }
 
-  // 💬 MEMORIA CONVERSACIONAL: Últimos 3 intercambios (6 mensajes totales: 3 usuario + 3 asistente)
-  // Optimizado para tokens y relevancia - solo lo más reciente e importante
+  // 💬 MEMORIA CONVERSACIONAL: Últimos 7-8 intercambios (hasta 15 mensajes)
+  // Ampliado para mejor contexto en ecosistema multi-agente con handoffs
   if (historial.length > 0) {
-    // Tomar últimos 6 mensajes (3 intercambios completos)
-    const ultimos = historial.slice(-6);
+    // Tomar últimos 15 mensajes (7-8 intercambios completos)
+    const ultimos = historial.slice(-15);
     
     lineas.push('\n💬 CONVERSACIÓN RECIENTE:');
     

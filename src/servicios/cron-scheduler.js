@@ -6,6 +6,7 @@ import {
   cleanupOldInteractions 
 } from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps } from './follow-up-service.js';
+import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 
 const jobs = [];
 const isProd = process.env.NODE_ENV === 'production';
@@ -90,6 +91,32 @@ export function initScheduler() {
   
   jobs.push(followUpJob);
   console.log('[CRON] 📅 Follow-up automático: cada 30 minutos (6am-10pm, UNA vez por transacción)');
+  
+  // ✅ Limpieza diaria completa de formularios y datos temporales
+  // Exactamente a las 00:00 Ecuador (medianoche)
+  const dailyCleanupJob = new CronJob(
+    '0 0 * * *', // 00:00 (medianoche) todos los días
+    async () => {
+      try {
+        console.log('[CRON] 🧹 Ejecutando limpieza diaria completa (00:00)...');
+        const result = await dailyCleanup();
+        
+        if (result.success) {
+          console.log(`[CRON] ✅ Limpieza diaria completada: ${result.totalCleaned} registros eliminados`);
+        } else {
+          console.error('[CRON] ❌ Error en limpieza diaria:', result.error);
+        }
+      } catch (error) {
+        console.error('[CRON] ❌ Error ejecutando limpieza diaria:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+  
+  jobs.push(dailyCleanupJob);
+  console.log('[CRON] 📅 Limpieza diaria completa: 00:00 (medianoche Ecuador)');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

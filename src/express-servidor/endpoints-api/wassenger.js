@@ -165,7 +165,32 @@ function detectBotLight(data, userId) {
   if (isGroupOrBroadcast(userId)) return { detected: true, reason: 'group_or_broadcast' };
   return { detected: false, reason: null };
 }
-/* ─────────────────────────────────────────────────────────────
+/**
+ * 🔍 Detecta si el mensaje es continuación de un formulario de reserva
+ * Reconoce patrones como: email, "ya te dije", horarios, fechas, personas
+ */
+function detectFormContinuation(text) {
+  if (!text) return false;
+  
+  const continuationPatterns = [
+    /mi\s+(email|correo|mail|e-mail)/i,
+    /ya\s+te\s+(dije|dij[eé]|mencion[eé]|coment[eé]|dí|di)/i,
+    /te\s+(dije|mencion[eé]|coment[eé])/i,
+    /somos\s+\d+/i,
+    /\d+\s+personas?/i,
+    /(voy|vamos|iremos)\s+(con|a ser)/i,
+    /mi\s+nombre\s+es/i,
+    /\w+@\w+\.\w+/i, // Email pattern
+    /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/i, // Fecha completa
+    /(mañana|ma\u00f1ana|hoy|pasado\s+ma\u00f1ana|tarde|noche)/i,
+    /(\d{1,2})(:|\.)?(\d{2})?\s*(am|pm|AM|PM)/i, // Horarios
+    /a\s+las\s+\d+/i, // "a las 9"
+    /para\s+(hoy|mañana|ma\u00f1ana)/i,
+    /el\s+(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)/i
+  ];
+  
+  return continuationPatterns.some(pattern => pattern.test(text));
+}/* ─────────────────────────────────────────────────────────────
    💰 AXEL QUOTE PROCESSOR
 ───────────────────────────────────────────────────────────── */
 async function processAxelQuote(userId, photoUrls, profile) {
@@ -397,26 +422,55 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ✅ Registrar mensaje procesado para rate limiting
     recordMessage(userId);
 
-    // Idioma (comando explícito)
-    const languageCommand = detectLanguageCommand(text);
-    if (languageCommand) {
-      current.preferredLanguage = languageCommand; // 🌍 Actualizar variable local
-      await saveProfile(userId, { ...current, preferredLanguage: languageCommand });
-      const msg = getLanguageChangeConfirmation(languageCommand);
-      await enviarWhatsApp(userId, msg);
-      await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'AURORA' });
-      return;
-    }
-
-    // Auto-detección de idioma (si aplica)
+    // 🌍 Detección natural de idioma
+    // Si el usuario escribe en otro idioma, el sistema cambia automáticamente
     const currentLanguage = current.preferredLanguage || 'es';
     const detectedLanguage = getUserLanguage(text || '', currentLanguage);
-    if (detectedLanguage?.confidence > 0.7 &&
-        detectedLanguage.language &&
+    
+    // Cambio de idioma detectado - natural y sin comandos
+    if (detectedLanguage?.language && 
         detectedLanguage.language !== currentLanguage &&
-        detectedLanguage.source === 'auto_detected_high_confidence') {
+        detectedLanguage.confidence > 0.3) { // Umbral bajo para cambio rápido
+      
+      console.log('[LANGUAGE] 🌍 Cambio de idioma detectado:', {
+        from: currentLanguage,
+        to: detectedLanguage.language,
+        confidence: detectedLanguage.confidence
+      });
+      
+      // Actualizar idioma del perfil
       current.preferredLanguage = detectedLanguage.language;
       await saveProfile(userId, { ...current, preferredLanguage: detectedLanguage.language });
+      
+      // Obtener último mensaje del asistente para repetirlo en nuevo idioma
+      const lastAssistantMessage = conversationHistory
+        .slice()
+        .reverse()
+        .find(msg => msg.role === 'assistant');
+      
+      if (lastAssistantMessage) {
+        console.log('[LANGUAGE] 🔄 Repitiendo último mensaje en nuevo idioma...');
+        
+        // Generar traducción del último mensaje
+        const translationPrompt = `Translate this message to ${detectedLanguage.language === 'en' ? 'English' : 'Spanish'}. Keep the same tone and structure:\n\n"${lastAssistantMessage.content}"`;
+        
+        const translatedMessage = await complete(translationPrompt, {
+          temperature: 0.3,
+          max_tokens: 300
+        });
+        
+        // Enviar mensaje traducido
+        await enviarWhatsApp(userId, translatedMessage);
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: translatedMessage, 
+          agent: lastAssistantMessage.agent || 'AURORA',
+          isTranslation: true
+        });
+        
+        console.log('[LANGUAGE] ✅ Mensaje repetido en', detectedLanguage.language);
+        return; // No continuar con el flujo normal
+      }
     }
 
     // Actualizar perfil mínimo
@@ -448,9 +502,20 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     await saveConversationMessage(userId, { role: 'user', content: processedText });
 
-    // Formulario parcial SOLO si es intención de reserva
+    // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
-    if (isReservationIntent(processedText)) {
+    const savedPartialCheck = await getPartialForm(userId).catch(() => null);
+    const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt);
+    const isFormContinuation = detectFormContinuation(processedText);
+    const shouldActivateForm = isReservationIntent(processedText) || hasActiveForm || isFormContinuation;
+    
+    if (shouldActivateForm) {
+      console.log('[FORM] 🎯 Activando formulario:', { 
+        isReservationIntent: isReservationIntent(processedText),
+        hasActiveForm,
+        isFormContinuation 
+      });
+      
       formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
       formResult.userMessage = text;
       
@@ -519,9 +584,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
-    // Si el usuario reanuda reserva cancelada (si existe partial_form guardado)
-    const savedPartial = await getPartialForm(userId).catch(() => null);
-    if (savedPartial && formResult?.form?.getResumeMessage) {
+    // Si el usuario reanuda reserva (mensaje de continuación si aplica)
+    if (savedPartialCheck && formResult?.form?.getResumeMessage) {
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
@@ -688,6 +752,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // 3. Nuevo agente saluda
         await enviarWhatsApp(userId, mensajeEntrada);
         await saveConversationMessage(userId, { role: 'assistant', content: mensajeEntrada, agent: targetAgent });
+
+        // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
+        if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
+          console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
+          
+          await new Promise(r => setTimeout(r, 600)); // Pequeño delay natural
+          
+          await enviarWhatsApp(userId, formResult.resumeMessage);
+          await saveConversationMessage(userId, { 
+            role: 'assistant', 
+            content: formResult.resumeMessage, 
+            agent: 'AURORA' 
+          });
+          
+          console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
+        }
 
         await saveProfile(userId, { ...profile, activeAgent: targetAgent });
 

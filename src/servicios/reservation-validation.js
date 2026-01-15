@@ -88,12 +88,31 @@ export function validateDuration(durationHours) {
  * 📅 Valida la ventana de tiempo permitida para reservar
  */
 export function validateReservationWindow(date, time) {
-  // IMPORTANTE: Asumir que date y time ya vienen en horario de Ecuador
-  const now = new Date();
+  // IMPORTANTE: Obtener hora actual en timezone Ecuador
+  const formatter = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  const hour = parts.find(p => p.type === 'hour').value;
+  const minute = parts.find(p => p.type === 'minute').value;
+  const second = parts.find(p => p.type === 'second').value;
+  
+  const nowEcuador = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}-05:00`);
   const reservationDateTime = new Date(`${date}T${time}:00-05:00`); // Explicit Ecuador timezone
   
-  const hoursUntilReservation = (reservationDateTime - now) / (1000 * 60 * 60);
-  const daysUntilReservation = (reservationDateTime - now) / (1000 * 60 * 60 * 24);
+  const hoursUntilReservation = (reservationDateTime - nowEcuador) / (1000 * 60 * 60);
+  const daysUntilReservation = (reservationDateTime - nowEcuador) / (1000 * 60 * 60 * 24);
   
   // Validar mínimo de anticipación (más flexible para desarrollo)
   // Solo rechazar si es literalmente en el pasado o muy cercano (30 min)

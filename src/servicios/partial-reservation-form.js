@@ -508,7 +508,21 @@ export function extractDataFromMessage(message, currentForm) {
   }
 
   // 📅 Detectar fecha (SIEMPRE intentar, permite cambiar fecha)
-  const today = new Date();
+  // 🌍 Obtener fecha actual en timezone Ecuador
+  const formatter = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  const todayStr = `${year}-${month}-${day}`;
+  
+  const today = new Date(`${year}-${month}-${day}T12:00:00-05:00`); // Ecuador timezone
   const relativeMatch = lowerMsg.match(/\b(hoy|ma[ñn]ana|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo|lunes|martes)\b/);
   const isoMatch = message.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
   const shortMatch = message.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
@@ -530,48 +544,51 @@ export function extractDataFromMessage(message, currentForm) {
   if (dayOfWeekMatch) {
     const [, dayName, dayNum] = dayOfWeekMatch;
     const day = parseInt(dayNum, 10);
-    const currentMonth = today.getMonth() + 1;
-    const currentYear = today.getFullYear();
+    const currentMonth = parseInt(month);
+    const currentYear = parseInt(year);
     
     // Asumir mes actual, si el día ya pasó usar mes siguiente
-    let month = currentMonth;
-    let year = currentYear;
+    let targetMonth = currentMonth;
+    let targetYear = currentYear;
     
-    if (day < today.getDate()) {
-      month = currentMonth + 1;
-      if (month > 12) {
-        month = 1;
-        year = currentYear + 1;
+    if (day < parseInt(day)) {
+      targetMonth = currentMonth + 1;
+      if (targetMonth > 12) {
+        targetMonth = 1;
+        targetYear = currentYear + 1;
       }
     }
     
-    updates.date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    updates.date = `${targetYear}-${targetMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     console.log('[FORM-DATE] 📅 Detectado día de semana + número:', updates.date);
   } else if (relativeMatch) {
       const keyword = relativeMatch[1];
       if (keyword === 'hoy') {
-        updates.date = today.toISOString().split('T')[0];
+        updates.date = todayStr;
       } else {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        updates.date = tomorrow.toISOString().split('T')[0];
+        
+        const tomorrowParts = formatter.formatToParts(tomorrow);
+        const tomorrowStr = `${tomorrowParts.find(p => p.type === 'year').value}-${tomorrowParts.find(p => p.type === 'month').value}-${tomorrowParts.find(p => p.type === 'day').value}`;
+        updates.date = tomorrowStr;
       }
       console.log('[FORM] 📅 Detectado fecha relativa:', updates.date);
     } else if (namedDateMatch) {
       const [, dayStr, monthName] = namedDateMatch;
-      const month = monthNames[monthName.toLowerCase()];
-      if (month) {
-        const day = parseInt(dayStr, 10);
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth() + 1;
+      const targetMonth = monthNames[monthName.toLowerCase()];
+      if (targetMonth) {
+        const targetDay = parseInt(dayStr, 10);
+        const currentYear = parseInt(year);
+        const currentMonth = parseInt(month);
         
         // Si el mes ya pasó este año, usar año siguiente
-        let year = currentYear;
-        if (month < currentMonth || (month === currentMonth && day < today.getDate())) {
-          year = currentYear + 1;
+        let targetYear = currentYear;
+        if (targetMonth < currentMonth || (targetMonth === currentMonth && targetDay < parseInt(day))) {
+          targetYear = currentYear + 1;
         }
         
-        updates.date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        updates.date = `${targetYear}-${targetMonth.toString().padStart(2, '0')}-${targetDay.toString().padStart(2, '0')}`;
         console.log('[FORM] 📅 Detectado fecha con nombre de mes:', updates.date);
       }
     } else if (isoMatch) {

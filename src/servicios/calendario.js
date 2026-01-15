@@ -336,12 +336,27 @@ async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk')
 }
 
 /**
- * 📅 Obtiene la fecha del día siguiente
+ * 📅 Obtiene la fecha del día siguiente (timezone-aware para Ecuador)
  */
 function getNextDate(dateString) {
-  const date = new Date(dateString);
+  // Crear fecha en timezone Ecuador para evitar issues de UTC
+  const date = new Date(dateString + 'T12:00:00-05:00');
   date.setDate(date.getDate() + 1);
-  return date.toISOString().split('T')[0];
+  
+  // Formatear usando Intl para mantener timezone correcto
+  const formatter = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -606,11 +621,32 @@ export async function updateReservationPayment(reservationId, paymentInfo, autoC
       throw new Error(`Reserva ${reservationId} no encontrada`);
     }
     
+    // Obtener fecha actual en timezone Ecuador
+    const formatter = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const parts = formatter.formatToParts(new Date());
+    const year = parts.find(p => p.type === 'year').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const day = parts.find(p => p.type === 'day').value;
+    const hour = parts.find(p => p.type === 'hour').value;
+    const minute = parts.find(p => p.type === 'minute').value;
+    const second = parts.find(p => p.type === 'second').value;
+    const ecuadorNow = `${year}-${month}-${day}T${hour}:${minute}:${second}-05:00`;
+    
     const updated = await reservationRepository.markAsPaid(reservationId, {
       payment_method: paymentInfo.paymentMethod || 'transfer',
       payment_reference: paymentInfo.reference || null,
       payment_amount: paymentInfo.amount || reservation.total_price,
-      payment_date: paymentInfo.date || new Date().toISOString()
+      payment_date: paymentInfo.date || ecuadorNow
     }, autoConfirm);
     
     return updated;
@@ -625,8 +661,13 @@ export async function updateReservationPayment(reservationId, paymentInfo, autoC
  */
 export async function getReservationByPaymentInfo(paymentData) {
   try {
-    // Obtener reservas recientes (últimos 7 días)
-    const dateLimit = new Date();
+    // Obtener reservas recientes (últimos 7 días) - timezone Ecuador
+    const formatter = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil'
+    });
+    
+    const now = new Date();
+    const dateLimit = new Date(now);
     dateLimit.setDate(dateLimit.getDate() - 7);
     
     const allReservations = await reservationRepository.findByUser(paymentData.userId);

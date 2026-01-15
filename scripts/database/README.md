@@ -1,96 +1,77 @@
-# 🛠️ Scripts Coworkia Agent
+# Scripts Database - Coworkia Agent
 
-## 📂 Estructura
+Herramientas operacionales para PostgreSQL. Refactorizado en Enero 2026.
 
-### Scripts Activos (Raíz)
-Herramientas de uso frecuente para operaciones y mantenimiento:
+---
 
-**Auditoría y Monitoreo:**
-- `audit-reservations.js` - Auditar reservas del sistema
-- `check-reservations.js` - Ver estado de reservas
-- `check-user-reservations.js` - Reservas de usuario específico
-- `check-axel-status.js` - Verificar estado de Axel (The PaintBull)
-- `monitor-pending.js` - Monitorear confirmaciones pendientes
+## Scripts Activos
 
-**Limpieza y Mantenimiento:**
-- `cleanup-all-cache.js` - Limpiar todos los cachés
-- `cleanup-expired-data.js` - Eliminar datos expirados
-- `cleanup-past-reservations.js` - Limpiar reservas pasadas
-- `cleanup-partial-forms.js` - Limpiar formularios parciales
-- `clean-user-data.js` - Reset datos de usuario
-- `clear-database.js` - Limpiar base de datos completa
-- `clear-pending-confirmation.js` - Limpiar confirmaciones pendientes
+### Auditoría y Diagnóstico
+- **`audit-full-database.js`** - Auditoría completa PostgreSQL (estructura, índices, FK, issues)
+- **`audit-reservations.js`** - Auditoría específica del sistema de reservas
+- **`check-reservations.js`** - Ver estado de reservas activas
+- **`check-user-reservations.js`** - Reservas de usuario específico
+- **`check-axel-status.js`** - Diagnóstico estado Axel (The PaintBull)
+- **`monitor-pending.js`** - Monitorear confirmaciones pendientes
 
-**Gestión de Reservas:**
-- `manage-reservations.js` - CRUD de reservas
+### Limpieza y Mantenimiento
+- **`cleanup-expired-data.js`** - Limpieza automática: confirmaciones expiradas, interacciones antiguas, reservas pasadas
+- **`cleanup-partial-forms.js`** - Limpiar formularios parciales abandonados
 
-**Deployment:**
-- `deploy-heroku.sh` - Script de deploy a Heroku
-- `setup-heroku-production.sh` - Setup inicial Heroku
-- `reset-postgres-heroku.sh` - Reset DB Heroku
-- `toggle-wassenger.sh` - Activar/desactivar Wassenger
-- `update-gmail-config.sh` - Actualizar config Gmail
+### Gestión de Reservas
+- **`manage-reservations.js`** - CRUD completo de reservas
 
-**Utilidades:**
-- `generate-webhook-secret.js` - Generar secreto webhook
-- `reset-user-via-api.sh` - Reset usuario vía API
-- `reset-test-user.mjs` - Reset usuario de prueba
+---
 
-### 📦 Archivos
-
-#### `migrations-archive/`
-Migrations ejecutadas una sola vez (YA APLICADAS):
-- `migrate-active-agent.js` - Agrega campo activeAgent
-- `migrate-add-tracking-columns.js` - Agrega tracking columns
-- `migrate-postgres-schema.js` - Migración SQLite → PostgreSQL
-- `fix-corrupt-data.js` - Fix datos corruptos (Nov 2025)
-- `fix-unique-index.js` - Fix índice único
-
-⚠️ **NO ejecutar de nuevo** - Solo referencia histórica
-
-#### `tests-manual/`
-Scripts de testing manual para desarrollo:
-- `test-aurora-local.js` - Test Aurora local
-- `test-aurora-multilanguage.js` - Test multi-idioma Aurora
-- `test-campaign-flow.js` - Test flujo campañas
-- `test-complete-flow.js` - Test flujo completo
-- `test-confirmation-fix.js` - Test confirmaciones
-- `test-follow-up-local.js` - Test follow-ups
-- `test-hotdesk-tracking.js` - Test tracking hot desk
-- `test-integration-multilanguage.js` - Test integración multi-idioma
-- `test-new-customer-flow.js` - Test clientes nuevos
-- `test-overlap-logic.js` - Test lógica overlaps
-- `test-payment-receipt.js` - Test recibos pago
-- `test-recurring-customer.js` - Test clientes recurrentes
-- `test-validations.js` - Test validaciones
-
-💡 Para tests automatizados usa `npm test` (Jest)
-
-## 🚀 Uso Común
+## Uso Común
 
 ```bash
 # Ver reservas de usuario
-node scripts/check-user-reservations.js +593987654321
+node scripts/database/check-user-reservations.js +593987654321
 
-# Limpiar datos expirados (recomendado: semanal)
-node scripts/cleanup-expired-data.js
+# Limpieza automática (recomendado: semanal)
+node scripts/database/cleanup-expired-data.js
 
-# Auditar sistema de reservas
-node scripts/audit-reservations.js
+# Auditoría completa de PostgreSQL
+node scripts/database/audit-full-database.js
 
-# Deploy a producción
-./scripts/deploy-heroku.sh
+# Auditoría sistema reservas
+node scripts/database/audit-reservations.js
 ```
 
-## ⚠️ Scripts Peligrosos
+---
 
-Estos scripts modifican/eliminan datos. Usar con precaución:
-- `clear-database.js` - ⛔ ELIMINA TODA LA DB
-- `cleanup-all-cache.js` - Limpia todos los cachés
-- `reset-postgres-heroku.sh` - ⛔ RESETEA DB HEROKU
+## Archivos Relacionados
 
-## 📝 Notas
+### ../migrations-archive/
+Migrations ejecutadas una sola vez (YA APLICADAS):
+- `migrate-heroku.js` - Migración 001-unified-conversations
+- `run-axel-migration.js` - Crear tabla axel_quotes  
+- `cleanup-obsolete-tables.js` - Limpieza tablas legacy
+- `migrate-active-agent.js` - Campo activeAgent
+- `migrate-add-tracking-columns.js` - Tracking columns
+- `migrate-postgres-schema.js` - SQLite → PostgreSQL
+- `fix-corrupt-data.js` - Fix datos corruptos
+- `fix-unique-index.js` - Fix índice único
 
-- Scripts organizados: Enero 2026
+ **NO ejecutar** - Solo referencia histórica
+
+### ../maintenance/
+Ver `scripts/maintenance/` para:
+- `manual-agent-reset.js` - Reset manual de agentes (T9)
+- `reset-server-state.js` - Reset estado servidor
+
+---
+
+## Historial de Refactor
+
+**Enero 2026:** Limpieza exhaustiva /scripts/database
+- Eliminados: 6 archivos obsoletos/duplicados/peligrosos
+- Movidos: 3 migrations a archive
+- Renombrado: audit-database → audit-full-database
+- **Antes:** 19 archivos | **Después:** 9 archivos activos
+
+Ver `auditoria-scripts-database.md` para análisis completo.
+
 - Migrations archivadas: Ya aplicadas en producción
 - Tests manuales: Para desarrollo local

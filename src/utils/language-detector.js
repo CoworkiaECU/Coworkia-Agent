@@ -8,14 +8,16 @@
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
-  QUECHUA: 'qu'
+  QUECHUA: 'qu',
+  AMHARIC: 'am'
 };
 
 // Nombres legibles de idiomas
 export const LANGUAGE_NAMES = {
   es: 'Español',
   en: 'English',
-  qu: 'Runasimi'
+  qu: 'Runasimi',
+  am: 'አማርኛ'
 };
 
 /**
@@ -193,9 +195,36 @@ export function detectLanguageCommand(message) {
 
   // Frases naturales de cambio de idioma
   const naturalCommands = [
-    { patterns: [/cambiar?\s+(a|al)?\s*inglés/i, /habla(r)?\s+inglés/i, /switch\s+to\s+english/i], lang: SUPPORTED_LANGUAGES.ENGLISH },
-    { patterns: [/cambiar?\s+(a|al)?\s*español/i, /habla(r)?\s+español/i, /switch\s+to\s+spanish/i], lang: SUPPORTED_LANGUAGES.SPANISH },
-    { patterns: [/cambiar?\s+(a|al)?\s*quechua/i, /habla(r)?\s+quechua/i, /runasimita/i], lang: SUPPORTED_LANGUAGES.QUECHUA }
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*inglés/i, 
+        /habla(r)?\s+inglés/i, 
+        /switch\s+to\s+english/i,
+        /do\s+you\s+speak\s+english/i,
+        /can\s+you\s+speak\s+english/i,
+        /hablas\s+inglés/i,
+        /hablas\s+ingles/i,
+        /english\s+please/i
+      ], lang: SUPPORTED_LANGUAGES.ENGLISH },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*español/i, 
+        /habla(r)?\s+español/i, 
+        /switch\s+to\s+spanish/i,
+        /do\s+you\s+speak\s+spanish/i,
+        /can\s+you\s+speak\s+spanish/i,
+        /hablas\s+español/i
+      ], lang: SUPPORTED_LANGUAGES.SPANISH },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*quechua/i, 
+        /habla(r)?\s+quechua/i, 
+        /runasimita/i
+      ], lang: SUPPORTED_LANGUAGES.QUECHUA },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*amárico/i,
+        /cambiar?\s+(a|al)?\s*amarico/i,
+        /habla(r)?\s+amárico/i,
+        /do\s+you\s+speak\s+amharic/i,
+        /አማርኛ/
+      ], lang: SUPPORTED_LANGUAGES.AMHARIC }
   ];
 
   for (const { patterns, lang } of naturalCommands) {

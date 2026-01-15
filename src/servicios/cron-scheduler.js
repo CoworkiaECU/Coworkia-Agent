@@ -6,6 +6,7 @@ import {
   cleanupOldInteractions 
 } from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps } from './follow-up-service.js';
+import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 
 const jobs = [];
 const isProd = process.env.NODE_ENV === 'production';
@@ -69,13 +70,14 @@ export function initScheduler() {
   jobs.push(cleanupInteractionsJob);
   console.log('[CRON] 📅 Limpieza de interacciones: cada 24 horas');
   
-  // ✅ Follow-up automático de conversaciones abandonadas
-  // Cada hora (solo envía si está en horario 6am-10pm Ecuador)
+  // ✅ Follow-up automático de transacciones pendientes
+  // Cada 30 minutos (verifica si han pasado 2h desde inicio de transacción)
+  // Solo envía UNA vez por transacción, respeta horario 6am-10pm Ecuador
   const followUpJob = new CronJob(
-    '0 * * * *', // Cada hora en punto
+    '*/30 * * * *', // Cada 30 minutos
     async () => {
       try {
-        console.log('[CRON] 🔔 Ejecutando follow-up de conversaciones abandonadas...');
+        console.log('[CRON] 🔔 Verificando transacciones pendientes para follow-up...');
         const result = await processFollowUps();
         console.log(`[CRON] ✅ Follow-up completado: ${result.sent} enviados, ${result.skipped} saltados`);
       } catch (error) {
@@ -88,7 +90,33 @@ export function initScheduler() {
   );
   
   jobs.push(followUpJob);
-  console.log('[CRON] 📅 Follow-up automático: cada 60 minutos (6am-10pm)');
+  console.log('[CRON] 📅 Follow-up automático: cada 30 minutos (6am-10pm, UNA vez por transacción)');
+  
+  // ✅ Limpieza diaria completa de formularios y datos temporales
+  // Exactamente a las 00:00 Ecuador (medianoche)
+  const dailyCleanupJob = new CronJob(
+    '0 0 * * *', // 00:00 (medianoche) todos los días
+    async () => {
+      try {
+        console.log('[CRON] 🧹 Ejecutando limpieza diaria completa (00:00)...');
+        const result = await dailyCleanup();
+        
+        if (result.success) {
+          console.log(`[CRON] ✅ Limpieza diaria completada: ${result.totalCleaned} registros eliminados`);
+        } else {
+          console.error('[CRON] ❌ Error en limpieza diaria:', result.error);
+        }
+      } catch (error) {
+        console.error('[CRON] ❌ Error ejecutando limpieza diaria:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+  
+  jobs.push(dailyCleanupJob);
+  console.log('[CRON] 📅 Limpieza diaria completa: 00:00 (medianoche Ecuador)');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

@@ -1,6 +1,6 @@
 /**
- * 🧠 Sistema de memoria: perfiles de usuarios e historial de interacciones
- * MIGRADO A SQLite para mejor performance y escalabilidad
+ * Sistema de memoria: perfiles de usuarios e historial de interacciones
+ * Migrado a PostgreSQL para mejor performance y escalabilidad
  */
 
 import databaseService from '../database/database.js';
@@ -27,7 +27,7 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 /**
- * � CACHÉ EN MEMORIA PARA PERFILES (P1 - v427)
+ * Cache en memoria para perfiles
  * TTL: 30 segundos para reducir queries repetitivas
  */
 const profileCache = new Map();
@@ -69,7 +69,7 @@ function invalidateCachedProfile(userId) {
 }
 
 /**
- * �🚀 Inicializar base de datos al importar el módulo
+ * Inicializar base de datos al importar el módulo
  */
 let dbInitialized = false;
 
@@ -87,7 +87,7 @@ async function ensureDbInitialized() {
 }
 
 /**
- * 📋 Carga todos los perfiles (para compatibilidad)
+ * Carga todos los perfiles (para compatibilidad)
  */
 export async function loadAllProfiles() {
   await ensureDbInitialized();
@@ -210,11 +210,15 @@ export async function saveProfile(userId, partialProfile = {}) {
   invalidateCachedProfile(userId);
   
   try {
+    // 🔥 SINCRONIZACIÓN NOMBRE: whatsapp_display_name es la fuente de verdad
+    const displayName = partialProfile.whatsappDisplayName || partialProfile.name;
+    const syncedName = displayName || null;
+
     // Convertir formato de aplicación a formato SQLite
     const sqliteData = {
-      name: partialProfile.name,
+      name: syncedName, // 🎯 Siempre sincronizado con display name
       email: partialProfile.email,
-      whatsapp_display_name: partialProfile.whatsappDisplayName,
+      whatsapp_display_name: displayName, // Guardar también el display name
       first_visit: partialProfile.firstVisit,
       free_trial_used: partialProfile.freeTrialUsed,
       free_trial_date: partialProfile.freeTrialDate,
@@ -478,13 +482,13 @@ export async function clearPartialForm(userId) {
   }
 }
 
-// 🗑️ REMOVIDO: calculateReservationCost y getPaymentInfo movidas a payment-calculator.js
+// Removido: calculateReservationCost y getPaymentInfo movidas a payment-calculator.js
 // Re-exportadas automáticamente en línea 16 para compatibilidad
 export { calculateReservationCost, getPaymentInfo } from '../servicios/payment-calculator.js';
 
 /**
- * 📜 Carga historial de conversación (stub temporal)
- * TODO: Implementar con tabla interactions
+ * Carga historial de conversación
+ * Implementado con tabla interactions
  */
 export async function loadConversationHistory(userId, limit = 10) {
   try {
@@ -500,8 +504,8 @@ export async function loadConversationHistory(userId, limit = 10) {
 }
 
 /**
- * 💬 Guarda mensaje de conversación (stub temporal)
- * TODO: Implementar almacenamiento estructurado
+ * Guarda mensaje de conversación
+ * Almacenamiento estructurado en interactions
  */
 export async function saveConversationMessage(userId, message, role = 'user') {
   try {

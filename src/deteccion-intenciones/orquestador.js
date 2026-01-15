@@ -1,6 +1,5 @@
-// Cerebro Principal: Orquestador de Agentes de Coworkia
-// Integra Aurora, Aluna, Adriana, Enzo, Ángela, Axel y Gabi con memoria contextual
-// + Sistema de coordinación inteligente por tópicos
+// deteccion-intenciones/orquestador.js
+// Aurora Core — Orquestador central del ecosistema Coworkia
 
 import { AURORA } from './aurora.js';
 import { ALUNA } from './aluna.js';
@@ -11,14 +10,8 @@ import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
 import { TOMI } from './tomi.js';
 import { detectarIntencion } from './detectar-intencion.js';
-import { 
-  shouldHandover, 
-  detectTopicFromMessage, 
-  getAgentForTopic,
-  getUserActiveTopics 
-} from '../servicios/aurora-coordinator.js';
+import { loggers } from '../utils/logger.js';
 
-// Configuración de agentes
 export const AGENTES = {
   AURORA,
   ALUNA,
@@ -30,978 +23,248 @@ export const AGENTES = {
   TOMI
 };
 
-const POST_EMAIL_REACTIVATION_KEYWORDS = [
-  'cancelar',
-  'cancelación',
-  'cancelacion',
-  'cambiar fecha',
-  'cambiar hora',
-  'modificar reserva',
-  'reprogramar',
-  'reagendar',
-  'otra fecha',
-  'otra hora',
-  'nueva reserva',
-  'reservar'
-];
-
 /**
- * Selecciona el agente apropiado y construye el prompt completo
- * @param {string} mensaje - Mensaje del usuario
- * @param {object} perfil - Perfil del usuario (opcional)
- * @param {array} historial - Últimas interacciones (opcional)
- * @param {object} formData - Datos del formulario parcial (opcional)
- * @returns {object} { agente, systemPrompt, prompt, metadata }
+ * Aurora Core decide TODO.
  */
-export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = null) {
-  // 1. Obtener agente activo PRIMERO
+export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = {}) {
+  const startTime = Date.now();
   const activeAgent = perfil.activeAgent || 'AURORA';
-  
-  // 2. Detectar intención (pasando el agente activo como contexto)
-  const intencion = detectarIntencion(mensaje, activeAgent);
-  
-  // 3. LÓGICA DE SELECCIÓN DE AGENTE:
-  // - Si hay handoff explícito (@código): CAMBIAR al nuevo agente
-  // - Si requiere Aurora específicamente (pago, modificación): CAMBIAR a Aurora
-  // - Si es keyword match pero ya hay activeAgent: MANTENER activeAgent
-  // - Si no hay activeAgent: USAR el detectado
-  
-  const isAgentHandoff = Boolean(intencion.flags?.agentHandoff);
-  const isReturningToAurora = Boolean(intencion.flags?.returningToAurora);
-  const requiresAurora = Boolean(intencion.flags?.requiresAurora);
-  const isKeywordMatch = Boolean(intencion.flags?.isKeywordMatch);
-  const maintainingActive = Boolean(intencion.flags?.maintainingActive);
-  
-  let agenteKey;
-  
-  if (isAgentHandoff || isReturningToAurora) {
-    // Cambio explícito con @código
-    agenteKey = intencion.agent;
-    console.log(`[ORQUESTADOR] 🔄 Handoff explícito hacia: ${agenteKey}`);
-  } else if (requiresAurora && activeAgent !== 'AURORA') {
-    // Contexto que requiere Aurora específicamente
-    agenteKey = 'AURORA';
-    console.log(`[ORQUESTADOR] ⚠️ Contexto requiere Aurora (${intencion.reason}), cambiando desde ${activeAgent}`);
-  } else if (isKeywordMatch && activeAgent && activeAgent !== 'AURORA') {
-    // Keywords sugieren otro agente pero ya hay uno activo (NO Aurora)
-    // MANTENER el agente activo
-    agenteKey = activeAgent;
-    console.log(`[ORQUESTADOR] 🎯 Keywords sugieren ${intencion.agent}, pero manteniendo agente activo: ${activeAgent}`);
-  } else {
-    // Usar el detectado (puede ser el mismo activeAgent si maintainingActive=true)
-    agenteKey = intencion.agent;
-    if (maintainingActive) {
-      console.log(`[ORQUESTADOR] ✅ Manteniendo agente activo: ${activeAgent}`);
-    } else {
-      console.log(`[ORQUESTADOR] 📍 Usando agente detectado: ${agenteKey}`);
-    }
-  }
-  
-  const agente = AGENTES[agenteKey.toUpperCase()];
-  
-  // 🚫 CANCELACIÓN DETECTADA
-  const esCancelacion = Boolean(intencion.flags?.cancelacion);
-  
-  // � SALUDO CASUAL DETECTADO
-  const esSaludoCasual = Boolean(intencion.flags?.casualGreeting);
-  
-  // �🔄 RELEVO ENTRE AGENTES
-  const esRelevoHaciaOtro = isAgentHandoff;
-  const esRetornoAurora = isReturningToAurora;
-  
-  // 🔄 MODIFICACIÓN DE RESERVA DETECTADA
-  const esModificacionReserva = Boolean(intencion.flags?.modificacionReserva);
-  
-  // 💳 SOLICITUD DE LINK DE PAGO DETECTADA
-  const esPaymentLinkRequest = Boolean(intencion.flags?.paymentLinkRequest);
-  
-  // 🎯 PREGUNTA DE IDENTIDAD DETECTADA
-  const esPreguntaIdentidad = Boolean(intencion.flags?.identityQuestion);
-  
-  // 🤖 PROMOCIÓN DE VENTA DE AGENTES VIRTUALES
-  const esPromocionVentaAgentes = Boolean(intencion.flags?.virtualAgentSalesPromo);
-  
-  // 🛟 SOPORTE POST-EMAIL: activar si:
-  // - Se detecta patrón post-email en el mensaje (detalles reserva, mi reserva, etc.)
-  // - O si justConfirmed está activo
-  // - O si tiene reservas Y NO tiene pendingConfirmation (ya confirmó antes)
-  const tieneReservasConfirmadas = perfil.reservationHistory && perfil.reservationHistory.length > 0;
-  const sinReservaPendiente = !perfil.pendingConfirmation;
-  const esSoportePostEmail = Boolean(
-    intencion.flags?.postEmailSupport || 
-    perfil.justConfirmed || 
-    (tieneReservasConfirmadas && sinReservaPendiente)
-  );
+  const userId = perfil.userId || 'unknown';
 
-  if (!agente) {
-    throw new Error(`Agente ${agenteKey} no encontrado`);
+  loggers.orquestador.userMessage(userId, activeAgent, mensaje);
+
+  // 1. Detectar intención
+  const intent = detectarIntencion(mensaje, activeAgent);
+  loggers.orquestador.debug('Intención detectada', { userId, agent: activeAgent, intent: intent.type });
+
+  // 2. Aurora Core decide a qué agente ir
+  const targetAgent = decidirAgente(intent, activeAgent);
+  
+  // 3. Detectar handoff y capturar contexto
+  const isHandoff = targetAgent !== activeAgent;
+  const handoffContext = isHandoff ? {
+    fromAgent: activeAgent,
+    toAgent: targetAgent,
+    reason: intent.reason,
+    userMessage: mensaje,
+    timestamp: new Date().toISOString()
+  } : null;
+  
+  if (isHandoff) {
+    loggers.orquestador.handoff(activeAgent, targetAgent, userId, intent.reason);
   }
 
-  // 2. Construir contexto según el agente
-  // 🎯 CONTEXTO ESPECÍFICO POR AGENTE:
-  // - Aurora: Recibe TODO (perfil, historial, reservas, formularios)
-  // - Enzo/Adriana/Aluna: Solo nombre, historial de CONVERSACIÓN (no reservas)
-  
-  const esAurora = agenteKey.toUpperCase() === 'AURORA';
-  
-  // Contexto de perfil: Aurora recibe todo, otros solo básico
-  const contextoUsuario = esAurora 
-    ? construirContextoPerfil(perfil, { postEmailSupport: esSoportePostEmail, mensaje })
-    : construirContextoPerfilBasico(perfil, agenteKey);
+  // 4. Construir contexto reducido (Aurora filtra según agente)
+  const contexto = construirContexto(perfil, historial, formData, handoffContext, targetAgent);
 
-  // Contexto de historial: Filtrar por agente activo
-  const contextoHistorial = construirContextoHistorial(historial, agenteKey);
+  // 5. Construir prompt para el agente
+  const agente = AGENTES[targetAgent];
+  if (!agente) throw new Error(`Agente no encontrado: ${targetAgent}`);
 
-  // 4. 🧠 Contexto de formulario: SOLO AURORA
-  const contextoFormulario = (esAurora && formData) ? construirContextoFormulario(formData) : '';
-
-  // 🔍 DEBUG: Log del contexto construido
-  console.log(`[DEBUG-CONTEXTO] 🧠 Contexto para ${agenteKey}:`, {
-    tieneHistorial: historial && historial.length > 0,
-    mensajesHistorial: historial ? historial.length : 0,
-    tienePendingConfirmation: !!(perfil.pendingConfirmation),
-    pendingData: perfil.pendingConfirmation ? {
-      date: perfil.pendingConfirmation.date,
-      startTime: perfil.pendingConfirmation.startTime
-    } : null,
-    tieneFormData: !!formData,
-    primeraVisita: perfil.firstVisit,
-    tieneEmail: !!perfil.email,
-    modoSoportePostEmail: esSoportePostEmail,
-    esModificacionReserva: esModificacionReserva,
-    tieneReservasConfirmadas: perfil.reservationHistory && perfil.reservationHistory.length > 0,
-    cantidadReservas: perfil.reservationHistory ? perfil.reservationHistory.length : 0
-  });
-
-  // 5. Construir prompt completo con contexto
-  const instruccionesModificacion = esModificacionReserva ? `
-🔄 MODIFICACIÓN DE RESERVA DETECTADA:
-- El usuario quiere MODIFICAR/CAMBIAR una reserva existente, NO crear una nueva
-- Usuario dijo: "${mensaje}"
-- Busca en el contexto cuál reserva quiere modificar (puede decir "la del lunes", "la de las 12", "la que te dije")
-- NO ofrezcas crear nueva reserva - él quiere cambiar la existente
-- Pregunta: "¿A qué fecha y hora prefieres cambiar tu reserva?"
-- Una vez obtenida nueva fecha/hora, confirma: "Perfecto! Cambio tu reserva a [nueva info]. ¿Confirmas?"` : '';
-  
-  const instruccionesPostEmail = esSoportePostEmail ? `
-- 🛟 MODO SOPORTE POST-CONFIRMACIÓN: Usa los datos de la reserva confirmada para responder dudas específicas.
-- 🚫 NO reinicies el flujo de reservas ni vuelvas a pedir datos, a menos que el usuario escriba explícitamente alguno de estos keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}.
-- ✅ Si menciona esas palabras clave, entonces sí guía el flujo adecuado (cancelar, reprogramar o nueva reserva).` : '';
-  
-  const instruccionesCancelacion = esCancelacion ? `
-🚫 CANCELACIÓN DETECTADA:
-- El usuario quiere CANCELAR el flujo actual de reserva
-- NO sigas preguntando datos de la reserva
-- NO intentes completar el formulario
-- Confirma que has cancelado el proceso
-- Ofrece ayuda conversacional: "¿En qué más puedo ayudarte?"
-- Mantente disponible para responder preguntas generales sobre Coworkia
-- Si quiere reservar después, esperará a que lo solicite explícitamente` : '';
-
-  const instruccionesPaymentLink = esPaymentLinkRequest ? `
-💳 SOLICITUD DE LINK DE PAGO DETECTADA:
-- El usuario pidió el link de pago (dijo: "${mensaje}")
-- Busca en "RESERVAS CONFIRMADAS FUTURAS" su reserva con status pending_payment
-- NO reinicies el flujo ni preguntes qué espacio necesita
-- Responde: "¡Claro! Te envío el link de pago para tu reserva del [FECHA] a las [HORA]"
-- Luego muestra INMEDIATAMENTE:
-  
-  💳 *PAGO CON TARJETA (Payphone):*
-  https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
-  💰 Total: $[MONTO]
-  
-  🏦 *TRANSFERENCIA BANCARIA:*
-  Produbanco - Cta Ahorros: 20059783069
-  Cédula: 1702683499
-  Titular: Gonzalo Villota Izurieta
-  💰 Total: $[MONTO sin comisión]
-  
-  📲 Envíame tu comprobante para confirmar automáticamente ✅
-
-- Si NO tiene reservas confirmadas, di: "Aún no tienes una reserva confirmada. ¿Te gustaría hacer una?"` : '';
-
-  const instruccionesRetorno = esRetornoAurora ? `
-👋 RETORNO DE USUARIO A AURORA:
-- El usuario mencionó @Aurora - está volviendo después de hablar con otro agente
-- SALUDO SENCILLO: "¡Hola ${perfil.whatsappDisplayName || perfil.name || 'de nuevo'}! 😊 ¿En qué te puedo ayudar?"
-- Si hay formulario parcial, pregunta: "¿Quieres continuar con tu reserva?"
-- Si NO hay formulario, SOLO saluda y espera que el usuario diga qué necesita
-- NO ofrezcas espacios ni servicios automáticamente
-- El usuario dirige la conversación` : '';
-
-  const instruccionesSaludoCasual = esSaludoCasual ? `
-👋 SALUDO CASUAL DETECTADO:
-- El usuario solo dijo "${mensaje}" (saludo informal)
-- RESPUESTA BREVE Y CÁLIDA CON PRESENTACIÓN:
-
-"¡Hola ${perfil.whatsappDisplayName || perfil.name}! Soy Aurora 😊
-
-¿En qué te puedo ayudar?"
-
-- ⛔ NO ofrezcas espacios (Hot Desk, Sala de Reuniones)
-- ⛔ NO menciones servicios no solicitados
-- ⛔ NO preguntes "¿Te gustaría reservar?"
-- ⛔ NO muestres lista de precios
-- ✅ SOLO saluda con presentación breve y espera
-- El usuario dirige la conversación y dirá qué necesita` : '';
-
-  const instruccionesPreguntaIdentidad = esPreguntaIdentidad ? `
-🎯 PREGUNTA DE IDENTIDAD DETECTADA:
-- El usuario preguntó: "${mensaje}"
-- RESPONDE CON LA RESPUESTA BOMBA DEL ECOSISTEMA (formato amigable con espacios):
-
-"¡Soy Aurora! 🌟 El cerebro que conecta TODO el ecosistema de Coworkia 🧠✨
-
-🏢 *Coworkia*
-Espacios de trabajo que inspiran
-
-💡 *MarketingLab* (@enzo)
-Marketing, IA y automatización
-
-💚 *MedBeneficios* (@angela)
-Salud y bienestar integral
-
-🚗 *The PaintBull* (@axel)
-Reparación de vehículos express
-
-💼 *GR Consulting* (@gabi)
-Finanzas, contabilidad y asesoría legal
-
-🏡 *Coworkia Real Estate* (@tomi)
-Propiedades Ecuador y República Dominicana
-
-📋 *Planes y Membresías* (@aluna)
-Tu espacio perfecto
-
-━━━━━━━━━━━━━━━━━
-
-🎯 *Mi superpoder:* Entiendo lo que necesitas y te conecto AL INSTANTE con el experto correcto.
-
-Un sistema, múltiples soluciones, CERO complicaciones.
-
-¿Qué te gustaría explorar primero? 😊🚀"
-
-⛔ CONTROL CRÍTICO - DESPUÉS DE ENVIAR RESPUESTA BOMBA:
-❌ NO agregues: "¿Qué espacio necesitas?"
-❌ NO muestres: Hot Desk, Sala de Reuniones, precios
-❌ NO ofrezcas: "¿Te gustaría reservar?"
-❌ NO preguntes por servicios específicos
-✅ SOLO la respuesta bomba y TERMINAR
-✅ El usuario dirá qué necesita en el SIGUIENTE mensaje` : '';
-  
-  const instruccionesPromocionVentaAgentes = esPromocionVentaAgentes ? `
-🤖 PROMOCIÓN: VENTA DE SISTEMA AGENTES VIRTUALES DETECTADA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-El usuario llegó desde campaña de MarketingLab OneMind y preguntó: "${mensaje}"
-
-🎯 TU MISIÓN: Demostrar tu capacidad y vender el sistema de agentes virtuales
-
-RESPONDE CON ESTE MENSAJE (personaliza según contexto):
-
-"¡Me encanta que me preguntes eso! 😊 
-
-Déjame mostrarte lo que soy capaz de hacer... 
-
-*Ahora mismo estoy:*
-• Coordinando conversaciones con múltiples usuarios simultáneamente 🎯
-• Procesando reservas sin intervención humana 📅
-• Derivando a 6 agentes especializados según el contexto 🤖
-• Gestionando pagos y confirmaciones automáticamente 💳
-• Respondiendo en español e inglés según el usuario 🌍
-
-Y esto es solo el 10% de lo que puedo hacer para tu empresa.
-
-¿Qué tipo de negocio tienes? Así te muestro cómo un agente como yo puede transformarlo 🚀"
-
-⚠️ REGLAS CRÍTICAS:
-• Tono entusiasta y confiado (demuestras seguridad en el sistema)
-• HAZ PREGUNTA sobre su negocio para personalizar
-• NO des precios (eso es para @enzo)
-• SÍ menciona beneficios: 24/7, sin errores, escalable, ROI rápido
-• Compara con humanos: recepcionista 1 cliente vs tú 100+ simultáneos
-• Después de que responda sobre su negocio, continúa con ejemplos concretos
-• SIEMPRE termina ofreciendo conectar con @enzo para detalles técnicos y precios
-
-🚨 PROHIBIDO ABSOLUTO EN ESTE CONTEXTO DE VENTA:
-• ❌ NO ofrezcas Hot Desk, Sala de Reuniones ni espacios físicos
-• ❌ NO menciones "2 horas gratis" ni promociones de coworking
-• ❌ NO preguntes "¿Te gustaría reservar un espacio?"
-• Este es un flow SOLO para venta de AGENTES VIRTUALES (software)
-• El cliente preguntó por AGENTES, no por espacios físicos
-• Mantén el foco 100% en el producto: sistemas de IA conversacional
-
-SI YA RESPONDIÓ SOBRE SU NEGOCIO, continúa con:
-
-"Perfecto, [tipo de negocio]! 🎯
-
-Un agente virtual personalizado para ti podría:
-
-✨ *AURORA CORE* (Sistema Base)
-• Atender clientes 24/7 sin descanso
-• Responder preguntas frecuentes al instante
-• Coordinar citas/reservas automáticamente
-• Procesar pagos y enviar confirmaciones
-• Idioma automático según el cliente
-
-💡 *MARKETINGLAB + ONEMIND* (Potenciadores)
-• Generación de contenido con IA
-• Análisis de conversaciones para insights
-• Automatización de campañas según comportamiento
-• Lead nurturing inteligente
-• Integración con tus sistemas existentes
-
-🎯 *TU VENTAJA COMPETITIVA:*
-Mientras tu competencia tiene recepcionistas limitadas (8h/día, 1 cliente a la vez),
-TÚ tendrías un agente que:
-- Nunca se cansa ⚡
-- Nunca renuncia 💪
-- Nunca olvida un cliente 🧠
-- Aprende de cada conversación 📈
-- Escala sin límites 🚀
-
-💰 *INVERSIÓN:*
-No es un gasto, es un empleado que se paga solo desde el primer mes.
-
-¿Te conecto con @enzo? Él lidera *MarketingLab OneMind* y te mostrará casos reales de empresas como la tuya + inversión exacta 🎯"` : '';
-  
-  // Solo mencionar día gratis si es primera visita Y NO hay resumeMessage (retoma)
-  const tieneResumeMessage = formData && formData.resumeMessage;
-  const esPrimeraVisita = perfil.firstVisit && !esSoportePostEmail && !esCancelacion && !tieneResumeMessage;
-
-  // 🎯 PROMPT DIFERENTE SEGÚN AGENTE
-  let prompt;
-  
-  if (esAurora) {
-    // AURORA: Prompt completo con reservas, formularios, instrucciones específicas
-    prompt = `
-${contextoUsuario}
-
-${contextoHistorial}
-
-${contextoFormulario}
-
-MENSAJE ACTUAL DEL USUARIO:
-${mensaje}
-
-INSTRUCCIONES:
-
-🚨 PRIORIDAD ABSOLUTA - LEER PRIMERO:
-${esSaludoCasual ? instruccionesSaludoCasual : ''}
-${esPreguntaIdentidad ? instruccionesPreguntaIdentidad : ''}
-${esPromocionVentaAgentes ? instruccionesPromocionVentaAgentes : ''}
-
-- Responde como ${agente.nombre} según tu rol y personalidad
-- Usa el contexto del perfil y el historial para personalizar
-${esPaymentLinkRequest ? instruccionesPaymentLink : ''}
-${esRetornoAurora ? instruccionesRetorno : ''}
-${esCancelacion ? instruccionesCancelacion : ''}
-${esModificacionReserva ? instruccionesModificacion : ''}
-${esSoportePostEmail ? `
-🚨 MODO SOPORTE ACTIVADO - NO VENDER NI INICIAR RESERVAS:
-- El usuario YA TIENE una reserva confirmada (ver sección RESERVA CONFIRMADA arriba)
-- Tu rol es SOLO responder preguntas sobre esa reserva existente
-- NO ofrezcas Hot Desk, Sala de Reuniones ni preguntes qué espacio necesita
-- NO inicies nuevo flujo de reserva
-- Responde directamente usando los datos de su RESERVA CONFIRMADA
-- Si pregunta por cambios/cancelación, usa keywords: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}
-` : ''}
-${formData && formData.form && formData.form.wasFree ? `
-🎉 PRIMERA VISITA GRATIS:
-- Este usuario tiene día gratis disponible
-- 🚫 NO menciones precio ($10, $25, etc.)
-- 🚫 NO preguntes método de pago
-- ✅ Siempre di "GRATIS" o "sin costo por ser tu primera visita"
-` : ''}
-${formData && !esCancelacion ? `
-🎯 ENFOQUE EN RESERVA ACTUAL:
-- SOLO procesa la reserva en "RESERVA EN CURSO" (arriba)
-- NO menciones otras fechas u opciones hasta que confirme la actual
-- Si el mensaje menciona OTRA fecha/espacio, ignóralo hasta completar esta reserva
-- Un solo mensaje = un solo objetivo (resumen O pregunta, nunca ambos)` : ''}
-${formData && formData.needsMoreInfo && !esCancelacion ? `- Pregunta SOLO por: ${formData.nextQuestion}` : ''}
-${esPrimeraVisita ? '- El usuario es nuevo, menciona naturalmente el beneficio de primera visita cuando sea relevante' : ''}
-${!esSoportePostEmail && !esCancelacion ? '- Si detectas cambio de tema que requiere otro agente, deriva apropiadamente' : ''}
-${!esSoportePostEmail && !esCancelacion ? '- Máximo 4-5 líneas, excepto casos que requieran más detalle' : ''}
-${!esSoportePostEmail && !esCancelacion ? '- Siempre termina con siguiente paso claro o pregunta de seguimiento' : ''}
-${esSoportePostEmail && !esCancelacion ? '- Responde brevemente y cierra confirmando que estás disponible para más consultas' : ''}
-${instruccionesPostEmail}
-  `.trim();
-  } else {
-    // ENZO, ADRIANA, ALUNA, ANGELA, AXEL, GABI: Prompt limpio, sin reservas, 100% enfocado en su especialidad
-    const tieneHistorialConAgente = historial && historial.length > 0;
-    
-    prompt = `
-${contextoUsuario}
-
-${contextoHistorial}
+  const prompt = `
+${contexto}
 
 MENSAJE DEL USUARIO:
 "${mensaje}"
 
-INSTRUCCIONES GENERALES:
-- Responde como ${agente.nombre} según tu rol y especialidad
-- Mantén contexto de conversación (memoria activa 24h hasta @Aurora)
-- Área de expertise exclusiva: ${agente.rol}
+INSTRUCCIONES:
+- Responde como ${agente.nombre}
+- Mantén tu rol: ${agente.rol}
+- No inventes datos que Aurora no te haya dado
+- Si el tema no es de tu especialidad, indícalo
+`.trim();
 
-🎯 CONTINUIDAD DE CONVERSACIÓN:
-${tieneHistorialConAgente ? 
-`- YA tienes historial con este usuario arriba ⬆️
-- NO saludes de nuevo ("Hola", "¿En qué te ayudo?", etc.)
-- CONTINÚA la conversación directamente
-- Avanza, profundiza, ejecuta sobre lo ya hablado
-- Si ya explicaste algo, NO lo repitas` : 
-`- Primera interacción con este usuario
-- Usa tu mensaje de entrada característico
-- Establece el tono de trabajo`}
+  const systemPrompt =
+    typeof agente.getSystemPrompt === 'function'
+      ? agente.getSystemPrompt(perfil.preferredLanguage || 'es')
+      : agente.systemPrompt;
 
-📎 SI USUARIO ENVÍA ARCHIVOS/IMÁGENES:
-- Analiza el contenido compartido (PDF, Word, Excel, imágenes)
-- Da insights accionables del archivo
-- Referencia específicamente lo que viste en el documento
-
-💡 RESPUESTAS:
-- Conciso pero completo
-- Mantén personalidad y tono característico
-- Emojis estratégicos para reforzar ideas
-  `.trim();
-  }
-
-  // 🆕 v283: Generate dynamic system prompt for Aurora based on user's free trial status and language
-  // 🆕 v293: Extended to all agents for multilanguage support
-  let systemPrompt;
-  if (agenteKey === 'AURORA' && typeof agente.getSystemPrompt === 'function') {
-    systemPrompt = agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es');
-  } else if (typeof agente.getSystemPrompt === 'function') {
-    systemPrompt = agente.getSystemPrompt(perfil.preferredLanguage || 'es');
-  } else {
-    systemPrompt = agente.systemPrompt;
-  }
+  const duration = Date.now() - startTime;
+  loggers.orquestador.timing('procesarMensaje', duration, { userId, agent: targetAgent, isHandoff });
 
   return {
     agente: agente.nombre,
-    agenteKey: agenteKey,
-    razonSeleccion: intencion.reason,
-    systemPrompt: systemPrompt,
+    agenteKey: targetAgent,
+    razonSeleccion: intent.reason,
+    systemPrompt,
     prompt,
     metadata: {
-      rol: agente.rol,
-      responsabilidades: agente.responsabilidades,
-      primeraVisita: perfil.firstVisit || false,
-      // 🆕 Contexto extendido para los agentes
-      userProfile: {
-        isFirstTime: perfil.firstVisit || false,
-        freeTrialUsed: perfil.freeTrialUsed || false,
-        freeTrialDate: perfil.freeTrialDate || null,
-        conversationCount: perfil.conversationCount || 0,
-        totalReservations: perfil.reservationHistory ? perfil.reservationHistory.length : 0,
-        hasEmail: !!perfil.email,
-        name: perfil.name || null
-      },
-      conversationContext: {
-        hasHistory: historial && historial.length > 0,
-        messageCount: historial ? historial.length : 0,
-        isFirstMessage: !historial || historial.length === 0,
-        postEmailSupport: esSoportePostEmail,
-        cancelacion: esCancelacion,
-        casualGreeting: esSaludoCasual
-      },
-      postEmailSupport: esSoportePostEmail,
-      cancelacion: esCancelacion,
-      casualGreeting: esSaludoCasual,
-      agentHandoff: esRelevoHaciaOtro,
-      returningToAurora: esRetornoAurora,
-      targetAgent: esRelevoHaciaOtro ? agenteKey : null,
-      // 🚫 Flag para indicar si se debe guardar formulario parcial
-      shouldSavePartialForm: esCancelacion && formData && Object.keys(formData).length > 0
+      agentHandoff: isHandoff,
+      targetAgent,
+      intent,
+      handoffContext
     }
   };
 }
 
 /**
- * Construye contexto legible del perfil del usuario
+ * Reglas duras de selección de agente.
  */
-function construirContextoPerfil(perfil = {}, extraFlags = {}) {
-  if (!perfil || Object.keys(perfil).length === 0) {
-    return 'PERFIL USUARIO: Usuario nuevo sin perfil registrado. Es primera vez.';
+function decidirAgente(intent, activeAgent) {
+  if (intent.flags?.agentHandoff) return intent.agent;
+  if (intent.flags?.returningToAurora) return 'AURORA';
+  if (intent.flags?.requiresAurora) return 'AURORA';
+
+  // Si hay agente activo y no se pidió cambio explícito, mantener
+  if (activeAgent && activeAgent !== 'AURORA' && !intent.flags?.forceChange) {
+    return activeAgent;
   }
 
-  const lineas = ['PERFIL USUARIO:'];
-  
-  // Extraer mensaje para detección de menciones
-  const mensajeActual = extraFlags.mensaje || '';
-  
-  // Información del perfil
-  if (perfil.name) {
-    lineas.push(`- Nombre: ${perfil.name}`);
-  }
-  if (perfil.email) lineas.push(`- Email: ${perfil.email}`);
-  if (perfil.userId) lineas.push(`- ID: ${perfil.userId}`);
-  if (perfil.channel) lineas.push(`- Canal: ${perfil.channel}`);
-  
-  // Contexto de interacciones previas
-  if (perfil.firstVisit !== undefined) {
-    const esPrimeraInteraccion = perfil.firstVisit || (perfil.conversationCount === 0);
-    lineas.push(`- Primera visita: ${esPrimeraInteraccion ? 'SÍ' : 'NO'}`);
-  }
-  
-  // 🔧 Conversación en curso
-  if (perfil.conversacionEnCurso) {
-    lineas.push(`- Conversación en curso: SÍ (último mensaje hace < 10 min)`);
-    lineas.push(`- NO saludes de nuevo, continúa la conversación naturalmente`);
+  return intent.agent || 'AURORA';
+}
+
+/**
+ * Aurora resume lo que el agente necesita saber.
+ * 🎯 ARQUITECTURA: Solo AURORA y ALUNA reciben contexto de reservas.
+ * Otros agentes (Enzo, Angela, etc) operan sin contaminar con datos de coworking.
+ */
+function construirContexto(perfil = {}, historial = [], formData = {}, handoffContext = null, targetAgent = 'AURORA') {
+  const lineas = [];
+
+  lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
+  if (perfil.email) lineas.push(`Email: ${perfil.email}`);
+
+  if (perfil.upcomingReservations?.length) {
+    lineas.push(`Reservas futuras: ${perfil.upcomingReservations.length}`);
   }
 
-  // 🆕 Flag de reserva recién confirmada (temporal)
-  if (perfil.justConfirmed) {
-    lineas.push(`- RESERVA RECIÉN CONFIRMADA: SÍ`);
-    lineas.push(`- Confirmada en: ${perfil.justConfirmedAt || 'hace momentos'}`);
-    lineas.push(`✅ Usuario tiene reserva lista, si pregunta o necesita algo:`);  
-    lineas.push(`   1. Mencionar su reserva existente de forma AMIGABLE`);
-    lineas.push(`   2. Preguntar: "¿Quieres hacer otra reserva para un día diferente?"`);
-    lineas.push(`   3. Si dice SÍ, iniciar flujo normal de nueva reserva`);
-  }
-
-  // 🎯 FUENTE DE VERDAD: free_trial_used (campo autoritativo)
-  console.log('[ORQUESTADOR] 🔍 DEBUG freeTrialUsed:', perfil.freeTrialUsed, 'Type:', typeof perfil.freeTrialUsed);
-  console.log('[ORQUESTADOR] 🔍 DEBUG reservationHistory length:', perfil.reservationHistory?.length || 0);
+  // 🔒 AISLAMIENTO: Solo agentes de coworking reciben contexto de reservas
+  const isCoworkingAgent = ['AURORA', 'ALUNA'].includes(targetAgent);
   
-  if (perfil.freeTrialUsed !== undefined) {
-    if (perfil.freeTrialUsed) {
-      lineas.push(`\n💼 CLIENTE RECURRENTE:`);
-      lineas.push(`- Día gratis usado: SÍ → **DEBE PAGAR**`);
-      lineas.push(`- Hot Desk: $10 por 2h`);
-      if (perfil.freeTrialDate) {
-        lineas.push(`  * Fecha de uso: ${perfil.freeTrialDate}`);
-      }
-      
-      // Mostrar lastReservation si existe (más confiable que reservationHistory)
-      if (perfil.lastReservation) {
-        const lastRes = perfil.lastReservation;
-        lineas.push(`  * Última visita: ${lastRes.date || 'fecha desconocida'} a las ${lastRes.startTime || 'N/A'}`);
-        const tipoEspacio = lastRes.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-        lineas.push(`  * Espacio usado: ${tipoEspacio}`);
-        if (perfil.email) {
-          lineas.push(`  * Confirmación enviada a: ${perfil.email}`);
-        }
-      } else if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
-        // Fallback a reservationHistory si lastReservation no existe
-        const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
-        if (ultimaReserva.wasFree) {
-          lineas.push(`  * Espacio usado: ${ultimaReserva.type || 'Hot Desk'}`);
-          lineas.push(`  * Horario: ${ultimaReserva.startTime || 'N/A'} - ${ultimaReserva.endTime || 'N/A'}`);
-        }
-      }
-      
-      lineas.push(`  ⚠️ Si usuario INSISTE que nunca vino, agendar como excepción SIN PAGO`);
+  // 🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
+  const isReturningToAurora = targetAgent === 'AURORA' && 
+                              handoffContext && 
+                              handoffContext.fromAgent !== 'AURORA' &&
+                              handoffContext.fromAgent !== 'ALUNA';
+  
+  if (isReturningToAurora && formData?.form && !formData.form.isComplete()) {
+    lineas.push('\n🔄 USUARIO REGRESA CON RESERVA PENDIENTE:');
+    
+    const form = formData.form;
+    const captured = [];
+    
+    if (form.spaceType) captured.push(form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones');
+    if (form.date) captured.push(`fecha: ${form.date}`);
+    if (form.time) captured.push(`hora: ${form.time}`);
+    if (form.email) captured.push(`email: ${form.email}`);
+    
+    if (captured.length > 0) {
+      lineas.push(`📋 Datos ya capturados: ${captured.join(', ')}`);
+    }
+    
+    const missing = form.getMissingFields();
+    if (missing.length > 0) {
+      lineas.push(`❌ Falta: ${missing.join(', ')}`);
+    }
+    
+    lineas.push('\n⚠️ ACCIÓN: Ya se le mostró un resumen de su reserva pendiente.');
+    lineas.push('Si el usuario quiere continuar, procede con las preguntas faltantes.');
+    lineas.push('Si quiere cambiar algo, actualiza los datos según indique.');
+  }
+  
+  if (isCoworkingAgent && formData?.summary) {
+    lineas.push(`Reserva en proceso: ${formData.summary}`);
+  }
+  
+  // 📋 FORMULARIO DE RESERVA: Solo para Aurora/Aluna
+  if (isCoworkingAgent && formData?.form) {
+    const form = formData.form;
+    const completed = [];
+    const missing = [];
+    
+    // Analizar qué campos están completos y cuáles faltan
+    if (form.spaceType) {
+      const spaceLabel = form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones';
+      completed.push(`tipo (${spaceLabel})`);
     } else {
-      lineas.push(`\n🎉 CLIENTE NUEVO:`);
-      lineas.push(`- Día gratis disponible: SÍ → 2h GRATIS`);
-      lineas.push(`- NO pedir pago, NO mencionar precio`);
-    }
-  }
-
-  // 🔄 RESERVA EN CURSO (pendingConfirmation)
-  // ⚠️ REFACTORIZACIÓN: Solo incluir si el usuario pregunta EXPLÍCITAMENTE sobre reserva
-  // NO incluir automáticamente para evitar que Aurora insista agresivamente
-  const mentionsReservation = /reserva|cancelar|confirmar|pendiente|agendar|mi reserva/i.test(mensajeActual);
-  
-  if (perfil.pendingConfirmation && mentionsReservation) {
-    // 🚨 CALCULAR wasFree basándose en free_trial_used del usuario, NO del formulario
-    const esGratisPorFreeTrial = !perfil.freeTrialUsed;
-    
-    lineas.push(`\n🔔 RESERVA EN CURSO - ESPERANDO CONFIRMACIÓN:`);
-    lineas.push(`- Fecha: ${perfil.pendingConfirmation.date || 'No definida'}`);
-    lineas.push(`- Hora: ${perfil.pendingConfirmation.startTime || 'No definida'} - ${perfil.pendingConfirmation.endTime || 'No definida'}`);
-    lineas.push(`- Servicio: ${perfil.pendingConfirmation.serviceType || 'No definido'}`);
-    lineas.push(`- Email: ${perfil.pendingConfirmation.email || '❌ FALTA'}`);
-    lineas.push(`- Acompañantes: ${perfil.pendingConfirmation.guestCount || 0}`);
-    lineas.push(`- Gratis: ${esGratisPorFreeTrial ? 'SÍ 🎉 - Free trial disponible' : 'NO - Pago requerido'}`);
-    lineas.push(`\n⚠️ El usuario pregunta sobre esta reserva. Responde con los detalles.`);
-  } else if (perfil.pendingConfirmation && !mentionsReservation) {
-    // Usuario tiene pendingConfirmation PERO no pregunta sobre eso
-    // NO incluir detalles - dejar que Aurora responda lo que el usuario pregunta
-    // Aurora puede mencionar casualmente si es relevante, pero SIN INSISTIR
-  }
-
-  // 🆕 Historial COMPLETO de reservas con precios
-  if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
-    lineas.push(`\n📋 HISTORIAL COMPLETO DE RESERVAS (${perfil.reservationHistory.length} total):`);
-    
-    perfil.reservationHistory.forEach((reserva, index) => {
-      const numero = index + 1;
-      const fecha = reserva.date || 'fecha desconocida';
-      const hora = reserva.startTime || 'N/A';
-      const tipo = reserva.serviceType === 'hotDesk' ? 'Hot Desk' : 
-                   reserva.serviceType === 'meetingRoom' ? 'Sala de Reuniones' : 
-                   reserva.type || 'Hot Desk';
-      
-      // Determinar si fue gratis o pagado
-      const esGratis = reserva.wasFree === true;
-      const precio = esGratis ? 'GRATIS 🎉' : 
-                     tipo === 'Hot Desk' ? '$10' : 
-                     tipo === 'Sala de Reuniones' ? '$29' : 
-                     reserva.price ? `$${reserva.price}` : 'PAGADO';
-      
-      lineas.push(`${numero}. ${fecha} ${hora} - ${tipo} - ${precio}`);
-    });
-    
-    lineas.push(`\n💡 Si usuario pregunta por sus reservas, muéstrale este historial con precios claros`);
-  } else {
-    // Historial vacío (informativo, no determina elegibilidad)
-    lineas.push(`\n📋 HISTORIAL COMPLETO DE RESERVAS (0 total):`);
-    lineas.push(`- Sin reservas confirmadas aún`);
-  }
-
-  // 🆕 RESERVAS CONFIRMADAS FUTURAS (para detectar conflictos y mostrar agenda)
-  if (perfil.upcomingReservations && perfil.upcomingReservations.length > 0) {
-    lineas.push(`\n📅 RESERVAS CONFIRMADAS FUTURAS (${perfil.upcomingReservations.length} próximas):`);
-    
-    perfil.upcomingReservations.forEach((reserva, index) => {
-      const numero = index + 1;
-      const fecha = reserva.date;
-      const tiempo = reserva.time || `${reserva.start_time || 'N/A'}-${reserva.end_time || 'N/A'}`;
-      const espacio = reserva.space || (reserva.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones');
-      const personas = reserva.people > 1 ? ` (${reserva.people} personas)` : '';
-      const precio = reserva.price || (reserva.was_free ? 'GRATIS' : 'PAGADO');
-      const status = reserva.status || 'unknown';
-      const statusLabel = status === 'pending_payment' ? '⏳ PAGO PENDIENTE' : '✅ CONFIRMADO';
-      
-      lineas.push(`${numero}. ${fecha} ${tiempo} - ${espacio}${personas} - ${precio} - ${statusLabel}`);
-    });
-    
-    lineas.push(`\n⚠️ IMPORTANTE - DETECCIÓN DE CONFLICTOS:`);
-    lineas.push(`- Cuando usuario solicite nueva reserva, REVISAR si fecha/hora coincide con estas`);
-    lineas.push(`- Si hay conflicto: "Ya tienes [espacio] reservado para [fecha] [hora]. ¿Quieres cambiarla o hacer otra diferente?"`);
-    
-    // 💳 Detectar si hay reservas con pago pendiente
-    const reservasConPagoPendiente = perfil.upcomingReservations.filter(r => r.status === 'pending_payment');
-    if (reservasConPagoPendiente.length > 0) {
-      lineas.push(`\n💳 RESERVAS CON PAGO PENDIENTE (${reservasConPagoPendiente.length}):`);
-      reservasConPagoPendiente.forEach(r => {
-        lineas.push(`- ${r.date} ${r.start_time || r.time} - ${r.space || 'Hot Desk'} - $${r.price || '10'}`);
-      });
-      lineas.push(`\n⚠️ Si usuario pide "link de pago" o "cómo pago", enviar INMEDIATAMENTE el link sin reiniciar flujo.`);
+      missing.push('tipo de espacio');
     }
     
-    lineas.push(`\n� REGLA CRÍTICA - NO MENCIONAR RESERVAS EN SALUDOS CASUALES:`);
-    lineas.push(`- ⛔ NO menciones las reservas automáticamente en saludos como "hola", "buenos días", "qué tal", etc.`);
-    lineas.push(`- ⛔ NO seas invasiva recordando citas que el usuario no pidió ver`);
-    lineas.push(`- ✅ SOLO menciona reservas cuando:`);
-    lineas.push(`  1. Usuario pregunta explícitamente: "¿qué reservas tengo?", "cuándo es mi cita?", "tengo algo agendado?"`);
-    lineas.push(`  2. Usuario solicita nueva reserva y hay conflicto de horario`);
-    lineas.push(`  3. Usuario solicita link de pago o pregunta cómo pagar`);
-    lineas.push(`- ✅ Para saludos casuales, responde naturalmente SIN mencionar reservas: "¡Hola! ¿En qué puedo ayudarte hoy?" 😊`);
-    
-    lineas.push(`\n�📋 Si usuario pregunta "¿qué reservas tengo?" o "cuántas reservas tengo?", responde EXACTAMENTE así:`);
-    lineas.push(`"Tienes ${perfil.upcomingReservations.length} reserva${perfil.upcomingReservations.length > 1 ? 's' : ''} confirmada${perfil.upcomingReservations.length > 1 ? 's' : ''}: 📅\n\n" + [lista con formato]`);
-    lineas.push(`\nFORMATO DE LISTA (usa emojis y líneas separadas):`);
-    lineas.push(`${perfil.upcomingReservations.length === 1 ? '"' : ''}📅 [Fecha]\n⏰ [Hora inicio] - [Hora fin]\n🏢 [Tipo de espacio]${perfil.upcomingReservations.length === 1 ? '\n💰 [Precio o GRATIS]"' : ''}`);
-    lineas.push(`Si son múltiples reservas, separar cada una con línea en blanco.`);
-  } else {
-    lineas.push(`\n📅 RESERVAS CONFIRMADAS FUTURAS: Ninguna`);
-    lineas.push(`\n⚠️ Este usuario NO tiene reservas confirmadas todavía.`);
-    lineas.push(`- Si pregunta "¿qué reservas tengo?" → Responder: "No tienes reservas confirmadas aún. ¿Te gustaría hacer una reserva?"`);
-    lineas.push(`- NO inventes fechas ni horarios que no existen en el sistema.`);
-  }
-
-  // 🆕 Conteo de mensajes para personalización
-  if (perfil.conversationCount) {
-    lineas.push(`- Mensajes enviados: ${perfil.conversationCount}`);
-  }
-  
-  if (perfil.lastMessageAt) lineas.push(`- Última interacción: ${perfil.lastMessageAt}`);
-
-  if (extraFlags.postEmailSupport) {
-    lineas.push(`\n🛟 MODO SOPORTE POST-CONFIRMACIÓN ACTIVADO:`);
-    lineas.push(`- Usuario llegó desde enlace de confirmación por correo`);
-    lineas.push(`- NO reiniciar flujo de reservas ni pedir datos nuevamente`);
-    lineas.push(`- Solo reactivar reserva si menciona: ${POST_EMAIL_REACTIVATION_KEYWORDS.join(', ')}`);
-    
-    // 🎯 MOSTRAR ÚLTIMA RESERVA CONFIRMADA
-    if (perfil.reservationHistory && perfil.reservationHistory.length > 0) {
-      const ultimaReserva = perfil.reservationHistory[perfil.reservationHistory.length - 1];
-      lineas.push(`\n📋 RESERVA CONFIRMADA DEL USUARIO (usar estos datos para responder):`);
-      lineas.push(`- Espacio: ${ultimaReserva.type || 'Hot Desk'}`);
-      lineas.push(`- Fecha de la visita: ${ultimaReserva.date || 'No disponible'}`);
-      
-      // Extraer hora de inicio y fin del campo time si existe
-      if (ultimaReserva.time) {
-        lineas.push(`- Hora de llegada: ${ultimaReserva.time}`);
-      } else if (ultimaReserva.startTime && ultimaReserva.endTime) {
-        lineas.push(`- Hora de llegada: ${ultimaReserva.startTime} - ${ultimaReserva.endTime}`);
-      }
-      
-      lineas.push(`- Estado: ${ultimaReserva.status || 'confirmada'}`);
-      lineas.push(`- Precio: ${ultimaReserva.wasFree ? 'GRATIS (primera vez)' : 'Pagado'}`);
-      lineas.push(`\n✅ USA ESTOS DATOS para responder cualquier pregunta sobre su reserva`);
+    if (form.date) {
+      completed.push(`fecha (${form.date})`);
     } else {
-      lineas.push(`\n⚠️ No se encontró historial de reservas - pedir al usuario que aclare su consulta`);
+      missing.push('fecha');
     }
-  }
-  
-  return lineas.join('\n');
-}
-
-/**
- * Construye contexto BÁSICO del perfil para agentes NO-Aurora
- * Solo incluye nombre y datos mínimos, sin reservas ni formularios
- */
-function construirContextoPerfilBasico(perfil = {}, agenteKey = null) {
-  if (!perfil || Object.keys(perfil).length === 0) {
-    return 'USUARIO: Primera interacción';
-  }
-
-  const lineas = ['USUARIO:'];
-  
-  if (perfil.name) {
-    lineas.push(`- Nombre: ${perfil.name}`);
-  } else if (perfil.whatsappDisplayName) {
-    lineas.push(`- Nombre: ${perfil.whatsappDisplayName}`);
-  }
-  
-  // Información mínima, sin reservas ni detalles de Coworkia
-  if (perfil.conversationCount && perfil.conversationCount > 1) {
-    lineas.push(`- Han conversado ${perfil.conversationCount} veces antes`);
-  }
-  
-  // 🚗 AXEL: Agregar contexto de cotización cargada desde DB
-  if (agenteKey === 'AXEL' && perfil.axelData) {
-    const { loadedQuote, lastAnalysis, emailSent, quoteConfirmed, awaitingScheduling } = perfil.axelData;
     
-    if (loadedQuote) {
-      lineas.push('\n📋 COTIZACIÓN RECUPERADA DESDE BASE DE DATOS:');
-      lineas.push(`- Código: ${loadedQuote.code}`);
-      lineas.push(`- Vehículo: ${loadedQuote.vehicle?.brand || ''} ${loadedQuote.vehicle?.model || ''} ${loadedQuote.vehicle?.year || ''}`);
-      lineas.push(`- Estado: ${loadedQuote.status}`);
-      lineas.push(`- Rango precio: $${loadedQuote.priceRange?.min || 0} - $${loadedQuote.priceRange?.max || 0}`);
-      if (loadedQuote.customerName) {
-        lineas.push(`- Cliente: ${loadedQuote.customerName}`);
-      }
-      if (loadedQuote.emailSent) {
-        lineas.push(`- ✅ Email de cotización ya enviado`);
-      }
-      if (loadedQuote.appointmentConfirmed) {
-        lineas.push(`- ✅ Cita ya confirmada`);
-      }
-      lineas.push('\n⚠️ IMPORTANTE: NO pidas fotos de nuevo. Ya tienes toda la información de esta cotización.');
-      lineas.push('El usuario puede estar llamando para: agendar cita, consultar precio, modificar algo.');
-    } else if (lastAnalysis && emailSent) {
-      // Cotización local (no desde DB)
-      lineas.push('\n📋 COTIZACIÓN PREVIA (sesión actual):');
-      lineas.push('- ✅ Ya analizaste fotos de este usuario');
-      lineas.push('- ✅ Cotización ya enviada por email');
-      if (quoteConfirmed) {
-        lineas.push('- Usuario confirmó interés en la cotización');
-      }
-      if (awaitingScheduling) {
-        lineas.push('- Usuario está listo para agendar cita');
-      }
-      lineas.push('\n⚠️ NO pidas fotos de nuevo. Usa el análisis previo.');
-    }
-  }
-  
-  return lineas.join('\n');
-}
-
-/**
- * Construye contexto del historial reciente
- * Si se especifica agenteKey, filtra solo mensajes relevantes para ese agente
- */
-function construirContextoHistorial(historial = [], agenteKey = null) {
-  if (!historial || historial.length === 0) {
-    return 'HISTORIAL: Primera interacción - sin mensajes previos.';
-  }
-
-  const lineas = ['HISTORIAL CONVERSACIÓN (últimos mensajes):'];
-  
-  // 🎯 FILTRADO POR AGENTE: Si NO es Aurora, solo mostrar conversaciones con ese agente
-  let recientes = historial.slice(-10);
-  
-  if (agenteKey && agenteKey !== 'AURORA') {
-    // Filtrar solo mensajes del usuario Y respuestas de este agente específico
-    recientes = recientes.filter(item => {
-      if (item.role === 'user') return true;
-      if (item.role === 'assistant') {
-        // Verificar si el mensaje es de este agente
-        const messageAgent = item.agent?.toUpperCase() || 'AURORA';
-        return messageAgent === agenteKey;
-      }
-      return false;
-    });
-    
-    if (recientes.length === 0) {
-      return `HISTORIAL: Primera conversación con ${agenteKey}. No hay mensajes previos con este agente.`;
-    }
-  }
-  
-  recientes.forEach((item, index) => {
-    const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '';
-    
-    if (item.role === 'user') {
-      lineas.push(`  Usuario: "${item.content}"`);
-    } else if (item.role === 'assistant') {
-      const agentName = item.agent || 'Aurora';
-      lineas.push(`  ${agentName}: "${item.content}"`);
-    }
-  });
-
-  lineas.push(''); // Línea en blanco para separar
-  lineas.push('INSTRUCCIONES SEGÚN HISTORIAL:');
-  
-  // 🆕 Detectar patrones en el historial para dar instrucciones específicas
-  const userMessages = recientes.filter(m => m.role === 'user');
-  const lastUserMessage = userMessages[userMessages.length - 1];
-  
-  if (userMessages.length === 1) {
-    lineas.push('- Es el primer mensaje del usuario, presentarte cálidamente');
-  } else if (userMessages.length > 1) {
-    lineas.push('- Usuario ya ha enviado mensajes anteriores, NO te presentes de nuevo');
-    lineas.push('- Continúa la conversación naturalmente basándote en el contexto');
-  }
-
-  // Detectar si hay preguntas sin resolver
-  if (lastUserMessage && lastUserMessage.content.includes('?')) {
-    lineas.push('- Asegúrate de responder la pregunta actual del usuario');
-  }
-
-  return lineas.join('\n');
-}
-
-/**
- * 🧠 Construye contexto del formulario parcial de reserva
- */
-function construirContextoFormulario(formData) {
-  if (!formData || !formData.form) {
-    return '';
-  }
-
-  const { form, summary, needsMoreInfo, nextQuestion, resumeMessage, userMessage } = formData;
-  const lineas = ['🧠 FORMULARIO PARCIAL DE RESERVA (datos ya proporcionados):'];
-
-  // 💰 Calcular si es gratis basado en freeTrialUsed
-  const esGratis = form.freeTrialUsed === false;
-  
-  if (summary) {
-    // Agregar indicador de precio gratis si aplica
-    const summaryConPrecio = esGratis ? 
-      `${summary}\n💰 Precio: GRATIS 🎉 (Primera visita)` : 
-      summary;
-    lineas.push(summaryConPrecio);
-  }
-
-  const missing = form.getMissingFields();
-  if (missing.length > 0) {
-    lineas.push('\n❓ DATOS FALTANTES:');
-    const fieldNames = {
-      spaceType: 'Tipo de espacio (Hot Desk o Sala)',
-      date: 'Fecha de la visita',
-      time: 'Hora de llegada',
-      email: 'Correo electrónico'
-    };
-    missing.forEach(field => {
-      lineas.push(`- ${fieldNames[field] || field}`);
-    });
-  }
-
-  // 🚨 DETECCIÓN DE FRUSTRACIÓN: Usuario dice "ya te dije", "te dije", "ya lo dije"
-  if (userMessage && /\b(ya\s+(te\s+)?dij[eé]|te\s+dij[eé]|ya\s+lo\s+dij[eé])\b/i.test(userMessage)) {
-    lineas.push('\n⚠️ FRUSTRACIÓN DETECTADA - Usuario repitió información:');
-    lineas.push('- El usuario está frustrado porque ya dio este dato antes');
-    lineas.push('- DEBES:');
-    lineas.push('  1. Pedir disculpas por el despiste: "¡Disculpa! Tienes razón, ya me lo dijiste" 🙏');
-    lineas.push('  2. Mostrar RESUMEN COMPLETO de TODOS los datos que tienes:');
-    lineas.push('     ' + summary);
-    lineas.push('  3. Confirmar con el usuario: "¿Todo esto está correcto?"');
-    lineas.push('  4. Solo preguntar por lo que REALMENTE falta');
-    lineas.push('- NO vuelvas a preguntar por datos que ya tienes');
-    lineas.push('- SÉ AMABLE y reconoce el error');
-  }
-  // 🔄 INSTRUCCIÓN ESPECIAL: Usuario retoma reserva
-  else if (resumeMessage) {
-    lineas.push('\n🔄 RETOMANDO RESERVA:');
-    lineas.push('- El usuario tiene datos previos de una reserva en proceso');
-    lineas.push('- DEBES usar exactamente este mensaje de resumen:');
-    lineas.push('---');
-    lineas.push(resumeMessage);
-    lineas.push('---');
-    lineas.push('- NO agregues nada más, solo espera respuesta del usuario');
-    lineas.push('- Si confirma los datos, continúa con lo que falta');
-    lineas.push('- Si quiere cambiar algo, actualiza y confirma los cambios');
-  } else if (needsMoreInfo && nextQuestion) {
-    lineas.push(`\n💡 INSTRUCCIONES DE FORMULARIO:`);
-    lineas.push('- REVISA los datos que YA TIENES (arriba) antes de preguntar');
-    lineas.push('- SOLO pregunta por lo que REALMENTE falta');
-    lineas.push('- NO repitas preguntas si ya tienes el dato');
-    lineas.push('- Sé NATURAL y amigable al pedir información');
-    lineas.push(`- Pregunta sugerida: ${nextQuestion}`);
-  } else if (!needsMoreInfo) {
-    lineas.push('\n✅ FORMULARIO COMPLETO - MENSAJE DE CONFIRMACIÓN:');
-    lineas.push('');
-    lineas.push('🚨 IMPORTANTE: Envía SOLO este resumen, nada más:');
-    lineas.push('');
-    lineas.push('"Tu reserva para el *[ESPACIO]* está lista:');
-    lineas.push('📅 Fecha: [DÍA NOMBRE] [DD/MM]');
-    lineas.push('🕐 Hora: [HH:MM] ([X] horas)');
-    lineas.push('📧 Email: [email]');
-    if (form.wasFree || (form.totalPrice === 0 && summary.includes('GRATIS'))) {
-      lineas.push('💰 Precio: GRATIS 🎉 (primera visita)');
+    if (form.time) {
+      completed.push(`hora (${form.time})`);
     } else {
-      lineas.push('💰 Precio: $[XX]');
-      lineas.push('💳 Pago: [MÉTODO]');
+      missing.push('hora');
     }
-    lineas.push('');
-    lineas.push('¿Confirmas estos datos? Responde SI para confirmar o NO si quieres cambiar algo."');
-    lineas.push('');
-    lineas.push('🚫 NO agregues:');
-    lineas.push('- "Además" o "También"');
-    lineas.push('- Preguntas sobre otras fechas');
-    lineas.push('- Información adicional');
-    lineas.push('- Opciones alternativas');
-    lineas.push('');
-    lineas.push('✅ SOLO el resumen + pregunta SI/NO');
+    
+    if (form.email) {
+      completed.push(`email (${form.email})`);
+    } else {
+      missing.push('email');
+    }
+    
+    if (form.numPeople && form.numPeople > 1) {
+      completed.push(`personas (${form.numPeople})`);
+    }
+    
+    // Construir mensaje informativo
+    lineas.push('\n📋 FORMULARIO DE RESERVA EN PROCESO:');
+    
+    if (completed.length > 0) {
+      lineas.push(`✅ Ya capturado: ${completed.join(', ')}`);
+    }
+    
+    if (missing.length > 0) {
+      lineas.push(`❌ Falta: ${missing.join(', ')}`);
+      
+      // Instrucción explícita para evitar preguntas redundantes
+      const completedFields = completed.map(c => c.split('(')[0].trim());
+      lineas.push(`\n⚠️ CRÍTICO: NO preguntes por ${completedFields.join(', ')}. Solo pregunta lo faltante: ${missing.join(', ')}`);
+    } else {
+      lineas.push('✅ Formulario completo - listo para confirmación');
+    }
+  }
+  
+  // 🤝 CONTEXTO DE HANDOFF: Info crucial para continuidad conversacional
+  if (handoffContext) {
+    lineas.push('\n🤝 CONTEXTO DE TRANSFERENCIA:');
+    lineas.push(`De: ${handoffContext.fromAgent}`);
+    lineas.push(`Motivo: ${handoffContext.reason}`);
+    lineas.push(`Mensaje que disparó handoff: "${handoffContext.userMessage}"`);
+    
+    // 🔒 NOTA: No pasamos datos de reserva a agentes externos
+    // Aurora mantiene el formulario pendiente para retomar después
+    if (!isCoworkingAgent && handoffContext.fromAgent === 'AURORA') {
+      lineas.push('\n📝 NOTA: Aurora mantendrá cualquier reserva pendiente para cuando el usuario regrese.');
+    }
+    
+    lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
+  }
+
+  // 💬 MEMORIA CONVERSACIONAL: Últimos 7-8 intercambios (hasta 15 mensajes)
+  // Ampliado para mejor contexto en ecosistema multi-agente con handoffs
+  if (historial.length > 0) {
+    // Tomar últimos 15 mensajes (7-8 intercambios completos)
+    const ultimos = historial.slice(-15);
+    
+    lineas.push('\n💬 CONVERSACIÓN RECIENTE:');
+    
+    ultimos.forEach((m, idx) => {
+      const isUser = m.role === 'user';
+      const speaker = isUser ? '👤 Usuario' : `🤖 ${m.agent || 'Asistente'}`;
+      const prefix = isUser ? '' : '   '; // Indentar respuestas del asistente
+      
+      // Truncar mensajes muy largos (>150 chars) para optimizar tokens
+      let content = m.content || '';
+      if (content.length > 150) {
+        content = content.substring(0, 147) + '...';
+      }
+      
+      lineas.push(`${prefix}${speaker}: ${content}`);
+    });
+    
+    lineas.push('\n📌 Usa esta conversación para contexto, pero NO repitas información que el usuario ya dio.');
   }
 
   return lineas.join('\n');
-}
-
-/**
- * Obtiene ejemplo de respuesta del agente (para testing/debug)
- */
-export function obtenerEjemplo(agenteKey, tipo = 'bienvenida') {
-  const agente = AGENTES[agenteKey];
-  if (!agente || !agente.ejemplos) return null;
-  return agente.ejemplos[tipo] || null;
-}
-
-/**
- * Lista todos los agentes disponibles
- */
-export function listarAgentes() {
-  return Object.entries(AGENTES).map(([key, agente]) => ({
-    key,
-    nombre: agente.nombre,
-    rol: agente.rol,
-    responsabilidades: agente.responsabilidades
-  }));
-}
-
-/**
- * Valida si un cambio de agente es apropiado
- */
-export function validarCambioAgente(agenteActual, mensajeNuevo) {
-  const intencionNueva = detectarIntencion(mensajeNuevo);
-  
-  return {
-    requiereCambio: intencionNueva.agent !== agenteActual,
-    nuevoAgente: intencionNueva.agent,
-    razon: intencionNueva.reason
-  };
 }
 
 export default {
   procesarMensaje,
-  obtenerEjemplo,
-  listarAgentes,
-  validarCambioAgente,
   AGENTES
 };

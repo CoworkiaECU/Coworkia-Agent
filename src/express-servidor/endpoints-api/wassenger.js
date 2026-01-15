@@ -1,165 +1,124 @@
 // src/express-servidor/endpoints-api/wassenger.js
 import { Router } from 'express';
+
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
-import { complete } from '../../servicios-ia/openai.js';
-import { processPaymentReceipt, isReceiptImage, generatePaymentRequest } from '../../servicios/payment-receipts.js';
+import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
+import { loggers } from '../../utils/logger.js';
+import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
+
+import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { detectCampaignMessage, personalizeCampaignResponse, getTrialUsedResponse, shouldSendPaymentLink } from '../../servicios/campaign-prompts.js';
+import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout } from '../../servicios/axel-photo-collector.js';
+import { processAxelFormMessage, generateFormSummary } from '../../servicios/axel-quote-form.js';
+import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
+import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
+import { generateQuote } from '../../servicios/axel-quote-generator.js';
+import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
+
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
+
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
-import { 
+
+import {
   loadProfile,
   saveProfile,
   saveInteraction,
   loadConversationHistory,
   saveConversationMessage,
-  savePartialForm
+  savePartialForm,
+  getPartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
+
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
-import { getPaymentInfo, calculateReservationCost } from '../../servicios/payment-calculator.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
 
-// 🗂️ Cache temporal en memoria para fotos pendientes de AXEL (FIX: PostgreSQL no guarda axelData)
-const axelPendingPhotos = new Map(); // userId -> { photos: [], timer: setTimeout }
-
 const router = Router();
 
-/**
- * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
- */
-function cleanWhatsAppName(whatsappName) {
-  if (!whatsappName || typeof whatsappName !== 'string') return null;
-  
-  let cleaned = whatsappName.trim();
-  
-  // Remover emojis comunes
-  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆]/g, '');
-  
-  // Remover texto común de WhatsApp Business
-  const businessKeywords = [
-    'whatsapp business', 'business', 'empresa', 'company', 
-    'servicio', 'service', 'oficial', 'official', '\\+593', '\\+1',
-    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
-  ];
-  
-  for (const keyword of businessKeywords) {
-    const regex = new RegExp(keyword, 'gi');
-    cleaned = cleaned.replace(regex, '');
-  }
-  
-  // Remover números de teléfono
-  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
-  
-  // Limpiar espacios y caracteres especiales (mantener acentos españoles)
-  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
-  
-  // Solo tomar el primer nombre si es muy largo
-  if (cleaned.length > 20) {
-    cleaned = cleaned.split(' ')[0];
-  }
-  
-  // Capitalizar cada palabra (Title Case)
-  if (cleaned.length > 0) {
-    cleaned = cleaned
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  }
-  
-  return cleaned.length > 1 ? cleaned : null;
+/* ─────────────────────────────────────────────────────────────
+   🔒 Seguridad & estabilidad global (NO dentro del webhook)
+───────────────────────────────────────────────────────────── */
+if (!globalThis.__AURORA_CORE_UNHANDLED__) {
+  globalThis.__AURORA_CORE_UNHANDLED__ = true;
+  process.on('unhandledRejection', (reason) => {
+    loggers.webhook.error('Unhandled promise rejection', {}, reason);
+  });
+  process.on('uncaughtException', (err) => {
+    loggers.webhook.error('Uncaught exception', {}, err);
+  });
 }
 
-/**
- * 🔍 Detecta nombre desde mensaje de presentación
- */
-function extractNameFromMessage(message) {
-  if (!message) return null;
-  
-  // Patrones comunes de presentación
-  const patterns = [
-    /(?:soy|me llamo|mi nombre es|soy de)\\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i,
-    /(?:hola|buenos días|buenas tardes|buenas noches),?\\s*(?:soy)?\\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = message.match(pattern);
-    if (match && match[1].length > 1) {
-      return match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+/* ─────────────────────────────────────────────────────────────
+   🧼 Helpers
+───────────────────────────────────────────────────────────── */
+function safeStr(v) {
+  return (typeof v === 'string' ? v : '').trim();
+}
+
+function nowUnix() {
+  return Math.floor(Date.now() / 1000);
+}
+
+function isIncomingEvent(evt) {
+  return evt && evt.includes('message:in') && !evt.includes('message:out');
+}
+
+function isGroupOrBroadcast(userId) {
+  return userId.includes('@g.us') || userId.includes('@broadcast');
+}
+
+function normalizeUserId(data) {
+  return safeStr(data.fromNumber || data.from || '');
+}
+
+function normalizeName(data) {
+  return safeStr(data.chat?.name || data.contact?.name || data.fromName || data.name || '');
+}
+
+function normalizeText(data) {
+  return safeStr(data.body || data.message || '');
+}
+
+function normalizeType(data) {
+  return safeStr(data.type || 'text') || 'text';
+}
+
+function buildMediaUrl(data) {
+  let mediaUrl = data.mediaUrl || data.media?.url || null;
+
+  // Wassenger a veces entrega links.download relativo
+  if (!mediaUrl && data.media?.links?.download) {
+    const token = process.env.WASSENGER_TOKEN;
+    mediaUrl = `https://api.wassenger.com${data.media.links.download}?token=${token}`;
+  }
+
+  return mediaUrl;
+}
+
+function buildMessageEnvelope({ userId, name, text, type, mediaUrl, data, evt }) {
+  // Esto es lo que “ve” Aurora Core. No hay agentes aquí.
+  return {
+    channel: 'whatsapp',
+    provider: 'wassenger',
+    event: evt,
+    userId,
+    name,
+    type,
+    text,
+    mediaUrl,
+    timestamp: data.timestamp || nowUnix(),
+    raw: {
+      // guardamos lo mínimo útil (sin reventar logs)
+      fromMe: data.fromMe,
+      isBot: data.isBot,
+      mime: data.media?.mime
     }
-  }
-  
-  return null;
+  };
 }
 
-/**
- * 🛡️ Detecta si un mensaje proviene de un bot
- * Retorna { detected: boolean, reason: string }
- */
-function detectarBot(data, text, name) {
-  // 🚨 FILTROS TEMPORALMENTE DESHABILITADOS PARA TESTING
-  // TODO: Reactivar filtros una vez confirmado que Aurora responde
-  
-  // 1. ÚNICO FILTRO ACTIVO: Detectar por campo isBot explícito
-  if (data.isBot === true || data.type === 'bot' || data.fromBot === true) {
-    return { detected: true, reason: 'campo_isBot_true' };
-  }
-
-  // 2. ÚNICO FILTRO ACTIVO: Detectar grupos
-  const userId = data.fromNumber || data.from || '';
-  if (userId.includes('@g.us') || userId.includes('@broadcast')) {
-    return { detected: true, reason: 'mensaje_de_grupo_o_broadcast' };
-  }
-
-  // ⚠️ FILTROS COMENTADOS TEMPORALMENTE:
-  
-  // 3. Detectar números sospechosos de bots (números muy largos o con patrones)
-  /*
-  const numeros = userId.replace(/\D/g, '');
-  if (numeros.length > 15 || numeros.startsWith('000000')) {
-    return { detected: true, reason: 'numero_invalido_o_sospechoso' };
-  }
-  */
-
-  // 4. Detectar nombres típicos de bots
-  /*
-  const nombreLower = (name || '').toLowerCase();
-  const botKeywords = ['bot', 'automated', 'auto-reply', 'no-reply', 'noreply', 'system', 'whatsapp business'];
-  if (botKeywords.some(keyword => nombreLower.includes(keyword))) {
-    return { detected: true, reason: 'nombre_contiene_keyword_bot' };
-  }
-  */
-
-  // 5. Detectar mensajes con estructura típica de bot (muy cortos o solo comandos)
-  /*
-  const textLower = text.toLowerCase().trim();
-  if (textLower.startsWith('/') || textLower.startsWith('!') || textLower.startsWith('.')) {
-    // Comandos de bots, pero permitimos si parece humano
-    if (text.length < 5) {
-      return { detected: true, reason: 'comando_bot_detectado' };
-    }
-  }
-  */
-
-  // 6. Detectar mensajes con URLs acortadas repetitivas (spam bots)
-  /*
-  const urlPattern = /(bit\.ly|tinyurl|goo\.gl|t\.co|ow\.ly)/gi;
-  const urlMatches = text.match(urlPattern);
-  if (urlMatches && urlMatches.length > 2) {
-    return { detected: true, reason: 'multiples_urls_acortadas_spam' };
-  }
-  */
-
-  // No es bot
-  return { detected: false, reason: null };
-}
-
-/**
- * Envía mensaje a WhatsApp vía Wassenger API
- */
 async function enviarWhatsApp(numero, mensaje) {
   const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
   const WASSENGER_DEVICE = process.env.WASSENGER_DEVICE || process.env.WASSENGER_DEVICE_ID;
@@ -170,8 +129,8 @@ async function enviarWhatsApp(numero, mensaje) {
     return { ok: false, error: 'NO_WASSENGER_CONFIG' };
   }
 
-  // 🛡️ SEGURIDAD: Nunca enviar mensaje al propio bot
-  if (BOT_NUMBER && numero.includes(BOT_NUMBER.replace(/\D/g, ''))) {
+  // No auto-mensajearse
+  if (BOT_NUMBER && numero.includes(String(BOT_NUMBER).replace(/\D/g, ''))) {
     console.warn('[WASSENGER] Intento de enviar mensaje al propio bot bloqueado');
     return { ok: false, error: 'SELF_MESSAGE_BLOCKED' };
   }
@@ -180,2245 +139,740 @@ async function enviarWhatsApp(numero, mensaje) {
     const response = await dispatchHttpRequest({
       url: 'https://api.wassenger.com/v1/messages',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Token': WASSENGER_TOKEN
-      },
-      body: JSON.stringify({
-        phone: numero,
-        message: mensaje,
-        device: WASSENGER_DEVICE
-      }),
+      headers: { 'Content-Type': 'application/json', Token: WASSENGER_TOKEN },
+      body: JSON.stringify({ phone: numero, message: mensaje, device: WASSENGER_DEVICE }),
       circuitId: 'wassenger:messages',
-      timeoutMs: 5000,
+      timeoutMs: 8000,
       maxRetries: 2
     });
 
     const data = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      loggers.wassenger.warn('Failed to send message', { userId: numero, status: response.status });
+    }
+    
     return { ok: response.ok, data };
   } catch (error) {
-    console.error('[WASSENGER] Error enviando mensaje:', error);
+    loggers.wassenger.error('Error sending message', { userId: numero }, error);
     return { ok: false, error: error.message };
   }
 }
 
+function detectBotLight(data, userId) {
+  // Mantenerlo mínimo (sin “matar” humanos por error)
+  if (data.isBot === true || data.type === 'bot' || data.fromBot === true) return { detected: true, reason: 'explicit_isBot' };
+  if (isGroupOrBroadcast(userId)) return { detected: true, reason: 'group_or_broadcast' };
+  return { detected: false, reason: null };
+}
 /**
- * Wassenger Webhook (POST)
- * Configura esta URL en Wassenger como Webhook de mensajes entrantes.
- * Body esperado:
- * {
- *   "event": "message:in:text" | "message:in",
- *   "data": {
- *      "fromNumber": "593987654321",
- *      "body": "texto del mensaje",
- *      "fromName": "Nombre Contacto"
- *   }
- * }
+ * 🔍 Detecta si el mensaje es continuación de un formulario de reserva
+ * Reconoce patrones como: email, "ya te dije", horarios, fechas, personas
  */
-router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
-  // 🚫 CONTROL: Desactivación temporal de Wassenger vía variable de entorno
-  const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
+function detectFormContinuation(text) {
+  if (!text) return false;
   
-  if (!wassengerEnabled) {
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] ⏸️ DESACTIVADO TEMPORALMENTE - Webhook ignorado');
+  const continuationPatterns = [
+    /mi\s+(email|correo|mail|e-mail)/i,
+    /ya\s+te\s+(dije|dij[eé]|mencion[eé]|coment[eé]|dí|di)/i,
+    /te\s+(dije|mencion[eé]|coment[eé])/i,
+    /somos\s+\d+/i,
+    /\d+\s+personas?/i,
+    /(voy|vamos|iremos)\s+(con|a ser)/i,
+    /mi\s+nombre\s+es/i,
+    /\w+@\w+\.\w+/i, // Email pattern
+    /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/i, // Fecha completa
+    /(mañana|ma\u00f1ana|hoy|pasado\s+ma\u00f1ana|tarde|noche)/i,
+    /(\d{1,2})(:|\.)?(\d{2})?\s*(am|pm|AM|PM)/i, // Horarios
+    /a\s+las\s+\d+/i, // "a las 9"
+    /para\s+(hoy|mañana|ma\u00f1ana)/i,
+    /el\s+(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)/i
+  ];
+  
+  return continuationPatterns.some(pattern => pattern.test(text));
+}/* ─────────────────────────────────────────────────────────────
+   💰 AXEL QUOTE PROCESSOR
+───────────────────────────────────────────────────────────── */
+async function processAxelQuote(userId, photoUrls, profile) {
+  const startTime = Date.now();
+  
+  try {
+    loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
+    
+    // 1. Procesar formulario - verificar si tenemos todos los datos
+    const formResult = await processAxelFormMessage(userId, '');
+    
+    if (formResult.needsMoreInfo) {
+      // Faltan datos del formulario
+      console.log('[AXEL-QUOTE] ⏳ Formulario incompleto, solicitando datos...');
+      await enviarWhatsApp(userId, `Perfecto! Ya tengo las fotos 📸\n\nAhora necesito algunos datos para preparar tu cotización:\n\n${formResult.prompt}`);
+      return { success: true, needsMoreData: true };
     }
-    return res.json({ 
-      ok: true, 
-      ignored: true, 
-      reason: 'wassenger_disabled',
-      message: 'Wassenger está temporalmente desactivado'
+    
+    // 2. Analizar fotos con Vision AI
+    await enviarWhatsApp(userId, `Analizando daños con IA... 🤖`);
+    
+    loggers.axel.info('Analyzing collision photos', { userId, photoCount: photoUrls.length });
+    const visionAnalysis = await analyzeCollisionPhotos(photoUrls);
+    
+    if (!visionAnalysis.success) {
+      await enviarWhatsApp(userId, `Disculpa, tuve un problema analizando las fotos. ¿Podrías enviarlas nuevamente?`);
+      return { success: false, error: visionAnalysis.error };
+    }
+    
+    // 3. Generar cotización con IA
+    await enviarWhatsApp(userId, `Preparando cotización personalizada... 📋`);
+    
+    const quoteResult = await generateQuote({
+      vehicleData: formResult.data,
+      damageAnalysis: visionAnalysis,
+      photoUrls
     });
+    
+    if (!quoteResult.success) {
+      await enviarWhatsApp(userId, `Hubo un problema generando la cotización. Déjame contactarte en un momento.`);
+      return { success: false, error: quoteResult.error };
+    }
+    
+    // 4. Generar código único
+    const { code: quoteCode } = await generateQuoteCode();
+    
+    // 5. Enviar cotización por WhatsApp
+    const whatsappMessage = `
+🎯 *COTIZACIÓN PAINTBULL*
+
+${quoteResult.quote}
+
+📋 *Código:* ${quoteCode}
+
+---
+
+📧 *Te envío copia detallada por email...*
+
+_The PaintBull - Expertos en colisiones_ 🚗💥
+    `.trim();
+    
+    await enviarWhatsApp(userId, whatsappMessage);
+    
+    // 6. Enviar email con cotización formal
+    if (formResult.data.email) {
+      const emailResult = await sendQuoteEmail({
+        customerName: formResult.data.nombre || profile.whatsappDisplayName || 'Cliente',
+        customerEmail: formResult.data.email,
+        vehicleData: formResult.data,
+        damageAnalysis: visionAnalysis.analysis,
+        quote: quoteResult.quote,
+        priceRange: quoteResult.priceRange,
+        photoUrls: photoUrls,
+        quoteCode: quoteCode
+      });
+      
+      if (emailResult.success) {
+        await enviarWhatsApp(userId, `✅ Email enviado a ${formResult.data.email}\n\nRevisa tu bandeja de entrada (y spam por si acaso).`);
+      } else {
+        console.error('[AXEL-QUOTE] ❌ Error enviando email:', emailResult.error);
+      }
+    }
+    
+    // 7. Cotización completada - Axel permanece activo
+    // Usuario puede seguir consultando con Axel sobre la cotización
+    // Para cambiar de agente, usuario debe usar @aurora, @aluna, etc.
+    
+    // ⏱️ T14: Limpiar transacción (cotización enviada exitosamente)
+    profile.transactionStartedAt = null;
+    profile.transactionAgent = null;
+    profile.followUpSentAt = null;
+    await saveProfile(userId, profile);
+    console.log('[T14] ✅ Transacción completada (cotización enviada):', { userId, quoteCode });
+    
+    const duration = Date.now() - startTime;
+    loggers.axel.timing('Quote processing complete', duration, { userId, quoteCode });
+    
+    return { success: true, quoteCode };
+    
+  } catch (error) {
+    loggers.axel.error('Quote processing failed', { userId }, error);
+    await enviarWhatsApp(userId, `Hubo un problema técnico. Déjame contactarte manualmente para ayudarte.`);
+    return { success: false, error: error.message };
+  }
+}
+function isOldMessage(data) {
+  const ts = Number(data.timestamp || 0);
+  if (!ts) return false;
+  const diff = nowUnix() - ts;
+  return diff > 3600; // 1h
+}
+
+function isCasualGreetingOnly(text) {
+  const t = (text || '').toLowerCase().trim();
+  return [
+    /^hola[!.?\s]*$/,
+    /^hi[!.?\s]*$/,
+    /^hey[!.?\s]*$/,
+    /^buenas[!.?\s]*$/,
+    /^buenos días[!.?\s]*$/,
+    /^buenas tardes[!.?\s]*$/,
+    /^buenas noches[!.?\s]*$/,
+    /^qué tal[!.?\s]*$/,
+    /^como estas[!.?\s]*$/,
+    /^hola aurora[!.?\s]*$/,
+    /^hola como estas[!.?\s]*$/
+  ].some(r => r.test(t));
+}
+
+function isReservationIntent(text) {
+  const t = (text || '').toLowerCase();
+  const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio', 'quiero venir', 'me gustaría'];
+  const questionKeywords = ['servicios', 'ofrecen', 'tienen', 'precios', 'cuesta', 'quiero saber', 'información', 'ubicación', 'donde', 'horario'];
+  if (isCasualGreetingOnly(text)) return false;
+  return reservationKeywords.some(k => t.includes(k)) || questionKeywords.some(k => t.includes(k));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ✅ Webhook POST (tonto + rápido)
+───────────────────────────────────────────────────────────── */
+router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, async (req, res) => {
+  const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
+  if (!wassengerEnabled) {
+    return res.json({ ok: true, ignored: true, reason: 'wassenger_disabled' });
   }
 
   const body = req.body || {};
-  const evt = body.event || '';
+  const evt = safeStr(body.event || '');
   const data = body.data || {};
+  const debug = process.env.DEBUG_MODE === 'true';
   const isProd = process.env.NODE_ENV === 'production';
-
-  if (process.env.DEBUG_MODE === 'true') {
-    if (isProd) {
-      console.log('[WASSENGER] Webhook recibido', {
-        event: evt,
-        from: data.fromNumber || data.from || 'unknown'
-      });
-    } else {
-      console.log('[WASSENGER] Webhook recibido:', JSON.stringify(body, null, 2));
-    }
-  }
 
   if (!evt || !data) {
     return res.status(400).json({ ok: false, error: 'INVALID_PAYLOAD' });
   }
 
-  // 🛡️ FILTRO 1: Ignorar mensajes salientes o eventos no relevantes
-  if (!evt.includes('message:in') || evt.includes('message:out')) {
+  // Sólo entrantes
+  if (!isIncomingEvent(evt)) {
     return res.json({ ok: true, ignored: true, reason: 'not_incoming_message' });
   }
 
-  // ⚡ RESPONDER INMEDIATAMENTE para evitar H12 timeout (30s)
-  // Wassenger necesita recibir 200 OK rápido, procesamos en background
+  // Responder inmediato para evitar timeouts
   res.json({ ok: true, processing: 'async' });
 
-  // 🔄 PROCESAMIENTO EN BACKGROUND
+  // Background
   setImmediate(async () => {
-    // Handler para rechazos no capturados
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('[WASSENGER] ⚠️ Unhandled Promise Rejection:', reason);
-      console.error('[WASSENGER] ⚠️ Promise:', promise);
-    });
+    const userId = normalizeUserId(data);
+    const name = normalizeName(data);
+    let text = normalizeText(data);
+    const type = normalizeType(data);
+    const mediaUrl = buildMediaUrl(data);
 
-    try {
-    console.log('[WASSENGER] 🔄 Iniciando procesamiento background...');
+    if (debug) {
+      console.log('[WASSENGER] Incoming:', {
+        event: evt,
+        userId: userId || 'NULL',
+        type,
+        hasText: !!text,
+        hasMedia: !!mediaUrl,
+        prod: isProd
+      });
+    }
 
-    // Extraer datos (compatibilidad con diferentes formatos de Wassenger)
-    const userId = (data.fromNumber || data.from || '').trim();
-    let text = (data.body || data.message || '').trim();
-    // 🔧 FIX: Extraer nombre desde la estructura correcta de Wassenger
-    const name = data.chat?.name || data.contact?.name || data.fromName || data.name || '';
-    const messageType = data.type || 'text';
+    if (!userId) return;
+
+    loggers.webhook.info('Processing incoming message', { userId, type, hasMedia: !!mediaUrl });
+
+    // Filtros básicos (no destructivos)
+    const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
+    if (BOT_NUMBER && userId.includes(String(BOT_NUMBER).replace(/\D/g, ''))) return;
+    if (data.fromMe === true || data.fromMe === 'true') return;
+    if (isOldMessage(data)) return;
+
+    const botCheck = detectBotLight(data, userId);
+    if (botCheck.detected) {
+      if (debug) console.log('[WASSENGER] Ignorado (bot):', botCheck.reason);
+      return;
+    }
+
+    // 🚦 Rate limiting - Prevenir spam/abuso
+    const rateLimitCheck = checkRateLimit(userId);
+    if (!rateLimitCheck.allowed) {
+      const message = rateLimitCheck.reason === 'minute_limit'
+        ? `⏱️ Por favor, espera ${rateLimitCheck.retryAfter} segundos antes de enviar más mensajes.\n\nLímite: ${rateLimitCheck.limit} mensajes por minuto.`
+        : `⏱️ Has alcanzado el límite de mensajes por hora.\n\nIntenta nuevamente en ${Math.ceil(rateLimitCheck.retryAfter / 60)} minutos.`;
+      
+      await enviarWhatsApp(userId, message);
+      return;
+    }
+
+    // 🎤 Voz → transcribir
+    if (type === 'audio' || type === 'voice' || type === 'ptt') {
+      if (!mediaUrl) return;
+      const tr = await transcribeAudio(mediaUrl);
+      if (!tr?.success || !tr?.text) {
+        await enviarWhatsApp(userId, '🎤 No pude procesar tu audio. ¿Puedes escribirlo por texto? 😊');
+        return;
+      }
+      text = tr.text;
+    }
+
+    // Construir “evento” para Aurora Core
+    const envelope = buildMessageEnvelope({ userId, name, text, type, mediaUrl, data, evt });
+
+    // Perfil + historial
+    const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+    let conversationHistory = await loadConversationHistory(userId, 10).catch(() => []);
+
+    // ✅ Registrar mensaje procesado para rate limiting
+    recordMessage(userId);
+
+    // 🌍 Detección natural de idioma
+    // Si el usuario escribe en otro idioma, el sistema cambia automáticamente
+    const currentLanguage = current.preferredLanguage || 'es';
+    const detectedLanguage = getUserLanguage(text || '', currentLanguage);
     
-    // 🎯 DECLARACIÓN ÚNICA DE activeAgent (usado en TODOS los flujos)
-    let activeAgent = 'AURORA'; // Default, se actualizará según el perfil cargado
-    
-    // 🔧 FIX: Construir URL de imagen desde Wassenger API
-    let mediaUrl = data.mediaUrl || data.media?.url || null;
-    
-    // Si no hay URL directa pero hay enlace de descarga de Wassenger
-    if (!mediaUrl && data.media?.links?.download) {
-      const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
-      // Convertir el path relativo a URL completa autenticada
-      mediaUrl = `https://api.wassenger.com${data.media.links.download}?token=${WASSENGER_TOKEN}`;
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 📸 URL de imagen construida desde API de Wassenger');
-      }
-    }
-
-    console.log('[WASSENGER] 📍 userId:', userId || 'NULL', 'text:', text?.substring(0, 50) || 'NULL', 'messageType:', messageType);
-
-    try {
-      console.log('[WASSENGER] 🔍 Punto A - después de log userId');
-    } catch (e) {
-      console.error('[WASSENGER] ❌ Crash en log Punto A:', e);
-    }
-
-    if (!userId) {
-      console.log('[WASSENGER] ⚠️ Sin userId - ignorando mensaje');
-      return; // Early exit - ya respondimos al webhook
-    }
-
-    try {
-      console.log('[WASSENGER] 🔍 Punto B - userId OK, verificando tipo...');
-    } catch (e) {
-      console.error('[WASSENGER] ❌ Crash en Punto B:', e);
-    }
-
-    console.log('[WASSENGER] 🔍 Verificando tipo de mensaje...');
-    console.log('[WASSENGER] 🔍 messageType:', messageType);
-    console.log('[WASSENGER] 🔍 messageType === "image":', messageType === 'image');
-    console.log('[WASSENGER] 🔍 messageType === "document":', messageType === 'document');
-    console.log('[WASSENGER] 🔍 messageType === "pdf":', messageType === 'pdf');
-    console.log('[WASSENGER] 🔍 Evaluación completa:', (messageType === 'image' || messageType === 'document' || messageType === 'pdf'));
-    console.log('[WASSENGER] 🔍 Punto D - Después de verificar tipo, antes de IF imagen');
-    console.log('[WASSENGER] 🔍 DEBUG - Evaluando condición IF imagen...');
-
-    // 📸 PROCESAMIENTO DE IMÁGENES/DOCUMENTOS
-    if (messageType === 'image' || messageType === 'document' || messageType === 'pdf') {
-      console.log('[WASSENGER] ➡️ Entrando a flujo de IMAGEN/DOCUMENTO');
-      console.log('[WASSENGER] 🔍 DENTRO del IF de imagen');
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 📸 Procesando imagen/documento...');
-        console.log('[WASSENGER] 📸 DEBUG - Type:', messageType, 'MediaURL:', mediaUrl ? 'PRESENTE' : 'AUSENTE');
-        console.log('[WASSENGER] 📸 DEBUG - MIME:', data.media?.mime);
-        console.log('[WASSENGER] 📸 DEBUG - Full data structure:', JSON.stringify(data, null, 2));
-      }
+    // Cambio de idioma detectado - natural y sin comandos
+    if (detectedLanguage?.language && 
+        detectedLanguage.language !== currentLanguage &&
+        detectedLanguage.confidence > 0.3) { // Umbral bajo para cambio rápido
       
-      const messageData = { type: messageType, media: { url: mediaUrl } };
+      console.log('[LANGUAGE] 🌍 Cambio de idioma detectado:', {
+        from: currentLanguage,
+        to: detectedLanguage.language,
+        confidence: detectedLanguage.confidence
+      });
       
-      // Cargar perfil para saber el agente activo
-      console.log('[WASSENGER DEBUG] 🔄 Cargando perfil para imagen...');
-      const startLoadProfileImage = Date.now();
-      const userProfile = await loadProfileWithTimeout(loadProfile, userId, 5000);
-      const loadProfileMs = Date.now() - startLoadProfileImage;
-      console.log(`[WASSENGER DEBUG] ✅ Perfil cargado en ${loadProfileMs}ms, fallback: ${userProfile._fallback || false}`);
+      // Actualizar idioma del perfil
+      current.preferredLanguage = detectedLanguage.language;
+      await saveProfile(userId, { ...current, preferredLanguage: detectedLanguage.language });
       
-      // Si no hay perfil y es fallback, usar perfil básico
-      console.log('[WASSENGER DEBUG] ✅ loadProfile completado, profile:', userProfile ? 'FOUND' : 'NULL');
-      activeAgent = userProfile?.activeAgent || 'AURORA'; // Actualizar variable global del try
+      // Obtener último mensaje del asistente para repetirlo en nuevo idioma
+      const lastAssistantMessage = conversationHistory
+        .slice()
+        .reverse()
+        .find(msg => msg.role === 'assistant');
       
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 📸 DEBUG - Active agent:', activeAgent, 'MediaURL exists:', !!mediaUrl);
-      }
-      
-      // 🚗 AXEL: Validar formato de archivo (solo imágenes, NO PDFs)
-      if (activeAgent === 'AXEL') {
-        const mimeType = data.media?.mime || '';
-        const isPDF = mimeType === 'application/pdf' || messageType === 'pdf' || messageType === 'document';
+      if (lastAssistantMessage) {
+        console.log('[LANGUAGE] 🔄 Repitiendo último mensaje en nuevo idioma...');
         
-        if (isPDF) {
-          console.log('[WASSENGER] 🚗 AXEL - PDF/Documento rechazado');
-          await enviarWhatsApp(userId,
-            '⚠️ *No puedo analizar PDFs o documentos*\n\n' +
-            'Para cotizar tu vehículo necesito *fotos* del daño. 📸\n\n' +
-            '*Por favor envíame:*\n' +
-            '✅ Fotos en JPG o PNG\n' +
-            '✅ Con buena iluminación\n' +
-            '✅ Desde varios ángulos\n\n' +
-            '¿Listo? Envíame las fotos del vehículo 👍'
-          );
-          return; // PDF not supported - early exit
-        }
-      }
-      
-      // 🚗 SI ES AXEL SIN IMAGEN: Verificar si tiene formulario en progreso
-      if (activeAgent === 'AXEL' && !mediaUrl) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🚗 AXEL activo - mensaje de texto recibido');
-        }
+        // Generar traducción del último mensaje
+        const translationPrompt = `Translate this message to ${detectedLanguage.language === 'en' ? 'English' : 'Spanish'}. Keep the same tone and structure:\n\n"${lastAssistantMessage.content}"`;
         
-        // 🚫 Si está esperando reenvío de fotos (por error anterior) y no hay texto, ignorar
-        if (userProfile.axelData?.waitingForPhotoRetry && !text.trim()) {
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log('[WASSENGER] 🚫 AXEL esperando fotos - ignorando mensaje vacío');
-          }
-          return; // Early exit - waiting for photo retry
-        }
-        
-        const responseText = text.toLowerCase();
-        
-        // Importar servicios del formulario
-        const { processAxelFormMessage, getAxelForm } = await import('../../servicios/axel-quote-form.js');
-          
-          // Verificar si tiene formulario en progreso
-          const { exists, data: currentForm } = await getAxelForm(userId);
-          
-          // Si NO tiene formulario y saluda/mensaje inicial → pedir fotos
-          if (!exists && (responseText.includes('hola') || responseText.includes('buenos') || responseText.includes('buenas') || responseText.length < 20)) {
-            await enviarWhatsApp(userId, 
-              '¡Hola! Soy Axel de PaintBull 🚗💥 Especialista en enderezada y pintura con 15 años de experiencia.\n\nEnvíame fotos de los daños de tu vehículo y te cotizo de inmediato. 📸\n\nIdealmente:\n• Foto general del vehículo\n• Close-up de cada zona dañada\n• Desde varios ángulos\n• Con buena luz natural'
-            );
-            return; // Background processing - webhook already responded
-          }
-          
-          // Si NO tiene formulario y escribe algo → recordar fotos
-          if (!exists) {
-            await enviarWhatsApp(userId, 
-              'Para poder ayudarte con la cotización necesito que me envíes fotos del daño. 📸\n\nAsegúrate de que:\n✅ Tengan buena iluminación\n✅ Muestren el daño desde varios ángulos\n✅ Sean claras (sin blur)\n\n¿Listo? Envíame las fotos 👍'
-            );
-            return; // Background processing - webhook already responded
-          }
-          
-          // 📋 SI TIENE FORMULARIO EN PROGRESO → Procesar datos
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log('[WASSENGER] 📋 Procesando datos del formulario...');
-          }
-          const formResult = await processAxelFormMessage(userId, text);
-          
-          if (!formResult.success) {
-            await enviarWhatsApp(userId, 
-              '⚠️ No pude procesar tu mensaje. ¿Puedes intentar de nuevo?\n\nRecuerda enviarlo como: _Marca Modelo Año_'
-            );
-            return; // Background processing - webhook already responded
-          }
-          
-          // Si formulario completo → Generar cotización
-          if (formResult.complete) {
-            if (process.env.DEBUG_MODE === 'true') {
-              console.log('[WASSENGER] ✅ Formulario completo - generando cotización');
-            }
-            
-            // Generar código único de cotización
-            const { generateQuoteCode } = await import('../../servicios/axel-quote-code.js');
-            const codeResult = await generateQuoteCode();
-            const quoteCode = codeResult.code;
-            
-            await enviarWhatsApp(userId, 
-              `✅ *¡Perfecto!* Ya tengo toda la información.\n\n` +
-              `🔢 Código de cotización: *${quoteCode}*\n\n` +
-              `🔄 Estoy preparando tu cotización personalizada...\n\n` +
-              `_Esto tomará unos segundos_ ⏱️`
-            );
-            
-            // Importar generador de cotizaciones
-            const { processQuoteGeneration } = await import('../../servicios/axel-quote-generator.js');
-            
-            // Obtener análisis de daños del perfil (corregido: lastAnalisis)
-            const damageAnalysis = profile.axelData?.lastAnalysis;
-            
-            if (!damageAnalysis) {
-              console.error('[WASSENGER] ❌ No se encontró análisis de daños en el perfil');
-              await enviarWhatsApp(userId, 
-                '⚠️ Hubo un problema recuperando el análisis de daños.\n\n' +
-                'Por favor, envíame nuevamente las fotos del vehículo para poder cotizar. 📸'
-              );
-              return; // Background processing - webhook already responded
-            }
-            
-            // Generar cotización con OpenAI
-            const quoteResult = await processQuoteGeneration({
-              userId,
-              vehicleData: formResult.data,
-              damageAnalysis: damageAnalysis,
-              photoUrls: damageAnalysis.photoUrls || [],
-              quoteCode: quoteCode
-            });
-            
-            if (!quoteResult.success) {
-              console.error('[WASSENGER] ❌ Error generando cotización:', quoteResult.error);
-              await enviarWhatsApp(userId, quoteResult.fallbackMessage);
-              
-              await saveInteraction({
-                userId,
-                agent: 'axel',
-                agentName: 'Axel',
-                intentReason: 'quote_generation_error',
-                input: text,
-                output: quoteResult.fallbackMessage,
-                meta: {
-                  route: '/webhooks/wassenger',
-                  via: 'whatsapp',
-                  error: quoteResult.error
-                }
-              });
-              
-              return; // Background processing - webhook already responded
-            }
-            
-            // Enviar cotización por WhatsApp
-            await enviarWhatsApp(userId, quoteResult.whatsappMessage);
-            
-            // Guardar cotización completa (FIX: usar userProfile en vez de profile)
-            userProfile.axelData = userProfile.axelData || {};
-            userProfile.axelData.latestQuote = {
-              vehicleData: formResult.data,
-              damageAnalysis: damageAnalysis,
-              quoteData: quoteResult.emailData,
-              quotedAt: new Date().toISOString()
-            };
-            await saveProfile(userId, userProfile);
-            
-            if (process.env.DEBUG_MODE === 'true') {
-              console.log('[WASSENGER] ✅ Cotización enviada y guardada');
-            }
-            
-            // Enviar email con cotización HTML
-            const { sendQuoteEmail } = await import('../../servicios/axel-quote-email.js');
-            const emailResult = await sendQuoteEmail({
-              customerEmail: formResult.data.email,
-              customerName: formResult.data.nombre,
-              vehicleData: formResult.data,
-              damageAnalysis: damageAnalysis,
-              quote: quoteResult.emailData.quote,
-              priceRange: quoteResult.emailData.priceRange,
-              photoUrls: damageAnalysis.photoUrls || [],
-              quoteCode: quoteCode
-            });
-            
-            if (emailResult.success) {
-              if (process.env.DEBUG_MODE === 'true') {
-                console.log('[WASSENGER] ✅ Email de cotización enviado');
-              }
-              
-              // 🗄️ GUARDAR EN POSTGRESQL (independiente de userId)
-              try {
-                const { saveQuote } = await import('../../servicios/axel-quote-db.js');
-                const dbResult = await saveQuote({
-                  quoteCode: quoteCode,
-                  userPhone: userId,
-                  vehicleData: formResult.data,
-                  damageAnalysis: damageAnalysis,
-                  quoteDetails: quoteResult.emailData.quote,
-                  priceRange: quoteResult.emailData.priceRange,
-                  customerName: formResult.data.nombre,
-                  customerEmail: formResult.data.email,
-                  photoUrls: damageAnalysis.photoUrls || []
-                });
-                
-                if (dbResult.success) {
-                  console.log('[WASSENGER] ✅ Cotización guardada en PostgreSQL:', quoteCode);
-                } else {
-                  console.error('[WASSENGER] ⚠️ Error guardando en PostgreSQL:', dbResult.error);
-                }
-              } catch (dbError) {
-                console.error('[WASSENGER] ❌ Error al guardar cotización:', dbError);
-              }
-              
-            } else {
-              console.error('[WASSENGER] ⚠️ Error enviando email de cotización:', emailResult.error);
-            }
-            
-            // Guardar interacción
-            await saveInteraction({
-              userId,
-              agent: 'axel',
-              agentName: 'Axel',
-              intentReason: 'quote_generated',
-              input: text,
-              output: quoteResult.whatsappMessage,
-              meta: {
-                route: '/webhooks/wassenger',
-                via: 'whatsapp',
-                formData: formResult.data,
-                quoteData: quoteResult.emailData,
-                emailSent: emailResult.success
-              }
-            });
-            
-            // Limpiar formulario y estado
-            const { deleteAxelForm } = await import('../../servicios/axel-quote-form.js');
-            await deleteAxelForm(userId);
-            
-            // Resetear flags en profile
-            profile.axelData.awaitingFormData = false;
-            profile.axelData.lastQuoteSentAt = new Date().toISOString();
-            await saveProfile(userId, profile);
-            
-            console.log('[WASSENGER] 🗑️ Formulario limpiado - cotización completada');
-            
-            return; // Background processing - webhook already responded
-          }
-          
-                // DETECTAR SI USUARIO YA TIENE COTIZACIÓN ENVIADA (buscar en DB PostgreSQL)
-      if (activeAgent === 'AXEL') {
-        const quoteCodeMatch = text.match(/AXEL-\d{4}-\d{4}/);
-        const hasExistingQuote = profile.axelData?.lastAnalysis && profile.axelData?.emailSent;
-        
-        // Si usuario menciona código AXEL, buscar en base de datos PostgreSQL
-        if (quoteCodeMatch) {
-          console.log(`[WASSENGER] 🔍 Buscando código en DB: ${quoteCodeMatch[0]}`);
-          
-          try {
-            const { findQuoteByCode } = await import('../../servicios/axel-quote-db.js');
-            const dbResult = await findQuoteByCode(quoteCodeMatch[0]);
-            
-            if (dbResult.success && dbResult.found) {
-              // Cotización encontrada en DB - cargar en perfil
-              const dbQuote = dbResult.quote;
-              console.log('[WASSENGER] ✅ Cotización encontrada en DB, cargando datos...');
-              
-              profile.axelData = profile.axelData || {};
-              profile.axelData.loadedQuote = {
-                code: dbQuote.quote_code,
-                vehicle: dbQuote.vehicle,
-                status: dbQuote.status,
-                priceRange: { min: dbQuote.price_min, max: dbQuote.price_max },
-                originalPhone: dbQuote.original_user_phone,
-                customerName: dbQuote.customer_name,
-                customerEmail: dbQuote.customer_email,
-                emailSent: dbQuote.email_sent,
-                appointmentConfirmed: dbQuote.appointment_confirmed
-              };
-              profile.axelData.quoteConfirmed = true;
-              profile.axelData.awaitingScheduling = dbQuote.status === 'sent' || dbQuote.status === 'confirmed';
-              profile.axelData.confirmedQuoteCode = dbQuote.quote_code;
-              
-              await saveProfile(userId, profile);
-              console.log('[WASSENGER] ✅ Estado actualizado con cotización DB');
-              
-            } else {
-              // Código no encontrado en DB
-              console.log('[WASSENGER] ❌ Código AXEL no encontrado en DB');
-              await enviarWhatsApp(userId,
-                `❌ No encontré la cotización con código ${quoteCodeMatch[0]}\n\n` +
-                'Verifica que el código sea correcto. Si acabas de recibir tu cotización, espera unos segundos e intenta de nuevo. 🔄'
-              );
-              return;
-            }
-          } catch (error) {
-            console.error('[WASSENGER] Error buscando código en DB:', error);
-            // Continuar con flujo normal si hay error DB
-          }
-        }
-        // Si tiene cotización local (sin código), también activar modo post-cotización
-        else if (hasExistingQuote && (text.toLowerCase().includes('confirmar') || text.toLowerCase().includes('cotizaci') || text.toLowerCase().includes('agendar') || text.toLowerCase().includes('cita'))) {
-          console.log('[WASSENGER] 💡 Usuario tiene cotización local existente, modo post-cotización activado');
-          
-          profile.axelData = profile.axelData || {};
-          profile.axelData.quoteConfirmed = true;
-          profile.axelData.awaitingScheduling = true;
-          
-          await saveProfile(userId, profile);
-          console.log('[WASSENGER] ✅ Estado actualizado: quoteConfirmed=true, awaitingScheduling=true');
-        }
-      }
-      
-      // SI ES AXEL CON IMAGEN: Agrupación batch con 15 segundos
-      if (activeAgent === 'AXEL' && mediaUrl) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🚗 AXEL + imagen - batch processing iniciado');
-        }
-        
-        // ⚠️ VALIDAR: Si ya tiene cotización previa, NO analizar fotos de nuevo
-        if (profile.axelData?.quoteConfirmed || (profile.axelData?.lastAnalysis && profile.axelData?.emailSent)) {
-          console.log('[WASSENGER] ⚠️ Usuario ya tiene cotización previa, ignorando nuevas fotos');
-          await enviarWhatsApp(userId,
-            'Ya tengo tu cotización anterior lista 📋\n\n' +
-            'Si necesitas un *nuevo análisis* para otro daño, dime "nuevo análisis" y empezamos de cero. 👍'
-          );
-          return; // Background processing - webhook already responded
-        }
-        
-        try {
-          // Sistema de agrupación temporal de fotos
-          let photoData = axelPendingPhotos.get(userId);
-          
-          if (!photoData) {
-            photoData = { photos: [], timer: null, firstPhotoAt: Date.now() };
-            axelPendingPhotos.set(userId, photoData);
-            
-            // Confirmar recepción inmediata (UX)
-            await enviarWhatsApp(userId, '📸 Foto recibida. Envía todas las que tengas, las analizo juntas en un momento...');
-          }
-          
-          // Agregar foto al grupo
-          photoData.photos.push({
-            url: mediaUrl,
-            receivedAt: Date.now()
-          });
-          
-          // Limpiar timer anterior
-          if (photoData.timer) {
-            clearTimeout(photoData.timer);
-          }
-          
-          console.log(`[WASSENGER] 📸 ${photoData.photos.length} foto(s) acumulada(s) - timer 15s iniciado`);
-          
-          // Timer de 15 segundos para procesar batch
-          photoData.timer = setTimeout(async () => {
-            const currentPhotoData = axelPendingPhotos.get(userId);
-            const allPhotos = currentPhotoData?.photos || [];
-            
-            if (allPhotos.length === 0) {
-              console.log('[WASSENGER] ⚠️ Timer sin fotos pendientes');
-              return;
-            }
-            
-            console.log(`[WASSENGER] 🚀 Procesando BATCH de ${allPhotos.length} foto(s)`);
-            
-            // Limpiar cache inmediatamente
-            axelPendingPhotos.delete(userId);
-            
-            // Importar servicio de análisis
-            const { analyzeCollisionPhoto } = await import('../../servicios/collision-analysis.js');
-            
-            // Analizar todas las fotos juntas
-            const photoUrls = allPhotos.map(p => p.url);
-            const analysis = await analyzeCollisionPhoto(photoUrls[0], { 
-              photoType: 'batch',
-              additionalPhotos: photoUrls.slice(1),
-              totalPhotos: photoUrls.length
-            });
-            
-            if (!analysis.success) {
-              console.error('[WASSENGER] ❌ Error análisis:', analysis.error);
-              await enviarWhatsApp(userId,
-                '⚠️ Ups, hubo un problema al revisar las fotos. ¿Podrías enviarlas otra vez? Con buena luz si es posible. 📸'
-              );
-              return;
-            }
-
-            console.log(`[WASSENGER] ✅ Análisis batch OK - Severidad: ${analysis.severity}`);
-            
-            // Cargar perfil para guardar resultado
-            const freshProfile = await loadProfile(userId);
-            freshProfile.axelData = freshProfile.axelData || {};
-            freshProfile.axelData.lastAnalysis = {
-              photoCount: allPhotos.length,
-              severity: analysis.severity,
-              damageAreas: analysis.damageAreas || [],
-              estimatedCost: analysis.estimatedCost || null,
-              analyzedAt: new Date().toISOString()
-            };
-            await saveProfile(userId, freshProfile);
-            
-            // RESPUESTA CONSOLIDADA EMPÁTICA
-            let respuesta = '';
-            
-            // Intro personalizada según severidad
-            const nombreUsuario = freshProfile.whatsappDisplayName || freshProfile.name || 'Amigo/a';
-            
-            if (analysis.severity === 'severe' || analysis.severity === 'major') {
-              respuesta = `${nombreUsuario}, revisé las ${allPhotos.length} foto(s). El golpe sí es considerable, pero tranquilo/a que tiene arreglo. 💪\n\n`;
-            } else if (analysis.severity === 'moderate') {
-              respuesta = `${nombreUsuario}, vi las fotos. Es un daño moderado, de esos que vemos seguido. No te preocupes. 👍\n\n`;
-            } else {
-              respuesta = `${nombreUsuario}, perfecto. El daño es leve, se puede solucionar sin problema. ✅\n\n`;
-            }
-            
-            // Áreas dañadas de forma natural
-            if (analysis.damageAreas && analysis.damageAreas.length > 0) {
-              const areas = analysis.damageAreas.slice(0, 3).join(', ');
-              respuesta += `📋 Áreas afectadas: ${areas}\n\n`;
-            }
-            
-            // Cotización con rango (siempre referencial)
-            if (analysis.estimatedCost) {
-              const min = Math.round(analysis.estimatedCost * 0.9);
-              const max = Math.round(analysis.estimatedCost * 1.2);
-              respuesta += `💰 Estimación referencial: $${min} - $${max} (sujeto a inspección física)\n\n`;
-            }
-            
-            // Call to action + solicitud de datos automática
-            respuesta += `\n✅ *COTIZACIÓN OFICIAL POR EMAIL*\n`;
-            respuesta += `Para enviarte la cotización formal necesito:\n`;
-            respuesta += `🚗 Marca, modelo y año del vehículo\n`;
-            respuesta += `📋 Tu nombre completo y email\n\n`;
-            respuesta += `_Ejemplo: Toyota Corolla 2018, Carlos Pérez, carlos@gmail.com_`;
-            
-            await enviarWhatsApp(userId, respuesta);
-            
-            console.log('[WASSENGER] ✅ Análisis batch enviado al usuario');
-            
-            // Guardar análisis en perfil
-            freshProfile.axelData = freshProfile.axelData || {};
-            freshProfile.axelData.lastAnalysis = {
-              severity: analysis.severity,
-              damageAreas: analysis.damageAreas || [],
-              estimatedCost: analysis.estimatedCost || null,
-              photoUrls: photoUrls,
-              analyzedAt: new Date().toISOString()
-            };
-            freshProfile.axelData.awaitingFormData = true; // ← Activar modo formulario
-            await saveProfile(userId, freshProfile);
-            
-            // Crear formulario parcial con análisis
-            const { saveAxelForm } = await import('../../servicios/axel-quote-form.js');
-            await saveAxelForm(userId, {
-              analysisId: Date.now().toString(),
-              severity: analysis.severity,
-              damageAreas: analysis.damageAreas,
-              estimatedCost: analysis.estimatedCost,
-              photoUrls: photoUrls,
-              step: 'awaiting_vehicle_data'
-            });
-            
-            console.log('[WASSENGER] 📋 Formulario iniciado - esperando datos del usuario');
-            
-          }, 15000); // 15 segundos de espera
-          
-          // No respondemos aún - esperamos que el timer procese todo junto
-          return; // Background processing - webhook already responded
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en batch processing:', error);
-          await enviarWhatsApp(userId, '⚠️ Ups, algo falló. Reenvíame las fotos por favor.');
-          axelPendingPhotos.delete(userId);
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // ==============================================
-      // ===== FOTOS PARA OTROS AGENTES =====
-      // ==============================================
-      
-      // 🎯 SI ES ENZO: Análisis especializado de marketing visual
-      if (activeAgent === 'ENZO' && mediaUrl) {
-        console.log('[WASSENGER] 🎯 Enzo analizando material de marketing...');
-        
-        const { analyzeMarketingVisual } = await import('../../servicios/marketing-visual-analysis.js');
-        
-        try {
-          // Confirmación inmediata
-          await enviarWhatsApp(userId, 'Perfecto! 🎯 Analizando tu material de marketing...');
-          
-          // Análisis con Vision AI especializado
-          const analysisResult = await analyzeMarketingVisual(mediaUrl, message);
-          
-          if (analysisResult.success) {
-            // Respuesta con análisis profesional
-            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algo específico? 💡`;
-            
-            await enviarWhatsApp(userId, respuesta);
-            
-            // Guardar en conversación unificada
-            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
-            await conversationAdapter.saveConversationMessage(
-              userId,
-              'assistant',
-              respuesta,
-              'MARKETING',
-              {
-                agent: 'enzo',
-                visualType: analysisResult.visualType,
-                imageUrl: mediaUrl,
-                analysisTimestamp: analysisResult.timestamp
-              }
-            );
-            
-            console.log('[WASSENGER] ✅ Análisis visual de Enzo enviado');
-          } else {
-            await enviarWhatsApp(userId, '⚠️ No pude analizar la imagen. ¿Podrías reenviarla?');
-          }
-          
-          return; // Background processing - webhook already responded
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en análisis visual:', error);
-          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame la imagen por favor.');
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // 🛡️ SI ES ADRIANA: Análisis especializado de documentos de seguros
-      if (activeAgent === 'ADRIANA' && mediaUrl) {
-        console.log('[WASSENGER] 🛡️ Adriana analizando documento de seguros...');
-        
-        const { analyzeInsuranceDocument } = await import('../../servicios/insurance-document-analysis.js');
-        
-        try {
-          // Confirmación inmediata
-          await enviarWhatsApp(userId, 'Perfecto! 🛡️ Analizando tu documento de seguros...');
-          
-          // Análisis especializado con Vision AI
-          const analysisResult = await analyzeInsuranceDocument(mediaUrl, message, {
-            fileType: messageType
-          });
-          
-          if (analysisResult.success) {
-            // Respuesta con análisis profesional
-            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algún punto? 😊`;
-            
-            await enviarWhatsApp(userId, respuesta);
-            
-            // Guardar en conversación unificada
-            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
-            await conversationAdapter.saveConversationMessage(
-              userId,
-              'assistant',
-              respuesta,
-              'SEGURO',
-              {
-                agent: 'adriana',
-                documentType: analysisResult.documentType,
-                documentUrl: mediaUrl,
-                fileType: messageType,
-                analysisTimestamp: analysisResult.timestamp
-              }
-            );
-            
-            console.log('[WASSENGER] ✅ Análisis de documento de Adriana enviado');
-          } else {
-            await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
-          }
-          
-          return; // Background processing - webhook already responded
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
-          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // 📋 SI ES ALUNA: Análisis especializado de documentos de contratos/membresías
-      if (activeAgent === 'ALUNA' && mediaUrl) {
-        console.log('[WASSENGER] 📋 Aluna analizando documento de contratos...');
-        
-        const { analyzeContractDocument } = await import('../../servicios/contract-document-analysis.js');
-        
-        try {
-          // Confirmación inmediata
-          await enviarWhatsApp(userId, 'Perfecto! 📋 Analizando tu documento...');
-          
-          // Análisis especializado con Vision AI
-          const analysisResult = await analyzeContractDocument(mediaUrl, message, {
-            fileType: messageType
-          });
-          
-          if (analysisResult.success) {
-            // Respuesta con análisis profesional
-            const respuesta = `${analysisResult.analysis}\n\n¿Necesitas que profundice en algún aspecto? 😊`;
-            
-            await enviarWhatsApp(userId, respuesta);
-            
-            // Guardar en conversación unificada
-            const { conversationAdapter } = await import('../../database/conversationAdapter.js');
-            await conversationAdapter.saveConversationMessage(
-              userId,
-              'assistant',
-              respuesta,
-              'CONTRATO',
-              {
-                agent: 'aluna',
-                documentType: analysisResult.documentType,
-                documentUrl: mediaUrl,
-                fileType: messageType,
-                analysisTimestamp: analysisResult.timestamp
-              }
-            );
-            
-            console.log('[WASSENGER] ✅ Análisis de documento de Aluna enviado');
-          } else {
-            await enviarWhatsApp(userId, '⚠️ No pude analizar el documento. ¿Podrías reenviarlo con mejor calidad?');
-          }
-          
-          return; // Background processing - webhook already responded
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en análisis de documento:', error);
-          await enviarWhatsApp(userId, '⚠️ Hubo un error. Reenvíame el documento por favor.');
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // 💚 SI ES ANGELA: Análisis especializado de documentos médicos con GPT-4V
-      if (activeAgent === 'ANGELA' && mediaUrl) {
-        console.log('[WASSENGER] 💚 Angela analizando documento médico con GPT-4V...');
-        
-        const { analyzeImage } = await import('../../servicios-ia/openai.js');
-        
-        try {
-          // Confirmación inmediata
-          await enviarWhatsApp(userId, 'Perfecto! 💚 Déjame ver tu documento médico...');
-          
-          // Prompt especializado para Angela (salud, exámenes, recetas)
-          const analysisPrompt = `Eres Ángela, asistente médica virtual de MedBeneficios en Ecuador. Analiza esta imagen/documento médico.
-
-CONTEXTO: Cliente del programa de fidelización para familias de trabajadores de instituciones financieras y tenderos.
-
-TAREA: Identifica y explica de manera SENCILLA y CÁLIDA:
-1. Tipo de documento (receta médica, examen de laboratorio, radiografía, orden médica, etc.)
-2. Información clave (diagnóstico, medicamentos, estudios solicitados, resultados)
-3. ¿Qué significa esto en términos simples? (sin términos médicos complejos)
-4. ¿Qué pasos debe seguir el paciente?
-5. ¿Hay algo que requiera atención inmediata?
-
-ESTILO DE RESPUESTA:
-- Cálida, cercana, como una amiga que trabaja en salud
-- Usa "tú" informal
-- Emojis: 💚 👩‍⚕️ 💊 📋 ✨
-- Expresiones: "Tranquilo", "Lo resolvemos", "Tu familia merece esto"
-- SIN términos médicos complicados (explica todo simple)
-
-Si NO puedes ver bien la imagen o está borrosa, di:
-"La imagen no se ve muy clara 😅 ¿Podrías reenviarla con mejor luz o más cerca? Así puedo ayudarte mejor 💚"`;
-
-          const analysisResult = await analyzeImage(mediaUrl, analysisPrompt, {
-            max_tokens: 800,
-            temperature: 0.7,
-            detail: 'high' // Alta resolución para documentos médicos
-          });
-          
-          if (analysisResult.success && analysisResult.content) {
-            const respuesta = `${analysisResult.content}\n\n¿Necesitas que te explique algo más? Aquí estoy 💚`;
-            
-            await enviarWhatsApp(userId, respuesta);
-            
-            // Guardar en conversación
-            await saveConversationMessage(userId, {
-              role: 'assistant',
-              content: respuesta,
-              agent: 'ANGELA'
-            });
-            
-            // Guardar interacción
-            await saveInteraction({
-              userId,
-              agent: 'angela',
-              agentName: 'Angela',
-              intentReason: 'medical_document_analysis',
-              input: `[DOCUMENTO MÉDICO: ${messageType}]`,
-              output: respuesta,
-              meta: {
-                route: '/webhooks/wassenger',
-                via: 'whatsapp',
-                mediaUrl,
-                fileType: messageType,
-                visionEnabled: true
-              }
-            });
-            
-            console.log('[WASSENGER] ✅ Análisis médico de Angela (GPT-4V) enviado');
-          } else {
-            await enviarWhatsApp(userId, '⚠️ No pude ver bien la imagen. ¿Podrías reenviarla con mejor luz? 💚');
-          }
-          
-          return; // Background processing - webhook already responded
-          
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error en análisis médico:', error);
-          await enviarWhatsApp(userId, '⚠️ Hubo un problema. Reenvíame el documento por favor 💚');
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // 🎯 FALLBACK: Análisis genérico si no es agente especializado
-      if (mediaUrl && !['ENZO', 'ADRIANA', 'ALUNA', 'ANGELA'].includes(activeAgent)) {
-        console.log('[WASSENGER] 🧠 Análisis genérico de documento...');
-        
-        const { analyzeImage } = await import('../../servicios-ia/openai.js');
-        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const agente = AGENTES[activeAgent];
-        
-        try {
-          // Prompt genérico según el tipo de archivo y agente
-          const fileType = messageType === 'document' ? 'documento/PDF' : 'imagen';
-          const analysisPrompt = `Analiza este ${fileType} que el Sensei acaba de enviar. 
-          
-Contexto: Eres ${agente?.nombre || activeAgent}, ${agente?.rol || 'asistente'}.
-Tarea: Identifica insights clave, datos importantes, oportunidades o problemas según tu expertise.
-
-Responde en tu estilo característico con:
-- Análisis rápido de lo que viste
-- Insights accionables
-- Recomendaciones específicas
-- Usa emojis estratégicos`;
-
-          const analysisResult = await analyzeImage(mediaUrl, analysisPrompt, {
-            max_tokens: 800,
-            temperature: 0.7
-          });
-          
-          if (analysisResult.success) {
-            const reply = analysisResult.content;
-            
-            // Enviar respuesta
-            await enviarWhatsApp(userId, reply);
-            
-            // Guardar interacción
-            await saveInteraction({
-              userId,
-              agent: activeAgent.toLowerCase(),
-              agentName: agente.nombre,
-              intentReason: 'document_analysis',
-              input: `[${fileType.toUpperCase()}]`,
-              output: reply,
-              meta: {
-                route: '/webhooks/wassenger',
-                via: 'whatsapp',
-                mediaUrl,
-                fileType: messageType
-              }
-            });
-            
-            return; // Background processing - webhook already responded
-          }
-        } catch (error) {
-          console.error('[WASSENGER] ❌ Error analizando documento:', error);
-          await enviarWhatsApp(userId, 'Gomen Sensei 🙏 Tuve un problema analizando tu archivo. ¿Puedes intentar de nuevo?');
-          return; // Background processing - webhook already responded
-        }
-      }
-      
-      // 💳 SI ES AURORA: Verificar si es comprobante de pago
-      if (activeAgent === 'AURORA' && isReceiptImage(messageData)) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 💳 Imagen detectada como posible comprobante de pago');
-        }
-        
-        if (!userProfile) {
-          await enviarWhatsApp(userId, '❌ No encontré tu perfil. ¿Puedes intentar hacer una reserva primero?');
-          return; // Background processing - webhook already responded
-        }
-        
-        // Procesar comprobante de pago
-        const paymentResult = await processPaymentReceipt(messageData, userProfile);
-        
-        // Enviar respuesta
-        await enviarWhatsApp(userId, paymentResult.message);
-        
-        // Guardar interacción
-        await saveInteraction({
-          userId,
-          agent: 'aurora',
-          agentName: 'Aurora',
-          intentReason: 'payment_verification',
-          input: `[IMAGEN: Comprobante de pago]`,
-          output: paymentResult.message,
-          meta: {
-            route: '/webhooks/wassenger',
-            via: 'whatsapp',
-            mediaUrl,
-            paymentVerified: paymentResult.success,
-            paymentData: paymentResult.data
-          }
+        const translatedMessage = await complete(translationPrompt, {
+          temperature: 0.3,
+          max_tokens: 300
         });
         
-        return; // Background processing - webhook already responded
-      } else {
-        // Imagen/documento enviado a Aurora pero no es comprobante
-        // Mensaje específico según agente activo
-        let responseMessage;
+        // Enviar mensaje traducido
+        await enviarWhatsApp(userId, translatedMessage);
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: translatedMessage, 
+          agent: lastAssistantMessage.agent || 'AURORA',
+          isTranslation: true
+        });
         
-        if (activeAgent === 'AURORA') {
-          responseMessage = '📷 He recibido tu archivo. Si es un comprobante de pago, procesalo. ' +
-            'Si necesitas ayuda técnica, habla con @Enzo. ' +
-            'Si necesitas ayuda con seguros, habla con @Adriana.';
-        } else if (activeAgent === 'ENZO') {
-          responseMessage = '📷 He recibido tu archivo Sensei. ¿Es material para una campaña de marketing? ' +
-            'Puedo analizar imágenes y darte feedback estratégico 🎯';
-        } else if (activeAgent === 'ADRIANA') {
-          responseMessage = '📷 He recibido tu archivo. ¿Es documentación para tu seguro? ' +
-            'Puedo revisar pólizas, siniestros o documentos relacionados 🛡️';
-        } else if (activeAgent === 'ANGELA') {
-          responseMessage = '📷 He recibido tu imagen. Actualmente estoy trabajando en mejorar mi capacidad de visión. ' +
-            'Mientras tanto, ¿puedes describirme qué necesitas que vea? 💚';
-        } else if (activeAgent === 'AXEL') {
-          responseMessage = '📷 He recibido tu foto del vehículo. Déjame analizarla para darte una cotización precisa 🚗';
-        } else if (activeAgent === 'GABI') {
-          responseMessage = '📷 He recibido tu documento. ¿Es un comprobante financiero, factura o documento contable? ' +
-            'Puedo ayudarte a procesarlo 💼';
-        } else {
-          // Fallback genérico
-          responseMessage = '📷 He recibido tu archivo. ¿En qué puedo ayudarte con esto?';
-        }
-        
-        await enviarWhatsApp(userId, responseMessage);
-        
-        return; // Background processing - webhook already responded
+        console.log('[LANGUAGE] ✅ Mensaje repetido en', detectedLanguage.language);
+        return; // No continuar con el flujo normal
       }
     }
 
-    console.log('[WASSENGER] 🔍 Punto E - Salió del IF de imagen (o nunca entró)');
-    console.log('[WASSENGER] 🔍 Punto C - Después de bloque de imagen, antes de audio');
+    // Actualizar perfil mínimo
+    const ahoraISO = new Date().toISOString();
+    const lastMessageAt = current.lastMessageAt ? new Date(current.lastMessageAt).getTime() : 0;
+    const minutos = lastMessageAt ? (Date.now() - lastMessageAt) / (1000 * 60) : 999;
+    const conversacionEnCurso = minutos < 10;
 
-    // 🎤 PROCESAMIENTO DE MENSAJES DE VOZ
-    if (messageType === 'audio' || messageType === 'voice' || messageType === 'ptt') {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🎤 Procesando mensaje de voz...');
-      }
-      
-      if (!mediaUrl) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ❌ No se encontró URL de audio');
-        }
-        return; // Background processing - webhook already responded
-      }
+    // 🔥 SINCRONIZACIÓN NOMBRE: Siempre usar whatsapp_display_name como fuente de verdad
+    const displayName = name || current.whatsappDisplayName || null;
+    const syncedName = displayName || current.name || null;
 
-      // Importar función de transcripción
-      const { transcribeAudio } = await import('../../servicios-ia/openai.js');
-      
-      // Transcribir audio
-      const transcription = await transcribeAudio(mediaUrl);
-      
-      if (!transcription.success) {
-        await enviarWhatsApp(userId, 
-          '🎤 Lo siento, no pude procesar tu mensaje de voz. ¿Podrías escribirlo por texto? 😊'
-        );
-        return; // Background processing - webhook already responded
-      }
-
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Audio transcrito:', transcription.text);
-      }
-      
-      // Actualizar el texto con la transcripción
-      text = transcription.text;
-      
-      // Notificar al usuario que se procesó el audio
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🎤→📝 Procesando como texto:', text);
-      }
-    }
-
-    console.log('[WASSENGER] 📝➡️ Iniciando flujo de TEXTO...');
-
-    // Continuar con procesamiento normal de texto
-    if (!text) {
-      console.log('[WASSENGER] ⚠️ No hay texto para procesar');
-      return; // Background processing - webhook already responded
-    }
-
-    // 🛡️ FILTRO 2: Evitar procesar el propio número del bot
-    const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
-    if (BOT_NUMBER && userId.includes(BOT_NUMBER.replace(/\D/g, ''))) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] Mensaje ignorado: es del propio bot');
-      }
-      return; // Background processing - webhook already responded
-    }
-
-    // 🛡️ FILTRO 3: Detectar si el mensaje viene del bot (campo fromMe)
-    if (data.fromMe === true || data.fromMe === 'true') {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] Mensaje ignorado: fromMe=true');
-      }
-      return; // Background processing - webhook already responded
-    }
-
-    // 🛡️ FILTRO 4: Ignorar mensajes muy antiguos (más de 1 hora)
-    const messageTimestamp = data.timestamp || Date.now() / 1000;
-    const now = Date.now() / 1000;
-    if (now - messageTimestamp > 3600) { // 1 hora
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] Mensaje ignorado: muy antiguo (>1h)');
-      }
-      return; // Background processing - webhook already responded
-    }
-
-    // 🛡️ FILTRO 5: Detectar y bloquear BOTS
-    const isBot = detectarBot(data, text, name);
-    if (isBot.detected) {
-      console.log(`[WASSENGER] BOT DETECTADO y bloqueado: ${isBot.reason}`);
-      return; // Background processing - webhook already responded
-    }
-
-    // 🔍 DEBUG: Log del mensaje que va a procesar Aurora
-    if (!isProd && process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] ✅ PROCESANDO MENSAJE VÁLIDO:');
-      console.log(`- Usuario: ${userId}`);
-      console.log(`- Nombre: ${name}`);
-      console.log(`- Texto: "${text}"`);
-      console.log(`- Tipo: ${messageType}`);
-      console.log('- Datos completos:', JSON.stringify(data, null, 2));
-    }
-
-    // Perfil/memoria
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 1️⃣ Iniciando loadProfile para:', userId);
-    }
-    console.log('[WASSENGER DEBUG] 🔄 Llamando loadProfile para mensajes de texto, userId:', userId);
-    const startLoadProfileText = Date.now();
-    const current = await loadProfileWithTimeout(loadProfile, userId, 5000) || {};
-    const loadProfileTextMs = Date.now() - startLoadProfileText;
-    console.log(`[WASSENGER DEBUG] ✅ loadProfile completado para texto en ${loadProfileTextMs}ms, fallback: ${current._fallback || false}`);
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 2️⃣ loadProfile completado, firstVisit:', current?.firstVisit);
-    }
-    const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
-    
-    // � OBTENER AGENTE ACTIVO (FIX: declarar solo una vez al inicio del setImmediate)
-    // Variable ya declarada en flujo de imágenes (línea 312), reutilizarla
-    
-    // �🆕 Cargar historial de conversación (últimos 10 mensajes)
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 3️⃣ Iniciando loadConversationHistory...');
-    }
-    let conversationHistory = await loadConversationHistory(userId, 10);
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 4️⃣ loadConversationHistory completado, mensajes:', conversationHistory?.length || 0);
-    }
-    
-    // � DEFINIR AGENTE ACTIVO (FIX: debe estar definido antes de usarse)
-    activeAgent = current.activeAgent || 'AURORA';
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 🤖 Agente activo del perfil:', activeAgent);
-    }
-    
-    // �🆕 DETECCIÓN INTELIGENTE DEL NOMBRE
-    let detectedName = current.name || null;
-    
-    // Si no tenemos nombre guardado, intentar extraerlo
-    if (!detectedName && name) {
-      detectedName = cleanWhatsAppName(name);
-      if (!isProd) {
-        console.log(`[WASSENGER] Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
-      }
-    }
-    
-    // También intentar detectar nombre del mensaje si es primera vez
-    if (!detectedName && firstVisit && text) {
-      const nameFromMessage = extractNameFromMessage(text);
-      if (nameFromMessage) {
-        detectedName = nameFromMessage;
-        if (!isProd) {
-          console.log(`[WASSENGER] Nombre detectado del mensaje: "${nameFromMessage}"`);
-        }
-      }
-    }
-    
-    // 🆕 DETECCIÓN AUTOMÁTICA DE EMAIL
-    let detectedEmail = current.email || null;
-    const emailRegex = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-    const emailMatch = text.match(emailRegex);
-    if (emailMatch && !detectedEmail) {
-      detectedEmail = emailMatch[0].toLowerCase();
-      if (!isProd) {
-        console.log(`[WASSENGER] 📧 Email detectado automáticamente: "${detectedEmail}"`);
-      }
-    }
-    
-    // 🔧 CALCULAR conversacionEnCurso: Si último mensaje fue hace menos de 10 minutos
-    const ahora = Date.now();
-    const ultimoMensaje = current.lastMessageAt ? new Date(current.lastMessageAt).getTime() : 0;
-    const minutosDesdeUltimoMensaje = (ahora - ultimoMensaje) / (1000 * 60);
-    const conversacionEnCurso = minutosDesdeUltimoMensaje < 10;
-    
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log(`[WASSENGER] 💬 Conversación en curso: ${conversacionEnCurso} (${minutosDesdeUltimoMensaje.toFixed(1)} min desde último mensaje)`);
-    }
-    
-    let profile = {
+    const profile = {
       ...current,
       userId,
-      name: detectedName,
-      email: detectedEmail, // 🆕 Guardar email detectado automáticamente
-      whatsappDisplayName: name || current.whatsappDisplayName || null, // ACTUALIZAR con nombre fresco de WhatsApp
+      name: syncedName, // 🎯 Sincronizar name con display name de WhatsApp
+      whatsappDisplayName: displayName,
       channel: 'whatsapp',
-      lastMessageAt: new Date().toISOString(),
+      lastMessageAt: ahoraISO,
       conversationCount: (current.conversationCount || 0) + 1,
-      conversacionEnCurso // 🆕 Flag para evitar saludos repetidos
-      // ⚠️ CRÍTICO: NO sobrescribir firstVisit, freeTrialUsed, freeTrialDate
-      // Esos campos solo se actualizan en confirmation-flow.js
-      // Si los pasamos aquí, se sobrescriben en cada mensaje
+      conversacionEnCurso
     };
-    
-    // Guardar perfil actualizado
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 5️⃣ Iniciando saveProfile...');
-    }
+
     await saveProfile(userId, profile);
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 6️⃣ saveProfile completado');
-    }
 
-    // 🔍 DEBUG: Log del perfil completo
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-PERFIL] 📊 Perfil cargado:', {
-        userId: profile.userId,
-        name: profile.name,
-        email: profile.email,
-        firstVisit: profile.firstVisit,
-        freeTrialUsed: profile.freeTrialUsed,
-        conversationCount: profile.conversationCount,
-        hasPendingConfirmation: !!profile.pendingConfirmation,
-        pendingConfirmationData: profile.pendingConfirmation ? {
-          date: profile.pendingConfirmation.date,
-          startTime: profile.pendingConfirmation.startTime,
-          serviceType: profile.pendingConfirmation.serviceType,
-          email: profile.pendingConfirmation.email ? 'Sí' : 'No'
-        } : 'No hay'
+    // Guardar mensaje usuario con contexto reply si existe
+    const replyContext = buildReplyContext(text || '', body, conversationHistory);
+    const processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : (text || '');
+
+    await saveConversationMessage(userId, { role: 'user', content: processedText });
+
+    // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
+    let formResult = { form: null, needsMoreInfo: false, updates: {} };
+    const savedPartialCheck = await getPartialForm(userId).catch(() => null);
+    const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt);
+    const isFormContinuation = detectFormContinuation(processedText);
+    const shouldActivateForm = isReservationIntent(processedText) || hasActiveForm || isFormContinuation;
+    
+    if (shouldActivateForm) {
+      console.log('[FORM] 🎯 Activando formulario:', { 
+        isReservationIntent: isReservationIntent(processedText),
+        hasActiveForm,
+        isFormContinuation 
       });
-    }
-
-    // 🧹 Limpiar flag temporal "justConfirmed" si han pasado más de 10 minutos
-    if (profile.justConfirmed && profile.justConfirmedUntil) {
-      const expiresAt = new Date(profile.justConfirmedUntil).getTime();
-      const now = Date.now();
-      if (now > expiresAt) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 🧹 Fin de periodo justConfirmed, limpiando en DB');
-        }
-        await clearJustConfirmed(userId);
-        profile.justConfirmed = false;
-      }
-    }
-
-    // 🚦 VALIDAR AGENTE ACTIVO - Solo responde el agente que está activo
-    // activeAgent ya fue declarado anteriormente
-    const isAgentMention = /@(aurora|enzo|adriana|aluna|angela|axel|gabi|tomi)/i.test(text);
-    
-    // NUEVA LÓGICA: Si el usuario NO menciona un agente específico, el mensaje va al agente activo
-    // Solo validamos si detectamos mención explícita de cambio de agente
-    // Esto permite que después de un handoff, todos los mensajes vayan al nuevo agente
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log(`[WASSENGER] 🎯 Agente activo: ${activeAgent}, Mención detectada: ${isAgentMention}`);
-    }
-
-    // 🔄 DETECTAR CONTEXTO DE REPLY (mensajes citados)
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 7️⃣ Analizando contexto de reply...');
-    }
-    const replyContext = buildReplyContext(text, body, conversationHistory);
-    
-    if (replyContext.hasReplyContext && process.env.DEBUG_MODE === 'true') {
-      console.log('[REPLY-CONTEXT] ✅ Contexto de reply detectado:', {
-        type: replyContext.contextType,
-        source: replyContext.source,
-        confidence: replyContext.confidence,
-        quotedPreview: replyContext.quotedMessage?.substring(0, 50) + '...'
-      });
-    }
-    
-    // Si detectamos contexto de reply, usar el mensaje enriquecido
-    let processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : text;
-    
-    // 🆕 Guardar mensaje del usuario en historial
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 8️⃣ Iniciando saveConversationMessage...');
-    }
-    await saveConversationMessage(userId, {
-      role: 'user',
-      content: processedText
-    });
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[DEBUG-FLOW] 8️⃣ saveConversationMessage completado');
-    }
-
-    // 🔍 DETECTAR INTENCIÓN - Lógica mejorada
-    const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio', 'quiero venir', 'me gustaría'];
-    const questionKeywords = ['servicios', 'ofrecen', 'tienen', 'precios', 'cuesta', 'quiero saber', 'información', 'ubicación', 'donde', 'horario'];
-    
-    // Saludo casual SOLO si es saludo sin preguntas o contexto adicional
-    const casualGreetingPatterns = [
-      /^hola[!.?\s]*$/i,
-      /^hi[!.?\s]*$/i,
-      /^hey[!.?\s]*$/i,
-      /^buenas[!.?\s]*$/i,
-      /^buenos días[!.?\s]*$/i,
-      /^buenas tardes[!.?\s]*$/i,
-      /^qué tal[!.?\s]*$/i,
-      /^como estas[!.?\s]*$/i,
-      /^hola aurora[!.?\s]*$/i,
-      /^hola como estas[!.?\s]*$/i
-    ];
-    
-    const isCasualGreeting = casualGreetingPatterns.some(pattern => 
-      pattern.test(processedText.toLowerCase().trim())
-    );
-    
-    // Es intención de reserva/info si tiene keywords de reserva O pregunta por servicios/info
-    const hasQuestionKeyword = questionKeywords.some(kw => 
-      processedText.toLowerCase().includes(kw)
-    );
-    
-    const isReservationIntent = !isCasualGreeting && (
-      reservationKeywords.some(kw => processedText.toLowerCase().includes(kw)) ||
-      hasQuestionKeyword
-    );
-    
-    let formResult = null;
-
-    // 🧠 FORMULARIO PARCIAL INTELIGENTE - SOLO si es intención de reserva
-    if (isReservationIntent) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🧠 Procesando mensaje con formulario inteligente (intención de reserva detectada)...');
-      }
+      
       formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
       formResult.userMessage = text;
-    } else {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ⏭️ Salteando formulario - saludo casual detectado');
+      
+      // ⏱️ T14: Iniciar tracking de transacción si necesita más info (inicio de reserva)
+      if (formResult.needsMoreInfo && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = 'AURORA';
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ⏱️ Transacción AURORA iniciada:', { userId, timestamp: profile.transactionStartedAt });
       }
-      // Crear objeto vacío para mantener compatibilidad
-      formResult = { form: null, needsMoreInfo: false, updates: {} };
     }
-    
-    // 🚨 VALIDACIÓN CRÍTICA: Si hay error de validación (domingo/feriado), responder inmediatamente
-    if (formResult.validationError) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🚫 Error de validación detectado:', formResult.validationError.type);
-      }
-      
+
+    // 🚨 Validaciones del formulario (ej domingo/feriado) → respuesta inmediata
+    if (formResult?.validationError) {
       const errorMessage = formResult.validationError.message;
-      
-      // Enviar mensaje de error al usuario
       await enviarWhatsApp(userId, errorMessage);
-      
-      // Guardar interacción
+      await saveConversationMessage(userId, { role: 'assistant', content: errorMessage, agent: 'AURORA' });
       await saveInteraction({
         userId,
-        agent: 'aurora',
-        agentName: 'Aurora',
+        agent: 'AURORA',
+        agentName: 'Aurora Core',
         intentReason: 'validation_error',
-        input: text,
+        input: processedText,
         output: errorMessage,
-        meta: {
-          route: '/webhooks/wassenger',
-          via: 'whatsapp',
-          errorType: formResult.validationError.type,
-          suggestedDate: formResult.validationError.suggestedDate
-        }
+        meta: { envelope, errorType: formResult.validationError.type }
       });
-      
-      // Guardar en historial
-      await saveConversationMessage(userId, {
-        role: 'assistant',
-        content: errorMessage,
-        agent: 'AURORA'
-      });
-      
-      // Limpiar el formulario para que pueda intentar otra fecha
       await clearPartialForm(userId);
-      
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Error de validación enviado - formulario limpiado');
-      }
-      
-      return res.json({ 
-        ok: true, 
-        processed: true,
-        type: 'validation_error',
-        errorType: formResult.validationError.type
-      });
-    }
-    
-    if (formResult.updates && Object.keys(formResult.updates).length > 0) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✨ Datos detectados automáticamente:', formResult.updates);
-      }
-      
-      // Actualizar perfil con datos detectados
-      if (formResult.updates.email && !profile.email) {
-        profile.email = formResult.updates.email;
-        await saveProfile(userId, profile);
-      }
+      return;
     }
 
-    // 🚫 BLOQUEO: Si hay reservas con pago pendiente, no permitir nuevas reservas
-    if (isReservationIntent) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 Detectado intent de reserva - verificando pagos pendientes...');
-      }
-      
-      const { default: reservationRepository } = await import('../../database/reservationRepository.js');
-      const allUserReservations = await reservationRepository.findByUser(userId);
-      const pendingPayments = allUserReservations.filter(r => 
-        r.status === 'pending_payment' && r.payment_status === 'pending'
-      );
-      
-      if (pendingPayments.length > 0) {
-        console.log(`[WASSENGER] 🚫 Usuario tiene ${pendingPayments.length} reserva(s) sin pagar`);
-        
-        const pendingList = pendingPayments.map((r, idx) => {
-          const date = new Date(r.date).toLocaleDateString('es-EC', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          });
-          return `${idx + 1}. ${date} | ${r.start_time}-${r.end_time} | $${r.total_price}`;
-        }).join('\n');
-        
-        const blockMessage = `⚠️ *Tienes ${pendingPayments.length} reserva(s) pendiente(s) de pago:*
-
-${pendingList}
-
-Por favor, completa el pago de tu(s) reserva(s) anterior(es) antes de agendar una nueva. 🙏
-
-¿Cómo prefieres pagar?
-💳 *Tarjeta* (Payphone - online)
-🏦 *Transferencia* bancaria`;
-
-        await enviarWhatsApp(userId, blockMessage);
-        
-        await saveInteraction({
-          userId,
-          agent: 'aurora',
-          agentName: 'Aurora',
-          intentReason: 'blocked_pending_payments',
-          input: text,
-          output: blockMessage,
-          meta: {
-            route: '/webhooks/wassenger',
-            via: 'whatsapp',
-            pendingCount: pendingPayments.length,
-            pendingIds: pendingPayments.map(r => r.id)
-          }
-        });
-        
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: blockMessage,
-          agent: 'AURORA'
-        });
-        
-        return res.json({ 
-          ok: true, 
-          processed: true,
-          type: 'blocked_pending_payments',
-          pendingCount: pendingPayments.length
-        });
-      }
-    }
-    
-    // 🔄 RETOMANDO RESERVA - Solo si existe partial_form guardado (de cancelación previa)
-    // Verificar si hay un partial_form guardado en DB (solo se guarda cuando hay cancelación)
-    const { getPartialForm } = await import('../../perfiles-interacciones/memoria-sqlite.js');
-    const savedPartialForm = await getPartialForm(userId);
-    
-    if (isReservationIntent && savedPartialForm && formResult.form && formResult.form.getResumeMessage) {
-      const resumeMessage = formResult.form.getResumeMessage();
-      if (resumeMessage) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 📋 Usuario retoma reserva cancelada anteriormente - enviando resumen');
-        }
-        formResult.resumeMessage = resumeMessage;
-      }
-    }
-
-    // 🔄 SISTEMA DE CONFIRMACIONES SI/NO (DESPUÉS de actualizar formulario)
-    // Solo procesar SI/NO si hay confirmación pendiente Y la respuesta es explícitamente SI/NO
+    // Si hay confirmación pendiente, SOLO procesar si responde SI/NO
     if (hasPendingConfirmation(profile)) {
-      // ⚠️ VALIDACIÓN: Verificar que pendingConfirmation tenga datos mínimos requeridos
-      const hasValidData = profile.pendingConfirmation && 
-                          profile.pendingConfirmation.date && 
-                          profile.pendingConfirmation.startTime;
-      
+      const hasValidData = profile.pendingConfirmation?.date && profile.pendingConfirmation?.startTime;
       if (!hasValidData) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ⚠️ pendingConfirmation existe pero datos incompletos - limpiando');
-        }
         await clearPendingConfirmation(userId);
         profile.pendingConfirmation = null;
-      }
-      
-      const isPositive = isPositiveResponse(text);
-      const isNegative = isNegativeResponse(text);
-      
-      if (hasValidData && (isPositive || isNegative)) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] Usuario tiene confirmación pendiente Y respuesta es SI/NO');
-        }
-        
-        // Detectar si hay contexto adicional después del SI (ej: "Si, pero quiero hacer otra reserva")
-        const hasAdditionalContext = text.match(/^s[ií][,.\s]+(.+)/i);
-        const additionalText = hasAdditionalContext ? hasAdditionalContext[1].trim() : null;
-        
-        const confirmationResult = await processConfirmationResponse(text, profile);
-      
-        // Enviar respuesta de confirmación
-        await enviarWhatsApp(userId, confirmationResult.message);
-        
-        // Guardar interacción de confirmación
-        await saveInteraction({
-          userId,
-          agent: 'aurora',
-          agentName: 'Aurora',
-          intentReason: 'confirmation_response',
-          input: text,
-          output: confirmationResult.message,
-          meta: {
-            route: '/webhooks/wassenger',
-            via: 'whatsapp',
-            confirmationSuccess: confirmationResult.success,
-            actionType: confirmationResult.actionType,
-            needsAction: confirmationResult.needsAction,
-            hasAdditionalContext: !!additionalText
-          }
-        });
-
-        // Guardar respuesta en historial
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: confirmationResult.message,
-          agent: 'AURORA'
-        });
-        
-        // Si confirmó exitosamente Y tiene contexto adicional, continuar procesando con Aurora
-        if (confirmationResult.success && additionalText) {
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log(`[WASSENGER] ✅ Confirmación exitosa + contexto adicional detectado: "${additionalText}"`);
-            console.log('[WASSENGER] 🔄 Continuando con Aurora para procesar: ', additionalText);
+      } else {
+        const isPos = isPositiveResponse(processedText);
+        const isNeg = isNegativeResponse(processedText);
+        if (isPos || isNeg) {
+          const confirmationResult = await processConfirmationResponse(processedText, profile);
+          
+          // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
+          if (confirmationResult.success && isPos) {
+            profile.transactionStartedAt = null;
+            profile.transactionAgent = null;
+            profile.followUpSentAt = null;
+            await saveProfile(userId, profile);
+            console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
           }
           
-          // Pequeño delay para que vea el mensaje de confirmación primero
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Recargar perfil actualizado post-confirmación
-          profile = await loadProfile(userId, data.chat?.name || data.contact?.name || data.fromName || name);
-          conversationHistory = await loadConversationHistory(userId);
-          
-          // Procesar el contexto adicional con Aurora (caerá al flujo normal más abajo)
-          processedText = additionalText;
-          // NO hacer return aquí - continuar al flujo de Aurora
-        } else {
-          // Confirmación normal sin contexto adicional o negativa - terminar
-          return res.json({ 
-            ok: true, 
-            processed: true,
-            type: 'confirmation_response',
-            success: confirmationResult.success,
-            needsAction: confirmationResult.needsAction
+          await enviarWhatsApp(userId, confirmationResult.message);
+          await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: 'AURORA' });
+          await saveInteraction({
+            userId,
+            agent: 'AURORA',
+            agentName: 'Aurora Core',
+            intentReason: 'confirmation_response',
+            input: processedText,
+            output: confirmationResult.message,
+            meta: { envelope, confirmationSuccess: confirmationResult.success }
           });
+          return;
         }
       }
     }
 
-    // Si el formulario NO está completo, continuar con Aurora para que pida datos faltantes
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] Formulario incompleto o respuesta no es SI/NO, continuando con Aurora...');
-    }
-    
-    // 💡 LÓGICA DE UPSELL: Si mencionó personas y pidió hot desk, sugerir sala
-    let upsellMessage = null;
-    if (formResult.form && formResult.form.spaceType === 'hotDesk' && formResult.form.numPeople >= 3) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 💡 Upsell detectado: 3+ personas con hot desk');
-      }
-      upsellMessage = `
-¡Nota! Veo que vienen ${formResult.form.numPeople} personas 👥
-
-Para grupos, te recomiendo nuestra **Sala de Reuniones** ($29/2h para 3-4 personas):
-✅ Espacio privado
-✅ Más cómodo para trabajar en equipo
-✅ Incluye pizarra y pantalla
-
-¿Prefieres cambiar a la sala o mantenemos el hot desk? 🤔
-`.trim();
+    // Si el usuario reanuda reserva (mensaje de continuación si aplica)
+    if (savedPartialCheck && formResult?.form?.getResumeMessage) {
+      const resumeMessage = formResult.form.getResumeMessage();
+      if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
 
-    // 🚀 VERIFICAR CAMPAÑAS PUBLICITARIAS (SOLO PRIMERA VISITA Y NO ACABA DE CANCELAR)
-    const campaignCheck = detectCampaignMessage(text);
-    let reply;
-    // NOTA: 'resultado' ya fue declarado más arriba (línea ~1203) donde se ejecuta el orquestador
-    
-    // 🌍 DETECTAR Y PROCESAR CAMBIO DE IDIOMA
-    const languageCommand = detectLanguageCommand(text);
-    if (languageCommand) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🌍 Comando de cambio de idioma detectado:', languageCommand);
+    // 📸 AXEL PHOTO COLLECTOR: Manejar texto durante sesión activa
+    if (profile.activeAgent === 'AXEL' && !mediaUrl && processedText) {
+      const session = getSession(userId);
+      
+      if (session && session.photoCount > 0) {
+        // Detectar comandos de finalización
+        const finalizationCommands = ['listo', 'ya', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
+        const normalizedText = processedText.toLowerCase().trim();
+        const isFinalizationCommand = finalizationCommands.some(cmd => normalizedText === cmd || normalizedText.includes(cmd));
+        
+        if (isFinalizationCommand) {
+          console.log(`[WASSENGER] ✅ Comando de finalización detectado: "${processedText}"`);
+          const result = completeSession(userId);
+          
+          if (result) {
+            await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
+            await processAxelQuote(userId, result.photos, profile);
+            return;
+          }
+        } else {
+          // Es una pregunta/texto normal - dejar que Axel responda pero mantener sesión activa
+          console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa`);
+          // El flujo continúa normalmente hacia procesarMensaje, sesión se mantiene
+        }
+      }
+    }
+
+    // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
+    if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
+      const photoStatus = addPhoto(userId, mediaUrl, type);
+      
+      console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada para cotización`);
+      
+      // ⏱️ T14: Iniciar tracking de transacción en primera foto
+      if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = 'AXEL';
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ⏱️ Transacción AXEL iniciada:', { userId, timestamp: profile.transactionStartedAt });
       }
       
-      // Actualizar idioma preferido del usuario
-      await saveProfile(userId, { preferredLanguage: languageCommand });
+      // Mensajes según estado
+      if (photoStatus.currentCount === 1) {
+        await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 30 segundos o escribe "listo".`);
+      } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
+        await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
+      }
       
-      // Enviar mensaje de confirmación
-      const confirmationMsg = getLanguageChangeConfirmation(languageCommand);
-      await enviarWhatsApp(userId, confirmationMsg);
-      
-      // Guardar en historial
-      await saveConversationMessage(userId, {
-        role: 'assistant',
-        content: confirmationMsg,
-        agent: 'AURORA'
+      // Iniciar timeout automático
+      startTimeout(userId, async (session) => {
+        const result = completeSession(userId);
+        if (result) {
+          await enviarWhatsApp(userId, `⏰ Tiempo completado. Procesando ${result.photoCount} foto(s) para tu cotización...`);
+          await processAxelQuote(userId, result.photos, profile);
+        }
       });
       
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Idioma actualizado y confirmación enviada');
-      }
-      return; // Background processing - webhook already responded (language changed)
-    }
-    
-    // 🌍 DETECTAR IDIOMA DEL MENSAJE (auto-detección)
-    const currentLanguage = profile.preferredLanguage || 'es';
-    const detectedLanguage = getUserLanguage(text, currentLanguage);
-    
-    // Si el idioma detectado es diferente al preferido con alta confianza, actualizar
-    // Simplificamos la condición: solo requiere confidence > 0.7 y que sea diferente
-    if (detectedLanguage.confidence > 0.7 && 
-        detectedLanguage.language !== currentLanguage && 
-        detectedLanguage.source === 'auto_detected_high_confidence') {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🌍 Cambio de idioma auto-detectado:', {
-          anterior: currentLanguage,
-          nuevo: detectedLanguage.language,
-          confianza: detectedLanguage.confidence,
-          source: detectedLanguage.source
-        });
-      }
-      
-      // Actualizar idioma preferido
-      await saveProfile(userId, { preferredLanguage: detectedLanguage.language });
-      profile.preferredLanguage = detectedLanguage.language;
-      
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Idioma actualizado automáticamente a:', detectedLanguage.language);
-      }
-    } else {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🌍 Idioma detectado:', {
-          language: detectedLanguage.language,
-          confidence: detectedLanguage.confidence,
-          source: detectedLanguage.source,
-          current: currentLanguage,
-          willUpdate: false
-        });
-      }
-    }
-    
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🎯 ORQUESTADOR - Ejecutar AQUÍ (después de tener processedText y formResult)
-    // ═══════════════════════════════════════════════════════════════════════════
-    // AHORA sí tenemos todo lo que el orquestador necesita:
-    // ✓ profile cargado
-    // ✓ conversationHistory cargado
-    // ✓ processedText creado (con contexto de reply)
-    // ✓ formResult extraído
-    // → El orquestador puede ejecutarse y detectar handoffs ANTES de procesamiento especializado
-    
-    let resultado = null;
-    
-    // 🔍 DEBUG: Verificar perfil antes de enviar al orquestador
-    console.log(`[WASSENGER] 🔍 DEBUGGING NOMBRE - Perfil antes del orquestador:`, {
-      userId: profile.userId,
-      name: profile.name,
-      whatsappDisplayName: profile.whatsappDisplayName,
-      firstVisit: profile.firstVisit
-    });
-    
-    // 📧 DETECTAR SOLICITUD DE REENVÍO DE CONFIRMACIÓN
-    const { detectResendConfirmationRequest, resendLastReservationConfirmation } = 
-      await import('../../servicios/resend-confirmation.js');
-    
-    const isResendRequest = detectResendConfirmationRequest(text);
-    
-    if (isResendRequest) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 📧 Detectada solicitud de reenvío de confirmación');
-      }
-      
-      const resendResult = await resendLastReservationConfirmation(userId, profile.email);
-      
-      if (resendResult.success) {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ✅ Confirmación reenviada exitosamente');
-        }
-        
-        await enviarWhatsApp(userId, resendResult.message);
-        
-        // Guardar en historial
-        await saveConversationMessage(userId, {
-          role: 'user',
-          content: text
-        });
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: resendResult.message,
-          agent: 'AURORA'
-        });
-        
-        return; // Background processing - webhook already responded
-      } else {
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ⚠️ No se pudo reenviar:', resendResult.error);
-        }
-        // Continuar con el flujo normal para que Aurora responda
-      }
-    }
-    
-    // Procesar mensaje con orquestador (ahora con historial + formulario + contexto de reply)
-    resultado = procesarMensaje(processedText, profile, conversationHistory, formResult);
-    
-    // 🚫 MANEJAR CANCELACIÓN
-    if (resultado.metadata.cancelacion) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🚫 Cancelación detectada');
-      }
-      
-      // Guardar formulario parcial si existe
-      if (resultado.metadata.shouldSavePartialForm) {
-        await savePartialForm(userId, formResult, 'reservation');
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] 💾 Formulario parcial guardado');
+      // Si alcanzó el máximo, procesar inmediatamente
+      if (photoStatus.currentCount >= photoStatus.maxPhotos) {
+        const result = completeSession(userId);
+        if (result) {
+          await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Analizando daños...`);
+          await processAxelQuote(userId, result.photos, profile);
         }
       }
       
-      // Limpiar estados activos
-      await clearPendingConfirmation(userId);
-      await clearJustConfirmed(userId);
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🧹 Estados de reserva limpiados');
-      }
+      return; // No continuar con flujo normal
+    }
+    // “Media event” para Aurora Core: si no hay texto pero hay media, damos un texto técnico controlado
+    let auroraInput = processedText;
+    if (!auroraInput && mediaUrl) {
+      auroraInput = `[MEDIA:${type}] El usuario envió un archivo. URL: ${mediaUrl}`;
     }
 
-    // 🤝 MANEJAR HANDOFF - Cambio de agente con 3 mensajes
-    if (resultado.metadata.agentHandoff) {
-      const targetAgent = resultado.metadata.targetAgent;
-      const fromAgent = activeAgent; // Agente ACTUAL antes del cambio
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log(`[WASSENGER] 🤝 Handoff detectado: ${fromAgent} → ${targetAgent}`);
+    // Si hay media y es recibo, dejamos que Aurora lo maneje (sin meter agentes aquí)
+    // Para que isReceiptImage funcione, armamos messageData estándar
+    const messageData = { type, media: { url: mediaUrl } };
+
+    if (mediaUrl && profile.activeAgent === 'AURORA' && isReceiptImage(messageData)) {
+      const paymentResult = await processPaymentReceipt(messageData, profile);
+      await enviarWhatsApp(userId, paymentResult.message);
+      await saveConversationMessage(userId, { role: 'assistant', content: paymentResult.message, agent: 'AURORA' });
+      await saveInteraction({
+        userId,
+        agent: 'AURORA',
+        agentName: 'Aurora Core',
+        intentReason: 'payment_verification',
+        input: `[RECEIPT:${type}]`,
+        output: paymentResult.message,
+        meta: { envelope, paymentVerified: paymentResult.success }
+      });
+      return;
+    }
+
+    // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
+    loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
+    const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
+      ...formResult,
+      envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
+    });
+
+    // Cancelación (si orquestador lo marca)
+    if (resultado?.metadata?.cancelacion) {
+      if (resultado.metadata.shouldSavePartialForm) {
+        await savePartialForm(userId, formResult, 'reservation');
       }
+      await clearPendingConfirmation(userId);
+      await clearJustConfirmed(userId);
+    }
+
+    // 🤝 Handoff genérico (NO AXEL hardcode, NO GABI hardcode)
+    if (resultado?.metadata?.agentHandoff) {
+      const targetAgent = resultado.metadata.targetAgent;
+      const fromAgent = profile.activeAgent || 'AURORA';
+      const userLanguage = profile.preferredLanguage || 'es';
+
+      loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
+      // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
+      if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
+        profile.transactionStartedAt = Date.now();
+        profile.transactionAgent = targetAgent;
+        profile.followUpSentAt = null;
+        console.log('[T14] ⏱️ Transacción iniciada en handoff:', { userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt });
+      }
+
       try {
-        // 1. Obtener configuración de ambos agentes
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
         const agenteActual = AGENTES[fromAgent];
         const nuevoAgente = AGENTES[targetAgent];
-        
-        if (!agenteActual || !nuevoAgente) {
-          console.error(`[WASSENGER] ❌ Agente no encontrado: ${fromAgent} o ${targetAgent}`);
-          throw new Error(`Agente no encontrado`);
-        }
 
         const userName = profile.whatsappDisplayName || profile.name || 'amigo';
+
+        // 🌍 Mensajes de handover multiidioma
+        const handoverActual = typeof agenteActual?.getHandover === 'function' 
+          ? agenteActual.getHandover(userLanguage)
+          : agenteActual?.handover || {};
         
-        // 🎯 MENSAJE 1: Aurora hace transición empática
-        const mensajeTransicion = nuevoAgente.handover?.transicion?.replace('{nombre}', userName) || 
-          `Entendido ${userName}, te conecto con ${nuevoAgente.nombre}.`;
+        const mensajesNuevo = typeof nuevoAgente?.getMensajes === 'function'
+          ? nuevoAgente.getMensajes(userLanguage)
+          : nuevoAgente?.mensajes || {};
+
+        const mensajeDespedida =
+          handoverActual.llamado?.replace(/{nombre}/g, userName)
+          || `${userName}, te dejo con ${nuevoAgente?.nombre || targetAgent}.`;
+
+        const mensajeEntrada =
+          mensajesNuevo.entrada?.replace(/{nombre}/g, userName)
+          || `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || targetAgent}. ¿En qué puedo ayudarte?`;
+
+        // 🔄 SECUENCIA HANDOFF: 2 mensajes rápidos y sincronizados
+        // 1. Agente actual despide
+        await enviarWhatsApp(userId, mensajeDespedida);
+        await saveConversationMessage(userId, { role: 'assistant', content: mensajeDespedida, agent: fromAgent });
+
+        // 2. Micro delay (solo para experiencia natural)
+        await new Promise(r => setTimeout(r, 400));
         
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log(`[WASSENGER] 📤 Mensaje 1 (Transición): ${fromAgent} envía transición empática`);
+        // 3. Nuevo agente saluda
+        await enviarWhatsApp(userId, mensajeEntrada);
+        await saveConversationMessage(userId, { role: 'assistant', content: mensajeEntrada, agent: targetAgent });
+
+        // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
+        if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
+          console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
+          
+          await new Promise(r => setTimeout(r, 600)); // Pequeño delay natural
+          
+          await enviarWhatsApp(userId, formResult.resumeMessage);
+          await saveConversationMessage(userId, { 
+            role: 'assistant', 
+            content: formResult.resumeMessage, 
+            agent: 'AURORA' 
+          });
+          
+          console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
         }
-        
-        const transicionResult = await enviarWhatsApp(userId, mensajeTransicion);
-        if (!transicionResult.ok) {
-          throw new Error(`Error enviando transición: ${transicionResult.error}`);
-        }
-        
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: mensajeTransicion,
-          agent: fromAgent.toUpperCase()
-        });
-        
-        // Esperar 2 segundos antes del llamado
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // 🎯 MENSAJE 2: Aurora hace llamado/presentación cruzada
-        const mensajeLlamado = nuevoAgente.handover?.llamado?.replace(/{nombre}/g, userName) || 
-          `${nuevoAgente.nombre}, te dejo con ${userName}.\n\n${userName}, para volver escribe @Aurora + tu consulta.`;
-        
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log(`[WASSENGER] 📤 Mensaje 2 (Llamado): ${fromAgent} hace presentación cruzada`);
-        }
-        
-        const llamadoResult = await enviarWhatsApp(userId, mensajeLlamado);
-        if (!llamadoResult.ok) {
-          throw new Error(`Error enviando llamado: ${llamadoResult.error}`);
-        }
-        
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: mensajeLlamado,
-          agent: fromAgent.toUpperCase()
-        });
-        
-        // Esperar 3 segundos antes de la entrada del nuevo agente
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // 🎯 MENSAJE 3: Nuevo agente entra con saludo
-        const mensajeEntrada = nuevoAgente.mensajes?.entrada?.replace('{nombre}', userName) || 
-          `¡Hola ${userName}! ¿En qué puedo ayudarte?`;
-        
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log(`[WASSENGER] 📤 Mensaje 3 (Entrada): ${targetAgent} entra y saluda`);
-        }
-        
-        const entradaResult = await enviarWhatsApp(userId, mensajeEntrada);
-        if (!entradaResult.ok) {
-          throw new Error(`Error enviando entrada: ${entradaResult.error}`);
-        }
-        
-        // Actualizar agente activo DESPUÉS de enviar los mensajes
-        await saveProfile(userId, {
-          activeAgent: targetAgent
-        });
-        
-        await saveConversationMessage(userId, {
-          role: 'assistant',
-          content: mensajeEntrada,
-          agent: targetAgent.toUpperCase()
-        });
-        
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ✅ Handoff completado con 3 mensajes');
-        }
-        
-        // Guardar interacción del handoff
+
+        await saveProfile(userId, { ...profile, activeAgent: targetAgent });
+
         await saveInteraction({
           userId,
-          agent: fromAgent.toLowerCase(),
-          agentName: fromAgent,
+          agent: fromAgent,
+          agentName: agenteActual?.nombre || 'Aurora Core',
           intentReason: 'agent_handoff',
-          input: text,
-          output: `Handoff desde ${fromAgent} a ${targetAgent} con 3 mensajes`,
-          meta: {
-            route: '/webhooks/wassenger',
-            via: 'whatsapp',
-            handoff: true,
-            fromAgent: fromAgent,
-            toAgent: targetAgent
-          }
+          input: auroraInput,
+          output: `handoff ${fromAgent} -> ${targetAgent}`,
+          meta: { envelope, fromAgent, toAgent: targetAgent }
         });
 
-        return; // Background processing - webhook already responded
-        
-      } catch (handoffError) {
-        console.error('[WASSENGER] ❌ Error durante handoff:', handoffError);
-        
-        // Enviar mensaje de error al usuario
-        await enviarWhatsApp(
-          userId, 
-          'Disculpa, hubo un problema al conectarte con el especialista. Por favor, intenta de nuevo o escribe "ayuda".'
-        );
-        
-        // Guardar error en interacciones
-        await saveInteraction({
-          userId,
-          agent: 'system',
-          agentName: 'System',
-          intentReason: 'handoff_error',
-          input: text,
-          output: `Error en handoff: ${handoffError.message}`,
-          meta: {
-            route: '/webhooks/wassenger',
-            via: 'whatsapp',
-            error: handoffError.message,
-            targetAgent
-          }
-        });
-        
-        return; // Background processing - webhook already responded
+        return;
+      } catch (e) {
+        console.error('[WASSENGER] handoff error:', e);
+        await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote con el especialista. Escribe "ayuda" y lo reintentamos.');
+        return;
       }
     }
-    
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Si llegamos aquí, el orquestador NO detectó handoff
-    // → Continuar con flujo normal (procesamiento especializado y respuesta)
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Si llegamos aquí, NO hubo handoff → Continuar con flujo normal
-    // ═══════════════════════════════════════════════════════════════════════════
 
-    // 👋 MANEJAR RETORNO - Usuario vuelve a un agente
-    if (resultado.metadata.returningToAurora) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 👋 Usuario retorna a Aurora desde otro agente');
-      }
-      
-      try {
-        // Enviar mensaje de despedida del agente anterior
-        const agenteAnterior = profile.activeAgent;
-          
-          if (agenteAnterior && agenteAnterior !== 'AURORA') {
-            const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-            const agenteObj = AGENTES[agenteAnterior];
-            
-            if (agenteObj && agenteObj.mensajes?.despedida) {
-              if (process.env.DEBUG_MODE === 'true') {
-                console.log('[WASSENGER] 👋 Enviando despedida de:', agenteObj.nombre);
-              }
-              
-              // Reemplazar {nombre} con el nombre real del usuario
-              const userName = profile.whatsappDisplayName || profile.name || 'amigo';
-              const mensajeDespedida = agenteObj.mensajes.despedida.replace(/{nombre}/g, userName);
-              
-              const despedidaResult = await enviarWhatsApp(userId, mensajeDespedida);
-              
-              if (despedidaResult.ok) {
-                await saveConversationMessage(userId, {
-                  role: 'assistant',
-                  content: mensajeDespedida,
-                  agent: activeAgent.toUpperCase() // Usar activeAgent key
-                });
+    // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core
+    let reply = await complete(resultado.prompt, {
+      temperature: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 0.7 : 0.4,
+      max_tokens: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 800 : 350,
+      system: resultado.systemPrompt
+    });
 
-                // Delay de 5 segundos
-                if (process.env.DEBUG_MODE === 'true') {
-                  console.log('[WASSENGER] ⏳ Esperando 5 segundos antes de entrada de Aurora...');
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-              } else {
-                console.warn('[WASSENGER] ⚠️ No se pudo enviar despedida:', despedidaResult.error);
-              }
-            }
-          }
-
-          // Actualizar agente activo a Aurora
-          await saveProfile(userId, {
-            activeAgent: 'AURORA'
-          });
-          
-          if (process.env.DEBUG_MODE === 'true') {
-            console.log('[WASSENGER] ✅ Agente activo actualizado a: AURORA');
-          }
-
-          // Aurora responde con su mensaje de entrada (siempre AURORA aquí)
-          reply = await complete(resultado.prompt, {
-            temperature: 0.4,
-            max_tokens: 300,
-            system: resultado.systemPrompt
-          });
-          
-        } catch (returnError) {
-          console.error('[WASSENGER] ❌ Error durante retorno a Aurora:', returnError);
-          
-          // Forzar actualización a Aurora y continuar
-          await saveProfile(userId, {
-            activeAgent: 'AURORA'
-          });
-          
-          // Aurora responde normalmente (siempre AURORA en catch)
-          reply = await complete(resultado.prompt, {
-            temperature: 0.4,
-            max_tokens: 300,
-            system: resultado.systemPrompt
-          });
-        }
-      }
-    
-    // 🎯 Flujo normal - Generar respuesta con el agente activo
-    if (!reply) {
-      // Solo generar respuesta si no se generó en el bloque de returningToAurora
-      console.log(`[WASSENGER] 🔍 DEBUGGING PROMPT - Contexto enviado a OpenAI:`, {
-        promptIncluyeNombre: resultado.prompt.includes(profile.name || 'SIN_NOMBRE'),
-        perfilNombre: profile.name,
-        esCancelacion: resultado.metadata.cancelacion,
-        firstVisit: profile.firstVisit,
-        freeTrialUsed: profile.freeTrialUsed
-      });
-
-      // 🎯 Configuración según agente activo (usar variable global ya actualizada)
-      activeAgent = profile.activeAgent || 'AURORA'; // Actualizar por si cambió
-      const isSpecializedAgent = ['ENZO', 'ADRIANA', 'ALUNA'].includes(activeAgent);
-      
-      console.log(`[WASSENGER] 🤖 LLAMANDO A OPENAI - activeAgent: ${activeAgent}, isSpecialized: ${isSpecializedAgent}`);
-      
-      reply = await complete(resultado.prompt, {
-        temperature: isSpecializedAgent ? 0.7 : 0.4,  // Agentes especializados más creativos
-        max_tokens: isSpecializedAgent ? 800 : 300,   // Agentes especializados sin límites
-        system: resultado.systemPrompt
-      });
-      
-      console.log(`[WASSENGER] ✅ RESPUESTA DE OPENAI RECIBIDA - length: ${reply?.length || 0}`);
-    } else {
-      console.log(`[WASSENGER] ⏭️ SKIP OPENAI - reply ya existe, length: ${reply?.length || 0}`);
-    }
-
-    // 💳 BYPASS DESHABILITADO - Aurora maneja el flujo completo con confirmación
-    // El bypass causaba: 1) Skip de confirmación, 2) No cálculo de precio, 3) No muestra opciones de pago
-    // Mantener este código comentado - Aurora ahora gestiona reservas de principio a fin
-    /*
-    const paymentCheck = shouldSendPaymentLink(text, profile);
-    if (paymentCheck && resultado.agenteKey === 'AURORA') {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 💳 Usuario recurrente eligió espacio:', paymentCheck.serviceType);
-        console.log('[WASSENGER] 💳 Enviando link de pago automáticamente');
-      }
-      reply = paymentCheck.message;
-      
-      // Guardar en perfil que está esperando comprobante
-      profile.awaitingPaymentReceipt = {
-        serviceType: paymentCheck.serviceType,
-        price: paymentCheck.price,
-        timestamp: new Date().toISOString()
-      };
-      await saveProfile(userId, profile); // FIX: Pasar userId correctamente
-    }
-    */
-
-    // 🎯 Agregar mensaje de upsell si aplica (ANTES de Aurora response)
-    if (upsellMessage && !campaignCheck.detected && !paymentCheck) {
-      reply = `${reply}\n\n${upsellMessage}`;
-    }
-
-    // 🔄 PROCESAR POSIBLES CONFIRMACIONES DE AURORA
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 🔍 Antes de finalReply - reply:', reply ? 'EXISTE' : 'NULL/UNDEFINED');
-    }
+    // ✨ Si es Aurora, pasar por el helper de confirmaciones
     let finalReply = reply;
     let confirmationActivated = false;
-    
+
     if (resultado.agenteKey === 'AURORA') {
-      // ✨ FLUJO SIMPLIFICADO - Una sola llamada a OpenAI con prompt completo
-      // El prompt ya tiene PRIORIDAD ABSOLUTA para saludos casuales y preguntas de identidad
-      // OpenAI decide basándose en las instrucciones del orquestador
-      
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 Llamando enhanceAuroraResponse con reply de length:', reply?.length || 0);
-        console.log('[WASSENGER] 🔍 Pasando formResult al enhancement:', formResult ? 'DISPONIBLE' : 'NO DISPONIBLE');
-      }
-      
       const enhancement = await enhanceAuroraResponse(reply, profile, formResult);
-      
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 enhanceAuroraResponse completado - enhanced:', enhancement.enhanced);
-      }
-      
-      if (enhancement.enhanced) {
+      if (enhancement?.enhanced) {
         finalReply = enhancement.finalMessage;
         confirmationActivated = true;
-        if (process.env.DEBUG_MODE === 'true') {
-          console.log('[WASSENGER] ✅ Aurora activó sistema de confirmación');
-        }
-      } else {
-        // Usar la respuesta original de Aurora (ya viene de OpenAI con prompt completo)
-        finalReply = reply;
       }
-    } else {
-      // Otros agentes usan su respuesta directamente
-      finalReply = reply;
     }
 
-    // 🆕 Guardar respuesta del asistente en historial
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 💾 Guardando mensaje en historial - finalReply length:', finalReply?.length || 0);
-    }
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
       agent: resultado.agenteKey
     });
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] ✅ Mensaje guardado en historial');
-    }
 
-    // 🔧 MARCAR PRIMERA VISITA COMO COMPLETADA después de respuesta de Aurora
-    if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🎯 Marcando primera visita como completada para:', userId);
-        console.log('[WASSENGER] 📊 Perfil antes del cambio:', JSON.stringify(profile, null, 2));
-      }
-      
-      const updatedProfile = {
-        ...profile,
-        firstVisit: false // ✅ Ya no es primera visita después de que Aurora responda
-        // conversationCount ya se incrementó en línea 876, no duplicar
-      };
-      
-      await saveProfile(userId, updatedProfile);
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Perfil actualizado con firstVisit: false');
-      }
-      
-      // Verificar que se guardó correctamente
-      const verifiedProfile = await loadProfile(userId);
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] 🔍 Perfil verificado después del guardado:', verifiedProfile.firstVisit);
-      }
-    }
-
-    // Guardar interacción
-    saveInteraction({
+    await saveInteraction({
       userId,
       agent: resultado.agenteKey,
-      agentName: resultado.agente,
+      agentName: resultado.agente || 'Aurora Core',
       intentReason: resultado.razonSeleccion,
-      input: text,
+      input: auroraInput,
       output: finalReply,
-      meta: { 
-        route: '/webhooks/wassenger',
-        via: 'whatsapp',
-        rol: resultado.metadata.rol,
-        freeTrialUsed: profile.freeTrialUsed,
-        conversationCount: profile.conversationCount,
-        confirmationActivated: confirmationActivated,
+      meta: {
+        envelope,
+        confirmationActivated,
         replyContext: getReplyContextMetadata(replyContext)
       }
     });
 
-    // Enviar respuesta a WhatsApp
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 📤 Enviando mensaje a WhatsApp - finalReply:', finalReply ? 'EXISTE' : 'NULL/UNDEFINED', '- Length:', finalReply?.length || 0);
-    }
-    const envio = await enviarWhatsApp(userId, finalReply);
-
-    if (process.env.DEBUG_MODE === 'true') {
-      console.log('[WASSENGER] 📬 Resultado del envío - ok:', envio.ok);
-    }
-    if (!envio.ok) {
-      console.error('[WASSENGER] ❌ Error al enviar respuesta:', envio.error);
-    } else {
-      if (process.env.DEBUG_MODE === 'true') {
-        console.log('[WASSENGER] ✅ Mensaje enviado correctamente');
-      }
-    }
-
-    // � SISTEMA AXEL: Detectar agendamiento de cita
-    if (resultado.agenteKey === 'AXEL' && profile.axelData) {
-      try {
-        const { awaitingScheduling, quoteConfirmed, confirmedQuoteCode, loadedQuote } = profile.axelData;
-        
-        // Solo procesar si usuario está en modo post-cotización
-        if ((awaitingScheduling || quoteConfirmed) && (confirmedQuoteCode || loadedQuote)) {
-          console.log('[AXEL-SYSTEM] 🔍 Usuario en modo agendamiento, analizando mensaje...');
-          
-          // Detectar patrones de agendamiento en el mensaje del usuario
-          const schedulingPatterns = [
-            /mañana\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
-            /(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
-            /(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
-            /(\d{1,2})\/(\d{1,2})(\/\d{2,4})?\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i,
-            /(hoy|hoy\s+día)\s+(a\s+las\s+)?(\d{1,2})(:\d{2})?\s*(am|pm)?/i
-          ];
-          
-          let schedulingDetected = false;
-          for (const pattern of schedulingPatterns) {
-            if (pattern.test(text)) {
-              schedulingDetected = true;
-              console.log('[AXEL-SYSTEM] ✅ Patrón de agendamiento detectado:', text);
-              break;
-            }
-          }
-          
-          // También detectar confirmaciones explícitas
-          const confirmationPatterns = [
-            /\b(si|sí|confirmo|confirmado|perfecto|ok|dale|va|acepto)\b/i
-          ];
-          
-          const hasConfirmation = confirmationPatterns.some(p => p.test(text));
-          
-          if (schedulingDetected || (hasConfirmation && finalReply.toLowerCase().includes('confirmado'))) {
-            console.log('[AXEL-SYSTEM] 🎯 Agendamiento confirmado - guardando en DB...');
-            
-            const quoteCode = confirmedQuoteCode || loadedQuote?.code;
-            
-            if (quoteCode) {
-              const { scheduleAppointment } = await import('../../servicios/axel-quote-db.js');
-              
-              // Extraer fecha/hora del mensaje o usar "pendiente" si solo confirmó
-              const appointmentDate = new Date();
-              appointmentDate.setDate(appointmentDate.getDate() + 1); // Default: mañana
-              
-              const appointmentTime = '10:00:00'; // Default: 10am
-              const notes = `Agendado vía WhatsApp. Mensaje: "${text}"`;
-              
-              const result = await scheduleAppointment(
-                quoteCode,
-                appointmentDate.toISOString().split('T')[0],
-                appointmentTime,
-                notes
-              );
-              
-              if (result.success) {
-                console.log('[AXEL-SYSTEM] ✅ Cita guardada en DB:', result.appointment);
-                
-                // Actualizar perfil local
-                profile.axelData.appointmentScheduled = true;
-                profile.axelData.appointmentDate = appointmentDate.toISOString().split('T')[0];
-                profile.axelData.appointmentTime = appointmentTime;
-                await saveProfile(userId, profile);
-                
-                console.log('[AXEL-SYSTEM] ✅ Estado actualizado: appointmentScheduled=true');
-              } else {
-                console.error('[AXEL-SYSTEM] ❌ Error guardando cita:', result.error);
-              }
-            } else {
-              console.error('[AXEL-SYSTEM] ⚠️ No se encontró código de cotización para agendar');
-            }
-          } else {
-            console.log('[AXEL-SYSTEM] ℹ️ No se detectó patrón de agendamiento en este mensaje');
-          }
-        } else {
-          console.log('[AXEL-SYSTEM] ℹ️ Usuario no está en modo agendamiento');
-        }
-      } catch (error) {
-        console.error('[AXEL-SYSTEM] ❌ Error en sistema de agendamiento:', error);
-        // No bloquear el flujo principal si falla
-      }
-    }
-
-    // �💼 SISTEMA GABI: Verificar contador y ofrecer reunión
-    if (resultado.agenteKey === 'GABI') {
-      try {
-        const { shouldOfferMeeting, generateMeetingOffer, markMeetingOffered } = await import('../../servicios/gabi-financial-system.js');
-        
-        const meetingCheck = await shouldOfferMeeting(userId);
-        
-        if (meetingCheck.shouldOffer) {
-          console.log(`[GABI-SYSTEM] 🎯 Usuario ${userId} alcanzó ${meetingCheck.count} interacciones - Ofreciendo reunión`);
-          
-          // Generar mensaje personalizado
-          const meetingMessage = await generateMeetingOffer(userId, meetingCheck.count);
-          
-          // Enviar oferta de reunión
-          await enviarWhatsApp(userId, meetingMessage);
-          
-          // Marcar que se ofreció reunión
-          const conversationId = `${userId}_${Date.now()}`;
-          await markMeetingOffered(userId, conversationId);
-          
-          console.log('[GABI-SYSTEM] ✅ Reunión ofrecida exitosamente');
-        } else {
-          console.log(`[GABI-SYSTEM] ℹ️ Usuario ${userId} tiene ${meetingCheck.count} interacciones - ${meetingCheck.reason}`);
-        }
-      } catch (error) {
-        console.error('[GABI-SYSTEM] ❌ Error en sistema de reuniones:', error);
-        // No bloquear el flujo principal si falla
-      }
-    }
-
-    // ✅ Procesamiento completado en background
-    console.log('[WASSENGER] ✅ Procesamiento background completado');
+    await enviarWhatsApp(userId, finalReply);
     
-    } // Cierre del try principal (línea 266)
-  } catch (err) {
-    // ❌ Error en procesamiento background (NO afecta respuesta al webhook)
-    console.error('[WASSENGER WEBHOOK] Error en procesamiento background:', err);
-    console.error('[WASSENGER WEBHOOK] Stack:', err.stack);
+    loggers.webhook.agentResponse(userId, resultado.agenteKey, true);
     
-    // NO responder aquí - ya respondimos al webhook
-    // Solo logueamos el error para debugging
-  }
-  }); // Cierre de setImmediate()
+    // ⏱️ T14: Limpiar transacción si agente completó exitosamente su servicio
+    // Detectar keywords de finalización en respuesta del agente
+    if (profile.transactionStartedAt && profile.transactionAgent) {
+      const completionKeywords = [
+        'te envío', 'enviado', 'te envié', 'listo', 'completado',
+        'confirmada', 'confirmado', 'reserva exitosa', 'cotización enviada',
+        'hemos terminado', 'proceso completado', 'análisis finalizado',
+        'documentos listos', 'reporte enviado', 'propuesta lista'
+      ];
+      
+      const replyLower = finalReply.toLowerCase();
+      const completionDetected = completionKeywords.some(keyword => replyLower.includes(keyword));
+      
+      if (completionDetected) {
+        const completedAgent = profile.transactionAgent;
+        profile.transactionStartedAt = null;
+        profile.transactionAgent = null;
+        profile.followUpSentAt = null;
+        await saveProfile(userId, profile);
+        console.log('[T14] ✅ Transacción completada (keyword detected):', { 
+          userId, 
+          agent: completedAgent, 
+          keywords: completionKeywords.filter(k => replyLower.includes(k))
+        });
+      }
+    }
+
+    // Marcar primera visita después de responder
+    if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
+      await saveProfile(userId, { ...profile, firstVisit: false });
+    }
+  });
 });
 
-/**
- * GET /webhooks/wassenger/status - Verificación de estado (sin auth)
- */
+/* ─────────────────────────────────────────────────────────────
+   Status & verification endpoints
+───────────────────────────────────────────────────────────── */
 router.get('/webhooks/wassenger/status', (req, res) => {
   const wassengerEnabled = process.env.WASSENGER_ENABLED !== 'false';
-  res.json({ 
-    ok: true, 
+  res.json({
+    ok: true,
     message: 'Wassenger Webhook activo',
     enabled: wassengerEnabled,
     status: wassengerEnabled ? '✅ ACTIVO' : '⏸️ PAUSADO',
@@ -2426,21 +880,11 @@ router.get('/webhooks/wassenger/status', (req, res) => {
   });
 });
 
-/**
- * GET /webhooks/wassenger - Verificación de webhook (para Wassenger)
- */
-router.get('/webhooks/wassenger', (req, res) => {
-  res.send('ok');
-});
+router.get('/webhooks/wassenger', (req, res) => res.send('ok'));
 
-/**
- * POST /webhooks/wassenger/control - Activar/Desactivar Wassenger
- * Body: { "action": "enable" | "disable" }
- * Nota: Esto solo funciona si usas un comando de Heroku CLI para cambiar config vars
- */
 router.post('/webhooks/wassenger/control', (req, res) => {
-  return res.json({ 
-    ok: false, 
+  return res.json({
+    ok: false,
     error: 'NOT_IMPLEMENTED',
     message: 'Use Heroku CLI para cambiar WASSENGER_ENABLED',
     help: {

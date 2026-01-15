@@ -401,8 +401,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     await markJustConfirmed(userProfile.userId, reservationRecord?.id);
 
     const confirmedDate = reservationRecord?.date || pendingReservation.date;
-    const confirmedStart = reservationRecord?.startTime || pendingReservation.startTime;
-    const confirmedEnd = reservationRecord?.endTime || pendingReservation.endTime;
+    const confirmedStart = reservationRecord?.start_time || pendingReservation.startTime;
+    const confirmedEnd = reservationRecord?.end_time || pendingReservation.endTime;
     
     // 🆕 v283: Formatear fecha para mensajes al usuario
     const formattedConfirmedDate = formatUserDate(confirmedDate);

@@ -97,6 +97,15 @@ export async function createCalendarEvent(reservationData) {
       location: customLocation = null  // Ubicación personalizada
     } = reservationData;
 
+    // 🚨 VALIDACIÓN: Verificar datos requeridos
+    if (!date || !startTime || !endTime) {
+      console.error('[CALENDAR] ❌ Datos incompletos:', { date, startTime, endTime });
+      return {
+        success: false,
+        error: `Datos incompletos para crear evento: date=${date}, startTime=${startTime}, endTime=${endTime}`
+      };
+    }
+
     // Construir fechas/horas para el evento
     const eventDate = new Date(date);
     const [startHour, startMinute] = startTime.split(':').map(Number);

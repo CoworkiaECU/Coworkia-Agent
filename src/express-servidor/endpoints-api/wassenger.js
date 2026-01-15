@@ -98,6 +98,74 @@ function buildMediaUrl(data) {
   return mediaUrl;
 }
 
+/**
+ * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
+ * Remueve emojis, keywords empresariales, números de teléfono
+ */
+function cleanWhatsAppName(whatsappName) {
+  if (!whatsappName || typeof whatsappName !== 'string') return null;
+  
+  let cleaned = whatsappName.trim();
+  
+  // Remover emojis comunes
+  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆☎️]/g, '');
+  
+  // Remover texto común de WhatsApp Business
+  const businessKeywords = [
+    'whatsapp business', 'business', 'empresa', 'company', 
+    'servicio', 'service', 'oficial', 'official', '\\+593', '\\+1',
+    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
+  ];
+  
+  for (const keyword of businessKeywords) {
+    const regex = new RegExp(keyword, 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+  
+  // Remover números de teléfono
+  cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
+  
+  // Limpiar espacios y caracteres especiales (mantener acentos españoles)
+  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  // Solo tomar el primer nombre si es muy largo
+  if (cleaned.length > 20) {
+    cleaned = cleaned.split(' ')[0];
+  }
+  
+  // Capitalizar cada palabra (Title Case)
+  if (cleaned.length > 0) {
+    cleaned = cleaned
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+  
+  return cleaned.length > 1 ? cleaned : null;
+}
+
+/**
+ * 🔍 Detecta nombre desde mensaje de presentación
+ */
+function extractNameFromMessage(message) {
+  if (!message) return null;
+  
+  // Patrones comunes de presentación
+  const patterns = [
+    /(?:soy|me llamo|mi nombre es|soy de)\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i,
+    /(?:hola|buenos días|buenas tardes|buenas noches),?\s*(?:soy)?\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    if (match && match[1].length > 1) {
+      return match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+    }
+  }
+  
+  return null;
+}
+
 function buildMessageEnvelope({ userId, name, text, type, mediaUrl, data, evt }) {
   // Esto es lo que “ve” Aurora Core. No hay agentes aquí.
   return {
@@ -479,15 +547,36 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const minutos = lastMessageAt ? (Date.now() - lastMessageAt) / (1000 * 60) : 999;
     const conversacionEnCurso = minutos < 10;
 
-    // 🔥 SINCRONIZACIÓN NOMBRE: Siempre usar whatsapp_display_name como fuente de verdad
-    const displayName = name || current.whatsappDisplayName || null;
-    const syncedName = displayName || current.name || null;
+    // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE (rescatado del backup v230)
+    let detectedName = current.name || null;
+    const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
+    
+    // Si no tenemos nombre guardado, intentar extraerlo inteligentemente
+    if (!detectedName && name) {
+      detectedName = cleanWhatsAppName(name);
+      const isProd = process.env.NODE_ENV === 'production';
+      if (!isProd) {
+        console.log(`[WASSENGER] 🧹 Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
+      }
+    }
+    
+    // También intentar detectar nombre del mensaje si es primera vez
+    if (!detectedName && firstVisit && text) {
+      const nameFromMessage = extractNameFromMessage(text);
+      if (nameFromMessage) {
+        detectedName = nameFromMessage;
+        const isProd = process.env.NODE_ENV === 'production';
+        if (!isProd) {
+          console.log(`[WASSENGER] 📝 Nombre detectado del mensaje: "${nameFromMessage}"`);
+        }
+      }
+    }
 
     const profile = {
       ...current,
       userId,
-      name: syncedName, // 🎯 Sincronizar name con display name de WhatsApp
-      whatsappDisplayName: displayName,
+      name: detectedName, // 🎯 Usar nombre limpio e inteligente
+      whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
       channel: 'whatsapp',
       lastMessageAt: ahoraISO,
       conversationCount: (current.conversationCount || 0) + 1,
@@ -556,7 +645,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       } else {
         const isPos = isPositiveResponse(processedText);
         const isNeg = isNegativeResponse(processedText);
+        
+        // 🎯 BACKUP OPTIMIZATION: Solo procesar SI/NO explícitos para evitar falsos positivos
         if (isPos || isNeg) {
+          console.log('[WASSENGER] ✅ Usuario tiene confirmación pendiente Y respuesta es SI/NO');
+          
           const confirmationResult = await processConfirmationResponse(processedText, profile);
           
           // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
@@ -568,8 +661,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
           }
           
+          // 📤 Enviar respuesta de confirmación
           await enviarWhatsApp(userId, confirmationResult.message);
+          
+          // 💾 Guardar en historial
           await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: 'AURORA' });
+          
+          // 📊 Guardar interacción
           await saveInteraction({
             userId,
             agent: 'AURORA',
@@ -577,10 +675,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             intentReason: 'confirmation_response',
             input: processedText,
             output: confirmationResult.message,
-            meta: { envelope, confirmationSuccess: confirmationResult.success }
+            meta: { 
+              envelope, 
+              confirmationSuccess: confirmationResult.success,
+              actionType: confirmationResult.actionType,
+              needsAction: confirmationResult.needsAction
+            }
           });
+          
+          // 🚫 CRÍTICO: RETURN para no continuar con orquestador
+          // Esto evita que Aurora "interprete" el "si" como mensaje nuevo
+          console.log('[WASSENGER] 🛑 Confirmación procesada - NO continuar con orquestador');
           return;
         }
+        
+        // Si no es SI/NO explícito, continuar con orquestador normal
+        console.log('[WASSENGER] ⚠️ Confirmación pendiente pero respuesta NO es SI/NO - continuar con Aurora');
       }
     }
 

@@ -245,38 +245,43 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   }
 
   // 1) CAMBIOS EXPLÍCITOS DE AGENTE (con @código)
-  // Solo estos patrones fuerzan cambio de agente
+  // 🛡️ PROTECCIÓN: Ignorar @menciones en EJEMPLOS de Aurora (mensajes que contienen "Ejemplo:")
+  const isAuroraExample = text.includes('Ejemplo:') || text.includes('ejemplo:');
   
-  if (/@enzo/i.test(text)) {
-    return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ENZO' } };
-  }
+  if (!isAuroraExample) {
+    // Solo detectar @menciones si NO es un ejemplo explicativo
+    
+    if (/@enzo/i.test(text)) {
+      return { agent: 'ENZO', reason: 'trigger @Enzo', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ENZO' } };
+    }
 
-  if (/@adriana/i.test(text)) {
-    return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ADRIANA' } };
-  }
+    if (/@adriana/i.test(text)) {
+      return { agent: 'ADRIANA', reason: 'trigger @Adriana', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ADRIANA' } };
+    }
 
-  if (/@[áa]ngela/i.test(text)) {
-    return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ANGELA' } };
-  }
+    if (/@[áa]ngela/i.test(text)) {
+      return { agent: 'ANGELA', reason: 'trigger @Ángela', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ANGELA' } };
+    }
 
-  if (/@axel/i.test(text)) {
-    return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
-  }
+    if (/@axel/i.test(text)) {
+      return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
+    }
 
-  if (/@gabi/i.test(text)) {
-    return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
-  }
+    if (/@gabi/i.test(text)) {
+      return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
+    }
 
-  if (/@tomi/i.test(text)) {
-    return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
-  }
+    if (/@tomi/i.test(text)) {
+      return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
+    }
 
-  if (/@aluna/i.test(text)) {
-    return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
-  }
+    if (/@aluna/i.test(text)) {
+      return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
+    }
 
-  if (/@aurora/i.test(text)) {
-    return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', returningToAurora: true } };
+    if (/@aurora/i.test(text)) {
+      return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', returningToAurora: true } };
+    }
   }
 
   // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)

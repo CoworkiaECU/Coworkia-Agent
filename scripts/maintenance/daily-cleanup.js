@@ -37,7 +37,7 @@ export async function dailyCleanup() {
     const formsResult = await databaseService.run(`
       DELETE FROM partial_forms 
       WHERE form_type = 'reservation'
-        AND created_at < datetime('now', '-1 day')
+        AND cancelled_at < NOW() - INTERVAL '1 day'
     `);
     results.partialForms = formsResult?.changes || 0;
     console.log(`      ✅ Formularios de reserva limpiados: ${results.partialForms}`);
@@ -47,7 +47,7 @@ export async function dailyCleanup() {
     const axelFormsResult = await databaseService.run(`
       DELETE FROM partial_forms 
       WHERE form_type = 'axel_quote'
-        AND created_at < datetime('now', '-1 day')
+        AND cancelled_at < NOW() - INTERVAL '1 day'
     `);
     results.axelQuoteForms = axelFormsResult?.changes || 0;
     console.log(`      ✅ Formularios Axel limpiados: ${results.axelQuoteForms}`);
@@ -57,7 +57,7 @@ export async function dailyCleanup() {
     const confirmResult = await databaseService.run(`
       DELETE FROM pending_confirmations 
       WHERE expires_at IS NOT NULL 
-        AND expires_at < datetime('now')
+        AND expires_at < NOW()
     `);
     results.expiredConfirmations = confirmResult?.changes || 0;
     console.log(`      ✅ Confirmaciones expiradas limpiadas: ${results.expiredConfirmations}`);
@@ -66,7 +66,7 @@ export async function dailyCleanup() {
     console.log('[4/4] 🗑️  Limpiando estados de reserva antiguos...');
     const stateResult = await databaseService.run(`
       DELETE FROM reservation_state 
-      WHERE created_at < datetime('now', '-2 days')
+      WHERE created_at < NOW() - INTERVAL '2 days'
     `);
     results.oldReservationStates = stateResult?.changes || 0;
     console.log(`      ✅ Estados antiguos limpiados: ${results.oldReservationStates}`);

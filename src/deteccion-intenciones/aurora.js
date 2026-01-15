@@ -255,31 +255,17 @@ Lo que verías:
 
 Para una propuesta personalizada, te conecto con @enzo (nuestro experto en marketing e IA).
 
-¿Te gustaría hablar con él?" 
-• Lead nurturing inteligente
-• Integración con tus sistemas existentes
-
-🎯 *TU VENTAJA COMPETITIVA:*
-Mientras tu competencia tiene recepcionistas limitadas, TÚ tendrías un agente que:
-- Nunca se cansa
-- Nunca renuncia
-- Nunca olvida un cliente
-- Aprende de cada conversación
-- Escala sin límites
-
-💰 *INVERSIÓN:*
-No es un gasto, es un empleado que se paga solo desde el primer mes.
-
-¿Quieres que @enzo te muestre casos reales y precios? Él lidera *MarketingLab OneMind*, la empresa que crea estos sistemas 🚀"
+¿Te gustaría hablar con él?"
 
 REGLAS CRÍTICAS PARA ESTA VENTA:
 • Usa un tono entusiasta pero profesional
+• Respuesta CORTA (máximo 8 líneas) - solo lista de beneficios
 • Haz preguntas para conocer su negocio
 • Muestra beneficios concretos, no solo features
-• Compara con humanos (costo, disponibilidad, escalabilidad)
 • Siempre termina derivando a @enzo para la venta técnica
 • NO des precios exactos (eso es para Enzo)
-• SÍ menciona "se paga solo", "ROI rápido", "ventaja competitiva"
+• NO escribas texto largo ni descripciones extensas
+• Mantén formato de bullet points para fácil lectura
 
 🚨 PROHIBIDO ABSOLUTO EN ESTE CONTEXTO:
 • ❌ NO ofrezcas Hot Desk, Sala de Reuniones ni espacios físicos
@@ -458,6 +444,17 @@ El sistema detectará tu respuesta y activará el flujo automático de:
     // 🚗 Mensaje de handover a Axel - versión persuasiva
     handoverAxel: 'Perfecto, {nombre}! 🚗\n\nTe conecto con *Axel* de *The PaintBull* - nuestro especialista en análisis de colisiones mediante IA.\n\n*Su superpoder:* Analiza fotos de tu vehículo con visión artificial y te da una cotización precisa ANTES de ir al taller. Así sabes exactamente qué esperar.\n\n*Axel*, te presento a {nombre}. Necesita tu expertise para evaluar un daño vehicular.\n\nCualquier cosa, mencióname con *@Aurora* y vuelvo contigo. ¡Éxito! ✨',
     
+    // 💚 Handovers a otros agentes especializados
+    handoverAngela: '{nombre}, te conecto con *Angela* de *MedBeneficios* - nuestra experta en salud y bienestar corporativo. 💚\n\n*Angela*, te presento a {nombre}. Necesita información sobre servicios de salud.\n\nPara volver a mí, escribe *@Aurora*',
+    
+    handoverAdriana: '{nombre}, te dejo con *Adriana* de *SegPopular* - nuestra especialista en seguros. 🛡️\n\n*Adriana*, te presento a {nombre}. Necesita asesoría en seguros.\n\nPara volver, escribe *@Aurora*',
+    
+    handoverEnzo: '{nombre}, te conecto con *Enzo* de *MarketingLab* - nuestro experto en marketing e IA generativa. 💡\n\n*Enzo*, te presento a {nombre}. Necesita consultoría en marketing digital.\n\nPara volver, escribe *@Aurora*',
+    
+    handoverGabi: '{nombre}, te dejo con *Gabi* de *GR Consulting* - nuestro especialista en legal, finanzas y compliance. ⚖️\n\n*Gabi*, te presento a {nombre}. Necesita asesoría administrativa.\n\nPara volver, escribe *@Aurora*',
+    
+    handoverAluna: '{nombre}, te conecto con *Aluna* - nuestra experta en membresías y planes mensuales de Coworkia. 🏢\n\n*Aluna*, {nombre} quiere información sobre planes mensuales.\n\nPara volver, escribe *@Aurora*',
+    
     // Esta función genera el mensaje de información general dinámicamente
     getInformacionGeneral: function(freeTrialUsed = false) {
       const hotDeskInfo = freeTrialUsed
@@ -494,5 +491,20 @@ ${hotDeskInfo}
     get informacionGeneral() {
       return this.getInformacionGeneral(false);
     }
+  },
+  
+  // Función para obtener mensaje de handoff según agente destino
+  getHandover: function(targetAgent, userName = 'amigo') {
+    const handoverMessages = {
+      'ANGELA': this.mensajes.handoverAngela,
+      'ADRIANA': this.mensajes.handoverAdriana,
+      'ENZO': this.mensajes.handoverEnzo,
+      'GABI': this.mensajes.handoverGabi,
+      'AXEL': this.mensajes.handoverAxel,
+      'ALUNA': this.mensajes.handoverAluna
+    };
+    
+    const message = handoverMessages[targetAgent];
+    return message ? message.replace(/{nombre}/g, userName) : null;
   }
 };

@@ -718,40 +718,33 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
 
       try {
-        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        const agenteActual = AGENTES[fromAgent];
-        const nuevoAgente = AGENTES[targetAgent];
-
-        const userName = profile.whatsappDisplayName || profile.name || 'amigo';
-
-        // 🌍 Mensajes de handover multiidioma
-        const handoverActual = typeof agenteActual?.getHandover === 'function' 
-          ? agenteActual.getHandover(userLanguage)
-          : agenteActual?.handover || {};
+        const { getHandoffMessages } = await import('../../deteccion-intenciones/orquestador.js');
         
-        const mensajesNuevo = typeof nuevoAgente?.getMensajes === 'function'
-          ? nuevoAgente.getMensajes(userLanguage)
-          : nuevoAgente?.mensajes || {};
+        const userName = profile.whatsappDisplayName || profile.name || 'amigo';
+        const userLanguage = profile.preferredLanguage || 'es';
 
-        const mensajeDespedida =
-          handoverActual.llamado?.replace(/{nombre}/g, userName)
-          || `${userName}, te dejo con ${nuevoAgente?.nombre || targetAgent}.`;
-
-        const mensajeEntrada =
-          mensajesNuevo.entrada?.replace(/{nombre}/g, userName)
-          || `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || targetAgent}. ¿En qué puedo ayudarte?`;
+        // 🎯 Obtener mensajes de handoff usando función unificada
+        const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
 
         // 🔄 SECUENCIA HANDOFF: 2 mensajes rápidos y sincronizados
         // 1. Agente actual despide
-        await enviarWhatsApp(userId, mensajeDespedida);
-        await saveConversationMessage(userId, { role: 'assistant', content: mensajeDespedida, agent: fromAgent });
+        await enviarWhatsApp(userId, handoffMessages.despedida);
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: handoffMessages.despedida, 
+          agent: fromAgent 
+        });
 
         // 2. Micro delay (solo para experiencia natural)
         await new Promise(r => setTimeout(r, 400));
         
         // 3. Nuevo agente saluda
-        await enviarWhatsApp(userId, mensajeEntrada);
-        await saveConversationMessage(userId, { role: 'assistant', content: mensajeEntrada, agent: targetAgent });
+        await enviarWhatsApp(userId, handoffMessages.entrada);
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: handoffMessages.entrada, 
+          agent: targetAgent 
+        });
 
         // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
         if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
@@ -771,10 +764,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
         await saveProfile(userId, { ...profile, activeAgent: targetAgent });
 
+        // Importar AGENTES para obtener nombre del agente
+        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+        
         await saveInteraction({
           userId,
           agent: fromAgent,
-          agentName: agenteActual?.nombre || 'Aurora Core',
+          agentName: AGENTES[fromAgent]?.nombre || 'Aurora Core',
           intentReason: 'agent_handoff',
           input: auroraInput,
           output: `handoff ${fromAgent} -> ${targetAgent}`,

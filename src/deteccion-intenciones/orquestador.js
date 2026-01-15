@@ -24,6 +24,63 @@ export const AGENTES = {
 };
 
 /**
+ * Función unificada para obtener mensajes de handoff entre agentes
+ * @param {string} fromAgent - Agente actual (ej: 'AURORA')
+ * @param {string} toAgent - Agente destino (ej: 'ANGELA')
+ * @param {string} userName - Nombre del usuario
+ * @param {string} userLanguage - Idioma preferido ('es', 'en', etc.)
+ * @returns {Object} { despedida: string, entrada: string }
+ */
+export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userLanguage = 'es') {
+  const agenteActual = AGENTES[fromAgent];
+  const nuevoAgente = AGENTES[toAgent];
+  
+  let mensajeDespedida = null;
+  let mensajeEntrada = null;
+  
+  // 1. MENSAJE DE DESPEDIDA del agente actual
+  
+  // Caso especial: Aurora tiene mensajes específicos por agente destino
+  if (fromAgent === 'AURORA' && typeof agenteActual?.getHandover === 'function') {
+    mensajeDespedida = agenteActual.getHandover(toAgent, userName);
+  }
+  
+  // Si no hay mensaje específico, usar mensaje genérico del agente actual
+  if (!mensajeDespedida) {
+    if (typeof agenteActual?.getHandover === 'function') {
+      const handoverData = agenteActual.getHandover(userLanguage);
+      mensajeDespedida = handoverData?.llamado?.replace(/{nombre}/g, userName);
+    } else if (agenteActual?.handover?.llamado) {
+      mensajeDespedida = agenteActual.handover.llamado.replace(/{nombre}/g, userName);
+    }
+  }
+  
+  // Fallback genérico para despedida
+  if (!mensajeDespedida) {
+    mensajeDespedida = `${userName}, te conecto con ${nuevoAgente?.nombre || toAgent}.`;
+  }
+  
+  // 2. MENSAJE DE ENTRADA del nuevo agente
+  
+  if (typeof nuevoAgente?.getMensajes === 'function') {
+    const mensajes = nuevoAgente.getMensajes(userLanguage);
+    mensajeEntrada = mensajes?.entrada?.replace(/{nombre}/g, userName);
+  } else if (nuevoAgente?.mensajes?.entrada) {
+    mensajeEntrada = nuevoAgente.mensajes.entrada.replace(/{nombre}/g, userName);
+  }
+  
+  // Fallback genérico para entrada
+  if (!mensajeEntrada) {
+    mensajeEntrada = `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || toAgent}. ¿En qué puedo ayudarte?`;
+  }
+  
+  return {
+    despedida: mensajeDespedida,
+    entrada: mensajeEntrada
+  };
+}
+
+/**
  * Aurora Core decide TODO.
  */
 export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = {}) {

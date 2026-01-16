@@ -240,6 +240,7 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS collision_quotes (
           id TEXT PRIMARY KEY,
+          quote_code TEXT UNIQUE,
           user_phone TEXT NOT NULL,
           damage_type TEXT NOT NULL,
           client_name TEXT,
@@ -250,6 +251,11 @@ class PostgresAdapter {
           phone TEXT,
           damage_description TEXT,
           photo_urls JSONB DEFAULT '[]'::jsonb,
+          damage_analysis JSONB,
+          quote_details TEXT,
+          price_min DECIMAL(10,2),
+          price_max DECIMAL(10,2),
+          currency TEXT DEFAULT 'USD',
           inspection_scheduled TIMESTAMP,
           inspection_completed BOOLEAN DEFAULT FALSE,
           quote_amount DECIMAL(10,2),

@@ -1,0 +1,296 @@
+/**
+ * 🔨 AXEL - PaintBull Collision Confirmation Handler
+ * 
+ * Maneja la confirmación SI del usuario y completa el proceso de cotización:
+ * 1. Analiza fotos con AI Vision (si aún no se hizo)
+ * 2. Genera cotización detallada con OpenAI
+ * 3. Guarda el quote en la base de datos (collision_quotes)
+ * 4. Envía email con cotización y análisis de daños
+ * 5. Retorna mensaje de éxito con código de cotización
+ * 
+ * DIFERENCIAS con Insurance:
+ * - Usa AI Vision para analizar daños en fotos
+ * - Genera cotización de reparación (no prima de seguro)
+ * - Guarda en tabla collision_quotes (no insurance_leads)
+ * - No valida ciudad ni rango de valores
+ * - NO crea evento de calendario automáticamente
+ */
+
+import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
+import databaseService from '../database/database.js';
+import { generateEmailForAgent } from './generic-email-templates.js';
+import { sendEmail } from './email.js';
+import { analyzeCollisionPhotos } from './axel-vision-analysis.js';
+import { generateQuote } from './axel-quote-generator.js';
+
+/**
+ * 🔢 Genera código secuencial de cotización
+ */
+async function generateQuoteCode() {
+  const year = new Date().getFullYear();
+  const prefix = `PB-${year}-`;
+  
+  const query = `
+    SELECT quote_code FROM collision_quotes 
+    WHERE quote_code LIKE ? 
+    ORDER BY quote_code DESC 
+    LIMIT 1
+  `;
+  
+  const result = await databaseService.get(query, [`${prefix}%`]);
+  
+  if (result && result.quote_code) {
+    const lastNumber = parseInt(result.quote_code.split('-')[2]);
+    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
+  }
+  
+  return `${prefix}001`;
+}
+
+/**
+ * ✅ Procesa confirmación SI de Axel
+ */
+export async function confirmCollisionQuote(userId, userProfile) {
+  console.log('[COLLISION-CONFIRM] 🔨 Procesando confirmación de cotización...');
+
+  // Obtener datos pendientes
+  const pendingData = await getPendingConfirmation(userId);
+  
+  if (!pendingData || pendingData.agentName !== 'AXEL') {
+    console.log('[COLLISION-CONFIRM] ⚠️ No hay datos pendientes de AXEL');
+    return {
+      success: false,
+      message: 'No encontré datos pendientes de cotización. Por favor inicia el proceso nuevamente con @axel.'
+    };
+  }
+
+  const formData = pendingData.formData;
+
+  try {
+    // ==========================================
+    // 1️⃣ ANALIZAR FOTOS CON AI VISION
+    // ==========================================
+    
+    let damageAnalysis = null;
+    
+    if (formData.photoUrls && formData.photoUrls.length > 0) {
+      console.log(`[COLLISION-CONFIRM] 👁️ Analizando ${formData.photoUrls.length} foto(s)...`);
+      
+      const visionResult = await analyzeCollisionPhotos(formData.photoUrls);
+      
+      if (visionResult.success) {
+        damageAnalysis = visionResult;
+        console.log('[COLLISION-CONFIRM] ✅ Análisis AI Vision completado:', {
+          severity: damageAnalysis.severity,
+          parts: damageAnalysis.affectedParts?.length
+        });
+      } else {
+        console.warn('[COLLISION-CONFIRM] ⚠️ AI Vision falló, continuando sin análisis:', visionResult.error);
+        // Análisis fallback manual
+        damageAnalysis = {
+          severity: 'MODERADO',
+          damageDetails: formData.damageDescription || 'Daño requiere inspección en taller',
+          affectedParts: [formData.damageType || 'carrocería'],
+          hiddenDamageRisk: 'MEDIO',
+          estimatedRepairDays: '3-7 días'
+        };
+      }
+    } else {
+      console.log('[COLLISION-CONFIRM] ⚠️ No hay fotos para analizar');
+      damageAnalysis = {
+        severity: 'DESCONOCIDO',
+        damageDetails: 'Sin fotos disponibles para análisis',
+        affectedParts: [formData.damageType || 'a determinar'],
+        hiddenDamageRisk: 'ALTO',
+        estimatedRepairDays: 'Requiere inspección'
+      };
+    }
+
+    // ==========================================
+    // 2️⃣ GENERAR COTIZACIÓN CON OPENAI
+    // ==========================================
+    
+    console.log('[COLLISION-CONFIRM] 💰 Generando cotización...');
+    
+    const vehicleData = {
+      marca: formData.vehicleBrand,
+      modelo: formData.vehicleModel,
+      año: formData.vehicleYear
+    };
+
+    const quoteResult = await generateQuote({
+      vehicleData,
+      damageAnalysis,
+      photoUrls: formData.photoUrls || []
+    });
+
+    if (!quoteResult.success) {
+      console.error('[COLLISION-CONFIRM] ❌ Error generando cotización:', quoteResult.error);
+      return {
+        success: false,
+        message: `❌ Hubo un error generando la cotización: ${quoteResult.error}\n\nPor favor intenta nuevamente más tarde.`
+      };
+    }
+
+    const quoteDetails = quoteResult.quote;
+    const priceRange = quoteResult.priceRange;
+
+    console.log('[COLLISION-CONFIRM] ✅ Cotización generada:', {
+      min: priceRange.min,
+      max: priceRange.max
+    });
+
+    // ==========================================
+    // 3️⃣ GUARDAR EN BASE DE DATOS
+    // ==========================================
+    
+    const quoteId = `collision_${Date.now()}_${userId.replace(/\+/g, '')}`;
+    const quoteCode = await generateQuoteCode();
+    
+    const insertQuery = `
+      INSERT INTO collision_quotes (
+        id, quote_code, user_phone, damage_type, client_name,
+        vehicle_brand, vehicle_model, vehicle_year, email, phone,
+        damage_description, photo_urls, damage_analysis,
+        quote_details, price_min, price_max, currency,
+        status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const insertParams = [
+      quoteId,
+      quoteCode,
+      userId,
+      formData.damageType || 'General',
+      formData.fullName,
+      formData.vehicleBrand,
+      formData.vehicleModel,
+      formData.vehicleYear,
+      formData.email || null,
+      formData.phone || null,
+      formData.damageDescription || '',
+      JSON.stringify(formData.photoUrls || []),
+      JSON.stringify({
+        severity: damageAnalysis.severity,
+        details: damageAnalysis.damageDetails,
+        parts: damageAnalysis.affectedParts,
+        risk: damageAnalysis.hiddenDamageRisk,
+        estimatedDays: damageAnalysis.estimatedRepairDays
+      }),
+      quoteDetails,
+      priceRange.min,
+      priceRange.max,
+      'USD',
+      'pending',
+      new Date().toISOString(),
+      new Date().toISOString()
+    ];
+    
+    await databaseService.run(insertQuery, insertParams);
+    console.log(`[COLLISION-CONFIRM] ✅ Cotización guardada: ${quoteId}`);
+
+    // ==========================================
+    // 4️⃣ ENVIAR EMAIL CON COTIZACIÓN
+    // ==========================================
+    
+    let emailSent = false;
+    let emailError = null;
+
+    if (formData.email) {
+      try {
+        console.log(`[COLLISION-CONFIRM] 📧 Enviando email a ${formData.email}...`);
+        
+        // Generar HTML del email con template de PaintBull
+        const emailHTML = generateEmailForAgent('AXEL', {
+          quoteId,
+          quoteCode,
+          damageType: formData.damageType || 'General',
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone || userId,
+          vehicleBrand: formData.vehicleBrand,
+          vehicleModel: formData.vehicleModel,
+          vehicleYear: formData.vehicleYear,
+          damageDescription: formData.damageDescription || 'Ver análisis adjunto',
+          damageAnalysis: {
+            severity: damageAnalysis.severity,
+            details: damageAnalysis.damageDetails,
+            parts: damageAnalysis.affectedParts?.join(', ') || 'N/A',
+            risk: damageAnalysis.hiddenDamageRisk,
+            estimatedDays: damageAnalysis.estimatedRepairDays
+          },
+          quoteDetails,
+          priceMin: priceRange.min,
+          priceMax: priceRange.max,
+          photoCount: formData.photoUrls?.length || 0
+        });
+
+        await sendEmail({
+          to: formData.email,
+          subject: `🔨 Cotización de Reparación - PaintBull | ${formData.vehicleBrand} ${formData.vehicleModel}`,
+          html: emailHTML
+        });
+
+        emailSent = true;
+        console.log('[COLLISION-CONFIRM] ✅ Email enviado exitosamente');
+      } catch (error) {
+        console.error('[COLLISION-CONFIRM] ❌ Error enviando email:', error);
+        emailError = error.message;
+      }
+    } else {
+      console.log('[COLLISION-CONFIRM] ⚠️ No hay email para enviar cotización');
+    }
+
+    // ==========================================
+    // 5️⃣ LIMPIAR DATOS PENDIENTES
+    // ==========================================
+    
+    await clearPendingConfirmation(userId);
+    console.log('[COLLISION-CONFIRM] 🗑️ Datos pendientes limpiados');
+
+    // ==========================================
+    // 6️⃣ RETORNAR RESULTADO
+    // ==========================================
+    
+    return {
+      success: true,
+      quoteId,
+      quoteCode,
+      message: `✅ Cotización generada exitosamente!
+
+📋 Código de cotización: ${quoteCode}
+
+💰 ESTIMACIÓN DE REPARACIÓN:
+━━━━━━━━━━━━━━━
+🚗 Vehículo: ${formData.vehicleBrand} ${formData.vehicleModel} ${formData.vehicleYear}
+🔨 Daño: ${formData.damageType || 'General'}
+⚠️ Severidad: ${damageAnalysis.severity}
+⏰ Tiempo estimado: ${damageAnalysis.estimatedRepairDays}
+
+💵 Rango de precio: $${priceRange.min.toLocaleString('en-US')} - $${priceRange.max.toLocaleString('en-US')} USD
+
+${emailSent ? '📧 Te enviamos los detalles completos a tu email\n\n' : ''}${emailError ? `⚠️ Hubo un problema enviando el email: ${emailError}\n\n` : ''}🔨 PaintBull - 15 años de experiencia en colisiones
+💡 Guarda tu código ${quoteCode} para agendar inspección en taller`,
+      data: {
+        quoteId,
+        quoteCode,
+        vehicleInfo: `${formData.vehicleBrand} ${formData.vehicleModel} ${formData.vehicleYear}`,
+        severity: damageAnalysis.severity,
+        priceRange,
+        estimatedDays: damageAnalysis.estimatedRepairDays,
+        emailSent
+      }
+    };
+
+  } catch (error) {
+    console.error('[COLLISION-CONFIRM] ❌ Error general:', error);
+    return {
+      success: false,
+      message: `❌ Error procesando cotización: ${error.message}\n\nPor favor intenta nuevamente.`
+    };
+  }
+}
+
+export default {
+  confirmCollisionQuote
+};

@@ -1,0 +1,631 @@
+/**
+ * 🧠 Sistema Universal de Formularios Inteligentes
+ * 
+ * Basado en partial-reservation-form.js de Aurora, pero adaptado para
+ * funcionar con CUALQUIER agente (Adriana, Axel, Enzo, Paula, Aluna).
+ * 
+ * Permite a los agentes "recordar" datos entre mensajes y completar
+ * progresivamente la información sin obligar al usuario a seguir orden estricto.
+ * 
+ * Ejemplo de uso:
+ * 
+ * ADRIANA (Seguros):
+ * - Usuario: "quiero seguro de auto para un Honda Civic"
+ * - Agente detecta: tipo=auto, vehiculo=Honda Civic
+ * - Pregunta siguiente: "¿Tu cédula?"
+ * 
+ * AXEL (Colisiones):
+ * - Usuario: "tengo rayones en mi auto, es un Toyota Corolla 2019"
+ * - Agente detecta: tipo=rayones, vehiculo=Toyota Corolla, año=2019
+ * - Pregunta siguiente: "¿Tu email para enviarte la cotización?"
+ */
+
+import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
+
+// TTL del formulario: 2 horas (igual que Aurora)
+const FORM_TTL_SECONDS = 2 * 60 * 60;
+
+/**
+ * 🎯 Clase Universal de Formulario
+ * 
+ * Cada agente define sus propios campos requeridos y opcionales.
+ */
+export class GenericForm {
+  /**
+   * @param {string} userId - ID del usuario (+593999...)
+   * @param {string} agentName - Nombre del agente (ADRIANA, AXEL, ENZO, PAULA, ALUNA)
+   * @param {Object} schema - Esquema de campos {required: [], optional: [], defaults: {}}
+   * @param {Object} existingData - Datos previos si existen
+   */
+  constructor(userId, agentName, schema, existingData = {}) {
+    this.userId = userId;
+    this.agentName = agentName;
+    this.schema = schema;
+    this.data = { ...schema.defaults, ...existingData };
+    this.updatedAt = new Date();
+    
+    console.log(`[GENERIC-FORM] ✨ Nuevo formulario ${agentName} para ${userId}`);
+    console.log(`[GENERIC-FORM] 📋 Campos requeridos:`, schema.required);
+  }
+
+  /**
+   * 📝 Actualiza un campo
+   */
+  updateField(field, value) {
+    this.data[field] = value;
+    this.updatedAt = new Date();
+    console.log(`[GENERIC-FORM] 📝 ${this.agentName} - Campo actualizado: ${field} = ${value}`);
+  }
+
+  /**
+   * 📊 Actualiza múltiples campos a la vez
+   */
+  updateFields(updates) {
+    Object.keys(updates).forEach(key => {
+      if (updates[key] !== null && updates[key] !== undefined) {
+        this.data[key] = updates[key];
+      }
+    });
+    this.updatedAt = new Date();
+    console.log(`[GENERIC-FORM] 📝 ${this.agentName} - Campos actualizados:`, Object.keys(updates));
+  }
+
+  /**
+   * ❓ Lista de campos faltantes
+   */
+  getMissingFields() {
+    const missing = [];
+    
+    this.schema.required.forEach(field => {
+      if (!this.data[field]) {
+        missing.push(field);
+      }
+    });
+    
+    return missing;
+  }
+
+  /**
+   * ✅ Verifica si está completo
+   */
+  isComplete() {
+    return this.getMissingFields().length === 0;
+  }
+
+  /**
+   * 📋 Genera resumen de datos actuales
+   */
+  getSummary() {
+    const parts = [];
+    
+    Object.keys(this.data).forEach(key => {
+      const value = this.data[key];
+      if (value && this.schema.labels && this.schema.labels[key]) {
+        parts.push(`${this.schema.labels[key]}: ${value}`);
+      }
+    });
+    
+    return parts.join('\n');
+  }
+
+  /**
+   * 🎯 Genera pregunta inteligente para el siguiente campo faltante
+   */
+  getNextQuestion() {
+    const missing = this.getMissingFields();
+    
+    if (missing.length === 0) {
+      return null; // Formulario completo
+    }
+
+    const field = missing[0];
+    
+    // Si el schema tiene preguntas personalizadas, usarlas
+    if (this.schema.questions && this.schema.questions[field]) {
+      return this.schema.questions[field];
+    }
+    
+    // Pregunta genérica
+    const label = this.schema.labels?.[field] || field;
+    return `¿Cuál es tu ${label}?`;
+  }
+
+  /**
+   * 💾 Serializar a JSON
+   */
+  toJSON() {
+    return {
+      userId: this.userId,
+      agentName: this.agentName,
+      schema: this.schema,
+      data: this.data,
+      updatedAt: this.updatedAt.toISOString()
+    };
+  }
+
+  /**
+   * 📂 Cargar desde JSON
+   */
+  static fromJSON(json) {
+    const form = new GenericForm(json.userId, json.agentName, json.schema, json.data);
+    form.updatedAt = new Date(json.updatedAt);
+    return form;
+  }
+}
+
+/**
+ * 🔧 ESQUEMAS DE FORMULARIOS POR AGENTE
+ */
+
+export const FORM_SCHEMAS = {
+  ADRIANA: {
+    required: ['city', 'commercialValue', 'matriculaImages', 'licenciaImages', 'plate', 'vehicleBrand', 'vehicleModel', 'vehicleYear', 'motor', 'chasis', 'originCountry', 'licenseType', 'licenseExpiry', 'fullName', 'cedula', 'phone'],
+    optional: ['email', 'quotedPremium'],
+    defaults: {
+      insuranceType: 'Seguro para Vehículos livianos',
+      matriculaImages: [],
+      licenciaImages: [],
+      status: 'pending'
+    },
+    labels: {
+      city: '🏙️ Ciudad',
+      commercialValue: '💰 Valor comercial',
+      matriculaImages: '📄 Matrícula',
+      licenciaImages: '🪪 Licencia',
+      plate: '🔢 Placa',
+      vehicleBrand: '🚗 Marca',
+      vehicleModel: '📦 Modelo',
+      vehicleYear: '📅 Año',
+      motor: '🔧 Motor',
+      chasis: '🏗️ Chasis',
+      originCountry: '🌍 País origen',
+      licenseType: '📝 Tipo licencia',
+      licenseExpiry: '⏰ Vigencia licencia',
+      fullName: '👤 Nombre',
+      cedula: '🆔 Cédula',
+      phone: '📱 Teléfono',
+      email: '📧 Email',
+      quotedPremium: '💵 Prima cotizada'
+    },
+    questions: {
+      city: '¿En qué ciudad se encuentra tu vehículo?',
+      commercialValue: '¿Cuál es el valor comercial aproximado de tu vehículo? (avalúo actual)',
+      matriculaImages: 'Por favor envía la matrícula de tu vehículo (ambos lados)',
+      licenciaImages: 'Ahora necesito tu licencia de conducir (ambos lados)',
+      fullName: '¿Cuál es tu nombre completo?',
+      cedula: '¿Tu número de cédula?',
+      phone: '¿Tu número de teléfono?',
+      email: '¿Tu correo electrónico para enviarte la cotización?'
+    }
+  },
+
+  AXEL: {
+    required: ['damageType', 'vehicleBrand', 'vehicleModel', 'vehicleYear', 'fullName', 'email', 'phone'],
+    optional: ['damageDescription', 'photoUrls'],
+    defaults: { photoUrls: [] },
+    labels: {
+      damageType: '🔨 Tipo de daño',
+      vehicleBrand: '🚗 Marca',
+      vehicleModel: '🚗 Modelo',
+      vehicleYear: '📅 Año',
+      fullName: '👤 Nombre',
+      email: '📧 Email',
+      phone: '📱 Teléfono',
+      damageDescription: '📝 Descripción',
+      photoUrls: '📸 Fotos'
+    },
+    questions: {
+      damageType: '¿Qué tipo de daño tiene tu vehículo? (rayones, abolladura, pintura, choque)',
+      vehicleBrand: '¿Marca del vehículo?',
+      vehicleModel: '¿Modelo?',
+      vehicleYear: '¿Año del vehículo?',
+      fullName: '¿Tu nombre completo?',
+      email: '¿Tu correo para enviarte la cotización?',
+      phone: '¿Un número de contacto?'
+    }
+  },
+
+  ENZO: {
+    required: ['projectType', 'companyName', 'fullName', 'email', 'phone', 'budget', 'urgency'],
+    optional: ['description', 'currentSituation'],
+    defaults: {},
+    labels: {
+      projectType: '🎯 Tipo de proyecto',
+      companyName: '🏢 Empresa',
+      fullName: '👤 Nombre',
+      email: '📧 Email',
+      phone: '📱 Teléfono',
+      budget: '💰 Presupuesto',
+      urgency: '⏰ Urgencia',
+      description: '📝 Descripción',
+      currentSituation: '📊 Situación actual'
+    },
+    questions: {
+      projectType: '¿Qué tipo de proyecto necesitas? (campaña digital, automatización IA, software, estrategia)',
+      companyName: '¿Nombre de tu empresa?',
+      fullName: '¿Tu nombre completo?',
+      email: '¿Tu correo?',
+      phone: '¿Un número de contacto?',
+      budget: '¿Tienes un presupuesto aproximado? (ej: $500, $2000, $5000+)',
+      urgency: '¿Qué tan urgente es? (ASAP, 1 semana, 1 mes, flexible)'
+    }
+  },
+
+  PAULA: {
+    required: ['operationType', 'propertyType', 'zone', 'budgetRange', 'fullName', 'email', 'phone'],
+    optional: ['bedrooms', 'amenities', 'squareMeters'],
+    defaults: {},
+    labels: {
+      operationType: '🏘️ Operación',
+      propertyType: '🏠 Tipo propiedad',
+      zone: '📍 Zona',
+      budgetRange: '💰 Presupuesto',
+      fullName: '👤 Nombre',
+      email: '📧 Email',
+      phone: '📱 Teléfono',
+      bedrooms: '🛏️ Dormitorios',
+      amenities: '✨ Amenidades',
+      squareMeters: '📐 m²'
+    },
+    questions: {
+      operationType: '¿Buscas comprar, vender o arrendar?',
+      propertyType: '¿Qué tipo de propiedad? (departamento, casa, local, terreno)',
+      zone: '¿En qué zona o sector? (ej: Cumbayá, La Carolina, Norte)',
+      budgetRange: '¿Cuál es tu rango de presupuesto?',
+      fullName: '¿Tu nombre completo?',
+      email: '¿Tu correo?',
+      phone: '¿Un número de contacto?'
+    }
+  },
+
+  ALUNA: {
+    required: ['membershipType', 'startDate', 'fullName', 'email', 'phone'],
+    optional: ['specialRequirements', 'companyName'],
+    defaults: {},
+    labels: {
+      membershipType: '🎫 Tipo de membresía',
+      startDate: '📅 Fecha inicio',
+      fullName: '👤 Nombre',
+      email: '📧 Email',
+      phone: '📱 Teléfono',
+      specialRequirements: '📝 Requisitos especiales',
+      companyName: '🏢 Empresa'
+    },
+    questions: {
+      membershipType: '¿Qué membresía te interesa? (Hot Desk mensual, oficina privada, virtual office)',
+      startDate: '¿Cuándo te gustaría empezar?',
+      fullName: '¿Tu nombre completo?',
+      email: '¿Tu correo?',
+      phone: '¿Un número de contacto?'
+    }
+  }
+};
+
+/**
+ * 📂 Obtener o crear formulario
+ */
+export async function getOrCreateGenericForm(userId, agentName, existingData = {}) {
+  try {
+    const existing = await getPendingConfirmation(userId);
+    
+    // Si ya existe formulario para este agente, cargarlo
+    if (existing && existing._type === 'generic_form' && existing._agentName === agentName) {
+      console.log(`[GENERIC-FORM] 📂 Formulario ${agentName} existente cargado`);
+      return GenericForm.fromJSON(existing._formData);
+    }
+    
+    // Crear nuevo formulario
+    console.log(`[GENERIC-FORM] ✨ Nuevo formulario ${agentName} creado`);
+    const schema = FORM_SCHEMAS[agentName];
+    return new GenericForm(userId, agentName, schema, existingData);
+  } catch (error) {
+    console.error(`[GENERIC-FORM] ❌ Error obteniendo formulario ${agentName}:`, error);
+    const schema = FORM_SCHEMAS[agentName];
+    return new GenericForm(userId, agentName, schema, existingData);
+  }
+}
+
+/**
+ * 💾 Guardar formulario en BD
+ */
+export async function saveGenericForm(form) {
+  try {
+    await setPendingConfirmation(form.userId, {
+      formData: form.toJSON(),
+      type: 'generic_form',
+      agentName: form.agentName
+    }, FORM_TTL_SECONDS / 60); // Convertir a minutos
+    
+    console.log(`[GENERIC-FORM] 💾 Formulario ${form.agentName} guardado`);
+    return true;
+  } catch (error) {
+    console.error(`[GENERIC-FORM] ❌ Error guardando formulario:`, error);
+    return false;
+  }
+}
+
+/**
+ * 🗑️ Limpiar formulario
+ */
+export async function clearGenericForm(userId) {
+  try {
+    await clearPendingConfirmation(userId);
+    console.log(`[GENERIC-FORM] 🗑️ Formulario limpiado para:`, userId);
+    return true;
+  } catch (error) {
+    console.error(`[GENERIC-FORM] ❌ Error limpiando formulario:`, error);
+    return false;
+  }
+}
+
+/**
+ * 🎯 Extrae datos del mensaje según el agente
+ * 
+ * Cada agente tiene sus propios patrones de detección
+ */
+export function extractDataFromMessage(message, agentName, currentForm) {
+  console.log(`[GENERIC-FORM] 🚀 Extrayendo datos para ${agentName}`);
+  
+  const updates = {};
+  const lowerMsg = message.toLowerCase();
+
+  // 📧 Email (universal para todos)
+  if (!currentForm.data.email) {
+    const emailMatch = message.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+      updates.email = emailMatch[1];
+      console.log(`[GENERIC-FORM] 📧 Email detectado:`, updates.email);
+    }
+  }
+
+  // 📱 Teléfono (universal)
+  if (!currentForm.data.phone) {
+    const phoneMatch = message.match(/(\+?\d{10,13})/);
+    if (phoneMatch) {
+      updates.phone = phoneMatch[1];
+      console.log(`[GENERIC-FORM] 📱 Teléfono detectado:`, updates.phone);
+    }
+  }
+
+  // 🎯 Detección específica por agente
+  switch (agentName) {
+    case 'ADRIANA':
+      extractAdrianaData(lowerMsg, currentForm, updates);
+      break;
+    case 'AXEL':
+      extractAxelData(lowerMsg, currentForm, updates);
+      break;
+    case 'ENZO':
+      extractEnzoData(lowerMsg, currentForm, updates);
+      break;
+    case 'PAULA':
+      extractPaulaData(lowerMsg, currentForm, updates);
+      break;
+    case 'ALUNA':
+      extractAlunaData(lowerMsg, currentForm, updates);
+      break;
+  }
+
+  return updates;
+}
+
+/**
+ * 🛡️ ADRIANA - Detectar datos de seguros
+ */
+function extractAdrianaData(lowerMsg, currentForm, updates) {
+  // Ciudad (detectar ciudades de la Sierra)
+  if (!currentForm.data.city) {
+    const sierraCities = [
+      'quito', 'ibarra', 'cayambe', 'tulcán', 'tulcan', 'tabacundo', 'cotacachi', 'pedro moncayo',
+      'latacunga', 'ambato', 'riobamba', 'guaranda', 'baños', 'banos', 'saquisilí', 'saquisili', 'pujilí', 'pujili', 'pelileo', 'guano', 'alausí', 'alausi',
+      'cuenca', 'loja', 'azogues', 'cariamanga', 'catamayo', 'gualaceo', 'paute'
+    ];
+    for (const city of sierraCities) {
+      if (lowerMsg.includes(city)) {
+        updates.city = city.charAt(0).toUpperCase() + city.slice(1);
+        break;
+      }
+    }
+  }
+
+  // Valor comercial (detectar montos en dólares)
+  if (!currentForm.data.commercialValue) {
+    // Detectar $42,000 o 42000 o $42000 o 42.000
+    const valueMatch = lowerMsg.match(/\$?\s?(\d{1,3}[,.]?\d{3,})/); 
+    if (valueMatch) {
+      const cleanValue = valueMatch[1].replace(/[,.](?=\d{3})/g, ''); // Remover separadores
+      const value = parseFloat(cleanValue);
+      if (value >= 1000) { // Mínimo razonable para un vehículo
+        updates.commercialValue = value;
+      }
+    }
+  }
+
+  // Cédula
+  if (!currentForm.data.cedula) {
+    const cedulaMatch = lowerMsg.match(/\b(\d{10}|\d{13})\b/);
+    if (cedulaMatch) {
+      updates.cedula = cedulaMatch[1];
+    }
+  }
+
+  // Placa
+  if (!currentForm.data.plate) {
+    const plateMatch = lowerMsg.match(/\b([A-Z]{3}-\d{3,4})\b/i);
+    if (plateMatch) {
+      updates.plate = plateMatch[1].toUpperCase();
+    }
+  }
+}
+
+/**
+ * 🔨 AXEL - Detectar datos de colisiones
+ */
+function extractAxelData(lowerMsg, currentForm, updates) {
+  // Tipo de daño
+  if (!currentForm.data.damageType) {
+    if (lowerMsg.includes('rayón') || lowerMsg.includes('rayon') || lowerMsg.includes('rayas')) {
+      updates.damageType = 'rayones';
+    } else if (lowerMsg.includes('abolladura') || lowerMsg.includes('golpe') || lowerMsg.includes('hundido')) {
+      updates.damageType = 'abolladura';
+    } else if (lowerMsg.includes('pintura')) {
+      updates.damageType = 'pintura';
+    } else if (lowerMsg.includes('choque') || lowerMsg.includes('accidente')) {
+      updates.damageType = 'choque';
+    }
+  }
+
+  // Marca del vehículo
+  const marcas = ['toyota', 'chevrolet', 'honda', 'nissan', 'mazda', 'hyundai', 'kia', 'ford', 'volkswagen'];
+  if (!currentForm.data.vehicleBrand) {
+    for (const marca of marcas) {
+      if (lowerMsg.includes(marca)) {
+        updates.vehicleBrand = marca.charAt(0).toUpperCase() + marca.slice(1);
+        break;
+      }
+    }
+  }
+
+  // Año del vehículo
+  if (!currentForm.data.vehicleYear) {
+    const yearMatch = lowerMsg.match(/\b(20\d{2}|19\d{2})\b/);
+    if (yearMatch) {
+      updates.vehicleYear = parseInt(yearMatch[1]);
+    }
+  }
+}
+
+/**
+ * 🎯 ENZO - Detectar datos de marketing
+ */
+function extractEnzoData(lowerMsg, currentForm, updates) {
+  // Tipo de proyecto
+  if (!currentForm.data.projectType) {
+    if (lowerMsg.includes('campaña') || lowerMsg.includes('publicidad') || lowerMsg.includes('ads')) {
+      updates.projectType = 'campaña digital';
+    } else if (lowerMsg.includes('automatización') || lowerMsg.includes('ia') || lowerMsg.includes('agente')) {
+      updates.projectType = 'automatización IA';
+    } else if (lowerMsg.includes('software') || lowerMsg.includes('sistema') || lowerMsg.includes('app')) {
+      updates.projectType = 'software';
+    } else if (lowerMsg.includes('estrategia') || lowerMsg.includes('consultoría')) {
+      updates.projectType = 'estrategia';
+    }
+  }
+
+  // Urgencia
+  if (!currentForm.data.urgency) {
+    if (lowerMsg.includes('urgente') || lowerMsg.includes('asap') || lowerMsg.includes('ya')) {
+      updates.urgency = 'ASAP';
+    } else if (lowerMsg.includes('semana')) {
+      updates.urgency = '1 semana';
+    } else if (lowerMsg.includes('mes')) {
+      updates.urgency = '1 mes';
+    } else if (lowerMsg.includes('flexible')) {
+      updates.urgency = 'flexible';
+    }
+  }
+}
+
+/**
+ * 🏘️ PAULA - Detectar datos de real estate
+ */
+function extractPaulaData(lowerMsg, currentForm, updates) {
+  // Tipo de operación
+  if (!currentForm.data.operationType) {
+    if (lowerMsg.includes('comprar') || lowerMsg.includes('compra')) {
+      updates.operationType = 'compra';
+    } else if (lowerMsg.includes('vender') || lowerMsg.includes('venta')) {
+      updates.operationType = 'venta';
+    } else if (lowerMsg.includes('arrendar') || lowerMsg.includes('alquil') || lowerMsg.includes('rent')) {
+      updates.operationType = 'arriendo';
+    }
+  }
+
+  // Tipo de propiedad
+  if (!currentForm.data.propertyType) {
+    if (lowerMsg.includes('departamento') || lowerMsg.includes('depa')) {
+      updates.propertyType = 'departamento';
+    } else if (lowerMsg.includes('casa')) {
+      updates.propertyType = 'casa';
+    } else if (lowerMsg.includes('local')) {
+      updates.propertyType = 'local';
+    } else if (lowerMsg.includes('terreno')) {
+      updates.propertyType = 'terreno';
+    }
+  }
+
+  // Zona
+  const zonas = ['cumbayá', 'tumbaco', 'carolina', 'gonzález suárez', 'floresta', 'pradera', 'chillos'];
+  if (!currentForm.data.zone) {
+    for (const zona of zonas) {
+      if (lowerMsg.includes(zona)) {
+        updates.zone = zona.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * 🎫 ALUNA - Detectar datos de membresías
+ */
+function extractAlunaData(lowerMsg, currentForm, updates) {
+  // Tipo de membresía
+  if (!currentForm.data.membershipType) {
+    if (lowerMsg.includes('hot desk')) {
+      updates.membershipType = 'Hot Desk mensual';
+    } else if (lowerMsg.includes('oficina privada')) {
+      updates.membershipType = 'Oficina privada';
+    } else if (lowerMsg.includes('virtual office')) {
+      updates.membershipType = 'Virtual office';
+    }
+  }
+}
+
+/**
+ * 🚀 Procesar mensaje con formulario genérico
+ * 
+ * Similar a processMessageWithForm de Aurora pero universal
+ */
+export async function processGenericFormMessage(userId, message, agentName) {
+  try {
+    // 1. Obtener o crear formulario
+    const form = await getOrCreateGenericForm(userId, agentName);
+    
+    // 2. Extraer datos del mensaje
+    const updates = extractDataFromMessage(message, agentName, form);
+    
+    // 3. Actualizar formulario
+    if (Object.keys(updates).length > 0) {
+      form.updateFields(updates);
+      await saveGenericForm(form);
+    }
+    
+    // 4. Verificar si está completo
+    const isComplete = form.isComplete();
+    const nextQuestion = form.getNextQuestion();
+    
+    return {
+      form,
+      updates,
+      isComplete,
+      needsMoreInfo: !isComplete,
+      nextQuestion,
+      summary: form.getSummary(),
+      data: form.data // Datos completos para usar en confirmación
+    };
+  } catch (error) {
+    console.error(`[GENERIC-FORM] ❌ Error procesando mensaje ${agentName}:`, error);
+    throw error;
+  }
+}
+
+export default {
+  GenericForm,
+  FORM_SCHEMAS,
+  getOrCreateGenericForm,
+  saveGenericForm,
+  clearGenericForm,
+  extractDataFromMessage,
+  processGenericFormMessage
+};

@@ -196,6 +196,153 @@ class PostgresAdapter {
       `);
 
       // ===================================================================
+      // TABLAS DE LEADS: Sistema de captura para agentes especializados
+      // ===================================================================
+
+      // Tabla de leads de seguros (Adriana - SegPopular)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS insurance_leads (
+          id TEXT PRIMARY KEY,
+          quote_code TEXT UNIQUE NOT NULL,
+          user_phone TEXT NOT NULL,
+          agent_name TEXT DEFAULT 'ADRIANA',
+          insurance_type TEXT DEFAULT 'Seguro para Vehículos livianos',
+          city TEXT,
+          commercial_value DECIMAL(10,2),
+          plate TEXT,
+          vehicle_brand TEXT,
+          vehicle_model TEXT,
+          vehicle_year INTEGER,
+          motor TEXT,
+          chasis TEXT,
+          origin_country TEXT,
+          license_type TEXT,
+          license_expiry DATE,
+          client_name TEXT,
+          cedula TEXT,
+          email TEXT,
+          phone TEXT,
+          matricula_images JSONB DEFAULT '[]'::jsonb,
+          licencia_images JSONB DEFAULT '[]'::jsonb,
+          quoted_premium DECIMAL(10,2),
+          premium_breakdown JSONB DEFAULT '{}'::jsonb,
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'quoted', 'accepted', 'rejected', 'cancelled')),
+          assigned_to TEXT,
+          notes TEXT,
+          quote_sent_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de cotizaciones de colisiones (Axel - PaintBull)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS collision_quotes (
+          id TEXT PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          damage_type TEXT NOT NULL,
+          client_name TEXT,
+          vehicle_brand TEXT,
+          vehicle_model TEXT,
+          vehicle_year INTEGER,
+          email TEXT,
+          phone TEXT,
+          damage_description TEXT,
+          photo_urls JSONB DEFAULT '[]'::jsonb,
+          inspection_scheduled TIMESTAMP,
+          inspection_completed BOOLEAN DEFAULT FALSE,
+          quote_amount DECIMAL(10,2),
+          quote_sent_at TIMESTAMP,
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'inspecting', 'quoted', 'accepted', 'in_progress', 'completed', 'cancelled')),
+          assigned_to TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de leads de marketing (Enzo - MarketingLab)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS marketing_leads (
+          id TEXT PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          project_type TEXT NOT NULL,
+          company TEXT,
+          client_name TEXT,
+          email TEXT,
+          phone TEXT,
+          budget_range TEXT,
+          urgency TEXT,
+          description TEXT,
+          meeting_scheduled TIMESTAMP,
+          meeting_completed BOOLEAN DEFAULT FALSE,
+          proposal_sent_at TIMESTAMP,
+          proposal_amount DECIMAL(10,2),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'meeting_scheduled', 'proposal_sent', 'negotiating', 'accepted', 'rejected', 'cancelled')),
+          assigned_to TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de leads inmobiliarios (Tomi - PropElite)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS real_estate_leads (
+          id TEXT PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          operation_type TEXT NOT NULL,
+          property_type TEXT,
+          preferred_zone TEXT,
+          budget_range TEXT,
+          client_name TEXT,
+          email TEXT,
+          phone TEXT,
+          requirements JSONB DEFAULT '{}'::jsonb,
+          properties_shown JSONB DEFAULT '[]'::jsonb,
+          viewing_scheduled TIMESTAMP,
+          viewing_completed BOOLEAN DEFAULT FALSE,
+          offer_made BOOLEAN DEFAULT FALSE,
+          offer_amount DECIMAL(10,2),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'searching', 'viewing_scheduled', 'negotiating', 'offer_made', 'accepted', 'rejected', 'cancelled')),
+          assigned_to TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de leads de membresías (Aluna - Coworkia Internal)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS membership_leads (
+          id TEXT PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          membership_type TEXT NOT NULL,
+          start_date TEXT,
+          client_name TEXT,
+          email TEXT,
+          phone TEXT,
+          special_requirements TEXT,
+          company_name TEXT,
+          tour_scheduled TIMESTAMP,
+          tour_completed BOOLEAN DEFAULT FALSE,
+          membership_activated BOOLEAN DEFAULT FALSE,
+          activation_date TIMESTAMP,
+          monthly_fee DECIMAL(10,2),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'tour_scheduled', 'negotiating', 'accepted', 'active', 'cancelled', 'expired')),
+          assigned_to TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // ===================================================================
       // NUEVAS TABLAS: Sistema Unificado de Conversaciones Multi-Agente
       // ===================================================================
 
@@ -286,6 +433,33 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone);
         CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_phone);
+        
+        -- Índices para tablas de leads
+        CREATE INDEX IF NOT EXISTS idx_insurance_leads_user ON insurance_leads(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_insurance_leads_status ON insurance_leads(status);
+        CREATE INDEX IF NOT EXISTS idx_insurance_leads_created ON insurance_leads(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_insurance_leads_type ON insurance_leads(insurance_type);
+        
+        CREATE INDEX IF NOT EXISTS idx_collision_quotes_user ON collision_quotes(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_collision_quotes_status ON collision_quotes(status);
+        CREATE INDEX IF NOT EXISTS idx_collision_quotes_created ON collision_quotes(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_collision_quotes_inspection ON collision_quotes(inspection_scheduled);
+        
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_user ON marketing_leads(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_status ON marketing_leads(status);
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_created ON marketing_leads(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_meeting ON marketing_leads(meeting_scheduled);
+        
+        CREATE INDEX IF NOT EXISTS idx_real_estate_leads_user ON real_estate_leads(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_real_estate_leads_status ON real_estate_leads(status);
+        CREATE INDEX IF NOT EXISTS idx_real_estate_leads_created ON real_estate_leads(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_real_estate_leads_operation ON real_estate_leads(operation_type);
+        CREATE INDEX IF NOT EXISTS idx_real_estate_leads_viewing ON real_estate_leads(viewing_scheduled);
+        
+        CREATE INDEX IF NOT EXISTS idx_membership_leads_user ON membership_leads(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_membership_leads_status ON membership_leads(status);
+        CREATE INDEX IF NOT EXISTS idx_membership_leads_created ON membership_leads(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_membership_leads_tour ON membership_leads(tour_scheduled);
         
         -- Índices para nuevas tablas
         CREATE INDEX IF NOT EXISTS idx_agent_conversations_user_agent ON agent_conversations(user_phone, agent);

@@ -17,8 +17,8 @@ const AURORA_KEYWORDS = [
   'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
 ];
 
-// Keywords Tomi: Requiere PROPERTY keywords (obligatorio) + LOCATION opcional
-const TOMI_PROPERTY_KEYWORDS = [
+// Keywords Paula: Requiere PROPERTY keywords (obligatorio) + LOCATION opcional
+const PAULA_PROPERTY_KEYWORDS = [
   'bienes raices', 'bienes raíces', 'inmobiliaria', 'propiedad', 'propiedades',
   'casa', 'departamento', 'apartamento', 'villa', 'terreno',
   'comprar casa', 'vender casa', 'busco casa', 'busco departamento',
@@ -26,7 +26,7 @@ const TOMI_PROPERTY_KEYWORDS = [
   'ECU-001', 'ECU-002', 'DOM-001', 'DOM-002'
 ];
 
-const TOMI_LOCATION_KEYWORDS = [
+const PAULA_LOCATION_KEYWORDS = [
   'ecuador', 'quito', 'guayaquil', 'cuenca', 'cumbaya', 'la pradera',
   'republica dominicana', 'república dominicana', 'punta cana', 'santo domingo'
 ];
@@ -271,8 +271,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
       return { agent: 'GABI', reason: 'trigger @Gabi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI' } };
     }
 
-    if (/@tomi/i.test(text)) {
-      return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
+    if (/@paula/i.test(text)) {
+      return { agent: 'PAULA', reason: 'trigger @Paula', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'PAULA' } };
     }
 
     if (/@aluna/i.test(text)) {
@@ -396,8 +396,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
   // 4) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
   // El orquestador decidirá si cambiar según activeAgent
   
-  // NOTA: Tomi NO se activa por keywords, solo por @tomi (handoff explícito)
-  // Aurora/orquestador responden preguntas sobre propiedades y sugieren usar @tomi
+  // NOTA: Paula NO se activa por keywords, solo por @paula (handoff explícito)
+  // Aurora/orquestador responden preguntas sobre propiedades y sugieren usar @paula
   
   // Keywords Aluna (membresías)
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {

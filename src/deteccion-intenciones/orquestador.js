@@ -8,7 +8,7 @@ import { ENZO } from './enzo.js';
 import { ANGELA } from './angela.js';
 import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
-import { TOMI } from './tomi.js';
+import { PAULA } from './paula.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
 
@@ -20,7 +20,7 @@ export const AGENTES = {
   ANGELA,
   AXEL,
   GABI,
-  TOMI
+  PAULA
 };
 
 /**

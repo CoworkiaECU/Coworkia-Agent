@@ -160,7 +160,7 @@ También coordinamos especialistas en:
   🛡️ Seguros - Adriana en SegPopular  
   📊 Marketing - Enzo en MarketingLab
   🚗 Centro de colisiones - Axel en PaintBull
-  🏘️ Real Estate - Tomi en PropElite
+  🏘️ Real Estate - Paula en PropElite
   ⚖️ Legal/Contable - Gabi en GR Consulting
 
 Para conectarlos escribe:

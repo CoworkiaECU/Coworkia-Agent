@@ -84,42 +84,42 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
       });
     });
     
-    describe('Tomi - Bienes Raíces (Keywords Corregidos)', () => {
-      test('Keywords de propiedad NO activan Tomi (solo @tomi lo activa)', async () => {
+    describe('Paula - Bienes Raíces (Keywords Corregidos)', () => {
+      test('Keywords de propiedad NO activan Paula (solo @paula lo activa)', async () => {
         const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
         
-        // "Busco casa" NO debe activar Tomi, Aurora responde y sugiere @tomi
+        // "Busco casa" NO debe activar Paula, Aurora responde y sugiere @paula
         const result = detectarIntencion('Busco casa en Quito');
         
         expect(result.agent).toBe('AURORA');
-        expect(result.agent).not.toBe('TOMI');
+        expect(result.agent).not.toBe('PAULA');
       });
       
-      test('Tomi SOLO se activa con @tomi (handoff explícito)', async () => {
+      test('Paula SOLO se activa con @paula (handoff explícito)', async () => {
         const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
         
-        const result = detectarIntencion('@tomi necesito vender mi casa');
+        const result = detectarIntencion('@paula necesito vender mi casa');
         
-        expect(result.agent).toBe('TOMI');
+        expect(result.agent).toBe('PAULA');
         expect(result.flags.agentHandoff).toBe(true);
       });
       
-      test('NO debe activar Tomi solo con ciudad (FIX P0)', async () => {
+      test('NO debe activar Paula solo con ciudad (FIX P0)', async () => {
         const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
         
         const result = detectarIntencion('Necesito espacio de coworking en Quito');
         
-        // Debe ser Aurora, NO Tomi
-        expect(result.agent).not.toBe('TOMI');
+        // Debe ser Aurora, NO Paula
+        expect(result.agent).not.toBe('PAULA');
         expect(result.agent).toBe('AURORA');
       });
       
-      test('NO debe activar Tomi con "quito" sin contexto propiedad', async () => {
+      test('NO debe activar Paula con "quito" sin contexto propiedad', async () => {
         const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
         
         const result = detectarIntencion('¿Están en Quito?');
         
-        expect(result.agent).not.toBe('TOMI');
+        expect(result.agent).not.toBe('PAULA');
       });
     });
     
@@ -221,7 +221,7 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
       const { ANGELA } = await import('../../src/deteccion-intenciones/angela.js');
       const { AXEL } = await import('../../src/deteccion-intenciones/axel.js');
       const { GABI } = await import('../../src/deteccion-intenciones/gabi.js');
-      const { TOMI } = await import('../../src/deteccion-intenciones/tomi.js');
+      const { PAULA } = await import('../../src/deteccion-intenciones/paula.js');
       
       expect(AURORA.personalidad.idiomas).toHaveLength(6);
       expect(ALUNA.personalidad.idiomas).toHaveLength(6);
@@ -230,7 +230,7 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
       expect(ANGELA.personalidad.idiomas).toHaveLength(6);
       expect(AXEL.personalidad.idiomas).toHaveLength(6);
       expect(GABI.personalidad.idiomas).toHaveLength(6);
-      expect(TOMI.personalidad.idiomas).toHaveLength(2); // es/en (bienes raíces)
+      expect(PAULA.personalidad.idiomas).toHaveLength(2); // es/en (bienes raíces)
     });
   });
   
@@ -279,22 +279,22 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
       expect(result.flags.returningToAurora).toBe(true);
     });
     
-    test('Flujo: Usuario pregunta por casa → Aurora sugiere @tomi → Tomi conectado', async () => {
+    test('Flujo: Usuario pregunta por casa → Aurora sugiere @paula → Paula conectada', async () => {
       const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
-      const { TOMI } = await import('../../src/deteccion-intenciones/tomi.js');
+      const { PAULA } = await import('../../src/deteccion-intenciones/paula.js');
       
-      // Paso 1: Usuario pregunta por casa → Aurora responde (NO activa Tomi)
+      // Paso 1: Usuario pregunta por casa → Aurora responde (NO activa Paula)
       let result = detectarIntencion('Busco casa en Cumbayá');
       expect(result.agent).toBe('AURORA');
       
-      // Paso 2: Usuario usa @tomi explícitamente → Ahora SÍ activa Tomi
-      result = detectarIntencion('@tomi quiero ver opciones de casas');
-      expect(result.agent).toBe('TOMI');
+      // Paso 2: Usuario usa @paula explícitamente → Ahora SÍ activa Paula
+      result = detectarIntencion('@paula quiero ver opciones de casas');
+      expect(result.agent).toBe('PAULA');
       
-      // Verificar que Tomi tiene proceso de compra
-      expect(TOMI.conocimiento.procesoCompra).toBeDefined();
-      expect(TOMI.conocimiento.procesoCompra.pasos).toBeDefined();
-      expect(TOMI.conocimiento.procesoCompra.pasos).toHaveLength(10);
+      // Verificar que Paula tiene proceso de compra
+      expect(PAULA.conocimiento.procesoCompra).toBeDefined();
+      expect(PAULA.conocimiento.procesoCompra.pasos).toBeDefined();
+      expect(PAULA.conocimiento.procesoCompra.pasos).toHaveLength(10);
     });
     
     test('Flujo: Post-email support → requiresAurora flag', async () => {
@@ -434,7 +434,7 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
     
     test('Todos los agentes deben tener estructura mínima', async () => {
       const agentes = [
-        'AURORA', 'ALUNA', 'ADRIANA', 'ENZO', 'angela', 'axel', 'gabi', 'TOMI'
+        'AURORA', 'ALUNA', 'ADRIANA', 'ENZO', 'angela', 'axel', 'gabi', 'PAULA'
       ];
       
       for (const agentName of agentes) {

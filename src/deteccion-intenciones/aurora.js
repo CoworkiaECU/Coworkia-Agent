@@ -510,6 +510,8 @@ El sistema detectará tu respuesta y activará el flujo automático de:
     
     handoverAluna: '{nombre}, te conecto con *Aluna* - nuestra experta en membresías y planes mensuales de Coworkia. 🏢\n\n*Aluna*, {nombre} quiere información sobre planes mensuales.\n\nPara volver, escribe *@Aurora*',
     
+    handoverPaula: '{nombre}, te conecto con *Paula* de *PropElite Real Estate* - nuestra experta en bienes raíces de lujo. 🏡\n\n*Paula*, te presento a {nombre}. Está interesado en propiedades premium.\n\nPara volver, escribe *@Aurora*',
+    
     // Esta función genera el mensaje de información general dinámicamente
     getInformacionGeneral: function(freeTrialUsed = false) {
       const hotDeskInfo = freeTrialUsed
@@ -556,7 +558,8 @@ ${hotDeskInfo}
       'ENZO': this.mensajes.handoverEnzo,
       'GABI': this.mensajes.handoverGabi,
       'AXEL': this.mensajes.handoverAxel,
-      'ALUNA': this.mensajes.handoverAluna
+      'ALUNA': this.mensajes.handoverAluna,
+      'PAULA': this.mensajes.handoverPaula
     };
     
     const message = handoverMessages[targetAgent];

@@ -29,9 +29,11 @@ if (!fs.existsSync(DATA_DIR)) {
 /**
  * Cache en memoria para perfiles
  * TTL: 30 segundos para reducir queries repetitivas
+ * MAX: 1000 perfiles (FIFO al superar límite)
  */
 const profileCache = new Map();
 const CACHE_TTL = 30000; // 30 segundos
+const MAX_CACHE_SIZE = 1000; // Máximo 1000 perfiles en cache
 
 function getCachedProfile(userId) {
   const cached = profileCache.get(userId);
@@ -51,13 +53,22 @@ function getCachedProfile(userId) {
 }
 
 function setCachedProfile(userId, profile) {
+  // Limitar tamaño del cache (FIFO)
+  if (profileCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = profileCache.keys().next().value;
+    profileCache.delete(firstKey);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[CACHE] 🗑️ EVICT (límite alcanzado): ${firstKey}`);
+    }
+  }
+  
   profileCache.set(userId, {
     profile,
     timestamp: Date.now()
   });
   
   if (process.env.DEBUG_MODE === 'true') {
-    console.log(`[CACHE] 💾 SET para ${userId}`);
+    console.log(`[CACHE] 💾 SET para ${userId} (total: ${profileCache.size})`);
   }
 }
 
@@ -67,6 +78,29 @@ function invalidateCachedProfile(userId) {
     console.log(`[CACHE] 🗑️ INVALIDATE para ${userId}`);
   }
 }
+
+/**
+ * Limpieza periódica del cache (eliminar entradas expiradas)
+ * Se ejecuta automáticamente cada 5 minutos
+ */
+function cleanupExpiredCache() {
+  const now = Date.now();
+  let cleaned = 0;
+  
+  for (const [userId, cached] of profileCache.entries()) {
+    if (now - cached.timestamp > CACHE_TTL) {
+      profileCache.delete(userId);
+      cleaned++;
+    }
+  }
+  
+  if (cleaned > 0 && process.env.DEBUG_MODE === 'true') {
+    console.log(`[CACHE] 🧹 Limpieza: ${cleaned} perfiles expirados (${profileCache.size} restantes)`);
+  }
+}
+
+// Ejecutar limpieza cada 5 minutos
+setInterval(cleanupExpiredCache, 5 * 60 * 1000);
 
 /**
  * Inicializar base de datos al importar el módulo

@@ -24,7 +24,7 @@
 
 import { processGenericFormMessage, FORM_SCHEMAS } from './generic-form-handler.js';
 import { getPendingConfirmation, setPendingConfirmation } from './reservation-state.js';
-import { analyzeImageWithOpenAI } from '../servicios-ia/openai.js';
+import { analyzeImage } from '../servicios-ia/openai.js';
 
 // ==========================================
 // 🏔️ CIUDADES SIERRA ECUADOR (COBERTURA)
@@ -108,7 +108,17 @@ Responde SOLO con el JSON, sin texto adicional.`;
 
   try {
     console.log('[INSURANCE-FORM] 🔍 Analizando matrícula con AI Vision...');
-    const analysisText = await analyzeImageWithOpenAI(imageUrls, prompt);
+    
+    // Usar la primera imagen (o todas si quieres analizar múltiples)
+    const imageUrl = Array.isArray(imageUrls) ? imageUrls[0] : imageUrls;
+    const result = await analyzeImage(imageUrl, prompt, { detail: 'high', max_tokens: 800 });
+    
+    if (!result.success) {
+      console.error('[INSURANCE-FORM] ❌ Error en AI Vision:', result.error);
+      return null;
+    }
+    
+    const analysisText = result.content;
     
     // Extraer JSON de la respuesta
     const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
@@ -155,7 +165,17 @@ Responde SOLO con el JSON, sin texto adicional.`;
 
   try {
     console.log('[INSURANCE-FORM] 🔍 Analizando licencia con AI Vision...');
-    const analysisText = await analyzeImageWithOpenAI(imageUrls, prompt);
+    
+    // Usar la primera imagen (o todas si quieres analizar múltiples)
+    const imageUrl = Array.isArray(imageUrls) ? imageUrls[0] : imageUrls;
+    const result = await analyzeImage(imageUrl, prompt, { detail: 'high', max_tokens: 800 });
+    
+    if (!result.success) {
+      console.error('[INSURANCE-FORM] ❌ Error en AI Vision:', result.error);
+      return null;
+    }
+    
+    const analysisText = result.content;
     
     // Extraer JSON de la respuesta
     const jsonMatch = analysisText.match(/\{[\s\S]*\}/);

@@ -160,6 +160,7 @@ export const PAULA = {
             areas_exteriores: '64.47m²'
           },
           estado: 'disponible',
+          ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
           fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
@@ -203,6 +204,7 @@ export const PAULA = {
             areas_exteriores: '75.43m²'
           },
           estado: 'disponible',
+          ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
           fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
@@ -246,6 +248,7 @@ export const PAULA = {
             areas_exteriores: '61.39m²'
           },
           estado: 'disponible',
+          ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
           fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
@@ -290,6 +293,7 @@ export const PAULA = {
             areas_exteriores: '52.68m²'
           },
           estado: 'disponible',
+          ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
           fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
@@ -413,17 +417,19 @@ export const PAULA = {
     return `Eres Paula, especialista en bienes raíces de lujo de PropElite Real Estate.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏡 FLUJO ESPECIAL: CONSULTA DIRECTA "CASA JARDÍN"
+🏡 FLUJO ESPECIAL PRIORITARIO: "CASA JARDÍN"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ SI AURORA TE PRESENTA UN CLIENTE QUE MENCIONA "CASA JARDÍN" ESPECÍFICAMENTE:
+⚠️ DETECCIÓN AUTOMÁTICA OBLIGATORIA:
 
-**Detecta estos patrones:**
-- Aurora dice: "cliente que necesita información del proyecto Casa Jardín"
-- Usuario dice: "quiero las fichas de Casa Jardín", "me interesa Casa Jardín"
-- Contexto: Cliente llega directamente preguntando por este proyecto
+Si detectas CUALQUIERA de estas señales en el mensaje:
+✓ Aurora dice: "cliente interesado en el proyecto Casa Jardín"
+✓ Aurora dice: "necesita las fichas completas"
+✓ Aurora dice: "proyecto *Casa Jardín*"
+✓ Usuario menciona: "Casa Jardín", "Casas Jardín", "El Morenal"
+✓ Usuario pide: "fichas de las casas", "4 casas disponibles"
 
-**TU RESPUESTA INMEDIATA (SIN PREGUNTAR QUÉ NECESITA):**
+→ RESPONDE INMEDIATAMENTE con este mensaje (COMPLETO, NO RESUMAS):
 
 "¡Excelente elección! 🏡 *Casas Jardín* es nuestro proyecto estrella.
 
@@ -458,17 +464,22 @@ export const PAULA = {
 ✅ Distribución FLEXIBLE (modificable hasta 40m² sin costo adicional)
 ✅ Sin costo por reducir área
 
-📸 **Fotos profesionales del proyecto:**
+📸 **Fotos profesionales:**
 https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY
+
+📍 **Ubicación en Google Maps:**
+https://maps.app.goo.gl/tamnA6UwAeJgxAVaA
 
 ¿Cuál de las 4 casas te llama más la atención? O si prefieres, ¿agendamos una visita presencial? 😊"
 
-⚠️ IMPORTANTE: 
-- Este mensaje ES la ficha completa de las 4 casas
-- NO actives #PROCESS_FORM en este caso (ya tienen info)
-- Espera a que el cliente indique interés específico
-- Si pregunta más detalles → explícalos con entusiasmo
-- Si quiere visita → AHORA SÍ activa #PROCESS_FORM para capturar datos de contacto
+⚠️ REGLAS ESTRICTAS PARA ESTE FLUJO: 
+- Responde INMEDIATAMENTE (este es tu primer mensaje)
+- NO preguntes qué necesita (ya lo sabes: info Casa Jardín)
+- NO resumas las fichas (envía el mensaje COMPLETO arriba)
+- NO actives #PROCESS_FORM todavía (espera a que muestren interés específico)
+- Después de enviar fichas, espera su reacción
+- Si preguntan detalles → explica con entusiasmo
+- Si quieren visita → AHORA SÍ activa #PROCESS_FORM
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 

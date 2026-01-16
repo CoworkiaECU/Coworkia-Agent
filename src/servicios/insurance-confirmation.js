@@ -17,7 +17,7 @@
  */
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
-import { saveToDatabase, queryDatabase } from '../database/postgres-adapter.js';
+import databaseService from '../database/database.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 
@@ -26,21 +26,25 @@ import { sendEmail } from './email.js';
  * Formato: SEG-YYYY-NNN (ej: SEG-2026-001)
  */
 async function generateQuoteCode() {
+  databaseService.ensureInitialized();
+  
   const year = new Date().getFullYear();
   const prefix = `SEG-${year}`;
   
   try {
     // Buscar la última cotización del año actual
-    const lastQuote = await queryDatabase(
-      'insurance_leads',
-      { quote_code: { $regex: `^${prefix}-` } },
-      { sort: { created_at: -1 }, limit: 1 }
-    );
+    const query = `
+      SELECT quote_code FROM insurance_leads 
+      WHERE quote_code LIKE ? 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const lastQuote = await databaseService.get(query, [`${prefix}%`]);
     
     let nextNumber = 1;
-    if (lastQuote && lastQuote.length > 0) {
+    if (lastQuote && lastQuote.quote_code) {
       // Extraer el número de la última cotización
-      const lastCode = lastQuote[0].quote_code;
+      const lastCode = lastQuote.quote_code;
       const lastNumber = parseInt(lastCode.split('-')[2]);
       nextNumber = lastNumber + 1;
     }
@@ -124,7 +128,52 @@ export async function processInsuranceConfirmation(userId, message, userProfile)
     };
 
     console.log('[INSURANCE-CONFIRM] 💾 Guardando lead en insurance_leads...');
-    await saveToDatabase('insurance_leads', leadData);
+    
+    // Usar databaseService.run() como en reservationRepository.js
+    const insertQuery = `
+      INSERT INTO insurance_leads (
+        id, quote_code, user_phone, agent_name, insurance_type,
+        city, commercial_value, plate, vehicle_brand, vehicle_model, vehicle_year,
+        motor, chasis, origin_country, license_type, license_expiry,
+        client_name, cedula, email, phone,
+        matricula_images, licencia_images,
+        quoted_premium, premium_breakdown,
+        status, quote_sent_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const insertParams = [
+      leadData.id,
+      leadData.quote_code,
+      leadData.user_phone,
+      leadData.agent_name,
+      leadData.insurance_type,
+      leadData.city,
+      leadData.commercial_value,
+      leadData.plate,
+      leadData.vehicle_brand,
+      leadData.vehicle_model,
+      leadData.vehicle_year,
+      leadData.motor,
+      leadData.chasis,
+      leadData.origin_country,
+      leadData.license_type,
+      leadData.license_expiry,
+      leadData.client_name,
+      leadData.cedula,
+      leadData.email,
+      leadData.phone,
+      leadData.matricula_images,
+      leadData.licencia_images,
+      leadData.quoted_premium,
+      leadData.premium_breakdown,
+      leadData.status,
+      leadData.quote_sent_at,
+      leadData.created_at,
+      leadData.updated_at
+    ];
+    
+    await databaseService.run(insertQuery, insertParams);
     console.log(`[INSURANCE-CONFIRM] ✅ Lead guardado: ${leadId}`);
 
     // ==========================================

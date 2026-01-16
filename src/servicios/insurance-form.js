@@ -265,7 +265,7 @@ export async function processInsuranceForm(userId, message, userProfile) {
 
   // Si no hay formulario, usar el sistema genérico
   if (!currentForm || currentForm.agentName !== 'ADRIANA') {
-    const result = await processGenericFormMessage('ADRIANA', userId, message, userProfile);
+    const result = await processGenericFormMessage(userId, message, 'ADRIANA');
     
     // VALIDACIÓN 1: Ciudad Sierra
     if (result.data?.city && !currentForm?.data?.cityValidated) {
@@ -479,7 +479,7 @@ Tu seguro popular de confianza
   }
 
   // Caso por defecto: continuar con formulario genérico
-  return await processGenericFormMessage('ADRIANA', userId, message, userProfile);
+  return await processGenericFormMessage(userId, message, 'ADRIANA');
 }
 
 /**

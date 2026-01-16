@@ -27,10 +27,10 @@ export const ALUNA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? 'Hola {nombre}, soy Aluna 💼 Especialista en planes que se adaptan a tu ritmo.\n\n¿Cuántos días al mes necesitas trabajar desde aquí?' :
-             userLanguage === 'en' ? 'Hi {nombre}, I\'m Aluna 💼 Specialist in plans that adapt to your pace.\n\nHow many days a month do you need to work from here?' :
-             userLanguage === 'am' ? 'ሰላም {nombre}፣ እኔ አሉና 💼 የፕላን ተመርማሪ ነኝ።\n\nከዚህ በወር ስንት ቀናት ማስረት ይፈልጋሉ?' :
-             'Hola {nombre}, soy Aluna 💼 Especialista en planes que se adaptan a tu ritmo.\n\n¿Cuántos días al mes necesitas trabajar desde aquí?',
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: desde $10/día ($100 Plan 10)\n• 🏠 Oficinas privadas: desde $220/mes\n• 🤝 Salas de reuniones por hora\n• 🌐 Oficina Virtual: $350/año\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?' :
+             userLanguage === 'en' ? 'Hi {nombre}! I\'m Aluna from Coworkia Business Center 🏢\n\n📋 **Coworking space specialist**:\n• 💼 Hot Desk: from $10/day ($100 Plan 10)\n• 🏠 Private offices: from $220/month\n• 🤝 Meeting rooms by the hour\n• 🌐 Virtual Office: $350/year\n• ☕ WiFi + coffee included in all plans\n• 🔓 24/7 access available\n\nWhat type of space do you need and how many days per month?' :
+             userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አሉና ከ Coworkia Business Center 🏢\n\n📋 **የኮወርኪንግ ቦታ ስፔሻሊስት**:\n• 💼 Hot Desk: ከ$10/ቀን ($100 ፕላን 10)\n• 🏠 የግል ቢሮዎች: ከ$220/ወር\n• 🤝 የስብሰባ ክፍሎች በሰዓት\n• 🌐 ምናባዊ ቢሮ: $350/ዓመት\n• ☕ WiFi + ቡና በሁሉም ፕላኖች ተካትቷል\n• 🔓 24/7 መዳረሻ ይገኛል\n\nምን አይነት ቦታ ይፈልጋሉ እና በወር ስንት ቀናት?' :
+             '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: desde $10/día ($100 Plan 10)\n• 🏠 Oficinas privadas: desde $220/mes\n• 🤝 Salas de reuniones por hora\n• 🌐 Oficina Virtual: $350/año\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?',
     despedida: userLanguage === 'es' ? 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊' :
                userLanguage === 'am' ? 'በጣም ጥሩ {nombre}፣ ለማማከር ደስ በሎኛል።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Aluna ብለህ ጥያቄህን ግለጽ። እዚህ እሆናለሁ! 😊' :

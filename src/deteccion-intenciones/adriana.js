@@ -28,10 +28,10 @@ export const ADRIANA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n¿En qué puedo asesorarte con seguros hoy?' :
-             userLanguage === 'en' ? 'Hello {nombre}! I\'m Adriana from Segpopular 🛡️\n\nHow can I help you with insurance today?' :
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n📋 **Broker certificado** en seguros para:\n• 🚗 Vehículos (cotización inmediata)\n• 💙 Vida individual (24-48h)\n• 👥 Vida colectiva (requiere reunión)\n\n¿Qué tipo de seguro necesitas?' :
+             userLanguage === 'en' ? 'Hello {nombre}! I\'m Adriana from Segpopular 🛡️\n\n📋 **Certified broker** for:\n• 🚗 Vehicle insurance (instant quote)\n• 💙 Individual life (24-48h)\n• 👥 Group life (requires meeting)\n\nWhat type of insurance do you need?' :
              userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አድሪያና ከ Segpopular 🛡️\n\nበመድን ምን ልረዳዎ እችላለሁ?' :
-             '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n¿En qué puedo asesorarte con seguros hoy?',
+             '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n📋 **Broker certificado** en seguros para:\n• 🚗 Vehículos (cotización inmediata)\n• 💙 Vida individual (24-48h)\n• 👥 Vida colectiva (requiere reunión)\n\n¿Qué tipo de seguro necesitas?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊' :
                userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure advising you.\n\nYou can always come back, just say @Adriana and your question. I\'ll be here! 😊' :
                userLanguage === 'am' ? 'በጣም ጥሩ {nombre}, ለማማከር ደስታ ነበር።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Adriana ብለህ ጥያቄህን ግለጽ። እዚህ እሆናለሁ! 😊' :

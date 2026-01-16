@@ -295,7 +295,7 @@ class PostgresAdapter {
         )
       `);
 
-      // Tabla de leads inmobiliarios (Tomi - PropElite)
+      // Tabla de leads inmobiliarios (Paula - PropElite)
       await client.query(`
         CREATE TABLE IF NOT EXISTS real_estate_leads (
           id TEXT PRIMARY KEY,

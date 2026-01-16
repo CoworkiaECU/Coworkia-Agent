@@ -243,7 +243,7 @@ Cuando te pregunten "QUÉ ES COWORKIA", "QUÉ SERVICIOS TIENEN", "QUÉ VENDEDORE
 🛡️ Seguros - Adriana en SegPopular  
 📊 Marketing - Enzo en MarketingLab
 🚗 Centro de colisiones - Axel en PaintBull
-🏘️ Real Estate - Tomi en PropElite
+🏘️ Real Estate - Paula en PropElite
 ⚖️ Legal/Contable - Gabi en GR Consulting
 
 Para conectar con un especialista, escribe:

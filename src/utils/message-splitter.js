@@ -126,11 +126,12 @@ function splitByPlanBlocks(message) {
  * ━ Divide mensaje por líneas divisoras
  */
 function splitByDividers(message) {
-  const parts = message.split(/━━━━━━━━━━━━━+/);
+  // Dividir por líneas de separación largas
+  const parts = message.split(/━{10,}/);
   
   return parts
     .map(part => part.trim())
-    .filter(part => part.length > 0);
+    .filter(part => part.length > 10); // Ignorar fragmentos muy pequeños que son ruido
 }
 
 /**

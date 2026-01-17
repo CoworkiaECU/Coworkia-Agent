@@ -910,7 +910,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core
     let reply = await complete(resultado.prompt, {
       temperature: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 0.7 : 0.4,
-      max_tokens: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 800 : 350,
+      max_tokens: ['ENZO', 'ADRIANA', 'ALUNA', 'PAULA'].includes(resultado.agenteKey) ? 1200 : 350, // Paula necesita más tokens para fichas completas
       system: resultado.systemPrompt
     });
 
@@ -949,12 +949,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 📨 Dividir mensaje automáticamente si es largo/estructurado
     const messageProcessed = splitLongMessage(finalReply);
     
+    console.log(`[MESSAGE-SPLIT] Análisis de mensaje:`);
+    console.log(`   - Longitud original: ${finalReply.length} caracteres`);
+    console.log(`   - Debe dividirse: ${messageProcessed.shouldDelay ? 'SÍ' : 'NO'}`);
+    console.log(`   - Partes detectadas: ${messageProcessed.parts.length}`);
+    console.log(`   - Delay entre partes: ${messageProcessed.delayMs}ms`);
+    
     if (messageProcessed.shouldDelay && messageProcessed.parts.length > 1) {
       // Enviar múltiples mensajes con delay
-      console.log(`[MESSAGE-SPLIT] 📨 Dividiendo mensaje en ${messageProcessed.parts.length} partes (delay: ${messageProcessed.delayMs}ms)`);
+      console.log(`[MESSAGE-SPLIT] 📨 Dividiendo mensaje en ${messageProcessed.parts.length} partes`);
       
       for (let i = 0; i < messageProcessed.parts.length; i++) {
         const part = cleanPromptMarkers(messageProcessed.parts[i]);
+        
+        console.log(`[MESSAGE-SPLIT] Enviando parte ${i + 1}/${messageProcessed.parts.length} (${part.length} chars)`);
+        console.log(`[MESSAGE-SPLIT] Preview: ${part.substring(0, 100)}...`);
         
         // Enviar mensaje
         await enviarWhatsApp(userId, part);
@@ -969,6 +978,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         // Delay entre mensajes (excepto en el último)
         if (i < messageProcessed.parts.length - 1) {
+          console.log(`[MESSAGE-SPLIT] Esperando ${messageProcessed.delayMs}ms antes de siguiente mensaje...`);
           await new Promise(resolve => setTimeout(resolve, messageProcessed.delayMs));
         }
       }
@@ -977,6 +987,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     } else {
       // Enviar mensaje único (comportamiento original)
       const cleanedMessage = cleanPromptMarkers(finalReply);
+      console.log(`[MESSAGE-SPLIT] Enviando mensaje único (${cleanedMessage.length} chars)`);
       await enviarWhatsApp(userId, cleanedMessage);
     }
     

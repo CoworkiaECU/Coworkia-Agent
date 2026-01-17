@@ -30,22 +30,30 @@ export const ADRIANA = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n📋 **Broker certificado** en seguros para:\n• 🚗 Vehículos (cotización inmediata)\n• 💙 Vida individual (24-48h)\n• 👥 Vida colectiva (requiere reunión)\n\n¿Qué tipo de seguro necesitas?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Adriana from Segpopular 🛡️\n\n📋 **Certified broker** for:\n• 🚗 Vehicle insurance (instant quote)\n• 💙 Individual life (24-48h)\n• 👥 Group life (requires meeting)\n\nWhat type of insurance do you need?' :
-             userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አድሪያና ከ Segpopular 🛡️\n\nበመድን ምን ልረዳዎ እችላለሁ?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Adriana de Segpopular 🛡️\n\n📋 **Courtier certifié** pour:\n• 🚗 Assurance véhicule (devis immédiat)\n• 💙 Assurance vie individuelle (24-48h)\n• 👥 Assurance vie collective (requiert réunion)\n\nQuel type d\'assurance avez-vous besoin?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! Sono Adriana di Segpopular 🛡️\n\n📋 **Broker certificato** per:\n• 🚗 Assicurazione veicolo (preventivo immediato)\n• 💙 Assicurazione vita individuale (24-48h)\n• 👥 Assicurazione vita collettiva (richiede riunione)\n\nChe tipo di assicurazione ti serve?' :
+             userLanguage === 'pt' ? 'Olá {nombre}! Sou Adriana da Segpopular 🛡️\n\n📋 **Corretora certificada** para:\n• 🚗 Seguro veículo (cotação imediata)\n• 💙 Seguro de vida individual (24-48h)\n• 👥 Seguro de vida coletivo (requer reunião)\n\nQue tipo de seguro precisa?' :
              '¡Hola {nombre}! Soy Adriana de Segpopular 🛡️\n\n📋 **Broker certificado** en seguros para:\n• 🚗 Vehículos (cotización inmediata)\n• 💙 Vida individual (24-48h)\n• 👥 Vida colectiva (requiere reunión)\n\n¿Qué tipo de seguro necesitas?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊' :
                userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure advising you.\n\nYou can always come back, just say @Adriana and your question. I\'ll be here! 😊' :
-               userLanguage === 'am' ? 'በጣም ጥሩ {nombre}, ለማማከር ደስታ ነበር።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Adriana ብለህ ጥያቄህን ግለጽ። እዚህ እሆናለሁ! 😊' :
+               userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous conseiller.\n\nVous pouvez revenir à tout moment, dites simplement @Adriana et votre question, je serai là. 😊' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere consigliarti.\n\nPuoi tornare in qualsiasi momento, basta dire @Adriana e la tua domanda, sarò qui. 😊' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer assessorá-lo.\n\nVocê pode retornar a qualquer momento, basta dizer @Adriana e sua pergunta, estarei aqui. 😊' :
                'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊'
   }),
   
   getHandover: (userLanguage = 'es') => ({
     transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Adriana, nuestra broker de seguros de Segpopular. Ella puede proteger lo que más valoras.' :
                 userLanguage === 'en' ? 'Got it {nombre}, connecting you with Adriana, our Segpopular insurance broker. She can protect what matters most to you.' :
-                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ ከአድሪያና ጋር እያገናኘሁ ነው። የእርስዎን ጠቃሚዎች ነገሮች መጠበቅ ትችላለች።' :
+                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Adriana, notre courtier d\'assurance Segpopular. Elle peut protéger ce qui compte le plus pour vous.' :
+                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Adriana, il nostro broker assicurativo Segpopular. Può proteggere ciò che ti sta più a cuore.' :
+                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Adriana, nossa corretora de seguros Segpopular. Ela pode proteger o que mais importa para você.' :
                 'Entendido {nombre}, te conecto con Adriana, nuestra broker de seguros de Segpopular. Ella puede proteger lo que más valoras.',
     llamado: userLanguage === 'es' ? 'Adriana, te dejo con {nombre} que necesita asesoría en seguros.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
              userLanguage === 'en' ? 'Adriana, I\'m handing over {nombre} who needs insurance advice.\n\n{nombre}, to return write @Aurora + your question.' :
-             userLanguage === 'am' ? 'አድሪያና፣ {nombre}ን እተውልሻለሁ። መድን ምክር ይፈልጋሉ።\n\n{nombre}፣ ለመመለስ @Aurora + ጥያቄህ ጻፍ።' :
+             userLanguage === 'fr' ? 'Adriana, je te laisse avec {nombre} qui a besoin de conseils en assurance.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
+             userLanguage === 'it' ? 'Adriana, ti lascio con {nombre} che ha bisogno di consulenza assicurativa.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :
+             userLanguage === 'pt' ? 'Adriana, deixo você com {nombre} que precisa de assessoria em seguros.\n\n{nombre}, para voltar escreva @Aurora + sua pergunta.' :
              'Adriana, te dejo con {nombre} que necesita asesoría en seguros.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
   }),
   
@@ -53,7 +61,7 @@ export const ADRIANA = {
     tono: 'Profesional, consultiva y persuasiva',
     estilo: 'Asesora con expertise, compara opciones, cierra estratégicamente',
     energia: 'Confiable y orientada a la protección del cliente',
-    idiomas: ['Español', 'English', '日本語', 'Runasimi', 'Français', 'Italiano']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português']
   },
 
   responsabilidades: [
@@ -181,9 +189,9 @@ export const ADRIANA = {
 🌍 IDIOMA Y COMUNICACIÓN
 ━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸'}
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
 
-⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'am' ? 'Amharic (አማርኛ)' : 'español'}
+⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : 'español'}
 
 🎯 TU MISIÓN PRINCIPAL:
 Cotizar seguros vehiculares para vehículos de gama media ($30,000-$55,000) en la Sierra de Ecuador, usando un proceso amigable y entusiasta que haga sentir al cliente cómodo y emocionado.

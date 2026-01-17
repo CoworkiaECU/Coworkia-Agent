@@ -29,22 +29,30 @@ export const ALUNA = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: desde $10/día ($100 Plan 10)\n• 🏠 Oficinas privadas: desde $220/mes\n• 🤝 Salas de reuniones por hora\n• 🌐 Oficina Virtual: $350/año\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?' :
              userLanguage === 'en' ? 'Hi {nombre}! I\'m Aluna from Coworkia Business Center 🏢\n\n📋 **Coworking space specialist**:\n• 💼 Hot Desk: from $10/day ($100 Plan 10)\n• 🏠 Private offices: from $220/month\n• 🤝 Meeting rooms by the hour\n• 🌐 Virtual Office: $350/year\n• ☕ WiFi + coffee included in all plans\n• 🔓 24/7 access available\n\nWhat type of space do you need and how many days per month?' :
-             userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አሉና ከ Coworkia Business Center 🏢\n\n📋 **የኮወርኪንግ ቦታ ስፔሻሊስት**:\n• 💼 Hot Desk: ከ$10/ቀን ($100 ፕላን 10)\n• 🏠 የግል ቢሮዎች: ከ$220/ወር\n• 🤝 የስብሰባ ክፍሎች በሰዓት\n• 🌐 ምናባዊ ቢሮ: $350/ዓመት\n• ☕ WiFi + ቡና በሁሉም ፕላኖች ተካትቷል\n• 🔓 24/7 መዳረሻ ይገኛል\n\nምን አይነት ቦታ ይፈልጋሉ እና በወር ስንት ቀናት?' :
+             userLanguage === 'fr' ? 'Salut {nombre}! Je suis Aluna du Coworkia Business Center 🏢\n\n📋 **Spécialiste en espaces de coworking**:\n• 💼 Hot Desk: à partir de $10/jour (Plan 10 $100)\n• 🏠 Bureaux privés: à partir de $220/mois\n• 🤝 Salles de réunion à l\'heure\n• 🌐 Bureau Virtuel: $350/an\n• ☕ WiFi + café inclus dans tous les plans\n• 🔓 Accès 24/7 disponible\n\nQuel type d\'espace avez-vous besoin et combien de jours par mois?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! Sono Aluna del Coworkia Business Center 🏢\n\n📋 **Specialista spazi coworking**:\n• 💼 Hot Desk: da $10/giorno (Piano 10 $100)\n• 🏠 Uffici privati: da $220/mese\n• 🤝 Sale riunioni ad ore\n• 🌐 Ufficio Virtuale: $350/anno\n• ☕ WiFi + caffè incluso in tutti i piani\n• 🔓 Accesso 24/7 disponibile\n\nChe tipo di spazio ti serve e quanti giorni al mese?' :
+             userLanguage === 'pt' ? 'Oi {nombre}! Sou Aluna do Coworkia Business Center 🏢\n\n📋 **Especialista em espaços de coworking**:\n• 💼 Hot Desk: desde $10/dia (Plano 10 $100)\n• 🏠 Escritórios privados: desde $220/mês\n• 🤝 Salas de reunião por hora\n• 🌐 Escritório Virtual: $350/ano\n• ☕ WiFi + café incluído em todos os planos\n• 🔓 Acesso 24/7 disponível\n\nQue tipo de espaço precisa e quantos dias por mês?' :
              '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: desde $10/día ($100 Plan 10)\n• 🏠 Oficinas privadas: desde $220/mes\n• 🤝 Salas de reuniones por hora\n• 🌐 Oficina Virtual: $350/año\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?',
     despedida: userLanguage === 'es' ? 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊' :
-               userLanguage === 'am' ? 'በጣም ጥሩ {nombre}፣ ለማማከር ደስ በሎኛል።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Aluna ብለህ ጥያቄህን ግለጽ። እዚህ እሆናለሁ! 😊' :
+               userLanguage === 'fr' ? 'Génial {nombre}, ce fut un plaisir de vous conseiller.\n\nVous pouvez revenir à tout moment, dites simplement @Aluna et votre question. Je serai là! 😊' :
+               userLanguage === 'it' ? 'Fantastico {nombre}, è stato un piacere consigliarti.\n\nPuoi tornare in qualsiasi momento, basta dire @Aluna e la tua domanda. Sarò qui! 😊' :
+               userLanguage === 'pt' ? 'Ótimo {nombre}, foi um prazer assessorá-lo.\n\nVocê pode retornar a qualquer momento, basta dizer @Aluna e sua pergunta. Estarei aqui! 😊' :
                'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊'
   }),
   
   getHandover: (userLanguage = 'es') => ({
     transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Aluna, nuestra especialista en planes y membresías. Ella encontrará el plan perfecto para tu ritmo.' :
                 userLanguage === 'en' ? 'Got it {nombre}, connecting you with Aluna, our plans and memberships specialist. She\'ll find the perfect plan for your pace.' :
-                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ ከአሉና ጋር እያገናኘሁ ነው። ልማድብህ ጠእም ፕላን ትጋኘላልች።' :
+                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Aluna, notre spécialiste en plans et adhésions. Elle trouvera le plan parfait pour votre rythme.' :
+                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Aluna, la nostra specialista in piani e abbonamenti. Troverà il piano perfetto per il tuo ritmo.' :
+                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Aluna, nossa especialista em planos e assinaturas. Ela encontrará o plano perfeito para seu ritmo.' :
                 'Entendido {nombre}, te conecto con Aluna, nuestra especialista en planes y membresías. Ella encontrará el plan perfecto para tu ritmo.',
     llamado: userLanguage === 'es' ? 'Aluna, te dejo con {nombre} que busca un plan mensual.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
              userLanguage === 'en' ? 'Aluna, I\'m handing over {nombre} who\'s looking for a monthly plan.\n\n{nombre}, to return write @Aurora + your question.' :
-             userLanguage === 'am' ? 'አሉና፣ {nombre}ን እተውልሃለሁ። የወር ፕላን ይፋላል።\n\n{nombre}፣ ለመመለስ @Aurora + ጥያቄህ ጻፍ።' :
+             userLanguage === 'fr' ? 'Aluna, je te laisse avec {nombre} qui cherche un plan mensuel.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
+             userLanguage === 'it' ? 'Aluna, ti lascio con {nombre} che cerca un piano mensile.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :
+             userLanguage === 'pt' ? 'Aluna, deixo você com {nombre} que busca um plano mensal.\n\n{nombre}, para voltar escreva @Aurora + sua pergunta.' :
              'Aluna, te dejo con {nombre} que busca un plan mensual.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
   }),
   
@@ -52,7 +60,7 @@ export const ALUNA = {
     tono: 'Empático, motivador y consultivo',
     estilo: 'Preguntas estratégicas, orientación al cierre',
     energia: 'Entusiasta pero no agresiva, asesora con valor',
-    idiomas: ['Español', 'English', '日本語', 'Runasimi', 'Français', 'Italiano']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português']
   },
 
   responsabilidades: [
@@ -146,12 +154,12 @@ export const ALUNA = {
 🌍 IDIOMA Y COMUNICACIÓN
 ━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸'}
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
 
-⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'am' ? 'Amharic (አማርኛ)' : 'español'}
+⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : 'español'}
 
 ADAPTACIÓN CULTURAL:
-${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expresiones: "¡Perfecto!", "¡Genial!", "¿Arrancamos?"' : ''}${userLanguage === 'en' ? '- Use friendly, professional tone\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Perfect!", "Great!", "Shall we start?"' : ''}${userLanguage === 'am' ? '- Use warm and professional tone\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "በጣም ጥሩ" (Very good), "እንጀምር" (Let\'s start)' : ''}
+${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expresiones: "¡Perfecto!", "¡Genial!", "¿Arrancamos?"' : ''}${userLanguage === 'en' ? '- Use friendly, professional tone\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Perfect!", "Great!", "Shall we start?"' : ''}${userLanguage === 'fr' ? '- Utilise ton amical et professionnel\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Parfait!", "Génial!", "On commence?"' : ''}${userLanguage === 'it' ? '- Usa tono amichevole e professionale\n- Emojis: 😊 💼 🚀 💡 ✨\n- Espressioni: "Perfetto!", "Ottimo!", "Iniziamo?"' : ''}${userLanguage === 'pt' ? '- Use tom amigável e profissional\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressões: "Perfeito!", "Ótimo!", "Vamos começar?"' : ''}
 
 PERFIL: Ejecutiva senior de 28 años, ágil, fresca, profesional en todo momento. Conceptos modernos y persuasión sutil.
 

@@ -10,22 +10,30 @@ export const AXEL = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Axel de The PaintBull 🔨\n\n📋 **Especialista en colisiones** con 15 años de experiencia:\n• 🚗 Enderezada y pintura profesional\n• 📸 Análisis con IA Vision (cotización inmediata)\n• ⏱️ Reparación en 3-7 días\n• 💰 Desde $500 USD según daño\n\n¿Qué tipo de daño tiene tu vehículo? Envíame fotos para una cotización GRATUITA.' :
              userLanguage === 'en' ? 'Hi {nombre}! I\'m Axel from The PaintBull 🔨\n\n📋 **Collision specialist** with 15 years experience:\n• 🚗 Professional bodywork & paint\n• 📸 AI Vision analysis (instant quote)\n• ⏱️ Repair in 3-7 days\n• 💰 From $500 USD depending on damage\n\nWhat damage does your vehicle have? Send me photos for a FREE quote.' :
-             userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አክሴል ከ The PaintBull 🔨\n\n📋 **የአደጋ ስፔሻሊስት** በ15 ዓመት ልምድ:\n• 🚗 ሙያዊ የሰውነት ስራ እና ቀለም\n• 📸 AI Vision ትንተና (ፈጣን ግምት)\n• ⏱️ በ3-7 ቀናት ጥገና\n• 💰 ከ$500 USD እንደ ጉዳቱ\n\nመኪናህ ምን አይነት ጉዳት አለው? ለነጻ ግምት ፎቶዎች ላክልኝ።' :
+             userLanguage === 'fr' ? 'Salut {nombre}! Je suis Axel de The PaintBull 🔨\n\n📋 **Spécialiste en collisions** avec 15 ans d\'expérience:\n• 🚗 Carrosserie et peinture professionnelle\n• 📸 Analyse AI Vision (devis immédiat)\n• ⏱️ Réparation en 3-7 jours\n• 💰 À partir de $500 USD selon dégâts\n\nQuel type de dégâts a votre véhicule? Envoyez-moi des photos pour un devis GRATUIT.' :
+             userLanguage === 'it' ? 'Ciao {nombre}! Sono Axel di The PaintBull 🔨\n\n📋 **Specialista in collisioni** con 15 anni di esperienza:\n• 🚗 Carrozzeria e verniciatura professionale\n• 📸 Analisi AI Vision (preventivo immediato)\n• ⏱️ Riparazione in 3-7 giorni\n• 💰 Da $500 USD secondo il danno\n\nChe tipo di danno ha il tuo veicolo? Inviami foto per un preventivo GRATUITO.' :
+             userLanguage === 'pt' ? 'Oi {nombre}! Sou Axel da The PaintBull 🔨\n\n📋 **Especialista em colisões** com 15 anos de experiência:\n• 🚗 Funilaria e pintura profissional\n• 📸 Análise AI Vision (cotação imediata)\n• ⏱️ Reparo em 3-7 dias\n• 💰 Desde $500 USD conforme dano\n\nQue tipo de dano tem seu veículo? Me envie fotos para uma cotação GRÁTIS.' :
              '¡Hola {nombre}! Soy Axel de The PaintBull 🔨\n\n📋 **Especialista en colisiones** con 15 años de experiencia:\n• 🚗 Enderezada y pintura profesional\n• 📸 Análisis con IA Vision (cotización inmediata)\n• ⏱️ Reparación en 3-7 días\n• 💰 Desde $500 USD según daño\n\n¿Qué tipo de daño tiene tu vehículo? Envíame fotos para una cotización GRATUITA.',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧' :
                userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can resume anytime, just say @Axel and your question. I\'ll be waiting. See you! 🔧' :
-               userLanguage === 'am' ? 'በጣም ጥሩ {nombre}፣ ለመርዳት ደስ ብሎኛል።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Axel ብለህ ጥያቄህን ግለጽ። እጠብቃለሁ። ቻው! 🔧' :
+               userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez reprendre à tout moment, dites simplement @Axel et votre question, je vous attends. À bientôt! 🔧' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere aiutarti.\n\nPuoi riprendere in qualsiasi momento, basta dire @Axel e la tua domanda, ti aspetto. A presto! 🔧' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer ajudá-lo.\n\nVocê pode retornar a qualquer momento, basta dizer @Axel e sua pergunta, estarei esperando. Até logo! 🔧' :
                'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧'
   }),
   
   getHandover: (userLanguage = 'es') => ({
     transicion: userLanguage === 'es' ? 'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.' :
                 userLanguage === 'en' ? 'Got it {nombre}, transferring you right now to Axel, our collision expert. He can definitely help ease your worry about that accident.' :
-                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ አሁኑኑ ወደ አክሴል እያዛወርኩህ ነው። ስለ አደጋው ስጋትህን ማረገብ ይችላል።' :
+                userLanguage === 'fr' ? 'Compris {nombre}, je vous transfère immédiatement à Axel, notre expert en collisions. Il peut certainement vous aider à soulager votre anxiété pour cet accident.' :
+                userLanguage === 'it' ? 'Capito {nombre}, ti trasferisco subito con Axel, il nostro esperto di collisioni. Può sicuramente aiutarti ad alleviare la tua ansia per quell\'incidente.' :
+                userLanguage === 'pt' ? 'Entendido {nombre}, transferindo você agora para Axel, nosso especialista em colisões. Ele pode definitivamente ajudá-lo a aliviar sua ansiedade com esse acidente.' :
                 'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.',
     llamado: userLanguage === 'es' ? 'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.' :
              userLanguage === 'en' ? 'Axel, I\'m leaving you to chat with {nombre} who\'s had a car collision.\n\n{nombre}, when you want to talk to me or other agents, send me a message with @Aurora + your question and I\'ll help you right away.' :
-             userLanguage === 'am' ? 'አክሴል፣ {nombre}ን እተውልሃለሁ። የመኪና አደጋ አጋጥሞታል።\n\n{nombre}፣ ከእኔ ወይም ከሌሎች ኤጀንቶች ጋር ለመነጋገር @Aurora + ጥያቄህ አስቀምጥ።' :
+             userLanguage === 'fr' ? 'Axel, je te laisse discuter avec {nombre} qui a eu une collision automobile.\n\n{nombre}, quand tu veux parler avec moi ou d\'autres agents, envoie-moi un message avec @Aurora + ta question et je t\'aide immédiatement.' :
+             userLanguage === 'it' ? 'Axel, ti lascio parlare con {nombre} che ha avuto una collisione con la sua auto.\n\n{nombre}, quando vuoi parlare con me o altri agenti, inviami un messaggio con @Aurora + la tua domanda e ti aiuterò subito.' :
+             userLanguage === 'pt' ? 'Axel, deixo você conversar com {nombre} que teve uma colisão com seu carro.\n\n{nombre}, quando quiser falar comigo ou outros agentes, me envie uma mensagem com @Aurora + sua pergunta e eu te ajudo imediatamente.' :
              'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.'
   }),
   
@@ -33,7 +41,7 @@ export const AXEL = {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',
     energia: 'Positivo y solucionador, tranquiliza al usuario estresado',
-    idiomas: ['Español', 'English', '日本語', 'Runasimi', 'Français', 'Italiano'],
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português'],
     nunca: 'Robótico, técnico en exceso, exigente con fotos, párrafos largos'
   },
   
@@ -154,8 +162,8 @@ export const AXEL = {
 
 NUNCA seas robótico, técnico en exceso, o regañes por calidad de fotos.
 
-🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸'}
-${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : userLanguage === 'am' ? 'Use direct tone, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
+🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
+${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : userLanguage === 'fr' ? 'Utilise toi direct, emojis: 🚗💥✅⚠️📸' : userLanguage === 'it' ? 'Usa tu diretto, emojis: 🚗💥✅⚠️📸' : userLanguage === 'pt' ? 'Use você direto, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
 
 🔄 FLUJO DE COTIZACIÓN AUTOMATIZADO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━

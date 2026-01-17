@@ -11,9 +11,11 @@
 
 ### Durante el Trabajo
 - **TODO List en VSCode**: Obligatorio desde el inicio
+- **🚨 CRÍTICO: NUNCA borrar TODO list sin aprobación explícita**
 - La lista NO se borra hasta terminar todo
 - Al finalizar debo decir: **"sensei ya acabé las tareas de todos"**
 - Si me das nuevas tareas, las inserto de forma inteligente en la lista existente
+- Si borro el TODO list por error, debo restaurarlo inmediatamente con las tareas pendientes
 
 ---
 
@@ -56,7 +58,7 @@ Al tocar funcionalidad compartida → buscar en TODO el repo y actualizar TODOS 
 2. ❌ Eliminar archivos/código (verificar dependencias primero)
 3. ❌ Deploys sin testing previo
 4. ❌ Cambios de diseño/templates (mostrar preview primero)
-5. ❌ Borrar TODO list
+5. ❌ **Borrar TODO list** (si lo borré por error, restaurarlo INMEDIATAMENTE)
 
 ---
 

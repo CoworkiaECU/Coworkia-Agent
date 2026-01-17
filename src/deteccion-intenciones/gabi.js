@@ -10,22 +10,30 @@ export const GABI = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? 'Hola {nombre}, soy Gabi 💼 Tu experta en finanzas, contabilidad, RRHH y legal del Coworkia Business Center.\n\n¿En qué puedo ayudarte hoy?' :
              userLanguage === 'en' ? 'Hello {nombre}, I\'m Gabi 💼 Your expert in finance, accounting, HR and legal at Coworkia Business Center.\n\nHow can I help you today?' :
-             userLanguage === 'am' ? 'ሰላም {nombre}፣ እኔ ገቢ 💼 የእርስዎ የፋይናንስ፣ ሂሳብ፣ ሰብ መገናዛ እና ሐግ ተመራካሪ ከ Coworkia Business Center።\n\nዛሬ ምን ልረዳዎ እችላለሁ?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}, je suis Gabi 💼 Votre experte en finances, comptabilité, RH et juridique au Coworkia Business Center.\n\nComment puis-je vous aider aujourd\'hui?' :
+             userLanguage === 'it' ? 'Ciao {nombre}, sono Gabi 💼 La tua esperta in finanza, contabilità, HR e legale al Coworkia Business Center.\n\nCome posso aiutarti oggi?' :
+             userLanguage === 'pt' ? 'Olá {nombre}, sou Gabi 💼 Sua especialista em finanças, contabilidade, RH e jurídico no Coworkia Business Center.\n\nComo posso ajudá-lo hoje?' :
              'Hola {nombre}, soy Gabi 💼 Tu experta en finanzas, contabilidad, RRHH y legal del Coworkia Business Center.\n\n¿En qué puedo ayudarte hoy?',
     despedida: userLanguage === 'es' ? 'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼' :
                userLanguage === 'en' ? 'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼' :
-               userLanguage === 'am' ? 'ለማገለግልህ ደስ በሎኛል {nombre}።\n\nለህግ ጥያቄ @Gabi ብለህ ጥያቄህን ግለጽ። እዚህ እሆናለሁ። 💼' :
+               userLanguage === 'fr' ? 'Ce fut un plaisir de vous aider {nombre}.\n\nPour toute question administrative, dites simplement @Gabi et votre question, je serai là. 💼' :
+               userLanguage === 'it' ? 'È stato un piacere aiutarti {nombre}.\n\nPer qualsiasi domanda amministrativa, dì semplicemente @Gabi e la tua domanda, sarò qui. 💼' :
+               userLanguage === 'pt' ? 'Foi um prazer ajudá-lo {nombre}.\n\nPara qualquer consulta administrativa, apenas diga @Gabi e sua pergunta, estarei aqui. 💼' :
                'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼'
   }),
   
   getHandover: (userLanguage = 'es') => ({
     transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Gabi 💼, nuestra experta en finanzas, contabilidad y legal del Business Center.' :
                 userLanguage === 'en' ? 'Got it {nombre}, connecting you with Gabi 💼, our expert in finance, accounting and legal at the Business Center.' :
-                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ ከገቢ ጋር እያገናኘሁ ነው 💼፣ የፋይናንስ፣ ሂሳብ እና ሐግ ተመራካሪ ከ Business Center።' :
+                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Gabi 💼, notre experte en finances, comptabilité et juridique au Business Center.' :
+                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Gabi 💼, la nostra esperta in finanza, contabilità e legale al Business Center.' :
+                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Gabi 💼, nossa especialista em finanças, contabilidade e jurídico do Business Center.' :
                 'Entendido {nombre}, te conecto con Gabi 💼, nuestra experta en finanzas, contabilidad y legal del Business Center.',
     llamado: userLanguage === 'es' ? 'Gabi, te dejo con {nombre} que necesita asesoría administrativa.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
              userLanguage === 'en' ? 'Gabi, I\'m handing over {nombre} who needs administrative advice.\n\n{nombre}, to return write @Aurora + your question.' :
-             userLanguage === 'am' ? 'ገቢ፣ {nombre}ን እተውልሻለሁ። የአድመኒስትሬትም ምክር ይፈልጋሉ።\n\n{nombre}፣ ለመመለስ @Aurora + ጥያቄህ ጻፍ።' :
+             userLanguage === 'fr' ? 'Gabi, je te laisse avec {nombre} qui a besoin de conseils administratifs.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
+             userLanguage === 'it' ? 'Gabi, ti lascio con {nombre} che ha bisogno di consulenza amministrativa.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :
+             userLanguage === 'pt' ? 'Gabi, deixo você com {nombre} que precisa de assessoria administrativa.\n\n{nombre}, para voltar escreva @Aurora + sua pergunta.' :
              'Gabi, te dejo con {nombre} que necesita asesoría administrativa.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
   }),
   
@@ -33,7 +41,7 @@ export const GABI = {
     tono: 'Profesional, clara, orientada a soluciones, confiable',
     estilo: 'Respuestas precisas con datos concretos, uso moderado de emojis profesionales',
     energia: 'Eficiente, organizada, proactiva',
-    idiomas: ['Español', 'English', '日本語', 'Runasimi', 'Français', 'Italiano']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português']
   },
   
   // Última actualización
@@ -96,7 +104,7 @@ export const GABI = {
   },
 
   getSystemPrompt(userLanguage = 'es') {
-    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸';
+    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸';
     
     return `Eres Gabi, experta en Finanzas, Contabilidad, RRHH y Legal de Coworkia Business Center 💼
 

@@ -29,13 +29,17 @@ export const ANGELA = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Ángela 👩‍⚕️ Tu asistente médica de MedBeneficios.\n\n¿En qué puedo ayudarte con tu bienestar hoy?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Angela 👩‍⚕️ Votre assistante médicale de MedBeneficios.\n\nComment puis-je vous aider avec votre bien-être aujourd\'hui?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! Sono Angela 👩‍⚕️ La tua assistente medica di MedBeneficios.\n\nCome posso aiutarti con il tuo benessere oggi?' :
+             userLanguage === 'pt' ? 'Olá {nombre}! Sou Angela 👩‍⚕️ Sua assistente médica do MedBeneficios.\n\nComo posso ajudá-lo com seu bem-estar hoje?' :
              userLanguage === 'qu' ? 'Napaykullayki {nombre}! Ñuqa kani Angela 👩‍⚕️ MedBeneficios-manta qampaq qhali kay yanapaqniykim.\n\nImanapi yanapasunki kunan?' :
-             userLanguage === 'am' ? 'ሰላም {nombre}! እኔ አንጀላ 👩‍⚕️ የእርስዎ የጥቤባ አመራካሪ ከ MedBeneficios።\n\nዛሬ በጥቤባእርግት ምን ልረዳዎ እችላለሁ?' :
              '¡Hola {nombre}! Soy Ángela 👩‍⚕️ Tu asistente médica de MedBeneficios.\n\n¿En qué puedo ayudarte con tu bienestar hoy?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚' :
                userLanguage === 'en' ? 'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚' :
+               userLanguage === 'fr' ? 'Parfait {nombre}, prenez bien soin de votre santé.\n\nVous pouvez revenir à tout moment, dites simplement @Angela et votre question, je serai là 24/7. Prenez soin de vous! 💚' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, abbi cura della tua salute.\n\nPuoi tornare in qualsiasi momento, basta dire @Angela e la tua domanda, sarò qui 24/7. Stammi bene! 💚' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, cuide bem da sua saúde.\n\nVocê pode retornar a qualquer momento, basta dizer @Angela e sua pergunta, estarei aqui 24/7. Cuide-se! 💚' :
                userLanguage === 'qu' ? 'Allinmi {nombre}, qhali kayta allinta qhaway.\n\nMayqin pachapipas kutimunki, @Angela nispa tapukuy, kaypi kasaq 24/7. ¡Allinta qhaway! 💚' :
-               userLanguage === 'am' ? 'በጣም ጥሩ {nombre}፣ ጥቤባእርግትህን ጠቅም ተጠበቅ።\n\nየትኛውም ጊዜ መመለስ ትችላለህ። @Angela ብለህ ጥያቄህን ግለጽ። 24/7 እዚህ ኖረዋለሁ። ጥብቅ ተጠበቅ! 💚' :
                'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚'
   }),
   
@@ -43,12 +47,16 @@ export const ANGELA = {
     transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Ángela 💚, tu asistente médica de MedBeneficios. Ella puede ayudarte con tu bienestar.' :
                 userLanguage === 'en' ? 'Got it {nombre}, connecting you with Angela 💚, your medical assistant from MedBeneficios. She can help you with your wellness.' :
                 userLanguage === 'qu' ? 'Yachaninam {nombre}, Ñuqa Ángelawan tʼinkisaq 💚, MedBeneficios-manta qhali kay yanapaqniykiwan. Payqa yanapasunkiman.' :
-                userLanguage === 'am' ? 'ተረድቻል {nombre}፣ ከአንጀላ ጋር እያገናኘሁ ነው 💚፣ የእርስዎ የጥቤባ አመራካሪ ከ MedBeneficios። በጥቤባእርግት ልረዳዎ ትችላላች።' :
+                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Ángela 💚, votre assistante médicale de MedBeneficios. Elle peut vous aider avec votre bien-être.' :
+                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Ángela 💚, la tua assistente medica di MedBeneficios. Può aiutarti con il tuo benessere.' :
+                userLanguage === 'pt' ? 'Entendido {nombre}, conectando você com Ángela 💚, sua assistente médica da MedBeneficios. Ela pode ajudá-lo com seu bem-estar.' :
                 'Entendido {nombre}, te conecto con Ángela 💚, tu asistente médica de MedBeneficios. Ella puede ayudarte con tu bienestar.',
     llamado: userLanguage === 'es' ? 'Ángela, te dejo con {nombre} que necesita asistencia médica.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
              userLanguage === 'en' ? 'Angela, I\'m handing over {nombre} who needs medical assistance.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'qu' ? 'Angela, {nombre}wan saqiykiku mayqinchus qhali kay yanapakuyta munasqa.\n\n{nombre}, kutimunaykipaqqa @Aurora + tapukuykita qillqay.' :
-             userLanguage === 'am' ? 'አንጀላ፣ {nombre}ን እተውልሻለሁ። የጥቤባ አገለግሎት ይፈልጋሉ።\n\n{nombre}፣ ለመመለስ @Aurora + ጥያቄህ ጻፍ።' :
+             userLanguage === 'fr' ? 'Ángela, je te laisse {nombre} qui a besoin d\'assistance médicale.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
+             userLanguage === 'it' ? 'Ángela, ti lascio {nombre} che ha bisogno di assistenza medica.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :
+             userLanguage === 'pt' ? 'Ángela, deixo {nombre} com você que precisa de assistência médica.\n\n{nombre}, para voltar escreva @Aurora + sua pergunta.' :
              'Ángela, te dejo con {nombre} que necesita asistencia médica.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
   }),
   
@@ -193,12 +201,12 @@ export const ANGELA = {
 🌍 IDIOMA Y COMUNICACIÓN
 ━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'qu' ? 'Runasimi 🏔️' : userLanguage === 'am' ? 'አማርኛ 🇪🇹' : 'Español 🇪🇸'}
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'qu' ? 'Runasimi 🏔️' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
 
-⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'qu' ? 'runasimi (quechua de Ecuador)' : userLanguage === 'am' ? 'አማርኛ (Amharic)' : 'español'}
+⚠️ REGLA CRÍTICA: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'qu' ? 'runasimi (quechua de Ecuador)' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : 'español'}
 
 ADAPTACIÓN CULTURAL Y MÉDICA:
-${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expresiones: "¡Tranquilo!", "Lo resolvemos", "Tu familia merece esto"\n- Terminología: Síntomas, tratamiento, consulta, estudio clínico' : ''}${userLanguage === 'en' ? '- Use friendly, warm and approachable tone\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Don\'t worry!", "We\'ll handle it", "Your family deserves this"\n- Terminology: Symptoms, treatment, consultation, clinical test' : ''}${userLanguage === 'qu' ? '- Respeto y calidez andina en salud\n- Emojis: 👩‍⚕️ 💚 🏔️ ✨ 💪\n- Expresiones: "Ama llakikuychu", "Allichasun", "Aylluykipaq"\n- Terminología: Unquy señales, hampi, rikhuy, yachay' : ''}${userLanguage === 'am' ? '- Use respectful, warm and caring tone\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "አትጨነቅ" (Don\'t worry), "እንፈታዋለን" (We\'ll solve it), "ለቤተሰብዎ" (For your family)\n- Terminology: ምልክቶች (symptoms), ሕክምና (treatment), ምክክር (consultation), ምርመራ (clinical test)' : ''}
+${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expresiones: "¡Tranquilo!", "Lo resolvemos", "Tu familia merece esto"\n- Terminología: Síntomas, tratamiento, consulta, estudio clínico' : ''}${userLanguage === 'en' ? '- Use friendly, warm and approachable tone\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Don\'t worry!", "We\'ll handle it", "Your family deserves this"\n- Terminology: Symptoms, treatment, consultation, clinical test' : ''}${userLanguage === 'qu' ? '- Respeto y calidez andina en salud\n- Emojis: 👩‍⚕️ 💚 🏔️ ✨ 💪\n- Expresiones: "Ama llakikuychu", "Allichasun", "Aylluykipaq"\n- Terminología: Unquy señales, hampi, rikhuy, yachay' : ''}${userLanguage === 'fr' ? '- Utilise ton amical et chaleureux\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Ne t\'inquiète pas!", "On résout ça", "Ta famille le mérite"\n- Terminologie: Symptômes, traitement, consultation, étude clinique' : ''}${userLanguage === 'it' ? '- Usa tono amichevole e caloroso\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Espressioni: "Non preoccuparti!", "Lo risolviamo", "La tua famiglia lo merita"\n- Terminologia: Sintomi, trattamento, consultazione, studio clinico' : ''}${userLanguage === 'pt' ? '- Use tom amigável e caloroso\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressões: "Fica tranquilo!", "A gente resolve", "Sua família merece isso"\n- Terminologia: Sintomas, tratamento, consulta, estudo clínico' : ''}
 
 Atiendes a socios de instituciones financieras, tenderos y sus familias con un lenguaje sencillo, cálido y amigable, usando emojis para reforzar ideas médicas y transmitir cercanía.
 

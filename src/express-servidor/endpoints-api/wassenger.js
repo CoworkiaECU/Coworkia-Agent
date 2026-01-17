@@ -549,28 +549,39 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const conversacionEnCurso = minutos < 10;
 
     // 🆕 DETECCIÓN INTELIGENTE DEL NOMBRE (rescatado del backup v230)
-    let detectedName = current.name || null;
+    // PRIORIDAD: 1) Nombre de WhatsApp actual, 2) Nombre en BD, 3) Extraer del mensaje
+    let detectedName = null;
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
     
-    // Si no tenemos nombre guardado, intentar extraerlo inteligentemente
-    if (!detectedName && name) {
-      detectedName = cleanWhatsAppName(name);
-      const isProd = process.env.NODE_ENV === 'production';
-      if (!isProd) {
-        console.log(`[WASSENGER] 🧹 Nombre detectado de WhatsApp: "${name}" → limpio: "${detectedName}"`);
-      }
-    }
+    // 🔍 LOG DEBUG: Verificar qué nombre está guardado vs. lo que llega de WhatsApp
+    console.log(`[NAME DEBUG] userId: ${userId}`);
+    console.log(`[NAME DEBUG] current.name (BD): "${current.name || 'NULL'}"`);
+    console.log(`[NAME DEBUG] name (WhatsApp): "${name || 'NULL'}"`);
+    console.log(`[NAME DEBUG] current.whatsappDisplayName (BD): "${current.whatsappDisplayName || 'NULL'}"`);
+    console.log(`[NAME DEBUG] firstVisit: ${firstVisit}`);
     
-    // También intentar detectar nombre del mensaje si es primera vez
-    if (!detectedName && firstVisit && text) {
+    // 1️⃣ PRIORIDAD: Si llega nombre de WhatsApp, SIEMPRE usarlo (puede haber cambiado)
+    if (name) {
+      detectedName = cleanWhatsAppName(name);
+      console.log(`[NAME DEBUG] ✅ Usando nombre de WhatsApp: "${name}" → limpio: "${detectedName}"`);
+    }
+    // 2️⃣ FALLBACK: Usar nombre guardado en BD
+    else if (current.name) {
+      detectedName = current.name;
+      console.log(`[NAME DEBUG] ⚠️ Usando nombre guardado en BD: "${detectedName}"`);
+    }
+    // 3️⃣ ÚLTIMO RECURSO: Intentar extraer del mensaje
+    else if (firstVisit && text) {
       const nameFromMessage = extractNameFromMessage(text);
       if (nameFromMessage) {
         detectedName = nameFromMessage;
-        const isProd = process.env.NODE_ENV === 'production';
-        if (!isProd) {
-          console.log(`[WASSENGER] 📝 Nombre detectado del mensaje: "${nameFromMessage}"`);
-        }
+        console.log(`[NAME DEBUG] 📝 Nombre detectado del mensaje: "${nameFromMessage}"`);
       }
+    }
+    
+    // Si aún no hay nombre, dejar en null para que use fallback "amigo"
+    if (!detectedName) {
+      console.log(`[NAME DEBUG] ❌ No se pudo detectar nombre, se usará fallback genérico`);
     }
 
     const profile = {

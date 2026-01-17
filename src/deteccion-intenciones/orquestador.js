@@ -12,6 +12,53 @@ import { PAULA } from './paula.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
 
+/**
+ * Detecta si Paula recibe mensaje fuera de su scope (bienes raíces)
+ * @param {string} mensaje - Mensaje del usuario
+ * @returns {Object|null} - { service, targetAgent } o null
+ */
+function detectPaulaOutOfScope(mensaje) {
+  const text = mensaje.toLowerCase();
+  
+  // 1. Coworkia / Aurora keywords (espacios de trabajo)
+  const coworkiaRegex = /\b(coworkia|coworking|hot\s*desk|day\s*pass|sala.*reuni[oó]n|oficina.*compartida|membres[ií]a.*coworking|espacio.*trabajo|workspace|reserva.*sala|hot.*desk)\b/i;
+  if (coworkiaRegex.test(text)) {
+    return { service: 'coworkia', targetAgent: 'AURORA' };
+  }
+  
+  // 2. Seguros / Adriana keywords
+  const segurosRegex = /\b(seguro|poliza|póliza|asegurar|cobertura|cotizaci[oó]n.*seguro|segpopular|bmi|aig|chubb|sweaden|seguro.*vehic|seguro.*vida)\b/i;
+  if (segurosRegex.test(text)) {
+    return { service: 'seguros', targetAgent: 'ADRIANA' };
+  }
+  
+  // 3. Marketing / Enzo keywords
+  const marketingRegex = /\b(marketing|publicidad|redes.*sociales|social.*media|campa[ñn]a|estrategia.*digital|marketinglab|seo|sem|contenido.*digital|posicionamiento)\b/i;
+  if (marketingRegex.test(text)) {
+    return { service: 'marketing', targetAgent: 'ENZO' };
+  }
+  
+  // 4. Salud / Angela keywords
+  const saludRegex = /\b(salud|m[eé]dico|doctor|consulta.*m[eé]dica|medicina|bienestar|medbeneficios?|atenci[oó]n.*m[eé]dica)\b/i;
+  if (saludRegex.test(text)) {
+    return { service: 'salud', targetAgent: 'ANGELA' };
+  }
+  
+  // 5. Reparación vehicular / Axel keywords
+  const reparacionRegex = /\b(choque|colisi[oó]n|rayado|abollado|da[ñn]o.*vehicular|da[ñn]o.*carro|reparar.*carro|pintura.*carro|paintbull|taller|enderezada)\b/i;
+  if (reparacionRegex.test(text)) {
+    return { service: 'reparacion_vehicular', targetAgent: 'AXEL' };
+  }
+  
+  // 6. Legal/Finanzas / Gabi keywords
+  const legalRegex = /\b(legal|abogad[oa]|contador|contabilidad|finanzas|impuestos|tributario|uafe|compliance|consulta.*legal|asesor[ií]a.*legal)\b/i;
+  if (legalRegex.test(text)) {
+    return { service: 'legal_finanzas', targetAgent: 'GABI' };
+  }
+  
+  return null; // No detectó out-of-scope
+}
+
 export const AGENTES = {
   AURORA,
   ALUNA,
@@ -94,7 +141,24 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
   const intent = detectarIntencion(mensaje, activeAgent);
   loggers.orquestador.debug('Intención detectada', { userId, agent: activeAgent, intent: intent.type });
 
-  // 🗑️ MANEJO DE CANCELACIÓN: Si el usuario quiere cancelar, ejecutar limpieza automática
+  // � DETECCIÓN OUT-OF-SCOPE: Si agente especializado detecta keywords de otros servicios
+  if (activeAgent === 'PAULA') {
+    const outOfScope = detectPaulaOutOfScope(mensaje);
+    if (outOfScope) {
+      console.log('[ORQUESTADOR] 🔀 Paula detectó out-of-scope:', outOfScope.service, '→', outOfScope.targetAgent);
+      intent.agent = outOfScope.targetAgent;
+      intent.reason = `paula_handoff_to_${outOfScope.service}`;
+      intent.flags = { 
+        ...intent.flags, 
+        agentHandoff: true, 
+        fromAgent: activeAgent, 
+        targetAgent: outOfScope.targetAgent,
+        outOfScope: true 
+      };
+    }
+  }
+
+  // �🗑️ MANEJO DE CANCELACIÓN: Si el usuario quiere cancelar, ejecutar limpieza automática
   if (intent.flags?.cancelacion) {
     console.log('[ORQUESTADOR] 🗑️ Cancelación detectada - Limpiando reservas pendientes');
     try {

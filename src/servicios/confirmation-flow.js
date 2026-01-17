@@ -32,14 +32,18 @@ class ConfirmationFlowError extends Error {
  * @returns {string} - Fecha formateada como "Miércoles 26/11/2025"
  */
 function formatUserDate(date) {
-  const dateObj = typeof date === 'string' ? new Date(date + 'T00:00:00') : new Date(date);
+  // 🔧 FIX: Usar timezone de Ecuador para obtener el día correcto
+  const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
   
+  // Crear Date con timezone explícito de Ecuador
+  const dateObj = new Date(dateStr + 'T12:00:00-05:00');
+  
+  // Array correcto: 0=domingo, 1=lunes, 2=martes, ..., 6=sábado
   const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const dayName = dayNames[dateObj.getUTCDay()];
+  const dayName = dayNames[dateObj.getDay()]; // getDay() en timezone local
   
-  const day = String(dateObj.getUTCDate()).padStart(2, '0');
-  const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-  const year = dateObj.getUTCFullYear();
+  // Parsear la fecha del string directamente para evitar issues de timezone
+  const [year, month, day] = dateStr.split('-');
   
   return `${dayName} ${day}/${month}/${year}`;
 }

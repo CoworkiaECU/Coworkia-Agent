@@ -83,7 +83,7 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
 /**
  * Aurora Core decide TODO.
  */
-export function procesarMensaje(mensaje, perfil = {}, historial = [], formData = {}) {
+export async function procesarMensaje(mensaje, perfil = {}, historial = [], formData = {}) {
   const startTime = Date.now();
   const activeAgent = perfil.activeAgent || 'AURORA';
   const userId = perfil.userId || 'unknown';
@@ -93,6 +93,22 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   // 1. Detectar intención
   const intent = detectarIntencion(mensaje, activeAgent);
   loggers.orquestador.debug('Intención detectada', { userId, agent: activeAgent, intent: intent.type });
+
+  // 🗑️ MANEJO DE CANCELACIÓN: Si el usuario quiere cancelar, ejecutar limpieza automática
+  if (intent.flags?.cancelacion) {
+    console.log('[ORQUESTADOR] 🗑️ Cancelación detectada - Limpiando reservas pendientes');
+    try {
+      const { cancelUserPendingReservations } = await import('../servicios/calendario.js');
+      const cancelResult = await cancelUserPendingReservations(userId);
+      
+      // Agregar información de cancelación al contexto
+      intent.cancelacionResult = cancelResult;
+      console.log('[ORQUESTADOR] ✅ Limpieza completada:', cancelResult);
+    } catch (error) {
+      console.error('[ORQUESTADOR] ❌ Error en limpieza de cancelación:', error);
+      intent.cancelacionError = error.message;
+    }
+  }
 
   // 2. Aurora Core decide a qué agente ir
   const targetAgent = decidirAgente(intent, activeAgent);
@@ -112,7 +128,7 @@ export function procesarMensaje(mensaje, perfil = {}, historial = [], formData =
   }
 
   // 4. Construir contexto reducido (Aurora filtra según agente)
-  const contexto = construirContexto(perfil, historial, formData, handoffContext, targetAgent);
+  const contexto = construirContexto(perfil, historial, formData, handoffContext, targetAgent, intent);
 
   // 5. Construir prompt para el agente
   const agente = AGENTES[targetAgent];
@@ -133,7 +149,7 @@ INSTRUCCIONES:
 
   const systemPrompt =
     typeof agente.getSystemPrompt === 'function'
-      ? agente.getSystemPrompt(perfil.preferredLanguage || 'es')
+      ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es')
       : agente.systemPrompt;
 
   const duration = Date.now() - startTime;
@@ -175,11 +191,28 @@ function decidirAgente(intent, activeAgent) {
  * 🎯 ARQUITECTURA: Solo AURORA y ALUNA reciben contexto de reservas.
  * Otros agentes (Enzo, Angela, etc) operan sin contaminar con datos de coworking.
  */
-function construirContexto(perfil = {}, historial = [], formData = {}, handoffContext = null, targetAgent = 'AURORA') {
+function construirContexto(perfil = {}, historial = [], formData = {}, handoffContext = null, targetAgent = 'AURORA', intent = null) {
   const lineas = [];
 
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
   if (perfil.email) lineas.push(`Email: ${perfil.email}`);
+
+  // 🗑️ CANCELACIÓN: Si el usuario pidió cancelar, informar el resultado
+  if (intent?.flags?.cancelacion && intent?.cancelacionResult) {
+    const result = intent.cancelacionResult;
+    lineas.push('\n🗑️ CANCELACIÓN SOLICITADA:');
+    if (result.success) {
+      lineas.push(`✅ Se cancelaron ${result.cancelledCount} reserva(s) pendiente(s)`);
+      if (result.cancelledCount > 0) {
+        lineas.push('📋 El sistema está limpio y disponible para nuevas reservas');
+      } else {
+        lineas.push('ℹ️ No había reservas pendientes por cancelar');
+      }
+    } else {
+      lineas.push(`❌ Error: ${result.error}`);
+    }
+    lineas.push('\n💬 INSTRUCCIÓN: Confirma al usuario que su solicitud fue procesada y pregunta si desea hacer algo más.');
+  }
 
   if (perfil.upcomingReservations?.length) {
     lineas.push(`Reservas futuras: ${perfil.upcomingReservations.length}`);

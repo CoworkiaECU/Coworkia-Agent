@@ -113,7 +113,21 @@ const CANCELACION_PATTERNS = [
   /cambio.*de\s+opinion/,
   /cambio.*de\s+opinion/,
   /cambie.*de\s+opinion/,
-  /cambie.*de\s+opinion/
+  /cambie.*de\s+opinion/,
+  // Nuevos patrones ampliados
+  /^no\s*quiero$/,
+  /^no$/,
+  /^borra$/,
+  /^borrar$/,
+  /^elimina$/,
+  /^eliminar$/,
+  /^descartar$/,
+  /^stop$/,
+  /^alto$/,
+  /ya\s*no/,
+  /borra.*todo/,
+  /elimina.*todo/,
+  /limpia.*todo/
 ];
 
 // Patrones FLEXIBLES para saludos casuales - detectan el saludo aunque haya otras palabras

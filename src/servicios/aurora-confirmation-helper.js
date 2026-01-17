@@ -310,20 +310,22 @@ function parseDate(dateStr) {
   }
 
   // 🔧 FIX: Manejar días de la semana correctamente
+  // IMPORTANTE: El array debe coincidir con Date.getDay() donde 0=domingo, 1=lunes, etc.
   const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const dayMatch = dayNames.findIndex(day => 
     dateStr.toLowerCase().includes(day)
   );
   
   if (dayMatch !== -1) {
-    const currentDayIndex = todayDate.getDay();
+    const currentDayIndex = todayDate.getDay(); // 0=domingo, 1=lunes, 2=martes, ..., 6=sábado
     const daysAhead = (dayMatch - currentDayIndex + 7) % 7;
     const targetDay = new Date(todayDate);
     targetDay.setDate(targetDay.getDate() + (daysAhead === 0 ? 7 : daysAhead));
     
     const targetParts = formatter.formatToParts(targetDay);
     const targetDateStr = `${targetParts.find(p => p.type === 'year').value}-${targetParts.find(p => p.type === 'month').value}-${targetParts.find(p => p.type === 'day').value}`;
-    console.log(`[PARSE-DATE] 🗓️ Día "${dayNames[dayMatch]}" detectado → ${targetDateStr}`);
+    const targetDayName = dayNames[targetDay.getDay()];
+    console.log(`[PARSE-DATE] 🗓️ Día "${dateStr}" detectado → ${targetDayName} ${targetDateStr} (getDay=${targetDay.getDay()})`);
     return targetDateStr;
   }
 

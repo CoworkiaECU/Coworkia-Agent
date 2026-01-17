@@ -112,7 +112,33 @@ function getServiceName(serviceType) {
 }
 
 /**
- * 🕐 Convierte string de hora "14:30" a minutos desde medianoche
+ * � Valida el número de personas para Sala de Reuniones
+ * @param {number} guestCount - Número de personas que asistirán
+ * @returns {Object} { valid: boolean, reason?: string }
+ */
+export function validateMeetingRoomGuests(guestCount) {
+  const min = parseInt(process.env.COWORKIA_MEETINGROOM_MIN_GUESTS || '3', 10);
+  const max = parseInt(process.env.COWORKIA_MEETINGROOM_MAX_GUESTS || '4', 10);
+  
+  if (!guestCount || guestCount < min) {
+    return {
+      valid: false,
+      reason: `La sala de reuniones es para grupos de ${min}-${max} personas 🏢\n\n¿Prefieres un Hot Desk? Perfecto para 1 persona ($10/2h) 💻`
+    };
+  }
+  
+  if (guestCount > max) {
+    return {
+      valid: false,
+      reason: `Disculpa, nuestra sala acomoda máximo ${max} personas 😊\n\nNuestra infraestructura es compacta. ¿Tienes otra opción?`
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * �🕐 Convierte string de hora "14:30" a minutos desde medianoche
  */
 function timeToMinutes(timeString) {
   const [hours, minutes] = timeString.split(':').map(Number);
@@ -144,7 +170,62 @@ export function getNowInGuayaquil(baseTime = null) {
 }
 
 /**
- * 🔍 Verifica disponibilidad para una fecha y horario específico
+ * �️ Cancela todas las reservas pendientes de un usuario
+ * Útil cuando el usuario dice "cancelar", "ya no quiero", "olvida", etc.
+ */
+export async function cancelUserPendingReservations(userId) {
+  try {
+    console.log('[CALENDARIO] 🗑️ Cancelando reservas pendientes de:', userId);
+    
+    // 1. Buscar todas las reservas pendientes del usuario
+    const pendingReservations = await reservationRepository.findByUser(userId, 50);
+    const pendingToCancel = pendingReservations.filter(res => 
+      res.status === 'pending' || res.status === 'pending_payment'
+    );
+    
+    if (pendingToCancel.length === 0) {
+      console.log('[CALENDARIO] ℹ️ No hay reservas pendientes para cancelar');
+      return {
+        success: true,
+        message: 'No tienes reservas pendientes',
+        cancelledCount: 0
+      };
+    }
+    
+    // 2. Cancelar cada reserva pendiente
+    for (const reservation of pendingToCancel) {
+      await reservationRepository.updateStatus(reservation.id, 'cancelled');
+      console.log('[CALENDARIO] ✅ Reserva cancelada:', reservation.id);
+    }
+    
+    // 3. Limpiar estado de confirmación pendiente del usuario
+    const { clearPendingConfirmation } = await import('../perfiles-interacciones/memoria-sqlite.js');
+    await clearPendingConfirmation(userId);
+    console.log('[CALENDARIO] 🧹 Estado de confirmación limpiado para:', userId);
+    
+    return {
+      success: true,
+      message: `Se cancelaron ${pendingToCancel.length} reserva(s) pendiente(s)`,
+      cancelledCount: pendingToCancel.length,
+      cancelledReservations: pendingToCancel.map(r => ({
+        id: r.id,
+        date: r.date,
+        time: r.start_time,
+        serviceType: r.service_type
+      }))
+    };
+  } catch (error) {
+    console.error('[CALENDARIO] ❌ Error cancelando reservas pendientes:', error);
+    return {
+      success: false,
+      error: 'Error al cancelar reservas',
+      details: error.message
+    };
+  }
+}
+
+/**
+ * �🔍 Verifica disponibilidad para una fecha y horario específico
  * 
  * IMPORTANTE: Todas las validaciones de "horario pasado" se hacen
  * usando la hora de Quito/Ecuador (UTC-5), NO la hora del servidor.
@@ -752,6 +833,7 @@ export default {
   createReservation,
   confirmReservation,
   cancelReservation,
+  cancelUserPendingReservations,
   getUserReservations,
   getUpcomingReservations,
   checkUserConflicts,

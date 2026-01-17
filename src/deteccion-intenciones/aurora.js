@@ -41,6 +41,48 @@ export const AURORA = {
     'Derivación a Aluna (planes), Enzo (experto), Adriana (seguros), Ángela (salud y bienestar) o Gabi (admin/finanzas)'
   ],
 
+  // Definiciones únicas de servicios (fuente única de verdad)
+  serviciosInfo: {
+    hotDesk: {
+      conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕
+• Primera visita GRATIS 🎁`,
+      sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕`
+    },
+    salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
+• 2 horas: $29
+• Pizarra + TV + WiFi + café ☕`,
+    ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
+⏰ Lun-Vie 8:30-18h | Sáb 9-14h`,
+    especialistas: `🏥 Salud - Ángela en MedBeneficios
+🛡️ Seguros - Adriana en SegPopular  
+📊 Marketing - Enzo en MarketingLab
+🚗 Centro de colisiones - Axel en PaintBull
+🏘️ Real Estate - Paula en PropElite
+⚖️ Legal/Contable - Gabi en GR Consulting`,
+    ejemploMenciones: `Para conectarlos escribe:
+@nombreagente + tu consulta
+
+Ejemplo: 
+"@axel tuve un siniestro con mi auto"`,
+    notaMenciones: `NOTA IMPORTANTE: Los ejemplos con @menciones son SOLO EXPLICATIVOS, NO disparan agentes.`,
+    agenteVirtual: {
+      intro: `¡Perfecto! Te muestro cómo funciona un sistema de agentes como yo 😊`,
+      llamadoExploracion: `¿Quieres ver la aplicación en vivo y lo que pueden hacer sus agentes?
+
+Puedes probarme ahora mismo:
+• Escribe "Aurora, quiero saber ¿qué puede hacer un Agente Virtual como tú para mi empresa?" para ver mis capacidades
+• Pregunta por seguros, marketing, real estate, etc. te transfiero con los especialistas`,
+      handoffEnzo: `Luego, conversa con @enzo que puede asesorarte con una cotización personalizada en pocos minutos 🚀
+
+¿Probamos el sistema ahora? 
+Escribe @paula para conocer a esta agente especialista en Bienes Raíces.`
+    }
+  },
+
   conocimiento: {
     servicios: {
       hotDesk: {
@@ -115,24 +157,10 @@ export const AURORA = {
    * @returns {string} System prompt personalizado
    */
   getSystemPrompt: function(freeTrialUsed = false, userLanguage = 'es') {
-    // Mensaje de servicios con o sin mención de primera visita gratis
+    // Usar definiciones centralizadas
     const hotDeskInfo = freeTrialUsed 
-      ? `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • WiFi de alta velocidad + café ☕`
-      : `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • WiFi de alta velocidad + café ☕
-   • Primera visita GRATIS 🎁`;
-
-    const informacionGeneralHotDesk = freeTrialUsed
-      ? `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • WiFi + café ☕`
-      : `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • Primera visita GRATIS 🎁
-   • WiFi + café ☕`;
+      ? this.serviciosInfo.hotDesk.sinPrimeraVisita
+      : this.serviciosInfo.hotDesk.conPrimeraVisita;
 
     return `Eres Aurora, la inteligencia artificial que coordina el ecosistema empresarial de Coworkia 🎯
 
@@ -175,36 +203,22 @@ MENSAJE 1 (enviar primero):
 
 🏢 *ESPACIOS COWORKING:*
 
-💻 Hot Desk (Escritorio compartido), 
-• 2 horas: $10
-• WiFi + café ☕
-${freeTrialUsed ? '' : '• Primera visita GRATIS 🎁'}
+${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosInfo.hotDesk.conPrimeraVisita}
 
-🏢 Sala de Reuniones (Privada 3-4 personas)
-• 2 horas: $29
-• pizarra, TV, WiFi + café ☕"
+${this.serviciosInfo.salaReuniones}"
 
 MENSAJE 2 (enviar después de 5 segundos):
 
 "🤝 *OTROS SERVICIOS:*
 También coordinamos especialistas en:
 
-  🏥 Salud - Ángela en MedBeneficios
-  🛡️ Seguros - Adriana en SegPopular  
-  📊 Marketing - Enzo en MarketingLab
-  🚗 Centro de colisiones - Axel en PaintBull
-  🏘️ Real Estate - Paula en PropElite
-  ⚖️ Legal/Contable - Gabi en GR Consulting
+  ${this.serviciosInfo.especialistas}
 
-Para conectarlos escribe:
-@nombreagente + tu consulta
-
-Ejemplo: 
-\"@axel tuve un siniestro con mi auto\"
+${this.serviciosInfo.ejemploMenciones}
 
 ¿Qué necesitas hoy? 😊"
 
-NOTA IMPORTANTE: Los ejemplos con @menciones son SOLO EXPLICATIVOS, NO disparan agentes.
+${this.serviciosInfo.notaMenciones}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -240,31 +254,22 @@ RESPONDE CON ESTE MENSAJE:
 
 Coworkia es un *espacio de coworking* con:
 
-💻 *Hot Desk* - Escritorio compartido
-${freeTrialUsed ? '• 2 horas: $10' : '• 2 horas: $10 | Primera visita GRATIS 🎁'}
-• WiFi de alta velocidad + café ☕
+${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosInfo.hotDesk.conPrimeraVisita}
 
-🏢 *Sala de Reuniones* - Privada para 3-4 personas
-• 2 horas: $29
-• Pizarra + proyector
+${this.serviciosInfo.salaReuniones}
 
 ¿Te gustaría reservar un espacio? Si es así:
 ¿Qué día y hora prefieres? 📅"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-�🏢 SERVICIOS DE COWORKIA
+🏢 SERVICIOS DE COWORKIA
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-💻 *Hot Desk* (Escritorio compartido)
-${freeTrialUsed ? '• 2 horas: $10' : '• 2 horas: $10 | Primera visita GRATIS 🎁'}
-• WiFi + café ☕
+${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosInfo.hotDesk.conPrimeraVisita}
 
-🏢 *Sala de Reuniones* (Privada 3-4 personas)
-• 2 horas: $29
-• Pizarra + proyector
+${this.serviciosInfo.salaReuniones}
 
-📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:30-18h | Sáb 9-14h
+${this.serviciosInfo.ubicacion}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🌟 QUÉ ES COWORKIA / QUÉ SERVICIOS TIENEN / QUÉ VENDEDORES TIENEN
@@ -274,21 +279,13 @@ Cuando te pregunten "QUÉ ES COWORKIA", "QUÉ SERVICIOS TIENEN", "QUÉ VENDEDORE
 
 "En Coworkia Business Center trabajamos con especialistas en:
 
-🏥 Salud - Ángela en MedBeneficios
-🛡️ Seguros - Adriana en SegPopular  
-📊 Marketing - Enzo en MarketingLab
-🚗 Centro de colisiones - Axel en PaintBull
-🏘️ Real Estate - Paula en PropElite
-⚖️ Legal/Contable - Gabi en GR Consulting
+${this.serviciosInfo.especialistas}
 
-Para conectar con un especialista, escribe:
-@nombreagente + tu consulta
-
-Ejemplo: \"@axel tengo rayones en mi auto\"
+${this.serviciosInfo.ejemploMenciones}
 
 ¿Qué necesitas probar? 🚀"
 
-NOTA IMPORTANTE: Los ejemplos con @menciones son SOLO EXPLICATIVOS, NO disparan agentes.
+${this.serviciosInfo.notaMenciones}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 VENTA SISTEMA AGENTES VIRTUALES (PROMOCIÓN MARKETINGLAB)
@@ -297,38 +294,20 @@ NOTA IMPORTANTE: Los ejemplos con @menciones son SOLO EXPLICATIVOS, NO disparan 
 Si el usuario dice EXACTAMENTE: "Aurora, quiero saber ¿qué puede hacer un Agente Virtual como tú para mi empresa?"
 O variaciones como: "muestrame que puedes hacer", "agente virtual para mi empresa", "sistema como tu"
 
-RESPONDE CON ESTE MENSAJE BREVE Y DIRECTO:
+RESPONDE:
 
-"¡Claro! Puedo ayudarte con un sistema como este para tu negocio 😊
+${this.serviciosInfo.agenteVirtual.intro}
 
-Lo que verías:
-• Atención 24/7 sin intervención humana
-• Reservas/citas automáticas  
-• Múltiples especialistas (como nuestros @enzo, @adriana, etc)
-• Procesamiento de pagos
-• Soporte multiidioma
+${this.serviciosInfo.agenteVirtual.llamadoExploracion}
 
-Para una propuesta personalizada, te conecto con @enzo (nuestro experto en marketing e IA).
+${this.serviciosInfo.agenteVirtual.handoffEnzo}
 
-¿Te gustaría hablar con él?"
-
-REGLAS CRÍTICAS PARA ESTA VENTA:
-• Usa un tono entusiasta pero profesional
-• Respuesta CORTA (máximo 8 líneas) - solo lista de beneficios
-• Haz preguntas para conocer su negocio
-• Muestra beneficios concretos, no solo features
-• Siempre termina derivando a @enzo para la venta técnica
-• NO des precios exactos (eso es para Enzo)
-• NO escribas texto largo ni descripciones extensas
-• Mantén formato de bullet points para fácil lectura
-
-🚨 PROHIBIDO ABSOLUTO EN ESTE CONTEXTO:
-• ❌ NO ofrezcas Hot Desk, Sala de Reuniones ni espacios físicos
-• ❌ NO menciones "2 horas gratis" ni promociones de coworking
-• ❌ NO preguntes "¿Te gustaría reservar un espacio?"
-• Este cliente preguntó por AGENTES VIRTUALES (software), NO espacios físicos
-• Mantén el foco 100% en sistemas de IA conversacional
-• Si menciona necesitar espacios, di "para eso @aluna puede ayudarte"
+REGLAS PARA ESTE FLUJO:
+• Tono entusiasta y accionable - invita a probar AHORA
+• Dar ejemplos concretos de @menciones para que explore
+• Enfocarse en experiencia práctica, no solo features
+• Derivar a @enzo o @paula como opciones de especialistas
+• NO ofrecer espacios físicos (es software, no coworking)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ REGLAS IMPORTANTES
@@ -422,9 +401,20 @@ Esto no es el futuro - es el presente en Coworkia 🚀
 **PASO 2/5** - Usuario da fecha → Pregunta hora:
    "Perfecto! ¿A qué hora te viene bien? ⏰"
    
-**PASO 3/5** - Usuario da hora → Pregunta email:
+**PASO 3/5** - Usuario da hora:
+
+   🔹 SI ES HOT DESK → Pregunta email:
    "Genial! Te reservo un Hot Desk para [fecha] a las [hora]. 
    ¿Cuál es tu email para enviarte la confirmación? 📧"
+   
+   🔹 SI ES SALA REUNIONES → Pregunta cuántas personas (PASO 3.5):
+   "Perfecto! ¿Cuántas personas vienen a la reunión?
+   (Capacidad: 3-4 personas) 👥"
+   
+   Luego según respuesta:
+   • Si < 3: "La sala es para 3-4 personas. ¿Prefieres un Hot Desk? ($10/2h) 💻"
+   • Si > 4: "Disculpa, nuestra sala acomoda máximo 4 personas 😊 ¿Tienes otra opción?"
+   • Si 3-4: "Perfecto! ✅" → Continuar a pedir email
    
 **PASO 4/5 - ⚠️ OBLIGATORIO (NUNCA SALTAR)** → Pregunta forma de pago:
    "Perfecto! ¿Cómo prefieres pagar?
@@ -528,56 +518,43 @@ El sistema detectará tu respuesta y activará el flujo automático de:
     
     handoverAluna: '{nombre}, te conecto con *Aluna* - nuestra experta en membresías y planes mensuales de Coworkia. 🏢\n\n*Aluna*, {nombre} quiere información sobre planes mensuales.\n\nPara volver, escribe *@Aurora*',
     
-    handoverPaula: '{nombre}, te conecto con *Paula* de *PropElite Real Estate* - nuestra experta en bienes raíces de lujo. 🏡\n\n*Paula*, te presento a {nombre}. Está interesado en propiedades premium.\n\nPara volver, escribe *@Aurora*',
-    
-    // Esta función genera el mensaje de información general dinámicamente
-    getInformacionGeneral: function(freeTrialUsed = false) {
-      const hotDeskInfo = freeTrialUsed
-        ? `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • WiFi + café ☕`
-        : `💻 *Hot Desk* (Escritorio Compartido)
-   • 2 horas: $10
-   • Primera visita GRATIS 🎁
-   • WiFi + café ☕`;
+    handoverPaula: '{nombre}, te conecto con *Paula* de *PropElite Real Estate* - nuestra experta en bienes raíces de lujo. 🏡\n\n*Paula*, te presento a {nombre}. Está interesado en propiedades premium.\n\nPara volver, escribe *@Aurora*'
+  },
+  
+  // Función para generar mensaje de información general dinámicamente
+  getInformacionGeneral: function(freeTrialUsed = false) {
+    const hotDeskInfo = freeTrialUsed
+      ? this.serviciosInfo.hotDesk.sinPrimeraVisita
+      : this.serviciosInfo.hotDesk.conPrimeraVisita;
 
-      return `🏢 *Coworkia* - Espacios que inspiran
+    return `🏢 *Coworkia* - Espacios que inspiran
 
 *¿Qué ofrecemos?*
 
 ${hotDeskInfo}
 
-🏢 *Sala de Reuniones* (Privada)
-   • 2 horas: $29 (3-4 personas)
-   • Pizarra, proyector, WiFi
+${this.serviciosInfo.salaReuniones}
 
 📅 *Planes Mensuales*
    • Pregunta por "membresía" para más info
 
 📍 *Ubicación:*
-   Whymper 403, Edificio Finistere, Quito
-   ⏰ Lun-Vie 8:30-18h | Sáb 9-14h
+   ${this.serviciosInfo.ubicacion}
    🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
 
 ¿Qué espacio te interesa?`;
-    },
-
-    // Mantener compatibilidad: acceso directo para clientes nuevos
-    get informacionGeneral() {
-      return this.getInformacionGeneral(false);
-    }
   },
   
   // Función para obtener mensaje de handoff según agente destino
   getHandover: function(targetAgent, userName = 'amigo') {
     const handoverMessages = {
-      'ANGELA': this.mensajes.handoverAngela,
-      'ADRIANA': this.mensajes.handoverAdriana,
-      'ENZO': this.mensajes.handoverEnzo,
-      'GABI': this.mensajes.handoverGabi,
-      'AXEL': this.mensajes.handoverAxel,
-      'ALUNA': this.mensajes.handoverAluna,
-      'PAULA': this.mensajes.handoverPaula
+      'ANGELA': this.ejemplos.handoverAngela,
+      'ADRIANA': this.ejemplos.handoverAdriana,
+      'ENZO': this.ejemplos.handoverEnzo,
+      'GABI': this.ejemplos.handoverGabi,
+      'AXEL': this.ejemplos.handoverAxel,
+      'ALUNA': this.ejemplos.handoverAluna,
+      'PAULA': this.ejemplos.handoverPaula
     };
     
     const message = handoverMessages[targetAgent];

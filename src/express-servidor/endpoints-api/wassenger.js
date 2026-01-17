@@ -21,6 +21,7 @@ import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhoo
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
+import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 
 import {
   loadProfile,
@@ -934,7 +935,39 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     });
 
-    await enviarWhatsApp(userId, finalReply);
+    // 📨 Dividir mensaje automáticamente si es largo/estructurado
+    const messageProcessed = splitLongMessage(finalReply);
+    
+    if (messageProcessed.shouldDelay && messageProcessed.parts.length > 1) {
+      // Enviar múltiples mensajes con delay
+      console.log(`[MESSAGE-SPLIT] 📨 Dividiendo mensaje en ${messageProcessed.parts.length} partes (delay: ${messageProcessed.delayMs}ms)`);
+      
+      for (let i = 0; i < messageProcessed.parts.length; i++) {
+        const part = cleanPromptMarkers(messageProcessed.parts[i]);
+        
+        // Enviar mensaje
+        await enviarWhatsApp(userId, part);
+        
+        // Guardar cada parte en historial
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: part,
+          agent: resultado.agenteKey,
+          metadata: { partNumber: i + 1, totalParts: messageProcessed.parts.length }
+        });
+        
+        // Delay entre mensajes (excepto en el último)
+        if (i < messageProcessed.parts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, messageProcessed.delayMs));
+        }
+      }
+      
+      console.log(`[MESSAGE-SPLIT] ✅ Enviados ${messageProcessed.parts.length} mensajes exitosamente`);
+    } else {
+      // Enviar mensaje único (comportamiento original)
+      const cleanedMessage = cleanPromptMarkers(finalReply);
+      await enviarWhatsApp(userId, cleanedMessage);
+    }
     
     loggers.webhook.agentResponse(userId, resultado.agenteKey, true);
     

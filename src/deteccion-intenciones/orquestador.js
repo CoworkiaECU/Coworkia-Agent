@@ -274,19 +274,58 @@ INSTRUCCIONES:
 }
 
 /**
- * Reglas duras de selección de agente.
+ * Decide qué agente debe responder según intent y contexto
+ * 
+ * PRIORIDAD:
+ * 1. Handoff explícito (flags.agentHandoff) → CAMBIAR
+ * 2. RequiresAurora (contexto crítico) → AURORA
+ * 3. ReturningToAurora (desde agente) → AURORA
+ * 4. Agente activo != AURORA → MANTENER (salvo forceChange)
+ * 5. SuggestedAgent → SOLO cambiar si activeAgent === AURORA
+ * 6. Fallback → intent.agent o AURORA
  */
 function decidirAgente(intent, activeAgent) {
-  if (intent.flags?.agentHandoff) return intent.agent;
-  if (intent.flags?.returningToAurora) return 'AURORA';
-  if (intent.flags?.requiresAurora) return 'AURORA';
-
-  // Si hay agente activo y no se pidió cambio explícito, mantener
-  if (activeAgent && activeAgent !== 'AURORA' && !intent.flags?.forceChange) {
-    return activeAgent;
+  const currentAgent = activeAgent || 'AURORA';
+  
+  // 1. Handoff explícito (mayor prioridad - @menciones, implicit keywords)
+  if (intent.flags?.agentHandoff) {
+    console.log('[DECIDIR-AGENTE] 🔀 Handoff explícito:', currentAgent, '→', intent.agent);
+    return intent.agent;
   }
-
-  return intent.agent || 'AURORA';
+  
+  // 2. Contexto requiere Aurora (reservas, pagos, post-email)
+  if (intent.flags?.requiresAurora) {
+    console.log('[DECIDIR-AGENTE] 🎯 Contexto requiere Aurora');
+    return 'AURORA';
+  }
+  
+  // 3. Retorno a Aurora desde agente especializado
+  if (intent.flags?.returningToAurora) {
+    console.log('[DECIDIR-AGENTE] ↩️  Retorno explícito a Aurora');
+    return 'AURORA';
+  }
+  
+  // 4. Agente especializado activo → MANTENER (salvo forceChange)
+  if (currentAgent !== 'AURORA' && !intent.flags?.forceChange) {
+    console.log('[DECIDIR-AGENTE] 🔒 Manteniendo agente especializado:', currentAgent);
+    return currentAgent;
+  }
+  
+  // 5. SuggestedAgent → Solo cambiar si estamos en Aurora
+  if (intent.flags?.suggestedAgent) {
+    if (currentAgent === 'AURORA') {
+      console.log('[DECIDIR-AGENTE] 💡 Suggested agent desde Aurora:', intent.agent);
+      return intent.agent; // Aurora puede cambiar a sugeridos
+    } else {
+      console.log('[DECIDIR-AGENTE] 🚫 Suggested agent ignorado (agente activo):', currentAgent);
+      return currentAgent; // Agente especializado ignora sugerencias
+    }
+  }
+  
+  // 6. Fallback
+  const finalAgent = intent.agent || 'AURORA';
+  console.log('[DECIDIR-AGENTE] 🔄 Fallback:', finalAgent);
+  return finalAgent;
 }
 
 /**

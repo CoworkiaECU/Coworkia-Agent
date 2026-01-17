@@ -142,7 +142,13 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
 
   // 1. Detectar intención
   const intent = detectarIntencion(mensaje, activeAgent);
-  loggers.orquestador.debug('Intención detectada', { userId, agent: activeAgent, intent: intent.type });
+  loggers.orquestador.debug('Intención detectada', { 
+    userId, 
+    activeAgent, 
+    detectedAgent: intent.agent,
+    reason: intent.reason,
+    flags: Object.keys(intent.flags || {}) 
+  });
 
   // � DETECCIÓN OUT-OF-SCOPE: Si agente especializado detecta keywords de otros servicios
   if (activeAgent === 'PAULA') {
@@ -268,7 +274,14 @@ INSTRUCCIONES:
       agentHandoff: isHandoff,
       targetAgent,
       intent,
-      handoffContext
+      handoffContext,
+      ...(intent.flags?.cancelacionEjecutada && {
+        cancelacion: true,
+        cancelacionDetails: {
+          hadActiveFlow: intent.flags?.hadActiveFlow,
+          timestamp: new Date().toISOString()
+        }
+      })
     }
   };
 }

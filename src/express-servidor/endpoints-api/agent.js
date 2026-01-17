@@ -20,13 +20,16 @@ router.post('/agent/handle', authAgentBuilder, async (req, res) => {
     if (userId) {
       const current = await loadProfile(userId) || {};
       const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
-      persistedProfile = await saveProfile(userId, {
+      const saved = await saveProfile(userId, {
         ...current,
         ...profile,
         userId,
         firstVisit,
         lastMessageAt: new Date().toISOString(),
       });
+      if (saved) {
+        persistedProfile = await loadProfile(userId);
+      }
     }
 
     const intent = detectarIntencion(message);
@@ -62,10 +65,22 @@ Reglas:
       system
     });
 
+    const AGENT_NAMES = {
+      AURORA: 'Aurora Core',
+      ALUNA: 'Aluna Closer',
+      ADRIANA: 'Adriana Segpopular',
+      ENZO: 'Enzo MarketingLab',
+      ANGELA: 'Angela Salud',
+      AXEL: 'Axel Reparación',
+      GABI: 'Gabi Legal',
+      PAULA: 'Paula Inmobiliaria'
+    };
+
     try {
       saveInteraction({
         userId: userId || 'anonymous',
         agent: intent.agent,
+        agentName: AGENT_NAMES[intent.agent] || intent.agent,
         intentReason: intent.reason,
         input: message,
         output: reply,

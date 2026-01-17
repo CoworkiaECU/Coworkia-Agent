@@ -211,7 +211,7 @@ export function getMessage(key, language = 'es') {
     return '';
   }
 
-  const validLanguage = ['es', 'en', 'qu'].includes(language) ? language : 'es';
+  const validLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(language) ? language : 'es';
   return translations[key][validLanguage] || translations[key]['es'];
 }
 

@@ -569,7 +569,7 @@ export async function saveConversationMessage(userId, message, role = 'user') {
 /**
  * 🌍 Obtiene el idioma preferido del usuario
  * @param {string} userId - ID del usuario
- * @returns {string} Código de idioma (es, en, ja, qu, fr, it) o 'es' por defecto
+ * @returns {string} Código de idioma (es, en, fr, it, pt, qu) o 'es' por defecto
  */
 export async function getUserPreferredLanguage(userId) {
   await ensureDbInitialized();
@@ -585,7 +585,7 @@ export async function getUserPreferredLanguage(userId) {
 /**
  * 🌍 Actualiza el idioma preferido del usuario
  * @param {string} userId - ID del usuario
- * @param {string} language - Código de idioma (es, en, ja, qu, fr, it)
+ * @param {string} language - Código de idioma (es, en, fr, it, pt, qu)
  * @returns {boolean} true si se guardó exitosamente
  */
 export async function setUserPreferredLanguage(userId, language) {

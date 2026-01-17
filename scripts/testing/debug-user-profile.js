@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { loadProfile } from '../../src/perfiles-interacciones/memoria-sqlite.js';
-import { userRepository } from '../../src/database/userRepository.js';
+import userRepository from '../../src/database/userRepository.js';
 
 const userId = process.argv[2];
 

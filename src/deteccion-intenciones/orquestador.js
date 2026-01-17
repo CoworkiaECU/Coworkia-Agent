@@ -11,6 +11,9 @@ import { GABI } from './gabi.js';
 import { PAULA } from './paula.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
+import { hasPendingConfirmation, clearPendingConfirmation } from '../servicios/confirmation-flow.js';
+import { clearForm as clearPartialForm } from '../servicios/partial-reservation-form.js';
+import { clearJustConfirmed } from '../servicios/reservation-state.js';
 
 /**
  * Detecta si Paula recibe mensaje fuera de su scope (bienes raíces)
@@ -158,19 +161,55 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     }
   }
 
-  // �🗑️ MANEJO DE CANCELACIÓN: Si el usuario quiere cancelar, ejecutar limpieza automática
+  // 🗑️ MANEJO DE CANCELACIÓN: Solo limpiar si HAY flujo activo
   if (intent.flags?.cancelacion) {
-    console.log('[ORQUESTADOR] 🗑️ Cancelación detectada - Limpiando reservas pendientes');
-    try {
-      const { cancelUserPendingReservations } = await import('../servicios/calendario.js');
-      const cancelResult = await cancelUserPendingReservations(userId);
+    console.log('[ORQUESTADOR] 🗑️ Cancelación detectada');
+    
+    // ✅ Verificar si realmente hay algo que cancelar
+    const hasPending = await hasPendingConfirmation(userId);
+    const hasPartialForm = !!(formData?.resumed || formData?.partial);
+    
+    if (hasPending || hasPartialForm) {
+      console.log('[ORQUESTADOR] 🧹 Limpiando flujo activo:', { 
+        pendingConfirmation: hasPending, 
+        partialForm: hasPartialForm 
+      });
       
-      // Agregar información de cancelación al contexto
-      intent.cancelacionResult = cancelResult;
-      console.log('[ORQUESTADOR] ✅ Limpieza completada:', cancelResult);
-    } catch (error) {
-      console.error('[ORQUESTADOR] ❌ Error en limpieza de cancelación:', error);
-      intent.cancelacionError = error.message;
+      try {
+        // Limpiar confirmaciones pendientes
+        if (hasPending) {
+          await clearPendingConfirmation(userId);
+          console.log('[ORQUESTADOR] ✅ Confirmación pendiente limpiada');
+        }
+        
+        // Limpiar formulario parcial
+        if (hasPartialForm) {
+          await clearPartialForm(userId, 'reservation');
+          console.log('[ORQUESTADOR] ✅ Formulario parcial limpiado');
+        }
+        
+        // Limpiar estado just-confirmed
+        await clearJustConfirmed(userId);
+        
+        // Limpiar reservas pendientes del calendario
+        const { cancelUserPendingReservations } = await import('../servicios/calendario.js');
+        const cancelResult = await cancelUserPendingReservations(userId);
+        
+        // 🎯 CRÍTICO: Marcar en metadata para que webhook vea el flag
+        intent.flags.cancelacionEjecutada = true;
+        intent.flags.hadActiveFlow = true;
+        intent.cancelacionResult = cancelResult;
+        
+        console.log('[ORQUESTADOR] ✅ Flujo cancelado exitosamente:', cancelResult);
+      } catch (error) {
+        console.error('[ORQUESTADOR] ❌ Error cancelando flujo:', error);
+        intent.flags.cancelacionError = true;
+        intent.cancelacionError = error.message;
+      }
+    } else {
+      console.log('[ORQUESTADOR] ℹ️  Cancelación solicitada pero NO hay flujo activo - ignorando');
+      intent.flags.noActiveFlow = true;
+      intent.flags.cancelacionIgnorada = true;
     }
   }
 

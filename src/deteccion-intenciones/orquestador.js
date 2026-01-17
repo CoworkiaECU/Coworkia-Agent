@@ -11,7 +11,7 @@ import { GABI } from './gabi.js';
 import { PAULA } from './paula.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
-import { hasPendingConfirmation, clearPendingConfirmation } from '../servicios/confirmation-flow.js';
+import { hasPendingConfirmation, clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { clearForm as clearPartialForm } from '../servicios/partial-reservation-form.js';
 import { clearJustConfirmed } from '../servicios/reservation-state.js';
 

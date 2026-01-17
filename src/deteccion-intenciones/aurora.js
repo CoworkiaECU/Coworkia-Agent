@@ -76,8 +76,7 @@ Ejemplo:
 Puedes probarme ahora mismo mis capacidades, te puedo transferir con especialistas en:
 • 🛡️ Seguros
 • 📊 Marketing
-• 🏘️ Bienes raíces
-• 🚗 Centro de colisiones
+
 • ⚖️ Legal
 • 💼 Finanzas
 • 🏥 Salud`,

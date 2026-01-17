@@ -538,29 +538,41 @@ export function extractDataFromMessage(message, currentForm) {
   };
   const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(\w+)/);
   
-  // Detectar día de la semana + número (ej: "miércoles 26")
-  const dayOfWeekMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\b/);
-
-  if (dayOfWeekMatch) {
-    const [, dayName, dayNum] = dayOfWeekMatch;
+  // 🗓️ Detectar "lunes 19 enero 2026" o "lunes 19 enero" o "lunes 19"
+  const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?\b/);
+  
+  if (fullDateMatch) {
+    const [, dayName, dayNum, monthName, yearStr] = fullDateMatch;
     const day = parseInt(dayNum, 10);
     const currentMonth = parseInt(month);
     const currentYear = parseInt(year);
+    const currentDay = parseInt(day);
     
-    // Asumir mes actual, si el día ya pasó usar mes siguiente
     let targetMonth = currentMonth;
-    let targetYear = currentYear;
+    let targetYear = yearStr ? parseInt(yearStr) : currentYear;
     
-    if (day < parseInt(day)) {
-      targetMonth = currentMonth + 1;
-      if (targetMonth > 12) {
-        targetMonth = 1;
-        targetYear = currentYear + 1;
+    // Si se especificó el nombre del mes, usarlo
+    if (monthName) {
+      const monthNames = {
+        'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+        'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+        'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+      };
+      targetMonth = monthNames[monthName];
+    } else {
+      // Si no hay mes explícito, asumir mes actual
+      // Si el día ya pasó este mes, usar mes siguiente
+      if (day < currentDay) {
+        targetMonth = currentMonth + 1;
+        if (targetMonth > 12) {
+          targetMonth = 1;
+          targetYear = currentYear + 1;
+        }
       }
     }
     
     updates.date = `${targetYear}-${targetMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    console.log('[FORM-DATE] 📅 Detectado día de semana + número:', updates.date);
+    console.log('[FORM-DATE] 📅 Detectado día de semana completo:', updates.date);
   } else if (relativeMatch) {
       const keyword = relativeMatch[1];
       if (keyword === 'hoy') {
@@ -674,19 +686,19 @@ export function extractDataFromMessage(message, currentForm) {
     }
   }
 
-  // 💳 Detectar método de pago
-  if (!currentForm.paymentMethod) {
-    const lowerMsg = message.toLowerCase();
-    if (lowerMsg.includes('tarjeta') || lowerMsg.includes('credito') || lowerMsg.includes('debito')) {
-      updates.paymentMethod = 'tarjeta';
-      console.log('[FORM] 💳 Detectado método: tarjeta');
-    } else if (lowerMsg.includes('transferencia') || lowerMsg.includes('transfer')) {
+  // 💳 Detectar método de pago (SIEMPRE intentar, permite cambiar método)
+  const paymentMatch = lowerMsg.match(/\b(efectivo|tarjeta|transferencia|cash|credito|crédit|débito|debito|transfer)\b/);
+  if (paymentMatch) {
+    const term = paymentMatch[1];
+    if (term === 'efectivo' || term === 'cash') {
+      updates.paymentMethod = 'efectivo';
+      console.log('[FORM] 💵 Detectado método: efectivo');
+    } else if (term === 'transferencia' || term === 'transfer') {
       updates.paymentMethod = 'transferencia';
       console.log('[FORM] 🏦 Detectado método: transferencia');
-    } else if (lowerMsg.includes('efectivo') || lowerMsg.includes('cash')) {
-      // 🔓 BYPASS TEMPORAL para testing
-      updates.paymentMethod = 'efectivo';
-      console.log('[FORM] 💵 Detectado método: efectivo (bypass)');
+    } else if (/tarjeta|credito|crédit|débito|debito/.test(term)) {
+      updates.paymentMethod = 'tarjeta';
+      console.log('[FORM] 💳 Detectado método: tarjeta');
     }
   }
 

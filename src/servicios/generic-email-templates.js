@@ -42,12 +42,18 @@ export function generateAdrianaEmailHTML(leadData) {
         
         <!-- Header SegPopular - Fondo Amarillo Característico -->
         <div style="background: #FFD700; text-align: center; padding: 40px 20px;">
-          <!-- Logo SegPopular en HTML elegante (basado en diseño original) -->
+          <!-- Logo SegPopular inline -->
           <div style="margin-bottom: 20px;">
-            <div style="font-family: 'Brush Script MT', 'Lucida Handwriting', cursive; color: #1E3A8A; font-size: 68px; font-weight: 400; letter-spacing: 3px; margin-bottom: -5px; font-style: italic; text-shadow: 3px 3px 6px rgba(0,0,0,0.15); line-height: 1;">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" 
+                 alt="SegPopular" 
+                 style="max-width: 240px; height: auto; display: block; margin: 0 auto;" />
+          </div>
+          <!-- Fallback text logo si imagen no carga -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-family: 'Brush Script MT', 'Lucida Handwriting', cursive; color: #1E3A8A; font-size: 58px; font-weight: 400; letter-spacing: 2px; margin-bottom: -5px; font-style: italic; text-shadow: 3px 3px 6px rgba(0,0,0,0.15); line-height: 1;">
               SegPopular
             </div>
-            <div style="font-family: 'Helvetica Neue', 'Arial', sans-serif; color: #1E3A8A; font-size: 14px; font-weight: 500; letter-spacing: 4px; text-transform: lowercase; margin-top: 8px;">
+            <div style="font-family: 'Helvetica Neue', 'Arial', sans-serif; color: #1E3A8A; font-size: 13px; font-weight: 500; letter-spacing: 3px; text-transform: lowercase; margin-top: 8px;">
               asesores de seguros populares
             </div>
           </div>
@@ -417,7 +423,7 @@ export function generateAxelEmailHTML(leadData) {
 
 /**
  * 🎯 ENZO - MarketingLab
- * Colores: Púrpura/Magenta (#7C3AED, #A855F7)
+ * Colores: Verde Lime (#84CC16, #65A30D) + Gris (#6B7280, #4B5563)
  */
 export function generateEnzoEmailHTML(leadData) {
   const {
@@ -445,10 +451,16 @@ export function generateEnzoEmailHTML(leadData) {
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
         <!-- Header MarketingLab -->
-        <div style="background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%); text-align: center; padding: 40px 20px;">
-          <!-- Logo MarketingLab en HTML (basado en diseño original) -->
+        <div style="background: linear-gradient(135deg, #84CC16 0%, #65A30D 100%); text-align: center; padding: 40px 20px;">
+          <!-- Logo MarketingLab inline -->
           <div style="margin-bottom: 20px;">
-            <div style="font-family: 'Impact', 'Haettenschweiler', 'Arial Black', sans-serif; color: #F3F4F6; font-size: 58px; font-weight: 900; letter-spacing: -3px; margin-bottom: 5px; text-transform: lowercase; text-shadow: 4px 4px 8px rgba(0,0,0,0.4); line-height: 0.9;">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" 
+                 alt="MarketingLab" 
+                 style="max-width: 220px; height: auto; display: block; margin: 0 auto; margin-bottom: 15px;" />
+          </div>
+          <!-- Fallback text logo -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-family: 'Impact', 'Haettenschweiler', 'Arial Black', sans-serif; color: #F9FAFB; font-size: 52px; font-weight: 900; letter-spacing: -2px; margin-bottom: 5px; text-transform: lowercase; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">
               marketinglab
             </div>
           </div>
@@ -467,62 +479,62 @@ export function generateEnzoEmailHTML(leadData) {
           <div style="text-align: center; margin-bottom: 25px;">
             <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
             <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Tu proyecto de <strong style="color: #7C3AED;">${projectType}</strong> está en buenas manos
+              Tu proyecto de <strong style="color: #65A30D;">${projectType}</strong> está en buenas manos
             </p>
           </div>
 
           <!-- Detalles del proyecto -->
-          <div style="background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(124,58,237,0.1)); border-left: 4px solid #A855F7; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(168,85,247,0.1);">
+          <div style="background: linear-gradient(135deg, rgba(132,204,22,0.12), rgba(101,163,13,0.12)); border-left: 4px solid #84CC16; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(132,204,22,0.15);">
             <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🎯 TU PROYECTO</h3>
             
             <div style="margin: 20px 0;">
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">🎯</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">🎯</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${projectType}</span>
                 </div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">🏢</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">🏢</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">${companyName}</span>
                 </div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">💰</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">💰</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">Presupuesto: ${budget}</span>
                 </div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">⏰</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">⏰</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">Urgencia: ${urgency}</span>
                 </div>
               </div>
 
               ${description ? `
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: flex-start;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">📝</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📝</span>
                   <span style="color: #374151; font-weight: 500; font-size: 15px;">${description}</span>
                 </div>
               </div>
               ` : ''}
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">📧</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📧</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
                 </div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(168,85,247,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #A855F7; font-size: 20px; margin-right: 12px;">📱</span>
+                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📱</span>
                   <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
                 </div>
               </div>
@@ -549,8 +561,8 @@ export function generateEnzoEmailHTML(leadData) {
           </div>
 
           <!-- Referencia -->
-          <div style="background: rgba(168,85,247,0.05); border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <p style="color: #6B7280; font-size: 13px; margin: 0;">
+          <div style="background: rgba(132,204,22,0.08); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid rgba(132,204,22,0.2);">
+            <p style="color: #4B5563; font-size: 13px; margin: 0; font-weight: 600;">
               <strong>Referencia:</strong> ${leadId}
             </p>
           </div>
@@ -567,9 +579,9 @@ export function generateEnzoEmailHTML(leadData) {
           </div>
 
           <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(124,58,237,0.1)); border-radius: 12px;">
-            <p style="color: #7C3AED; font-size: 18px; font-weight: 700; margin: 0;">¡Hagamos crecer tu marca! 🎯</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Enzo - MarketingLab</p>
+          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(132,204,22,0.15), rgba(101,163,13,0.15)); border-radius: 12px; border: 2px solid #84CC16;">
+            <p style="color: #65A30D; font-size: 18px; font-weight: 700; margin: 0;">¡Hagamos crecer tu marca! 🎯</p>
+            <p style="color: #4B5563; font-size: 14px; margin: 8px 0; font-weight: 600;">Enzo - MarketingLab</p>
           </div>
 
         </div>

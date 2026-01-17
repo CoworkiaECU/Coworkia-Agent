@@ -70,16 +70,20 @@ Ejemplo:
 "@axel tuve un siniestro con mi auto"`,
     notaMenciones: `NOTA IMPORTANTE: Los ejemplos con @menciones son SOLO EXPLICATIVOS, NO disparan agentes.`,
     agenteVirtual: {
-      intro: `¡Perfecto! Te muestro cómo funciona un sistema de agentes como yo 😊`,
-      llamadoExploracion: `¿Quieres ver la aplicación en vivo y lo que pueden hacer sus agentes?
+      intro: `¡Perfecto! Te muestro cómo funciona un sistema de agentes como yo �🏼‍💼✨`,
+      llamadoExploracion: `*¿Quieres ver la aplicación en vivo y lo que pueden hacer sus agentes?*
 
-Puedes probarme ahora mismo:
-• Escribe "Aurora, quiero saber ¿qué puede hacer un Agente Virtual como tú para mi empresa?" para ver mis capacidades
-• Pregunta por seguros, marketing, real estate, etc. te transfiero con los especialistas`,
-      handoffEnzo: `Luego, conversa con @enzo que puede asesorarte con una cotización personalizada en pocos minutos 🚀
+Puedes probarme ahora mismo mis capacidades, te puedo transferir con especialistas en:
+• 🛡️ Seguros
+• 📊 Marketing
+• 🏘️ Bienes raíces
+• 🚗 Centro de colisiones
+• ⚖️ Legal
+• 💼 Finanzas
+• 🏥 Salud`,
+      handoffEnzo: `Luego, conversa con @enzo especialista de marketing y desarrollo de software que puede asesorarte con una cotización personalizada en pocos minutos 🚀
 
-¿Probamos el sistema ahora? 
-Escribe @paula para conocer a esta agente especialista en Bienes Raíces.`
+¿Probamos el sistema ahora?`
     }
   },
 

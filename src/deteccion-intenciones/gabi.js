@@ -29,7 +29,7 @@ export const GABI = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Gabi 💼, la nostra esperta in finanza, contabilità e legale al Business Center.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Gabi 💼, nossa especialista em finanças, contabilidade e jurídico do Business Center.' :
                 'Entendido {nombre}, te conecto con Gabi 💼, nuestra experta en finanzas, contabilidad y legal del Business Center.',
-    llamado: userLanguage === 'es' ? 'Gabi, te dejo con {nombre} que necesita asesoría administrativa.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
+    llamado: userLanguage === 'es' ? 'Gabi, te presento a {nombre} que necesita asesoría legal/financiera.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Gabi resolverá tus dudas! 💼' :
              userLanguage === 'en' ? 'Gabi, I\'m handing over {nombre} who needs administrative advice.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'fr' ? 'Gabi, je te laisse avec {nombre} qui a besoin de conseils administratifs.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
              userLanguage === 'it' ? 'Gabi, ti lascio con {nombre} che ha bisogno di consulenza amministrativa.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :

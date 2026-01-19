@@ -48,7 +48,7 @@ export const ALUNA = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Aluna, la nostra specialista in piani e abbonamenti. Troverà il piano perfetto per il tuo ritmo.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Aluna, nossa especialista em planos e assinaturas. Ela encontrará o plano perfeito para seu ritmo.' :
                 'Entendido {nombre}, te conecto con Aluna, nuestra especialista en planes y membresías. Ella encontrará el plan perfecto para tu ritmo.',
-    llamado: userLanguage === 'es' ? 'Aluna, te dejo con {nombre} que busca un plan mensual.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
+    llamado: userLanguage === 'es' ? 'Aluna, te presento a {nombre} interesado en membresías de coworking.\n\n{nombre}, tu consulta permanece activa por 72 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Aluna te encontrará el plan perfecto! 🏢' :
              userLanguage === 'en' ? 'Aluna, I\'m handing over {nombre} who\'s looking for a monthly plan.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'fr' ? 'Aluna, je te laisse avec {nombre} qui cherche un plan mensuel.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
              userLanguage === 'it' ? 'Aluna, ti lascio con {nombre} che cerca un piano mensile.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :

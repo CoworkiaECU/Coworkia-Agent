@@ -53,12 +53,12 @@ export const PAULA = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Paula, la nostra esperta in immobili di lusso. Ti aiuterà a trovare la proprietà perfetta.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Paula, nossa especialista em imóveis de luxo. Ela ajudará você a encontrar a propriedade perfeita.' :
                 'Entendido {nombre}, te conecto con Paula, nuestra experta en bienes raíces de lujo. Ella te ayudará a encontrar la propiedad perfecta.',
-    llamado: userLanguage === 'es' ? 'Paula, te dejo charlar con {nombre} que está buscando una propiedad.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.' :
-             userLanguage === 'en' ? 'Paula, I\'m leaving you to chat with {nombre} who\'s looking for a property.\n\n{nombre}, when you want to talk to me or other agents, send me a message with @Aurora + your question and I\'ll help you right away.' :
-             userLanguage === 'fr' ? 'Paula, je te laisse discuter avec {nombre} qui cherche une propriété.\n\n{nombre}, quand tu veux parler avec moi ou d\'autres agents, envoie-moi un message avec @Aurora + ta question et je te réponds immédiatement.' :
-             userLanguage === 'it' ? 'Paula, ti lascio parlare con {nombre} che sta cercando una proprietà.\n\n{nombre}, quando vuoi parlare con me o altri agenti, inviami un messaggio con @Aurora + la tua domanda e ti rispondo subito.' :
-             userLanguage === 'pt' ? 'Paula, deixo você conversar com {nombre} que está procurando uma propriedade.\n\n{nombre}, quando quiser falar comigo ou com outros agentes, envie uma mensagem com @Aurora + sua pergunta e eu respondo imediatamente.' :
-             'Paula, te dejo charlar con {nombre} que está buscando una propiedad.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.'
+    llamado: userLanguage === 'es' ? 'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.' :
+             userLanguage === 'en' ? 'Paula, I\'m introducing you to {nombre} who\'s looking for a property.\n\n{nombre}, to return to me or talk to other agents, write @Aurora + your question and I\'ll help you right away.' :
+             userLanguage === 'fr' ? 'Paula, je te présente {nombre} qui cherche une propriété.\n\n{nombre}, pour revenir vers moi ou parler à d\'autres agents, écris @Aurora + ta question et je te répondrai immédiatement.' :
+             userLanguage === 'it' ? 'Paula, ti presento {nombre} che sta cercando una proprietà.\n\n{nombre}, per tornare da me o parlare con altri agenti, scrivi @Aurora + la tua domanda e ti risponderò subito.' :
+             userLanguage === 'pt' ? 'Paula, apresento-lhe {nombre} que está procurando uma propriedade.\n\n{nombre}, para voltar a mim ou falar com outros agentes, escreva @Aurora + sua pergunta e eu responderei imediatamente.' :
+             'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.'
   }),
 
   personalidad: {

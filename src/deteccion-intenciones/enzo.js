@@ -47,7 +47,7 @@ export const ENZO = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Enzo, il nostro esperto di marketing digitale. Può potenziare il tuo business con l\'IA.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, conectando você com Enzo, nosso especialista em marketing digital. Ele pode impulsionar seu negócio com IA.' :
                 'Entendido {nombre}, te conecto con Enzo, nuestro experto en marketing digital. Él puede potenciar tu negocio con IA.',
-    llamado: userLanguage === 'es' ? 'Enzo, te dejo con {nombre} que necesita estrategias de marketing.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
+    llamado: userLanguage === 'es' ? 'Enzo, te presento a {nombre} que busca potenciar su marketing digital.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Enzo transformará tu negocio! 🚀' :
              userLanguage === 'en' ? 'Enzo, I\'m handing over {nombre} who needs marketing strategies.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'fr' ? 'Enzo, je te laisse {nombre} qui a besoin de stratégies marketing.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
              userLanguage === 'it' ? 'Enzo, ti lascio {nombre} che ha bisogno di strategie di marketing.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :

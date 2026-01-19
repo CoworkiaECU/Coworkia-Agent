@@ -975,8 +975,14 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
         // 🎯 Obtener mensajes de handoff usando función unificada
         const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
 
-        // 🔄 SECUENCIA HANDOFF: 2 mensajes rápidos y sincronizados
-        // 1. Agente actual despide
+        console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🔄 HANDOVER ELEGANTE CON DELAY SECUENCIAL
+        // ═══════════════════════════════════════════════════════════════
+        
+        // PASO 1: Agente saliente se despide con contexto
+        console.log(`[HANDOFF] 👋 ${fromAgent} despidiéndose...`);
         await enviarWhatsApp(userId, handoffMessages.despedida);
         await saveConversationMessage(userId, { 
           role: 'assistant', 
@@ -984,10 +990,12 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
           agent: fromAgent 
         });
 
-        // 2. Micro delay (solo para experiencia natural)
-        await new Promise(r => setTimeout(r, 400));
+        // PASO 2: Delay para experiencia natural (no simultáneo)
+        await new Promise(r => setTimeout(r, 1200)); // 1.2 segundos
+        console.log(`[HANDOFF] ⏱️ Delay aplicado (1.2s)`);
         
-        // 3. Nuevo agente saluda
+        // PASO 3: Nuevo agente saluda
+        console.log(`[HANDOFF] 👋 ${targetAgent} saludando...`);
         await enviarWhatsApp(userId, handoffMessages.entrada);
         await saveConversationMessage(userId, { 
           role: 'assistant', 
@@ -995,11 +1003,13 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
           agent: targetAgent 
         });
 
+        console.log(`[HANDOFF] ✅ Handover completado exitosamente`);
+
         // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
         if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
           console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
           
-          await new Promise(r => setTimeout(r, 600)); // Pequeño delay natural
+          await new Promise(r => setTimeout(r, 800)); // Delay adicional para contexto
           
           await enviarWhatsApp(userId, formResult.resumeMessage);
           await saveConversationMessage(userId, { 

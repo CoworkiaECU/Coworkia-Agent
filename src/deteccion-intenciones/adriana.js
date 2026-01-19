@@ -49,7 +49,7 @@ export const ADRIANA = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Adriana, il nostro broker assicurativo Segpopular. Può proteggere ciò che ti sta più a cuore.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Adriana, nossa corretora de seguros Segpopular. Ela pode proteger o que mais importa para você.' :
                 'Entendido {nombre}, te conecto con Adriana, nuestra broker de seguros de Segpopular. Ella puede proteger lo que más valoras.',
-    llamado: userLanguage === 'es' ? 'Adriana, te dejo con {nombre} que necesita asesoría en seguros.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
+    llamado: userLanguage === 'es' ? 'Adriana, te presento a {nombre} que necesita cotización de seguro vehicular.\n\n{nombre}, tu consulta permanece activa por 72 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Adriana te cuidará! 🛡️' :
              userLanguage === 'en' ? 'Adriana, I\'m handing over {nombre} who needs insurance advice.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'fr' ? 'Adriana, je te laisse avec {nombre} qui a besoin de conseils en assurance.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
              userLanguage === 'it' ? 'Adriana, ti lascio con {nombre} che ha bisogno di consulenza assicurativa.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :

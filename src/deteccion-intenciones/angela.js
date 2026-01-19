@@ -51,7 +51,7 @@ export const ANGELA = {
                 userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Ángela 💚, la tua assistente medica di MedBeneficios. Può aiutarti con il tuo benessere.' :
                 userLanguage === 'pt' ? 'Entendido {nombre}, conectando você com Ángela 💚, sua assistente médica da MedBeneficios. Ela pode ajudá-lo com seu bem-estar.' :
                 'Entendido {nombre}, te conecto con Ángela 💚, tu asistente médica de MedBeneficios. Ella puede ayudarte con tu bienestar.',
-    llamado: userLanguage === 'es' ? 'Ángela, te dejo con {nombre} que necesita asistencia médica.\n\n{nombre}, para volver escribe @Aurora + tu consulta.' :
+    llamado: userLanguage === 'es' ? 'Ángela, te presento a {nombre} que necesita asistencia médica.\n\n{nombre}, tu consulta permanece activa por 24 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Cuídate con Ángela! 💚' :
              userLanguage === 'en' ? 'Angela, I\'m handing over {nombre} who needs medical assistance.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'qu' ? 'Angela, {nombre}wan saqiykiku mayqinchus qhali kay yanapakuyta munasqa.\n\n{nombre}, kutimunaykipaqqa @Aurora + tapukuykita qillqay.' :
              userLanguage === 'fr' ? 'Ángela, je te laisse {nombre} qui a besoin d\'assistance médicale.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :

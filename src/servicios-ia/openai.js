@@ -136,93 +136,85 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
 }
 
 /**
- * 💳 Analiza comprobante de pago específicamente
+ * 💳 Analiza comprobante de pago (SISTEMA COMPLETO - 20 PARÁMETROS)
+ * 
+ * Extrae datos críticos, importantes y adicionales de cualquier comprobante:
+ * - Payphone (Ecuador)
+ * - Transferencias bancarias
+ * - Tarjetas de crédito/débito
+ * - PayPal
+ * 
+ * @param {string} imageUrl - URL de la imagen del comprobante
+ * @returns {Promise<Object>} Objeto con success, data (20 parámetros), rawResponse, usage
  */
-// 🆕 v283: Updated Payphone format recognition based on actual ppls.me receipts
+// 🆕 v522: Sistema completo con 20 parámetros de extracción
 export async function analyzePaymentReceipt(imageUrl) {
-  const prompt = `Analiza este comprobante de pago y extrae la siguiente información en formato JSON:
+  const prompt = `Analiza este comprobante de pago y extrae TODOS los parámetros posibles en formato JSON.
+
+ESTRUCTURA JSON COMPLETA (devuelve TODOS los campos, usa null si no encuentras el dato):
 
 {
-  "transactionNumber": "número de transacción/referencia/comprobante",
-  "amount": "monto en números (ej: 8.40)",
-  "currency": "moneda (USD, EUR, etc)",
-  "date": "fecha en formato YYYY-MM-DD",
-  "time": "hora en formato HH:MM",
-  "bank": "nombre del banco o método de pago",
-  "paymentMethod": "transferencia/payphone/tarjeta/etc",
-  "recipient": "nombre del destinatario/empresa",
-  "receiptNumber": "número de comprobante si existe (ej: Comprobante Nro. 590709020900)",
-  "isValid": true/false,
-  "confidence": "porcentaje de confianza (0-100)"
+  // === PARÁMETROS CRÍTICOS (OBLIGATORIOS) ===
+  "transactionNumber": "número de transacción/referencia principal",
+  "amount": número decimal (ej: 12.08),
+  "currency": "USD" o moneda,
+  "transactionDate": "YYYY-MM-DD",
+  "transactionTime": "HH:MM:SS",
+  "paymentMethod": "payphone|transferencia_interbancaria|transferencia_mismo_banco|deposito_efectivo|tarjeta_credito|tarjeta_debito|paypal|otro",
+  "transactionStatus": "approved|pending|rejected|cancelled",
+  
+  // === PARÁMETROS IMPORTANTES ===
+  "bankSender": "nombre del banco emisor",
+  "bankReceiver": "nombre del banco receptor",
+  "accountNumberDestination": "número de cuenta destino (limpio, sin guiones)",
+  "accountNumberSource": "número de cuenta origen (puede estar parcial: ****1234)",
+  "accountHolderSource": "nombre del pagador en MAYÚSCULAS",
+  "authorizationNumber": "código de autorización (ej: W70613140 para Payphone)",
+  "receiptNumber": "número de comprobante visible",
+  
+  // === PARÁMETROS ADICIONALES ===
+  "transactionDescription": "concepto/descripción del pago",
+  "paymentChannel": "web|mobile_app|physical_pos|atm|branch",
+  "cardType": "visa|mastercard|diners|amex|alia|null",
+  "cardLastFour": "últimos 4 dígitos de tarjeta o null",
+  "transactionFee": número decimal de comisión o 0,
+  
+  // === VALIDACIÓN ===
+  "isValid": true o false (si el pago está aprobado y completo),
+  "confidence": número 0-100 (tu confianza en la extracción)
 }
 
+═══════════════════════════════════════════════════════════
 FORMATOS DE COMPROBANTES RECONOCIDOS:
+═══════════════════════════════════════════════════════════
 
-1. PAYPHONE (Ecuador) - FORMATO OFICIAL ppls.me:
-   CARACTERÍSTICAS VISUALES EXACTAS:
-   - Logo "payphone" en la parte superior
-   - Estado de la transacción: "Aprobada" en color VERDE (es texto verde, no un banner)
-   - Monto: "USD 12.08" (o cualquier valor) en grande, centrado
-   - Descripción principal: "PAGO APROBADO" en texto grande
-   - Descripción secundaria: "Coworkia hoy desk" o "Coworkia sala" (el concepto de pago)
-   
-   SECCIÓN "Detalle de transacción":
-   - Fecha: formato "DD/MM/YYYY HH:MM" (ej: "18/11/2025 14:12")
-   - No. Transacción: número de 8 dígitos (ej: "70613140")
-   - No. Autorización: empieza con "W" + número (ej: "W70613140")
-   - Persona: nombre del pagador en mayúsculas (ej: "DIEGO VILLOTA")
-   
-   PIE DE PÁGINA:
-   - Logos de seguridad: Verified by VISA, MasterCard SecureCode, PCI DSS
-   - Texto: "Powered by payphone" al final
-   
-   REGLAS DE VALIDACIÓN:
-   - Si ves "Aprobada" (en verde) + monto "USD X.XX" + "PAGO APROBADO" → ES 100% VÁLIDO
-   - transactionNumber = el valor de "No. Transacción" (8 dígitos)
-   - receiptNumber = el valor de "No. Autorización" (W + 8 dígitos)
-   - paymentMethod = "payphone"
-   - bank = "Payphone"
-   - isValid = true
-   - confidence = 95
-   - Fecha debe convertirse de DD/MM/YYYY a YYYY-MM-DD
+1️⃣ PAYPHONE (Ecuador) - FORMATO OFICIAL ppls.me:
+   CARACTERÍSTICAS: Logo "payphone", "Aprobada" verde, "PAGO APROBADO"
+   EXTRAE: No. Transacción (8 dígitos), No. Autorización (W+número), Persona, Fecha DD/MM/YYYY
+   PARÁMETROS: paymentMethod="payphone", bankSender="Payphone", transactionStatus="approved"
 
-2. TRANSFERENCIAS BANCARIAS (Ecuador):
-   - Logo del banco o cooperativa
-   - "Comprobante de transferencia" o "Transacción exitosa"
-   - Monto, fecha, cuenta origen/destino
-   - Número de referencia bancaria
-   - Bancos aceptados: Pichincha, Guayaquil, Pacífico, Produbanco, Bolivariano, Internacional, 
-     Austro, Procredit, Solidario, BanEcuador, y todas las cooperativas reguladas
-   - ES VÁLIDO si es de un banco/cooperativa ecuatoriano
+2️⃣ TRANSFERENCIAS BANCARIAS: 
+   Bancos Ecuador: Pichincha, Guayaquil, Produbanco, etc.
+   EXTRAE: Cuentas origen/destino, referencia, banco emisor/receptor
+   PARÁMETROS: paymentMethod="transferencia_interbancaria", bankSender y bankReceiver
 
-3. TARJETAS DE CRÉDITO/DÉBITO:
-   - Visa, Mastercard, Diners Club, American Express, Alia
-   - Terminal de pago (POS) físico o digital
-   - Últimos 4 dígitos de tarjeta
-   - Código de autorización
-   - Monto y fecha
-   
-4. PAYPAL:
-   - Logo de PayPal
-   - "Payment Successful" o "Pago exitoso"
-   - Email del destinatario
-   - Transaction ID
-   - Monto en USD
+3️⃣ TARJETAS: Visa, Mastercard, Diners, AmEx
+   EXTRAE: Últimos 4 dígitos, código autorización, tipo tarjeta
+   PARÁMETROS: paymentMethod="tarjeta_credito", cardType, cardLastFour
 
-REGLAS CRÍTICAS:
-- Si ves logo de PAYPHONE + "PAGO APROBADO" → ES VÁLIDO (isValid: true, confidence: 95)
-- El "transactionNumber" puede estar como "No. Transacción" o "No. Autorización"
-- El "receiptNumber" es el número visible del comprobante digital
-- Para Payphone: paymentMethod = "payphone", bank = "Payphone"
-- Si no encuentras algún dato, usa null
-- Solo extrae información que esté claramente visible
-- Fecha de Payphone viene en formato DD/MM/YYYY HH:MM, conviértela a YYYY-MM-DD
+REGLAS: 
+- Fechas a YYYY-MM-DD
+- Limpiar números de cuenta (sin guiones)
+- Nombres en MAYÚSCULAS
+- null si no encuentras
+- isValid=true solo si approved y monto visible
 
-Responde SOLO con el JSON, sin texto adicional.`;
+Responde SOLO con el JSON.`;
 
   const result = await analyzeImage(imageUrl, prompt, {
-    temperature: 0.1, // Muy baja para consistencia
-    max_tokens: 300
+    temperature: 0.1,
+    max_tokens: 600,
+    detail: 'high'
   });
 
   if (!result.success) {
@@ -234,7 +226,6 @@ Responde SOLO con el JSON, sin texto adicional.`;
   }
 
   try {
-    // Extraer JSON de la respuesta
     const jsonMatch = result.content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error('No se encontró JSON válido en la respuesta');
@@ -242,9 +233,38 @@ Responde SOLO con el JSON, sin texto adicional.`;
 
     const paymentData = JSON.parse(jsonMatch[0]);
     
+    // Normalizar datos
+    const normalizedData = {
+      transactionNumber: paymentData.transactionNumber,
+      amount: parseFloat(paymentData.amount) || null,
+      currency: paymentData.currency || 'USD',
+      transactionDate: paymentData.transactionDate,
+      transactionTime: paymentData.transactionTime,
+      paymentMethod: paymentData.paymentMethod,
+      transactionStatus: paymentData.transactionStatus,
+      bankSender: paymentData.bankSender,
+      bankReceiver: paymentData.bankReceiver,
+      accountNumberDestination: paymentData.accountNumberDestination,
+      accountNumberSource: paymentData.accountNumberSource,
+      accountHolderSource: paymentData.accountHolderSource,
+      authorizationNumber: paymentData.authorizationNumber,
+      receiptNumber: paymentData.receiptNumber,
+      transactionDescription: paymentData.transactionDescription,
+      paymentChannel: paymentData.paymentChannel,
+      cardType: paymentData.cardType,
+      cardLastFour: paymentData.cardLastFour,
+      transactionFee: parseFloat(paymentData.transactionFee) || 0,
+      isValid: paymentData.isValid || false,
+      confidence: parseInt(paymentData.confidence) || 0,
+      // Legacy compatibility
+      date: paymentData.transactionDate,
+      time: paymentData.transactionTime,
+      bank: paymentData.bankSender
+    };
+    
     return {
       success: true,
-      data: paymentData,
+      data: normalizedData,
       rawResponse: result.content,
       usage: result.usage
     };

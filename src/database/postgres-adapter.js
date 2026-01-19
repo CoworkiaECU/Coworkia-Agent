@@ -339,13 +339,122 @@ class PostgresAdapter {
           membership_activated BOOLEAN DEFAULT FALSE,
           activation_date TIMESTAMP,
           monthly_fee DECIMAL(10,2),
-          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'tour_scheduled', 'negotiating', 'accepted', 'active', 'cancelled', 'expired')),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'pending_payment', 'tour_scheduled', 'negotiating', 'accepted', 'active', 'cancelled', 'expired')),
           assigned_to TEXT,
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
         )
+      `);
+
+      // Tabla de pagos de membresías (VisionAI - 20 parámetros)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS membership_payments (
+          id TEXT PRIMARY KEY,
+          membership_lead_id TEXT NOT NULL,
+          user_phone TEXT NOT NULL,
+          
+          -- PARÁMETROS CRÍTICOS (OBLIGATORIOS)
+          amount DECIMAL(10,2) NOT NULL,
+          transaction_date DATE NOT NULL,
+          transaction_time TIME,
+          transaction_number TEXT NOT NULL,
+          payment_method TEXT NOT NULL,
+          
+          -- PARÁMETROS IMPORTANTES
+          bank_sender TEXT,
+          bank_receiver TEXT,
+          account_number_destination TEXT,
+          account_number_source TEXT,
+          account_holder_source TEXT,
+          authorization_number TEXT,
+          receipt_number TEXT,
+          
+          -- PARÁMETROS ADICIONALES
+          currency TEXT DEFAULT 'USD',
+          transaction_description TEXT,
+          transaction_status TEXT DEFAULT 'approved',
+          payment_channel TEXT,
+          card_type TEXT,
+          card_last_four TEXT,
+          transaction_fee DECIMAL(10,2) DEFAULT 0,
+          
+          -- METADATA DE ANÁLISIS
+          confidence_score INTEGER,
+          image_url TEXT,
+          raw_vision_data JSONB,
+          validation_warnings JSONB,
+          
+          -- ESTADO DE PROCESAMIENTO
+          status TEXT DEFAULT 'verified' CHECK (status IN ('pending', 'verified', 'rejected', 'flagged', 'manual_review')),
+          verification_method TEXT DEFAULT 'vision_ai',
+          verified_by TEXT,
+          verified_at TIMESTAMP,
+          rejection_reason TEXT,
+          
+          -- AUDITORÍA
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          processed_at TIMESTAMP,
+          
+          FOREIGN KEY (membership_lead_id) REFERENCES membership_leads(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de pagos de reservas (mismo esquema para Aurora)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS reservation_payments (
+          id TEXT PRIMARY KEY,
+          reservation_id TEXT NOT NULL,
+          user_phone TEXT NOT NULL,
+          
+          -- Mismos campos que membership_payments
+          amount DECIMAL(10,2) NOT NULL,
+          transaction_date DATE NOT NULL,
+          transaction_time TIME,
+          transaction_number TEXT NOT NULL,
+          payment_method TEXT NOT NULL,
+          bank_sender TEXT,
+          bank_receiver TEXT,
+          account_number_destination TEXT,
+          account_number_source TEXT,
+          account_holder_source TEXT,
+          authorization_number TEXT,
+          receipt_number TEXT,
+          currency TEXT DEFAULT 'USD',
+          transaction_description TEXT,
+          transaction_status TEXT DEFAULT 'approved',
+          payment_channel TEXT,
+          card_type TEXT,
+          card_last_four TEXT,
+          transaction_fee DECIMAL(10,2) DEFAULT 0,
+          confidence_score INTEGER,
+          image_url TEXT,
+          raw_vision_data JSONB,
+          validation_warnings JSONB,
+          status TEXT DEFAULT 'verified' CHECK (status IN ('pending', 'verified', 'rejected', 'flagged', 'manual_review')),
+          verification_method TEXT DEFAULT 'vision_ai',
+          verified_by TEXT,
+          verified_at TIMESTAMP,
+          rejection_reason TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          processed_at TIMESTAMP,
+          
+          FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Crear índice único para evitar duplicados por transaction_number
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_membership_payments_transaction_unique 
+        ON membership_payments(transaction_number);
+        
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_reservation_payments_transaction_unique 
+        ON reservation_payments(transaction_number);
       `);
 
       // ===================================================================
@@ -466,6 +575,18 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_membership_leads_status ON membership_leads(status);
         CREATE INDEX IF NOT EXISTS idx_membership_leads_created ON membership_leads(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_membership_leads_tour ON membership_leads(tour_scheduled);
+        
+        -- Índices para tablas de pagos
+        CREATE INDEX IF NOT EXISTS idx_membership_payments_lead ON membership_payments(membership_lead_id);
+        CREATE INDEX IF NOT EXISTS idx_membership_payments_user ON membership_payments(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_membership_payments_date ON membership_payments(transaction_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_membership_payments_status ON membership_payments(status);
+        CREATE INDEX IF NOT EXISTS idx_membership_payments_confidence ON membership_payments(confidence_score);
+        
+        CREATE INDEX IF NOT EXISTS idx_reservation_payments_reservation ON reservation_payments(reservation_id);
+        CREATE INDEX IF NOT EXISTS idx_reservation_payments_user ON reservation_payments(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_reservation_payments_date ON reservation_payments(transaction_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_reservation_payments_status ON reservation_payments(status);
         
         -- Índices para nuevas tablas
         CREATE INDEX IF NOT EXISTS idx_agent_conversations_user_agent ON agent_conversations(user_phone, agent);

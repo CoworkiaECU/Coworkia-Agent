@@ -7,6 +7,7 @@ import { loggers } from '../../utils/logger.js';
 import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
+import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout } from '../../servicios/axel-photo-collector.js';
@@ -856,6 +857,56 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
       }
       
       return; // No continuar con flujo normal
+    }
+    
+    // 💼 ALUNA PAYMENT RECEIPTS: Verificar comprobantes de membresías
+    if (mediaUrl && type === 'image' && profile.activeAgent === 'ALUNA') {
+      const messageData = { type, media: { url: mediaUrl } };
+      
+      if (isReceiptImage(messageData)) {
+        console.log('[ALUNA] 💳 Comprobante de membresía detectado');
+        
+        const pendingLead = await findPendingMembershipLead(userId);
+        
+        if (pendingLead && pendingLead.status === 'pending_payment') {
+          console.log('[ALUNA] 📋 Lead pendiente encontrado:', pendingLead.id);
+          
+          const paymentResult = await processMembershipPayment(messageData, profile);
+          
+          await enviarWhatsApp(userId, paymentResult.message);
+          await saveConversationMessage(userId, { 
+            role: 'assistant', 
+            content: paymentResult.message, 
+            agent: 'ALUNA' 
+          });
+          
+          await saveInteraction({
+            userId,
+            agent: 'ALUNA',
+            agentName: 'Aluna - Closer Membresías',
+            intentReason: 'membership_payment_verification',
+            input: `[RECEIPT:${type}]`,
+            output: paymentResult.message,
+            meta: { 
+              envelope, 
+              paymentVerified: paymentResult.autoApproved || false,
+              manualReview: paymentResult.manualReview || false,
+              rejected: paymentResult.rejected || false
+            }
+          });
+          
+          return; // No continuar con flujo normal
+        }
+        
+        // Si no hay lead pendiente, informar al usuario
+        console.log('[ALUNA] ⚠️ No hay lead pendiente para este comprobante');
+        await enviarWhatsApp(userId, 
+          `📸 Recibí tu comprobante, pero no encuentro solicitudes de membresía pendientes de pago.\n\n` +
+          `¿Necesitas información sobre nuestros planes? Escribe "planes" 😊`
+        );
+        
+        return;
+      }
     }
     // “Media event” para Aurora Core: si no hay texto pero hay media, damos un texto técnico controlado
     let auroraInput = processedText;

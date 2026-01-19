@@ -821,23 +821,34 @@ _(Intento ${ambiguousAttempts}/3)_`,
  */
 export async function processConfirmationResponse(message, userProfile) {
   try {
-    const pendingConfirmation = userProfile.pendingConfirmation;
+    const pendingConfirmation = await getPendingConfirmation(userProfile.userId);
     
     if (!pendingConfirmation) {
       return {
         success: false,
-        message: 'No tienes ninguna reserva pendiente de confirmación.',
+        message: 'No tienes ninguna solicitud pendiente de confirmación.',
         needsAction: false
       };
     }
 
     // Detectar tipo de respuesta
     if (isPositiveResponse(message)) {
-      return await processPositiveConfirmation(userProfile, pendingConfirmation);
+      // Si tiene agentName (ALUNA, PAULA, etc), procesarlo de forma especializada
+      if (pendingConfirmation.agentName) {
+        return await processSpecializedConfirmation(userProfile.userId, pendingConfirmation, userProfile);
+      }
+      // Si no, es una reserva de Aurora (formato legacy)
+      return await processPositiveConfirmation(userProfile, userProfile.pendingConfirmation);
     }
     
     if (isNegativeResponse(message)) {
-      return await processNegativeConfirmation(userProfile, message);
+      // Limpiar confirmación pendiente sin importar el tipo
+      await clearPendingConfirmation(userProfile.userId);
+      return {
+        success: false,
+        message: 'Entendido, cancelé la solicitud. Si cambias de opinión, solo escríbeme nuevamente! 😊',
+        needsAction: false
+      };
     }
     
     // Respuesta ambigua
@@ -848,6 +859,53 @@ export async function processConfirmationResponse(message, userProfile) {
     return {
       success: false,
       message: '❌ Error procesando tu respuesta. Intenta nuevamente.',
+      needsAction: false
+    };
+  }
+}
+
+/**
+ * 🎯 Procesa confirmaciones especializadas de otros agentes (ALUNA, PAULA, etc.)
+ */
+async function processSpecializedConfirmation(userId, pendingData, userProfile) {
+  console.log(`[Confirmation] 🎯 Procesando confirmación especializada para ${pendingData.agentName}`);
+  
+  try {
+    let result;
+    
+    switch (pendingData.agentName) {
+      case 'ALUNA': {
+        const { confirmMembershipLead } = await import('./membership-confirmation.js');
+        result = await confirmMembershipLead(userId, userProfile);
+        break;
+      }
+      case 'PAULA': {
+        const { confirmRealEstateLead } = await import('./real-estate-confirmation.js');
+        result = await confirmRealEstateLead(userId, userProfile);
+        break;
+      }
+      // Agregar más agentes aquí cuando se implementen
+      default:
+        console.error(`[Confirmation] ⚠️ Agente no soportado: ${pendingData.agentName}`);
+        return {
+          success: false,
+          message: 'Error: Este tipo de confirmación aún no está implementado.',
+          needsAction: false
+        };
+    }
+    
+    return {
+      success: result.success,
+      message: result.message,
+      needsAction: false,
+      actionType: 'specialized_confirmation'
+    };
+    
+  } catch (error) {
+    console.error(`[Confirmation] ❌ Error en confirmación especializada:`, error);
+    return {
+      success: false,
+      message: `Error al procesar tu solicitud: ${error.message}`,
       needsAction: false
     };
   }

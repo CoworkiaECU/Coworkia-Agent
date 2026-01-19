@@ -1,7 +1,11 @@
 /**
  * 📧 Templates de Email para Agentes Especializados
  * Cada empresa tiene su propio diseño HTML con branding
+ * ✨ Con soporte para Dark Mode
  */
+
+import { LOGOS_BASE64, DARK_MODE_CSS } from './email-assets.js';
+import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
 
 /**
  * 🛡️ ADRIANA - SegPopular (Seguros)
@@ -35,47 +39,39 @@ export function generateAdrianaEmailHTML(leadData) {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Solicitud de Seguro - SegPopular</title>
+      ${DARK_MODE_CSS}
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
       
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
         <!-- Header SegPopular - Fondo Amarillo Característico -->
-        <div style="background: #FFD700; text-align: center; padding: 40px 20px;">
-          <!-- Logo SegPopular inline -->
-          <div style="margin-bottom: 20px;">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" 
+        <div class="brand-yellow" style="background: #FFD700; text-align: center; padding: 40px 20px;">
+          <!-- Logo SegPopular PNG embebido base64 -->
+          <div style="margin-bottom: 25px;">
+            <img src="data:image/png;base64,${LOGOS_BASE64.segpopular}" 
                  alt="SegPopular" 
-                 style="max-width: 240px; height: auto; display: block; margin: 0 auto;" />
+                 style="max-width: 280px; height: auto; display: block; margin: 0 auto;" />
           </div>
-          <!-- Fallback text logo si imagen no carga -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-family: 'Brush Script MT', 'Lucida Handwriting', cursive; color: #1E3A8A; font-size: 58px; font-weight: 400; letter-spacing: 2px; margin-bottom: -5px; font-style: italic; text-shadow: 3px 3px 6px rgba(0,0,0,0.15); line-height: 1;">
-              SegPopular
-            </div>
-            <div style="font-family: 'Helvetica Neue', 'Arial', sans-serif; color: #1E3A8A; font-size: 13px; font-weight: 500; letter-spacing: 3px; text-transform: lowercase; margin-top: 8px;">
-              asesores de seguros populares
-            </div>
-          </div>
-          <div style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 3px solid #1E3A8A;">
-            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #1E3A8A;">✅ Solicitud Recibida</h1>
-            <p style="margin: 8px 0 0 0; color: #374151; font-size: 15px;">Adriana te contactará pronto</p>
+          <div class="card-white shadow" style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 3px solid #1E3A8A;">
+            <h1 class="brand-blue" style="margin: 0; font-size: 22px; font-weight: 600; color: #1E3A8A;">✅ Solicitud Recibida</h1>
+            <p class="text-gray" style="margin: 8px 0 0 0; color: #374151; font-size: 15px;">Adriana te contactará pronto</p>
           </div>
         </div>
 
-        <div style="padding: 30px;">
+        <div class="content-section" style="padding: 30px;">
           
           <!-- Saludo personalizado -->
           <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
-            <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Recibimos tu solicitud de seguro de <strong style="color: #1E3A8A;">${insuranceType}</strong>
+            <h2 class="text-dark" style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
+            <p class="text-gray" style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
+              Recibimos tu solicitud de seguro de <strong class="brand-blue" style="color: #1E3A8A;">${insuranceType}</strong>
             </p>
           </div>
 
           <!-- Detalles de la solicitud -->
           <div style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.3)); border-left: 4px solid #1E3A8A; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(30,58,138,0.2);">
-            <h3 style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">📋 TUS DATOS</h3>
+            <h3 class="brand-blue" style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">📋 TUS DATOS</h3>
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
@@ -445,53 +441,48 @@ export function generateEnzoEmailHTML(leadData) {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Proyecto de Marketing - MarketingLab</title>
+      ${DARK_MODE_CSS}
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
       
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
-        <!-- Header MarketingLab -->
-        <div style="background: linear-gradient(135deg, #84CC16 0%, #65A30D 100%); text-align: center; padding: 40px 20px;">
-          <!-- Logo MarketingLab inline -->
-          <div style="margin-bottom: 20px;">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" 
+        <!-- Header MarketingLab - Gris sobrio con acentos verdes -->
+        <div style="background: linear-gradient(135deg, #374151 0%, #1F2937 100%); text-align: center; padding: 40px 20px;">
+          <!-- Logo MarketingLab PNG embebido base64 -->
+          <div style="margin-bottom: 25px;">
+            <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}" 
                  alt="MarketingLab" 
-                 style="max-width: 220px; height: auto; display: block; margin: 0 auto; margin-bottom: 15px;" />
+                 style="max-width: 260px; height: auto; display: block; margin: 0 auto;" />
           </div>
-          <!-- Fallback text logo -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-family: 'Impact', 'Haettenschweiler', 'Arial Black', sans-serif; color: #F9FAFB; font-size: 52px; font-weight: 900; letter-spacing: -2px; margin-bottom: 5px; text-transform: lowercase; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">
-              marketinglab
-            </div>
-          </div>
-          <div style="color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 600; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
+          <div style="color: rgba(255,255,255,0.85); font-size: 15px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
             Estrategias que funcionan
           </div>
-          <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ Proyecto Registrado</h1>
-            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">Enzo revisará tu caso</p>
+          <div class="card-white shadow" style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-left: 4px solid #84CC16;">
+            <h1 class="text-dark" style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ Proyecto Registrado</h1>
+            <p class="text-gray" style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">Enzo revisará tu caso</p>
           </div>
         </div>
 
-        <div style="padding: 30px;">
+        <div class="content-section" style="padding: 30px;">
           
           <!-- Saludo personalizado -->
           <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
-            <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Tu proyecto de <strong style="color: #65A30D;">${projectType}</strong> está en buenas manos
+            <h2 class="text-dark" style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
+            <p class="text-gray" style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
+              Tu proyecto de <strong class="brand-green" style="color: #84CC16;">${projectType}</strong> está en buenas manos
             </p>
           </div>
 
           <!-- Detalles del proyecto -->
-          <div style="background: linear-gradient(135deg, rgba(132,204,22,0.12), rgba(101,163,13,0.12)); border-left: 4px solid #84CC16; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(132,204,22,0.15);">
-            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🎯 TU PROYECTO</h3>
+          <div style="background: linear-gradient(135deg, rgba(249,250,251,0.5), rgba(243,244,246,0.5)); border-left: 4px solid #84CC16; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <h3 class="text-dark" style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🎯 TU PROYECTO</h3>
             
             <div style="margin: 20px 0;">
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
+              <div class="card-white-border" style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
                 <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">🎯</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${projectType}</span>
+                  <span class="brand-green" style="color: #84CC16; font-size: 20px; margin-right: 12px;">🎯</span>
+                  <span class="text-dark" style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${projectType}</span>
                 </div>
               </div>
               
@@ -595,7 +586,7 @@ export function generateEnzoEmailHTML(leadData) {
  * 🏘️ PAULA - PropElite Bienes Raíces (Real Estate Expert)
  * Colores: Rosa elegante (#DB2777, #EC4899) + Verde esmeralda (#059669)
  */
-export function generatePaulaEmailHTML(leadData) {
+export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
   const {
     userName,
     operationType,
@@ -607,6 +598,14 @@ export function generatePaulaEmailHTML(leadData) {
     leadId
   } = leadData;
 
+  // Calcular lead score si los datos están disponibles
+  let leadScoreHTML = '';
+  if (leadScoreData) {
+    const score = calcularLeadScore(leadScoreData);
+    const reporte = generarReporteLeadScore(leadScoreData, score);
+    leadScoreHTML = reporte.html;
+  }
+
   return `
     <!DOCTYPE html>
     <html>
@@ -614,136 +613,124 @@ export function generatePaulaEmailHTML(leadData) {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Búsqueda de Propiedad - PropElite</title>
+      <style>
+        ${DARK_MODE_CSS}
+      </style>
     </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
+    <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #EDE8D0; background-color: #3D4436; margin: 0; padding: 20px;">
       
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: #F5F5DC; border: 2px solid #D4AF37; border-radius: 0; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);">
         
-        <!-- Header PropElite - Diseño elegante para Paula -->
-        <div style="background: linear-gradient(135deg, #DB2777 0%, #059669 100%); text-align: center; padding: 40px 20px;">
-          <!-- Logo PropElite con diseño elegante -->
-          <div style="margin-bottom: 20px;">
-            <div style="background: white; width: 140px; height: 140px; margin: 0 auto 15px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.2); border: 4px solid rgba(255,255,255,0.3);">
-              <div style="font-family: 'Georgia', serif; color: #DB2777; font-size: 48px; font-weight: 700; margin-bottom: -5px;">P</div>
-              <div style="font-family: 'Georgia', serif; color: #059669; font-size: 24px; font-weight: 400; font-style: italic;">Elite</div>
+        <!-- Header PropElite - Diseño Ultra Minimalista Wordmark -->
+        <div style="background: #3D4436; text-align: center; padding: 60px 20px 50px 20px; border-bottom: 1px solid rgba(212,175,55,0.3);">
+          <!-- Logo Wordmark Ultra Minimalista -->
+          <div style="margin-bottom: 45px;">
+            <!-- Prop Elite - Wordmark principal con potencia -->
+            <div style="font-family: 'Georgia', serif; color: #D4AF37; font-size: 64px; font-weight: 700; letter-spacing: 2px; margin-bottom: 15px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+              Prop Elite
             </div>
-            <div style="font-family: 'Georgia', serif; color: white; font-size: 38px; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px;">
-              PropElite
-            </div>
-            <div style="font-family: 'Arial', sans-serif; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 400; letter-spacing: 2px; margin-bottom: 10px;">
-              Bienes Raíces
+            <!-- Prime Living - Tagline -->
+            <div style="font-family: 'Helvetica Neue', 'Arial', sans-serif; color: #EDE8D0; font-size: 13px; font-weight: 400; letter-spacing: 5px; text-transform: uppercase; opacity: 0.9; margin-top: 20px;">
+              PRIME LIVING
             </div>
           </div>
-          <div style="color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px; font-style: italic;">
-            Tu hogar perfecto te espera
-          </div>
-          <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ Búsqueda Iniciada</h1>
-            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">Paula encontrará opciones para ti</p>
+          
+          <!-- Línea divisoria sutil -->
+          <div style="height: 1px; width: 80px; background: rgba(212,175,55,0.4); margin: 35px auto 40px auto;"></div>
+          
+          <!-- Card de confirmación -->
+          <div class="card-white shadow" style="background: #EDE8D0; color: #3D4436; padding: 28px 40px; border-radius: 0; display: inline-block; box-shadow: 0 8px 30px rgba(0,0,0,0.25); border: 1px solid #D4AF37;">
+            <h1 class="text-dark" style="margin: 0; font-size: 20px; font-weight: 600; color: #3D4436; letter-spacing: 3px; font-family: 'Georgia', serif; text-transform: uppercase;">Búsqueda Iniciada</h1>
+            <p class="text-gray" style="margin: 10px 0 0 0; color: #52594B; font-size: 13px; font-family: 'Arial', sans-serif; letter-spacing: 1px;">Su búsqueda exclusiva ha comenzado</p>
           </div>
         </div>
 
-        <div style="padding: 30px;">
+        <div class="content-section" style="padding: 45px 40px; background: #F5F5DC;">
           
           <!-- Saludo personalizado -->
-          <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
-            <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Iniciamos la búsqueda de tu <strong style="color: #DB2777;">${propertyType}</strong>
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #D4AF37; padding-bottom: 30px;">
+            <h2 class="text-dark" style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; font-family: 'Georgia', serif; letter-spacing: 2px;">${userName}</h2>
+            <p class="text-gray" style="color: #52594B; font-size: 15px; margin: 0; font-family: 'Arial', sans-serif;">
+              Iniciamos la búsqueda de su <span style="color: #D4AF37; font-weight: 700; font-family: 'Georgia', serif;">${propertyType}</span>
             </p>
           </div>
 
           <!-- Detalles de la búsqueda -->
-          <div style="background: linear-gradient(135deg, rgba(219,39,119,0.1), rgba(5,150,105,0.1)); border-left: 4px solid #DB2777; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(219,39,119,0.2);">
-            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🏘️ TU BÚSQUEDA</h3>
+          <div class="card-white-border" style="background: #4A5241; border: 2px solid #D4AF37; border-radius: 0; padding: 35px; margin: 35px 0; box-shadow: 0 4px 20px rgba(74,82,65,0.3);">
+            <h3 class="text-dark" style="color: #D4AF37; margin-top: 0; font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif; border-bottom: 2px solid #D4AF37; padding-bottom: 15px; margin-bottom: 25px;">Especificaciones</h3>
             
-            <div style="margin: 20px 0;">
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #DB2777; font-size: 20px; margin-right: 12px;">🏠</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Operación: ${operationType}</span>
-                </div>
+            <div style="margin: 25px 0;">
+              <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Operación</div>
+                <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${operationType}</div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #DB2777; font-size: 20px; margin-right: 12px;">🏘️</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${propertyType}</span>
-                </div>
+              <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Tipo de Propiedad</div>
+                <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyType}</div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #059669; font-size: 20px; margin-right: 12px;">📍</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Zona: ${zone}</span>
-                </div>
+              <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Zona</div>
+                <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${zone}</div>
               </div>
               
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #DB2777; font-size: 20px; margin-right: 12px;">💰</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Presupuesto: ${budgetRange}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #059669; font-size: 20px; margin-right: 12px;">📧</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(219,39,119,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #DB2777; font-size: 20px; margin-right: 12px;">📱</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
-                </div>
+              <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Presupuesto</div>
+                <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${budgetRange}</div>
               </div>
             </div>
           </div>
 
+          <!-- Contacto -->
+          <div class="card-white-border" style="background: #EDE8D0; border: 2px solid #D4AF37; border-radius: 0; padding: 30px; margin: 30px 0;">
+            <div style="margin: 12px 0;">
+              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Email</span>
+              <div class="text-dark" style="color: #3D4436; font-weight: 600; font-size: 15px; font-family: 'Arial', sans-serif; margin-top: 6px;">${email}</div>
+            </div>
+            <div style="height: 2px; background: #D4AF37; margin: 20px 0;"></div>
+            <div style="margin: 12px 0;">
+              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Teléfono</span>
+              <div class="text-dark" style="color: #3D4436; font-weight: 600; font-size: 15px; font-family: 'Arial', sans-serif; margin-top: 6px;">${phone}</div>
+            </div>
+          </div>
+
           <!-- Próximos pasos -->
-          <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #059669; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Proceso:</h3>
-            <div style="color: #374151; font-size: 15px; line-height: 1.8;">
-              <p style="margin: 10px 0;">
-                <strong style="color: #DB2777;">1.</strong> Paula buscará propiedades que coincidan con tus criterios
+          <div class="card-white-border" style="background: #4A5241; border: 2px solid #D4AF37; border-radius: 0; padding: 35px; margin: 35px 0;">
+            <h3 style="color: #D4AF37; font-size: 15px; margin-bottom: 25px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif;">Proceso Elite</h3>
+            <div style="color: #EDE8D0; font-size: 15px; line-height: 2.2; font-family: 'Georgia', serif;">
+              <p style="margin: 15px 0;">
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">I.</span> &nbsp; Selección personalizada de propiedades exclusivas
               </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #DB2777;">2.</strong> Te enviaremos opciones con fotos y detalles
+              <p style="margin: 15px 0;">
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">II.</span> &nbsp; Presentación detallada con documentación completa
               </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #DB2777;">3.</strong> Agendaremos visitas a las que te interesen
+              <p style="margin: 15px 0;">
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">III.</span> &nbsp; Visitas privadas coordinadas a su conveniencia
               </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #DB2777;">4.</strong> Te acompañaremos hasta cerrar el trato
+              <p style="margin: 15px 0;">
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">IV.</span> &nbsp; Asesoría completa hasta la transacción final
               </p>
             </div>
           </div>
 
           <!-- Referencia -->
-          <div style="background: rgba(219,39,119,0.1); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid #DB2777;">
-            <p style="color: #374151; font-size: 13px; margin: 0;">
+          <div style="background: #EDE8D0; border-radius: 0; padding: 25px; margin: 35px 0 0 0; border-top: 2px solid #D4AF37;">
+            <p class="text-muted" style="color: #52594B; font-size: 11px; margin: 0; font-family: 'Arial', sans-serif; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;">
               <strong>Referencia:</strong> ${leadId}
             </p>
           </div>
 
-          <!-- Contacto -->
-          <div style="text-align: center; margin: 25px 0;">
-            <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              💬 ¿Quieres más detalles?
-            </p>
-            <a href="https://wa.me/593994837117?text=Hola%20Paula,%20quiero%20ver%20opciones%20${leadId}" 
-               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              📱 Contactar a Paula por WhatsApp
-            </a>
-          </div>
+          <!-- Lead Score - Internal Qualification -->
+          ${leadScoreHTML}
 
-          <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(219,39,119,0.15), rgba(5,150,105,0.15)); border-radius: 12px; border: 2px solid #DB2777;">
-            <p style="color: #DB2777; font-size: 18px; font-weight: 700; margin: 0;">¡Encontraremos tu hogar ideal! 🏘️</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0; font-weight: 600;">Paula - PropElite Bienes Raíces</p>
-            <p style="color: #059669; font-size: 13px; margin: 5px 0; font-style: italic;">Real Estate Expert</p>
+          <!-- Footer Elite Minimalista -->
+          <div style="text-align: center; margin: 45px 0 0 0; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+            <!-- Wordmark pequeño -->
+            <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
+            <p style="color: #EDE8D0; font-size: 10px; margin: 8px 0 15px 0; font-family: 'Helvetica Neue', 'Arial', sans-serif; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">PRIME LIVING</p>
+            <div style="height: 1px; width: 60px; background: rgba(212,175,55,0.3); margin: 20px auto;"></div>
+            <p style="color: #EDE8D0; font-size: 11px; margin: 8px 0 0 0; font-family: 'Arial', sans-serif; opacity: 0.7;">Paula - Real Estate Advisor</p>
           </div>
 
         </div>
@@ -927,20 +914,107 @@ export function generateAlunaEmailHTML(leadData) {
 }
 
 /**
+ * � ALUNA - Coworkia Membresías
+ * Colores: Verde agua (#4ECDC4, #44A08D)
+ */
+export function generateAlunaEmailHTML(type, leadData) {
+  if (type === 'admin') {
+    return {
+      subject: `🎫 Nueva Solicitud Membresía - ${leadData.membershipType} - ${leadData.clientName}`,
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Nueva Solicitud - Aluna</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <h1 style="color: #4ECDC4; margin: 0 0 20px 0;">🎫 Nueva Solicitud de Membresía</h1>
+    <p style="font-size: 16px; color: #333;">¡Tienes un nuevo prospecto interesado!</p>
+    
+    <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #44A08D; margin: 0 0 15px 0;">📋 Detalles del Lead</h3>
+      <p><strong>ID:</strong> ${leadData.leadId}</p>
+      <p><strong>Membresía:</strong> ${leadData.membershipType}</p>
+      <p><strong>Precio:</strong> ${leadData.price}</p>
+      <p><strong>Inicio:</strong> ${leadData.startDate}</p>
+      <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
+      <p><strong>Cliente:</strong> ${leadData.clientName}</p>
+      <p><strong>Email:</strong> ${leadData.email}</p>
+      <p><strong>Teléfono:</strong> ${leadData.phone}</p>
+      <p><strong>Requisitos:</strong> ${leadData.specialRequirements}</p>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${leadData.whatsappLink}" style="display: inline-block; background: #25D366; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">💬 Contactar por WhatsApp</a>
+    </div>
+    
+    <p style="color: #666; font-size: 13px; text-align: center;">Aluna - Coworkia Business Center</p>
+  </div>
+</body>
+</html>`
+    };
+  } else {
+    return {
+      subject: `🎉 ¡Bienvenido a Coworkia! - ${leadData.membershipType}`,
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bienvenido - Coworkia</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px;">
+    <h1 style="color: #4ECDC4; text-align: center;">🎉 ¡Excelente decisión, ${leadData.clientName}!</h1>
+    <p style="font-size: 16px; color: #333; text-align: center;">Tu solicitud de <strong>${leadData.membershipType}</strong> ha sido recibida.</p>
+    
+    <div style="background: linear-gradient(135deg, #4ECDC4, #44A08D); color: white; border-radius: 12px; padding: 25px; margin: 25px 0;">
+      <h3 style="margin: 0 0 15px 0; font-size: 18px;">✨ Tu Plan</h3>
+      <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">${leadData.membershipType}</p>
+      <p style="font-size: 20px; margin: 5px 0;">${leadData.price}</p>
+      <ul style="list-style: none; padding: 0; margin: 15px 0 0 0;">
+        ${leadData.benefits.map(b => `<li style="margin: 8px 0;">✅ ${b}</li>`).join('')}
+      </ul>
+    </div>
+    
+    <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #44A08D; margin: 0 0 15px 0;">📅 Próximos Pasos</h3>
+      <ol style="color: #333;">
+        <li>Te contactaremos en 4-8 horas</li>
+        <li>Agendaremos tu tour del espacio</li>
+        <li>Responderemos todas tus preguntas</li>
+        <li>Procesaremos el pago</li>
+        <li>¡Empiezas a trabajar!</li>
+      </ol>
+    </div>
+    
+    ${leadData.calendarLink ? `<div style="text-align: center; margin: 25px 0;">
+      <a href="${leadData.calendarLink}" style="display: inline-block; background: #4ECDC4; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">📅 Ver en Google Calendar</a>
+    </div>` : ''}
+    
+    <p style="color: #666; font-size: 13px; text-align: center; margin-top: 30px;">Aluna - Coworkia Business Center<br>Tu espacio, tu productividad 🚀</p>
+  </div>
+</body>
+</html>`
+    };
+  }
+}
+
+/**
  * 📧 Función helper para elegir el template correcto según el agente
  */
-export function generateEmailForAgent(agentName, leadData) {
+export function generateEmailForAgent(agentName, type, leadData) {
   switch (agentName) {
     case 'ADRIANA':
-      return generateAdrianaEmailHTML(leadData);
+      return { subject: 'Solicitud de Seguro', html: generateAdrianaEmailHTML(leadData) };
     case 'AXEL':
-      return generateAxelEmailHTML(leadData);
+      return { subject: 'Solicitud de Cotización', html: generateAxelEmailHTML(leadData) };
     case 'ENZO':
-      return generateEnzoEmailHTML(leadData);
+      return { subject: 'Solicitud de Proyecto', html: generateEnzoEmailHTML(leadData) };
     case 'PAULA':
-      return generatePaulaEmailHTML(leadData);
+      return { subject: 'Solicitud Inmobiliaria', html: generatePaulaEmailHTML(leadData) };
     case 'ALUNA':
-      return generateAlunaEmailHTML(leadData);
+      return generateAlunaEmailHTML(type || 'admin', leadData);
     default:
       throw new Error(`Template no encontrado para agente: ${agentName}`);
   }

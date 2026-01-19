@@ -15,6 +15,7 @@ import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
 import { generateQuote } from '../../servicios/axel-quote-generator.js';
 import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
+import { processMembershipForm } from '../../servicios/membership-form.js';
 
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 
@@ -30,7 +31,8 @@ import {
   loadConversationHistory,
   saveConversationMessage,
   savePartialForm,
-  getPartialForm
+  getPartialForm,
+  getPendingConfirmation
 } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
@@ -610,7 +612,47 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const isFormContinuation = detectFormContinuation(processedText);
     const shouldActivateForm = isReservationIntent(processedText) || hasActiveForm || isFormContinuation;
     
-    if (shouldActivateForm) {
+    // 💼 ALUNA - Formulario de membresías
+    if (profile.activeAgent === 'ALUNA') {
+      // Detectar si el usuario muestra interés en una membresía
+      const membershipInterest = /\b(quiero|me interesa|necesito|busco|solicito)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText);
+      
+      if (membershipInterest || hasActiveForm) {
+        console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
+        try {
+          formResult = await processMembershipForm(userId, processedText, profile);
+          
+          if (formResult.isComplete) {
+            // Generar mensaje de confirmación con resumen
+            const confirmationMessage = `Perfecto! Déjame confirmar todos los datos:
+
+📋 RESUMEN DE TU MEMBRESÍA:
+${formResult.summary}
+
+✨ BENEFICIOS INCLUIDOS:
+${formResult.benefits || 'Múltiples beneficios según plan'}
+
+¿Todo correcto? Responde SI para confirmar y agendar tu tour del espacio 🏢`;
+
+            await enviarWhatsApp(userId, confirmationMessage);
+            await saveConversationMessage(userId, { role: 'assistant', content: confirmationMessage, agent: 'ALUNA' });
+            return; // Esperar confirmación
+          }
+          
+          if (formResult.needsMoreInfo && formResult.nextQuestion) {
+            await enviarWhatsApp(userId, formResult.nextQuestion);
+            await saveConversationMessage(userId, { role: 'assistant', content: formResult.nextQuestion, agent: 'ALUNA' });
+            return; // Esperar siguiente campo
+          }
+        } catch (error) {
+          console.error('[ALUNA-FORM] ❌ Error procesando formulario:', error);
+          // Continuar con flujo normal en caso de error
+        }
+      }
+    }
+    
+    // 🏢 AURORA - Formulario de reservas
+    if (shouldActivateForm && profile.activeAgent === 'AURORA') {
       console.log('[FORM] 🎯 Activando formulario:', { 
         isReservationIntent: isReservationIntent(processedText),
         hasActiveForm,
@@ -649,14 +691,96 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // Si hay confirmación pendiente, SOLO procesar si responde SI/NO
-    if (hasPendingConfirmation(profile)) {
-      const hasValidData = profile.pendingConfirmation?.date && profile.pendingConfirmation?.startTime;
-      if (!hasValidData) {
-        await clearPendingConfirmation(userId);
-        profile.pendingConfirmation = null;
-      } else {
+    // Verificar tanto el sistema legacy (profile.pendingConfirmation) como el nuevo sistema (getPendingConfirmation)
+    const legacyPending = hasPendingConfirmation(profile);
+    const newSystemPending = await getPendingConfirmation(userId).catch(() => null);
+    const hasPending = legacyPending || newSystemPending;
+    
+    if (hasPending) {
+      // Sistema legacy (Aurora)
+      if (legacyPending) {
+        const hasValidData = profile.pendingConfirmation?.date && profile.pendingConfirmation?.startTime;
+        if (!hasValidData) {
+          await clearPendingConfirmation(userId);
+          profile.pendingConfirmation = null;
+        } else {
+          const isPos = isPositiveResponse(processedText);
+          const isNeg = isNegativeResponse(processedText);
+          
+          // 🎯 BACKUP OPTIMIZATION: Solo procesar SI/NO explícitos para evitar falsos positivos
+          if (isPos || isNeg) {
+            console.log('[WASSENGER] ✅ Usuario tiene confirmación pendiente Y respuesta es SI/NO');
+            
+            const confirmationResult = await processConfirmationResponse(processedText, profile);
+            
+            // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
+            if (confirmationResult.success && isPos) {
+              profile.transactionStartedAt = null;
+              profile.transactionAgent = null;
+              profile.followUpSentAt = null;
+              await saveProfile(userId, profile);
+              console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
+            }
+            
+            // 📤 Enviar respuesta de confirmación
+            await enviarWhatsApp(userId, confirmationResult.message);
+            
+            // 💾 Guardar en historial
+            await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: profile.activeAgent || 'AURORA' });
+            
+            // 📊 Guardar interacción
+            await saveInteraction({
+              userId,
+              agent: profile.activeAgent || 'AURORA',
+              agentName: profile.activeAgent || 'Aurora Core',
+              intentReason: 'confirmation_response',
+              input: processedText,
+              output: confirmationResult.message,
+              meta: { 
+                envelope, 
+                confirmationSuccess: confirmationResult.success,
+                actionType: confirmationResult.actionType,
+                needsAction: confirmationResult.needsAction
+              }
+            });
+            
+            // 🚫 CRÍTICO: RETURN para no continuar con orquestador
+            console.log('[WASSENGER] 🛑 Confirmación procesada - NO continuar con orquestador');
+            return;
+          }
+          
+          // Si no es SI/NO explícito, continuar con orquestador normal
+          console.log('[WASSENGER] ⚠️ Confirmación pendiente pero respuesta NO es SI/NO - continuar con agente');
+        }
+      } 
+      // Sistema nuevo (ALUNA, PAULA, etc.)
+      else if (newSystemPending) {
         const isPos = isPositiveResponse(processedText);
         const isNeg = isNegativeResponse(processedText);
+        
+        if (isPos || isNeg) {
+          console.log(`[WASSENGER] ✅ ${newSystemPending.agentName} - Confirmación pendiente y respuesta SI/NO`);
+          
+          const confirmationResult = await processConfirmationResponse(processedText, profile);
+          
+          // 📤 Enviar respuesta
+          await enviarWhatsApp(userId, confirmationResult.message);
+          await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: newSystemPending.agentName });
+          await saveInteraction({
+            userId,
+            agent: newSystemPending.agentName,
+            agentName: newSystemPending.agentName,
+            intentReason: 'specialized_confirmation',
+            input: processedText,
+            output: confirmationResult.message,
+            meta: { envelope, success: confirmationResult.success }
+          });
+          
+          console.log('[WASSENGER] 🛑 Confirmación especializada procesada');
+          return;
+        }
+      }
+    }
         
         // 🎯 BACKUP OPTIMIZATION: Solo procesar SI/NO explícitos para evitar falsos positivos
         if (isPos || isNeg) {

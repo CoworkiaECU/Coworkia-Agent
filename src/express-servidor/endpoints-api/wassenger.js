@@ -781,54 +781,6 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
         }
       }
     }
-        
-        // 🎯 BACKUP OPTIMIZATION: Solo procesar SI/NO explícitos para evitar falsos positivos
-        if (isPos || isNeg) {
-          console.log('[WASSENGER] ✅ Usuario tiene confirmación pendiente Y respuesta es SI/NO');
-          
-          const confirmationResult = await processConfirmationResponse(processedText, profile);
-          
-          // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
-          if (confirmationResult.success && isPos) {
-            profile.transactionStartedAt = null;
-            profile.transactionAgent = null;
-            profile.followUpSentAt = null;
-            await saveProfile(userId, profile);
-            console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
-          }
-          
-          // 📤 Enviar respuesta de confirmación
-          await enviarWhatsApp(userId, confirmationResult.message);
-          
-          // 💾 Guardar en historial
-          await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: 'AURORA' });
-          
-          // 📊 Guardar interacción
-          await saveInteraction({
-            userId,
-            agent: 'AURORA',
-            agentName: 'Aurora Core',
-            intentReason: 'confirmation_response',
-            input: processedText,
-            output: confirmationResult.message,
-            meta: { 
-              envelope, 
-              confirmationSuccess: confirmationResult.success,
-              actionType: confirmationResult.actionType,
-              needsAction: confirmationResult.needsAction
-            }
-          });
-          
-          // 🚫 CRÍTICO: RETURN para no continuar con orquestador
-          // Esto evita que Aurora "interprete" el "si" como mensaje nuevo
-          console.log('[WASSENGER] 🛑 Confirmación procesada - NO continuar con orquestador');
-          return;
-        }
-        
-        // Si no es SI/NO explícito, continuar con orquestador normal
-        console.log('[WASSENGER] ⚠️ Confirmación pendiente pero respuesta NO es SI/NO - continuar con Aurora');
-      }
-    }
 
     // Si el usuario reanuda reserva (mensaje de continuación si aplica)
     if (savedPartialCheck && formResult?.form?.getResumeMessage) {

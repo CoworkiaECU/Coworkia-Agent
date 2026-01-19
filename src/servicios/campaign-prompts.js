@@ -1,6 +1,7 @@
 /**
  * 🎯 Prompts Prediseñados para Campañas Publicitarias
  * Mensajes específicos para Instagram/Facebook y otras campañas
+ * 🌍 MULTIIDIOMA: Respeta preferredLanguage del usuario
  */
 
 // 🚀 CAMPAÑA PRINCIPAL: 2 HORAS GRATIS
@@ -8,21 +9,40 @@ export const CAMPAIGN_PROMPTS = {
   
   // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
   PROBAR_SERVICIO: {
-    trigger: "quiero probar el servicio",
-    response: `¡Hola {nombre}! 👋🏼 Soy Aurora, déjame coordinar tu espacio de inmediato.
+    trigger: "quiero probar el servicio|want to try the service|essayer le service",
+    getResponse: (userLanguage = 'es') => ({
+      es: `¡Hola {nombre}! 👋🏼 Soy Aurora, déjame coordinar tu espacio de inmediato.
 
 ¿Qué prefieres?
 
 📍 Hot Desk (2 horas gratis en tu primera visita 🎁)
 🏢 Sala de Reuniones (3-4 personas, $29 por 2h)
 
-Dime cuál te interesa y agendamos 😊`
+Dime cuál te interesa y agendamos 😊`,
+      en: `Hello {nombre}! 👋🏼 I'm Aurora, let me coordinate your space right away.
+
+What do you prefer?
+
+📍 Hot Desk (2 free hours on your first visit 🎁)
+🏢 Meeting Room (3-4 people, $29 for 2h)
+
+Tell me which one interests you and we'll schedule it 😊`,
+      fr: `Bonjour {nombre}! 👋🏼 Je suis Aurora, je coordonne votre espace immédiatement.
+
+Que préférez-vous?
+
+📍 Hot Desk (2 heures gratuites lors de votre première visite 🎁)
+🏢 Salle de Réunion (3-4 personnes, $29 pour 2h)
+
+Dites-moi ce qui vous intéresse et nous planifierons 😊`
+    })
   },
 
   // Mensaje 2: ¡Hola coWorkia! Quiero un espacio privado, con locker propio y pago mensual
   ESPACIO_PRIVADO_MENSUAL: {
-    trigger: "espacio privado.*locker.*mensual",
-    response: `¡Hola {nombre}! Soy Aurora 👋🏼
+    trigger: "espacio privado.*locker.*mensual|private space.*locker.*monthly|espace privé.*casier.*mensuel",
+    getResponse: (userLanguage = 'es') => ({
+      es: `¡Hola {nombre}! Soy Aurora 👋🏼
 
 Entiendo que buscas un espacio privado con locker y membresía mensual.
 
@@ -34,7 +54,34 @@ O si prefieres, puedes conocer el espacio primero (tu primera visita es gratis �
 • Hablar con Aluna sobre planes mensuales
 • Agendar una visita para conocer el espacio
 
-Dime y coordinamos 😊`
+Dime y coordinamos 😊`,
+      en: `Hello {nombre}! I'm Aurora 👋🏼
+
+I understand you're looking for a private space with a locker and monthly membership.
+
+For all-inclusive plans, I'll connect you with *Aluna* 📋, our membership specialist.
+
+Or if you prefer, you can visit the space first (your first visit is free 🎁).
+
+What do you prefer?
+• Talk to Aluna about monthly plans
+• Schedule a visit to see the space
+
+Let me know and we'll coordinate 😊`,
+      fr: `Bonjour {nombre}! Je suis Aurora 👋🏼
+
+Je comprends que vous cherchez un espace privé avec casier et abonnement mensuel.
+
+Pour les plans tout compris, je vous connecte avec *Aluna* 📋, notre spécialiste des adhésions.
+
+Ou si vous préférez, vous pouvez visiter l'espace d'abord (votre première visite est gratuite 🎁).
+
+Que préférez-vous?
+• Parler à Aluna des plans mensuels
+• Planifier une visite pour voir l'espace
+
+Dites-moi et nous coordonnerons 😊`
+    })
   }
 };
 
@@ -50,7 +97,7 @@ export function detectCampaignMessage(message) {
       return {
         detected: true,
         campaign: key,
-        template: campaign.response
+        getTemplate: campaign.getResponse
       };
     }
   }
@@ -59,15 +106,20 @@ export function detectCampaignMessage(message) {
 }
 
 /**
- * 🎨 Personaliza respuesta de campaña con nombre del usuario
+ * 🎨 Personaliza respuesta de campaña con nombre del usuario y respeta idioma
  * 🔍 Detecta si es cliente recurrente y NO ofrece trial gratis
+ * @param {Function} getTemplate - Función que retorna templates por idioma
+ * @param {Object} userProfile - Perfil del usuario con preferredLanguage
  */
-export function personalizeCampaignResponse(template, userProfile) {
+export function personalizeCampaignResponse(getTemplate, userProfile) {
   const userName = userProfile?.name || '';
+  const userLanguage = userProfile?.preferredLanguage || 'es';
   
-  // Simplemente reemplazar el nombre en el template, SIN lógica adicional
-  // Aurora maneja el contexto completo (primera visita, recurrente, etc.)
-  console.log('[CAMPAIGN] 🎯 Template personalizado para:', userName || 'usuario sin nombre');
+  // Obtener template en el idioma correcto
+  const templates = getTemplate(userLanguage);
+  const template = templates[userLanguage] || templates.es; // Fallback a español
+  
+  console.log('[CAMPAIGN] 🎯 Template personalizado:', { userName, userLanguage });
   return template.replace(/{nombre}/g, userName);
 }
 

@@ -417,6 +417,238 @@ export function detectFinancialDocumentType(userMessage) {
 }
 
 // ============================================================================
+// TRACKING DE ENTREGAS PENDIENTES (PAGOS COMPUESTOS)
+// ============================================================================
+
+/**
+ * Obtiene entregas pendientes de pagos compuestos para un usuario
+ * @param {string} userId - ID del usuario (teléfono)
+ * @returns {Promise<Array>} Lista de entregas pendientes
+ */
+export async function getPendingDeliveries(userId) {
+  try {
+    const query = `
+      SELECT 
+        mp.id,
+        mp.membership_lead_id,
+        mp.transaction_number,
+        mp.amount as payment_amount,
+        mp.transaction_date,
+        mp.validation_warnings,
+        ml.membership_type,
+        ml.client_name,
+        ml.email,
+        ml.created_at as lead_created
+      FROM membership_payments mp
+      JOIN membership_leads ml ON mp.membership_lead_id = ml.id
+      WHERE ml.user_phone = $1
+        AND mp.status = 'verified'
+        AND mp.validation_warnings IS NOT NULL
+        AND mp.validation_warnings::text LIKE '%compositePayment%'
+        AND (mp.validation_warnings->'compositePayment'->>'isComposite')::boolean = true
+        AND COALESCE((mp.validation_warnings->'compositePayment'->>'deliveryCompleted')::boolean, false) = false
+      ORDER BY mp.transaction_date DESC
+    `;
+    
+    const results = await database.all(query, [userId]);
+    
+    return results.map(row => {
+      let compositeData = {};
+      try {
+        if (row.validation_warnings?.compositePayment) {
+          compositeData = row.validation_warnings.compositePayment;
+        } else if (typeof row.validation_warnings === 'string') {
+          compositeData = JSON.parse(row.validation_warnings).compositePayment || {};
+        }
+      } catch (e) {
+        console.error('[GABI-DELIVERIES] Error parsing composite data:', e);
+      }
+      
+      return {
+        paymentId: row.id,
+        leadId: row.membership_lead_id,
+        transactionNumber: row.transaction_number,
+        membershipType: row.membership_type,
+        clientName: row.client_name,
+        paymentDate: row.transaction_date,
+        cashAmount: compositeData.cashAmount || 0,
+        canjeAmount: compositeData.canjeAmount || 0,
+        canjeDescription: compositeData.canjeDescription || 'No especificado',
+        totalAmount: compositeData.totalAmount || 0,
+        deliveryCompleted: compositeData.deliveryCompleted || false,
+        deliveryCompletedDate: compositeData.deliveryCompletedDate || null
+      };
+    });
+    
+  } catch (error) {
+    console.error('[GABI-DELIVERIES] ❌ Error al obtener entregas pendientes:', error);
+    return [];
+  }
+}
+
+/**
+ * Marca una entrega como completada
+ * @param {string} paymentId - ID del pago
+ * @param {string} completedBy - Quien marca como completado (userId o 'system')
+ * @returns {Promise<Object>} { success: boolean, message: string }
+ */
+export async function markDeliveryCompleted(paymentId, completedBy = 'system') {
+  try {
+    // Obtener el pago actual
+    const getQuery = `
+      SELECT validation_warnings 
+      FROM membership_payments 
+      WHERE id = $1
+    `;
+    
+    const payment = await database.get(getQuery, [paymentId]);
+    
+    if (!payment) {
+      return { success: false, message: 'Pago no encontrado' };
+    }
+    
+    let warnings = {};
+    try {
+      warnings = typeof payment.validation_warnings === 'string' 
+        ? JSON.parse(payment.validation_warnings) 
+        : payment.validation_warnings || {};
+    } catch (e) {
+      warnings = payment.validation_warnings || {};
+    }
+    
+    // Actualizar compositePayment con deliveryCompleted
+    if (warnings.compositePayment) {
+      warnings.compositePayment.deliveryCompleted = true;
+      warnings.compositePayment.deliveryCompletedDate = new Date().toISOString();
+      warnings.compositePayment.deliveryCompletedBy = completedBy;
+    }
+    
+    // Actualizar en BD
+    const updateQuery = `
+      UPDATE membership_payments
+      SET validation_warnings = $1,
+          updated_at = NOW()
+      WHERE id = $2
+    `;
+    
+    await database.run(updateQuery, [JSON.stringify(warnings), paymentId]);
+    
+    console.log(`[GABI-DELIVERIES] ✅ Entrega marcada como completada: ${paymentId}`);
+    
+    return {
+      success: true,
+      message: 'Entrega marcada como completada',
+      paymentId,
+      completedAt: warnings.compositePayment.deliveryCompletedDate
+    };
+    
+  } catch (error) {
+    console.error('[GABI-DELIVERIES] ❌ Error al marcar entrega:', error);
+    return { success: false, message: 'Error al actualizar entrega' };
+  }
+}
+
+/**
+ * Genera recordatorio de entregas pendientes para un usuario
+ * @param {string} userId - ID del usuario
+ * @returns {Promise<Object>} { hasDeliveries: boolean, message: string, deliveries: Array }
+ */
+export async function generateDeliveryReminder(userId) {
+  try {
+    const deliveries = await getPendingDeliveries(userId);
+    
+    if (deliveries.length === 0) {
+      return {
+        hasDeliveries: false,
+        message: '✅ No tienes entregas pendientes.',
+        deliveries: []
+      };
+    }
+    
+    let message = `📦 *ENTREGAS PENDIENTES DE PAGO COMPUESTO*\n\n`;
+    message += `Tienes ${deliveries.length} entrega(s) pendiente(s):\n\n`;
+    
+    deliveries.forEach((delivery, index) => {
+      message += `${index + 1}. *${delivery.membershipType}*\n`;
+      message += `   💵 Canje: $${delivery.canjeAmount} USD\n`;
+      message += `   📝 Descripción: ${delivery.canjeDescription}\n`;
+      message += `   📅 Desde: ${new Date(delivery.paymentDate).toLocaleDateString()}\n`;
+      message += `   🔢 Transacción: ${delivery.transactionNumber}\n\n`;
+    });
+    
+    message += `⚠️ *Recuerda cumplir con tus compromisos de canje.*\n`;
+    message += `Cuando completes una entrega, avísame escribiendo:\n`;
+    message += `"@Gabi entrega completada [número transacción]"\n\n`;
+    message += `Para ver detalles de tus entregas, escribe: "@Gabi entregas pendientes"`;
+    
+    return {
+      hasDeliveries: true,
+      message,
+      deliveries,
+      count: deliveries.length
+    };
+    
+  } catch (error) {
+    console.error('[GABI-DELIVERIES] ❌ Error al generar recordatorio:', error);
+    return {
+      hasDeliveries: false,
+      message: '❌ Error al consultar entregas pendientes.',
+      deliveries: []
+    };
+  }
+}
+
+/**
+ * Obtiene estadísticas de entregas (completadas vs pendientes)
+ * @param {string} userId - ID del usuario (opcional, null para stats globales)
+ * @returns {Promise<Object>} Estadísticas de entregas
+ */
+export async function getDeliveryStats(userId = null) {
+  try {
+    let userFilter = userId ? 'AND ml.user_phone = $1' : '';
+    let params = userId ? [userId] : [];
+    
+    const query = `
+      SELECT 
+        COUNT(*) FILTER (WHERE (mp.validation_warnings->'compositePayment'->>'deliveryCompleted')::boolean = false) as pending,
+        COUNT(*) FILTER (WHERE (mp.validation_warnings->'compositePayment'->>'deliveryCompleted')::boolean = true) as completed,
+        COUNT(*) as total,
+        SUM((mp.validation_warnings->'compositePayment'->>'canjeAmount')::numeric) FILTER (WHERE (mp.validation_warnings->'compositePayment'->>'deliveryCompleted')::boolean = false) as pending_amount,
+        SUM((mp.validation_warnings->'compositePayment'->>'canjeAmount')::numeric) FILTER (WHERE (mp.validation_warnings->'compositePayment'->>'deliveryCompleted')::boolean = true) as completed_amount
+      FROM membership_payments mp
+      JOIN membership_leads ml ON mp.membership_lead_id = ml.id
+      WHERE mp.status = 'verified'
+        AND mp.validation_warnings IS NOT NULL
+        AND mp.validation_warnings::text LIKE '%compositePayment%'
+        AND (mp.validation_warnings->'compositePayment'->>'isComposite')::boolean = true
+        ${userFilter}
+    `;
+    
+    const result = await database.get(query, params);
+    
+    return {
+      total: parseInt(result?.total || 0),
+      pending: parseInt(result?.pending || 0),
+      completed: parseInt(result?.completed || 0),
+      pendingAmount: parseFloat(result?.pending_amount || 0),
+      completedAmount: parseFloat(result?.completed_amount || 0),
+      completionRate: result?.total > 0 ? (result.completed / result.total * 100).toFixed(1) : 0
+    };
+    
+  } catch (error) {
+    console.error('[GABI-DELIVERIES] ❌ Error al obtener estadísticas:', error);
+    return {
+      total: 0,
+      pending: 0,
+      completed: 0,
+      pendingAmount: 0,
+      completedAmount: 0,
+      completionRate: 0
+    };
+  }
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -434,5 +666,11 @@ export default {
   
   // Documentos financieros
   detectFinancialDocumentType,
-  FINANCIAL_DOCUMENT_TYPES
+  FINANCIAL_DOCUMENT_TYPES,
+  
+  // Tracking de entregas pendientes (pagos compuestos)
+  getPendingDeliveries,
+  markDeliveryCompleted,
+  generateDeliveryReminder,
+  getDeliveryStats
 };

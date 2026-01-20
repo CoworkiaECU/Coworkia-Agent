@@ -8,6 +8,7 @@ import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
+import { analyzeMedicalImage } from '../../servicios/angela-vision-analysis.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue } from '../../servicios/axel-photo-collector.js';
@@ -499,10 +500,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const currentLanguage = current.preferredLanguage || 'es';
     const detectedLanguage = getUserLanguage(text || '', currentLanguage);
     
-    // Cambio de idioma detectado - natural y sin comandos
+    // Cooldown de cambio de idioma: 30 segundos entre cambios
+    const lastLanguageChangeAt = current.lastLanguageChangeAt || 0;
+    const languageChangeCooldown = 30000; // 30 segundos
+    const canChangeLanguage = (Date.now() - lastLanguageChangeAt) > languageChangeCooldown;
+    
+    // Cambio de idioma detectado - requiere alta confianza (0.7) y cooldown
     if (detectedLanguage?.language && 
         detectedLanguage.language !== currentLanguage &&
-        detectedLanguage.confidence > 0.3) { // Umbral bajo para cambio rápido
+        detectedLanguage.confidence > 0.7 && // 🔧 CORREGIDO: Umbral alto (70%) para evitar cambios erróneos
+        canChangeLanguage) {
       
       console.log('[LANGUAGE] 🌍 Cambio de idioma detectado:', {
         from: currentLanguage,
@@ -510,9 +517,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         confidence: detectedLanguage.confidence
       });
       
-      // Actualizar idioma del perfil
+      // Actualizar idioma del perfil con timestamp de cambio
       current.preferredLanguage = detectedLanguage.language;
-      await saveProfile(userId, { ...current, preferredLanguage: detectedLanguage.language });
+      current.lastLanguageChangeAt = Date.now();
+      await saveProfile(userId, { 
+        ...current, 
+        preferredLanguage: detectedLanguage.language,
+        lastLanguageChangeAt: current.lastLanguageChangeAt
+      });
       
       // Obtener último mensaje del asistente para repetirlo en nuevo idioma
       const lastAssistantMessage = conversationHistory
@@ -523,8 +535,20 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       if (lastAssistantMessage) {
         console.log('[LANGUAGE] 🔄 Repitiendo último mensaje en nuevo idioma...');
         
-        // Generar traducción del último mensaje
-        const translationPrompt = `Translate this message to ${detectedLanguage.language === 'en' ? 'English' : 'Spanish'}. Keep the same tone and structure:\n\n"${lastAssistantMessage.content}"`;
+        // Nombres completos de idiomas para traducción (incluye Quechua para Angela)
+        const languageNames = {
+          es: 'Spanish',
+          en: 'English',
+          fr: 'French',
+          it: 'Italian',
+          pt: 'Portuguese',
+          qu: 'Quechua'
+        };
+        
+        const targetLanguageName = languageNames[detectedLanguage.language] || 'Spanish';
+        
+        // Generar traducción del último mensaje a cualquiera de los 5 idiomas
+        const translationPrompt = `Translate this message to ${targetLanguageName}. Keep the same tone and structure:\n\n"${lastAssistantMessage.content}"`;
         
         const translatedMessage = await complete(translationPrompt, {
           temperature: 0.3,
@@ -543,6 +567,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[LANGUAGE] ✅ Mensaje repetido en', detectedLanguage.language);
         return; // No continuar con el flujo normal
       }
+    } else if (detectedLanguage?.language && 
+               detectedLanguage.language !== currentLanguage &&
+               detectedLanguage.confidence > 0.7 &&
+               !canChangeLanguage) {
+      // Usuario intenta cambiar idioma durante cooldown
+      console.log('[LANGUAGE] ⏱️ Cambio de idioma en cooldown (últimos 30s)');
     }
 
     // Actualizar perfil mínimo
@@ -884,7 +914,9 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
         if (pendingLead && pendingLead.status === 'pending_payment') {
           console.log('[ALUNA] 📋 Lead pendiente encontrado:', pendingLead.id);
           
-          const paymentResult = await processMembershipPayment(messageData, profile);
+          // Pasar el mensaje del usuario para detectar pagos compuestos
+          const userMessage = messageData.text || '';
+          const paymentResult = await processMembershipPayment(messageData, profile, userMessage);
           
           await enviarWhatsApp(userId, paymentResult.message);
           await saveConversationMessage(userId, { 
@@ -918,6 +950,55 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
           `¿Necesitas información sobre nuestros planes? Escribe "planes" 😊`
         );
         
+        return;
+      }
+    }
+
+    // 🏥 ANGELA MEDICAL IMAGES: Analizar imágenes médicas (heridas, ojos, piel)
+    if (mediaUrl && type === 'image' && profile.activeAgent === 'ANGELA') {
+      console.log('[ANGELA] 🏥 Imagen médica detectada');
+      
+      try {
+        const medicalAnalysis = await analyzeMedicalImage(mediaUrl, processedText || '');
+        
+        if (medicalAnalysis.success) {
+          await enviarWhatsApp(userId, medicalAnalysis.analysis);
+          await saveConversationMessage(userId, {
+            role: 'assistant',
+            content: medicalAnalysis.analysis,
+            agent: 'ANGELA'
+          });
+          
+          await saveInteraction({
+            userId,
+            agent: 'ANGELA',
+            agentName: 'Angela - MedBeneficios',
+            intentReason: 'medical_image_analysis',
+            input: `[MEDICAL_IMAGE:${medicalAnalysis.imageType}] ${processedText || 'Imagen médica'}`,
+            output: medicalAnalysis.analysis,
+            meta: {
+              envelope,
+              imageType: medicalAnalysis.imageType,
+              confidence: medicalAnalysis.confidence,
+              imageUrl: mediaUrl
+            }
+          });
+          
+          return; // No continuar con flujo normal
+        } else {
+          console.error('[ANGELA] ❌ Error analizando imagen médica:', medicalAnalysis.error);
+          await enviarWhatsApp(userId, 
+            `⚠️ No pude analizar la imagen automáticamente.\n\n` +
+            `Por favor, descríbeme lo que ves en la imagen y con gusto te ayudo 😊`
+          );
+          return;
+        }
+      } catch (error) {
+        console.error('[ANGELA] 🚨 Error procesando imagen médica:', error);
+        await enviarWhatsApp(userId, 
+          `⚠️ Hubo un problema procesando tu imagen.\n\n` +
+          `Por favor, intenta enviarla nuevamente o descríbeme tu consulta por texto 💚`
+        );
         return;
       }
     }
@@ -1173,6 +1254,97 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
     // Marcar primera visita después de responder
     if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
       await saveProfile(userId, { ...profile, firstVisit: false });
+    }
+
+    // 📦 GABI: Tracking de entregas pendientes (pagos compuestos)
+    if (resultado.agenteKey === 'GABI') {
+      try {
+        const { 
+          getPendingDeliveries,
+          markDeliveryCompleted,
+          generateDeliveryReminder 
+        } = await import('../../servicios/gabi-financial-system.js');
+        
+        const userMessage = messageData?.text?.toLowerCase() || '';
+        
+        // Detectar solicitud de ver entregas pendientes
+        const checkDeliveriesKeywords = [
+          'entregas pendientes', 'mis entregas', 'qué debo entregar',
+          'entregas pendiente', 'mi entrega', 'pendientes'
+        ];
+        
+        const wantsToCheck = checkDeliveriesKeywords.some(kw => userMessage.includes(kw));
+        
+        if (wantsToCheck) {
+          console.log('[GABI-DELIVERIES] 📦 Usuario solicita ver entregas pendientes');
+          const reminder = await generateDeliveryReminder(userId);
+          
+          if (reminder.hasDeliveries) {
+            await enviarWhatsApp(userId, reminder.message);
+            console.log('[GABI-DELIVERIES] ✅ Recordatorio enviado:', reminder.count, 'entregas');
+          }
+        }
+        
+        // Detectar completación de entrega
+        const completedKeywords = [
+          'entrega completada', 'completé entrega', 'ya entregué',
+          'entrega lista', 'terminé entrega', 'cumplí'
+        ];
+        
+        const completedDetected = completedKeywords.some(kw => userMessage.includes(kw));
+        
+        if (completedDetected) {
+          console.log('[GABI-DELIVERIES] ✅ Usuario reporta entrega completada');
+          
+          // Extraer número de transacción del mensaje
+          const transactionMatch = userMessage.match(/([a-z]{2,4}[\d]{6,}|trf[\d]+|w[\d]+|dup[\d]+)/i);
+          
+          if (transactionMatch) {
+            const transactionNumber = transactionMatch[0].toUpperCase();
+            console.log('[GABI-DELIVERIES] 🔍 Transacción detectada:', transactionNumber);
+            
+            // Buscar pago por número de transacción
+            const deliveries = await getPendingDeliveries(userId);
+            const delivery = deliveries.find(d => 
+              d.transactionNumber.toUpperCase() === transactionNumber
+            );
+            
+            if (delivery) {
+              const result = await markDeliveryCompleted(delivery.paymentId, userId);
+              
+              if (result.success) {
+                const confirmMessage = `✅ *¡Entrega Completada!*\n\n` +
+                  `📦 Membresía: ${delivery.membershipType}\n` +
+                  `💵 Canje: $${delivery.canjeAmount} USD\n` +
+                  `📝 Servicio: ${delivery.canjeDescription}\n` +
+                  `🔢 Transacción: ${transactionNumber}\n` +
+                  `📅 Completado: ${new Date().toLocaleDateString()}\n\n` +
+                  `¡Gracias por cumplir con tu compromiso! 🎉`;
+                
+                await enviarWhatsApp(userId, confirmMessage);
+                console.log('[GABI-DELIVERIES] ✅ Entrega marcada como completada');
+              }
+            } else {
+              console.log('[GABI-DELIVERIES] ⚠️ No se encontró entrega con transacción:', transactionNumber);
+            }
+          }
+        }
+        
+        // Auto-recordatorio periódico (cada 5 interacciones con Gabi)
+        const gabiMessages = await memoria.getRecentMessages(userId, 'GABI', 50);
+        if (gabiMessages.length % 5 === 0 && gabiMessages.length > 0) {
+          const deliveries = await getPendingDeliveries(userId);
+          if (deliveries.length > 0) {
+            console.log('[GABI-DELIVERIES] 📅 Auto-recordatorio (cada 5 mensajes)');
+            const gentleReminder = `\n\n📦 *Recordatorio:*\nTienes ${deliveries.length} entrega(s) pendiente(s) de pago compuesto.\nEscribe "@Gabi entregas pendientes" para ver detalles.`;
+            // No enviar de inmediato para no interrumpir, solo agregar al siguiente mensaje
+          }
+        }
+        
+      } catch (error) {
+        console.error('[GABI-DELIVERIES] ❌ Error en tracking de entregas:', error);
+        // No interrumpir flujo principal si falla
+      }
     }
   });
 });

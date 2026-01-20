@@ -31,6 +31,21 @@ export const AURORA = {
     idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português']
   },
 
+  getMensajes: (userLanguage = 'es') => ({
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aurora ✨ Tu asistente de Coworkia Business Center.\n\n¿En qué te puedo ayudar?' :
+             userLanguage === 'en' ? 'Hello {nombre}! I\'m Aurora ✨ Your Coworkia Business Center assistant.\n\nHow can I help you?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Aurora ✨ Votre assistante Coworkia Business Center.\n\nComment puis-je vous aider?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! Sono Aurora ✨ La tua assistente Coworkia Business Center.\n\nCome posso aiutarti?' :
+             userLanguage === 'pt' ? 'Olá {nombre}! Sou Aurora ✨ Sua assistente Coworkia Business Center.\n\nComo posso ajudá-lo?' :
+             '¡Hola {nombre}! Soy Aurora ✨ Tu asistente de Coworkia Business Center.\n\n¿En qué te puedo ayudar?',
+    despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo escríbeme. ¡Aquí estaré! 😊' :
+               userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure helping you.\n\nYou can always come back, just write to me. I\'ll be here! 😊' :
+               userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, écrivez-moi simplement. Je serai là! 😊' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere aiutarti.\n\nPuoi tornare in qualsiasi momento, scrivimi semplicemente. Sarò qui! 😊' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer ajudá-lo.\n\nVocê pode retornar a qualquer momento, apenas me escreva. Estarei aqui! 😊' :
+               'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo escríbeme. ¡Aquí estaré! 😊'
+  }),
+
   responsabilidades: [
     'Bienvenida y orientación a nuevos usuarios',
     'Información sobre servicios y espacios',
@@ -671,18 +686,63 @@ ${this.serviciosInfo.salaReuniones}
   },
   
   // Función para obtener mensaje de handoff según agente destino
-  getHandover: function(targetAgent, userName = 'amigo') {
+  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
     const handoverMessages = {
-      'ANGELA': this.ejemplos.handoverAngela,
-      'ADRIANA': this.ejemplos.handoverAdriana,
-      'ENZO': this.ejemplos.handoverEnzo,
-      'GABI': this.ejemplos.handoverGabi,
-      'AXEL': this.ejemplos.handoverAxel,
-      'ALUNA': this.ejemplos.handoverAluna,
-      'PAULA': this.ejemplos.handoverPaula
+      'ANGELA': {
+        es: '{nombre}, te conecto con *Angela* de *MedBeneficios* - nuestra experta en salud y bienestar corporativo. 💚\n\n*Angela*, te presento a {nombre}. Necesita información sobre servicios de salud.\n\nPara volver a mí, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Angela* from *MedBeneficios* - our health and wellness expert. 💚\n\n*Angela*, meet {nombre}. They need information about health services.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je vous connecte avec *Angela* de *MedBeneficios* - notre experte en santé et bien-être. 💚\n\n*Angela*, je te présente {nombre}. Besoin d\'informations sur les services de santé.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti connetto con *Angela* di *MedBeneficios* - la nostra esperta in salute e benessere. 💚\n\n*Angela*, ti presento {nombre}. Ha bisogno di informazioni sui servizi sanitari.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, conectando você com *Angela* da *MedBeneficios* - nossa especialista em saúde e bem-estar. 💚\n\n*Angela*, apresento {nombre}. Precisa de informações sobre serviços de saúde.\n\nPara voltar, escreva *@Aurora*'
+      },
+      'ADRIANA': {
+        es: '{nombre}, te dejo con *Adriana* de *SegPopular* - nuestra especialista en seguros. 🛡️\n\n*Adriana*, te presento a {nombre}. Necesita asesoría en seguros.\n\nPara volver, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Adriana* from *SegPopular* - our insurance specialist. 🛡️\n\n*Adriana*, meet {nombre}. They need insurance advice.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je te laisse avec *Adriana* de *SegPopular* - notre spécialiste en assurance. 🛡️\n\n*Adriana*, je te présente {nombre}. Besoin de conseils en assurance.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti lascio con *Adriana* di *SegPopular* - la nostra specialista assicurativa. 🛡️\n\n*Adriana*, ti presento {nombre}. Ha bisogno di consulenza assicurativa.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, deixo você com *Adriana* da *SegPopular* - nossa especialista em seguros. 🛡️\n\n*Adriana*, apresento {nombre}. Precisa de assessoria em seguros.\n\nPara voltar, escreva *@Aurora*'
+      },
+      'ENZO': {
+        es: '{nombre}, te conecto con *Enzo* de *MarketingLab* - nuestro experto en marketing e IA generativa. 💡\n\n*Enzo*, te presento a {nombre}. Necesita consultoría en marketing digital.\n\nPara volver, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Enzo* from *MarketingLab* - our marketing and AI expert. 💡\n\n*Enzo*, meet {nombre}. They need digital marketing consulting.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je te connecte avec *Enzo* de *MarketingLab* - notre expert en marketing et IA. 💡\n\n*Enzo*, je te présente {nombre}. Besoin de conseil en marketing digital.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti connetto con *Enzo* di *MarketingLab* - il nostro esperto di marketing e IA. 💡\n\n*Enzo*, ti presento {nombre}. Ha bisogno di consulenza marketing digitale.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, conectando você com *Enzo* da *MarketingLab* - nosso especialista em marketing e IA. 💡\n\n*Enzo*, apresento {nombre}. Precisa de consultoria em marketing digital.\n\nPara voltar, escreva *@Aurora*'
+      },
+      'GABI': {
+        es: '{nombre}, te dejo con *Gabi* de *GR Consulting* - nuestro especialista en legal, finanzas y compliance. ⚖️\n\n*Gabi*, te presento a {nombre}. Necesita asesoría administrativa.\n\nPara volver, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Gabi* from *GR Consulting* - our legal, finance and compliance specialist. ⚖️\n\n*Gabi*, meet {nombre}. They need administrative advice.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je te laisse avec *Gabi* de *GR Consulting* - notre spécialiste juridique, financier et compliance. ⚖️\n\n*Gabi*, je te présente {nombre}. Besoin de conseil administratif.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti lascio con *Gabi* di *GR Consulting* - il nostro specialista legale, finanziario e compliance. ⚖️\n\n*Gabi*, ti presento {nombre}. Ha bisogno di consulenza amministrativa.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, deixo você com *Gabi* da *GR Consulting* - nosso especialista jurídico, financeiro e compliance. ⚖️\n\n*Gabi*, apresento {nombre}. Precisa de assessoria administrativa.\n\nPara voltar, escreva *@Aurora*'
+      },
+      'AXEL': {
+        es: 'Perfecto, {nombre}! 🚗\n\nTe conecto con *Axel* de *The PaintBull* - nuestro especialista en análisis de colisiones mediante IA.\n\n*Su superpoder:* Analiza fotos de tu vehículo con visión artificial y te da una cotización precisa ANTES de ir al taller. Así sabes exactamente qué esperar.\n\n*Axel*, te presento a {nombre}. Necesita tu expertise para evaluar un daño vehicular.\n\nCualquier cosa, mencióname con *@Aurora* y vuelvo contigo. ¡Éxito! ✨',
+        en: 'Perfect, {nombre}! 🚗\n\nConnecting you with *Axel* from *The PaintBull* - our AI collision analysis specialist.\n\n*His superpower:* Analyzes your vehicle photos with artificial vision and gives you a precise quote BEFORE going to the shop. So you know exactly what to expect.\n\n*Axel*, meet {nombre}. They need your expertise to evaluate vehicle damage.\n\nAnything, mention me with *@Aurora* and I\'ll come back. Success! ✨',
+        fr: 'Parfait, {nombre}! 🚗\n\nJe te connecte avec *Axel* de *The PaintBull* - notre spécialiste en analyse de collisions par IA.\n\n*Son super-pouvoir:* Analyse les photos de ton véhicule avec vision artificielle et te donne un devis précis AVANT d\'aller au garage. Tu sais exactement à quoi t\'attendre.\n\n*Axel*, je te présente {nombre}. Besoin de ton expertise pour évaluer des dommages véhiculaires.\n\nSi besoin, mentionne-moi avec *@Aurora* et je reviens. Succès! ✨',
+        it: 'Perfetto, {nombre}! 🚗\n\nTi connetto con *Axel* di *The PaintBull* - il nostro specialista in analisi collisioni con IA.\n\n*Il suo superpotere:* Analizza le foto del tuo veicolo con visione artificiale e ti dà un preventivo preciso PRIMA di andare in officina. Così sai esattamente cosa aspettarti.\n\n*Axel*, ti presento {nombre}. Ha bisogno della tua esperienza per valutare un danno al veicolo.\n\nQualsiasi cosa, menzionami con *@Aurora* e torno. Successo! ✨',
+        pt: 'Perfeito, {nombre}! 🚗\n\nConectando você com *Axel* da *The PaintBull* - nosso especialista em análise de colisões com IA.\n\n*Seu superpoder:* Analisa fotos do seu veículo com visão artificial e te dá uma cotação precisa ANTES de ir à oficina. Assim você sabe exatamente o que esperar.\n\n*Axel*, apresento {nombre}. Precisa de sua expertise para avaliar dano veicular.\n\nQualquer coisa, me mencione com *@Aurora* e volto. Sucesso! ✨'
+      },
+      'ALUNA': {
+        es: '{nombre}, te conecto con *Aluna* - nuestra experta en membresías y planes mensuales de Coworkia. 🏢\n\n*Aluna*, {nombre} quiere información sobre planes mensuales.\n\nPara volver, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Aluna* - our Coworkia membership and monthly plans expert. 🏢\n\n*Aluna*, {nombre} wants information about monthly plans.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je te connecte avec *Aluna* - notre experte en abonnements et plans mensuels Coworkia. 🏢\n\n*Aluna*, {nombre} veut des informations sur les plans mensuels.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti connetto con *Aluna* - la nostra esperta in abbonamenti e piani mensili Coworkia. 🏢\n\n*Aluna*, {nombre} vuole informazioni sui piani mensili.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, conectando você com *Aluna* - nossa especialista em assinaturas e planos mensais Coworkia. 🏢\n\n*Aluna*, {nombre} quer informações sobre planos mensais.\n\nPara voltar, escreva *@Aurora*'
+      },
+      'PAULA': {
+        es: '{nombre}, te conecto con *Paula* de *PropElite Real Estate* - nuestra experta en bienes raíces de lujo. 🏡\n\n*Paula*, te presento a {nombre}. Está interesado en propiedades premium.\n\nPara volver, escribe *@Aurora*',
+        en: '{nombre}, connecting you with *Paula* from *PropElite Real Estate* - our luxury real estate expert. 🏡\n\n*Paula*, meet {nombre}. They\'re interested in premium properties.\n\nTo return, write *@Aurora*',
+        fr: '{nombre}, je te connecte avec *Paula* de *PropElite Real Estate* - notre experte en immobilier de luxe. 🏡\n\n*Paula*, je te présente {nombre}. Intéressé par des propriétés premium.\n\nPour revenir, écris *@Aurora*',
+        it: '{nombre}, ti connetto con *Paula* di *PropElite Real Estate* - la nostra esperta in immobili di lusso. 🏡\n\n*Paula*, ti presento {nombre}. È interessato a proprietà premium.\n\nPer tornare, scrivi *@Aurora*',
+        pt: '{nombre}, conectando você com *Paula* da *PropElite Real Estate* - nossa especialista em imóveis de luxo. 🏡\n\n*Paula*, apresento {nombre}. Está interessado em propriedades premium.\n\nPara voltar, escreva *@Aurora*'
+      }
     };
     
-    const message = handoverMessages[targetAgent];
-    return message ? message.replace(/{nombre}/g, userName) : null;
+    const agentMessages = handoverMessages[targetAgent];
+    if (!agentMessages) return null;
+    
+    const message = agentMessages[userLanguage] || agentMessages['es'];
+    return message.replace(/{nombre}/g, userName);
   }
 };

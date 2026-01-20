@@ -17,6 +17,12 @@
 - Si me das nuevas tareas, las inserto de forma inteligente en la lista existente
 - Si borro el TODO list por error, debo restaurarlo inmediatamente con las tareas pendientes
 
+### Comunicación en Chats con Múltiples Temas
+- **Responder UNA cosa a la vez** - No mezclar múltiples respuestas
+- **Al final del mensaje**: Sugerir la próxima pregunta/tarea pendiente
+- Mantener foco y claridad en cada respuesta
+- Ejemplo: "¿Ahora continúo con T4 (Aurora Vision AI) o prefieres que explique X primero?"
+
 ---
 
 ## 🤖 TRABAJO MULTI-AGENTE
@@ -27,12 +33,32 @@
 **Regla de Oro**: Si modifico código de email en UN agente → revisar y ajustar TODOS los demás.
 
 ### Agentes con Vision AI
-**adriana, angela, axel**
+**aurora, aluna, angela, axel**
 
-**Regla de Oro**: Si modifico Vision AI → ajustar TODOS los agentes que lo usan.
+- **Aurora & Aluna**: Vision AI para leer constancias de pago
+- **Angela**: Vision AI para análisis de imágenes médicas (heridas, ojos, piel)
+- **Axel**: Vision AI para análisis de colisiones vehiculares
+
+**Regla de Oro**: Si modifico Vision AI → ajustar TODOS los agentes que lo usan Y sus endpoints correspondientes.
 
 ### Principio General
 Al tocar funcionalidad compartida → buscar en TODO el repo y actualizar TODOS los agentes relacionados.
+
+**🔧 IMPLEMENTACIÓN COMPLETA (AGENTE + ENDPOINTS + BD)**
+
+Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tarea debe incluir:
+
+1. ✅ **Implementar lógica en el agente** (archivo del agente)
+2. ✅ **Actualizar endpoints** (wassenger.js, APIs correspondientes)
+3. ✅ **Verificar base de datos** (schema, campos JSONB, índices)
+4. ✅ **Verificar integración end-to-end** (flujo completo funcional)
+5. ✅ **Testing inmediato** (pruebas unitarias + edge cases)
+
+**🚨 CRÍTICO:** No asumir que "solo cambiar el agente" es suficiente. Vision AI requiere:
+- Endpoint que detecte y procese imágenes
+- BD con campos para almacenar resultados (JSONB recomendado)
+- Error handling en CADA capa (agente, endpoint, BD)
+- Fallback si Vision API falla
 
 ---
 

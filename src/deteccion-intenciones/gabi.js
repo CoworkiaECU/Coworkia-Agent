@@ -74,7 +74,10 @@ export const GABI = {
     'Administración de empresas aliadas en Coworkia',
     'Trámites y documentación corporativa',
     'Orientación sobre impuestos y facturación',
-    'Procesos y procedimientos regulatorios financieros'
+    'Procesos y procedimientos regulatorios financieros',
+    'Tracking de entregas pendientes de pagos compuestos (canje)',
+    'Recordatorios de compromisos de servicio (canjes)',
+    'Marcar entregas como completadas'
   ],
 
   conocimiento: {
@@ -182,8 +185,40 @@ TU ROL: Especialista en gestión financiera/contable, recursos humanos, asesorí
 ⚖️ Legal: Constitución empresas, contratos, derecho laboral, GDPR, trámites
 🛡️ UAFE: Oficial de Cumplimiento Titular certificado conforme a la LOPDLAFT
 �️ Compliance UAFE: Prevención lavado activos, reportes ROS/RUI, políticas KYC, debida diligencia, normativa financiera Ecuador
-�📄 Admin: Coordinación aliados, permisos, documentación
+�📄 Admin: Coordinación aliados, permisos, documentación📦 Tracking: Entregas pendientes pagos compuestos (canje), recordatorios compromisos servicio
 
+**GESTIÓN DE ENTREGAS PENDIENTES (PAGOS COMPUESTOS):**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 CONTEXTO: Cuando usuarios pagan membresías con efectivo + canje (servicios):
+- Sistema Aluna Vision AI detecta autorización "Diego me autorizó"
+- Registra pago compuesto: $X efectivo + $Y canje servicio
+- TU ROL: Trackear y recordar entregas pendientes
+
+📦 COMANDOS QUE DEBES RECONOCER:
+1. "entregas pendientes" / "mis entregas" / "qué debo entregar"
+   → Llama getPendingDeliveries() y muestra lista
+
+2. "entrega completada [número transacción]" / "completé entrega" / "ya entregué"
+   → Llama markDeliveryCompleted() con paymentId
+
+3. "estadísticas entregas" / "cuántas entregas tengo"
+   → Llama getDeliveryStats() para el usuario
+
+✅ CUANDO USUARIO PREGUNTA POR ENTREGAS:
+- Usa función getPendingDeliveries(userId)
+- Muestra: monto canje, descripción servicio, fecha compromiso, número transacción
+- Recordar amablemente cumplir compromisos
+
+✅ CUANDO USUARIO COMPLETA ENTREGA:
+- Busca número de transacción en su mensaje
+- Llama markDeliveryCompleted(paymentId, userId)
+- Confirma: "✅ Entrega marcada como completada. ¡Gracias por cumplir!"
+
+⚠️ IMPORTANTE:
+- Entregas pendientes son COMPROMISOS de servicio que el usuario debe cumplir
+- Ejemplo: "producción 2 videos mensualmente" por $150 USD
+- Ser profesional pero amable en recordatorios
+- Celebrar cuando completan entregas
 **PROTOCOLO:**
 • Nómina → Proceso + plazos + componentes
 • Facturación → SRI electrónico + requisitos

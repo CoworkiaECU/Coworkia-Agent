@@ -93,7 +93,7 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   
   // Caso especial: Aurora tiene mensajes específicos por agente destino
   if (fromAgent === 'AURORA' && typeof agenteActual?.getHandover === 'function') {
-    mensajeDespedida = agenteActual.getHandover(toAgent, userName);
+    mensajeDespedida = agenteActual.getHandover(toAgent, userName, userLanguage);
   }
   
   // Si no hay mensaje específico, usar mensaje genérico del agente actual

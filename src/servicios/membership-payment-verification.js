@@ -21,18 +21,43 @@ import db from '../database/postgres-adapter.js';
 
 // Constantes de validación
 const CUENTA_COWORKIA = '20059783069';
-const TOLERANCE_AMOUNT = 0.50; // $0.50 USD
+const TOLERANCE_AMOUNT = 1.00; // $1.00 USD
 const MAX_DAYS_OLD = 30; // Comprobantes de últimos 30 días
 const MIN_CONFIDENCE = 70; // Confianza mínima para auto-aprobar
+
+// Keywords para detectar autorización de Diego para pagos compuestos
+const DIEGO_AUTH_KEYWORDS = [
+  'diego me autorizó',
+  'diego autorizo',
+  'diego me autorizo',
+  'diego aprobó',
+  'diego aprobo',
+  'autorización de diego',
+  'autorizacion de diego'
+];
 
 /**
  * 📋 Información de membresías disponibles
  */
 const MEMBERSHIP_TYPES = {
-  'Plan 10': { price: 100, benefits: '10 horas/mes + Uso salas' },
-  'Plan 20': { price: 180, benefits: '20 horas/mes + Acceso 24/7' },
-  'Oficina Ejecutiva': { price: 250, benefits: 'Oficina privada 15m²' },
-  'Oficina Virtual': { price: 350, benefits: 'Dirección comercial + Mail' }
+  'Plan 10': { 
+    price: 180, 
+    priceWithIVA: 201.60,
+    benefits: '11 días/mes todo el día + Sala reuniones 1x/sem (3 pers) + 1 invitado/sem (2h)',
+    description: '11 días completos desde apertura hasta cierre'
+  },
+  'Plan 20': { 
+    price: 250,
+    priceWithIVA: 280,
+    benefits: '22 días/mes todo el día + Sala reuniones 2x/sem (4 pers) + 2 invitados/sem (2h)',
+    description: '22 días completos desde apertura hasta cierre'
+  },
+  'Oficina Virtual': { 
+    price: 365,
+    priceWithIVA: 365, // Sin IVA según negociación
+    benefits: 'Cumplimiento entes rectores + Recepción docs/paquetes (1kg max) + Sala reuniones 1x/mes (3 pers)',
+    description: 'Dirección comercial legal 365 días/año'
+  }
 };
 
 /**
@@ -154,6 +179,41 @@ async function checkDuplicate(transactionNumber) {
 }
 
 /**
+ * 🤝 Detecta si el usuario menciona autorización de Diego para pago compuesto
+ */
+function detectDiegoAuthorization(userMessage = '') {
+  if (!userMessage) return false;
+  
+  const lowerMessage = userMessage.toLowerCase();
+  return DIEGO_AUTH_KEYWORDS.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * 💰 Extrae información de pago compuesto del mensaje del usuario
+ * Formato esperado: "$100 efectivo" + "$150 canje servicio producción videos"
+ */
+function parseCompositePayment(userMessage) {
+  const cashMatch = userMessage.match(/\$?(\d+(?:\.\d{2})?)\s*(?:en\s+)?efectivo/i);
+  const canjeMatch = userMessage.match(/\$?(\d+(?:\.\d{2})?)\s*(?:en\s+)?canje/i);
+  
+  const cashAmount = cashMatch ? parseFloat(cashMatch[1]) : 0;
+  const canjeAmount = canjeMatch ? parseFloat(canjeMatch[1]) : 0;
+  
+  // Extraer descripción del canje
+  const canjeDescMatch = userMessage.match(/canje\s+([^$\n]+?)(?:\$|\n|mensualmente|$)/i);
+  const canjeDescription = canjeDescMatch ? canjeDescMatch[1].trim() : '';
+  
+  return {
+    isComposite: cashAmount > 0 && canjeAmount > 0,
+    cashAmount,
+    canjeAmount,
+    totalAmount: cashAmount + canjeAmount,
+    canjeDescription,
+    rawMessage: userMessage
+  };
+}
+
+/**
  * 🎯 Decide si un pago debe aprobarse automáticamente
  */
 function shouldAutoApprove(validations, confidence) {
@@ -267,7 +327,8 @@ async function savePayment(lead, paymentData, validations, imageUrl) {
       amount: validations.amount,
       date: validations.date,
       account: validations.account,
-      duplicate: validations.duplicate
+      duplicate: validations.duplicate,
+      compositePayment: validations.compositePayment || null
     };
     
     const values = [
@@ -358,14 +419,37 @@ async function approveLead(lead, payment) {
 
 /**
  * 💳 FUNCIÓN PRINCIPAL: Procesa comprobante de pago de membresía
+ * @param {Object} messageData - Datos del mensaje con imagen
+ * @param {Object} userProfile - Perfil del usuario
+ * @param {String} userMessage - Mensaje opcional del usuario (para detectar pagos compuestos)
  */
-export async function processMembershipPayment(messageData, userProfile) {
+export async function processMembershipPayment(messageData, userProfile, userMessage = '') {
   console.log('[MEMBERSHIP-PAYMENT] 🔍 Procesando comprobante...');
   
   const userId = userProfile.userId;
   const imageUrl = messageData.media?.url;
   
   try {
+    // Validar que haya imagen
+    if (!messageData?.media?.url) {
+      return {
+        success: false,
+        message: '📸 No pude analizar el comprobante.\n\nPor favor envía una foto clara de tu comprobante de pago.'
+      };
+    }
+    
+    // DETECTAR PAGO COMPUESTO (Diego autorizado)
+    const hasDiegoAuth = detectDiegoAuthorization(userMessage);
+    const compositePayment = hasDiegoAuth ? parseCompositePayment(userMessage) : null;
+    
+    if (hasDiegoAuth && compositePayment?.isComposite) {
+      console.log('[MEMBERSHIP-PAYMENT] 🤝 Pago compuesto detectado:', {
+        cash: compositePayment.cashAmount,
+        canje: compositePayment.canjeAmount,
+        total: compositePayment.totalAmount
+      });
+    }
+    
     // PASO 1: Analizar imagen con VisionAI (20 parámetros)
     console.log('[MEMBERSHIP-PAYMENT] 🤖 Analizando con VisionAI...');
     const analysisResult = await analyzePaymentReceipt(imageUrl);
@@ -415,11 +499,32 @@ O si prefieres, reenvía la foto más clara 📸`
     const membershipInfo = MEMBERSHIP_TYPES[pendingLead.membership_type];
     const expectedAmount = membershipInfo.price;
     
+    // Para pagos compuestos, validar contra el total compuesto
+    let actualAmount = paymentData.amount;
+    let isCompositePayment = false;
+    
+    if (compositePayment?.isComposite) {
+      // Verificar que el monto del comprobante coincida con el efectivo declarado
+      if (Math.abs(paymentData.amount - compositePayment.cashAmount) <= TOLERANCE_AMOUNT) {
+        actualAmount = compositePayment.totalAmount; // Usar total para validación
+        isCompositePayment = true;
+        console.log('[MEMBERSHIP-PAYMENT] ✅ Pago compuesto validado:', {
+          comprobanteEfectivo: paymentData.amount,
+          declaradoEfectivo: compositePayment.cashAmount,
+          canje: compositePayment.canjeAmount,
+          totalValidar: actualAmount
+        });
+      } else {
+        console.warn('[MEMBERSHIP-PAYMENT] ⚠️ Monto en comprobante no coincide con efectivo declarado');
+      }
+    }
+    
     const validations = {
-      amount: validateAmount(paymentData.amount, expectedAmount),
+      amount: validateAmount(actualAmount, expectedAmount),
       date: validateDate(paymentData.transactionDate),
       account: validateDestinationAccount(paymentData.accountNumberDestination),
-      duplicate: await checkDuplicate(paymentData.transactionNumber)
+      duplicate: await checkDuplicate(paymentData.transactionNumber),
+      compositePayment: isCompositePayment ? compositePayment : null
     };
     
     // PASO 4: Decidir si auto-aprobar
@@ -452,8 +557,12 @@ Por favor contacta a nuestro equipo:
         autoApproved: true,
         message: `✅ *¡PAGO VERIFICADO AUTOMÁTICAMENTE!*
 
-📋 *RESUMEN DEL PAGO:*
-💰 Monto: $${paymentData.amount} USD
+📋 *RESUMEN DEL PAGO:*${validations.compositePayment ? `
+💰 Efectivo: $${validations.compositePayment.cashAmount} USD
+🤝 Canje: $${validations.compositePayment.canjeAmount} USD (${validations.compositePayment.canjeDescription})
+💵 Total: $${validations.compositePayment.totalAmount} USD
+🎯 *Autorizado por Diego*` : `
+💰 Monto: $${paymentData.amount} USD`}
 📅 Fecha: ${paymentData.transactionDate}
 💳 Método: ${paymentData.paymentMethod}
 ${paymentData.authorizationNumber ? `🔢 Autorización: ${paymentData.authorizationNumber}` : ''}
@@ -464,7 +573,14 @@ ${paymentData.authorizationNumber ? `🔢 Autorización: ${paymentData.authoriza
 
 📧 *Confirmación enviada a:* ${pendingLead.email}
 
-${pendingLead.membership_type !== 'Oficina Virtual' ? `🏢 *PRÓXIMO PASO:*
+${validations.compositePayment ? `📝 *ENTREGAS PENDIENTES:*
+${validations.compositePayment.canjeDescription}
+💵 Valor: $${validations.compositePayment.canjeAmount}
+📅 Mensualmente según acuerdo
+
+⚠️ Gabi te recordará las entregas pendientes.
+
+` : ''}${pendingLead.membership_type !== 'Oficina Virtual' ? `🏢 *PRÓXIMO PASO:*
 Te agendamos un tour del espacio para conocernos y entregarte tu acceso.
 
 📅 Fecha tour: Te contactaremos en las próximas horas` : ''}

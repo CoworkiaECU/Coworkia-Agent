@@ -11,14 +11,15 @@ import { analyzeImage } from '../servicios-ia/openai.js';
  */
 export async function analyzeCollisionPhotos(photoUrls) {
   try {
-    console.log(`[AXEL-VISION] 👁️ Analizando ${photoUrls.length} foto(s)...`);
-
-    if (!photoUrls || photoUrls.length === 0) {
+    // Validar que photoUrls sea un array válido
+    if (!photoUrls || !Array.isArray(photoUrls) || photoUrls.length === 0) {
       return {
         success: false,
         error: 'No hay fotos para analizar'
       };
     }
+
+    console.log(`[AXEL-VISION] 👁️ Analizando ${photoUrls.length} foto(s)...`);
 
     // Prompt especializado para análisis de daños vehiculares
     const visionPrompt = `Eres un experto en reparación de colisiones vehiculares con 15 años de experiencia.

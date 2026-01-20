@@ -145,11 +145,28 @@ export async function processPaymentReceipt(messageData, userProfile) {
   // Extract variables BEFORE try block so catch can access them
   const userId = userProfile?.userId;
   const imageUrl = messageData?.media?.url;
+  let pendingReservation = null;
   
   try {
+    // Validar que haya imagen
+    if (!messageData?.media?.url) {
+      return {
+        success: false,
+        message: '📸 No se encontró imagen en tu mensaje.\n\nPor favor envía una foto de tu comprobante de pago.'
+      };
+    }
+    
     // 🔍 SIEMPRE analizar imagen primero con Vision API
     console.log('[RECEIPT] 🤖 Analizando comprobante con Vision API...');
     const analysisResult = await analyzeReceiptImage(messageData, null); // null = sin monto esperado
+    
+    // Manejar error de Vision API
+    if (!analysisResult.isValid && analysisResult.reason) {
+      return {
+        success: false,
+        message: `⚠️ No pude analizar el comprobante.\n\n${analysisResult.reason}\n\nPor favor:\n• Verifica que la foto sea clara\n• Intenta con mejor iluminación\n• Envía captura de pantalla si es digital`
+      };
+    }
     
     // Transcribir datos extraídos
     const transcription = `📸 ¡Perfecto! Recibí tu comprobante
@@ -163,7 +180,7 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
 ¿Los datos son correctos?`;
 
     // Buscar reserva pendiente
-    const pendingReservation = await reservationRepository.findPendingByUser(userProfile.userId);
+    pendingReservation = await reservationRepository.findPendingByUser(userProfile.userId);
 
     if (!pendingReservation || pendingReservation.status !== 'pending_payment' || pendingReservation.payment_status === 'paid') {
       return {
@@ -182,7 +199,7 @@ ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''
     
     // Validar monto con reserva existente
     const amountDifference = Math.abs(analysisResult.amount - expectedAmount);
-    const isAmountValid = amountDifference <= 0.50; // Tolerancia $0.50
+    const isAmountValid = amountDifference <= 1.00; // Tolerancia $1.00
     
     if (analysisResult.amount && isAmountValid) {
       console.log('[RECEIPT] ✅ Pago válido detectado, guardando info de pago...');

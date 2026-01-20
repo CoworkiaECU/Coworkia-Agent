@@ -1,36 +1,33 @@
 /**
- * 💼 ALUNA - Coworkia Membership Form Wrapper
+ * 💼 ALUNA - Formulario de Membresías
  * 
- * Maneja el proceso de venta de membresías:
- * 1. Recopila tipo de membresía deseada
- * 2. Recopila fecha de inicio preferida
- * 3. Recopila datos de contacto
- * 4. Genera mensaje de confirmación con resumen
- * 5. Al confirmar: Guarda lead, envía email a admin, agenda tour
+ * Wrapper simple que conecta el endpoint de wassenger.js
+ * con el sistema genérico de formularios.
  * 
- * DIFERENCIAS con otros agentes:
- * - No usa fotos ni AI Vision (es venta de espacio)
- * - No calcula precio (precios fijos por plan)
- * - Agenda tour del espacio (visita presencial obligatoria)
- * - Focus en cerrar venta y agendar primera visita
+ * Flujo:
+ * 1. Usuario muestra interés en membresía
+ * 2. Sistema activa formulario progresivo
+ * 3. Recopila datos necesarios
+ * 4. Genera resumen para confirmación
+ * 5. Usuario confirma con SI
+ * 6. Se ejecuta membership-confirmation.js
  */
 
-import { processGenericFormMessage } from './generic-form-handler.js';
+import { processGenericForm } from './generic-form-handler.js';
 
 /**
- * 🎯 Procesa el formulario de membresías de Aluna
- * 
- * LÓGICA ESPECIAL:
- * 1. Detecta tipo de membresía (Plan 10, Plan 20, Oficina Ejecutiva, Oficina Virtual)
- * 2. Valida fecha inicio (debe ser futuro o max 30 días)
- * 3. Recopila datos de contacto completos
- * 4. Genera resumen con precio y beneficios
- * 5. Al confirmar con SI: Guarda lead y agenda tour
+ * Procesa formulario de membresía para Aluna
+ * @param {string} userId - Teléfono del usuario (+593...)
+ * @param {string} message - Mensaje del usuario
+ * @param {Object} profile - Perfil del usuario
+ * @returns {Object} Estado del formulario
  */
-export async function processMembershipForm(userId, message, userProfile) {
-  return await processGenericFormMessage(userId, message, 'ALUNA');
+export async function processMembershipForm(userId, message, profile) {
+  return await processGenericForm(userId, message, profile, 'ALUNA');
 }
 
-export default {
-  processMembershipForm
-};
+/**
+ * Re-exporta getPendingConfirmation para mantener compatibilidad
+ * con wassenger.js que ya lo importa
+ */
+export { getPendingConfirmation } from './reservation-state.js';

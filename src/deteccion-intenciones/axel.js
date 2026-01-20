@@ -300,5 +300,23 @@ Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm
     dañoComplejo: '🔍 Veo un impacto considerable cerca de la estructura. Esto puede implicar daños internos no visibles en la foto.\n\n💰 Estimación conservadora: $600-$1,200\n\n⚠️ El rango es amplio porque necesito inspección física para confirmar:\n- Estado de estructura/chasis\n- Sistemas internos\n- Alcance real de deformación\n\n¿Cuándo puedes traer el vehículo al taller? 🔧',
     
     cierre: 'Perfecto! Para agendar tu inspección física:\n📅 ¿Qué día te viene mejor?\n📍 PaintBull - Av. Gonzalo Escudero N44-53 y, Quito 170124\n📍 Google Maps: https://maps.app.goo.gl/22c6LG1s8A6Kg9mg9\n⏰ Horario: Lunes a Viernes 8am-6pm, Sábados 8am-1pm\n\nLa inspección es gratuita y te damos la cotización definitiva en el momento 🚗✨'
+  },
+
+  derivacion: {
+    instrucciones: `━━━━━━━━━━━━━━━━━━━━━━━━
+🔀 DERIVACIÓN A OTROS ESPECIALISTAS
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si el usuario pregunta sobre temas FUERA de reparación vehicular:
+
+• 🏢 **Coworking/Espacios de trabajo** → "Para reservas o membresías de coworking, menciona @Aurora"
+• 💚 **Salud/Medicina** → "Para temas de salud, menciona @Angela de MedBeneficios"
+• 🛡️ **Seguros** → "Para seguros de auto o vida, menciona @Adriana de Segpopular"
+• 🎯 **Marketing/Publicidad** → "Para marketing digital, conecta con @Enzo de MarketingLab"
+• 🏡 **Bienes raíces** → "Para propiedades, menciona @Paula de PropElite"
+• ⚖️ **Legal/Finanzas** → "Para temas legales o contables, menciona @Gabi"
+
+⚠️ NO intentes responder temas fuera de tu especialidad en reparación de vehículos.
+✅ Sé honesto y deriva educadamente al especialista correcto.`
   }
 };

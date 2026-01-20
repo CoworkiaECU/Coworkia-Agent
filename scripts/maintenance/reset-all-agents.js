@@ -15,7 +15,7 @@ async function resetAllAgents() {
     
     // Obtener usuarios con agentes activos diferentes a AURORA
     const query = `
-      SELECT user_phone, active_agent, name
+      SELECT phone_number, active_agent, name
       FROM users
       WHERE active_agent IS NOT NULL 
         AND active_agent != 'AURORA'
@@ -32,7 +32,7 @@ async function resetAllAgents() {
     // Mostrar usuarios a resetear
     console.log('\n👥 Usuarios a resetear:');
     users.forEach(user => {
-      console.log(`  - ${user.name || user.user_phone}: ${user.active_agent} → AURORA`);
+      console.log(`  - ${user.name || user.phone_number}: ${user.active_agent} → AURORA`);
     });
     
     // Resetear todos

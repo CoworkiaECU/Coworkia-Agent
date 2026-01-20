@@ -259,7 +259,7 @@ INSTRUCCIONES:
 
   const systemPrompt =
     typeof agente.getSystemPrompt === 'function'
-      ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es')
+      ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es', perfil.conversationCount || 0)
       : agente.systemPrompt;
 
   const duration = Date.now() - startTime;

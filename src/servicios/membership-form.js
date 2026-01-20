@@ -13,7 +13,7 @@
  * 6. Se ejecuta membership-confirmation.js
  */
 
-import { processGenericForm } from './generic-form-handler.js';
+import { processGenericFormMessage } from './generic-form-handler.js';
 
 /**
  * Procesa formulario de membresía para Aluna
@@ -23,7 +23,7 @@ import { processGenericForm } from './generic-form-handler.js';
  * @returns {Object} Estado del formulario
  */
 export async function processMembershipForm(userId, message, profile) {
-  return await processGenericForm(userId, message, profile, 'ALUNA');
+  return await processGenericFormMessage(userId, message, 'ALUNA');
 }
 
 /**

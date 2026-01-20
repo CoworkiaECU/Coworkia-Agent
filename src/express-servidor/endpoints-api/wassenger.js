@@ -495,85 +495,30 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ✅ Registrar mensaje procesado para rate limiting
     recordMessage(userId);
 
-    // 🌍 Detección natural de idioma
-    // 🚨 TEMPORALMENTE DESHABILITADO: Sistema causando mezcla de idiomas
-    // TODO: Refactor completo del flujo de detección antes de reactivar
-    const currentLanguage = current.preferredLanguage || 'es';
-    const detectedLanguage = getUserLanguage(text || '', currentLanguage);
+    // 🌍 DETECCIÓN DE IDIOMA (LIMPIA) - Solo primer mensaje
+    // Idiomas soportados: español (default), inglés (todos), quechua (solo Angela)
+    const isFirstMessage = !current.preferredLanguage;
+    let userLanguage = current.preferredLanguage || 'es';
     
-    // Cooldown de cambio de idioma: 30 segundos entre cambios
-    const lastLanguageChangeAt = current.lastLanguageChangeAt || 0;
-    const languageChangeCooldown = 30000; // 30 segundos
-    const canChangeLanguage = (Date.now() - lastLanguageChangeAt) > languageChangeCooldown;
-    
-    // 🚫 DESHABILITADO: Cambio automático de idioma
-    if (false && detectedLanguage?.language && 
-        detectedLanguage.language !== currentLanguage &&
-        detectedLanguage.confidence > 0.7 && // 🔧 CORREGIDO: Umbral alto (70%) para evitar cambios erróneos
-        canChangeLanguage) {
+    if (isFirstMessage && text) {
+      const detected = getUserLanguage(text, 'es');
       
-      console.log('[LANGUAGE] 🌍 Cambio de idioma detectado:', {
-        from: currentLanguage,
-        to: detectedLanguage.language,
-        confidence: detectedLanguage.confidence
-      });
-      
-      // Actualizar idioma del perfil con timestamp de cambio
-      current.preferredLanguage = detectedLanguage.language;
-      current.lastLanguageChangeAt = Date.now();
-      await saveProfile(userId, { 
-        ...current, 
-        preferredLanguage: detectedLanguage.language,
-        lastLanguageChangeAt: current.lastLanguageChangeAt
-      });
-      
-      // Obtener último mensaje del asistente para repetirlo en nuevo idioma
-      const lastAssistantMessage = conversationHistory
-        .slice()
-        .reverse()
-        .find(msg => msg.role === 'assistant');
-      
-      if (lastAssistantMessage) {
-        console.log('[LANGUAGE] 🔄 Repitiendo último mensaje en nuevo idioma...');
-        
-        // Nombres completos de idiomas para traducción (incluye Quechua para Angela)
-        const languageNames = {
-          es: 'Spanish',
-          en: 'English',
-          fr: 'French',
-          it: 'Italian',
-          pt: 'Portuguese',
-          qu: 'Quechua'
-        };
-        
-        const targetLanguageName = languageNames[detectedLanguage.language] || 'Spanish';
-        
-        // Generar traducción del último mensaje a cualquiera de los 5 idiomas
-        const translationPrompt = `Translate this message to ${targetLanguageName}. Keep the same tone and structure:\n\n"${lastAssistantMessage.content}"`;
-        
-        const translatedMessage = await complete(translationPrompt, {
-          temperature: 0.3,
-          max_tokens: 300
-        });
-        
-        // Enviar mensaje traducido
-        await enviarWhatsApp(userId, translatedMessage);
-        await saveConversationMessage(userId, { 
-          role: 'assistant', 
-          content: translatedMessage, 
-          agent: lastAssistantMessage.agent || 'AURORA',
-          isTranslation: true
-        });
-        
-        console.log('[LANGUAGE] ✅ Mensaje repetido en', detectedLanguage.language);
-        return; // No continuar con el flujo normal
+      // Solo cambiar a inglés si hay alta confianza
+      if (detected.language === 'en' && detected.confidence > 0.5) {
+        userLanguage = 'en';
+        console.log('[LANGUAGE] 🌍 Primer mensaje en inglés detectado');
       }
-    } else if (detectedLanguage?.language && 
-               detectedLanguage.language !== currentLanguage &&
-               detectedLanguage.confidence > 0.7 &&
-               !canChangeLanguage) {
-      // Usuario intenta cambiar idioma durante cooldown
-      console.log('[LANGUAGE] ⏱️ Cambio de idioma en cooldown (últimos 30s)');
+      // Quechua solo para Angela (si algún día lo necesita)
+      else if (detected.language === 'qu' && detected.confidence > 0.6) {
+        userLanguage = 'qu';
+        console.log('[LANGUAGE] 🌍 Primer mensaje en quechua detectado');
+      }
+      
+      // Guardar idioma detectado permanentemente
+      if (userLanguage !== 'es') {
+        current.preferredLanguage = userLanguage;
+        await saveProfile(userId, { ...current, preferredLanguage: userLanguage });
+      }
     }
 
     // Actualizar perfil mínimo
@@ -623,6 +568,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       userId,
       name: detectedName, // 🎯 Usar nombre limpio e inteligente
       whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
+      preferredLanguage: userLanguage, // 🌍 Idioma detectado/guardado
       channel: 'whatsapp',
       lastMessageAt: ahoraISO,
       conversationCount: (current.conversationCount || 0) + 1,

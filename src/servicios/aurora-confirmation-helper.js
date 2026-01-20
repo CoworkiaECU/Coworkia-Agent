@@ -318,14 +318,21 @@ function parseDate(dateStr) {
   
   if (dayMatch !== -1) {
     const currentDayIndex = todayDate.getDay(); // 0=domingo, 1=lunes, 2=martes, ..., 6=sábado
-    const daysAhead = (dayMatch - currentDayIndex + 7) % 7;
+    let daysAhead = (dayMatch - currentDayIndex + 7) % 7;
+    
+    // 🚨 FIX CRÍTICO: Si piden el mismo día de hoy, asumir que quieren el PRÓXIMO (la siguiente semana)
+    // Ejemplo: Si hoy es lunes y piden "lunes", NO es hoy, es el lunes que viene (7 días)
+    if (daysAhead === 0) {
+      daysAhead = 7;
+    }
+    
     const targetDay = new Date(todayDate);
-    targetDay.setDate(targetDay.getDate() + (daysAhead === 0 ? 7 : daysAhead));
+    targetDay.setDate(targetDay.getDate() + daysAhead);
     
     const targetParts = formatter.formatToParts(targetDay);
     const targetDateStr = `${targetParts.find(p => p.type === 'year').value}-${targetParts.find(p => p.type === 'month').value}-${targetParts.find(p => p.type === 'day').value}`;
     const targetDayName = dayNames[targetDay.getDay()];
-    console.log(`[PARSE-DATE] 🗓️ Día "${dateStr}" detectado → ${targetDayName} ${targetDateStr} (getDay=${targetDay.getDay()})`);
+    console.log(`[PARSE-DATE] 🗓️ Día "${dateStr}" detectado → PRÓXIMO ${targetDayName} ${targetDateStr} (+${daysAhead} días desde hoy)`);
     return targetDateStr;
   }
 
@@ -465,10 +472,19 @@ Por favor, intenta así:
     if (dayOfWeek === 0) {
       console.warn('[AURORA-PROCESS] 🚫 Domingo detectado - Coworkia CERRADO');
       
-      // Sugerir lunes siguiente
+      // Sugerir lunes siguiente (mañana si es domingo)
       const nextMonday = new Date(requestedDate);
-      nextMonday.setDate(nextMonday.getDate() + 1); // Domingo + 1 = Lunes
-      const nextMondayStr = nextMonday.toISOString().split('T')[0];
+      nextMonday.setDate(nextMonday.getDate() + 1); // Domingo + 1 día = Lunes
+      
+      // Formatear lunes usando timezone Ecuador
+      const formatter = new Intl.DateTimeFormat('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const mondayParts = formatter.formatToParts(nextMonday);
+      const nextMondayStr = `${mondayParts.find(p => p.type === 'year').value}-${mondayParts.find(p => p.type === 'month').value}-${mondayParts.find(p => p.type === 'day').value}`;
       
       return {
         success: false,

@@ -279,9 +279,11 @@ export const FORM_SCHEMAS = {
   },
 
   ALUNA: {
-    required: ['membershipType', 'startDate', 'fullName', 'email', 'phone'],
-    optional: ['specialRequirements', 'companyName'],
-    defaults: {},
+    required: ['membershipType', 'fullName', 'email', 'phone'],
+    optional: ['startDate', 'specialRequirements', 'companyName'],
+    defaults: {
+      startDate: new Date().toISOString().split('T')[0] // Default: hoy
+    },
     labels: {
       membershipType: '🎫 Tipo de membresía',
       startDate: '📅 Fecha inicio',
@@ -292,11 +294,10 @@ export const FORM_SCHEMAS = {
       companyName: '🏢 Empresa'
     },
     questions: {
-      membershipType: '¿Qué membresía te interesa? (Hot Desk mensual, oficina privada, virtual office)',
-      startDate: '¿Cuándo te gustaría empezar?',
-      fullName: '¿Tu nombre completo?',
-      email: '¿Tu correo?',
-      phone: '¿Un número de contacto?'
+      membershipType: '¿Qué plan te interesa? (Plan 10, Plan 20, Oficina Ejecutiva, Oficina Virtual)',
+      fullName: 'Perfecto. Para procesar necesito tu nombre completo 👤',
+      email: '¿Tu correo electrónico? 📧',
+      phone: '¿Y un número de teléfono? 📱'
     }
   }
 };
@@ -368,6 +369,9 @@ export function extractDataFromMessage(message, agentName, currentForm) {
   
   const updates = {};
   const lowerMsg = message.toLowerCase();
+  
+  // Guardar el mensaje original en el formulario para patrones complejos
+  currentForm.data._lastMessage = message;
 
   // 📧 Email (universal para todos)
   if (!currentForm.data.email) {
@@ -378,12 +382,50 @@ export function extractDataFromMessage(message, agentName, currentForm) {
     }
   }
 
-  // 📱 Teléfono (universal)
+  // 📱 Teléfono (universal) - MEJORADO
   if (!currentForm.data.phone) {
-    const phoneMatch = message.match(/(\+?\d{10,13})/);
-    if (phoneMatch) {
-      updates.phone = phoneMatch[1];
-      console.log(`[GENERIC-FORM] 📱 Teléfono detectado:`, updates.phone);
+    // Detectar teléfonos ecuatorianos
+    const phonePatterns = [
+      /\b(09\d{8})\b/, // 09XXXXXXXX
+      /\b(\+?593\s?9\d{8})\b/, // +593 9XXXXXXXX
+      /\b(9\d{8})\b/ // 9XXXXXXXX
+    ];
+    
+    for (const pattern of phonePatterns) {
+      const phoneMatch = message.match(pattern);
+      if (phoneMatch && phoneMatch[1]) {
+        let phone = phoneMatch[1].replace(/\s/g, '');
+        
+        // Normalizar
+        if (phone.startsWith('09')) {
+          phone = `+593${phone.slice(1)}`;
+        } else if (phone.startsWith('9') && phone.length === 9) {
+          phone = `+593${phone}`;
+        } else if (phone.startsWith('593') && !phone.startsWith('+')) {
+          phone = `+${phone}`;
+        }
+        
+        updates.phone = phone;
+        console.log(`[GENERIC-FORM] 📱 Teléfono detectado:`, updates.phone);
+        break;
+      }
+    }
+  }
+  
+  // 👤 Nombre completo (universal) - MEJORADO
+  if (!currentForm.data.fullName) {
+    const namePatterns = [
+      /(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)/i,
+      /^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)$/i
+    ];
+    
+    for (const pattern of namePatterns) {
+      const nameMatch = message.match(pattern);
+      if (nameMatch && nameMatch[1]) {
+        updates.fullName = nameMatch[1].trim();
+        console.log(`[GENERIC-FORM] 👤 Nombre detectado:`, updates.fullName);
+        break;
+      }
     }
   }
 
@@ -570,14 +612,92 @@ function extractPaulaData(lowerMsg, currentForm, updates) {
  * 🎫 ALUNA - Detectar datos de membresías
  */
 function extractAlunaData(lowerMsg, currentForm, updates) {
-  // Tipo de membresía
+  // Tipo de membresía - DETECTAR TODOS LOS FORMATOS
   if (!currentForm.data.membershipType) {
-    if (lowerMsg.includes('hot desk')) {
+    // Detectar "Plan 10", "Plan 20", etc.
+    if (lowerMsg.includes('plan 10') || lowerMsg.includes('plan10')) {
+      updates.membershipType = 'Plan 10';
+      console.log('[ALUNA] 📦 Detectado: Plan 10');
+    } else if (lowerMsg.includes('plan 20') || lowerMsg.includes('plan20')) {
+      updates.membershipType = 'Plan 20';
+      console.log('[ALUNA] 📦 Detectado: Plan 20');
+    } else if (lowerMsg.includes('hot desk')) {
       updates.membershipType = 'Hot Desk mensual';
-    } else if (lowerMsg.includes('oficina privada')) {
-      updates.membershipType = 'Oficina privada';
-    } else if (lowerMsg.includes('virtual office')) {
-      updates.membershipType = 'Virtual office';
+      console.log('[ALUNA] 📦 Detectado: Hot Desk mensual');
+    } else if (lowerMsg.includes('oficina ejecutiva') || lowerMsg.includes('oficina privada')) {
+      updates.membershipType = 'Oficina Ejecutiva';
+      console.log('[ALUNA] 📦 Detectado: Oficina Ejecutiva');
+    } else if (lowerMsg.includes('oficina virtual') || lowerMsg.includes('virtual office')) {
+      updates.membershipType = 'Oficina Virtual';
+      console.log('[ALUNA] 📦 Detectado: Oficina Virtual');
+    }
+  }
+  
+  // Fecha de inicio - DETECTAR "hoy", "mañana", "ya", "inmediatamente"
+  if (!currentForm.data.startDate) {
+    const today = new Date();
+    
+    if (lowerMsg.includes('hoy') || lowerMsg.includes('ya') || lowerMsg.includes('inmediatamente') || lowerMsg.includes('ahora')) {
+      updates.startDate = today.toISOString().split('T')[0];
+      console.log('[ALUNA] 📅 Fecha inicio: HOY', updates.startDate);
+    } else if (lowerMsg.includes('mañana') || lowerMsg.includes('manana')) {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      updates.startDate = tomorrow.toISOString().split('T')[0];
+      console.log('[ALUNA] 📅 Fecha inicio: MAÑANA', updates.startDate);
+    } else {
+      // Por defecto, si el usuario confirma pero no especifica, asumir HOY
+      // Esto evita el loop infinito
+      updates.startDate = today.toISOString().split('T')[0];
+      console.log('[ALUNA] 📅 Fecha inicio: DEFAULT (hoy)', updates.startDate);
+    }
+  }
+  
+  // Nombre completo - DETECTAR de forma más agresiva
+  if (!currentForm.data.fullName) {
+    // Detectar "mi nombre es X", "soy X", "me llamo X"
+    const namePatterns = [
+      /(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)/i,
+      /^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)$/i // Formato "Nombre Apellido" solo
+    ];
+    
+    for (const pattern of namePatterns) {
+      const match = currentForm.data._lastMessage?.match(pattern);
+      if (match && match[1]) {
+        updates.fullName = match[1].trim();
+        console.log('[ALUNA] 👤 Nombre detectado:', updates.fullName);
+        break;
+      }
+    }
+  }
+  
+  // Teléfono - MEJORAR DETECCIÓN
+  if (!currentForm.data.phone) {
+    // Detectar teléfonos ecuatorianos (09X XXX XXXX o +593 9X XXX XXXX)
+    const phonePatterns = [
+      /\b(09\d{8})\b/, // 09XXXXXXXX
+      /\b(\+?593\s?9\d{8})\b/, // +593 9XXXXXXXX o 593 9XXXXXXXX
+      /\b(9\d{8})\b/ // 9XXXXXXXX
+    ];
+    
+    for (const pattern of phonePatterns) {
+      const match = currentForm.data._lastMessage?.match(pattern);
+      if (match && match[1]) {
+        let phone = match[1].replace(/\s/g, ''); // Remover espacios
+        
+        // Normalizar a formato +593
+        if (phone.startsWith('09')) {
+          phone = `+593${phone.slice(1)}`;
+        } else if (phone.startsWith('9') && phone.length === 9) {
+          phone = `+593${phone}`;
+        } else if (phone.startsWith('593') && !phone.startsWith('+')) {
+          phone = `+${phone}`;
+        }
+        
+        updates.phone = phone;
+        console.log('[ALUNA] 📱 Teléfono detectado:', updates.phone);
+        break;
+      }
     }
   }
 }

@@ -16,7 +16,7 @@ async function resetAllAgents() {
     // Obtener usuarios con agentes activos diferentes a AURORA
     const query = `
       SELECT user_phone, active_agent, name
-      FROM user_profiles
+      FROM users
       WHERE active_agent IS NOT NULL 
         AND active_agent != 'AURORA'
     `;
@@ -37,7 +37,7 @@ async function resetAllAgents() {
     
     // Resetear todos
     const updateQuery = `
-      UPDATE user_profiles
+      UPDATE users
       SET active_agent = 'AURORA',
           updated_at = NOW()
       WHERE active_agent IS NOT NULL 

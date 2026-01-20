@@ -4,10 +4,14 @@
  * - Acepta 1-4 fotos por cotización
  * - Timeout de 30 segundos entre fotos
  * - Almacenamiento temporal en memoria
+ * - Queue de procesamiento para respuestas ordenadas
  */
 
 // 🗂️ Almacén temporal de fotos por usuario
 const photoSessions = new Map();
+
+// 🔄 Queue de procesamiento por usuario (evita race conditions)
+const processingQueues = new Map();
 
 // ⏱️ Timeout de 30 segundos para considerar sesión completa
 const PHOTO_TIMEOUT_MS = 30000;
@@ -209,6 +213,43 @@ export function getStats() {
   };
 }
 
+/**
+ * 🔄 Ejecutar tarea en queue para garantizar orden
+ * Evita que múltiples mensajes se envíen simultáneamente
+ */
+export async function queueTask(userId, task) {
+  // Obtener o crear queue para este usuario
+  if (!processingQueues.has(userId)) {
+    processingQueues.set(userId, Promise.resolve());
+  }
+  
+  // Encolar tarea
+  const previousTask = processingQueues.get(userId);
+  
+  const newTask = previousTask.then(async () => {
+    try {
+      return await task();
+    } catch (error) {
+      console.error(`[AXEL-PHOTOS] ❌ Error en queue task:`, error);
+      throw error;
+    }
+  });
+  
+  processingQueues.set(userId, newTask);
+  
+  return newTask;
+}
+
+/**
+ * 🧹 Limpiar queue de usuario
+ */
+export function clearQueue(userId) {
+  if (processingQueues.has(userId)) {
+    processingQueues.delete(userId);
+    console.log(`[AXEL-PHOTOS] 🧹 Queue limpiada para ${userId}`);
+  }
+}
+
 export default {
   addPhoto,
   getSession,
@@ -217,6 +258,8 @@ export default {
   cancelSession,
   canProcessQuote,
   getStats,
+  queueTask,
+  clearQueue,
   MIN_PHOTOS,
   MAX_PHOTOS,
   PHOTO_TIMEOUT_MS

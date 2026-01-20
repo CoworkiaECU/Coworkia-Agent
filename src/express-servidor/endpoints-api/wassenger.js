@@ -10,7 +10,7 @@ import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-r
 import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout } from '../../servicios/axel-photo-collector.js';
+import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue } from '../../servicios/axel-photo-collector.js';
 import { processAxelFormMessage, generateFormSummary } from '../../servicios/axel-quote-form.js';
 import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
@@ -801,13 +801,19 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
         
         if (isFinalizationCommand) {
           console.log(`[WASSENGER] ✅ Comando de finalización detectado: "${processedText}"`);
-          const result = completeSession(userId);
           
-          if (result) {
-            await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
-            await processAxelQuote(userId, result.photos, profile);
-            return;
-          }
+          // 🔄 Usar queue para garantizar orden
+          await queueTask(userId, async () => {
+            const result = completeSession(userId);
+            
+            if (result) {
+              await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
+              await processAxelQuote(userId, result.photos, profile);
+              clearQueue(userId); // Limpiar queue después de procesar
+            }
+          });
+          
+          return;
         } else {
           // Es una pregunta/texto normal - dejar que Axel responda pero mantener sesión activa
           console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa`);
@@ -818,43 +824,50 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
 
     // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
     if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
-      const photoStatus = addPhoto(userId, mediaUrl, type);
-      
-      console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada para cotización`);
-      
-      // ⏱️ T14: Iniciar tracking de transacción en primera foto
-      if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
-        profile.transactionStartedAt = Date.now();
-        profile.transactionAgent = 'AXEL';
-        profile.followUpSentAt = null;
-        await saveProfile(userId, profile);
-        console.log('[T14] ⏱️ Transacción AXEL iniciada:', { userId, timestamp: profile.transactionStartedAt });
-      }
-      
-      // Mensajes según estado
-      if (photoStatus.currentCount === 1) {
-        await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 30 segundos o escribe "listo".`);
-      } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
-        await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
-      }
-      
-      // Iniciar timeout automático
-      startTimeout(userId, async (session) => {
-        const result = completeSession(userId);
-        if (result) {
-          await enviarWhatsApp(userId, `⏰ Tiempo completado. Procesando ${result.photoCount} foto(s) para tu cotización...`);
-          await processAxelQuote(userId, result.photos, profile);
+      // 🔄 Usar queue para garantizar orden de mensajes
+      await queueTask(userId, async () => {
+        const photoStatus = addPhoto(userId, mediaUrl, type);
+        
+        console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada para cotización`);
+        
+        // ⏱️ T14: Iniciar tracking de transacción en primera foto
+        if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
+          profile.transactionStartedAt = Date.now();
+          profile.transactionAgent = 'AXEL';
+          profile.followUpSentAt = null;
+          await saveProfile(userId, profile);
+          console.log('[T14] ⏱️ Transacción AXEL iniciada:', { userId, timestamp: profile.transactionStartedAt });
+        }
+        
+        // Mensajes según estado (enviados secuencialmente gracias al queue)
+        if (photoStatus.currentCount === 1) {
+          await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 30 segundos o escribe "listo".`);
+        } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
+          await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
+        }
+        
+        // Iniciar timeout automático
+        startTimeout(userId, async (session) => {
+          await queueTask(userId, async () => {
+            const result = completeSession(userId);
+            if (result) {
+              await enviarWhatsApp(userId, `⏰ Tiempo completado. Procesando ${result.photoCount} foto(s) para tu cotización...`);
+              await processAxelQuote(userId, result.photos, profile);
+              clearQueue(userId); // Limpiar queue después de procesar
+            }
+          });
+        });
+        
+        // Si alcanzó el máximo, procesar inmediatamente
+        if (photoStatus.currentCount >= photoStatus.maxPhotos) {
+          const result = completeSession(userId);
+          if (result) {
+            await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Analizando daños...`);
+            await processAxelQuote(userId, result.photos, profile);
+            clearQueue(userId); // Limpiar queue después de procesar
+          }
         }
       });
-      
-      // Si alcanzó el máximo, procesar inmediatamente
-      if (photoStatus.currentCount >= photoStatus.maxPhotos) {
-        const result = completeSession(userId);
-        if (result) {
-          await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Analizando daños...`);
-          await processAxelQuote(userId, result.photos, profile);
-        }
-      }
       
       return; // No continuar con flujo normal
     }

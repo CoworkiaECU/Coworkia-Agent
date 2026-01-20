@@ -21,20 +21,7 @@ const CALENDAR_CONFIG = {
  * Formato: 'YYYY-MM-DD'
  */
 const FERIADOS_ECUADOR = [
-  // 2025
-  '2025-01-01', // Año Nuevo
-  '2025-02-10', // Carnaval (lunes)
-  '2025-02-11', // Carnaval (martes)
-  '2025-03-28', // Viernes Santo
-  '2025-05-01', // Día del Trabajo
-  '2025-05-24', // Batalla de Pichincha
-  '2025-07-24', // Natalicio de Simón Bolívar
-  '2025-08-10', // Primer Grito de Independencia
-  '2025-10-09', // Independencia de Guayaquil
-  '2025-11-02', // Día de los Difuntos
-  '2025-11-03', // Independencia de Cuenca
-  '2025-12-25', // Navidad
-  '2025-12-31', // Fin de Año
+  // 2026 - Feriados nacionales Ecuador
   
   // 2026 (adelantarse para no tener problemas)
   '2026-01-01', // Año Nuevo

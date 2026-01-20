@@ -19,11 +19,8 @@ import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmatio
 // TTL del formulario: 2 horas (usuarios pueden distraerse, atender llamadas, etc.)
 const FORM_TTL_SECONDS = 2 * 60 * 60;
 
-// 🎉 Lista de feriados nacionales de Ecuador (2025-2026)
+// 🎉 Lista de feriados nacionales de Ecuador (2026)
 const FERIADOS_ECUADOR = [
-  '2025-01-01', '2025-02-10', '2025-02-11', '2025-03-28', '2025-05-01',
-  '2025-05-24', '2025-07-24', '2025-08-10', '2025-10-09', '2025-11-02',
-  '2025-11-03', '2025-12-25', '2025-12-31',
   '2026-01-01', '2026-02-23', '2026-02-24', '2026-04-10', '2026-05-01',
   '2026-05-24', '2026-07-24', '2026-08-10', '2026-10-09', '2026-11-02',
   '2026-11-03', '2026-12-25', '2026-12-31'

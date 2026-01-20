@@ -496,7 +496,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     recordMessage(userId);
 
     // 🌍 Detección natural de idioma
-    // Si el usuario escribe en otro idioma, el sistema cambia automáticamente
+    // 🚨 TEMPORALMENTE DESHABILITADO: Sistema causando mezcla de idiomas
+    // TODO: Refactor completo del flujo de detección antes de reactivar
     const currentLanguage = current.preferredLanguage || 'es';
     const detectedLanguage = getUserLanguage(text || '', currentLanguage);
     
@@ -505,8 +506,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const languageChangeCooldown = 30000; // 30 segundos
     const canChangeLanguage = (Date.now() - lastLanguageChangeAt) > languageChangeCooldown;
     
-    // Cambio de idioma detectado - requiere alta confianza (0.7) y cooldown
-    if (detectedLanguage?.language && 
+    // 🚫 DESHABILITADO: Cambio automático de idioma
+    if (false && detectedLanguage?.language && 
         detectedLanguage.language !== currentLanguage &&
         detectedLanguage.confidence > 0.7 && // 🔧 CORREGIDO: Umbral alto (70%) para evitar cambios erróneos
         canChangeLanguage) {

@@ -5,6 +5,7 @@ import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
 import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
 import { loggers } from '../../utils/logger.js';
 import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
+import { validateAudio, getLocalizedAudioError } from '../../utils/audio-validator.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
@@ -474,15 +475,47 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
-    // 🎤 Voz → transcribir
+    // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN)
     if (type === 'audio' || type === 'voice' || type === 'ptt') {
       if (!mediaUrl) return;
-      const tr = await transcribeAudio(mediaUrl);
-      if (!tr?.success || !tr?.text) {
-        await enviarWhatsApp(userId, '🎤 No pude procesar tu audio. ¿Puedes escribirlo por texto? 😊');
+      
+      // Obtener idioma del usuario (si ya está guardado)
+      const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+      const userLanguage = current.preferredLanguage || 'es';
+      
+      console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
+      
+      // ✅ Validar audio antes de transcribir
+      const validation = validateAudio(mediaUrl);
+      
+      if (!validation.valid) {
+        console.error('[Whisper] ❌ Audio inválido:', validation.errors);
+        const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
+        await enviarWhatsApp(userId, errorMsg);
         return;
       }
+      
+      // ⚠️ Warnings (tamaño grande, etc.)
+      if (validation.warnings.length > 0) {
+        console.warn('[Whisper] ⚠️ Advertencias:', validation.warnings);
+      }
+      
+      // 🎤 Transcribir
+      const tr = await transcribeAudio(mediaUrl, {
+        language: userLanguage,
+        agentName: 'orquestador',
+        userName: name || userId
+      });
+      
+      if (!tr?.success || !tr?.text) {
+        console.error('[Whisper] ❌ Error en transcripción:', tr?.error);
+        const errorMsg = getLocalizedAudioError(tr?.error || 'Error desconocido', userLanguage);
+        await enviarWhatsApp(userId, errorMsg);
+        return;
+      }
+      
       text = tr.text;
+      console.log(`[Whisper] ✅ Audio transcrito (${tr.language}):`, text.substring(0, 100));
     }
 
     // Construir “evento” para Aurora Core

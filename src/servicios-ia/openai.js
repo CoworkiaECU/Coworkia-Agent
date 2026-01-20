@@ -281,14 +281,35 @@ Responde SOLO con el JSON.`;
 }
 
 /**
- * 🎤 Transcribe audio usando Whisper
+ * 🎤 Transcribe audio usando Whisper (MULTIIDIOMA)
  * @param {string} audioUrl - URL del archivo de audio
- * @returns {Promise<{success: boolean, text: string, error?: string}>}
+ * @param {Object} options - Opciones de transcripción
+ * @param {string} options.language - Código ISO de idioma (es, en, fr, it, pt, qu)
+ * @param {string} options.agentName - Nombre del agente para contexto
+ * @param {string} options.userName - Nombre del usuario
+ * @returns {Promise<{success: boolean, text: string, language?: string, error?: string}>}
  */
-export async function transcribeAudio(audioUrl) {
+export async function transcribeAudio(audioUrl, options = {}) {
+  const {
+    language = 'es',
+    agentName = 'desconocido',
+    userName = 'usuario'
+  } = options;
+
   try {
     console.log('[Whisper] 🎤 Transcribiendo audio...');
     console.log('[Whisper] URL:', audioUrl);
+    console.log('[Whisper] Idioma:', language);
+    console.log('[Whisper] Agente:', agentName);
+    console.log('[Whisper] Usuario:', userName);
+
+    // Validar idioma soportado
+    const supportedLanguages = ['es', 'en', 'fr', 'it', 'pt', 'qu'];
+    const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
+    
+    if (language !== whisperLanguage) {
+      console.warn(`[Whisper] ⚠️ Idioma '${language}' no soportado, usando '${whisperLanguage}'`);
+    }
 
     // Descargar el audio desde la URL
     const response = await fetch(audioUrl);
@@ -301,29 +322,41 @@ export async function transcribeAudio(audioUrl) {
     const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });
     
     // Node.js no tiene File, pero OpenAI SDK acepta Blob directamente
-    console.log('[Whisper] Tamaño del audio:', audioBuffer.byteLength, 'bytes');
+    const audioSizeKB = (audioBuffer.byteLength / 1024).toFixed(2);
+    console.log('[Whisper] Tamaño del audio:', audioSizeKB, 'KB');
 
-    // Transcribir con Whisper
+    // Transcribir con Whisper (multiidioma)
     const transcription = await client.audio.transcriptions.create({
       file: audioBlob,
       model: 'whisper-1',
-      language: 'es', // Español
+      language: whisperLanguage,
       response_format: 'text'
     });
 
-    console.log('[Whisper] ✅ Transcripción exitosa:', transcription.substring(0, 100) + '...');
+    const preview = transcription.length > 100 
+      ? transcription.substring(0, 100) + '...' 
+      : transcription;
+    
+    console.log('[Whisper] ✅ Transcripción exitosa:', preview);
+    console.log('[Whisper] Idioma usado:', whisperLanguage);
 
     return {
       success: true,
-      text: transcription
+      text: transcription,
+      language: whisperLanguage
     };
 
   } catch (error) {
     console.error('[Whisper] ❌ Error transcribiendo:', error);
+    console.error('[Whisper] Usuario:', userName);
+    console.error('[Whisper] Agente:', agentName);
+    console.error('[Whisper] Idioma:', language);
+    
     return {
       success: false,
       text: '',
-      error: error.message
+      error: error.message,
+      language
     };
   }
 }

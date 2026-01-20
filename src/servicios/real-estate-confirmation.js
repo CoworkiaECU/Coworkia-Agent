@@ -1,25 +1,27 @@
 /**
  * 🏡 PAULA - PropElite Real Estate Confirmation Handler
  * 
- * Maneja la confirmación SI del usuario y completa el proceso de búsqueda:
- * 1. Guarda el lead en la base de datos (real_estate_leads)
- * 2. Envía email con resumen de búsqueda y próximos pasos
- * 3. NO agenda visita automáticamente (se coordina después según disponibilidad)
- * 4. NO calcula precio (asesoría gratuita, comisión pagada por vendedor)
- * 5. Retorna mensaje de éxito con siguiente paso
+ * Maneja DOS tipos de confirmaciones:
  * 
- * DIFERENCIAS con otros agentes:
- * - No usa AI Vision ni análisis de fotos
- * - No genera cotización automática (Paula busca propiedades manualmente)
- * - No crea evento de calendario (visitas se agendan después)
- * - No calcula precios (asesoría sin costo)
- * - Focus en iniciar relación y entender necesidades
+ * A) LEADS DE BÚSQUEDA (property_lead):
+ *    1. Guarda el lead en real_estate_leads
+ *    2. Envía email con resumen de búsqueda
+ *    3. NO agenda visita automáticamente
+ * 
+ * B) VISITAS A PROPIEDADES (property_visit):
+ *    1. Valida disponibilidad de horario
+ *    2. Crea evento en calendario
+ *    3. Guarda visita en property_visits
+ *    4. Envía email de confirmación con detalles
+ * 
+ * El tipo se detecta automáticamente desde pendingConfirmation.type
  */
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
+import { confirmPropertyVisit } from './paula-confirmation-helper.js';
 
 /**
  * 🔢 Genera código secuencial de lead inmobiliario
@@ -46,9 +48,52 @@ async function generateLeadCode() {
 }
 
 /**
- * ✅ Procesa confirmación SI de Paula
+ * ✅ Procesa confirmación SI de Paula (Router principal)
+ * Detecta tipo de confirmación y delega al handler correcto
  */
 export async function confirmRealEstateLead(userId, userProfile) {
+  try {
+    console.log('[REAL-ESTATE-CONFIRM] 📝 Iniciando confirmación para:', userId);
+    
+    // Obtener confirmación pendiente
+    const pendingConfirmation = await getPendingConfirmation(userId);
+    
+    if (!pendingConfirmation) {
+      return {
+        success: false,
+        message: '❌ No hay ninguna confirmación pendiente.'
+      };
+    }
+    
+    const confirmationType = pendingConfirmation.type;
+    console.log('[REAL-ESTATE-CONFIRM] 🎯 Tipo de confirmación:', confirmationType);
+    
+    // Router: Delegar según tipo
+    switch (confirmationType) {
+      case 'property_visit':
+        // Confirmar visita a propiedad específica
+        return await confirmPropertyVisit(userId, userProfile);
+        
+      case 'property_lead':
+      default:
+        // Confirmar lead de búsqueda general
+        return await confirmPropertyLead(userId, userProfile);
+    }
+    
+  } catch (error) {
+    console.error('[REAL-ESTATE-CONFIRM] ❌ Error en router de confirmación:', error);
+    return {
+      success: false,
+      message: '❌ Hubo un error al procesar tu confirmación. Por favor intenta nuevamente.'
+    };
+  }
+}
+
+/**
+ * ✅ Confirma lead de búsqueda de propiedad
+ * (La función original confirmRealEstateLead ahora se llama confirmPropertyLead)
+ */
+async function confirmPropertyLead(userId, userProfile) {
   console.log('[REAL-ESTATE-CONFIRM] 🏡 Procesando confirmación de búsqueda...');
 
   // Obtener datos pendientes

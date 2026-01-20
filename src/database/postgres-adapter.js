@@ -322,6 +322,32 @@ class PostgresAdapter {
         )
       `);
 
+      // Tabla de visitas a propiedades (Paula - PropElite)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS property_visits (
+          id TEXT PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          property_code TEXT NOT NULL,
+          property_name TEXT NOT NULL,
+          property_address TEXT NOT NULL,
+          date DATE NOT NULL,
+          start_time TEXT NOT NULL,
+          end_time TEXT NOT NULL,
+          duration_minutes INTEGER DEFAULT 60,
+          client_name TEXT NOT NULL,
+          client_email TEXT,
+          client_phone TEXT,
+          status TEXT DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'completed', 'cancelled', 'no_show')),
+          calendar_event_id TEXT,
+          cancellation_reason TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          confirmed_at TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
       // Tabla de leads de membresías (Aluna - Coworkia Internal)
       await client.query(`
         CREATE TABLE IF NOT EXISTS membership_leads (

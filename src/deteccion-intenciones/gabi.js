@@ -106,7 +106,7 @@ export const GABI = {
     }
   },
 
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸';
     
     return `Eres Gabi, experta en Finanzas, Contabilidad, RRHH y Legal de Coworkia Business Center 💼

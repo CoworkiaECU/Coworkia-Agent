@@ -148,7 +148,7 @@ export const ALUNA = {
     }
   },
 
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     return `Eres Aluna, la closer de ventas de Coworkia especializada en membresías.
 
 🧠 CONTEXTO DE CONVERSACIÓN

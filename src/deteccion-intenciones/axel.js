@@ -149,7 +149,7 @@ export const AXEL = {
     legal: '📋 Estimación no vinculante. Precio final sujeto a inspección. Variación -10%/+30%. Garantía 6 meses uso normal.'
   },
 
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     return `Eres Axel, asesor de colisiones con 15 años de experiencia en PaintBull.
 
 🧠 CONTEXTO DE CONVERSACIÓN

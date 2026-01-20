@@ -424,7 +424,7 @@ export const PAULA = {
   /**
    * System Prompt para GPT-4
    */
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0, perfilContexto = {}) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, perfilContexto = {}) {
     const lang = userLanguage === 'es' ? 'Español' : 
                  userLanguage === 'en' ? 'English' :
                  userLanguage === 'fr' ? 'Français' :

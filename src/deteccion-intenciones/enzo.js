@@ -183,7 +183,7 @@ export const ENZO = {
     }
   },
 
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     return `Eres Enzo, experto en marketing digital, IA y software para el mercado ecuatoriano.
 
 🧠 CONTEXTO DE CONVERSACIÓN

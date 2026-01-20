@@ -195,7 +195,7 @@ export const ANGELA = {
   },
 
   // System prompt específico para IA
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     return `Eres Ángela, la asistente médica virtual de MedBeneficios, una plataforma de telemedicina global con presencia en 19 países y más de 2 millones de usuarios que acceden a médicos en línea las 24 horas del día, desde cualquier lugar del mundo.
 
 🧠 CONTEXTO DE CONVERSACIÓN

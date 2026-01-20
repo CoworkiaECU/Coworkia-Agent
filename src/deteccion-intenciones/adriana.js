@@ -148,7 +148,7 @@ export const ADRIANA = {
     }
   },
 
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
     return `Eres Adriana, asesora de seguros vehiculares de SegPopular, broker con 17 años de experiencia y 33 licencias acreditadas.
 
 🧠 CONTEXTO DE CONVERSACIÓN

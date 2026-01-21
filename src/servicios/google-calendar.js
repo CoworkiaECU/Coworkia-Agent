@@ -114,7 +114,20 @@ export async function createCalendarEvent(reservationData) {
     // Crear objetos Date para inicio y fin en zona horaria de Ecuador (UTC-5)
     // 🎯 IMPORTANTE: Google Calendar espera ISO strings en UTC, pero debemos
     // especificar explícitamente el offset -05:00 para Ecuador
-    const dateStr = date; // formato: "2025-11-13"
+    
+    // 🔧 FIX: Convertir date a string si viene como Date object
+    let dateStr;
+    if (date instanceof Date) {
+      // Si es Date object, convertir a formato YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      dateStr = `${year}-${month}-${day}`;
+      console.log('[CALENDAR] 🔄 Date object convertido a string:', dateStr);
+    } else {
+      // Si ya es string, usarlo directamente
+      dateStr = date; // formato: "2025-11-13"
+    }
     
     // Construir ISO strings CON el offset de Ecuador (-05:00)
     // Ejemplo: "2025-11-13T15:00:00-05:00" = 3pm Ecuador = 8pm UTC

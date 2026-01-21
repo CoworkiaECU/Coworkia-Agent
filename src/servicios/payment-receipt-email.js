@@ -284,10 +284,13 @@ function generatePaymentReceiptHTML(paymentData) {
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
               ¿Dudas sobre tu pago o membresía?
             </p>
-            <a href="https://wa.me/593994837117?text=Recibí%20mi%20recibo%20de%20pago%20y%20tengo%20una%20consulta" 
+            <a href="https://wa.me/593994837117?text=Hola%20Aluna,%20recibí%20mi%20recibo%20de%20pago%20y%20tengo%20una%20consulta%20sobre%20mi%20membresía" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              📱 Contactar a Aurora
+              📱 Hablar con Aluna
             </a>
+            <p style="color: #9ca3af; font-size: 12px; margin: 12px 0 0 0;">
+              Aluna tiene tu caso en sus manos 💜
+            </p>
           </div>
 
           <!-- Footer agradecimiento -->

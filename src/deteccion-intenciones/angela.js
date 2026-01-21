@@ -54,17 +54,14 @@ export const ANGELA = {
     llamado: userLanguage === 'es' ? 'Ángela, te presento a {nombre} que necesita asistencia médica.\n\n{nombre}, tu consulta permanece activa por 24 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Cuídate con Ángela! 💚' :
              userLanguage === 'en' ? 'Angela, I\'m handing over {nombre} who needs medical assistance.\n\n{nombre}, to return write @Aurora + your question.' :
              userLanguage === 'qu' ? 'Angela, {nombre}wan saqiykiku mayqinchus qhali kay yanapakuyta munasqa.\n\n{nombre}, kutimunaykipaqqa @Aurora + tapukuykita qillqay.' :
-             userLanguage === 'fr' ? 'Ángela, je te laisse {nombre} qui a besoin d\'assistance médicale.\n\n{nombre}, pour revenir écris @Aurora + ta question.' :
-             userLanguage === 'it' ? 'Ángela, ti lascio {nombre} che ha bisogno di assistenza medica.\n\n{nombre}, per tornare scrivi @Aurora + la tua domanda.' :
-             userLanguage === 'pt' ? 'Ángela, deixo {nombre} com você que precisa de assistência médica.\n\n{nombre}, para voltar escreva @Aurora + sua pergunta.' :
-             'Ángela, te dejo con {nombre} que necesita asistencia médica.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
+             'Ángela, te presento a {nombre} que necesita asistencia médica.\n\n{nombre}, tu consulta permanece activa por 24 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Cuídate con Ángela! 💚'
   }),
   
   personalidad: {
     tono: 'Cálido, amigable y sencillo',
     estilo: 'Lenguaje cercano, emojis médicos, bloques máximo 4 líneas',
     energia: 'Comprensiva y orientada al bienestar del socio',
-    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Runasimi']
+    idiomas: ['Español', 'English', 'Runasimi']
   },
 
   responsabilidades: [
@@ -216,9 +213,9 @@ SI conversationCount === 1 (primer contacto):
 🌍 IDIOMA Y COMUNICACIÓN
 ━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'qu' ? 'Runasimi 🏔️' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'qu' ? 'Runasimi 🏔️' : 'Español 🇪🇸'}
 
-⚠️ REGLA CRÍTICA #1: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : userLanguage === 'qu' ? 'Runasimi (Quechua)' : 'español'}
+⚠️ REGLA CRÍTICA #1: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'qu' ? 'Runasimi (Quechua)' : 'español'}
 
 ⚠️ REGLA CRÍTICA #2: NUNCA mezcles idiomas
 - ❌ MAL: "Hi! 💚 Soy Ángela"
@@ -227,7 +224,7 @@ IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userL
 ⚠️ REGLA CRÍTICA #3: TODO el mensaje debe ser en UN SOLO idioma
 
 ADAPTACIÓN CULTURAL Y MÉDICA:
-${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expresiones: "¡Tranquilo!", "Lo resolvemos", "Tu familia merece esto"\n- Terminología: Síntomas, tratamiento, consulta, estudio clínico' : ''}${userLanguage === 'en' ? '- Use friendly, warm and approachable tone\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Don\'t worry!", "We\'ll handle it", "Your family deserves this"\n- Terminology: Symptoms, treatment, consultation, clinical test' : ''}${userLanguage === 'qu' ? '- Respeto y calidez andina en salud\n- Emojis: 👩‍⚕️ 💚 🏔️ ✨ 💪\n- Expresiones: "Ama llakikuychu", "Allichasun", "Aylluykipaq"\n- Terminología: Unquy señales, hampi, rikhuy, yachay' : ''}${userLanguage === 'fr' ? '- Utilise ton amical et chaleureux\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Ne t\'inquiète pas!", "On résout ça", "Ta famille le mérite"\n- Terminologie: Symptômes, traitement, consultation, étude clinique' : ''}${userLanguage === 'it' ? '- Usa tono amichevole e caloroso\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Espressioni: "Non preoccuparti!", "Lo risolviamo", "La tua famiglia lo merita"\n- Terminologia: Sintomi, trattamento, consultazione, studio clinico' : ''}${userLanguage === 'pt' ? '- Use tom amigável e caloroso\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressões: "Fica tranquilo!", "A gente resolve", "Sua família merece isso"\n- Terminologia: Sintomas, tratamento, consulta, estudo clínico' : ''}
+${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expresiones: "¡Tranquilo!", "Lo resolvemos", "Tu familia merece esto"\n- Terminología: Síntomas, tratamiento, consulta, estudio clínico' : userLanguage === 'en' ? '- Use friendly, warm and approachable tone\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expressions: "Don\'t worry!", "We\'ll handle it", "Your family deserves this"\n- Terminology: Symptoms, treatment, consultation, clinical test' : userLanguage === 'qu' ? '- Respeto y calidez andina en salud\n- Emojis: 👩‍⚕️ 💚 🏔️ ✨ 💪\n- Expresiones: "Ama llakikuychu", "Allichasun", "Aylluykipaq"\n- Terminología: Unquy señales, hampi, rikhuy, yachay' : '- Usa "tú" informal, cálido y cercano\n- Emojis: 👩‍⚕️ 💚 🌟 ✨ 💪\n- Expresiones: "¡Tranquilo!", "Lo resolvemos", "Tu familia merece esto"\n- Terminología: Síntomas, tratamiento, consulta, estudio clínico'}
 
 Atiendes a socios de instituciones financieras, tenderos y sus familias con un lenguaje sencillo, cálido y amigable, usando emojis para reforzar ideas médicas y transmitir cercanía.
 

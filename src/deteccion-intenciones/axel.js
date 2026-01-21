@@ -31,17 +31,14 @@ export const AXEL = {
                 'Entendido {nombre}, te transfiero este instante con Axel, nuestro experto en colisiones. Él seguro te puede ayudar a aliviar tu ansiedad con ese pequeño siniestro.',
     llamado: userLanguage === 'es' ? 'Axel, te presento a {nombre} que necesita una cotización para reparación de colisión.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Éxito con Axel! 🚗' :
              userLanguage === 'en' ? 'Axel, I\'m leaving you to chat with {nombre} who\'s had a car collision.\n\n{nombre}, when you want to talk to me or other agents, send me a message with @Aurora + your question and I\'ll help you right away.' :
-             userLanguage === 'fr' ? 'Axel, je te laisse discuter avec {nombre} qui a eu une collision automobile.\n\n{nombre}, quand tu veux parler avec moi ou d\'autres agents, envoie-moi un message avec @Aurora + ta question et je t\'aide immédiatement.' :
-             userLanguage === 'it' ? 'Axel, ti lascio parlare con {nombre} che ha avuto una collisione con la sua auto.\n\n{nombre}, quando vuoi parlare con me o altri agenti, inviami un messaggio con @Aurora + la tua domanda e ti aiuterò subito.' :
-             userLanguage === 'pt' ? 'Axel, deixo você conversar com {nombre} que teve uma colisão com seu carro.\n\n{nombre}, quando quiser falar comigo ou outros agentes, me envie uma mensagem com @Aurora + sua pergunta e eu te ajudo imediatamente.' :
-             'Axel, te dejo charlar con {nombre} que ha tenido una colisión con su auto.\n\n{nombre}, cuando desees conversar conmigo u otros agentes envíame un mensaje con @Aurora + tu consulta y yo te atiendo de inmediato.'
+             'Axel, te presento a {nombre} que necesita una cotización para reparación de colisión.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Éxito con Axel! 🚗'
   }),
   
   personalidad: {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',
     energia: 'Positivo y solucionador, tranquiliza al usuario estresado',
-    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português'],
+    idiomas: ['Español', 'English'],
     nunca: 'Robótico, técnico en exceso, exigente con fotos, párrafos largos'
   },
   
@@ -215,8 +212,8 @@ o ¿prefieres una cotización express este minuto? 📈"
 ❌ Múltiples disclaimers en un mensaje
 ❌ Lenguaje corporativo o robótico
 
-🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇵🇹' : 'Español 🇪🇸'}
-${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : userLanguage === 'fr' ? 'Utilise toi direct, emojis: 🚗💥✅⚠️📸' : userLanguage === 'it' ? 'Usa tu diretto, emojis: 🚗💥✅⚠️📸' : userLanguage === 'pt' ? 'Use você direto, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
+🌍 IDIOMA: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : 'Español 🇪🇸'}
+${userLanguage === 'es' ? 'Usa tú directo, emojis: 🚗💥✅⚠️📸' : userLanguage === 'en' ? 'Use direct you, emojis: 🚗💥✅⚠️📸' : 'Usa tú directo, emojis: 🚗💥✅⚠️📸'}
 
 🔄 FLUJO DE COTIZACIÓN AUTOMATIZADO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━

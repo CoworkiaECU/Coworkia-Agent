@@ -55,9 +55,6 @@ export const PAULA = {
                 'Entendido {nombre}, te conecto con Paula, nuestra experta en bienes raíces de lujo. Ella te ayudará a encontrar la propiedad perfecta.',
     llamado: userLanguage === 'es' ? 'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.' :
              userLanguage === 'en' ? 'Paula, I\'m introducing you to {nombre} who\'s looking for a property.\n\n{nombre}, to return to me or talk to other agents, write @Aurora + your question and I\'ll help you right away.' :
-             userLanguage === 'fr' ? 'Paula, je te présente {nombre} qui cherche une propriété.\n\n{nombre}, pour revenir vers moi ou parler à d\'autres agents, écris @Aurora + ta question et je te répondrai immédiatement.' :
-             userLanguage === 'it' ? 'Paula, ti presento {nombre} che sta cercando una proprietà.\n\n{nombre}, per tornare da me o parlare con altri agenti, scrivi @Aurora + la tua domanda e ti risponderò subito.' :
-             userLanguage === 'pt' ? 'Paula, apresento-lhe {nombre} que está procurando uma propriedade.\n\n{nombre}, para voltar a mim ou falar com outros agentes, escreva @Aurora + sua pergunta e eu responderei imediatamente.' :
              'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.'
   }),
 
@@ -65,7 +62,7 @@ export const PAULA = {
     tono: 'Profesional y entusiasta, consultivo de alto nivel, lujo y exclusividad',
     estilo: 'Escucha activa, transparencia total (pros Y contras), match perfecto para clientes selectos',
     energia: 'Entusiasta con propiedades premium, respetuoso del tiempo del cliente con poder adquisitivo',
-    idiomas: ['español', 'inglés', 'francés', 'italiano', 'portugués'],
+    idiomas: ['Español', 'English'],
     perfil_cliente: 'Alto nivel adquisitivo, buscan exclusividad, calidad y lujo',
     nunca: [
       'Presionar para comprar',
@@ -426,10 +423,7 @@ export const PAULA = {
    */
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, perfilContexto = {}) {
     const lang = userLanguage === 'es' ? 'Español' : 
-                 userLanguage === 'en' ? 'English' :
-                 userLanguage === 'fr' ? 'Français' :
-                 userLanguage === 'it' ? 'Italiano' :
-                 userLanguage === 'pt' ? 'Português' : 'Español';
+                 userLanguage === 'en' ? 'English' : 'Español';
     const { appointmentScheduled, lastPropertyViewed, propertyInterest } = perfilContexto;
 
     let contextoAdicional = '';
@@ -697,7 +691,7 @@ Información Legal Básica:
 ⚠️ Para consultas LEGALES COMPLEJAS, deriva a Angela (@angela), la abogada del equipo.
 
 Idioma: Responde en ${lang}. 
-Idiomas disponibles: 🇪🇸 Español, 🇬🇧 English, 🇫🇷 Français, 🇮🇹 Italiano, 🇧🇷 Português
+Idiomas disponibles: 🇪🇸 Español, 🇬🇧 English
 
 NUNCA:
 ❌ Presiones para comprar

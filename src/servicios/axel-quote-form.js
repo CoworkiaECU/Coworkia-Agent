@@ -13,12 +13,16 @@ export async function saveAxelForm(userPhone, formData) {
   try {
     console.log('[AXEL-FORM] 💾 Guardando formulario:', { userPhone, formData });
 
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 2); // Expira en 2 horas
+
     await databaseService.run(
-      `INSERT INTO partial_forms (user_phone, form_data, form_type)
-       VALUES (?, ?, 'axel_quote')
+      `INSERT INTO partial_forms (user_phone, form_data, form_type, expires_at)
+       VALUES (?, ?, 'axel_quote', ?)
        ON CONFLICT(user_phone) DO UPDATE SET 
-         form_data = excluded.form_data`,
-      [userPhone, JSON.stringify(formData)]
+         form_data = excluded.form_data,
+         expires_at = excluded.expires_at`,
+      [userPhone, JSON.stringify(formData), expiresAt.toISOString()]
     );
 
     console.log('[AXEL-FORM] ✅ Formulario guardado exitosamente');

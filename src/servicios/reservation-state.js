@@ -61,6 +61,14 @@ export async function cleanupExpiredConfirmations() {
   return result?.changes || 0;
 }
 
+export async function cleanupExpiredPartialForms() {
+  const result = await databaseService.run(
+    'DELETE FROM partial_forms WHERE expires_at IS NOT NULL AND expires_at < ?',
+    [nowIso()]
+  );
+  return result?.changes || 0;
+}
+
 export async function setPendingConfirmation(userPhone, reservationData, ttlMinutes = 120) {
   await ensureUserExists(userPhone, reservationData);
   await cleanupExpiredConfirmations();

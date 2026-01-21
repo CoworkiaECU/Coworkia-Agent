@@ -474,14 +474,18 @@ export async function updateReservationHistory(userId, reservation) {
 export async function savePartialForm(userId, formData, formType = 'reservation') {
   await ensureDbInitialized();
   try {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 2); // Expira en 2 horas
+    
     await databaseService.run(
-      `INSERT INTO partial_forms (user_phone, form_data, form_type, cancelled_at)
-       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      `INSERT INTO partial_forms (user_phone, form_data, form_type, cancelled_at, expires_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
        ON CONFLICT(user_phone) DO UPDATE SET
          form_data = excluded.form_data,
          form_type = excluded.form_type,
-         cancelled_at = CURRENT_TIMESTAMP`,
-      [userId, JSON.stringify(formData), formType]
+         cancelled_at = CURRENT_TIMESTAMP,
+         expires_at = excluded.expires_at`,
+      [userId, JSON.stringify(formData), formType, expiresAt.toISOString()]
     );
     console.log('[MEMORIA] ✅ Formulario parcial guardado:', { userId, formType });
     return true;

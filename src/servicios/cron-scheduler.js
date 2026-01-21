@@ -3,7 +3,8 @@ import { CronJob } from 'cron';
 import { 
   cleanupExpiredConfirmations, 
   cleanupJustConfirmedFlags,
-  cleanupOldInteractions 
+  cleanupOldInteractions,
+  cleanupExpiredPartialForms 
 } from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps } from './follow-up-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
@@ -31,6 +32,10 @@ export function initScheduler() {
         console.log('[CRON] 🧹 Ejecutando limpieza de flags justConfirmed...');
         const flags = await cleanupJustConfirmedFlags();
         console.log(`[CRON] ✅ Eliminados ${flags} flags justConfirmed expirados`);
+        
+        console.log('[CRON] 🧹 Ejecutando limpieza de formularios parciales expirados...');
+        const partialForms = await cleanupExpiredPartialForms();
+        console.log(`[CRON] ✅ Eliminados ${partialForms} formularios parciales expirados`);
       } catch (error) {
         console.error('[CRON] ❌ Error en limpieza de flags:', error);
       }

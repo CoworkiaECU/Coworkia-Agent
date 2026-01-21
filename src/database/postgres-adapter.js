@@ -194,6 +194,7 @@ class PostgresAdapter {
           form_data TEXT NOT NULL,
           form_type TEXT,
           cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
           FOREIGN KEY (user_phone) REFERENCES users(phone_number)
         )
       `);

@@ -3,7 +3,8 @@ import { fileURLToPath } from 'url';
 import databaseService from '../../src/database/database.js';
 import {
   cleanupExpiredConfirmations as cleanupExpiredConfirmationsCore,
-  cleanupJustConfirmedFlags as cleanupJustConfirmedFlagsCore
+  cleanupJustConfirmedFlags as cleanupJustConfirmedFlagsCore,
+  cleanupExpiredPartialForms as cleanupExpiredPartialFormsCore
 } from '../../src/servicios/reservation-state.js';
 
 const DEFAULT_INTERACTION_RETENTION_DAYS = parseInt(process.env.INTERACTIONS_RETENTION_DAYS || '30', 10);
@@ -63,6 +64,18 @@ export async function cleanupJustConfirmedFlags({ dryRun = false } = {}) {
     return await countExpiredJustConfirmedFlags();
   }
   return await cleanupJustConfirmedFlagsCore();
+}
+
+export async function cleanupExpiredPartialForms({ dryRun = false } = {}) {
+  await ensureDatabaseReady();
+  if (dryRun) {
+    const row = await databaseService.get(
+      'SELECT COUNT(*) as total FROM partial_forms WHERE expires_at IS NOT NULL AND expires_at < ?',
+      [new Date().toISOString()]
+    );
+    return row?.total || 0;
+  }
+  return await cleanupExpiredPartialFormsCore();
 }
 
 export async function cleanupOldInteractions({ retentionDays = DEFAULT_INTERACTION_RETENTION_DAYS, dryRun = false } = {}) {

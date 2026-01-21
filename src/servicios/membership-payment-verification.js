@@ -16,7 +16,7 @@
 
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import db from '../database/postgres-adapter.js';
-// import { sendMembershipConfirmationEmails } from './email.js'; // TODO: Implementar
+import { sendPaymentReceipt, prepareReceiptData } from './payment-receipt-email.js';
 // import { createMembershipTourEvent } from './google-calendar.js'; // TODO: Implementar
 
 // Constantes de validación
@@ -384,9 +384,83 @@ async function savePayment(lead, paymentData, validations, imageUrl) {
 }
 
 /**
- * 📧 Actualiza lead a estado 'accepted' y envía emails
+ * � Genera recibo de pago profesional
  */
-async function approveLead(lead, payment) {
+function generateReceiptMessage(lead, paymentData, compositePayment = null) {
+  const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+  const today = new Date().toLocaleDateString('es-EC', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  const membershipInfo = MEMBERSHIP_TYPES[lead.membership_type] || {};
+  
+  return `
+📄 *RECIBO DE PAGO OFICIAL*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧾 *Número:* ${receiptNumber}
+📅 *Fecha emisión:* ${today}
+
+👤 *DATOS DEL CLIENTE*
+• Nombre: ${lead.full_name}
+• Email: ${lead.email}
+• Teléfono: ${lead.user_phone}
+
+💼 *MEMBRESÍA CONTRATADA*
+• Plan: *${lead.membership_type}*
+• Beneficios: ${membershipInfo.benefits || 'Ver detalles del plan'}
+• Inicio: ${lead.start_date || 'Inmediato'}
+
+💰 *DETALLE DE PAGO*
+${compositePayment ? `
+• Efectivo: $${compositePayment.cashAmount.toFixed(2)} USD ✅
+• Canje servicios: $${compositePayment.canjeAmount.toFixed(2)} USD/mes
+  └─ Descripción: ${compositePayment.canjeDescription}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 *TOTAL MENSUAL:* $${compositePayment.totalAmount.toFixed(2)} USD
+
+⚠️ *ENTREGAS MENSUALES*
+📦 ${compositePayment.canjeDescription}
+💵 Valor: $${compositePayment.canjeAmount.toFixed(2)} USD
+📅 Frecuencia: Mensual
+⏰ *Gabi* te recordará 3 días antes de cada entrega.
+` : `
+• Monto pagado: $${paymentData.amount.toFixed(2)} USD ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 *TOTAL:* $${paymentData.amount.toFixed(2)} USD
+`}
+
+📋 *COMPROBANTE BANCARIO*
+• Banco: ${paymentData.bankSender || 'No especificado'}
+• Fecha transacción: ${paymentData.transactionDate}
+• Número transacción: ${paymentData.transactionNumber || 'N/A'}
+• Autorización: ${paymentData.authorizationNumber || 'N/A'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ *PAGO VERIFICADO Y CONFIRMADO*
+
+🏢 *Coworkia Business Center*
+📍 Whymper 403, Edificio Finistere, Quito
+📞 +593 99 483 7117
+📧 secretaria.coworkia@gmail.com
+🌐 www.coworkia.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${lead.membership_type !== 'Oficina Virtual' ? `🎯 *PRÓXIMO PASO:*
+Te contactaremos en las próximas horas para agendar tu tour del espacio y entregarte tu acceso.
+
+` : ''}¡Bienvenido/a a nuestra comunidad! 🎉
+Gracias por confiar en Coworkia 💙
+  `.trim();
+}
+
+/**
+ * �📧 Actualiza lead a estado 'accepted' y envía emails
+ */
+async function approveLead(lead, payment, compositePayment = null) {
   try {
     // Actualizar lead
     await db.run(
@@ -397,9 +471,17 @@ async function approveLead(lead, payment) {
       [lead.id]
     );
     
-    // TODO: Enviar emails de confirmación
-    // await sendMembershipConfirmationEmails(lead, payment);
-    console.log('[PAYMENT-VERIFICATION] 📧 TODO: Enviar emails de confirmación');
+    // 💚 GABI: Enviar recibo profesional por email
+    console.log('[PAYMENT-VERIFICATION] 💚 Gabi enviando recibo por email...');
+    const receiptData = prepareReceiptData(lead, payment, compositePayment);
+    const emailResult = await sendPaymentReceipt(receiptData);
+    
+    if (emailResult.success) {
+      console.log('[PAYMENT-VERIFICATION] ✅ Recibo enviado por Gabi:', receiptData.receiptNumber);
+    } else {
+      console.error('[PAYMENT-VERIFICATION] ⚠️ Error enviando recibo:', emailResult.error);
+      // No fallar si email falla, pero registrar el error
+    }
     
     // TODO: Programar tour (si aplica)
     // if (lead.membership_type !== 'Oficina Virtual') {
@@ -409,7 +491,11 @@ async function approveLead(lead, payment) {
     
     console.log('[PAYMENT-VERIFICATION] ✅ Lead aprobado:', lead.id);
     
-    return { success: true };
+    return { 
+      success: true, 
+      receiptNumber: receiptData.receiptNumber,
+      receiptSent: emailResult.success 
+    };
     
   } catch (error) {
     console.error('[PAYMENT-VERIFICATION] ❌ Error aprobando lead:', error);
@@ -550,42 +636,22 @@ Por favor contacta a nuestro equipo:
     
     // 🟢 CASO 1: AUTO-APROBADO
     if (approvalDecision.autoApprove) {
-      await approveLead(pendingLead, paymentData);
+      await approveLead(pendingLead, paymentData, compositePayment);
+      
+      // 📄 Generar recibo profesional por WhatsApp también
+      const receiptMessage = generateReceiptMessage(
+        pendingLead, 
+        paymentData, 
+        validations.compositePayment
+      );
+      
+      console.log('[PAYMENT-VERIFICATION] 📄 Recibo generado para:', pendingLead.full_name);
+      console.log('[PAYMENT-VERIFICATION] 💚 Gabi también envió recibo por email');
       
       return {
         success: true,
         autoApproved: true,
-        message: `✅ *¡PAGO VERIFICADO AUTOMÁTICAMENTE!*
-
-📋 *RESUMEN DEL PAGO:*${validations.compositePayment ? `
-💰 Efectivo: $${validations.compositePayment.cashAmount} USD
-🤝 Canje: $${validations.compositePayment.canjeAmount} USD (${validations.compositePayment.canjeDescription})
-💵 Total: $${validations.compositePayment.totalAmount} USD
-🎯 *Autorizado por Diego*` : `
-💰 Monto: $${paymentData.amount} USD`}
-📅 Fecha: ${paymentData.transactionDate}
-💳 Método: ${paymentData.paymentMethod}
-${paymentData.authorizationNumber ? `🔢 Autorización: ${paymentData.authorizationNumber}` : ''}
-
-📦 *TU MEMBRESÍA:*
-✨ ${pendingLead.membership_type}
-💵 ${membershipInfo.benefits}
-
-📧 *Confirmación enviada a:* ${pendingLead.email}
-
-${validations.compositePayment ? `📝 *ENTREGAS PENDIENTES:*
-${validations.compositePayment.canjeDescription}
-💵 Valor: $${validations.compositePayment.canjeAmount}
-📅 Mensualmente según acuerdo
-
-⚠️ Gabi te recordará las entregas pendientes.
-
-` : ''}${pendingLead.membership_type !== 'Oficina Virtual' ? `🏢 *PRÓXIMO PASO:*
-Te agendamos un tour del espacio para conocernos y entregarte tu acceso.
-
-📅 Fecha tour: Te contactaremos en las próximas horas` : ''}
-
-¡Bienvenido/a a Coworkia! 🎉`
+        message: receiptMessage
       };
     }
     

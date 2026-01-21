@@ -475,6 +475,29 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
+    // 🚫 BLOQUEO: Tipos de archivo NO permitidos (stickers, documentos, ubicaciones, contactos)
+    // Solo permitimos: text, image, audio, voice, ptt, video (en casos específicos)
+    const BLOCKED_TYPES = ['sticker', 'document', 'location', 'contact', 'vcard', 'poll', 'live_location'];
+    
+    if (BLOCKED_TYPES.includes(type)) {
+      console.log(`[WEBHOOK] 🚫 Tipo bloqueado: ${type} de usuario ${userId}`);
+      
+      // Obtener idioma del usuario para mensaje personalizado
+      const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+      const userLanguage = current.preferredLanguage || 'es';
+      
+      const blockedMessages = {
+        es: '📝 Por favor envía tu mensaje por texto, imagen o audio.\n\nNo puedo procesar este tipo de archivo.',
+        en: '📝 Please send your message as text, image or audio.\n\nI cannot process this type of file.',
+        fr: '📝 Veuillez envoyer votre message par texte, image ou audio.\n\nJe ne peux pas traiter ce type de fichier.',
+        it: '📝 Per favore invia il tuo messaggio come testo, immagine o audio.\n\nNon posso elaborare questo tipo di file.',
+        pt: '📝 Por favor envie sua mensagem por texto, imagem ou áudio.\n\nNão consigo processar este tipo de arquivo.'
+      };
+      
+      await enviarWhatsApp(userId, blockedMessages[userLanguage] || blockedMessages.es);
+      return; // 🛑 No procesar
+    }
+
     // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN)
     if (type === 'audio' || type === 'voice' || type === 'ptt') {
       if (!mediaUrl) return;

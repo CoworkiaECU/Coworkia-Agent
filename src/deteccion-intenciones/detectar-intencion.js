@@ -1,14 +1,14 @@
 // Detector de intenciones: decide a qué agente activar según el mensaje del usuario.
 // Reglas:
 // - Aurora (por defecto): info, reservas, Hot Desk 1, cobros unitarios.
-// - Aluna: membresías/planes mensuales (10, 20, oficina ejecutiva/virtual).
+// - Aluna: membresías/planes mensuales (Plan 10, Plan 20, oficina virtual).
 // - Adriana: solo con @Adriana explícito (seguros Segpopular).
 // - Enzo: solo si el usuario menciona @Enzo (experto en marketing/IA/ventas).
 
 const ALUNA_KEYWORDS = [
   'membresía', 'membresia', 'plan mensual', 'planes',
   'plan 10', 'plan10', 'plan 20', 'plan20',
-  'oficina ejecutiva', 'oficina virtual', 'virtual office'
+  'oficina virtual', 'virtual office', 'sala reuniones', 'meeting room'
 ];
 
 const AURORA_KEYWORDS = [

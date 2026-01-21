@@ -41,7 +41,7 @@ export function detectDocumentType(userMessage = '', fileType = '') {
   
   // Keywords por tipo de documento
   const keywords = {
-    membership: ['membresía', 'afiliación', 'contrato de membresía', 'membresía de', 'plan mensual', 'plan 10', 'plan 20', 'oficina ejecutiva', 'oficina virtual'],
+    membership: ['membresía', 'afiliación', 'contrato de membresía', 'membresía de', 'plan mensual', 'plan 10', 'plan 20', 'oficina virtual', 'sala reuniones'],
     agreement: ['acuerdo', 'convenio', 'contrato', 'agreement', 'contrato de servicios', 'acuerdo comercial'],
     terms: ['términos', 'condiciones', 'terms and conditions', 'términos de uso', 'política de privacidad', 'aviso legal'],
     invoice: ['factura', 'comprobante', 'invoice', 'recibo', 'pago', 'cobro', 'estado de cuenta'],
@@ -78,7 +78,7 @@ export function buildContractPrompt(documentType, userContext = '') {
 Este es un contrato de membresía o afiliación. Realiza un análisis profesional siguiendo esta estructura:
 
 1. **Información del Contrato**
-   - Tipo de membresía (Plan 10, Plan 20, Oficina Ejecutiva, Oficina Virtual, u otro)
+   - Tipo de membresía (Plan 10 [$140], Plan 20 [$250], Oficina Virtual [$365/año], Sala Reuniones [$39], u otro)
    - Duración del contrato (mensual, trimestral, anual)
    - Precio/inversión acordada
    - Fecha de inicio y vigencia
@@ -476,7 +476,7 @@ export function extractMembershipData(analysis) {
   };
   
   // Extraer tipo de membresía
-  const membershipMatch = analysis.match(/(?:Plan 10|Plan 20|Oficina Ejecutiva|Oficina Virtual)/i);
+  const membershipMatch = analysis.match(/(?:Plan 10|Plan 20|Oficina Virtual|Sala Reuniones)/i);
   if (membershipMatch) data.membershipType = membershipMatch[0];
   
   // Extraer duración

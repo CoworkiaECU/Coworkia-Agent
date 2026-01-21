@@ -294,7 +294,7 @@ export const FORM_SCHEMAS = {
       companyName: '🏢 Empresa'
     },
     questions: {
-      membershipType: '¿Qué plan te interesa? (Plan 10, Plan 20, Oficina Ejecutiva, Oficina Virtual)',
+      membershipType: '¿Qué plan te interesa? (Plan 10 [$140], Plan 20 [$250], Oficina Virtual [$365/año], Sala Reuniones [$39])',
       fullName: 'Perfecto. Para procesar necesito tu nombre completo 👤',
       email: '¿Tu correo electrónico? 📧',
       phone: '¿Y un número de teléfono? 📱'
@@ -624,9 +624,9 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
     } else if (lowerMsg.includes('hot desk')) {
       updates.membershipType = 'Hot Desk mensual';
       console.log('[ALUNA] 📦 Detectado: Hot Desk mensual');
-    } else if (lowerMsg.includes('oficina ejecutiva') || lowerMsg.includes('oficina privada')) {
-      updates.membershipType = 'Oficina Ejecutiva';
-      console.log('[ALUNA] 📦 Detectado: Oficina Ejecutiva');
+    } else if (lowerMsg.includes('sala') && (lowerMsg.includes('reunion') || lowerMsg.includes('reunión'))) {
+      updates.membershipType = 'Sala Reuniones';
+      console.log('[ALUNA] 📦 Detectado: Sala Reuniones');
     } else if (lowerMsg.includes('oficina virtual') || lowerMsg.includes('virtual office')) {
       updates.membershipType = 'Oficina Virtual';
       console.log('[ALUNA] 📦 Detectado: Oficina Virtual');

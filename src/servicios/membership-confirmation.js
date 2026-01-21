@@ -46,9 +46,9 @@ function getMembershipDetails(membershipType) {
   const plans = {
     'plan10': {
       name: 'Plan 10',
-      price: '$100 USD/mes',
-      days: '10+1 días gratis = 11 días',
-      hours: '2 horas por visita',
+      price: '$140 USD/mes',
+      days: '10+1 días gratis = 11 días completos',
+      hours: 'Día completo por visita',
       benefits: [
         'Locker O cajonera privada',
         '2 invitados gratis/mes',
@@ -59,9 +59,9 @@ function getMembershipDetails(membershipType) {
     },
     'plan20': {
       name: 'Plan 20',
-      price: '$180 USD/mes',
-      days: '20+2 días gratis = 22 días',
-      hours: '2 horas por visita',
+      price: '$250 USD/mes',
+      days: '20+2 días gratis = 22 días completos',
+      hours: 'Día completo por visita',
       benefits: [
         'Locker O cajonera privada',
         '4 invitados gratis/mes',
@@ -70,31 +70,29 @@ function getMembershipDetails(membershipType) {
         'Secretaria Virtual IA (9+ meses)'
       ]
     },
-    'oficinaejecutiva': {
-      name: 'Oficina Ejecutiva',
-      price: '$250 USD/mes',
-      days: 'Entrada libre (sin límite)',
-      hours: 'Sin límite de horas',
-      benefits: [
-        'Espacio privado XL dedicado',
-        'Locker Y cajonera privada',
-        'Branding ligero personalizado',
-        '1 invitado diario gratis',
-        '6 usos sala reuniones/mes',
-        'Secretaria Virtual IA (6+ meses)'
-      ]
-    },
     'oficinavirtual': {
       name: 'Oficina Virtual',
-      price: '$350 USD/año',
+      price: '$365 USD/año',
       days: 'Solo dirección comercial',
-      hours: '4 usos sala/año (2h cada vez)',
+      hours: 'Sala reuniones con pago adicional ($39)',
       benefits: [
         'Dirección comercial oficial',
-        'Recepción de correspondencia',
-        'Branding ligero',
-        '4 usos sala reuniones/año',
-        'Asesoría legal IA para cumplimiento'
+        'Recepción y notificación de correspondencia',
+        'Cumplimiento legal con SRI',
+        'Ideal para empresas remotas',
+        'Sala disponible por $39 (4 personas x 2h)'
+      ]
+    },
+    'salareuniones': {
+      name: 'Sala de Reuniones',
+      price: '$39 USD/sesión',
+      days: 'Reserva por sesión',
+      hours: '2 horas - capacidad 3-4 personas',
+      benefits: [
+        'WiFi de alta velocidad',
+        'Pantalla para presentaciones',
+        'Espacio profesional',
+        'Reserva previa necesaria'
       ]
     }
   };

@@ -172,7 +172,7 @@ export function detectLanguageCommand(message) {
 
   const normalized = message.toLowerCase().trim();
 
-  // Comandos con barra diagonal
+  // Comandos con barra diagonal - Solo ES/EN/QU
   const slashCommands = {
     '/spanish': SUPPORTED_LANGUAGES.SPANISH,
     '/español': SUPPORTED_LANGUAGES.SPANISH,
@@ -180,14 +180,6 @@ export function detectLanguageCommand(message) {
     '/english': SUPPORTED_LANGUAGES.ENGLISH,
     '/inglés': SUPPORTED_LANGUAGES.ENGLISH,
     '/ingles': SUPPORTED_LANGUAGES.ENGLISH,
-    '/french': SUPPORTED_LANGUAGES.FRENCH,
-    '/français': SUPPORTED_LANGUAGES.FRENCH,
-    '/francais': SUPPORTED_LANGUAGES.FRENCH,
-    '/italian': SUPPORTED_LANGUAGES.ITALIAN,
-    '/italiano': SUPPORTED_LANGUAGES.ITALIAN,
-    '/portuguese': SUPPORTED_LANGUAGES.PORTUGUESE,
-    '/português': SUPPORTED_LANGUAGES.PORTUGUESE,
-    '/portugues': SUPPORTED_LANGUAGES.PORTUGUESE,
     '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
     '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };

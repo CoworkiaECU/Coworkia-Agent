@@ -1,50 +1,9 @@
 // 🧾 Sistema de Recibos de Pago por Email - Gabi Financiera
 // Envía recibos profesionales HTML por email (NO interactúa con usuarios)
 
-import dotenv from 'dotenv';
-dotenv.config();
+import { EMAIL_USER, getTransporter } from './mailer.js';
 
-import nodemailer from 'nodemailer';
-
-/**
- * 📧 Configuración del transportador de email
- */
-async function createEmailTransporter() {
-  console.log('[GABI-EMAIL] 🔧 Inicializando transportador de email');
-  
-  const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS || process.env.GMAIL_PASS;
-  const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
-  
-  console.log('[GABI-EMAIL] - Usuario configurado:', EMAIL_USER ? '✅' : '❌');
-  console.log('[GABI-EMAIL] - Servicio:', EMAIL_SERVICE);
-  
-  if (!EMAIL_USER || !EMAIL_PASS) {
-    console.warn('[GABI-EMAIL] ❌ Configuración de email no encontrada. Recibos no se enviarán.');
-    return null;
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      service: EMAIL_SERVICE,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-    
-    await transporter.verify();
-    console.log('[GABI-EMAIL] ✅ Conexión SMTP verificada exitosamente');
-    
-    return transporter;
-  } catch (error) {
-    console.error('[GABI-EMAIL] ❌ Error creando transportador:', error);
-    return null;
-  }
-}
+const RECEIPT_FROM_EMAIL = EMAIL_USER || 'coworkia.ec@gmail.com';
 
 /**
  * 🎨 Genera HTML template para recibo de pago (estilo formal/legal)
@@ -338,7 +297,7 @@ export async function sendPaymentReceipt(paymentData) {
   console.log('[GABI-EMAIL] - Email:', paymentData.memberEmail);
   console.log('[GABI-EMAIL] - Recibo:', paymentData.receiptNumber);
 
-  const transporter = await createEmailTransporter();
+  const transporter = await getTransporter();
   
   if (!transporter) {
     console.error('[GABI-EMAIL] ❌ No se pudo crear transportador. Email no enviado.');
@@ -348,7 +307,7 @@ export async function sendPaymentReceipt(paymentData) {
   const htmlContent = generatePaymentReceiptHTML(paymentData);
 
   const mailOptions = {
-    from: `"Gabi - Coworkia Financiera" <${process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+    from: `"Gabi - Coworkia Financiera" <${RECEIPT_FROM_EMAIL}>`,
     to: paymentData.memberEmail,
     subject: `🧾 Recibo de Pago - ${paymentData.receiptNumber} - Coworkia`,
     html: htmlContent

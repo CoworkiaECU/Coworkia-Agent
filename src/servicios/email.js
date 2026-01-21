@@ -1,68 +1,11 @@
 // Sistema de Email para confirmaciones de reservas - Coworkia
 // Envía emails profesionales con detalles de reserva
 
-import dotenv from 'dotenv';
-dotenv.config();
-
-import nodemailer from 'nodemailer';
+import { EMAIL_USER, getTransporter } from './mailer.js';
 import { createCalendarEvent } from './google-calendar.js';
 
-/**
- * 📧 Configuración del transportador de email
- */
-async function createEmailTransporter() {
-  console.log('[EMAIL] 🔧 Inicializando transportador de email');
-  
-  const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS || process.env.GMAIL_PASS;
-  const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
-  
-  console.log('[EMAIL] - Usuario configurado:', EMAIL_USER ? '✅' : '❌');
-  console.log('[EMAIL] - Servicio:', EMAIL_SERVICE);
-  console.log('[EMAIL] - Password configurado:', EMAIL_PASS ? '✅' : '❌');
-  
-  if (!EMAIL_USER || !EMAIL_PASS) {
-    console.warn('[EMAIL] ❌ Configuración de email no encontrada. Emails no se enviarán.');
-    return null;
-  }
+const DEFAULT_FROM_EMAIL = EMAIL_USER || 'coworkia.ec@gmail.com';
 
-  try {
-    console.log('[EMAIL] 🏗️ Creando transportador nodemailer...');
-    const transporter = nodemailer.createTransport({
-      service: EMAIL_SERVICE,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS
-      },
-      // Configuración adicional para Gmail
-      tls: {
-        rejectUnauthorized: false
-      },
-      debug: process.env.DEBUG_EMAIL === 'true',
-      logger: process.env.DEBUG_EMAIL === 'true'
-    });
-    
-    console.log('[EMAIL] ✅ Transportador creado, verificando conexión...');
-    
-    // Verificar la conexión
-    try {
-      await transporter.verify();
-      console.log('[EMAIL] ✅ Conexión SMTP verificada exitosamente');
-    } catch (verifyError) {
-      console.error('[EMAIL] ❌ Error verificando conexión SMTP:', verifyError.message);
-      console.error('[EMAIL] 💡 Posibles soluciones:');
-      console.error('  1. Usar App Password en lugar de contraseña normal');
-      console.error('  2. Verificar que 2FA esté habilitado en Gmail');
-      console.error('  3. Generar un App Password específico para esta aplicación');
-      console.error('  4. Verificar que EMAIL_PASS sea el App Password, no la contraseña normal');
-    }
-    
-    return transporter;
-  } catch (error) {
-    console.error('[EMAIL] ❌ Error creando transportador:', error);
-    return null;
-  }
-}
 
 /**
  * 🎨 Genera HTML template para email de confirmación (estilo actualizado)
@@ -333,15 +276,14 @@ export async function sendEmail({ to, subject, html, from }) {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
     
-    const transporter = await createEmailTransporter();
+    const transporter = await getTransporter();
     
     if (!transporter) {
       console.error('[EMAIL] ❌ No se pudo crear transportador');
       return { success: false, error: 'Email transporter not configured' };
     }
     
-    const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
-    const fromAddress = from || `"Coworkia Agent" <${EMAIL_USER}>`;
+    const fromAddress = from || `"Coworkia Agent" <${DEFAULT_FROM_EMAIL}>`;
     
     const mailOptions = {
       from: fromAddress,
@@ -363,7 +305,7 @@ export async function sendEmail({ to, subject, html, from }) {
 
 export async function sendReservationConfirmation(reservationData) {
   console.log('[EMAIL] 🚀 Iniciando envío de confirmación de reserva...');
-  const transporter = await createEmailTransporter();
+  const transporter = await getTransporter();
   
   if (!transporter) {
     console.error('[EMAIL] ❌ No se pudo crear el transportador de email');
@@ -394,7 +336,7 @@ export async function sendReservationConfirmation(reservationData) {
   const mailOptions = {
     from: {
       name: 'Coworkia',
-      address: process.env.EMAIL_USER || 'coworkia.ec@gmail.com'
+      address: DEFAULT_FROM_EMAIL
     },
     to: email,
     cc: 'coworkia.ec@gmail.com', // Copia a Coworkia
@@ -474,7 +416,7 @@ Equipo Coworkia
  * 📧 Envía email de recordatorio (24h antes)
  */
 export async function sendReservationReminder(reservationData) {
-  const transporter = await createEmailTransporter();
+  const transporter = await getTransporter();
   
   if (!transporter) {
     return { success: false, error: 'Configuración de email no disponible' };
@@ -491,7 +433,7 @@ export async function sendReservationReminder(reservationData) {
   const mailOptions = {
     from: {
       name: 'Coworkia',
-      address: process.env.EMAIL_USER || 'coworkia.ec@gmail.com'
+      address: DEFAULT_FROM_EMAIL
     },
     to: email,
     subject: `🔔 Recordatorio - Tu reserva es mañana - ${serviceType}`,
@@ -552,7 +494,7 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
   console.log('[EMAIL] - Usuario:', userName ? 'Sí' : 'No');
   console.log('[EMAIL] - Datos reserva: [SANITIZED]');
   
-  const transporter = await createEmailTransporter();
+  const transporter = await getTransporter();
   if (!transporter) {
     console.error('[EMAIL] ❌ Transportador no configurado');
     return { success: false, error: 'Email no configurado' };
@@ -575,7 +517,7 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
   console.log('[EMAIL] ✅ HTML del email generado');
 
   const emailOptions = {
-    from: `"Coworkia" <${process.env.EMAIL_USER}>`,
+    from: `"Coworkia" <${DEFAULT_FROM_EMAIL}>`,
     to: userEmail,
     subject: `✅ Pago Confirmado - Reserva ${reservationData.date}`,
     html: emailHtml,
@@ -817,7 +759,7 @@ function generatePaymentConfirmationHTML(data) {
  * 🧪 Prueba la configuración de email
  */
 export async function testEmailConfiguration() {
-  const transporter = await createEmailTransporter();
+  const transporter = await getTransporter();
   
   if (!transporter) {
     return {

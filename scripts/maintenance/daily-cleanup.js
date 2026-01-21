@@ -31,7 +31,11 @@ export async function dailyCleanup() {
     axelQuoteForms: 0
   };
   
+  let response;
+
   try {
+    await databaseService.initialize();
+
     // 1️⃣ Limpiar formularios parciales de reservas (>24h)
     console.log('[1/4] 🗑️  Limpiando formularios parciales de reservas...');
     const formsResult = await databaseService.run(`
@@ -83,8 +87,8 @@ export async function dailyCleanup() {
     console.log(`   - Estados: ${results.oldReservationStates}`);
     console.log(`${'='.repeat(60)}\n`);
     
-    return { 
-      success: true, 
+    response = {
+      success: true,
       results,
       totalCleaned
     };
@@ -93,12 +97,16 @@ export async function dailyCleanup() {
     console.error('\n❌ [DAILY-CLEANUP] Error durante limpieza:', error);
     console.error('Stack trace:', error.stack);
     
-    return { 
-      success: false, 
+    response = {
+      success: false,
       error: error.message,
       results
     };
+  } finally {
+    await databaseService.close();
   }
+
+  return response;
 }
 
 // Ejecutar si se llama directamente

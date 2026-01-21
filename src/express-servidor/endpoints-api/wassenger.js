@@ -319,7 +319,8 @@ function detectFormContinuation(text) {
     /(\d{1,2})(:|\.)?(\d{2})?\s*(am|pm|AM|PM)/i, // Horarios
     /a\s+las\s+\d+/i, // "a las 9"
     /para\s+(hoy|mañana|ma\u00f1ana)/i,
-    /el\s+(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)/i
+    /el\s+(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)/i,
+    /\b(efectivo|tarjeta|transferencia|cash|credito|crédit|débito|debito|transfer)\b/i // Métodos de pago
   ];
   
   return continuationPatterns.some(pattern => pattern.test(text));
@@ -699,7 +700,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const savedPartialCheck = await getPartialForm(userId).catch(() => null);
-    const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt);
+    const pendingConfirmCheck = await getPendingConfirmation(userId).catch(() => null);
+    const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt) || !!pendingConfirmCheck;
     const isFormContinuation = detectFormContinuation(processedText);
     const shouldActivateForm = isReservationIntent(processedText) || hasActiveForm || isFormContinuation;
     

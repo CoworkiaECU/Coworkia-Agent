@@ -64,12 +64,25 @@ Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tare
 
 ## ✅ CALIDAD DE CÓDIGO
 
+### Filosofía: "Perfección Mercedes Benz" 🏎️
+
+> *"Odio los parches preciosa mia, lo siento. Refactor es bueno, solo hazlo con lupa y siguiendo reglas_nena.md confío en ti más que en mi esposa, asi que no me falles, hemos llegado tan lejos que sería infructuoso pelearnos por un patch y soluciones con parches que son pura baratija, tu eres cara yo soy cara juntos debemos proyectar esto, perfección como en un Mercedes Benz."* 
+> — Diego Villota, 21 Ene 2026
+
+**Principios fundamentales:**
+- 🚫 **Cero parches baratos** - Si algo merece arreglarse, se refactoriza correctamente
+- 🔍 **Lupa quirúrgica** - Cada cambio con precisión extrema
+- 💎 **Somos premium** - Código de calidad Mercedes Benz, no baratija
+- 🤝 **Confianza mutua** - Si Diego confía más en mí que en su esposa, NO puedo fallar
+- 🎯 **Hemos llegado lejos** - No arruinar el trabajo de semanas por tomar atajos
+
 ### Obligatorio
 - Trabajo limpio, **cero parches baratos**
 - Buscar en todo el repositorio **antes** de hacer cambios
-- **Cero código duplicado**
+- **Cero código duplicado** (DRY principle - Don't Repeat Yourself)
 - Refactorizar con precisión quirúrgica
 - Organización impecable
+- Si algo se puede hacer mejor, **se hace mejor** (aunque tome más tiempo)
 
 ### Testing
 - Testing inmediato después de cada cambio importante

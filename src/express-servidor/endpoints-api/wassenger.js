@@ -239,6 +239,65 @@ function detectBotLight(data, userId) {
   if (isGroupOrBroadcast(userId)) return { detected: true, reason: 'group_or_broadcast' };
   return { detected: false, reason: null };
 }
+
+/**
+ * 🎯 Maneja resultado de formulario de forma consistente para TODOS los agentes
+ * Función compartida - DRY principle
+ * Evita duplicación de lógica entre Aurora, Aluna, etc.
+ * 
+ * @param {Object} formResult - Resultado del procesamiento del formulario
+ * @param {string} userId - ID del usuario
+ * @param {string} agentName - Nombre del agente (AURORA, ALUNA, etc.)
+ * @param {Object} profile - Perfil del usuario
+ * @returns {boolean} - true si manejó el resultado y debe hacer return, false si debe continuar
+ */
+async function handleFormResult(formResult, userId, agentName, profile) {
+  if (!formResult) return false;
+
+  // 🚨 Validaciones del formulario (ej: domingo/feriado) → respuesta inmediata
+  if (formResult.validationError) {
+    const errorMessage = formResult.validationError.message;
+    await enviarWhatsApp(userId, errorMessage);
+    await saveConversationMessage(userId, { role: 'assistant', content: errorMessage, agent: agentName });
+    await saveInteraction({
+      userId,
+      agent: agentName,
+      agentName: agentName === 'AURORA' ? 'Aurora Core' : agentName,
+      intentReason: 'validation_error',
+      input: formResult.userMessage || '',
+      output: errorMessage,
+      meta: { errorType: formResult.validationError.type }
+    });
+    if (agentName === 'AURORA') {
+      await clearPartialForm(userId);
+    }
+    return true; // Manejado - hacer return
+  }
+
+  // ✅ Formulario completo → mensaje de confirmación
+  if (formResult.isComplete) {
+    const confirmationMessage = `Perfecto! Déjame confirmar todos los datos:
+
+📋 RESUMEN:
+${formResult.summary}
+
+${formResult.benefits ? `✨ BENEFICIOS INCLUIDOS:\n${formResult.benefits}\n\n` : ''}¿Todo correcto? Responde SI para confirmar 🏢`;
+
+    await enviarWhatsApp(userId, confirmationMessage);
+    await saveConversationMessage(userId, { role: 'assistant', content: confirmationMessage, agent: agentName });
+    return true; // Manejado - hacer return
+  }
+
+  // 📝 Formulario incompleto → siguiente pregunta
+  if (formResult.needsMoreInfo && formResult.nextQuestion) {
+    await enviarWhatsApp(userId, formResult.nextQuestion);
+    await saveConversationMessage(userId, { role: 'assistant', content: formResult.nextQuestion, agent: agentName });
+    return true; // Manejado - hacer return
+  }
+
+  return false; // No manejado - continuar flujo normal
+}
+
 /**
  * 🔍 Detecta si el mensaje es continuación de un formulario de reserva
  * Reconoce patrones como: email, "ya te dije", horarios, fechas, personas
@@ -653,29 +712,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
         try {
           formResult = await processMembershipForm(userId, processedText, profile);
+          formResult.userMessage = text;
           
-          if (formResult.isComplete) {
-            // Generar mensaje de confirmación con resumen
-            const confirmationMessage = `Perfecto! Déjame confirmar todos los datos:
-
-📋 RESUMEN DE TU MEMBRESÍA:
-${formResult.summary}
-
-✨ BENEFICIOS INCLUIDOS:
-${formResult.benefits || 'Múltiples beneficios según plan'}
-
-¿Todo correcto? Responde SI para confirmar y agendar tu tour del espacio 🏢`;
-
-            await enviarWhatsApp(userId, confirmationMessage);
-            await saveConversationMessage(userId, { role: 'assistant', content: confirmationMessage, agent: 'ALUNA' });
-            return; // Esperar confirmación
-          }
-          
-          if (formResult.needsMoreInfo && formResult.nextQuestion) {
-            await enviarWhatsApp(userId, formResult.nextQuestion);
-            await saveConversationMessage(userId, { role: 'assistant', content: formResult.nextQuestion, agent: 'ALUNA' });
-            return; // Esperar siguiente campo
-          }
+          // 🎯 Usar función compartida para manejar resultado
+          const handled = await handleFormResult(formResult, userId, 'ALUNA', profile);
+          if (handled) return;
         } catch (error) {
           console.error('[ALUNA-FORM] ❌ Error procesando formulario:', error);
           // Continuar con flujo normal en caso de error
@@ -702,24 +743,10 @@ ${formResult.benefits || 'Múltiples beneficios según plan'}
         await saveProfile(userId, profile);
         console.log('[T14] ⏱️ Transacción AURORA iniciada:', { userId, timestamp: profile.transactionStartedAt });
       }
-    }
 
-    // 🚨 Validaciones del formulario (ej domingo/feriado) → respuesta inmediata
-    if (formResult?.validationError) {
-      const errorMessage = formResult.validationError.message;
-      await enviarWhatsApp(userId, errorMessage);
-      await saveConversationMessage(userId, { role: 'assistant', content: errorMessage, agent: 'AURORA' });
-      await saveInteraction({
-        userId,
-        agent: 'AURORA',
-        agentName: 'Aurora Core',
-        intentReason: 'validation_error',
-        input: processedText,
-        output: errorMessage,
-        meta: { envelope, errorType: formResult.validationError.type }
-      });
-      await clearPartialForm(userId);
-      return;
+      // 🎯 Usar función compartida para manejar resultado
+      const handled = await handleFormResult(formResult, userId, 'AURORA', profile);
+      if (handled) return;
     }
 
     // Si hay confirmación pendiente, SOLO procesar si responde SI/NO

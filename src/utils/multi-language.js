@@ -2,25 +2,22 @@
 // Centraliza configuración de idiomas para todos los agentes
 
 export const SUPPORTED_LANGUAGES = {
-  // Idiomas estándar para todos los agentes
-  STANDARD: ['es', 'en', 'fr', 'it', 'pt'],
+  // Español + English (todos los agentes)
+  STANDARD: ['es', 'en'],
   
-  // Angela incluye Quechua para comunidades indígenas (salud)
-  ANGELA_EXTENDED: ['es', 'en', 'fr', 'it', 'pt', 'qu']
+  // Angela: Español + English + Quechua (comunidades indígenas)
+  ANGELA_EXTENDED: ['es', 'en', 'qu']
 };
 
 export const LANGUAGE_NAMES = {
-  STANDARD: ['Español', 'English', 'Français', 'Italiano', 'Português'],
-  ANGELA_EXTENDED: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua (Runasimi)']
+  STANDARD: ['Español', 'English'],
+  ANGELA_EXTENDED: ['Español', 'English', 'Quechua (Runasimi)']
 };
 
 export const getLanguageEmoji = (lang) => {
   const emojis = {
     es: '🇪🇸',
     en: '🇺🇸',
-    fr: '🇫🇷',
-    it: '🇮🇹',
-    pt: '🇵🇹',
     qu: '🇵🇪'
   };
   return emojis[lang] || '🇪🇸';
@@ -30,9 +27,6 @@ export const getLanguageName = (lang) => {
   const names = {
     es: 'Español',
     en: 'English',
-    fr: 'Français',
-    it: 'Italiano',
-    pt: 'Português',
     qu: 'Quechua (Runasimi)'
   };
   return names[lang] || 'Español';

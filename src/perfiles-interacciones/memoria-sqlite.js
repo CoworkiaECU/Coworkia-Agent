@@ -6,6 +6,7 @@
 import databaseService from '../database/database.js';
 import userRepository from '../database/userRepository.js';
 import reservationRepository from '../database/reservationRepository.js';
+import { SUPPORTED_LANGUAGES } from '../utils/multi-language.js';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -247,6 +248,16 @@ export async function saveProfile(userId, partialProfile = {}) {
     // 🔥 SINCRONIZACIÓN NOMBRE: whatsapp_display_name es la fuente de verdad
     const displayName = partialProfile.whatsappDisplayName || partialProfile.name;
     const syncedName = displayName || null;
+    
+    // 🌍 VALIDACIÓN IDIOMA: Solo ES/EN/QU permitidos
+    let validatedLanguage = partialProfile.preferredLanguage;
+    if (validatedLanguage) {
+      const allSupportedLanguages = [...SUPPORTED_LANGUAGES.STANDARD, ...SUPPORTED_LANGUAGES.ANGELA_EXTENDED.filter(lang => !SUPPORTED_LANGUAGES.STANDARD.includes(lang))];
+      if (!allSupportedLanguages.includes(validatedLanguage)) {
+        console.warn(`⚠️ Invalid language '${validatedLanguage}' for user ${userId}, defaulting to 'es'`);
+        validatedLanguage = 'es';
+      }
+    }
 
     // Convertir formato de aplicación a formato SQLite
     const sqliteData = {
@@ -259,7 +270,7 @@ export async function saveProfile(userId, partialProfile = {}) {
       conversation_count: partialProfile.conversationCount,
       last_message_at: partialProfile.lastMessageAt || new Date().toISOString(),
       active_agent: partialProfile.activeAgent,
-      preferred_language: partialProfile.preferredLanguage // 🌍 Idioma preferido
+      preferred_language: validatedLanguage // 🌍 Idioma preferido (validado)
     };
     
     // Remover campos undefined

@@ -1,16 +1,13 @@
 /**
  * 🌍 Sistema de Detección Automática de Idioma
  * Detecta el idioma del mensaje del usuario usando patrones nativos
- * Soporta: Español, English, Français, Italiano, Português, Runasimi (Quechua Ecuador)
+ * Soporta: Español, English, Runasimi (Quechua Ecuador)
  */
 
 // Códigos ISO 639-1 para idiomas soportados
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
-  FRENCH: 'fr',
-  ITALIAN: 'it',
-  PORTUGUESE: 'pt',
   QUECHUA: 'qu'
 };
 
@@ -18,9 +15,6 @@ export const SUPPORTED_LANGUAGES = {
 export const LANGUAGE_NAMES = {
   es: 'Español',
   en: 'English',
-  fr: 'Français',
-  it: 'Italiano',
-  pt: 'Português',
   qu: 'Runasimi'
 };
 
@@ -50,42 +44,6 @@ const LANGUAGE_PATTERNS = {
       'tomorrow', 'today', 'booking', 'reservation', 'help', 'price', 'information'
     ],
     specialChars: /\b(the|a|an|is|are|am|was|were|been|being)\b/i,
-    weight: 1.0
-  },
-
-  // Français - Mots communs et accents
-  fr: {
-    commonWords: [
-      'bonjour', 'merci', 'comment', 'quoi', 'quand', 'où', 'pourquoi',
-      'voulez', 'veux', 'besoin', 'aide', 'prix', 'réservation', 'information',
-      'vous', 'nous', 'avec', 'sans', 'pour', 'dans', 'sur', 'aujourd',
-      'demain', 'maintenant', 'mais', 'très', 'bien', 'oui', 'non'
-    ],
-    specialChars: /[àâäéèêëïîôùûüÿœç]/i,
-    weight: 1.0
-  },
-
-  // Italiano - Parole comuni e accenti
-  it: {
-    commonWords: [
-      'ciao', 'buongiorno', 'grazie', 'prego', 'come', 'cosa', 'quando',
-      'dove', 'perché', 'voglio', 'vorrei', 'bisogno', 'aiuto', 'prezzo',
-      'prenotazione', 'informazione', 'anche', 'molto', 'adesso', 'domani',
-      'oggi', 'con', 'senza', 'per', 'sono', 'siamo', 'posso'
-    ],
-    specialChars: /[àèéìíîòóùú]/i,
-    weight: 1.0
-  },
-
-  // Português - Palavras comuns e acentos
-  pt: {
-    commonWords: [
-      'olá', 'bom', 'dia', 'obrigado', 'obrigada', 'por', 'favor', 'como',
-      'que', 'quando', 'onde', 'porque', 'quero', 'preciso', 'ajuda', 'preço',
-      'reserva', 'informação', 'com', 'sem', 'para', 'muito', 'agora',
-      'amanhã', 'hoje', 'sim', 'não', 'posso', 'estou', 'está'
-    ],
-    specialChars: /[ãáàâçéêíóôõú]/i,
     weight: 1.0
   },
 
@@ -262,29 +220,6 @@ export function detectLanguageCommand(message) {
         /hablas\s+español/i
       ], lang: SUPPORTED_LANGUAGES.SPANISH },
     { patterns: [
-        /cambiar?\s+(a|al)?\s*francés/i,
-        /cambiar?\s+(a|al)?\s*frances/i,
-        /habla(r)?\s+francés/i,
-        /switch\s+to\s+french/i,
-        /parlez\s+vous\s+français/i,
-        /français\s+(s'il\s+vous\s+)?pla[iî]t/i
-      ], lang: SUPPORTED_LANGUAGES.FRENCH },
-    { patterns: [
-        /cambiar?\s+(a|al)?\s*italiano/i,
-        /habla(r)?\s+italiano/i,
-        /switch\s+to\s+italian/i,
-        /parla\s+italiano/i,
-        /italiano\s+per\s+favore/i
-      ], lang: SUPPORTED_LANGUAGES.ITALIAN },
-    { patterns: [
-        /cambiar?\s+(a|al)?\s*portugués/i,
-        /cambiar?\s+(a|al)?\s*portugues/i,
-        /habla(r)?\s+portugués/i,
-        /switch\s+to\s+portuguese/i,
-        /fala\s+português/i,
-        /português\s+por\s+favor/i
-      ], lang: SUPPORTED_LANGUAGES.PORTUGUESE },
-    { patterns: [
         /cambiar?\s+(a|al)?\s*quechua/i, 
         /habla(r)?\s+quechua/i, 
         /runasimita/i
@@ -358,9 +293,6 @@ export function getLanguageChangeConfirmation(newLanguage) {
   const confirmations = {
     es: '✅ Perfecto! Ahora te responderé en español 🇪🇸',
     en: '✅ Perfect! I will now respond in English 🇺🇸',
-    fr: '✅ Parfait! Je vais maintenant répondre en français 🇫🇷',
-    it: '✅ Perfetto! Ora risponderò in italiano 🇮🇹',
-    pt: '✅ Perfeito! Agora vou responder em português 🇵🇹',
     qu: '✅ Allinmi! Kunan runasimipi rimanayki 🏔️'
   };
 

@@ -303,8 +303,8 @@ export async function transcribeAudio(audioUrl, options = {}) {
     console.log('[Whisper] Agente:', agentName);
     console.log('[Whisper] Usuario:', userName);
 
-    // Validar idioma soportado
-    const supportedLanguages = ['es', 'en', 'fr', 'it', 'pt', 'qu'];
+    // Validar idioma soportado: ES + EN (todos) + QU (solo Angela)
+    const supportedLanguages = ['es', 'en', 'qu'];
     const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
     
     if (language !== whisperLanguage) {

@@ -90,7 +90,7 @@ class PostgresAdapter {
           conversation_count INTEGER DEFAULT 0,
           last_message_at TIMESTAMP,
           active_agent TEXT DEFAULT 'AURORA',
-          preferred_language TEXT DEFAULT 'es',
+          preferred_language TEXT DEFAULT 'es' CHECK (preferred_language IN ('es', 'en', 'qu')),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -104,7 +104,22 @@ class PostgresAdapter {
             SELECT 1 FROM information_schema.columns 
             WHERE table_name = 'users' AND column_name = 'preferred_language'
           ) THEN
-            ALTER TABLE users ADD COLUMN preferred_language TEXT DEFAULT 'es';
+            ALTER TABLE users ADD COLUMN preferred_language TEXT DEFAULT 'es' CHECK (preferred_language IN ('es', 'en', 'qu'));
+          END IF;
+        END $$;
+      `);
+      
+      // Agregar CHECK constraint si no existe (migración para tablas existentes)
+      await client.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.constraint_column_usage 
+            WHERE table_name = 'users' 
+            AND constraint_name = 'users_preferred_language_check'
+          ) THEN
+            ALTER TABLE users ADD CONSTRAINT users_preferred_language_check 
+            CHECK (preferred_language IN ('es', 'en', 'qu'));
           END IF;
         END $$;
       `);

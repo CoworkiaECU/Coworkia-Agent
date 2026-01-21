@@ -838,7 +838,7 @@ export async function processConfirmationResponse(message, userProfile) {
         return await processSpecializedConfirmation(userProfile.userId, pendingConfirmation, userProfile);
       }
       // Si no, es una reserva de Aurora (formato legacy)
-      return await processPositiveConfirmation(userProfile, userProfile.pendingConfirmation);
+      return await processPositiveConfirmation(userProfile, pendingConfirmation);
     }
     
     if (isNegativeResponse(message)) {

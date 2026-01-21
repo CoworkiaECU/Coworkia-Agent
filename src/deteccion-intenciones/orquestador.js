@@ -12,9 +12,9 @@ import { PAULA } from './paula.js';
 import { detectarIntencion } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
 import { hasPendingConfirmation } from '../servicios/confirmation-flow.js';
-import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { clearPendingConfirmation as clearLegacyPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { clearForm as clearPartialForm } from '../servicios/partial-reservation-form.js';
-import { clearJustConfirmed } from '../servicios/reservation-state.js';
+import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 
 /**
  * Detecta si Paula recibe mensaje fuera de su scope (bienes raíces)
@@ -173,7 +173,9 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     console.log('[ORQUESTADOR] 🗑️ Cancelación detectada');
     
     // ✅ Verificar si realmente hay algo que cancelar
-    const hasPending = await hasPendingConfirmation(userId);
+    const pendingNew = await getPendingConfirmation(userId);
+    const hasPendingLegacy = await hasPendingConfirmation(userId);
+    const hasPending = hasPendingLegacy || !!pendingNew;
     const hasPartialForm = !!(formData?.resumed || formData?.partial);
     
     if (hasPending || hasPartialForm) {
@@ -183,10 +185,16 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
       });
       
       try {
-        // Limpiar confirmaciones pendientes
-        if (hasPending) {
+        // Limpiar confirmaciones pendientes (nuevo sistema reservation-state)
+        if (pendingNew) {
           await clearPendingConfirmation(userId);
-          console.log('[ORQUESTADOR] ✅ Confirmación pendiente limpiada');
+          console.log('[ORQUESTADOR] ✅ Confirmación pendiente (reservation-state) limpiada');
+        }
+
+        // Limpiar confirmaciones pendientes
+        if (hasPendingLegacy) {
+          await clearLegacyPendingConfirmation(userId);
+          console.log('[ORQUESTADOR] ✅ Confirmación pendiente (legacy) limpiada');
         }
         
         // Limpiar formulario parcial
@@ -375,7 +383,8 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   }
 
   // 🔒 AISLAMIENTO: Solo agentes de coworking reciben contexto de reservas
-  const isCoworkingAgent = ['AURORA', 'ALUNA'].includes(targetAgent);
+  const isCoworkingAgent = ['AURORA', 'ALUNA', 'GABI'].includes(targetAgent);
+  const isExternalAgent = ['ENZO', 'ANGELA', 'AXEL', 'PAULA'].includes(targetAgent);
   
   // 🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
   const isReturningToAurora = targetAgent === 'AURORA' && 
@@ -485,26 +494,40 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   // 💬 MEMORIA CONVERSACIONAL: Últimos 7-8 intercambios (hasta 15 mensajes)
   // Ampliado para mejor contexto en ecosistema multi-agente con handoffs
   if (historial.length > 0) {
-    // Tomar últimos 15 mensajes (7-8 intercambios completos)
-    const ultimos = historial.slice(-15);
+    const historyLimit = isExternalAgent ? 3 : 15;
+    const recentHistory = historial.slice(-historyLimit);
+    const filteredHistory = isExternalAgent
+      ? recentHistory.filter((m) => {
+          const content = (m.content || '').toLowerCase();
+          return !(
+            content.includes('@') ||
+            /paymentmethod|pago|payphone|transferencia|precio|total/i.test(content) ||
+            /fecha/.test(content) ||
+            /reserva/.test(content)
+          );
+        })
+      : recentHistory;
     
-    lineas.push('\n💬 CONVERSACIÓN RECIENTE:');
-    
-    ultimos.forEach((m, idx) => {
-      const isUser = m.role === 'user';
-      const speaker = isUser ? '👤 Usuario' : `🤖 ${m.agent || 'Asistente'}`;
-      const prefix = isUser ? '' : '   '; // Indentar respuestas del asistente
+    if (filteredHistory.length > 0) {
+      lineas.push('\n💬 CONVERSACIÓN RECIENTE:');
+
+      filteredHistory.forEach((m) => {
+        const isUser = m.role === 'user';
+        const speaker = isUser ? '👤 Usuario' : `🤖 ${m.agent || 'Asistente'}`;
+        const prefix = isUser ? '' : '   ';
+
+        let content = m.content || '';
+        if (content.length > 150) {
+          content = content.substring(0, 147) + '...';
+        }
+
+        lineas.push(`${prefix}${speaker}: ${content}`);
+      });
       
-      // Truncar mensajes muy largos (>150 chars) para optimizar tokens
-      let content = m.content || '';
-      if (content.length > 150) {
-        content = content.substring(0, 147) + '...';
-      }
-      
-      lineas.push(`${prefix}${speaker}: ${content}`);
-    });
-    
-    lineas.push('\n📌 Usa esta conversación para contexto, pero NO repitas información que el usuario ya dio.');
+      lineas.push('\n📌 Usa esta conversación para contexto, pero NO repitas información que el usuario ya dio.');
+    } else {
+      lineas.push('\n💬 CONVERSACIÓN RECIENTE: (contenido filtrado por privacidad)');
+    }
   }
 
   return lineas.join('\n');

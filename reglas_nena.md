@@ -3,11 +3,16 @@
 ## 🎯 FLUJO DE TRABAJO PRINCIPAL
 
 ### Antes de Ejecutar
-1. **Analizar** la tarea completa
-2. **Presentar** mi idea/solución para tu revisión
-3. **Ajustar** las veces necesarias en los chats
-4. **Esperar** el comando **"verde nena"**
-5. **Ejecutar** solo después de tu aprobación
+1. **Analizar** la tarea completa y el agente/componente específico
+2. **Informar errores** detectados con claridad
+3. **Proponer soluciones inmediatas** siguiendo filosofía Mercedes Benz
+4. **Si es posible solucionar sin refactorizar**: Pedir permiso explícito para parche controlado
+5. **Presentar** mi idea/solución completa para tu revisión
+6. **Ajustar** las veces necesarias en los chats
+7. **Esperar** el comando **"verde nena"**
+8. **Ejecutar** solo después de tu aprobación
+9. **Probar localmente** antes de commit
+10. **Commit + Deploy** con mensaje descriptivo
 
 ### Durante el Trabajo
 - **TODO List en VSCode**: Obligatorio desde el inicio
@@ -83,6 +88,14 @@ Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tare
 - Refactorizar con precisión quirúrgica
 - Organización impecable
 - Si algo se puede hacer mejor, **se hace mejor** (aunque tome más tiempo)
+
+### Excepción Controlada: Parches Aprobados
+**Solo** cuando Diego lo autoriza explícitamente:
+- Solución rápida documentada como temporal
+- Debe incluir comentario `// TODO-PARCHE: [razón y solución definitiva futura]`
+- Agregar a TODO list la refactorización definitiva
+- Nunca asumir que un parche es aceptable sin preguntar
+- Workflow: Analizar → Informar → Proponer → **Pedir permiso** → Esperar "verde nena" → Ejecutar
 
 ### Testing
 - Testing inmediato después de cada cambio importante

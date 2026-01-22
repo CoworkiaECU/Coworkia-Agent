@@ -91,8 +91,8 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   
   // 1. MENSAJE DE DESPEDIDA del agente actual
   
-  // Caso especial: Aurora tiene mensajes específicos por agente destino
-  if (fromAgent === 'AURORA' && typeof agenteActual?.getHandover === 'function') {
+  // Casos especiales: Aurora, Angela y Axel tienen mensajes específicos por agente destino
+  if ((fromAgent === 'AURORA' || fromAgent === 'ANGELA' || fromAgent === 'AXEL') && typeof agenteActual?.getHandover === 'function') {
     mensajeDespedida = agenteActual.getHandover(toAgent, userName, userLanguage);
   }
   
@@ -113,11 +113,30 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   
   // 2. MENSAJE DE ENTRADA del nuevo agente
   
-  if (typeof nuevoAgente?.getMensajes === 'function') {
-    const mensajes = nuevoAgente.getMensajes(userLanguage);
-    mensajeEntrada = mensajes?.entrada?.replace(/{nombre}/g, userName);
-  } else if (nuevoAgente?.mensajes?.entrada) {
-    mensajeEntrada = nuevoAgente.mensajes.entrada.replace(/{nombre}/g, userName);
+  // Caso especial: Aurora detecta si viene de otro agente (returning user)
+  if (toAgent === 'AURORA' && fromAgent !== 'AURORA') {
+    // Usuario regresa a Aurora desde otro agente
+    if (userLanguage === 'es') {
+      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊\n\n¿En qué te puedo asistir?`;
+    } else if (userLanguage === 'en') {
+      mensajeEntrada = `Hello again ${userName}! 😊\n\nHow can I assist you?`;
+    } else if (userLanguage === 'fr') {
+      mensajeEntrada = `Rebonjour ${userName}! 😊\n\nComment puis-je vous aider?`;
+    } else if (userLanguage === 'it') {
+      mensajeEntrada = `Ciao di nuovo ${userName}! 😊\n\nCome posso aiutarti?`;
+    } else if (userLanguage === 'pt') {
+      mensajeEntrada = `Olá novamente ${userName}! 😊\n\nComo posso ajudá-lo?`;
+    } else {
+      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊\n\n¿En qué te puedo asistir?`;
+    }
+  } else {
+    // Mensaje de entrada estándar
+    if (typeof nuevoAgente?.getMensajes === 'function') {
+      const mensajes = nuevoAgente.getMensajes(userLanguage);
+      mensajeEntrada = mensajes?.entrada?.replace(/{nombre}/g, userName);
+    } else if (nuevoAgente?.mensajes?.entrada) {
+      mensajeEntrada = nuevoAgente.mensajes.entrada.replace(/{nombre}/g, userName);
+    }
   }
   
   // Fallback genérico para entrada

@@ -103,11 +103,11 @@ function generatePaymentReceiptHTML(paymentData) {
         
         <!-- Header formal con colores sobrios para recibo de pago -->
         <div style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); text-align: center; padding: 40px 20px;">
-          <div style="color: #4ECDC4; font-size: 56px; font-weight: 700; letter-spacing: -2px; margin-bottom: 12px;">
+          <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px;">
             Coworkia
           </div>
-          <div style="color: rgba(255,255,255,0.8); font-size: 16px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
-            work · connect · grow
+          <div style="color: rgba(255,255,255,0.95); font-size: 20px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
+            Business Center
           </div>
           <div style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #374151;">🧾 RECIBO DE PAGO OFICIAL</h1>

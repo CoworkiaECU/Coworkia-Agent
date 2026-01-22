@@ -119,11 +119,11 @@ function generateConfirmationEmailHTML(reservationData) {
         <!-- Header limpio con colores corporativos Coworkia -->
         <div style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); text-align: center; padding: 40px 20px;">
           <!-- Solo texto, sin logos -->
-          <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 12px;">
+          <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px;">
             Coworkia
           </div>
-          <div style="color: rgba(255,255,255,0.9); font-size: 18px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
-            work · connect · grow
+          <div style="color: rgba(255,255,255,0.95); font-size: 20px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
+            Business Center
           </div>
           <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ ¡Reserva Confirmada!</h1>
@@ -740,7 +740,7 @@ function generatePaymentConfirmationHTML(data) {
                   </svg>
                 </div>
                 <div style="color: #4FD1C7; font-size: 18px; font-weight: 600; margin-bottom: 5px;">coWorkia</div>
-                <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">work · connect · grow</div>
+                <div style="color: #9ca3af; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">Business Center</div>
                 <p style="color: #a0aec0; margin: 0; font-size: 14px;">
                     ¡Gracias por elegir Coworkia! 🚀<br>
                     <a href="mailto:coworkia.ec@gmail.com" style="color: #4FD1C7;">coworkia.ec@gmail.com</a> | 

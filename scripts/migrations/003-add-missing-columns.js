@@ -31,11 +31,11 @@ async function runMigration() {
       await pool.query('ALTER TABLE partial_forms ADD COLUMN expires_at TIMESTAMP');
       console.log('✅ Columna expires_at agregada exitosamente');
       
-      // Update existing rows
+      // Update existing rows (usar cancelled_at en lugar de updated_at)
       const updateResult = await pool.query(`
         UPDATE partial_forms 
-        SET expires_at = updated_at + INTERVAL '24 hours'
-        WHERE expires_at IS NULL AND updated_at IS NOT NULL
+        SET expires_at = cancelled_at + INTERVAL '24 hours'
+        WHERE expires_at IS NULL AND cancelled_at IS NOT NULL
       `);
       console.log(`✅ Actualizados ${updateResult.rowCount} registros con expires_at`);
     } else {
@@ -55,7 +55,7 @@ async function runMigration() {
       await pool.query('ALTER TABLE reservation_state ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
       console.log('✅ Columna created_at agregada exitosamente');
       
-      // Update existing rows
+      // Update existing rows (usar updated_at que SÍ existe en reservation_state)
       const updateResult = await pool.query(`
         UPDATE reservation_state
         SET created_at = COALESCE(updated_at, CURRENT_TIMESTAMP)

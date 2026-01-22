@@ -16,15 +16,33 @@ export const GABI = {
                'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼'
   }),
   
-  getHandover: (userLanguage = 'es') => ({
-    transicion: userLanguage === 'en' ? 'Got it {nombre}, connecting you with Gabi 💼, our expert in finance, accounting and legal at the Business Center.' :
-                userLanguage === 'qu' ? 'Riqsisqaña {nombre}, Gabi 💼man t\'inkisqayki, qullqi, yupay, legal yachayniyuq Business Center.' :
-                'Entendido {nombre}, te conecto con Gabi 💼, nuestra experta en finanzas, contabilidad y legal del Business Center.',
-    llamado: userLanguage === 'es' ? 'Gabi, te presento a {nombre} que necesita asesoría legal/financiera.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Gabi resolverá tus dudas! 💼' :
-             userLanguage === 'en' ? 'Gabi, I\'m handing over {nombre} who needs administrative advice.\n\n{nombre}, to return write @Aurora + your question.' :
-                userLanguage === 'qu' ? 'Gabi, {nombre}wan saqisqayki, payqa administración yanapayta munan.\n\n{nombre}, kutimunaykipaq @Aurora + tapuykita qillqay.' :
-                'Gabi, te dejo con {nombre} que necesita asesoría administrativa.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
-  }),
+  // Función para obtener mensaje de handoff según agente destino (cuando Gabi transfiere A otros)
+  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
+    const handoverMessages = {
+      'AURORA': {
+        es: 'Perfecto {nombre}, ya tienes la información contable/legal que necesitabas. 💼\n\nTe devuelvo con *Aurora* para lo que necesites. Si tienes dudas administrativas, solo di *@Gabi* y aquí estaré.\n\n¡Éxito con tu negocio!',
+        en: 'Perfect {nombre}, you have the accounting/legal information you needed. 💼\n\nReturning you to *Aurora* for anything you need. If you have administrative questions, just say *@Gabi* and I\'ll be here.\n\nSuccess with your business!',
+        qu: 'Allinmi {nombre}, qullqi/legal willaykunata tarisqayki. 💼\n\n*Aurora*man kutichisqayki imapaqpas. Administración tapuykunapaq, *@Gabi* niy, kaypi kanki.\n\nAllin kachun negocioypi!'
+      },
+      'ALUNA': {
+        es: 'Entendido {nombre}, ya revisamos tu información de pagos/membresía. 💼\n\nTe comunico con *Aluna* para tus planes de coworking. Para dudas de facturación, escribe *@Gabi*.\n\n¡Hasta luego!',
+        en: 'Got it {nombre}, we reviewed your payment/membership information. 💼\n\nConnecting you with *Aluna* for your coworking plans. For billing questions, write *@Gabi*.\n\nSee you!',
+        qu: 'Riqsisqaña {nombre}, qullqi/membresía willaykunata qhawasqanchik. 💼\n\n*Aluna*man t\'inkisqayki coworking plankuna. Facturación tapuypaq, *@Gabi* qillqay.\n\nTupananchiskama!'
+      },
+      'ADRIANA': {
+        es: 'Perfecto {nombre}, ya hablamos sobre cumplimiento y regulaciones. 💼\n\nTe dejo con *Adriana* de *SegPopular* para tu seguro. Para temas legales/contables, di *@Gabi*.\n\n¡Protege tu inversión!',
+        en: 'Perfect {nombre}, we discussed compliance and regulations. 💼\n\nConnecting you with *Adriana* from *SegPopular* for your insurance. For legal/accounting matters, say *@Gabi*.\n\nProtect your investment!',
+        qu: 'Allinmi {nombre}, cumplimiento, regulaciones rimasqanchik. 💼\n\n*Adriana* *SegPopular*manta seguromanta. Legal/qullqi tapuypaq, *@Gabi* niy.\n\nQolqeykita jark\'ay!'
+      }
+    };
+    
+    const agentMessages = handoverMessages[targetAgent];
+    if (!agentMessages) return null;
+    
+    // Fallback inteligente: userLanguage → 'en' → 'es'
+    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
+    return message.replace(/{nombre}/g, userName);
+  },
   
   personalidad: {
     tono: 'Profesional, clara, orientada a soluciones, confiable',

@@ -695,7 +695,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const replyContext = buildReplyContext(text || '', body, conversationHistory);
     const processedText = replyContext.hasReplyContext ? replyContext.enrichedMessage : (text || '');
 
-    await saveConversationMessage(userId, { role: 'user', content: processedText });
+    // 📸 Si hay imagen pero no texto, usar placeholder descriptivo
+    const messageContent = processedText || (mediaUrl && type === 'image' ? '[Usuario envió imagen]' : '');
+
+    await saveConversationMessage(userId, { role: 'user', content: messageContent });
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };

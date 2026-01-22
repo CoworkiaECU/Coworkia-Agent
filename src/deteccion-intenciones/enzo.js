@@ -34,14 +34,46 @@ export const ENZO = {
                'Perfecto {nombre}, ha sido un placer.\n\nEn cualquier momento puedes retomar, solo di @Enzo y tu consulta, aquí estaré. ¡Éxitos! 🚀'
   }),
   
-  getHandover: (userLanguage = 'es') => ({
-    transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Enzo, nuestro experto en marketing digital. Él puede potenciar tu negocio con IA.' :
-                userLanguage === 'en' ? 'Got it {nombre}, connecting you with Enzo, our digital marketing expert. He can boost your business with AI.' :
-                'Entendido {nombre}, te conecto con Enzo, nuestro experto en marketing digital. Él puede potenciar tu negocio con IA.',
-    llamado: userLanguage === 'es' ? 'Enzo, te presento a {nombre} que busca potenciar su marketing digital.\n\n{nombre}, tu consulta permanece activa por 48 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Enzo transformará tu negocio! 🚀' :
-             userLanguage === 'en' ? 'Enzo, I\'m handing over {nombre} who needs marketing strategies.\n\n{nombre}, to return write @Aurora + your question.' :
-             'Enzo, te dejo con {nombre} que necesita estrategias de marketing.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
-  }),
+  // Función para obtener mensaje de handoff según agente destino (cuando Enzo transfiere A otros)
+  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
+    const handoverMessages = {
+      'AURORA': {
+        es: 'Perfecto {nombre}, ya tienes tu estrategia de marketing. 🚀\n\nTe devuelvo con *Aurora* para lo que necesites. Si tienes dudas sobre campañas o estrategia digital, solo di *@Enzo* y aquí estaré.\n\n¡Éxitos con tu proyecto!',
+        en: 'Perfect {nombre}, you have your marketing strategy now. 🚀\n\nReturning you to *Aurora* for anything you need. If you have questions about campaigns or digital strategy, just say *@Enzo* and I\'ll be here.\n\nSuccess with your project!'
+      },
+      'PAULA': {
+        es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para marketing inmobiliario. 🏡\n\nPara dudas de marketing general, escribe *@Enzo*.\n\n¡Éxito!',
+        en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for real estate marketing. 🏡\n\nFor general marketing questions, write *@Enzo*.\n\nSuccess!'
+      },
+      'GABI': {
+        es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para facturación y contratos. ⚖️\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Hasta pronto!',
+        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for billing and contracts. ⚖️\n\nFor marketing matters, just say *@Enzo*.\n\nSee you soon!'
+      },
+      'ADRIANA': {
+        es: 'Entendido {nombre}, te comunico con *Adriana* de *SegPopular* para tu seguro. 🛡️\n\nPara dudas de marketing, escribe *@Enzo*.\n\n¡Protege tu inversión!',
+        en: 'Got it {nombre}, connecting you with *Adriana* from *SegPopular* for your insurance. 🛡️\n\nFor marketing questions, write *@Enzo*.\n\nProtect your investment!'
+      },
+      'AXEL': {
+        es: 'Perfecto {nombre}, te dejo con *Axel* de *The PaintBull* para tu vehículo. 🚗\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Éxito!',
+        en: 'Perfect {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle. 🚗\n\nFor marketing matters, just say *@Enzo*.\n\nSuccess!'
+      },
+      'ALUNA': {
+        es: 'Entendido {nombre}, te comunico con *Aluna* para planes de coworking. 🏢\n\nPara dudas de marketing, escribe *@Enzo*.\n\n¡Hasta luego!',
+        en: 'Got it {nombre}, connecting you with *Aluna* for coworking plans. 🏢\n\nFor marketing questions, write *@Enzo*.\n\nSee you!'
+      },
+      'ANGELA': {
+        es: 'Perfecto {nombre}, te dejo con *Angela* de *MedBeneficios* para tu salud. 💚\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Cuídate!',
+        en: 'Perfect {nombre}, connecting you with *Angela* from *MedBeneficios* for your health. 💚\n\nFor marketing matters, just say *@Enzo*.\n\nTake care!'
+      }
+    };
+    
+    const agentMessages = handoverMessages[targetAgent];
+    if (!agentMessages) return null;
+    
+    // Fallback inteligente: userLanguage → 'en' → 'es'
+    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
+    return message.replace(/{nombre}/g, userName);
+  },
   
   personalidad: {
     tono: 'Técnico pero accesible, directo y práctico',

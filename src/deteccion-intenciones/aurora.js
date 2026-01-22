@@ -621,7 +621,7 @@ Para tu reserva del Hot Desk el {fecha} a las {hora}, puedes pagar con tarjeta d
 • Proceso 100% seguro y automático
 • Confirmación inmediata
 
-💰 *Total a pagar:* ${monto} USD
+💰 *Total a pagar:* {monto} USD
 
 Después de pagar, envíame captura del comprobante y confirmo tu reserva. ¡Listo! ✅"
 

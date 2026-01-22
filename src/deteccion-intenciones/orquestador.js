@@ -91,8 +91,8 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   
   // 1. MENSAJE DE DESPEDIDA del agente actual
   
-  // Casos especiales: Aurora, Angela, Axel, Adriana y Aluna tienen mensajes específicos por agente destino
-  if ((fromAgent === 'AURORA' || fromAgent === 'ANGELA' || fromAgent === 'AXEL' || fromAgent === 'ADRIANA' || fromAgent === 'ALUNA') && typeof agenteActual?.getHandover === 'function') {
+  // Casos especiales: Aurora, Angela, Axel, Adriana, Aluna y Enzo tienen mensajes específicos por agente destino
+  if ((fromAgent === 'AURORA' || fromAgent === 'ANGELA' || fromAgent === 'AXEL' || fromAgent === 'ADRIANA' || fromAgent === 'ALUNA' || fromAgent === 'ENZO') && typeof agenteActual?.getHandover === 'function') {
     mensajeDespedida = agenteActual.getHandover(toAgent, userName, userLanguage);
   }
   

@@ -79,7 +79,8 @@ export const AXEL = {
     const agentMessages = handoverMessages[targetAgent];
     if (!agentMessages) return null;
     
-    const message = agentMessages[userLanguage] || agentMessages['es'];
+    // Fallback inteligente: userLanguage → 'en' → 'es'
+    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
     return message.replace(/{nombre}/g, userName);
   },
   

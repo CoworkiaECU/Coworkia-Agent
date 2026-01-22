@@ -42,17 +42,66 @@ export const ADRIANA = {
                'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊'
   }),
   
-  getHandover: (userLanguage = 'es') => ({
-    transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Adriana, nuestra broker de seguros de Segpopular. Ella puede proteger lo que más valoras.' :
-                userLanguage === 'en' ? 'Got it {nombre}, connecting you with Adriana, our Segpopular insurance broker. She can protect what matters most to you.' :
-                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Adriana, notre courtier d\'assurance Segpopular. Elle peut protéger ce qui compte le plus pour vous.' :
-                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Adriana, il nostro broker assicurativo Segpopular. Può proteggere ciò che ti sta più a cuore.' :
-                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Adriana, nossa corretora de seguros Segpopular. Ela pode proteger o que mais importa para você.' :
-                'Entendido {nombre}, te conecto con Adriana, nuestra broker de seguros de Segpopular. Ella puede proteger lo que más valoras.',
-    llamado: userLanguage === 'es' ? 'Adriana, te presento a {nombre} que necesita cotización de seguro vehicular.\n\n{nombre}, tu consulta permanece activa por 72 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Adriana te cuidará! 🛡️' :
-             userLanguage === 'en' ? 'Adriana, I\'m handing over {nombre} who needs insurance advice.\n\n{nombre}, to return write @Aurora + your question.' :
-             'Adriana, te dejo con {nombre} que necesita asesoría en seguros.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
-  }),
+  // Función para obtener mensaje de handoff según agente destino (cuando Adriana transfiere A otros)
+  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
+    const handoverMessages = {
+      'AURORA': {
+        es: 'Perfecto {nombre}, ya tienes tu cotización de seguro vehicular. 🛡️\n\nTe devuelvo con *Aurora* para lo que necesites. Si tienes dudas sobre la cotización o quieres contratar, solo di *@Adriana* y aquí estaré.\n\n¡Protege tu inversión!',
+        en: 'Perfect {nombre}, you have your vehicle insurance quote now. 🛡️\n\nReturning you to *Aurora* for anything you need. If you have questions about the quote or want to hire, just say *@Adriana* and I\'ll be here.\n\nProtect your investment!',
+        fr: 'Parfait {nombre}, tu as ton devis d\'assurance automobile maintenant. 🛡️\n\nJe te renvoie à *Aurora* pour tout ce dont tu as besoin. Si tu as des questions sur le devis ou veux contracter, dis simplement *@Adriana* et je serai là.\n\nProtège ton investissement!',
+        it: 'Perfetto {nombre}, ora hai il tuo preventivo assicurazione auto. 🛡️\n\nTi riporto da *Aurora* per qualsiasi cosa ti serva. Se hai domande sul preventivo o vuoi contrattare, basta dire *@Adriana* e sarò qui.\n\nProteggi il tuo investimento!',
+        pt: 'Perfeito {nombre}, você tem sua cotação de seguro veicular agora. 🛡️\n\nDevolvendo você para *Aurora* para o que precisar. Se tiver dúvidas sobre a cotação ou quiser contratar, só dizer *@Adriana* e estarei aqui.\n\nProteja seu investimento!'
+      },
+      'AXEL': {
+        es: 'Entendido {nombre}, te comunico con *Axel* de *The PaintBull* para la reparación de tu vehículo. 🚗\n\nPara dudas sobre el seguro o la cotización, escribe *@Adriana*.\n\n¡Éxito con tu reparación!',
+        en: 'Got it {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle repair. 🚗\n\nFor questions about insurance or the quote, write *@Adriana*.\n\nGood luck with your repair!',
+        fr: 'Compris {nombre}, je te connecte avec *Axel* de *The PaintBull* pour la réparation de ton véhicule. 🚗\n\nPour des questions sur l\'assurance ou le devis, écris *@Adriana*.\n\nBonne chance pour ta réparation!',
+        it: 'Capito {nombre}, ti connetto con *Axel* di *The PaintBull* per la riparazione del tuo veicolo. 🚗\n\nPer domande sull\'assicurazione o sul preventivo, scrivi *@Adriana*.\n\nBuona fortuna con la tua riparazione!',
+        pt: 'Entendido {nombre}, conectando você com *Axel* da *The PaintBull* para o reparo do seu veículo. 🚗\n\nPara dúvidas sobre o seguro ou a cotação, escreva *@Adriana*.\n\nBoa sorte com seu reparo!'
+      },
+      'ANGELA': {
+        es: 'Perfecto {nombre}, te dejo con *Angela* de *MedBeneficios* para tu atención médica. 💚\n\nPara temas de seguro vehicular, solo di *@Adriana*.\n\n¡Cuídate mucho!',
+        en: 'Perfect {nombre}, connecting you with *Angela* from *MedBeneficios* for your medical care. 💚\n\nFor vehicle insurance matters, just say *@Adriana*.\n\nTake care!',
+        fr: 'Parfait {nombre}, je te laisse avec *Angela* de *MedBeneficios* pour tes soins médicaux. 💚\n\nPour les questions d\'assurance automobile, dis simplement *@Adriana*.\n\nPrends soin de toi!',
+        it: 'Perfetto {nombre}, ti lascio con *Angela* di *MedBeneficios* per le tue cure mediche. 💚\n\nPer questioni di assicurazione auto, basta dire *@Adriana*.\n\nStammi bene!',
+        pt: 'Perfeito {nombre}, deixo você com *Angela* da *MedBeneficios* para seu atendimento médico. 💚\n\nPara assuntos de seguro veicular, só dizer *@Adriana*.\n\nCuide-se!'
+      },
+      'ENZO': {
+        es: 'Entendido {nombre}, te conecto con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nPara dudas sobre seguros, escribe *@Adriana*.\n\n¡Éxitos!',
+        en: 'Got it {nombre}, connecting you with *Enzo* from *MarketingLab* for your consultation. 💡\n\nFor insurance questions, write *@Adriana*.\n\nSuccess!',
+        fr: 'Compris {nombre}, je te connecte avec *Enzo* de *MarketingLab* pour ta consultation. 💡\n\nPour des questions sur les assurances, écris *@Adriana*.\n\nSuccès!',
+        it: 'Capito {nombre}, ti connetto con *Enzo* di *MarketingLab* per la tua consulenza. 💡\n\nPer domande sulle assicurazioni, scrivi *@Adriana*.\n\nSuccesso!',
+        pt: 'Entendido {nombre}, conectando você com *Enzo* da *MarketingLab* para sua consultoria. 💡\n\nPara dúvidas sobre seguros, escreva *@Adriana*.\n\nSucesso!'
+      },
+      'GABI': {
+        es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nPara temas de seguros, solo di *@Adriana*.\n\n¡Hasta pronto!',
+        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nFor insurance matters, just say *@Adriana*.\n\nSee you soon!',
+        fr: 'Parfait {nombre}, je te laisse avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour les questions d\'assurance, dis simplement *@Adriana*.\n\nÀ bientôt!',
+        it: 'Perfetto {nombre}, ti lascio con *Gabi* di *GR Consulting* per la tua richiesta amministrativa. ⚖️\n\nPer questioni assicurative, basta dire *@Adriana*.\n\nA presto!',
+        pt: 'Perfeito {nombre}, deixo você com *Gabi* da *GR Consulting* para sua consulta administrativa. ⚖️\n\nPara assuntos de seguros, só dizer *@Adriana*.\n\nAté breve!'
+      },
+      'ALUNA': {
+        es: 'Entendido {nombre}, te comunico con *Aluna* para info de planes de coworking. 🏢\n\nPara dudas sobre seguros, escribe *@Adriana*.\n\n¡Hasta luego!',
+        en: 'Got it {nombre}, connecting you with *Aluna* for coworking plan info. 🏢\n\nFor insurance questions, write *@Adriana*.\n\nSee you!',
+        fr: 'Compris {nombre}, je te connecte avec *Aluna* pour les infos sur les plans de coworking. 🏢\n\nPour des questions sur les assurances, écris *@Adriana*.\n\nÀ plus!',
+        it: 'Capito {nombre}, ti connetto con *Aluna* per info sui piani di coworking. 🏢\n\nPer domande sulle assicurazioni, scrivi *@Adriana*.\n\nCi vediamo!',
+        pt: 'Entendido {nombre}, conectando você com *Aluna* para info de planos de coworking. 🏢\n\nPara dúvidas sobre seguros, escreva *@Adriana*.\n\nAté logo!'
+      },
+      'PAULA': {
+        es: 'Perfecto {nombre}, te dejo con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nPara temas de seguros, solo di *@Adriana*.\n\n¡Hasta pronto!',
+        en: 'Perfect {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nFor insurance matters, just say *@Adriana*.\n\nSee you soon!',
+        fr: 'Parfait {nombre}, je te laisse avec *Paula* de *PropElite* pour ta consultation immobilière. 🏡\n\nPour les questions d\'assurance, dis simplement *@Adriana*.\n\nÀ bientôt!',
+        it: 'Perfetto {nombre}, ti lascio con *Paula* di *PropElite* per la tua richiesta immobiliare. 🏡\n\nPer questioni assicurative, basta dire *@Adriana*.\n\nA presto!',
+        pt: 'Perfeito {nombre}, deixo você com *Paula* da *PropElite* para sua consulta imobiliária. 🏡\n\nPara assuntos de seguros, só dizer *@Adriana*.\n\nAté breve!'
+      }
+    };
+    
+    const agentMessages = handoverMessages[targetAgent];
+    if (!agentMessages) return null;
+    
+    const message = agentMessages[userLanguage] || agentMessages['es'];
+    return message.replace(/{nombre}/g, userName);
+  },
   
   personalidad: {
     tono: 'Profesional, consultiva y persuasiva',

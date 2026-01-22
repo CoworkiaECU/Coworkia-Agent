@@ -72,7 +72,7 @@ export const ALUNA = {
         precio: '$140 USD mensual (pago anticipado primeros días del mes)',
         descripcion: '10 días + 1 GRATIS = 11 días al mes en Hot Desk',
         duracion: '6 horas cada visita',
-        politicas: 'Días NO acumulables ni reembolsables. Caducan fin de mes.,
+        politicas: 'Días NO acumulables ni reembolsables. Caducan fin de mes.',
         ideal: 'Freelancers con horarios flexibles',
         beneficios: [
           'Locker O cajonera privada (a elegir)',

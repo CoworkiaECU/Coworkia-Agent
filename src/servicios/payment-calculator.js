@@ -19,7 +19,7 @@ const PRICING = {
   hotDesk: {
     baseHours: 2,
     basePrice: 10.00,
-    additionalHourPrice: 10.00,
+    additionalHourPrice: 7.00,
     minPeople: 1,
     maxPeople: 1
   },

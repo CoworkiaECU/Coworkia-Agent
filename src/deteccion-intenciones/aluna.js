@@ -27,9 +27,9 @@ export const ALUNA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: Plan 10 ($140/mes, 11 días) | Plan 20 ($250/mes, 22 días)\n• 🤝 Sala reuniones: $39 por 4 personas x 2 horas\n• 🌐 Oficina Virtual: $365/año (recepción correspondencia)\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?' :
-             userLanguage === 'en' ? 'Hi {nombre}! I\'m Aluna from Coworkia Business Center 🏢\n\n📋 **Coworking space specialist**:\n• 💼 Hot Desk: Plan 10 ($140/month, 11 days) | Plan 20 ($250/month, 22 days)\n• 🤝 Meeting room: $39 for 4 people x 2 hours\n• 🌐 Virtual Office: $365/year (mail handling)\n• ☕ WiFi + coffee included in all plans\n• 🔓 24/7 access available\n\nWhat type of space do you need and how many days per month?' :
-             '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: Plan 10 ($140/mes, 11 días) | Plan 20 ($250/mes, 22 días)\n• 🤝 Sala reuniones: $39 por 4 personas x 2 horas\n• 🌐 Oficina Virtual: $365/año (recepción correspondencia)\n• ☕ WiFi + café incluido en todos los planes\n• 🔓 Acceso 24/7 disponible\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?',
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: Plan 10 ($140/mes, 11 días) | Plan 20 ($250/mes, 22 días)\n• 🤝 Sala reuniones: $39 por 4 personas x 2 horas\n• 🌐 Oficina Virtual: $365/año (recepción correspondencia + sala incluida)\n• ☕ WiFi + café incluido en todos los planes\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?' :
+             userLanguage === 'en' ? 'Hi {nombre}! I\'m Aluna from Coworkia Business Center 🏢\n\n📋 **Coworking space specialist**:\n• 💼 Hot Desk: Plan 10 ($140/month, 11 days) | Plan 20 ($250/month, 22 days)\n• 🤝 Meeting room: $39 for 4 people x 2 hours\n• 🌐 Virtual Office: $365/year (mail handling + meeting room included)\n• ☕ WiFi + coffee included in all plans\n\nWhat type of space do you need and how many days per month?' :
+             '¡Hola {nombre}! Soy Aluna de Coworkia Business Center 🏢\n\n📋 **Especialista en espacios de coworking**:\n• 💼 Hot Desk: Plan 10 ($140/mes, 11 días) | Plan 20 ($250/mes, 22 días)\n• 🤝 Sala reuniones: $39 por 4 personas x 2 horas\n• 🌐 Oficina Virtual: $365/año (recepción correspondencia + sala incluida)\n• ☕ WiFi + café incluido en todos los planes\n\n¿Qué tipo de espacio necesitas y cuántos días al mes?',
     despedida: userLanguage === 'es' ? 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊' :
                'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊'
@@ -71,8 +71,8 @@ export const ALUNA = {
         nombre: 'Plan 10',
         precio: '$140 USD mensual (pago anticipado primeros días del mes)',
         descripcion: '10 días + 1 GRATIS = 11 días al mes en Hot Desk',
-        duracion: '2 horas cada visita',
-        politicas: 'Días NO acumulables ni reembolsables. Caducan fin de mes.',
+        duracion: '6 horas cada visita',
+        politicas: 'Días NO acumulables ni reembolsables. Caducan fin de mes.,
         ideal: 'Freelancers con horarios flexibles',
         beneficios: [
           'Locker O cajonera privada (a elegir)',
@@ -92,7 +92,8 @@ export const ALUNA = {
           'Locker O cajonera privada (a elegir)',
           '4 invitados gratis al mes (máximo 4, registro obligatorio)',
           '4 usos de sala de reuniones por 2 horas cada vez (vía Aurora)',
-          'Secretaria Virtual con IA (contratos 9+ meses) - Asesoría personalizada con OpenAI'
+          'Secretaria Virtual con IA (contratos 9+ meses) - Asesoría personalizada con OpenAI',
+          'Acceso horarios de oficina'
         ]
       },
       oficinaVirtual: {
@@ -105,7 +106,7 @@ export const ALUNA = {
           'Recepción y notificación de correspondencia',
           'Ideal para emprendedores remotos o empresas extranjeras',
           'Cumplimiento con SRI y entidades de control',
-          'Sala de reuniones: disponible con pago adicional ($39 por 4 personas x 2h)'
+          'Sala de reuniones incluida sin adicional (una vez por mes por 2 horas)'
         ]
       },
       salaReuniones: {
@@ -282,7 +283,7 @@ PLANES DISPONIBLES:
 • Solo planes anuales, pago anticipado total
 • Recepción y notificación de correspondencia
 • Cumplimiento legal con SRI y entidades rectoras
-• Sala reuniones disponible con pago adicional ($39)
+• Sala reuniones incluida sin adicional (una vez por mes por 2 horas)
 → Ideal: Emprendedores remotos o empresas extranjeras
 
 💡 *VENTAJA COMPETITIVA ÚNICA DE COWORKIA:*

@@ -74,13 +74,13 @@ function getMembershipDetails(membershipType) {
       name: 'Oficina Virtual',
       price: '$365 USD/año',
       days: 'Solo dirección comercial',
-      hours: 'Sala reuniones con pago adicional ($39)',
+      hours: 'Sala reuniones incluida (una vez por mes por 2 horas)',
       benefits: [
         'Dirección comercial oficial',
         'Recepción y notificación de correspondencia',
         'Cumplimiento legal con SRI',
         'Ideal para empresas remotas',
-        'Sala disponible por $39 (4 personas x 2h)'
+        'Sala reuniones incluida sin adicional (una vez por mes por 2 horas)'
       ]
     },
     'salareuniones': {

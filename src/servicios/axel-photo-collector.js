@@ -89,14 +89,15 @@ export function getSession(userId) {
     timeoutRemaining,
     isExpired: elapsed >= PHOTO_TIMEOUT_MS,
     canAddMore: session.photos.length < MAX_PHOTOS,
-    isReady: session.photos.length >= MIN_PHOTOS
+    isReady: session.photos.length >= MIN_PHOTOS,
+    readyToProcess: session.readyToProcess || false
   };
 }
 
 /**
  * ⏰ Iniciar timeout para procesar automáticamente
  */
-export function startTimeout(userId, onComplete) {
+export function startTimeout(userId) {
   const session = photoSessions.get(userId);
   
   if (!session) {
@@ -109,13 +110,10 @@ export function startTimeout(userId, onComplete) {
     clearTimeout(session.timeoutId);
   }
   
-  // Crear nuevo timeout
+  // Crear nuevo timeout que marca flag en vez de ejecutar directamente
   session.timeoutId = setTimeout(() => {
-    console.log(`[AXEL-PHOTOS] ⏰ Timeout alcanzado para ${userId} - procesando ${session.photos.length} foto(s)`);
-    
-    if (onComplete && typeof onComplete === 'function') {
-      onComplete(session);
-    }
+    console.log(`[AXEL-PHOTOS] ⏰ Timeout alcanzado para ${userId} - marcando sesión lista`);
+    session.readyToProcess = true;
   }, PHOTO_TIMEOUT_MS);
   
   console.log(`[AXEL-PHOTOS] ⏱️ Timeout iniciado: ${PHOTO_TIMEOUT_MS}ms`);

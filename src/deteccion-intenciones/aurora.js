@@ -591,7 +591,8 @@ RESPONDE CON ESTE MENSAJE:
    → Pagas aquí en recepción
 
 2️⃣ *Tarjeta de crédito/débito* 💳
-   → Pagas aquí con datáfono
+   → Te envío link de pago seguro (Payphone)
+   → Pagas online con tu tarjeta
 
 3️⃣ *Transferencia bancaria* 🏦
    → *Banco:* Produbanco
@@ -603,6 +604,26 @@ RESPONDE CON ESTE MENSAJE:
 📱 Si pagas por transferencia, solo envíame el comprobante por WhatsApp y listo!
 
 ¿Con cuál prefieres pagar?"
+
+🚨 IMPORTANTE SOBRE PAGO CON TARJETA:
+• Cuando el usuario selecciona "Tarjeta" o "tarjeta de crédito/débito"
+• DEBES enviar el link de Payphone INMEDIATAMENTE
+• USA ESTE MENSAJE:
+
+"Perfecto, {nombre}! 😊
+
+Para tu reserva del Hot Desk el {fecha} a las {hora}, puedes pagar con tarjeta de la siguiente manera:
+
+💳 *PAGO CON TARJETA (PAYPHONE):*
+🔗 https://pay.payphoneapp.com/coworkia
+
+• Ingresa al link → Coloca tu tarjeta → Paga
+• Proceso 100% seguro y automático
+• Confirmación inmediata
+
+💰 *Total a pagar:* ${monto} USD
+
+Después de pagar, envíame captura del comprobante y confirmo tu reserva. ¡Listo! ✅"
 
 🚨 IMPORTANTE:
 • SIEMPRE muestra las 3 opciones completas

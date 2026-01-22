@@ -234,29 +234,64 @@ ${reservationType}
       location: event.location
     });
 
-    // Usar el calendario configurado o crear en calendario principal
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    // 🎯 MULTI-CALENDARIO: Crear evento en calendario principal Y en coworkia.ec@gmail.com
+    const primaryCalendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    const secondaryCalendarId = 'coworkia.ec@gmail.com';
     
-    // Crear el evento (sin invitaciones - las notificaciones van por email)
-    const response = await runWithRetry('google-calendar:insert', () => calendar.events.insert({
-      calendarId,
+    console.log('[CALENDAR] 🔄 Creando evento en múltiples calendarios...');
+    console.log(`[CALENDAR] 📅 Principal: ${primaryCalendarId}`);
+    console.log(`[CALENDAR] 📅 Secundario: ${secondaryCalendarId}`);
+    
+    // Crear el evento en calendario principal (sin invitaciones - las notificaciones van por email)
+    const primaryResponse = await runWithRetry('google-calendar:insert-primary', () => calendar.events.insert({
+      calendarId: primaryCalendarId,
       resource: event,
       sendUpdates: 'none'
     }), {
       maxRetries: 2,
       backoffBaseMs: 600,
-      circuitId: 'google-calendar-insert'
+      circuitId: 'google-calendar-insert-primary'
     });
 
-    console.log('[CALENDAR] ✅ Evento creado exitosamente!');
-    console.log(`[CALENDAR] 🔗 URL del evento: ${response.data.htmlLink}`);
-    console.log(`[CALENDAR] 📧 ID del evento: ${response.data.id}`);
+    console.log('[CALENDAR] ✅ Evento creado en calendario principal!');
+    console.log(`[CALENDAR] 🔗 URL del evento: ${primaryResponse.data.htmlLink}`);
+    console.log(`[CALENDAR] 📧 ID del evento: ${primaryResponse.data.id}`);
+    
+    // Intentar crear copia en calendario secundario (coworkia.ec@gmail.com)
+    let secondaryEventId = null;
+    let secondaryEventUrl = null;
+    
+    try {
+      const secondaryResponse = await runWithRetry('google-calendar:insert-secondary', () => calendar.events.insert({
+        calendarId: secondaryCalendarId,
+        resource: event,
+        sendUpdates: 'none'
+      }), {
+        maxRetries: 2,
+        backoffBaseMs: 600,
+        circuitId: 'google-calendar-insert-secondary'
+      });
+      
+      secondaryEventId = secondaryResponse.data.id;
+      secondaryEventUrl = secondaryResponse.data.htmlLink;
+      
+      console.log('[CALENDAR] ✅ Evento copiado a calendario secundario!');
+      console.log(`[CALENDAR] 🔗 URL secundario: ${secondaryEventUrl}`);
+      console.log(`[CALENDAR] 📧 ID secundario: ${secondaryEventId}`);
+    } catch (secondaryError) {
+      console.error('[CALENDAR] ⚠️ Error copiando a calendario secundario (continuando):', secondaryError.message);
+      // No lanzar error - el evento principal ya está creado
+    }
 
     return {
       success: true,
-      eventId: response.data.id,
-      eventUrl: response.data.htmlLink,
-      message: 'Evento creado en Google Calendar'
+      eventId: primaryResponse.data.id,
+      eventUrl: primaryResponse.data.htmlLink,
+      secondaryEventId,
+      secondaryEventUrl,
+      message: secondaryEventId 
+        ? 'Evento creado en ambos calendarios' 
+        : 'Evento creado en calendario principal (secundario falló)'
     };
 
   } catch (error) {

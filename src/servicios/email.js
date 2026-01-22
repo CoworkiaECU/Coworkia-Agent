@@ -4,7 +4,7 @@
 import { EMAIL_USER, getTransporter } from './mailer.js';
 import { createCalendarEvent } from './google-calendar.js';
 
-const DEFAULT_FROM_EMAIL = EMAIL_USER || 'coworkia.ec@gmail.com';
+const DEFAULT_FROM_EMAIL = EMAIL_USER || 'secretaria.coworkia@gmail.com';
 
 
 /**
@@ -335,11 +335,11 @@ export async function sendReservationConfirmation(reservationData) {
   
   const mailOptions = {
     from: {
-      name: 'Coworkia',
-      address: DEFAULT_FROM_EMAIL
+      name: 'Coworkia Secretaría',
+      address: 'secretaria.coworkia@gmail.com'
     },
-    to: email,
-    cc: 'coworkia.ec@gmail.com', // Copia a Coworkia
+    to: [email],
+    cc: 'coworkia.ec@gmail.com', // Copia al administrador
     subject: `✅ Reserva Confirmada - ${serviceType} ${date} ${startTime} - Coworkia`,
     html: emailHTML,
     text: `

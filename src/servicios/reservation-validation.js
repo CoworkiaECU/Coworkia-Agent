@@ -77,7 +77,7 @@ export function validateDuration(durationHours) {
     return {
       valid: false,
       reason: `Duración máxima: ${BUSINESS_CONFIG.maxDurationHours} horas`,
-      suggestion: `Para reservas de más de ${BUSINESS_CONFIG.maxDurationHours} horas, contacta a secretaria@coworkia.com`
+      suggestion: `Para reservas de más de ${BUSINESS_CONFIG.maxDurationHours} horas, contacta a secretaria.coworkia@gmail.com`
     };
   }
   

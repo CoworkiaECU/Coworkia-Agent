@@ -5,7 +5,7 @@
  * Flujo:
  * 1. Genera enlace WhatsApp pre-llenado para que el cliente contacte a Juan
  * 2. Envía mensaje WhatsApp automático a Juan (+593998100623) con datos del cliente
- * 3. Envía email HTML a segpopular.ec@gmail.com con análisis detallado
+ * 3. Envía email HTML a coworkia.ec@gmail.com con análisis detallado
  */
 
 import axios from 'axios';

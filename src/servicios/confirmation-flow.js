@@ -390,6 +390,13 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       lastReservation: reservationRecord
     };
     
+    // 📧 Guardar email del formulario en users.email si está presente
+    if (pendingReservation.email && pendingReservation.email !== userProfile.email) {
+      console.log('[Confirmation] 📧 Guardando email del formulario en BD:', pendingReservation.email);
+      userUpdates.email = pendingReservation.email;
+      userProfile.email = pendingReservation.email; // Actualizar también en memoria para notificaciones
+    }
+    
     // 🎁 Si es primera reserva gratis, marcar trial usado
     if (pendingReservation.wasFree) {
       console.log('[Confirmation] 🎁 Marcando trial gratis como usado');

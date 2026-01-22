@@ -674,12 +674,13 @@ export function extractDataFromMessage(message, currentForm) {
     console.log('[FORM] 🔄 Sobrescribiendo hora anterior:', currentForm.time, '→', detectedTime);
   } else {
     console.log('[FORM-TIME] ❌ No se detectó hora en el mensaje');
-  }  // 📧 Detectar email
-  if (!currentForm.email) {
-    const emailMatch = message.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
-    if (emailMatch) {
-      updates.email = emailMatch[1];
-      console.log('[FORM] 📧 Detectado email:', updates.email);
+  }  // 📧 Detectar email (SIEMPRE permitir actualizar, incluso si ya existe)
+  const emailMatch = message.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
+  if (emailMatch) {
+    updates.email = emailMatch[1];
+    console.log('[FORM] 📧 Detectado email:', updates.email);
+    if (currentForm.email && currentForm.email !== emailMatch[1]) {
+      console.log('[FORM] 🔄 Sobrescribiendo email anterior:', currentForm.email, '→', emailMatch[1]);
     }
   }
 

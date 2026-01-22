@@ -35,18 +35,42 @@ export const ALUNA = {
                'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊'
   }),
   
-  getHandover: (userLanguage = 'es') => ({
-    transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Aluna, nuestra especialista en planes y membresías. Ella encontrará el plan perfecto para tu ritmo.' :
-                userLanguage === 'en' ? 'Got it {nombre}, connecting you with Aluna, our plans and memberships specialist. She\'ll find the perfect plan for your pace.' :
-                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Aluna, notre spécialiste en plans et adhésions. Elle trouvera le plan parfait pour votre rythme.' :
-                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Aluna, la nostra specialista in piani e abbonamenti. Troverà il piano perfetto per il tuo ritmo.' :
-                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Aluna, nossa especialista em planos e assinaturas. Ela encontrará o plano perfeito para seu ritmo.' :
-                'Entendido {nombre}, te conecto con Aluna, nuestra especialista en planes y membresías. Ella encontrará el plan perfecto para tu ritmo.',
-    llamado: userLanguage === 'es' ? 'Aluna, te presento a {nombre} interesado en membresías de coworking.\n\n{nombre}, tu consulta permanece activa por 72 horas. Para volver a mí, escribe @Aurora + tu consulta. ¡Aluna te encontrará el plan perfecto! 🏢' :
-             userLanguage === 'en' ? 'Aluna, I\'m handing over {nombre} who\'s looking for a monthly plan.\n\n{nombre}, to return write @Aurora + your question.' :
-
-             'Aluna, te dejo con {nombre} que busca un plan mensual.\n\n{nombre}, para volver escribe @Aurora + tu consulta.'
-  }),
+  // Función para obtener mensaje de handoff según agente destino (cuando Aluna transfiere A otros)
+  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
+    const handoverMessages = {
+      'AURORA': {
+        es: 'Perfecto {nombre}, te devuelvo con *Aurora* para lo que necesites. 🏢\n\nSi tienes dudas sobre planes o membresías, solo di *@Aluna* y aquí estaré.\n\n¡Hasta pronto!',
+        en: 'Perfect {nombre}, returning you to *Aurora* for anything you need. 🏢\n\nIf you have questions about plans or memberships, just say *@Aluna* and I\'ll be here.\n\nSee you soon!'
+      },
+      'AXEL': {
+        es: 'Entendido {nombre}, te comunico con *Axel* de *The PaintBull* para tu cotización vehicular. 🚗\n\nPara dudas sobre planes, escribe *@Aluna*.\n\n¡Éxito!',
+        en: 'Got it {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle quote. 🚗\n\nFor plan questions, write *@Aluna*.\n\nSuccess!'
+      },
+      'ADRIANA': {
+        es: 'Perfecto {nombre}, te dejo con *Adriana* de *SegPopular* para tu seguro vehicular. 🛡️\n\nPara temas de planes, solo di *@Aluna*.\n\n¡Protege tu inversión!',
+        en: 'Perfect {nombre}, connecting you with *Adriana* from *SegPopular* for your vehicle insurance. 🛡️\n\nFor plan matters, just say *@Aluna*.\n\nProtect your investment!'
+      },
+      'ANGELA': {
+        es: 'Entendido {nombre}, te comunico con *Angela* de *MedBeneficios* para tu consulta de salud. 💚\n\nPara dudas sobre coworking, escribe *@Aluna*.\n\n¡Cuídate!',
+        en: 'Got it {nombre}, connecting you with *Angela* from *MedBeneficios* for your health inquiry. 💚\n\nFor coworking questions, write *@Aluna*.\n\nTake care!'
+      },
+      'ENZO': {
+        es: 'Perfecto {nombre}, te dejo con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nPara temas de planes, solo di *@Aluna*.\n\n¡Éxitos!',
+        en: 'Perfect {nombre}, connecting you with *Enzo* from *MarketingLab* for your consultation. 💡\n\nFor plan matters, just say *@Aluna*.\n\nSuccess!'
+      },
+      'PAULA': {
+        es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nPara dudas sobre coworking, escribe *@Aluna*.\n\n¡Hasta pronto!',
+        en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nFor coworking questions, write *@Aluna*.\n\nSee you soon!'
+      }
+    };
+    
+    const agentMessages = handoverMessages[targetAgent];
+    if (!agentMessages) return null;
+    
+    // Fallback inteligente: userLanguage → 'en' → 'es'
+    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
+    return message.replace(/{nombre}/g, userName);
+  },
   
   personalidad: {
     tono: 'Empático, motivador y consultivo',

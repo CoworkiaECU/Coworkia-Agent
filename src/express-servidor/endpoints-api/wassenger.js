@@ -861,8 +861,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 📸 AXEL PHOTO COLLECTOR: Manejar texto durante sesión activa
+    console.log(`[AXEL-DEBUG] 💬 Texto recibido - activeAgent: ${profile.activeAgent}, processedText: "${processedText}"`);
     if (profile.activeAgent === 'AXEL' && !mediaUrl && processedText) {
       const session = getSession(userId);
+      console.log(`[AXEL-DEBUG] 📊 Sesión actual:`, session ? `${session.photoCount} fotos, readyToProcess: ${session.readyToProcess}` : 'null');
       
       if (session && session.photoCount > 0) {
         // Detectar comandos de finalización O timeout expirado
@@ -888,15 +890,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           return;
         } else {
-          // Es una pregunta/texto normal - dejar que Axel responda pero mantener sesión activa
-          console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa`);
+          // 🔧 FIX 2: Es una pregunta/texto normal - dejar que Axel responda pero MANTENER sesión activa
+          console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa (${session.photoCount} fotos guardadas)`);
+          console.log(`[AXEL-DEBUG] ⏸️ Sesión preservada - Axel puede responder preguntas sin perder fotos`);
           // El flujo continúa normalmente hacia procesarMensaje, sesión se mantiene
         }
       }
     }
 
     // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
+    console.log(`[AXEL-DEBUG] 📸 Foto recibida - activeAgent: ${profile.activeAgent}, mediaUrl: ${mediaUrl ? 'SI' : 'NO'}, type: ${type}`);
     if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
+      console.log('[AXEL-DEBUG] ✅ Condición cumplida - procesando foto para Axel');
       // 🔄 TODO en queue para garantizar orden absoluto
       await queueTask(userId, async () => {
         const photoStatus = addPhoto(userId, mediaUrl, type);
@@ -1088,6 +1093,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
+      // 🔧 FIX 1: Actualizar activeAgent ANTES del handoff para que fotos lleguen al agente correcto
+      console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
+      profile.activeAgent = targetAgent;
+      await saveProfile(userId, profile);
+      console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
+      
       // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
       if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
         profile.transactionStartedAt = Date.now();
@@ -1150,8 +1161,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
         }
-
-        await saveProfile(userId, { ...profile, activeAgent: targetAgent });
 
         // Importar AGENTES para obtener nombre del agente
         const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');

@@ -282,7 +282,6 @@ function detectVirtualAgentSalesPromo(text) {
   
   // Categoría 4: Palabras que indican interés en el producto
   const interestKeywords = [
-    'quiero saber',
     'me interesa',
     'muestrame',
     'dame informacion',

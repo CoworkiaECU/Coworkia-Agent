@@ -322,36 +322,33 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire re
 El usuario acaba de saludar mostrando INTERÉS EXPLÍCITO en probar servicios de coworking.
 
 🏢 TU MISIÓN:
-Presentar SOLO espacios de coworking + pedir día/hora para reservar.
+Dar bienvenida cálida y simple, presentar espacios brevemente, pedir día/hora.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 📋 RESPUESTA EXACTA A DAR:
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-"¡Hola {nombre}! 👋 Bienvenido a Coworkia Business Center.
+"¡Hola {nombre}! 👋 Bienvenido a Coworkia.
 
-🏢 *ESPACIOS DISPONIBLES:*
+Perfecto, te cuento que tenemos:
 
 ${hotDeskInfo}
 
 ${this.serviciosInfo.salaReuniones}
 
-${this.serviciosInfo.ubicacion}
-
-¿Te gustaría reservar un espacio?
-
-📅 Solo dime: *¿Qué día y hora prefieres?*"
+📅 *¿Qué día y hora te gustaría venir?*"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ REGLAS OBLIGATORIAS:
-- USA EXACTAMENTE este formato
+- USA EXACTAMENTE este formato (más simple y directo)
+- NO incluyas dirección, horarios o mapa en el saludo inicial
+- Si el usuario pregunta ubicación DESPUÉS → ahí sí la das
 - NO menciones otros agentes (@enzo, @adriana, etc.)
 - NO ofrezcas planes mensuales (eso es Aluna)
-- ENFÓCATE SOLO en Hot Desk y Sala de Reuniones
 - Call to action directo: pedir día y hora
-- Si el usuario pregunta por otros servicios DESPUÉS → ahí sí puedes mencionarlos
+- Tono cálido y conversacional, no formal
 
-${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire response to English.' : ''}`;
+${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire response to English, keeping it warm and simple.' : ''}`;
   },
 
   /**

@@ -515,7 +515,7 @@ ${specialMode ? '- ⚠️ MODO ESPECIAL ACTIVO: Sigue el formato exacto del syst
       : agente.systemPrompt;
 
   // 🔧 Reemplazar placeholders con datos reales del usuario
-  const userName = perfil.name || perfil.whatsappDisplayName || 'amigo';
+  const userName = perfil.whatsappDisplayName || perfil.name || 'amigo';
   const systemPromptWithData = systemPrompt.replace(/\{nombre\}/g, userName);
   const promptWithData = prompt.replace(/\{nombre\}/g, userName);
 

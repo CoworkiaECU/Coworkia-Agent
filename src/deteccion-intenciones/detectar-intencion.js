@@ -196,6 +196,127 @@ export function detectarPreguntaIdentidad(text) {
 }
 
 /**
+ * 🤖 Detecta si el usuario pregunta por VENTA de agentes virtuales
+ * (No info de coworking, sino venta del sistema OneMind)
+ * 
+ * Usa scoring system con keywords por categorías:
+ * - Mención de Aurora/agente virtual (obligatorio)
+ * - Pregunta sobre capacidades
+ * - Contexto empresarial
+ * - Palabras de interés
+ * 
+ * @param {string} text - Mensaje del usuario
+ * @returns {object} { detected: boolean, confidence: number, score: number, reasons: string, reason: string }
+ */
+function detectVirtualAgentSalesPromo(text) {
+  // Normalizar: quitar signos, lowercase, normalizar acentos
+  const normalized = text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // quitar acentos
+    .replace(/[¿?¡!,.:;]/g, ' ') // quitar signos de puntuación
+    .replace(/\s+/g, ' ') // normalizar espacios múltiples
+    .trim();
+  
+  let score = 0;
+  const reasons = [];
+  
+  // Categoría 1: Mención de Aurora o agente virtual (OBLIGATORIO)
+  const mentionKeywords = [
+    'aurora',
+    'agente virtual',
+    'agente como tu',
+    'agente como ti',
+    'sistema como tu',
+    'sistema como ti',
+    'bot como este',
+    'bot como tu',
+    'asistente virtual'
+  ];
+  
+  const hasMention = mentionKeywords.some(k => normalized.includes(k));
+  if (hasMention) {
+    score += 3;
+    reasons.push('mencion_agente');
+  } else {
+    // Si no menciona agente/aurora, no es venta de sistema
+    return { detected: false, confidence: 0, score: 0, reasons: '', reason: 'no_agent_mention' };
+  }
+  
+  // Categoría 2: Pregunta sobre capacidades (alta prioridad)
+  const capabilityKeywords = [
+    'que puede hacer',
+    'que puedes hacer',
+    'como funciona',
+    'que hace',
+    'capacidades',
+    'funcionalidades',
+    'que ofrece',
+    'que ofreces'
+  ];
+  
+  if (capabilityKeywords.some(k => normalized.includes(k))) {
+    score += 2;
+    reasons.push('pregunta_capacidades');
+  }
+  
+  // Categoría 3: Contexto empresarial
+  const businessKeywords = [
+    'para mi empresa',
+    'para mi negocio',
+    'para la empresa',
+    'implementar',
+    'contratar',
+    'adquirir',
+    'comprar',
+    'sistema para',
+    'quiero uno',
+    'quiero un sistema',
+    'necesito uno'
+  ];
+  
+  if (businessKeywords.some(k => normalized.includes(k))) {
+    score += 2;
+    reasons.push('contexto_empresarial');
+  }
+  
+  // Categoría 4: Palabras que indican interés en el producto
+  const interestKeywords = [
+    'quiero saber',
+    'me interesa',
+    'muestrame',
+    'dame informacion',
+    'cuentame',
+    'explicame',
+    'quiero que me digas',
+    'quiero conocer'
+  ];
+  
+  if (interestKeywords.some(k => normalized.includes(k))) {
+    score += 1;
+    reasons.push('interes_producto');
+  }
+  
+  // Decisión: score >= 3 = detectado (ya tiene mención + algo más)
+  const detected = score >= 3;
+  const confidence = Math.min(score / 8, 1); // Normalizar 0-1 (máximo posible: 8)
+  
+  if (detected) {
+    console.log(`[VIRTUAL-AGENT-PROMO] ✅ Detectado (score: ${score}/8, confidence: ${(confidence * 100).toFixed(0)}%, reasons: ${reasons.join(', ')})`);
+  } else {
+    console.log(`[VIRTUAL-AGENT-PROMO] ❌ No detectado (score: ${score}/8, insuficiente)`);
+  }
+  
+  return {
+    detected,
+    confidence,
+    score,
+    reasons: reasons.join(', '),
+    reason: detected ? 'virtual_agent_sales_detected' : 'insufficient_score'
+  };
+}
+
+/**
  * Detecta intención y agente apropiado
  * IMPORTANTE: Esta función solo detecta CAMBIOS EXPLÍCITOS de agente
  * El orquestador es responsable de respetar el activeAgent si no hay cambio
@@ -227,19 +348,20 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
   // 🤖 Detectar mensaje promocional de venta de agentes virtuales
-  const isVirtualAgentSalesPromo = /aurora.*quiero.*saber.*qu[eé].*puede.*hacer.*(un\s+)?agente.*virtual/i.test(text) ||
-                                    /aurora.*mu[eé]strame.*que.*puedes.*hacer.*(un\s+)?agente.*virtual/i.test(text) ||
-                                    /mu[eé]strame.*(un\s+)?agente.*virtual.*para.*mi.*empresa/i.test(text) ||
-                                    /sistema.*como.*tu.*para.*mi.*empresa/i.test(text) ||
-                                    /quiero.*(un\s+)?agente.*virtual.*como.*aurora/i.test(text) ||
-                                    /qu[eé].*puede.*hacer.*(un\s+)?agente.*virtual.*como.*t[uú].*para.*mi.*empresa/i.test(text);
+  const virtualAgentPromo = detectVirtualAgentSalesPromo(text);
   
   // 0) PROMOCIÓN: Venta de sistema de agentes virtuales
-  if (isVirtualAgentSalesPromo) {
+  if (virtualAgentPromo.detected) {
     return {
       agent: 'AURORA',
       reason: 'virtual agent sales promotion - MarketingLab OneMind',
-      flags: { virtualAgentSalesPromo: true, requiresAurora: true }
+      flags: { 
+        virtualAgentSalesPromo: true, 
+        requiresAurora: true,
+        confidence: virtualAgentPromo.confidence,
+        detectionScore: virtualAgentPromo.score,
+        detectionReasons: virtualAgentPromo.reasons
+      }
     };
   }
   

@@ -503,7 +503,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   // Solo para casos donde Aurora DEBE intervenir
   
   // 2.4) 📝 NUEVA RESERVA - Handoff implícito a Aurora desde cualquier agente
-  const isNewReservationRequest = /\b(quiero|necesito|quisiera|me gustar[íi]a)\s+(reservar|hacer\s+una\s+reserva|agendar|una\s+reserva|un\s+hot\s*desk|una\s+sala)/i.test(message);
+  const isNewReservationRequest = /\b(quiero|necesito|quisiera|me gustar[íi]a)\s+(reservar|hacer\s+una\s+reserva|agendar|una\s+reserva|un\s+hot\s*desk|una\s+sala)/i.test(text);
   if (isNewReservationRequest && currentAgent !== 'AURORA') {
     console.log('[INTENT] 📝 Nueva reserva detectada desde', currentAgent, '→ Handoff implícito a AURORA');
     return {

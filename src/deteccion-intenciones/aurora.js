@@ -705,11 +705,11 @@ Para tu reserva del Hot Desk el {fecha} a las {hora}, puedes pagar con tarjeta d
 🔗 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
 💰 *DESGLOSE:*
-• Subtotal: ${monto} USD
-• IVA 15%: ${(monto * 0.15).toFixed(2)} USD
-• Comisión Payphone 5%: ${(monto * 1.15 * 0.05).toFixed(2)} USD
+• Subtotal: {monto} USD
+• IVA 15%: {iva} USD
+• Comisión Payphone 5%: {comision} USD
 ━━━━━━━━━━━━━━━━━
-💵 *TOTAL:* ${(monto * 1.15 * 1.05).toFixed(2)} USD
+💵 *TOTAL:* {total} USD
 
 Después de pagar, envíame el comprobante ✅"
 

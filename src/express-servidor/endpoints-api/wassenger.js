@@ -20,6 +20,7 @@ import { generateQuote } from '../../servicios/axel-quote-generator.js';
 import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
 import { processMembershipForm } from '../../servicios/membership-form.js';
 
+import { detectCampaignMessage, personalizeCampaignResponse, CAMPAIGN_PROMPTS } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 
 import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
@@ -1049,7 +1050,24 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       auroraInput = `[MEDIA:${type}] El usuario envió un archivo. URL: ${mediaUrl}`;
     }
 
-    // Si hay media y es recibo, dejamos que Aurora lo maneje (sin meter agentes aquí)
+    // 🎯 DETECCIÓN DE CAMPAÑAS - Activar agente directo SIN handoff
+    const campaignDetection = detectCampaignMessage(auroraInput);
+    if (campaignDetection.detected && CAMPAIGN_PROMPTS[campaignDetection.campaign]?.targetAgent) {
+      const targetAgent = CAMPAIGN_PROMPTS[campaignDetection.campaign].targetAgent;
+      console.log(`[CAMPAIGN] 🚀 ${targetAgent} activado: ${campaignDetection.campaign}`);
+      
+      profile.activeAgent = targetAgent;
+      profile.conversationCount = (profile.conversationCount || 0) + 1;
+      await saveProfile(userId, profile);
+      
+      const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile);
+      await enviarWhatsApp(userId, response);
+      await saveConversationMessage(userId, { role: 'assistant', content: response, agent: targetAgent });
+      await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent === 'PAULA' ? 'Paula - PropElite' : targetAgent, intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign } });
+      return;
+    }
+
+        // Si hay media y es recibo, dejamos que Aurora lo maneje (sin meter agentes aquí)
     // Para que isReceiptImage funcione, armamos messageData estándar
     const messageData = { type, media: { url: mediaUrl } };
 

@@ -202,11 +202,23 @@ export function detectarPreguntaIdentidad(text) {
  * 
  * @param {string} inputRaw - Mensaje del usuario
  * @param {string} currentAgent - Agente actualmente activo (para contexto)
+ * @param {object} context - Contexto adicional (ej: hasActiveForm)
  * @returns {object} { agent, reason, flags }
  */
-export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA') {
+export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', context = {}) {
   const text = String(inputRaw || '').toLowerCase().trim();
   const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  // 🛡️ PROTECCIÓN: Si es un email, NO detectar intenciones implícitas
+  // Evita que emails como "segpopular.ec@icloud.com" activen agente de seguros
+  const isEmail = /@[a-z0-9.-]+\.[a-z]{2,}/i.test(text);
+  if (isEmail) {
+    return {
+      agent: currentAgent,
+      reason: 'email address - skip implicit detection',
+      flags: { skipImplicitDetection: true }
+    };
+  }
 
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
   const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));

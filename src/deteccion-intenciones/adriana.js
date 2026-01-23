@@ -2,6 +2,7 @@
 // Empresa: Segpopular S.A. (17 años de experiencia, ranking 77 Pichincha, 145 nacional)
 
 export const ADRIANA = {
+  maintenance: true,  // 🔧 Agente temporalmente desactivado
   nombre: 'Adriana',
   rol: 'Broker de Seguros en Segpopular S.A.',
   empresa: 'Segpopular S.A.',

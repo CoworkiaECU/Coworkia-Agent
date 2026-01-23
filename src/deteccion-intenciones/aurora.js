@@ -51,6 +51,134 @@ export const AURORA = {
   ],
 
   // Definiciones únicas de servicios (fuente única de verdad)
+  getServiciosInfo: function(userLanguage = 'es') {
+    const info = {
+      es: {
+        hotDesk: {
+          conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕
+• Primera visita GRATIS 🎁`,
+          sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕`
+        },
+        salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
+• 2 horas: $29
+• Pizarra + TV + WiFi + café ☕`,
+        ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
+⏰ Lun-Vie 8:30-18h
+🚫 Cerrado: Sábados, domingos y feriados
+🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+        especialistas: `🏥 Salud - Ángela en MedBeneficios
+🛡️ Seguros - Adriana en SegPopular  
+📊 Marketing - Enzo en MarketingLab
+🚗 Centro de colisiones - Axel en PaintBull
+🏘️ Real Estate - Paula en PropElite
+⚖️ Legal/Contable - Gabi en GR Consulting`
+      },
+      en: {
+        hotDesk: {
+          conPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
+• 2 hours: $10
+• WiFi + coffee ☕
+• First visit FREE 🎁`,
+          sinPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
+• 2 hours: $10
+• WiFi + coffee ☕`
+        },
+        salaReuniones: `🏢 Meeting Room (Private for 3-4 people)
+• 2 hours: $29
+• Whiteboard + TV + WiFi + coffee ☕`,
+        ubicacion: `📍 Whymper 403, Finistere Building, Quito
+⏰ Mon-Fri 8:30am-6pm
+🚫 Closed: Saturdays, Sundays and holidays
+🗺️ Map: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+        especialistas: `🏥 Health - Angela at MedBeneficios
+🛡️ Insurance - Adriana at SegPopular  
+📊 Marketing - Enzo at MarketingLab
+🚗 Collision Center - Axel at PaintBull
+🏘️ Real Estate - Paula at PropElite
+⚖️ Legal/Accounting - Gabi at GR Consulting`
+      },
+      fr: {
+        hotDesk: {
+          conPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
+• 2 heures: $10
+• WiFi + café ☕
+• Première visite GRATUITE 🎁`,
+          sinPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
+• 2 heures: $10
+• WiFi + café ☕`
+        },
+        salaReuniones: `🏢 Salle de Réunion (Privée pour 3-4 personnes)
+• 2 heures: $29
+• Tableau blanc + TV + WiFi + café ☕`,
+        ubicacion: `📍 Whymper 403, Édifice Finistere, Quito
+⏰ Lun-Ven 8h30-18h
+🚫 Fermé: Samedis, dimanches et jours fériés
+🗺️ Carte: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+        especialistas: `🏥 Santé - Angela chez MedBeneficios
+🛡️ Assurance - Adriana chez SegPopular  
+📊 Marketing - Enzo chez MarketingLab
+🚗 Centre de collision - Axel chez PaintBull
+🏘️ Immobilier - Paula chez PropElite
+⚖️ Juridique/Comptable - Gabi chez GR Consulting`
+      },
+      it: {
+        hotDesk: {
+          conPrimeraVisita: `💻 Hot Desk (Scrivania condivisa - 1 persona)
+• 2 ore: $10
+• WiFi + caffè ☕
+• Prima visita GRATIS 🎁`,
+          sinPrimeraVisita: `💻 Hot Desk (Scrivania condivisa - 1 persona)
+• 2 ore: $10
+• WiFi + caffè ☕`
+        },
+        salaReuniones: `🏢 Sala Riunioni (Privata per 3-4 persone)
+• 2 ore: $29
+• Lavagna + TV + WiFi + caffè ☕`,
+        ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
+⏰ Lun-Ven 8:30-18:00
+🚫 Chiuso: Sabato, domenica e festivi
+🗺️ Mappa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+        especialistas: `🏥 Salute - Angela presso MedBeneficios
+🛡️ Assicurazioni - Adriana presso SegPopular  
+📊 Marketing - Enzo presso MarketingLab
+🚗 Centro Collisioni - Axel presso PaintBull
+🏘️ Immobiliare - Paula presso PropElite
+⚖️ Legale/Contabile - Gabi presso GR Consulting`
+      },
+      pt: {
+        hotDesk: {
+          conPrimeraVisita: `💻 Hot Desk (Mesa compartilhada - 1 pessoa)
+• 2 horas: $10
+• WiFi + café ☕
+• Primeira visita GRÁTIS 🎁`,
+          sinPrimeraVisita: `💻 Hot Desk (Mesa compartilhada - 1 pessoa)
+• 2 horas: $10
+• WiFi + café ☕`
+        },
+        salaReuniones: `🏢 Sala de Reuniões (Privada para 3-4 pessoas)
+• 2 horas: $29
+• Quadro branco + TV + WiFi + café ☕`,
+        ubicacion: `📍 Whymper 403, Edifício Finistere, Quito
+⏰ Seg-Sex 8:30-18h
+🚫 Fechado: Sábados, domingos e feriados
+🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+        especialistas: `🏥 Saúde - Angela na MedBeneficios
+🛡️ Seguros - Adriana na SegPopular  
+📊 Marketing - Enzo na MarketingLab
+🚗 Centro de Colisões - Axel na PaintBull
+🏘️ Imóveis - Paula na PropElite
+⚖️ Jurídico/Contábil - Gabi na GR Consulting`
+      }
+    };
+    
+    return info[userLanguage] || info['es'];
+  },
+
+  // Mantenemos serviciosInfo para compatibilidad (fallback español)
   serviciosInfo: {
     hotDesk: {
       conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
@@ -144,13 +272,9 @@ Soy parte de *OneMind*, departamento de tecnología e IA de MarketingLab, que es
 
 Mira nuestro equipo especializado:
 
-🏥    @angela - Salud y Bienestar (MedBeneficios)
-🛡️    @adriana - Seguros Integrales (SegPopular)
+�    @aurora - Coworking y Espacios (Coworkia)
 📊    @enzo - Marketing e IA (MarketingLab)
-🚗    @axel - Centro de Colisiones (PaintBull)
-🏡    @paula - Real Estate de Lujo (PropElite)
-⚖️    @gabi - Legal y Finanzas (GR Consulting)
-🏢    @aluna - Membresías Coworking
+🏡    @aluna - Membresías y Servicios
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🎮 *PRUÉBALO AHORA:*

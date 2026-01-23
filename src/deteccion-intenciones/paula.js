@@ -6,6 +6,7 @@
  */
 
 export const PAULA = {
+  maintenance: true,  // 🔧 Agente temporalmente desactivado
   nombre: 'Paula',
   rol: 'Real Estate Expert',
   empresa: 'PropElite Bienes Raíces',

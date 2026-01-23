@@ -2,6 +2,7 @@
 // Activación: Solo con @Ángela explícito
 
 export const ANGELA = {
+  maintenance: true,  // 🔧 Agente temporalmente desactivado
   nombre: 'Ángela',
   rol: 'Asistente Médica Virtual de MedBeneficios',
   descripcionCorta: 'asistente médica del programa MedBeneficios',

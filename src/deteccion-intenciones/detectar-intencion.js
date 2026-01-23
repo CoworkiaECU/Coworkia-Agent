@@ -90,6 +90,28 @@ const MODIFICACION_RESERVA_PATTERNS = [
   /mal.*fecha/
 ];
 
+const RECEIPT_REQUEST_PATTERNS = [
+  /recibo/,
+  /factura/,
+  /comprobante/,
+  /recibo.*pago/,
+  /factura.*pago/,
+  /necesito.*recibo/,
+  /quiero.*recibo/,
+  /dame.*recibo/,
+  /envia.*recibo/,
+  /reenviar.*recibo/,
+  /donde.*recibo/,
+  /como.*recibo/,
+  /mi.*recibo/,
+  /mis.*recibos/,
+  /receipt/,
+  /invoice/,
+  /payment.*receipt/,
+  /send.*receipt/,
+  /resend.*receipt/
+];
+
 const CANCELACION_PATTERNS = [
   /^cancela$/,
   /^cancelar$/,
@@ -193,6 +215,16 @@ export function detectarSaludoCasual(text) {
 export function detectarPreguntaIdentidad(text) {
   const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   return IDENTITY_QUESTION_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
+/**
+ * 🧾 Detecta si el usuario solicita un recibo de pago
+ * @param {string} text - Mensaje del usuario normalizado
+ * @returns {boolean} true si solicita recibo
+ */
+export function detectarSolicitudRecibo(text) {
+  const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return RECEIPT_REQUEST_PATTERNS.some(pattern => pattern.test(normalized));
 }
 
 /**

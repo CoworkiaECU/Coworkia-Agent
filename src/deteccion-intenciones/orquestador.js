@@ -9,12 +9,15 @@ import { ANGELA } from './angela.js';
 import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
 import { PAULA } from './paula.js';
-import { detectarIntencion } from './detectar-intencion.js';
+import { detectarIntencion, detectarSolicitudRecibo } from './detectar-intencion.js';
 import { loggers } from '../utils/logger.js';
+import { detectLanguage, detectLanguageCommand } from '../utils/language-detector.js';
+import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 import { hasPendingConfirmation } from '../servicios/confirmation-flow.js';
 import { clearPendingConfirmation as clearLegacyPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { clearForm as clearPartialForm } from '../servicios/partial-reservation-form.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
+import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
 
 /**
  * Detecta si Paula recibe mensaje fuera de su scope (bienes raíces)
@@ -160,6 +163,45 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
 
   loggers.orquestador.userMessage(userId, activeAgent, mensaje);
 
+  // 🌍 Detectar idioma automáticamente en cada mensaje
+  const languageCommand = detectLanguageCommand(mensaje);
+  const languageDetection = detectLanguage(mensaje, perfil.preferredLanguage);
+  
+  // Si hay comando explícito de cambio de idioma (/english, /español, etc.)
+  if (languageCommand && languageCommand !== perfil.preferredLanguage) {
+    loggers.orquestador.debug('Comando de idioma detectado', { 
+      userId, 
+      from: perfil.preferredLanguage, 
+      to: languageCommand 
+    });
+    await setUserPreferredLanguage(userId, languageCommand);
+    perfil.preferredLanguage = languageCommand;
+    console.log(`[LANGUAGE] 🌍 Idioma cambiado explícitamente: ${languageCommand}`);
+  }
+  // Si detecta cambio de idioma con confianza alta, actualizar automáticamente
+  else if (languageDetection.language !== perfil.preferredLanguage && 
+           languageDetection.confidence > 0.7) {
+    loggers.orquestador.debug('Cambio de idioma detectado automáticamente', { 
+      userId, 
+      from: perfil.preferredLanguage, 
+      to: languageDetection.language,
+      confidence: languageDetection.confidence,
+      reason: languageDetection.reason
+    });
+    await setUserPreferredLanguage(userId, languageDetection.language);
+    perfil.preferredLanguage = languageDetection.language;
+    console.log(`[LANGUAGE] 🌍 Idioma actualizado automáticamente: ${languageDetection.language} (confianza: ${languageDetection.confidence})`);
+  }
+  // Logging del idioma detectado para debug
+  else if (languageDetection.confidence > 0.5) {
+    loggers.orquestador.debug('Idioma detectado (no cambia)', { 
+      userId, 
+      detected: languageDetection.language,
+      current: perfil.preferredLanguage,
+      confidence: languageDetection.confidence
+    });
+  }
+
   // 1. Detectar intención
   const intent = detectarIntencion(mensaje, activeAgent);
   loggers.orquestador.debug('Intención detectada', { 
@@ -247,8 +289,149 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     }
   }
 
+  // 🧾 MANEJO DE SOLICITUD DE RECIBOS: Aurora busca y reenvía recibos
+  const solicitudRecibo = detectarSolicitudRecibo(mensaje);
+  if (solicitudRecibo && (activeAgent === 'AURORA' || activeAgent === 'ALUNA')) {
+    console.log('[ORQUESTADOR] 🧾 Solicitud de recibo detectada');
+    
+    try {
+      // Buscar recibos del usuario
+      const receipts = await getUserReceipts(userId, 5);
+      
+      if (receipts.length === 0) {
+        // No hay recibos
+        const userLanguage = perfil.preferredLanguage || 'es';
+        const noReceiptsMessage = userLanguage === 'es'
+          ? 'No encontré recibos de pago en tu historial. 🤔\n\nSi realizaste un pago recientemente, el recibo fue enviado automáticamente a tu email registrado.\n\n📧 Revisa tu bandeja de entrada y la carpeta de Spam/Promociones.\n\n¿Necesitas ayuda con algo más?'
+          : 'I couldn\'t find any payment receipts in your history. 🤔\n\nIf you made a payment recently, the receipt was automatically sent to your registered email.\n\n📧 Check your inbox and Spam/Promotions folder.\n\nNeed help with something else?';
+        
+        return {
+          respuesta: noReceiptsMessage,
+          shouldReply: true,
+          metadata: {
+            agent: activeAgent,
+            receiptRequest: true,
+            receiptsFound: 0
+          }
+        };
+      }
+      
+      // Detectar si solicita reenvío de un recibo específico
+      const receiptNumberMatch = mensaje.match(/REC-\d+-[A-Z0-9]+/i);
+      
+      if (receiptNumberMatch) {
+        // Usuario proporcionó número de recibo específico - reenviar
+        const receiptNumber = receiptNumberMatch[0].toUpperCase();
+        console.log('[ORQUESTADOR] 📧 Reenviando recibo específico:', receiptNumber);
+        
+        const resendResult = await resendReceipt(receiptNumber, userId);
+        
+        if (resendResult.success) {
+          const userLanguage = perfil.preferredLanguage || 'es';
+          const successMessage = userLanguage === 'es'
+            ? `✅ ¡Listo! Te reenvié el recibo \`${receiptNumber}\` a tu email.\n\n📧 Revisa tu bandeja de entrada en unos minutos.\n\n¿Necesitas algo más?`
+            : `✅ Done! I resent receipt \`${receiptNumber}\` to your email.\n\n📧 Check your inbox in a few minutes.\n\nNeed anything else?`;
+          
+          return {
+            respuesta: successMessage,
+            shouldReply: true,
+            metadata: {
+              agent: activeAgent,
+              receiptRequest: true,
+              receiptResent: true,
+              receiptNumber
+            }
+          };
+        } else if (resendResult.notFound) {
+          const userLanguage = perfil.preferredLanguage || 'es';
+          const notFoundMessage = userLanguage === 'es'
+            ? `⚠️ No encontré el recibo \`${receiptNumber}\` en tu historial.\n\nVerifica el número o dime "mis recibos" para ver todos tus recibos disponibles.`
+            : `⚠️ I couldn't find receipt \`${receiptNumber}\` in your history.\n\nVerify the number or tell me "my receipts" to see all your available receipts.`;
+          
+          return {
+            respuesta: notFoundMessage,
+            shouldReply: true,
+            metadata: {
+              agent: activeAgent,
+              receiptRequest: true,
+              receiptNotFound: true,
+              receiptNumber
+            }
+          };
+        } else {
+          throw new Error(resendResult.error);
+        }
+      }
+      
+      // Mostrar lista de recibos disponibles
+      const userLanguage = perfil.preferredLanguage || 'es';
+      const receiptsList = formatReceiptsList(receipts, userLanguage);
+      
+      const responseMessage = userLanguage === 'es'
+        ? `${receiptsList}\n\n📧 Los recibos fueron enviados automáticamente a tu email registrado.\n\nSi necesitas que te reenvíe alguno, dime el número de recibo (por ejemplo: \`REC-1234-ABC123\`).`
+        : `${receiptsList}\n\n📧 Receipts were automatically sent to your registered email.\n\nIf you need me to resend one, tell me the receipt number (for example: \`REC-1234-ABC123\`).`;
+      
+      return {
+        respuesta: responseMessage,
+        shouldReply: true,
+        metadata: {
+          agent: activeAgent,
+          receiptRequest: true,
+          receiptsFound: receipts.length,
+          receiptNumbers: receipts.map(r => r.receipt_number)
+        }
+      };
+      
+    } catch (error) {
+      console.error('[ORQUESTADOR] ❌ Error manejando solicitud de recibo:', error);
+      const userLanguage = perfil.preferredLanguage || 'es';
+      const errorMessage = userLanguage === 'es'
+        ? 'Disculpa, tuve un problema consultando tus recibos. ¿Puedes intentar nuevamente en un momento?'
+        : 'Sorry, I had a problem checking your receipts. Can you try again in a moment?';
+      
+      return {
+        respuesta: errorMessage,
+        shouldReply: true,
+        metadata: {
+          agent: activeAgent,
+          receiptRequest: true,
+          error: error.message
+        }
+      };
+    }
+  }
+
   // 2. Aurora Core decide a qué agente ir
   const targetAgent = decidirAgente(intent, activeAgent);
+  
+  // 🔧 Verificar si el agente está en mantenimiento
+  const targetAgentObj = AGENTES[targetAgent];
+  if (targetAgentObj?.maintenance === true && targetAgent !== 'AURORA') {
+    console.log(`[ORQUESTADOR] 🔧 ${targetAgent} en mantenimiento, redirigiendo a AURORA`);
+    
+    // Crear mensaje de mantenimiento según idioma del usuario
+    const userLanguage = perfil.preferredLanguage || 'es';
+    const maintenanceMessages = {
+      es: `Disculpa, ${targetAgentObj.nombre} está temporalmente fuera de servicio por mantenimiento.\n\n¿En qué más puedo ayudarte? 😊`,
+      en: `Sorry, ${targetAgentObj.nombre} is temporarily out of service for maintenance.\n\nHow else can I help you? 😊`,
+      fr: `Désolé, ${targetAgentObj.nombre} est temporairement hors service pour maintenance.\n\nComment puis-je vous aider autrement? 😊`,
+      it: `Scusa, ${targetAgentObj.nombre} è temporaneamente fuori servizio per manutenzione.\n\nCome posso aiutarti? 😊`,
+      pt: `Desculpe, ${targetAgentObj.nombre} está temporariamente fora de serviço por manutenção.\n\nComo posso ajudá-lo? 😊`
+    };
+    
+    return {
+      respuesta: maintenanceMessages[userLanguage] || maintenanceMessages.es,
+      shouldReply: true,
+      shouldUpdateAgent: false,
+      metadata: {
+        agent: 'AURORA',
+        previousAgent: activeAgent,
+        intendedAgent: targetAgent,
+        maintenance: true,
+        maintenanceAgent: targetAgent
+      }
+    };
+  }
   
   // 3. Detectar handoff y capturar contexto
   const isHandoff = targetAgent !== activeAgent;

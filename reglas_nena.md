@@ -11,7 +11,10 @@
 6. **Ajustar** las veces necesarias en los chats
 7. **Esperar** el comando **"verde nena"**
 8. **Ejecutar** solo después de tu aprobación
-9. **Probar localmente** antes de commit
+9. **🚨 TESTING OBLIGATORIO: Probar localmente CADA cambio antes de continuar**
+   - Test local inmediato después de cada implementación
+   - Verificar que funciona correctamente
+   - NO seguir al siguiente agente/componente sin testing
 10. **Commit + Deploy** con mensaje descriptivo
 
 ### Durante el Trabajo

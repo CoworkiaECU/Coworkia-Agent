@@ -2,6 +2,7 @@
 // Coworkia Business Center - Administración y Compliance
 
 export const GABI = {
+  maintenance: true,  // 🔧 Agente temporalmente desactivado
   nombre: 'Gabi',
   rol: 'Experta en Finanzas, Contabilidad, RRHH y Legal',
   empresa: 'Coworkia Business Center',

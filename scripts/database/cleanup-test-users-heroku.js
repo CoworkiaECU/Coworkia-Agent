@@ -61,7 +61,7 @@ async function cleanupTestUsers() {
 
       // 6. Eliminar interacciones legacy
       const interactions = await client.query(
-        'DELETE FROM interactions WHERE user_id = $1',
+        'DELETE FROM interactions WHERE user_phone = $1',
         [phone]
       );
       console.log(`  🗑️  Interacciones: ${interactions.rowCount} eliminadas`);

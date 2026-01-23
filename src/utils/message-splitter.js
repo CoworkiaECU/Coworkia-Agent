@@ -176,16 +176,16 @@ export function processMessage(message) {
   const parts = splitMessage(message);
   
   // Calcular delay apropiado según contexto
-  let delayMs = 2500; // Default: 2.5 segundos
+  let delayMs = 5000; // Default: 5 segundos (aumentado para evitar desorden)
   
   // Para fichas de propiedades o planes, dar más tiempo de lectura
   if (message.includes('🏡 **CASA #') || message.includes('📋 **PLAN')) {
-    delayMs = 3000; // 3 segundos
+    delayMs = 5000; // 5 segundos
   }
   
   // Para mensajes cortos, menos delay
   if (parts.every(p => p.length < 300)) {
-    delayMs = 1500; // 1.5 segundos
+    delayMs = 3000; // 3 segundos
   }
   
   return {

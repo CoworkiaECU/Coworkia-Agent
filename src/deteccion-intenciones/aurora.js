@@ -700,7 +700,7 @@ RESPONDE CON ESTE MENSAJE:
 Para tu reserva del Hot Desk el {fecha} a las {hora}, puedes pagar con tarjeta de la siguiente manera:
 
 💳 *PAGO CON TARJETA (PAYPHONE):*
-🔗 https://pay.payphoneapp.com/coworkia
+🔗 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
 • Ingresa al link → Coloca tu tarjeta → Paga
 • Proceso 100% seguro y automático

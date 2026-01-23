@@ -470,6 +470,17 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)
   // Solo para casos donde Aurora DEBE intervenir
   
+  // 2.4) 📝 NUEVA RESERVA - Handoff implícito a Aurora desde cualquier agente
+  const isNewReservationRequest = /\b(quiero|necesito|quisiera|me gustar[íi]a)\s+(reservar|hacer\s+una\s+reserva|agendar|una\s+reserva|un\s+hot\s*desk|una\s+sala)/i.test(message);
+  if (isNewReservationRequest && currentAgent !== 'AURORA') {
+    console.log('[INTENT] 📝 Nueva reserva detectada desde', currentAgent, '→ Handoff implícito a AURORA');
+    return {
+      agent: 'AURORA',
+      reason: 'new reservation request - implicit handoff to Aurora',
+      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', implicitHandoff: true, reservationRequest: true }
+    };
+  }
+  
   // 2.5) 🔄 MODIFICACIÓN DE RESERVA EXISTENTE
   if (isModificacionReserva) {
     return {

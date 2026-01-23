@@ -307,6 +307,7 @@ function detectFormContinuation(text) {
   if (!text) return false;
   
   const continuationPatterns = [
+    /^\d+$/,  // Números simples (3, 4, 10, etc) - para cantidad de personas
     /mi\s+(email|correo|mail|e-mail)/i,
     /ya\s+te\s+(dije|dij[eé]|mencion[eé]|coment[eé]|dí|di)/i,
     /te\s+(dije|mencion[eé]|coment[eé])/i,

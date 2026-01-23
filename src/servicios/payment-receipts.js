@@ -30,6 +30,30 @@ const TEST_RECEIPT_DIEGO = {
   userPhone: '+593987770788'
 };
 
+// 🏦 CUENTAS COWORKIA - Para validación de transferencias
+const COWORKIA_ACCOUNTS = {
+  PRODUBANCO: {
+    accountNumber: '20059783069',
+    accountPartial: '3069', // Últimos 4 dígitos para matching
+    accountHolder: 'VILLOTA IZURIETA GONZALO',
+    alternativeNames: ['GONZALO VILLOTA', 'VILLOTA GONZALO', 'G. VILLOTA']
+  }
+};
+
+// 💰 CONCEPTOS VÁLIDOS DE PAGO
+const VALID_PAYMENT_CONCEPTS = [
+  'garantia coworkia',
+  'coworkia',
+  'reserva coworkia',
+  'plan coworkia',
+  'plan 20',
+  'plan 40',
+  'plan 60',
+  'plan 100',
+  'hot desk',
+  'sala reuniones'
+];
+
 export const PAYMENT_INSTRUCTIONS = {
   
   // 🏦 Datos bancarios para transferencias
@@ -87,7 +111,63 @@ ${PAYMENT_INSTRUCTIONS.RECEIPT_INSTRUCTIONS}
 };
 
 /**
- * 📸 Detecta si el mensaje contiene una imagen (comprobante)
+ * � Valida si la transferencia es a cuentas de Coworkia
+ */
+function validateCoworkiaTransfer(paymentData) {
+  if (!paymentData) return { isValid: false, reason: 'Datos de pago no disponibles' };
+  
+  // Solo validar transferencias bancarias
+  const isTransfer = paymentData.paymentMethod?.includes('transferencia');
+  if (!isTransfer) {
+    // PayPhone u otros métodos se validan automáticamente
+    return { isValid: true, validated: false, reason: 'No requiere validación de cuenta' };
+  }
+  
+  // Verificar cuenta destino
+  const accountDest = (paymentData.accountNumberDestination || '').replace(/[^0-9]/g, '');
+  const accountHolder = (paymentData.accountHolderSource || '').toUpperCase();
+  const concept = (paymentData.transactionDescription || '').toLowerCase();
+  
+  console.log('[RECEIPT] 🔍 Validando transferencia bancaria:', {
+    accountDest: accountDest,
+    accountHolder: accountHolder,
+    concept: concept,
+    bankSender: paymentData.bankSender,
+    bankReceiver: paymentData.bankReceiver
+  });
+  
+  // Validar cuenta destino (Produbanco o últimos 4 dígitos)
+  const isCorrectAccount = accountDest.includes(COWORKIA_ACCOUNTS.PRODUBANCO.accountNumber) ||
+                          accountDest.endsWith(COWORKIA_ACCOUNTS.PRODUBANCO.accountPartial);
+  
+  if (!isCorrectAccount) {
+    return { 
+      isValid: false, 
+      validated: true,
+      reason: `⚠️ Cuenta destino incorrecta. Debe ser: ${COWORKIA_ACCOUNTS.PRODUBANCO.accountNumber} (Produbanco)` 
+    };
+  }
+  
+  // Validar concepto (opcional pero recomendado)
+  const hasValidConcept = VALID_PAYMENT_CONCEPTS.some(validConcept => 
+    concept.includes(validConcept)
+  );
+  
+  if (!hasValidConcept) {
+    console.warn('[RECEIPT] ⚠️ Concepto no estándar:', concept);
+    // No rechazar, solo advertir
+  }
+  
+  console.log('[RECEIPT] ✅ Transferencia validada correctamente');
+  return { 
+    isValid: true, 
+    validated: true,
+    reason: 'Transferencia a cuenta Coworkia verificada'
+  };
+}
+
+/**
+ * �📸 Detecta si el mensaje contiene una imagen (comprobante)
  */
 export function isReceiptImage(messageData) {
   const { type, media } = messageData;
@@ -179,6 +259,26 @@ export async function processPaymentReceipt(messageData, userProfile) {
       };
     }
     
+    // 🏦 VALIDAR si la transferencia es a cuentas de Coworkia
+    const transferValidation = validateCoworkiaTransfer(analysisResult);
+    console.log('[RECEIPT] 🏦 Validación de transferencia:', transferValidation);
+    
+    if (transferValidation.validated && !transferValidation.isValid) {
+      return {
+        success: false,
+        message: `📸 He recibido tu comprobante, pero encontré un problema:
+
+${transferValidation.reason}
+
+🏦 **Datos correctos para transferencia:**
+• Banco: Produbanco
+• Cuenta: ${COWORKIA_ACCOUNTS.PRODUBANCO.accountNumber}
+• Nombre: ${COWORKIA_ACCOUNTS.PRODUBANCO.accountHolder}
+
+Por favor verifica y envía el comprobante correcto 😊`
+      };
+    }
+    
     // Transcribir datos extraídos
     const transcription = `📸 ¡Perfecto! Recibí tu comprobante
 
@@ -187,6 +287,7 @@ He registrado:
 📅 Fecha: ${analysisResult.date || 'No detectada'}
 💳 Método: ${analysisResult.paymentMethod || 'No especificado'}
 ${analysisResult.reference ? `🔢 Referencia: ${analysisResult.reference}` : ''}
+${transferValidation.validated ? '✅ Cuenta destino verificada' : ''}
 
 ¿Los datos son correctos?`;
 

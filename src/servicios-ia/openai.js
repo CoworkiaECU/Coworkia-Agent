@@ -194,7 +194,20 @@ FORMATOS DE COMPROBANTES RECONOCIDOS:
    PARÁMETROS: paymentMethod="payphone", bankSender="Payphone", transactionStatus="approved"
 
 2️⃣ TRANSFERENCIAS BANCARIAS: 
-   Bancos Ecuador: Pichincha, Guayaquil, Produbanco, etc.
+   
+   📱 BANCO PICHINCHA - App Móvil:
+   TÍTULO: "¡Transferencia exitosa!" (checkmark verde)
+   CAMPOS CLAVE:
+   • "Monto": valor en dólares
+   • "Comprobante": número de 8 dígitos (ej: 36481686)
+   • "Cuenta origen": nombre + número (ej: Zapata Soria Francisco - 5068678700)
+   • "Cuenta destino": nombre + número parcial (ej: Villota Izurieta Gonzalo - ****3069)
+   • "Concepto": descripción (buscar "Garantía Coworkia", "Coworkia", "plan", "reserva")
+   • "Email": email del pagador
+   EXTRAE: transactionNumber=Comprobante, accountHolderSource=nombre origen
+   PARÁMETROS: paymentMethod="transferencia_interbancaria", bankSender="Banco Pichincha"
+   
+   🏦 OTROS BANCOS: Guayaquil, Produbanco, Bolivariano, Pacífico
    EXTRAE: Cuentas origen/destino, referencia, banco emisor/receptor
    PARÁMETROS: paymentMethod="transferencia_interbancaria", bankSender y bankReceiver
 

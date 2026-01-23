@@ -16,6 +16,9 @@
 
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 
+// 📲 Enlace genérico para referir amigos al sistema de Coworkia
+const REFERRAL_LINK = `https://wa.me/593994837117?text=${encodeURIComponent('¡Hola Coworkia! quiero probar el servicio')}`;
+
 // TTL del formulario: 2 horas (usuarios pueden distraerse, atender llamadas, etc.)
 const FORM_TTL_SECONDS = 2 * 60 * 60;
 
@@ -324,6 +327,7 @@ export class PartialReservationForm {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
       const pricing = this.calculateTotalWithTaxes();
       const isFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+      const hasUsedFreeTrial = this.freeTrialUsed === true;
       
       // Mapear método de pago a texto legible
       const metodoPagoDisplay = {
@@ -333,6 +337,37 @@ export class PartialReservationForm {
       };
       const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
       
+      // 🆕 BRANCH 1: Usuario con free trial usado - Mostrar costo + sugerencia referido
+      if (hasUsedFreeTrial && this.spaceType === 'hotDesk') {
+        let message = `⚠️ *Segunda Reserva - Tiene Costo*\n\n`;
+        message += `Ya usaste tus 2 horas gratis 🎉\n\n`;
+        message += `📋 *Detalles de esta reserva:*\n`;
+        message += `📅 ${this.date}\n`;
+        message += `⏰ ${this.time} (${this.durationHours}h)\n`;
+        message += `💻 ${spaceName}\n`;
+        message += `📧 ${this.email}\n\n`;
+        message += `💰 *Costo:*\n`;
+        message += `Base: $10.00\n`;
+        message += `IVA (12%): $1.20\n`;
+        message += `Comisión tarjeta (3.5%): $0.35\n`;
+        message += `*TOTAL: $11.55*\n\n`;
+        message += `💳 Pago: ${metodoPago}\n\n`;
+        message += `───────────────────\n\n`;
+        message += `💡 *¿Sabías que...?*\n\n`;
+        message += `Tu amigo o colega TAMBIÉN puede registrarse y disfrutar de *2 horas gratis* 🎁\n\n`;
+        message += `📲 *Envíale este enlace:*\n`;
+        message += `${REFERRAL_LINK}\n\n`;
+        message += `Dile: _"Amigo, regístrate aquí para recibir tus dos horas gratis"_ 😊\n\n`;
+        message += `───────────────────\n\n`;
+        message += `¿Deseas *CONFIRMAR* esta reserva con costo?\n\n`;
+        message += `✅ Responde *SI* para confirmar\n`;
+        message += `❌ Responde *NO* para cancelar`;
+        
+        console.log('[FORM] ✅ Confirmación CON COSTO + REFERRAL generada (freeTrialUsed=true)');
+        return message;
+      }
+      
+      // 🆕 BRANCH 2: Primera reserva GRATIS o reservas sin free trial
       let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
       message += `📅 Fecha: ${this.date}\n`;
       message += `⏰ Horario: ${this.time} (${this.durationHours}h)\n`;

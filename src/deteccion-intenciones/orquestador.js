@@ -275,12 +275,41 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     specialMode = 'SERVICE_INTEREST_GREETING';
   }
 
-  // 6. Construir prompt para el agente
+  // 6. Consultar reservas si el usuario pregunta por ellas
+  let reservasContexto = '';
+  const preguntaReservas = /\b(reserva|reservación|cita|hora)\b/i.test(mensaje) && 
+                           /\b(tengo|confirmada|pendiente|qué|cuál|cuáles|mi)\b/i.test(mensaje);
+  
+  if (preguntaReservas && targetAgent === 'AURORA') {
+    try {
+      const reservasHoy = await AGENTES.AURORA.getConfirmedReservationsToday(userId);
+      
+      if (reservasHoy.length > 0) {
+        reservasContexto = `\n\n📋 RESERVAS CONFIRMADAS HOY:\n`;
+        reservasHoy.forEach((res, idx) => {
+          const spaceName = res.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+          reservasContexto += `${idx + 1}. ${spaceName}\n`;
+          reservasContexto += `   ⏰ ${res.start_time} - ${res.end_time}\n`;
+          reservasContexto += `   💰 ${res.was_free ? 'GRATIS (primera visita)' : `$${res.total_price}`}\n`;
+          if (res.hot_desk_number) {
+            reservasContexto += `   🪑 Puesto #${res.hot_desk_number}\n`;
+          }
+        });
+        reservasContexto += `\nMuestra esta información al usuario de forma clara y amigable.`;
+      } else {
+        reservasContexto = `\n\n📋 El usuario NO tiene reservas confirmadas para hoy.`;
+      }
+    } catch (error) {
+      console.error('[ORQUESTADOR] Error consultando reservas:', error);
+    }
+  }
+
+  // 7. Construir prompt para el agente
   const agente = AGENTES[targetAgent];
   if (!agente) throw new Error(`Agente no encontrado: ${targetAgent}`);
 
   const prompt = `
-${contexto}
+${contexto}${reservasContexto}
 
 MENSAJE DEL USUARIO:
 "${mensaje}"

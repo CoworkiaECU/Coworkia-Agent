@@ -277,7 +277,36 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire re
    * - Este flujo se ejecuta INCLUSO si mencionan "@paula" directamente
    * 
    * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   * 
+   */
+  
+  /**
+   * 📋 Consulta reservas confirmadas del día actual desde la base de datos
+   * @param {string} userPhone - Número de teléfono del usuario (+593...)
+   * @returns {Promise<Array>} Array de reservas confirmadas hoy
+   */
+  getConfirmedReservationsToday: async function(userPhone) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      const { databaseService } = await import('../database/database.js');
+      
+      const reservations = await databaseService.all(`
+        SELECT service_type, date, start_time, end_time, was_free, total_price, hot_desk_number
+        FROM reservations 
+        WHERE user_phone = $1 
+          AND status = 'confirmed' 
+          AND date = $2
+        ORDER BY start_time ASC
+      `, [userPhone, today]);
+      
+      return reservations || [];
+    } catch (error) {
+      console.error('[AURORA] Error consultando reservas:', error);
+      return [];
+    }
+  },
+  
+  /**
    * Genera el system prompt dinámicamente basado en el estado del usuario
    * @param {boolean} freeTrialUsed - Si el usuario ya usó su día gratis
    * @param {string} userLanguage - Idioma preferido del usuario (es, en)

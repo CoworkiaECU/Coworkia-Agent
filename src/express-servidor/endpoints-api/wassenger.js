@@ -723,7 +723,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const pendingConfirmCheck = await getPendingConfirmation(userId).catch(() => null);
     const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt) || !!pendingConfirmCheck;
     const isFormContinuation = detectFormContinuation(processedText);
-    const shouldActivateForm = isReservationIntent(processedText) || hasActiveForm || isFormContinuation;
+    
+    // 🔍 DETECCIÓN TEMPRANA: Verificar si hay intención especial que debe ir directo al orquestador
+    const { detectVirtualAgentSalesPromo, detectarSaludoConInteresServicio } = await import('../../deteccion-intenciones/detectar-intencion.js');
+    const hasSpecialIntent = detectVirtualAgentSalesPromo(processedText) || detectarSaludoConInteresServicio(processedText);
+    
+    // Si hay intent especial, NO activar formulario - dejar que orquestador lo maneje
+    const shouldActivateForm = !hasSpecialIntent && (isReservationIntent(processedText) || hasActiveForm || isFormContinuation);
     
     // 💼 ALUNA - Formulario de membresías
     if (profile.activeAgent === 'ALUNA') {

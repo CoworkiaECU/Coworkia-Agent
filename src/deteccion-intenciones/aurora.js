@@ -272,9 +272,9 @@ Soy parte de *OneMind*, departamento de tecnología e IA de MarketingLab, que es
 
 Mira nuestro equipo especializado:
 
-�    @aurora - Coworking y Espacios (Coworkia)
-📊    @enzo - Marketing e IA (MarketingLab)
-🏡    @aluna - Membresías y Servicios
+🤖 @aurora - Coworking y Espacios (Coworkia)
+📊 @enzo - Marketing e IA (MarketingLab)
+🏡 @aluna - Membresías y Servicios
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🎮 *PRUÉBALO AHORA:*

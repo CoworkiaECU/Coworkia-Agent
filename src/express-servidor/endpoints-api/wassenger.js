@@ -701,6 +701,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       conversacionEnCurso
     };
 
+    // 🔄 SIEMPRE actualizar nombre si cambia en WhatsApp
+    if (name && name !== current.whatsappDisplayName) {
+      console.log(`[NAME UPDATE] ✅ Nombre actualizado: "${current.whatsappDisplayName || 'NULL'}" → "${name}"`);
+    }
+
     await saveProfile(userId, profile);
 
     // Guardar mensaje usuario con contexto reply si existe

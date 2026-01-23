@@ -347,18 +347,26 @@ export class PartialReservationForm {
    */
   toJSON() {
     // Calcular precio con impuestos:
-    // - Cliente nuevo (freeTrialUsed = false): totalPrice = 0
+    // - Cliente nuevo HOT DESK (freeTrialUsed = false + hotDesk): totalPrice = 0
+    // - Sala reuniones SIEMPRE paga (meetingRoom): calcular precio
     // - Cliente recurrente (freeTrialUsed = true): calcular con impuestos
     let pricing = { total: 0 };
     
-    if (this.freeTrialUsed === false) {
-      // Cliente nuevo - GRATIS
+    // ✅ REGLA: Solo Hot Desk puede ser gratis para nuevos clientes
+    const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+    
+    if (isHotDeskFreeTrial) {
+      // Cliente nuevo con Hot Desk - GRATIS
       pricing = { total: 0 };
-      console.log('[FORM] 💰 Cliente nuevo - Precio: GRATIS');
+      console.log('[FORM] 💰 Cliente nuevo Hot Desk - Precio: GRATIS');
     } else if (this.paymentMethod) {
-      // Cliente recurrente con método de pago
+      // Sala reuniones O cliente recurrente - CALCULAR PRECIO
       pricing = this.calculateTotalWithTaxes();
-      console.log('[FORM] 💰 Cliente recurrente - Precio calculado:', pricing.total);
+      console.log('[FORM] 💰 Precio calculado:', {
+        spaceType: this.spaceType,
+        freeTrialUsed: this.freeTrialUsed,
+        total: pricing.total
+      });
     }
     
     return {

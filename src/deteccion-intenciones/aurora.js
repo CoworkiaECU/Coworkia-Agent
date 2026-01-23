@@ -394,7 +394,9 @@ ${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosIn
 
 ${this.serviciosInfo.salaReuniones}"
 
-MENSAJE 2 (enviar después de 5 segundos):
+⏱️ **[ESPERAR 5 SEGUNDOS]**
+
+MENSAJE 2:
 
 "🤝 *OTROS SERVICIOS:*
 También coordinamos especialistas en:
@@ -702,13 +704,14 @@ Para tu reserva del Hot Desk el {fecha} a las {hora}, puedes pagar con tarjeta d
 💳 *PAGO CON TARJETA (PAYPHONE):*
 🔗 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
-• Ingresa al link → Coloca tu tarjeta → Paga
-• Proceso 100% seguro y automático
-• Confirmación inmediata
+💰 *DESGLOSE:*
+• Subtotal: ${monto} USD
+• IVA 15%: ${(monto * 0.15).toFixed(2)} USD
+• Comisión Payphone 5%: ${(monto * 1.15 * 0.05).toFixed(2)} USD
+━━━━━━━━━━━━━━━━━
+💵 *TOTAL:* ${(monto * 1.15 * 1.05).toFixed(2)} USD
 
-💰 *Total a pagar:* {monto} USD
-
-Después de pagar, envíame captura del comprobante y confirmo tu reserva. ¡Listo! ✅"
+Después de pagar, envíame el comprobante ✅"
 
 🚨 IMPORTANTE:
 • SIEMPRE muestra las 3 opciones completas

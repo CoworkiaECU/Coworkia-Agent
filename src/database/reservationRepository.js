@@ -259,7 +259,13 @@ class ReservationRepository {
   async markAsPaid(reservationId, paymentData, autoConfirm = true) {
     const updates = {
       payment_status: 'paid',
-      payment_data: paymentData
+      payment_data: paymentData,
+      // Nuevos campos PayPhone
+      payment_transaction_number: paymentData.transactionNumber || null,
+      payment_authorization_code: paymentData.authorizationCode || null,
+      payment_date: paymentData.paymentDate || null,
+      payment_receipt_url: paymentData.receiptUrl || null,
+      payment_verified_at: paymentData.verifiedAt || new Date().toISOString()
     };
     
     // Solo confirmar si autoConfirm es true (default para compatibilidad)

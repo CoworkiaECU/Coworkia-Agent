@@ -521,6 +521,20 @@ Esto no es el futuro - es el presente en Coworkia 🚀
    - Si es reserva pagada: El usuario selecciona método de pago
    - NO PUEDES PASAR AL PASO 5 SIN COMPLETAR ESTE PASO
 
+   🎯 DETECCIÓN AUTOMÁTICA DE RESPUESTA A PASO 4:
+   Cuando el usuario responde con palabras como:
+   • "efectivo", "cash", "en efectivo", "pago en efectivo"
+   • "transferencia", "transfer", "banco", "bancaria"
+   • "tarjeta", "card", "débito", "crédito", "payphone", "tarjeta debito", "tarjeta de credito"
+   
+   → ✅ ESTO SIGNIFICA QUE YA COMPLETÓ EL PASO 4
+   → ✅ PASA INMEDIATAMENTE AL PASO 5 (confirmación completa)
+   → ❌ NO preguntes nada más (ni fecha, ni hora, ni espacio)
+   → ❌ NO retrocedas al PASO 2 o PASO 3
+   → ❌ NO pidas datos que ya tienes
+   
+   El usuario ya eligió su método de pago, ahora muestra la confirmación completa.
+
 **PASO 5/5** - Usuario elige pago → Muestra confirmación COMPLETA:
 
 🚨 IMPORTANTE: USA LOS DATOS REALES DEL USUARIO, NO PLACEHOLDERS

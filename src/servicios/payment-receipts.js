@@ -474,8 +474,6 @@ async function analyzeReceiptImage(messageData, expectedAmount, userId = null) {
  * 🤖 Análisis simulado como fallback
  */
 async function simulateReceiptAnalysis(expectedAmount) {
- */
-async function simulateReceiptAnalysis(expectedAmount) {
   console.log('[RECEIPT] 🎭 Análisis simulado (fallback)...');
   
   await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento

@@ -1149,9 +1149,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         await saveProfile(userId, profile);
         console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
 
-        // PASO 3: Delay para experiencia natural (no simultáneo)
-        await new Promise(r => setTimeout(r, 1200)); // 1.2 segundos
-        console.log(`[HANDOFF] ⏱️ Delay aplicado (1.2s)`);
+        // PASO 3: Delay LARGO para garantizar orden de entrega en WhatsApp (4-5s)
+        console.log(`[HANDOFF] ⏱️ Esperando 5 segundos para asegurar orden de entrega...`);
+        await new Promise(r => setTimeout(r, 5000)); // 5 segundos - crítico para WhatsApp
+        console.log(`[HANDOFF] ⏱️ Delay aplicado (5s) - continuando handoff`);
         
         // PASO 4: Nuevo agente saluda
         console.log(`[HANDOFF] 👋 ${targetAgent} saludando...`);

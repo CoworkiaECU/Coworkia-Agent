@@ -1093,12 +1093,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
-      // 🔧 FIX 1: Actualizar activeAgent ANTES del handoff para que fotos lleguen al agente correcto
-      console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
-      profile.activeAgent = targetAgent;
-      await saveProfile(userId, profile);
-      console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
-      
       // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
       if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
         profile.transactionStartedAt = Date.now();
@@ -1131,11 +1125,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           agent: fromAgent 
         });
 
-        // PASO 2: Delay para experiencia natural (no simultáneo)
+        // PASO 2: Actualizar activeAgent DESPUÉS de despedida para que llegue al agente correcto
+        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
+        profile.activeAgent = targetAgent;
+        await saveProfile(userId, profile);
+        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
+
+        // PASO 3: Delay para experiencia natural (no simultáneo)
         await new Promise(r => setTimeout(r, 1200)); // 1.2 segundos
         console.log(`[HANDOFF] ⏱️ Delay aplicado (1.2s)`);
         
-        // PASO 3: Nuevo agente saluda
+        // PASO 4: Nuevo agente saluda
         console.log(`[HANDOFF] 👋 ${targetAgent} saludando...`);
         await enviarWhatsApp(userId, handoffMessages.entrada);
         await saveConversationMessage(userId, { 

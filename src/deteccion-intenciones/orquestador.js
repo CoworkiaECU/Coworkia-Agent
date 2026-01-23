@@ -267,7 +267,15 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
   // 4. Construir contexto reducido (Aurora filtra según agente)
   const contexto = construirContexto(perfil, historial, formData, handoffContext, targetAgent, intent);
 
-  // 5. Construir prompt para el agente
+  // 5. Determinar si hay modo especial
+  let specialMode = null;
+  if (intent.flags?.virtualAgentSalesPromo) {
+    specialMode = 'VIRTUAL_AGENT_SALES';
+  } else if (intent.flags?.serviceInterest) {
+    specialMode = 'SERVICE_INTEREST_GREETING';
+  }
+
+  // 6. Construir prompt para el agente
   const agente = AGENTES[targetAgent];
   if (!agente) throw new Error(`Agente no encontrado: ${targetAgent}`);
 
@@ -279,14 +287,19 @@ MENSAJE DEL USUARIO:
 
 INSTRUCCIONES:
 - Responde como ${agente.nombre}
-- Mantén tu rol: ${agente.rol}
+${specialMode ? '- ⚠️ MODO ESPECIAL ACTIVO: Sigue el formato exacto del system prompt' : '- Mantén tu rol: ' + agente.rol}
 - No inventes datos que Aurora no te haya dado
 - Si el tema no es de tu especialidad, indícalo
 `.trim();
 
   const systemPrompt =
     typeof agente.getSystemPrompt === 'function'
-      ? agente.getSystemPrompt(perfil.freeTrialUsed || false, perfil.preferredLanguage || 'es', perfil.conversationCount || 0)
+      ? agente.getSystemPrompt(
+          perfil.freeTrialUsed || false, 
+          perfil.preferredLanguage || 'es', 
+          perfil.conversationCount || 0,
+          specialMode
+        )
       : agente.systemPrompt;
 
   const duration = Date.now() - startTime;
@@ -303,6 +316,7 @@ INSTRUCCIONES:
       targetAgent,
       intent,
       handoffContext,
+      specialMode,
       ...(intent.flags?.cancelacionEjecutada && {
         cancelacion: true,
         cancelacionDetails: {
@@ -380,39 +394,19 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
   if (perfil.email) lineas.push(`Email: ${perfil.email}`);
 
-  // 🤖 PROMPTS ESPECIALES: Venta de agentes virtuales o saludo con interés en servicio
+  // 🤖 PROMPTS ESPECIALES: Contexto mínimo (system prompt tiene todas las instrucciones)
   const isVirtualAgentSales = intent?.flags?.virtualAgentSalesPromo === true;
   const isServiceInterestGreeting = intent?.flags?.serviceInterest === true;
 
-  // 1. VENTA DE SISTEMA ONEMIND (prioridad alta)
   if (isVirtualAgentSales) {
-    lineas.push('\n🤖 CONTEXTO ESPECIAL: DEMO SISTEMA ONEMIND');
-    lineas.push('⚠️ CRÍTICO: Usuario pregunta por el SISTEMA de agentes virtuales');
-    lineas.push('⚠️ NO es consulta de coworking - es DEMO del producto OneMind');
-    lineas.push('');
-    lineas.push('📝 INSTRUCCIÓN: Usa el PROMPT ESPECIAL #2 de tu system prompt');
-    lineas.push('- Lista los agentes con @códigos para que pruebe');
-    lineas.push('- Invita a navegar el ecosistema AHORA');
-    lineas.push('- Deriva a @enzo para cotización de sistema personalizado');
-    lineas.push('- NO ofrezcas espacios coworking en esta respuesta');
-    
-    // Retornar SOLO este contexto, sin agregar nada más
+    lineas.push('\n🔴 MODO: DEMO_SISTEMA_ONEMIND');
+    // NO agregar más instrucciones - el system prompt especializado ya las tiene
     return lineas.join('\n');
   }
 
-  // 2. SALUDO CON INTERÉS EN SERVICIO (coworking)
   if (isServiceInterestGreeting) {
-    lineas.push('\n🏢 CONTEXTO ESPECIAL: SALUDO CON INTERÉS EN COWORKING');
-    lineas.push('⚠️ Usuario quiere probar servicios de coworking AHORA');
-    lineas.push('⚠️ NO menciones otros agentes (@enzo, @adriana, etc.)');
-    lineas.push('');
-    lineas.push('📝 INSTRUCCIÓN: Usa el PROMPT ESPECIAL #1 de tu system prompt');
-    lineas.push('- Presenta Hot Desk + Sala de Reuniones con precios');
-    lineas.push('- Menciona ubicación y horarios');
-    lineas.push('- Pregunta día y hora para reservar (call to action)');
-    lineas.push('- Tono: bienvenida cálida pero directo al grano');
-    
-    // Retornar SOLO este contexto, sin agregar nada más
+    lineas.push('\n🔴 MODO: SALUDO_CON_INTERES_SERVICIO');
+    // NO agregar más instrucciones - el system prompt especializado ya las tiene
     return lineas.join('\n');
   }
 

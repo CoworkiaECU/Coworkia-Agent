@@ -65,7 +65,8 @@ export const AURORA = {
 • 2 horas: $29
 • Pizarra + TV + WiFi + café ☕`,
     ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:30-18h | Sáb 9-14h
+⏰ Lun-Vie 8:30-18h
+🚫 Cerrado: Sábados, domingos y feriados
 🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
     especialistas: `🏥 Salud - Ángela en MedBeneficios
 🛡️ Seguros - Adriana en SegPopular  

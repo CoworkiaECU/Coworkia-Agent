@@ -1211,6 +1211,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core
+    
+    // 🔍 DEBUG: Verificar specialMode
+    console.log('[WASSENGER] 🔍 DEBUG - Antes de OpenAI:', {
+      userId,
+      agenteKey: resultado.agenteKey,
+      specialMode: resultado.metadata?.specialMode,
+      hasVirtualAgentSalesFlag: resultado.metadata?.intent?.flags?.virtualAgentSalesPromo,
+      systemPromptLength: resultado.systemPrompt?.length,
+      systemPromptStart: resultado.systemPrompt?.substring(0, 200)
+    });
+    
     let reply = await complete(resultado.prompt, {
       temperature: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 0.7 : 0.4,
       max_tokens: ['ENZO', 'ADRIANA', 'ALUNA', 'PAULA'].includes(resultado.agenteKey) ? 1200 : 350, // Paula necesita más tokens para fichas completas

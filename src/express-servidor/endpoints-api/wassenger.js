@@ -1144,6 +1144,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
+      // 🔄 Pasar formulario parcial guardado si existe (para continuación de flujo)
+      savedPartial: savedPartialCheck,
       envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
     });
 

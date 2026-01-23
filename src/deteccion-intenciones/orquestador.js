@@ -690,6 +690,30 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     lineas.push(`Reserva en proceso: ${formData.summary}`);
   }
   
+  // 📋 FORMULARIO PARCIAL GUARDADO: Si hay formulario guardado pero no activo, informar
+  if (isCoworkingAgent && formData?.savedPartial && !formData?.form && !skipReservationContext) {
+    const saved = formData.savedPartial;
+    if (saved.formData && !saved.cancelledAt) {
+      const data = saved.formData;
+      const captured = [];
+      
+      if (data.spaceType) {
+        const spaceLabel = data.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones';
+        captured.push(`tipo (${spaceLabel})`);
+      }
+      if (data.date) captured.push(`fecha (${data.date})`);
+      if (data.time) captured.push(`hora (${data.time})`);
+      if (data.email) captured.push(`email (${data.email})`);
+      if (data.numPeople && data.numPeople > 1) captured.push(`personas (${data.numPeople})`);
+      
+      if (captured.length > 0) {
+        lineas.push('\n📋 RESERVA PENDIENTE (continuación):');
+        lineas.push(`✅ Datos guardados: ${captured.join(', ')}`);
+        lineas.push('\n⚠️ ACCIÓN: El usuario está continuando una reserva. Retoma el flujo y pregunta solo lo que falta.');
+      }
+    }
+  }
+  
   // 📋 FORMULARIO DE RESERVA: Solo para Aurora/Aluna
   if (isCoworkingAgent && formData?.form && !skipReservationContext) {
     const form = formData.form;

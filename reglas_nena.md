@@ -28,6 +28,14 @@
 - Mantener foco y claridad en cada respuesta
 - Ejemplo: "¿Ahora continúo con T4 (Aurora Vision AI) o prefieres que explique X primero?"
 
+### 🚨 ANÁLISIS DE PROBLEMAS - REGLA CRÍTICA
+**SIEMPRE extraer logs completos antes de diagnosticar**
+- Screenshots/pantallazos son solo presentación visual del problema
+- **OBLIGATORIO**: Extraer logs de Heroku con el comando apropiado
+- Analizar = revisar logs línea por línea, NO adivinar por capturas
+- Identificar: timestamps, agente activo, formulario activo, errores, contexto
+- Diagnóstico basado en datos reales, no supuestos
+
 ---
 
 ## 🤖 TRABAJO MULTI-AGENTE

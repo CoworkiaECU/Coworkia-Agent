@@ -165,15 +165,45 @@ class PostgresAdapter {
         )
       `);
 
-      // Tabla de confirmaciones pendientes (ALINEADA CON SQLite)
+      // Tabla de confirmaciones pendientes (MEJORADA - con tipo de agente)
       await client.query(`
         CREATE TABLE IF NOT EXISTS pending_confirmations (
           user_phone TEXT PRIMARY KEY,
+          agent_type TEXT NOT NULL DEFAULT 'AURORA',
+          agent_name TEXT,
           reservation_data TEXT NOT NULL,
+          confirmation_type TEXT, -- 'reservation', 'membership', 'visit', 'quote'
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP,
-          FOREIGN KEY (user_phone) REFERENCES users(phone_number)
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
         )
+      `);
+      
+      // Agregar columnas nuevas si la tabla ya existe
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'pending_confirmations' AND column_name = 'agent_type'
+          ) THEN
+            ALTER TABLE pending_confirmations ADD COLUMN agent_type TEXT NOT NULL DEFAULT 'AURORA';
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'pending_confirmations' AND column_name = 'agent_name'
+          ) THEN
+            ALTER TABLE pending_confirmations ADD COLUMN agent_name TEXT;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'pending_confirmations' AND column_name = 'confirmation_type'
+          ) THEN
+            ALTER TABLE pending_confirmations ADD COLUMN confirmation_type TEXT;
+          END IF;
+        END $$;
       `);
 
       // Tabla de estado de reservas (justConfirmed flag)
@@ -187,7 +217,97 @@ class PostgresAdapter {
         )
       `);
 
-      // Tabla de formularios parciales guardados (para cancelaciones)
+      // ===================================================================
+      // TABLAS DE FORMULARIOS PARCIALES: Especializadas por agente
+      // Reemplaza partial_forms genérica para mejor calidad de datos
+      // ===================================================================
+
+      // Aurora - Reservas parciales/canceladas
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS aurora_partial_reservations (
+          user_phone TEXT PRIMARY KEY,
+          service_type TEXT NOT NULL,
+          date DATE,
+          start_time TEXT,
+          end_time TEXT,
+          duration_hours INTEGER,
+          guest_count INTEGER,
+          total_price DECIMAL(10,2),
+          was_free BOOLEAN DEFAULT FALSE,
+          form_progress TEXT, -- 'date_selected', 'time_selected', 'guests_selected', etc.
+          cancellation_reason TEXT,
+          cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Aluna - Membresías parciales/canceladas
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS aluna_partial_memberships (
+          user_phone TEXT PRIMARY KEY,
+          membership_type TEXT NOT NULL,
+          start_date TEXT,
+          client_name TEXT,
+          email TEXT,
+          phone TEXT,
+          company_name TEXT,
+          special_requirements TEXT,
+          monthly_fee DECIMAL(10,2),
+          form_progress TEXT,
+          cancellation_reason TEXT,
+          cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Axel - Cotizaciones parciales/canceladas
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS axel_partial_quotes (
+          user_phone TEXT PRIMARY KEY,
+          damage_type TEXT NOT NULL,
+          client_name TEXT,
+          vehicle_brand TEXT,
+          vehicle_model TEXT,
+          vehicle_year INTEGER,
+          email TEXT,
+          phone TEXT,
+          damage_description TEXT,
+          photo_count INTEGER DEFAULT 0,
+          form_progress TEXT,
+          cancellation_reason TEXT,
+          cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Paula - Visitas parciales/canceladas
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS paula_partial_visits (
+          user_phone TEXT PRIMARY KEY,
+          property_code TEXT NOT NULL,
+          property_name TEXT,
+          property_address TEXT,
+          date DATE,
+          start_time TEXT,
+          client_name TEXT,
+          client_email TEXT,
+          client_phone TEXT,
+          form_progress TEXT,
+          cancellation_reason TEXT,
+          cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      // Tabla de formularios parciales guardados (LEGACY - mantener para migración)
       await client.query(`
         CREATE TABLE IF NOT EXISTS partial_forms (
           user_phone TEXT PRIMARY KEY,
@@ -585,8 +705,22 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
         CREATE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(date, start_time, end_time, service_type);
         CREATE INDEX IF NOT EXISTS idx_pending_confirmations_expires ON pending_confirmations(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_pending_confirmations_agent ON pending_confirmations(agent_type);
         CREATE INDEX IF NOT EXISTS idx_reservation_state_just_confirmed ON reservation_state(just_confirmed_until);
+        
+        -- Índices para tablas de formularios parciales especializadas
+        CREATE INDEX IF NOT EXISTS idx_aurora_partial_expires ON aurora_partial_reservations(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_aurora_partial_cancelled ON aurora_partial_reservations(cancelled_at);
+        CREATE INDEX IF NOT EXISTS idx_aluna_partial_expires ON aluna_partial_memberships(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_aluna_partial_cancelled ON aluna_partial_memberships(cancelled_at);
+        CREATE INDEX IF NOT EXISTS idx_axel_partial_expires ON axel_partial_quotes(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_axel_partial_cancelled ON axel_partial_quotes(cancelled_at);
+        CREATE INDEX IF NOT EXISTS idx_paula_partial_expires ON paula_partial_visits(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_paula_partial_cancelled ON paula_partial_visits(cancelled_at);
+        
+        -- Índice legacy (mantener para migración)
         CREATE INDEX IF NOT EXISTS idx_partial_forms_cancelled ON partial_forms(cancelled_at);
+        
         CREATE INDEX IF NOT EXISTS idx_interactions_user ON interactions(user_phone);
         CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_conversation_user ON conversation_history(user_phone);

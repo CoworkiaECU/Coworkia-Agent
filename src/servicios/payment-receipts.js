@@ -469,25 +469,11 @@ async function analyzeReceiptImage(messageData, expectedAmount, userId = null) {
     };
   }
 }
-        confidence: paymentData.confidence || 0.5,
-        aiAnalyzed: true,
-        issues: [`Diferencia de $${amountDifference.toFixed(2)} detectada`]
-      };
-    }
-    
-  } catch (error) {
-    console.error('[RECEIPT] ❌ Error con Vision API:', error);
-    return {
-      isValid: false,
-      amount: null,
-      reason: `Error analizando imagen: ${error.message}`,
-      confidence: 0
-    };
-  }
-}
 
 /**
  * 🤖 Análisis simulado como fallback
+ */
+async function simulateReceiptAnalysis(expectedAmount) {
  */
 async function simulateReceiptAnalysis(expectedAmount) {
   console.log('[RECEIPT] 🎭 Análisis simulado (fallback)...');

@@ -380,43 +380,37 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
   if (perfil.email) lineas.push(`Email: ${perfil.email}`);
 
-  // 🤖 VENTA DE AGENTES VIRTUALES: Si detectado, cambiar completamente el contexto
+  // 🤖 PROMPTS ESPECIALES: Venta de agentes virtuales o saludo con interés en servicio
   const isVirtualAgentSales = intent?.flags?.virtualAgentSalesPromo === true;
-  
+  const isServiceInterestGreeting = intent?.flags?.serviceInterest === true;
+
+  // 1. VENTA DE SISTEMA ONEMIND (prioridad alta)
   if (isVirtualAgentSales) {
-    lineas.push('\n🤖 CONTEXTO: VENTA DE SISTEMA ONEMIND');
-    lineas.push('El usuario pregunta por el SISTEMA de agentes virtuales (como Aurora)');
-    lineas.push('NO es consulta de coworking - es venta de tecnología MarketingLab');
+    lineas.push('\n🤖 CONTEXTO ESPECIAL: DEMO SISTEMA ONEMIND');
+    lineas.push('⚠️ CRÍTICO: Usuario pregunta por el SISTEMA de agentes virtuales');
+    lineas.push('⚠️ NO es consulta de coworking - es DEMO del producto OneMind');
     lineas.push('');
-    lineas.push('📝 INSTRUCCIONES ESPECÍFICAS:');
-    lineas.push('1. Presenta OneMind como sistema multilingüe de agentes virtuales');
-    lineas.push('2. Destaca beneficios: atención 24/7, múltiples especialistas, integración CRM');
-    lineas.push('3. Menciona resultados reales: 80% reducción tiempo respuesta, 60% menos carga operativa');
-    lineas.push('4. Precio: Desde $350/mes según necesidad');
-    lineas.push('5. Ofrece demo personalizada para su empresa');
-    lineas.push('6. NO menciones espacios coworking, Hot Desk, Salas de Reuniones');
+    lineas.push('📝 INSTRUCCIÓN: Usa el PROMPT ESPECIAL #2 de tu system prompt');
+    lineas.push('- Lista los agentes con @códigos para que pruebe');
+    lineas.push('- Invita a navegar el ecosistema AHORA');
+    lineas.push('- Deriva a @enzo para cotización de sistema personalizado');
+    lineas.push('- NO ofrezcas espacios coworking en esta respuesta');
+    
+    // Retornar SOLO este contexto, sin agregar nada más
+    return lineas.join('\n');
+  }
+
+  // 2. SALUDO CON INTERÉS EN SERVICIO (coworking)
+  if (isServiceInterestGreeting) {
+    lineas.push('\n🏢 CONTEXTO ESPECIAL: SALUDO CON INTERÉS EN COWORKING');
+    lineas.push('⚠️ Usuario quiere probar servicios de coworking AHORA');
+    lineas.push('⚠️ NO menciones otros agentes (@enzo, @adriana, etc.)');
     lineas.push('');
-    lineas.push('💬 EJEMPLO DE RESPUESTA:');
-    lineas.push('"¡Excelente pregunta! 🤖✨');
-    lineas.push('');
-    lineas.push('OneMind es nuestro sistema de agentes virtuales multilingües que transforman tu atención al cliente 24/7.');
-    lineas.push('');
-    lineas.push('🎯 LO QUE PUEDES HACER:');
-    lineas.push('✅ Atención automatizada en WhatsApp/Email/Web');
-    lineas.push('✅ Múltiples especialistas en un solo sistema');
-    lineas.push('✅ Base de conocimiento personalizada');
-    lineas.push('✅ Integración con tu CRM/ERP');
-    lineas.push('✅ Análisis de conversaciones con IA');
-    lineas.push('');
-    lineas.push('📊 RESULTADOS REALES:');
-    lineas.push('• 80% reducción en tiempo de respuesta');
-    lineas.push('• 60% menos carga operativa');
-    lineas.push('• Disponibilidad 24/7 en 5+ idiomas');
-    lineas.push('');
-    lineas.push('💰 INVERSIÓN:');
-    lineas.push('Desde $350/mes según tu necesidad');
-    lineas.push('');
-    lineas.push('¿Te gustaría una demo personalizada para tu empresa?"');
+    lineas.push('📝 INSTRUCCIÓN: Usa el PROMPT ESPECIAL #1 de tu system prompt');
+    lineas.push('- Presenta Hot Desk + Sala de Reuniones con precios');
+    lineas.push('- Menciona ubicación y horarios');
+    lineas.push('- Pregunta día y hora para reservar (call to action)');
+    lineas.push('- Tono: bienvenida cálida pero directo al grano');
     
     // Retornar SOLO este contexto, sin agregar nada más
     return lineas.join('\n');

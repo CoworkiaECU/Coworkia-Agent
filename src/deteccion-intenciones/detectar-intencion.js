@@ -196,6 +196,25 @@ export function detectarPreguntaIdentidad(text) {
 }
 
 /**
+ * Detecta si el usuario saluda CON interés explícito en probar servicios
+ * Ejemplos: "Hola Coworkia quiero probar", "Buenos días quiero el servicio"
+ * @param {string} text - Mensaje del usuario normalizado
+ * @returns {boolean} true si es saludo con interés en servicio
+ */
+export function detectarSaludoConInteresServicio(text) {
+  const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  const patterns = [
+    /hola.*coworkia.*(quiero|necesito|me interesa)/i,
+    /hola.*(quiero|necesito).*(servicio|probar|usar)/i,
+    /buenos.*(quiero|necesito).*(servicio|probar)/i,
+    /buenas.*(quiero|necesito).*(servicio|probar)/i
+  ];
+  
+  return patterns.some(pattern => pattern.test(normalized));
+}
+
+/**
  * 🤖 Detecta si el usuario pregunta por VENTA de agentes virtuales
  * (No info de coworking, sino venta del sistema OneMind)
  * 
@@ -296,8 +315,8 @@ function detectVirtualAgentSalesPromo(text) {
     reasons.push('interes_producto');
   }
   
-  // Decisión: score >= 3 = detectado (ya tiene mención + algo más)
-  const detected = score >= 3;
+  // Decisión: score >= 4 = detectado (mención + contexto adicional significativo)
+  const detected = score >= 4;
   const confidence = Math.min(score / 8, 1); // Normalizar 0-1 (máximo posible: 8)
   
   if (detected) {
@@ -346,6 +365,21 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   const isCasualGreeting = detectarSaludoCasual(normalized);
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
+  // 0.5) Saludo con interés explícito en servicio - Aurora presenta coworking SOLO
+  const isSaludoConInteres = detectarSaludoConInteresServicio(text);
+  
+  if (isSaludoConInteres) {
+    return {
+      agent: currentAgent, // Mantener Aurora
+      reason: 'greeting with service interest - present coworking spaces',
+      flags: { 
+        serviceInterest: true,
+        requiresAurora: true,
+        skipOtherAgents: true // No mencionar otros agentes en respuesta
+      }
+    };
+  }
+  
   // 🤖 Detectar mensaje promocional de venta de agentes virtuales
   const virtualAgentPromo = detectVirtualAgentSalesPromo(text);
   
@@ -357,6 +391,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
       flags: { 
         virtualAgentSalesPromo: true, 
         requiresAurora: true,
+        skipDefaultGreeting: true,
+        requiresSpecialResponse: true,
         confidence: virtualAgentPromo.confidence,
         detectionScore: virtualAgentPromo.score,
         detectionReasons: virtualAgentPromo.reasons

@@ -277,8 +277,8 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
 
   // 6. Consultar reservas si el usuario pregunta por ellas
   let reservasContexto = '';
-  const preguntaReservas = /\b(reserva|reservación|cita|hora)\b/i.test(mensaje) && 
-                           /\b(tengo|confirmada|pendiente|qué|cuál|cuáles|mi)\b/i.test(mensaje);
+  const preguntaReservas = /\b(reserva|reservación|reservacion|cita|hora)\b/i.test(mensaje) && 
+                           /\b(tengo|confirmada|pendiente|pendienes|activa|qué|cuál|cuáles|mi|mis|alguna)\b/i.test(mensaje);
   
   if (preguntaReservas && targetAgent === 'AURORA') {
     try {

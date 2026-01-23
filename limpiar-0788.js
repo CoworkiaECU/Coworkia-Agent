@@ -41,10 +41,15 @@ async function limpiar() {
     console.log('✅ Aluna partial:', r6.rowCount);
     
     // 7. Ver perfil
-    const user = await client.query('SELECT phone_number, "whatsappDisplayName", name FROM users WHERE phone_number = $1', [phone]);
+    const user = await client.query('SELECT phone_number, whatsapp_display_name, name FROM users WHERE phone_number = $1', [phone]);
     if (user.rows[0]) {
-      console.log('📋 Perfil:', user.rows[0].whatsappDisplayName || user.rows[0].name || 'NULL');
+      console.log('📋 Perfil whatsapp_display_name:', user.rows[0].whatsapp_display_name || 'NULL');
+      console.log('📋 Perfil name:', user.rows[0].name || 'NULL');
     }
+    
+    // 8. FORZAR UPDATE del whatsapp_display_name a NULL para que refresh
+    const r8 = await client.query('UPDATE users SET whatsapp_display_name = NULL WHERE phone_number = $1', [phone]);
+    console.log('✅ Whatsapp name reseteado a NULL:', r8.rowCount);
     
     await client.query('COMMIT');
     console.log('\n✅ LIMPIEZA COMPLETADA');

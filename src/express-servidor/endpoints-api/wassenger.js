@@ -693,7 +693,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       ...current,
       userId,
       name: detectedName, // 🎯 Usar nombre limpio e inteligente
-      whatsappDisplayName: name || null, // Guardar nombre original de WhatsApp
+      whatsappDisplayName: name || current.whatsappDisplayName || null, // ✅ ACTUALIZAR SIEMPRE si viene de WhatsApp
       preferredLanguage: userLanguage, // 🌍 Idioma detectado/guardado
       channel: 'whatsapp',
       lastMessageAt: ahoraISO,

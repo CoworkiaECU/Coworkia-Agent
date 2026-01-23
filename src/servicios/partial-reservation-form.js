@@ -319,7 +319,41 @@ export class PartialReservationForm {
   getConfirmationMessage() {
     const missing = this.getMissingFields();
     
-    // Si solo falta paymentMethod, mostrar resumen completo con precio
+    // ✅ CASO 1: Formulario COMPLETO - Confirmación final
+    if (missing.length === 0) {
+      const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+      const pricing = this.calculateTotalWithTaxes();
+      const isFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+      
+      // Mapear método de pago a texto legible
+      const metodoPagoDisplay = {
+        'tarjeta': 'Tarjeta 💳',
+        'transferencia': 'Transferencia 🏦',
+        'efectivo': 'Efectivo 💵'
+      };
+      const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
+      
+      let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
+      message += `📅 Fecha: ${this.date}\n`;
+      message += `⏰ Horario: ${this.time} (${this.durationHours}h)\n`;
+      message += `💻 Espacio: ${spaceName}\n`;
+      message += `📧 Email: ${this.email}\n`;
+      
+      if (isFreeTrial) {
+        message += `💰 Total: GRATIS 🎉 (Primera visita)\n`;
+      } else {
+        message += `💰 Total: $${pricing.total.toFixed(2)} USD\n`;
+      }
+      
+      message += `💳 Pago: ${metodoPago}\n\n`;
+      message += `¿*Confirmas esta reserva?*\n\n`;
+      message += `Responde *SI* para continuar ${isFreeTrial ? '' : 'con el pago '}o *NO* para cancelar 👍`;
+      
+      console.log('[FORM] ✅ Confirmación final generada - formulario completo');
+      return message;
+    }
+    
+    // ⚠️ CASO 2: Solo falta paymentMethod - Mostrar opciones de pago
     if (missing.length === 1 && missing[0] === 'paymentMethod') {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
       const basePrice = this.getBasePrice();
@@ -336,9 +370,12 @@ export class PartialReservationForm {
       message += `🏦 *Transferencia* - $${(basePrice * 1.15).toFixed(2)} (incluye IVA 15%)\n\n`;
       message += `Escribe "tarjeta" o "transferencia" 👍`;
       
+      console.log('[FORM] ⚠️ Preguntando método de pago - solo falta paymentMethod');
       return message;
     }
     
+    // ❌ CASO 3: Faltan otros campos - No generar confirmación, usar getNextQuestion()
+    console.log('[FORM] ❌ No generar confirmación - faltan campos:', missing);
     return null;
   }
 
@@ -849,8 +886,14 @@ Estamos abiertos:
   let nextQuestion = null;
   let confirmationMessage = null;
   
-  if (!isComplete && !validationError) {
-    // Si solo falta paymentMethod, mostrar confirmación con precios
+  // ✅ FIX: Si está completo, generar confirmación final
+  if (isComplete && !validationError) {
+    confirmationMessage = form.getConfirmationMessage();
+    console.log('[FORM] ✅ Formulario completo - generando confirmación final');
+  }
+  // Si no está completo, mostrar pregunta siguiente
+  else if (!isComplete && !validationError) {
+    // Si solo falta paymentMethod, getConfirmationMessage ya maneja ese caso
     confirmationMessage = form.getConfirmationMessage();
     
     if (!confirmationMessage) {

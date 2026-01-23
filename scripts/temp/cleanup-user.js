@@ -22,7 +22,7 @@ async function cleanup() {
     const res3 = await pool.query("DELETE FROM partial_forms WHERE user_phone = $1", [userId]);
     console.log("✅ Formularios parciales eliminados:", res3.rowCount);
     
-    // 4. Resetear perfil
+    // 4. Resetear perfil (incluyendo idioma)
     const res4 = await pool.query(`
       UPDATE users 
       SET active_agent = 'AURORA', 
@@ -30,10 +30,11 @@ async function cleanup() {
           context_preferences = '{}',
           transaction_started_at = NULL,
           transaction_agent = NULL,
+          preferred_language = NULL,
           updated_at = NOW() 
       WHERE phone_number = $1
     `, [userId]);
-    console.log("✅ Perfil reseteado (activeAgent=AURORA):", res4.rowCount);
+    console.log("✅ Perfil reseteado (activeAgent=AURORA, idioma=NULL para re-detectar):", res4.rowCount);
     
     // 5. Limpiar interacciones
     const res5 = await pool.query("DELETE FROM interactions WHERE user_phone = $1", [userId]);

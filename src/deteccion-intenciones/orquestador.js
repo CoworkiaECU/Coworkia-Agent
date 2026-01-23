@@ -380,6 +380,48 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
   if (perfil.email) lineas.push(`Email: ${perfil.email}`);
 
+  // 🤖 VENTA DE AGENTES VIRTUALES: Si detectado, cambiar completamente el contexto
+  const isVirtualAgentSales = intent?.flags?.virtualAgentSalesPromo === true;
+  
+  if (isVirtualAgentSales) {
+    lineas.push('\n🤖 CONTEXTO: VENTA DE SISTEMA ONEMIND');
+    lineas.push('El usuario pregunta por el SISTEMA de agentes virtuales (como Aurora)');
+    lineas.push('NO es consulta de coworking - es venta de tecnología MarketingLab');
+    lineas.push('');
+    lineas.push('📝 INSTRUCCIONES ESPECÍFICAS:');
+    lineas.push('1. Presenta OneMind como sistema multilingüe de agentes virtuales');
+    lineas.push('2. Destaca beneficios: atención 24/7, múltiples especialistas, integración CRM');
+    lineas.push('3. Menciona resultados reales: 80% reducción tiempo respuesta, 60% menos carga operativa');
+    lineas.push('4. Precio: Desde $350/mes según necesidad');
+    lineas.push('5. Ofrece demo personalizada para su empresa');
+    lineas.push('6. NO menciones espacios coworking, Hot Desk, Salas de Reuniones');
+    lineas.push('');
+    lineas.push('💬 EJEMPLO DE RESPUESTA:');
+    lineas.push('"¡Excelente pregunta! 🤖✨');
+    lineas.push('');
+    lineas.push('OneMind es nuestro sistema de agentes virtuales multilingües que transforman tu atención al cliente 24/7.');
+    lineas.push('');
+    lineas.push('🎯 LO QUE PUEDES HACER:');
+    lineas.push('✅ Atención automatizada en WhatsApp/Email/Web');
+    lineas.push('✅ Múltiples especialistas en un solo sistema');
+    lineas.push('✅ Base de conocimiento personalizada');
+    lineas.push('✅ Integración con tu CRM/ERP');
+    lineas.push('✅ Análisis de conversaciones con IA');
+    lineas.push('');
+    lineas.push('📊 RESULTADOS REALES:');
+    lineas.push('• 80% reducción en tiempo de respuesta');
+    lineas.push('• 60% menos carga operativa');
+    lineas.push('• Disponibilidad 24/7 en 5+ idiomas');
+    lineas.push('');
+    lineas.push('💰 INVERSIÓN:');
+    lineas.push('Desde $350/mes según tu necesidad');
+    lineas.push('');
+    lineas.push('¿Te gustaría una demo personalizada para tu empresa?"');
+    
+    // Retornar SOLO este contexto, sin agregar nada más
+    return lineas.join('\n');
+  }
+
   // 🗑️ CANCELACIÓN: Si el usuario pidió cancelar, informar el resultado
   if (intent?.flags?.cancelacion && intent?.cancelacionResult) {
     const result = intent.cancelacionResult;
@@ -405,13 +447,16 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   const isCoworkingAgent = ['AURORA', 'ALUNA', 'GABI'].includes(targetAgent);
   const isExternalAgent = ['ENZO', 'ANGELA', 'AXEL', 'PAULA'].includes(targetAgent);
   
-  // 🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
+  // � PROTECCIÓN: NO agregar contexto de reservas si es venta de agentes virtuales
+  const skipReservationContext = isVirtualAgentSales;
+  
+  // �🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
   const isReturningToAurora = targetAgent === 'AURORA' && 
                               handoffContext && 
                               handoffContext.fromAgent !== 'AURORA' &&
                               handoffContext.fromAgent !== 'ALUNA';
   
-  if (isReturningToAurora && formData?.form && !formData.form.isComplete()) {
+  if (isReturningToAurora && formData?.form && !formData.form.isComplete() && !skipReservationContext) {
     lineas.push('\n🔄 USUARIO REGRESA CON RESERVA PENDIENTE:');
     
     const form = formData.form;
@@ -436,12 +481,12 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     lineas.push('Si quiere cambiar algo, actualiza los datos según indique.');
   }
   
-  if (isCoworkingAgent && formData?.summary) {
+  if (isCoworkingAgent && formData?.summary && !skipReservationContext) {
     lineas.push(`Reserva en proceso: ${formData.summary}`);
   }
   
   // 📋 FORMULARIO DE RESERVA: Solo para Aurora/Aluna
-  if (isCoworkingAgent && formData?.form) {
+  if (isCoworkingAgent && formData?.form && !skipReservationContext) {
     const form = formData.form;
     const completed = [];
     const missing = [];

@@ -23,7 +23,16 @@ async function cleanup() {
     console.log("✅ Formularios parciales eliminados:", res3.rowCount);
     
     // 4. Resetear perfil
-    const res4 = await pool.query("UPDATE users SET active_agent = 'AURORA', profile = '{}', updated_at = NOW() WHERE phone_number = $1", [userId]);
+    const res4 = await pool.query(`
+      UPDATE users 
+      SET active_agent = 'AURORA', 
+          active_agents = '{}', 
+          context_preferences = '{}',
+          transaction_started_at = NULL,
+          transaction_agent = NULL,
+          updated_at = NOW() 
+      WHERE phone_number = $1
+    `, [userId]);
     console.log("✅ Perfil reseteado (activeAgent=AURORA):", res4.rowCount);
     
     // 5. Limpiar interacciones

@@ -227,7 +227,7 @@ export function detectarSaludoConInteresServicio(text) {
  * @param {string} text - Mensaje del usuario
  * @returns {object} { detected: boolean, confidence: number, score: number, reasons: string, reason: string }
  */
-function detectVirtualAgentSalesPromo(text) {
+export function detectVirtualAgentSalesPromo(text) {
   // Normalizar: quitar signos, lowercase, normalizar acentos
   const normalized = text
     .toLowerCase()

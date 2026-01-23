@@ -82,6 +82,44 @@ Que préférez-vous?
 
 Dites-moi et nous coordonnerons 😊`
     })
+  },
+
+  // Mensaje 3: ¡Hola Paula! Me interesa Casa Jardín (Campaña PropElite)
+  CASA_JARDIN_PAULA: {
+    trigger: "hola paula.*casa jard[ií]n|hello paula.*casa jard[ií]n",
+    targetAgent: 'PAULA', // Activar Paula directamente
+    getResponse: (userLanguage = 'es') => ({
+      es: `¡Hola {nombre}! Soy Paula de PropElite Bienes Raíces 🏡
+
+¡Excelente elección! *Casas Jardín* en El Morenal es uno de nuestros proyectos más exclusivos 💎
+
+🏗️ Constructor premium: G.M.A. Arquitectos
+📍 Urbanización privada exclusiva
+✨ YA CONSTRUIDAS - Listas para habitar
+
+Te envío la información de las 4 casas disponibles con sus fichas completas.
+
+📋 ¿Prefieres que te envíe:
+• Todas las fichas juntas para comparar
+• Una por una con detalles específicos
+
+Dime cómo prefieres y te las envío de inmediato 😊`,
+      en: `Hello {nombre}! I'm Paula from PropElite Real Estate 🏡
+
+Excellent choice! *Casas Jardín* in El Morenal is one of our most exclusive projects 💎
+
+🏗️ Premium builder: G.M.A. Arquitectos
+📍 Exclusive private urbanization
+✨ ALREADY BUILT - Ready to move in
+
+I'll send you information on the 4 available houses with complete details.
+
+📋 Do you prefer that I send you:
+• All files together to compare
+• One by one with specific details
+
+Let me know how you prefer and I'll send them right away 😊`
+    })
   }
 };
 

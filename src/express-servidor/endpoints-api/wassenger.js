@@ -59,6 +59,41 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   ⏱️ DEBOUNCE: Agrupar webhooks rápidos del mismo usuario
+   Previene race conditions cuando usuarios envían múltiples
+   mensajes/fotos en < 2 segundos. Agrupa todo en un solo
+   procesamiento para evitar saturar el pool de PostgreSQL.
+───────────────────────────────────────────────────────────── */
+const pendingWebhooks = new Map(); // userId → { timer, handler }
+const DEBOUNCE_WINDOW_MS = 1500; // 1.5 segundos
+
+/**
+ * Agrupa webhooks del mismo usuario que lleguen dentro de DEBOUNCE_WINDOW_MS.
+ * Cada nuevo webhook cancela el timer anterior y lo reinicia.
+ * Cuando el timer expira, ejecuta el handler con el último mensaje recibido.
+ */
+function debounceUserWebhook(userId, handler) {
+  // Si ya hay un timer activo, cancelarlo
+  if (pendingWebhooks.has(userId)) {
+    const existing = pendingWebhooks.get(userId);
+    clearTimeout(existing.timer);
+    console.log(`[DEBOUNCE] 📦 Mensaje adicional de ${userId}, reiniciando timer`);
+  } else {
+    console.log(`[DEBOUNCE] 🆕 Primer mensaje de ${userId}, iniciando espera`);
+  }
+  
+  // Crear nuevo timer
+  const timer = setTimeout(() => {
+    pendingWebhooks.delete(userId);
+    console.log(`[DEBOUNCE] ✅ Procesando mensajes de ${userId} (timer expirado)`);
+    handler();
+  }, DEBOUNCE_WINDOW_MS);
+  
+  // Guardar handler y timer
+  pendingWebhooks.set(userId, { timer, handler });
+}
+
+/* ─────────────────────────────────────────────────────────────
    🧼 Helpers
 ───────────────────────────────────────────────────────────── */
 function safeStr(v) {
@@ -534,8 +569,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
-    // 🚦 Rate limiting - Prevenir spam/abuso
-    const rateLimitCheck = checkRateLimit(userId);
+    // ⏱️ DEBOUNCE: Agrupar mensajes rápidos del mismo usuario
+    // TODOS los webhooks que pasen los filtros básicos entran al debounce
+    debounceUserWebhook(userId, async () => {
+      // 🚦 Rate limiting - Prevenir spam/abuso
+      const rateLimitCheck = checkRateLimit(userId);
     if (!rateLimitCheck.allowed) {
       const message = rateLimitCheck.reason === 'minute_limit'
         ? `⏱️ Por favor, espera ${rateLimitCheck.retryAfter} segundos antes de enviar más mensajes.\n\nLímite: ${rateLimitCheck.limit} mensajes por minuto.`
@@ -1436,8 +1474,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // No interrumpir flujo principal si falla
       }
     }
-  });
-});
+    }); // Cierre del debounceUserWebhook
+  }); // Cierre del setImmediate
+}); // Cierre del router.post
 
 /* ─────────────────────────────────────────────────────────────
    Status & verification endpoints

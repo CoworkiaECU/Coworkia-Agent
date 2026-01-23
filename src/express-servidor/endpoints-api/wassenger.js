@@ -635,13 +635,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       else if (detected.language === 'qu' && detected.confidence > 0.6) {
         userLanguage = 'qu';
         console.log('[LANGUAGE] 🌍 Primer mensaje en quechua detectado');
+      } else {
+        // Español detectado o default
+        userLanguage = 'es';
+        console.log('[LANGUAGE] 🌍 Primer mensaje en español detectado (o default)');
       }
       
-      // Guardar idioma detectado permanentemente
-      if (userLanguage !== 'es') {
-        current.preferredLanguage = userLanguage;
-        await saveProfile(userId, { ...current, preferredLanguage: userLanguage });
-      }
+      // ✅ SIEMPRE guardar idioma detectado (incluso si es español)
+      current.preferredLanguage = userLanguage;
+      await saveProfile(userId, { ...current, preferredLanguage: userLanguage });
+      console.log(`[LANGUAGE] ✅ Idioma guardado en BD: ${userLanguage}`);
     }
 
     // Actualizar perfil mínimo

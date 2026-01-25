@@ -176,16 +176,16 @@ export function processMessage(message) {
   const parts = splitMessage(message);
   
   // Calcular delay apropiado según contexto
-  let delayMs = 5000; // Default: 5 segundos (aumentado para evitar desorden)
+  let delayMs = 6000; // Default: 6 segundos (aumentado para garantizar orden en Wassenger)
   
   // Para fichas de propiedades o planes, dar más tiempo de lectura
   if (message.includes('🏡 **CASA #') || message.includes('📋 **PLAN')) {
-    delayMs = 5000; // 5 segundos
+    delayMs = 7000; // 7 segundos
   }
   
-  // Para mensajes cortos, menos delay
+  // Para mensajes cortos, delay moderado (mínimo 5s para evitar desorden)
   if (parts.every(p => p.length < 300)) {
-    delayMs = 3000; // 3 segundos
+    delayMs = 5000; // 5 segundos
   }
   
   return {

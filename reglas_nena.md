@@ -162,3 +162,34 @@ Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tare
 - Implementación incremental: una funcionalidad a la vez
 - Velocidad SÍ, pero nunca a costa de calidad
 - TODO list es **SAGRADO**
+
+---
+
+## 🧪 PROTOCOLO DE PRUEBAS CON MÚLTIPLES CELULARES
+
+**Números de prueba activos:**
+- **0788** (593987770788): Celular principal de Diego
+- **0262** (593987770262): Celular prestado para testing
+
+**Metodología de auditoría:**
+- Las **capturas de pantalla son SOLO presentación visual** del problema
+- **NUNCA confiar en fotos** - son solo un medio de comunicación
+- **OBLIGATORIO**: Extraer logs completos de Heroku de ambos números
+- **Análisis con lupa**: Revisar logs línea por línea, timestamps, agente activo, formulario activo, errores
+- **Diagnóstico real**: Basado en logs extraídos, NO en interpretación de capturas
+- **Acción correctiva**: Identificar en código el error exacto y corregir
+
+**Flujo de trabajo para auditorías con múltiples celulares:**
+1. Diego envía prueba desde 0788 o 0262
+2. Extraer logs de Heroku filtrando por número específico
+3. Analizar con precisión quirúrgica qué sucedió
+4. Identificar el problema exacto en el código
+5. Aplicar corrección siguiendo filosofía Mercedes Benz
+6. Limpiar BD de ese número para nueva prueba
+7. Repetir ciclo hasta funcionamiento impecable
+
+**Limpieza de datos entre pruebas:**
+- Eliminar todas las reservas pendientes de ambos números
+- Resetear whatsapp_display_name a NULL para refresh automático
+- Limpiar cache de formularios parciales
+- El sistema debe tratar cada prueba como usuario nuevo

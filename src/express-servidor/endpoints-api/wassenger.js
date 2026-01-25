@@ -1326,6 +1326,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log(`[MESSAGE-SPLIT] Enviando parte ${i + 1}/${messageProcessed.parts.length} (${part.length} chars)`);
         console.log(`[MESSAGE-SPLIT] Preview: ${part.substring(0, 100)}...`);
         
+        // 🚨 FIX: Esperar ANTES de enviar (excepto primer mensaje)
+        // Esto garantiza que Wassenger/WhatsApp procese los mensajes en orden
+        if (i > 0) {
+          console.log(`[MESSAGE-SPLIT] ⏳ Esperando ${messageProcessed.delayMs}ms antes de enviar parte ${i + 1}...`);
+          await new Promise(resolve => setTimeout(resolve, messageProcessed.delayMs));
+        }
+        
         // Enviar mensaje
         await enviarWhatsApp(userId, part);
         
@@ -1336,12 +1343,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           agent: resultado.agenteKey,
           metadata: { partNumber: i + 1, totalParts: messageProcessed.parts.length }
         });
-        
-        // Delay entre mensajes (excepto en el último)
-        if (i < messageProcessed.parts.length - 1) {
-          console.log(`[MESSAGE-SPLIT] Esperando ${messageProcessed.delayMs}ms antes de siguiente mensaje...`);
-          await new Promise(resolve => setTimeout(resolve, messageProcessed.delayMs));
-        }
       }
       
       console.log(`[MESSAGE-SPLIT] ✅ Enviados ${messageProcessed.parts.length} mensajes exitosamente`);

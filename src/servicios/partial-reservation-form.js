@@ -835,6 +835,15 @@ export function extractDataFromMessage(message, currentForm) {
       
       updates.numPeople = num;
       console.log('[FORM] 👥 Detectado personas:', num);
+      
+      // ✅ VALIDACIÓN: Hot Desk es SOLO individual (1 persona)
+      // Si numPeople > 1 y spaceType es hotDesk, cambiar a meetingRoom
+      if (num > 1 && currentForm.spaceType === 'hotDesk') {
+        updates.spaceType = 'meetingRoom';
+        console.log('[FORM] ⚠️ CORRECCIÓN AUTOMÁTICA: Hot Desk no permite múltiples personas');
+        console.log('[FORM] 🔄 Cambiando de hotDesk → meetingRoom (para', num, 'personas)');
+      }
+      
       break;
     }
   }

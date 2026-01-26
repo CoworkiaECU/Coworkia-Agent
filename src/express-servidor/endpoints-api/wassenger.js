@@ -40,7 +40,7 @@ import {
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
-import { clearJustConfirmed, clearPendingConfirmation } from '../../servicios/reservation-state.js';
+import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../../servicios/reservation-state.js';
 
 const router = Router();
 

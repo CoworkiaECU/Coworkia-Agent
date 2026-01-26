@@ -21,7 +21,7 @@ async function limpiarTest() {
     
     // 0. Limpiar reservations PRIMERO (foreign key constraint)
     const reservationsResult = await client.query(
-      'DELETE FROM reservations WHERE phone_number = ANY($1::text[]) RETURNING id',
+      'DELETE FROM reservations WHERE user_phone = ANY($1::text[]) RETURNING id',
       [testNumbers]
     );
     console.log(`✅ Reservations eliminadas: ${reservationsResult.rowCount}`);

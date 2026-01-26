@@ -840,22 +840,12 @@ export async function processMessageWithForm(userId, message, userProfile = null
 • WiFi + café ☕
 • Primera visita GRATIS 🎁`;
     
-    const welcomeMessage = `¡Hola${userName}! 👋 Bienvenido a Coworkia Business Center.
-
-🏢 ESPACIOS DE COWORKING:
+    const welcomeMessage = `¡Hola${userName}! 👋 Perfecto, tenemos:
 
 ${hotDeskInfo}
 
-🏢 Sala de Reuniones (Privada para 3-4 personas)
-• 2 horas: $29
-• Pizarra + TV + WiFi + café ☕
+🏢 Sala Reuniones (3-4 personas) - 2h: $29
 
-📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:30-18h
-🚫 Cerrado: Sábados, domingos y feriados
-🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
-
-¿Te gustaría reservar un espacio? Si es así:
 ¿Qué día y hora prefieres? 📅`;
     
     return {

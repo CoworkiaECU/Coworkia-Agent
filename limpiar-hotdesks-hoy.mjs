@@ -12,10 +12,10 @@ async function limpiarHotDesksHoy() {
   // Mostrar reservas antes de eliminar
   console.log('📊 Reservas de Hot Desk hoy:\n');
   const reservasHoy = await databaseService.all(
-    `SELECT id, phone_number, space_type, start_date, status, created_at 
+    `SELECT id, user_phone, service_type, date, start_time, status, created_at 
      FROM reservations 
-     WHERE DATE(start_date) = ? 
-     AND space_type = 'hotDesk'
+     WHERE date = ? 
+     AND service_type = 'hotDesk'
      ORDER BY created_at DESC`,
     [hoy]
   );
@@ -23,9 +23,9 @@ async function limpiarHotDesksHoy() {
   console.log(`   Total: ${reservasHoy.length} reservas\n`);
   reservasHoy.forEach(r => {
     console.log(`   - ID: ${r.id}`);
-    console.log(`     Usuario: ${r.phone_number}`);
+    console.log(`     Usuario: ${r.user_phone}`);
     console.log(`     Estado: ${r.status}`);
-    console.log(`     Fecha: ${r.start_date}`);
+    console.log(`     Fecha: ${r.date} ${r.start_time}`);
     console.log(`     Creada: ${r.created_at}\n`);
   });
 
@@ -33,8 +33,8 @@ async function limpiarHotDesksHoy() {
   console.log('🗑️  Eliminando...\n');
   const result = await databaseService.run(
     `DELETE FROM reservations 
-     WHERE DATE(start_date) = ? 
-     AND space_type = 'hotDesk'`,
+     WHERE date = ? 
+     AND service_type = 'hotDesk'`,
     [hoy]
   );
 

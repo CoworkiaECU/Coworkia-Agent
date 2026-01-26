@@ -1243,31 +1243,40 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
 
         // ═══════════════════════════════════════════════════════════════
-        // 🔄 HANDOVER ELEGANTE CON DELAY SECUENCIAL
+        // 🔄 HANDOVER ELEGANTE CON ORDEN CORRECTO
         // ═══════════════════════════════════════════════════════════════
         
-        // PASO 1: Agente saliente se despide con contexto
-        console.log(`[HANDOFF] 👋 ${fromAgent} despidiéndose...`);
+        // ✅ PASO 1: Actualizar activeAgent PRIMERO para contexto correcto
+        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
+        profile.activeAgent = targetAgent;
+        await saveProfile(userId, profile);
+        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
+        
+        // ✅ PASO 2: NUEVO agente saluda PRIMERO (usuario sabe con quién habla)
+        console.log(`[HANDOFF] 👋 ${targetAgent} saludando PRIMERO...`);
+        await enviarWhatsApp(userId, handoffMessages.entrada);
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: handoffMessages.entrada, 
+          agent: targetAgent 
+        });
+
+        // ✅ PASO 3: Delay para garantizar orden de entrega en WhatsApp
+        console.log(`[HANDOFF] ⏱️ Esperando 3 segundos para orden de entrega...`);
+        await new Promise(r => setTimeout(r, 3000)); // 3 segundos suficiente
+        console.log(`[HANDOFF] ⏱️ Delay aplicado (3s) - enviando despedida`);
+        
+        // ✅ PASO 4: Agente saliente se despide DESPUÉS (cierre contextual)
+        console.log(`[HANDOFF] 👋 ${fromAgent} despidiéndose DESPUÉS...`);
         await enviarWhatsApp(userId, handoffMessages.despedida);
         await saveConversationMessage(userId, { 
           role: 'assistant', 
           content: handoffMessages.despedida, 
           agent: fromAgent 
         });
-
-        // PASO 2: Actualizar activeAgent DESPUÉS de despedida para que llegue al agente correcto
-        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
-        profile.activeAgent = targetAgent;
-        await saveProfile(userId, profile);
-        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
-
-        // PASO 3: Delay LARGO para garantizar orden de entrega en WhatsApp (4-5s)
-        console.log(`[HANDOFF] ⏱️ Esperando 5 segundos para asegurar orden de entrega...`);
-        await new Promise(r => setTimeout(r, 5000)); // 5 segundos - crítico para WhatsApp
-        console.log(`[HANDOFF] ⏱️ Delay aplicado (5s) - continuando handoff`);
         
-        // PASO 4: Nuevo agente saluda
-        console.log(`[HANDOFF] 👋 ${targetAgent} saludando...`);
+        // ✅ CONTINUAR: Procesar mensaje del usuario con nuevo agente activo
+        console.log(`[HANDOFF] 💬 Continuando procesamiento con ${targetAgent}...`);
         await enviarWhatsApp(userId, handoffMessages.entrada);
         await saveConversationMessage(userId, { 
           role: 'assistant', 

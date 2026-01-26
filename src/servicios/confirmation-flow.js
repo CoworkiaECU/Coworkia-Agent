@@ -350,7 +350,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       );
       
       pendingReservation.hotDeskNumber = hotDeskNumber;
-      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/6`);
+      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/4`);
     }
     
     // 🔄 Crear reserva

@@ -159,7 +159,7 @@ export async function createCalendarEvent(reservationData) {
     // 🔢 Agregar número de Hot Desk al título si está disponible
     const hotDeskNumber = reservationData.hotDeskNumber;
     const hotDeskSuffix = (serviceType === 'hotDesk' || serviceType === 'Hot Desk') && hotDeskNumber 
-      ? ` ${hotDeskNumber}/6` 
+      ? ` ${hotDeskNumber}/4` 
       : '';
     
     const eventTitle = `${serviceName}${hotDeskSuffix} ${userName}${guestSuffix}`;

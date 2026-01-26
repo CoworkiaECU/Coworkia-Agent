@@ -57,7 +57,7 @@ class ReservationRepository {
       status = 'pending',
       payment_status = 'pending',
       payment_data = null,
-      hot_desk_number = null, // Nuevo: número de Hot Desk (1-6)
+      hot_desk_number = null, // Nuevo: número de Hot Desk (1-4)
       payment_method = null, // Nuevo: método de pago
       calendar_event_id = null // Nuevo: ID de evento en Google Calendar
     } = reservationData;
@@ -344,7 +344,7 @@ class ReservationRepository {
   }
 
   /**
-   * 🔢 Asigna número de Hot Desk automáticamente (1-6)
+   * 🔢 Asigna número de Hot Desk automáticamente (1-4)
    * Consulta reservas confirmadas en el mismo slot y asigna el siguiente disponible
    */
   async assignHotDeskNumber(date, startTime, endTime) {
@@ -374,8 +374,8 @@ class ReservationRepository {
     
     const occupiedNumbers = occupiedDesks.map(r => r.hot_desk_number);
     
-    // Buscar primer número disponible (1-6)
-    for (let i = 1; i <= 6; i++) {
+    // Buscar primer número disponible (1-4)
+    for (let i = 1; i <= 4; i++) {
       if (!occupiedNumbers.includes(i)) {
         return i;
       }
@@ -417,9 +417,9 @@ class ReservationRepository {
     
     return {
       occupiedCount,
-      availableCount: 6 - occupiedCount,
+      availableCount: 4 - occupiedCount,
       occupiedNumbers,
-      isFull: occupiedCount >= 6
+      isFull: occupiedCount >= 4
     };
   }
 }

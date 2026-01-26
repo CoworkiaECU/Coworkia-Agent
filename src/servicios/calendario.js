@@ -85,7 +85,7 @@ function parseCapacity(value, fallback = 1) {
 }
 
 const SERVICE_CAPACITY = {
-  hotDesk: parseCapacity(process.env.COWORKIA_HOTDESK_CAPACITY, 1),
+  hotDesk: parseCapacity(process.env.COWORKIA_HOTDESK_CAPACITY, 4),
   meetingRoom: parseCapacity(process.env.COWORKIA_MEETINGROOM_CAPACITY, 1),
   privateOffice: parseCapacity(process.env.COWORKIA_PRIVATEOFFICE_CAPACITY, 1)
 };
@@ -496,7 +496,7 @@ export async function createReservation(reservationData) {
         paymentMethod,
         createdAt: newReservation.created_at
       },
-      message: `Reserva creada: ${date} de ${startTime} a ${endTime} (${durationHours}h)${hotDeskNumber ? ` - Hot Desk ${hotDeskNumber}/6` : ''}`
+      message: `Reserva creada: ${date} de ${startTime} a ${endTime} (${durationHours}h)${hotDeskNumber ? ` - Hot Desk ${hotDeskNumber}/4` : ''}`
     };
   } catch (error) {
     console.error('[CALENDARIO] Error creando reserva:', error);
@@ -795,7 +795,7 @@ export async function checkHotDeskAvailability(date, startTime, endTime) {
     occupiedCount: availability.occupiedCount,
     availableCount: availability.availableCount,
     occupiedNumbers: availability.occupiedNumbers,
-    maxCapacity: 6,
+    maxCapacity: 4,
     message
   };
 }

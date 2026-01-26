@@ -23,7 +23,7 @@ import { processMembershipForm } from '../../servicios/membership-form.js';
 import { detectCampaignMessage, personalizeCampaignResponse, CAMPAIGN_PROMPTS } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
 
-import { processMessageWithForm, clearForm as clearPartialForm } from '../../servicios/partial-reservation-form.js';
+import { processMessageWithForm } from '../../servicios/partial-reservation-form.js';
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
@@ -34,8 +34,7 @@ import {
   saveProfile,
   saveInteraction,
   loadConversationHistory,
-  saveConversationMessage,
-  savePartialForm
+  saveConversationMessage
 } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
@@ -304,7 +303,7 @@ async function handleFormResult(formResult, userId, agentName, profile) {
       meta: { errorType: formResult.validationError.type }
     });
     if (agentName === 'AURORA') {
-      await clearPartialForm(userId);
+      await clearAgentForm(userId, 'AURORA');
     }
     return true; // Manejado - hacer return
   }
@@ -916,7 +915,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     // Si el usuario reanuda reserva (mensaje de continuación si aplica)
-    if (savedPartialCheck && formResult?.form?.getResumeMessage) {
+    if (currentAgentForm && formResult?.form?.getResumeMessage) {
       const resumeMessage = formResult.form.getResumeMessage();
       if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
@@ -1190,14 +1189,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
       // 🔄 Pasar formulario parcial guardado si existe (para continuación de flujo)
-      savedPartial: savedPartialCheck,
+      savedPartial: currentAgentForm,
       envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
     });
 
     // Cancelación (si orquestador lo marca)
     if (resultado?.metadata?.cancelacion) {
       if (resultado.metadata.shouldSavePartialForm) {
-        await savePartialForm(userId, formResult, 'reservation');
+        await saveAgentForm(userId, 'AURORA', formResult.form?.toJSON() || {}, 120);
       }
       await clearPendingConfirmation(userId);
       await clearJustConfirmed(userId);

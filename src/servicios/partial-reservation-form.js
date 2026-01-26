@@ -527,38 +527,6 @@ export async function getOrCreateForm(userId, freeTrialUsed = false, existingFor
 }
 
 /**
- * 💾 Guarda formulario parcial en BD
- */
-export async function saveForm(form) {
-  try {
-    await setPendingConfirmation(form.userId, {
-      formData: form.toJSON(),
-      type: 'partial_form'
-    }, FORM_TTL_SECONDS / 60); // Convertir segundos a minutos
-    
-    console.log('[FORM] 💾 Formulario guardado para:', form.userId);
-    return true;
-  } catch (error) {
-    console.error('[FORM] ❌ Error guardando formulario:', error);
-    return false;
-  }
-}
-
-/**
- * 🗑️ Limpia formulario parcial (cuando se completa o cancela)
- */
-export async function clearForm(userId) {
-  try {
-    await clearPendingConfirmation(userId);
-    console.log('[FORM] 🗑️ Formulario limpiado para:', userId);
-    return true;
-  } catch (error) {
-    console.error('[FORM] ❌ Error limpiando formulario:', error);
-    return false;
-  }
-}
-
-/**
  * 🎯 Extrae datos del mensaje del usuario y actualiza formulario
  * 
  * Detecta menciones de:
@@ -879,7 +847,7 @@ ${hotDeskInfo}
   // 5. Actualizar formulario si hay datos nuevos
   if (Object.keys(updates).length > 0) {
     form.updateFields(updates);
-    await saveForm(form);
+    console.log('[FORM] 📝 Campos actualizados:', Object.keys(updates));
   }
 
   // 6. Verificar si está completo

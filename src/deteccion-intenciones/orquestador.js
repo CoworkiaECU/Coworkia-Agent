@@ -15,7 +15,7 @@ import { detectLanguage, detectLanguageCommand } from '../utils/language-detecto
 import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 import { hasPendingConfirmation } from '../servicios/confirmation-flow.js';
 import { clearPendingConfirmation as clearLegacyPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
-import { clearForm as clearPartialForm } from '../servicios/partial-reservation-form.js';
+import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
 
@@ -260,7 +260,7 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
         
         // Limpiar formulario parcial
         if (hasPartialForm) {
-          await clearPartialForm(userId, 'reservation');
+          await clearAgentForm(userId, 'AURORA');
           console.log('[ORQUESTADOR] ✅ Formulario parcial limpiado');
         }
         

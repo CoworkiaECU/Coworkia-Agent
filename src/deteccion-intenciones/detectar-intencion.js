@@ -229,7 +229,15 @@ export function detectarSolicitudRecibo(text) {
 
 /**
  * Detecta si el usuario saluda CON interés explícito en probar servicios
- * Ejemplos: "Hola Coworkia quiero probar", "Buenos días quiero el servicio"
+ * Unificado: soporta variantes con/sin emoji, con/sin "coworkia"
+ * 
+ * Ejemplos detectados:
+ * - "¡Hola Coworkia! quiero probar el servicio" ✅
+ * - "¡Hola Coworkia! quiero probar el servicio ☕️" ✅
+ * - "Hola necesito el servicio de coworking" ✅
+ * - "Buenos días quiero probar" ✅
+ * - "Quiero probar el servicio" ✅
+ * 
  * @param {string} text - Mensaje del usuario normalizado
  * @returns {boolean} true si es saludo con interés en servicio
  */
@@ -237,10 +245,14 @@ export function detectarSaludoConInteresServicio(text) {
   const normalized = text.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
   const patterns = [
-    /hola.*coworkia.*(quiero|necesito|me interesa)/i,
-    /hola.*(quiero|necesito).*(servicio|probar|usar)/i,
-    /buenos.*(quiero|necesito).*(servicio|probar)/i,
-    /buenas.*(quiero|necesito).*(servicio|probar)/i
+    // Patrón principal: Hola/Buenos/Buenas + coworkia + quiero/necesito + probar/servicio
+    /(?:hola|buenos|buenas).*(coworkia).*(quiero|necesito|me interesa).*(probar|servicio)/i,
+    // Variante: Hola + quiero/necesito + servicio/probar + mención cowork/espacio
+    /(?:hola|buenos|buenas).*(quiero|necesito).*(servicio|probar|usar).*(cowork|espacio|oficina)/i,
+    // Directo: "quiero probar el servicio" (sin saludo)
+    /quiero\s+probar\s+(el\s+)?servicio/i,
+    // Variante corta: "hola coworkia quiero/necesito" (cualquier verbo)
+    /hola.*(coworkia).*(quiero|necesito|me interesa)/i
   ];
   
   return patterns.some(pattern => pattern.test(normalized));

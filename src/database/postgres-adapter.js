@@ -307,6 +307,36 @@ class PostgresAdapter {
         )
       `);
 
+      // ===================================================================
+      // TABLA UNIFICADA DE FORMULARIOS: Sistema multi-agente
+      // Reemplaza partial_forms, pending_confirmations parcialmente
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS agent_forms (
+          user_phone TEXT NOT NULL,
+          agent_type TEXT NOT NULL,
+          form_data JSONB NOT NULL,
+          form_progress TEXT,
+          is_active BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          cancelled_at TIMESTAMP,
+          PRIMARY KEY (user_phone, agent_type),
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_agent_forms_active 
+        ON agent_forms(user_phone, is_active)
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_agent_forms_expires 
+        ON agent_forms(expires_at) WHERE expires_at IS NOT NULL
+      `);
+
       // Tabla de formularios parciales guardados (LEGACY - mantener para migración)
       await client.query(`
         CREATE TABLE IF NOT EXISTS partial_forms (

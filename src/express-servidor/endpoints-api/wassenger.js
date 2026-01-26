@@ -27,6 +27,7 @@ import { processMessageWithForm, clearForm as clearPartialForm } from '../../ser
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
+import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms } from '../../servicios/agent-form-manager.js';
 
 import {
   loadProfile,
@@ -34,9 +35,7 @@ import {
   saveInteraction,
   loadConversationHistory,
   saveConversationMessage,
-  savePartialForm,
-  getPartialForm,
-  getPendingConfirmation
+  savePartialForm
 } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
@@ -758,9 +757,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
-    const savedPartialCheck = await getPartialForm(userId).catch(() => null);
-    const pendingConfirmCheck = await getPendingConfirmation(userId).catch(() => null);
-    const hasActiveForm = !!(savedPartialCheck && !savedPartialCheck.cancelledAt) || !!pendingConfirmCheck;
+    const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
+    const hasActiveForm = !!currentAgentForm;
     const isFormContinuation = detectFormContinuation(processedText);
     
     // 🔍 DETECCIÓN TEMPRANA: Verificar si hay intención especial que debe ir directo al orquestador
@@ -803,8 +801,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         isFormContinuation 
       });
       
-      formResult = await processMessageWithForm(userId, processedText, profile, profile.freeTrialUsed);
+      formResult = await processMessageWithForm(userId, processedText, profile, currentAgentForm);
       formResult.userMessage = text;
+      
+      // 💾 Guardar form en sistema unificado si hay cambios
+      if (formResult.form && formResult.updates && Object.keys(formResult.updates).length > 0) {
+        await saveAgentForm(userId, 'AURORA', formResult.form.toJSON(), 120);
+      }
       
       // ⏱️ T14: Iniciar tracking de transacción si necesita más info (inicio de reserva)
       if (formResult.needsMoreInfo && !profile.transactionStartedAt) {
@@ -1105,6 +1108,44 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     let auroraInput = processedText;
     if (!auroraInput && mediaUrl) {
       auroraInput = `[MEDIA:${type}] El usuario envió un archivo. URL: ${mediaUrl}`;
+    }
+
+    // 🎯 DETECCIÓN CÓDIGO EXPRESO @agente - Handoff explícito
+    const handoffMatch = processedText.match(/@(aurora|aluna|enzo|axel|adriana|angela|gabi|paula)\b/i);
+    
+    if (handoffMatch) {
+      const targetAgent = handoffMatch[1].toUpperCase();
+      const fromAgent = profile.activeAgent || 'AURORA';
+      
+      console.log(`[HANDOFF] 🔄 Código expreso detectado: ${fromAgent} → ${targetAgent}`);
+      
+      // Guardar form del agente actual antes de cambiar
+      if (formResult?.form) {
+        await saveAgentForm(userId, fromAgent, formResult.form.toJSON(), 120);
+        console.log(`[HANDOFF] 💾 Form de ${fromAgent} guardado antes del cambio`);
+      }
+      
+      // Mensaje de despedida del agente actual
+      const despedida = `Listo ${profile.name || 'amigo'}, te dejo con ${targetAgent}. Estoy aquí cuando lo necesites, solo escribe @${fromAgent.toLowerCase()} y vuelvo contigo donde nos quedamos 😊`;
+      await enviarWhatsApp(userId, despedida);
+      await saveConversationMessage(userId, { role: 'assistant', content: despedida, agent: fromAgent });
+      
+      // Cambiar agente activo
+      profile.activeAgent = targetAgent;
+      profile.conversationCount = (profile.conversationCount || 0) + 1;
+      await saveProfile(userId, profile);
+      
+      // Cargar form del nuevo agente (si existe)
+      const newAgentForm = await getAgentForm(userId, targetAgent);
+      const welcomeBack = newAgentForm 
+        ? `¡Hola de nuevo! Veo que teníamos una conversación pendiente. ¿Continuamos? 😊`
+        : `¡Hola! Soy ${targetAgent}, ¿en qué puedo ayudarte? 😊`;
+      
+      await enviarWhatsApp(userId, welcomeBack);
+      await saveConversationMessage(userId, { role: 'assistant', content: welcomeBack, agent: targetAgent });
+      await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent, intentReason: 'handoff_explicit', input: processedText, output: welcomeBack, meta: { envelope, fromAgent, handoffType: 'explicit' } });
+      
+      return;
     }
 
     // 🎯 DETECCIÓN DE CAMPAÑAS - Activar agente directo SIN handoff

@@ -15,6 +15,7 @@
  */
 
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
+import { detectarSaludoConInteresServicio } from '../deteccion-intenciones/detectar-intencion.js';
 
 // 📲 Enlace genérico para referir amigos al sistema de Coworkia
 const REFERRAL_LINK = `https://wa.me/593994837117?text=${encodeURIComponent('¡Hola Coworkia! quiero probar el servicio')}`;
@@ -477,35 +478,38 @@ export class PartialReservationForm {
 /**
  * 🔍 Obtiene o crea formulario parcial para un usuario
  * 
- * IMPORTANTE: Detecta si pending_confirmations contiene datos normalizados
- * (formato {date, startTime, serviceType}) y los convierte a formato de formulario
- * para preservar información ya capturada.
+ * NUEVO: Soporta form existente del sistema unificado (agent_forms)
+ * Si se proporciona existingFormData, lo usa directamente
+ * Esto permite que wassenger pase el form cargado de agent_forms
  */
-export async function getOrCreateForm(userId, freeTrialUsed = false) {
+export async function getOrCreateForm(userId, freeTrialUsed = false, existingFormData = null) {
   try {
+    // 🎯 CASO 1: Form existente del sistema unificado (prioridad)
+    if (existingFormData) {
+      console.log('[FORM] 📜 Form existente del sistema unificado cargado para:', userId);
+      return PartialReservationForm.fromJSON(existingFormData, freeTrialUsed);
+    }
+    
+    // 🔄 CASO 2: Buscar en pending_confirmations (legacy, por compatibilidad)
     const existing = await getPendingConfirmation(userId);
     
-    // 🔄 CASO 1: Ya existe un formulario parcial guardado
     if (existing && existing._type === 'partial_form' && existing._formData) {
-      console.log('[FORM] 📂 Formulario parcial existente cargado para:', userId);
+      console.log('[FORM] 📂 Formulario legacy cargado desde pending_confirmations:', userId);
       return PartialReservationForm.fromJSON(existing._formData, freeTrialUsed);
     }
     
-    // 🔄 CASO 2: Hay datos normalizados (de confirmación previa) - convertir a formulario
     if (existing && existing._type === 'direct') {
       console.log('[FORM] 🔄 Detectado formato normalizado, convirtiendo a formulario...');
       
       const formData = {
         userId: existing.userId,
-        spaceType: existing.serviceType,        // serviceType → spaceType
+        spaceType: existing.serviceType,
         date: existing.date,
-        time: existing.startTime,               // startTime → time
+        time: existing.startTime,
         email: existing.email,
-        numPeople: (existing.guestCount || 0) + 1,  // guestCount → numPeople
+        numPeople: (existing.guestCount || 0) + 1,
         durationHours: existing.durationHours || 2,
         paymentMethod: existing.paymentMethod,
-        // Si wasFree existe (true/false), significa que ya hizo una reserva → trial usado
-        // Si wasFree es null, usar valor actual de freeTrialUsed del perfil
         freeTrialUsed: existing.wasFree !== null ? true : freeTrialUsed
       };
       
@@ -819,12 +823,13 @@ export function extractDataFromMessage(message, currentForm) {
  * 🤖 Procesa mensaje y actualiza formulario automáticamente
  * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
-export async function processMessageWithForm(userId, message, userProfile = null, freeTrialUsed = false) {
-  // 🎉 DETECCIÓN: Saludo inicial "quiero probar el servicio"
-  const isSpecialWelcome = /hola.*coworkia.*(quiero|necesito).*(probar|servicio)/i.test(message.toLowerCase());
+export async function processMessageWithForm(userId, message, userProfile = null, existingFormData = null) {
+  // 🎉 DETECCIÓN: Saludo inicial "quiero probar el servicio" (función unificada)
+  const isSpecialWelcome = detectarSaludoConInteresServicio(message);
   
-  // 1. Obtener o crear formulario (pasando si tiene free trial disponible)
-  const form = await getOrCreateForm(userId, freeTrialUsed);
+  // 1. Obtener o crear formulario (prioriza existingFormData del sistema unificado)
+  const freeTrialUsed = userProfile?.freeTrialUsed || false;
+  const form = await getOrCreateForm(userId, freeTrialUsed, existingFormData);
 
   // 2. Si es el saludo especial Y no hay datos en el formulario, generar mensaje de bienvenida
   if (isSpecialWelcome && !form.spaceType && !form.date && !form.time) {

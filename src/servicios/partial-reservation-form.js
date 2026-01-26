@@ -325,7 +325,12 @@ export class PartialReservationForm {
       return null; // No hay datos para resumir
     }
 
-    let message = '¡Perfecto! Ya tengo algunos datos de tu reserva:\n\n';
+    // ✅ Si no falta nada, NO enviar mensaje de resumen (ya está completo)
+    if (missing.length === 0) {
+      return null;
+    }
+
+    let message = 'Ya tengo:\n\n';
     message += this.getSummary();
     
     if (missing.length > 0) {
@@ -343,7 +348,6 @@ export class PartialReservationForm {
       message += `❓ Solo necesito: ${missingNames.join(', ')}`;
     }
     
-    message += '\n\n¿Te viene bien o prefieres cambiar algo?';
     return message;
   }
 
@@ -417,29 +421,7 @@ export class PartialReservationForm {
       return message;
     }
     
-    // ⚠️ CASO 2: Solo falta paymentMethod - Mostrar opciones de pago
-    if (missing.length === 1 && missing[0] === 'paymentMethod') {
-      const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-      const basePrice = this.getBasePrice();
-      const formattedDate = this.formatDate(this.date);
-      
-      let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
-      message += `🏢 Espacio: ${spaceName}\n`;
-      message += `📅 Fecha: ${formattedDate}\n`;
-      message += `⏰ Hora: ${this.time}\n`;
-      message += `📧 Email: ${this.email}\n`;
-      message += `⏱️ Duración: ${this.durationHours}h\n`;
-      message += `💰 Precio base: $${basePrice}\n\n`;
-      message += `¿Cómo deseas pagar?\n\n`;
-      message += `💳 *Tarjeta* - $${(basePrice * 1.208).toFixed(2)} (incluye ISD 5% + IVA 15%)\n`;
-      message += `🏦 *Transferencia* - $${(basePrice * 1.15).toFixed(2)} (incluye IVA 15%)\n\n`;
-      message += `Escribe "tarjeta" o "transferencia" 👍`;
-      
-      console.log('[FORM] ⚠️ Preguntando método de pago - solo falta paymentMethod');
-      return message;
-    }
-    
-    // ❌ CASO 3: Faltan otros campos - No generar confirmación, usar getNextQuestion()
+    // ❌ CASO 2: Faltan campos - No generar confirmación, usar getNextQuestion()
     console.log('[FORM] ❌ No generar confirmación - faltan campos:', missing);
     return null;
   }

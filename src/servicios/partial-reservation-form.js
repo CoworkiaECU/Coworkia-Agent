@@ -606,14 +606,20 @@ export function extractDataFromMessage(message, currentForm) {
   const lowerMsg = message.toLowerCase();
 
   // 🏢 Detectar tipo de espacio
-  if (!currentForm.spaceType) {
-    if (/hot\s*desk|escritorio|puesto/i.test(message)) {
-      updates.spaceType = 'hotDesk';
-      console.log('[FORM] 🏢 Detectado: Hot Desk');
-    } else if (/sala|meeting\s*room|reuni[oó]n/i.test(message)) {
-      updates.spaceType = 'meetingRoom';
-      console.log('[FORM] 🏢 Detectado: Sala de Reuniones');
-    }
+  // ✅ CAMBIO: Permitir sobrescribir si usuario menciona explícitamente un espacio
+  // Esto permite cambiar de hotDesk → meetingRoom o viceversa
+  const mentionsSala = /sala|meeting\s*room|reuni[oó]n/i.test(message);
+  const mentionsHotDesk = /hot\s*desk|escritorio|puesto/i.test(message);
+  
+  if (mentionsSala) {
+    updates.spaceType = 'meetingRoom';
+    console.log('[FORM] 🏢 Usuario menciona sala/reunión → meetingRoom');
+  } else if (mentionsHotDesk) {
+    updates.spaceType = 'hotDesk';
+    console.log('[FORM] 🏢 Usuario menciona hot desk → hotDesk');
+  } else if (!currentForm.spaceType) {
+    // Si no menciona ninguno y no hay spaceType, no hacer nada (Aurora preguntará)
+    console.log('[FORM] 🏢 No se detectó mención de espacio');
   }
 
   // 📅 Detectar fecha (SIEMPRE intentar, permite cambiar fecha)

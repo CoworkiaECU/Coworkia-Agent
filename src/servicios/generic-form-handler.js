@@ -282,7 +282,7 @@ export const FORM_SCHEMAS = {
     required: ['membershipType', 'fullName', 'email', 'phone'],
     optional: ['startDate', 'specialRequirements', 'companyName'],
     defaults: {
-      startDate: new Date().toISOString().split('T')[0] // Default: hoy
+      // ✅ FIX: NO defaults para startDate - Usuario debe especificar o se asume "cuanto antes"
     },
     labels: {
       membershipType: '🎫 Tipo de membresía',
@@ -295,9 +295,9 @@ export const FORM_SCHEMAS = {
     },
     questions: {
       membershipType: '¿Qué plan te interesa? (Plan 10 [$140], Plan 20 [$250], Oficina Virtual [$365/año], Sala Reuniones [$39])',
-      fullName: 'Perfecto. Para procesar necesito tu nombre completo 👤',
-      email: '¿Tu correo electrónico? 📧',
-      phone: '¿Y un número de teléfono? 📱'
+      fullName: '¡Genial! 🎉 Para preparar tu membresía, ¿cuál es tu nombre completo? 👤',
+      email: 'Perfecto. ¿A qué email te envío los detalles? 📧',
+      phone: 'Y para coordinar, ¿cuál es tu mejor número de contacto? 📱'
     }
   }
 };
@@ -639,7 +639,8 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
     console.log('[ALUNA] ℹ️ membershipType ya existe:', currentForm.data.membershipType, '- NO sobrescribir');
   }
   
-  // Fecha de inicio - DETECTAR "hoy", "mañana", "ya", "inmediatamente"
+  // 📅 Fecha de inicio - SOLO detectar si usuario menciona explícitamente
+  // ✅ FIX: Eliminado default que causaba loop - No asumir "hoy" automáticamente
   if (!currentForm.data.startDate) {
     const today = new Date();
     
@@ -651,45 +652,59 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
       tomorrow.setDate(tomorrow.getDate() + 1);
       updates.startDate = tomorrow.toISOString().split('T')[0];
       console.log('[ALUNA] 📅 Fecha inicio: MAÑANA', updates.startDate);
-    } else {
-      // Por defecto, si el usuario confirma pero no especifica, asumir HOY
-      // Esto evita el loop infinito
-      updates.startDate = today.toISOString().split('T')[0];
-      console.log('[ALUNA] 📅 Fecha inicio: DEFAULT (hoy)', updates.startDate);
     }
+    // ✅ NO asignar startDate si no se menciona - Evita loop infinito
   }
   
-  // Nombre completo - DETECTAR de forma más agresiva
+  // 👤 Nombre completo - Detección inteligente y flexible
+  // ✅ FIX: Aceptar 1-4 palabras capitalizadas, contexto conversacional mejorado
   if (!currentForm.data.fullName) {
-    // Detectar "mi nombre es X", "soy X", "me llamo X"
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    // Patrones de detección (en orden de prioridad):
     const namePatterns = [
-      /(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)/i,
-      /^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)$/i // Formato "Nombre Apellido" solo
+      // 1. Presentación explícita: "mi nombre es Juan Pérez", "me llamo María", "soy Carlos Gómez"
+      /(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})/i,
+      
+      // 2. Respuesta directa: "Juan Pérez" o "María González Sánchez" (1-4 palabras capitalizadas)
+      /^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})$/,
+      
+      // 3. En medio de frase: "Sí, soy Juan Pérez", "Claro, me llamo María"
+      /(?:sí|si|claro|ok|dale|perfecto)[,\s]+(?:soy|me llamo|mi nombre es)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})/i
     ];
     
     for (const pattern of namePatterns) {
-      const match = currentForm.data._lastMessage?.match(pattern);
+      const match = originalMessage.match(pattern);
       if (match && match[1]) {
-        updates.fullName = match[1].trim();
-        console.log('[ALUNA] 👤 Nombre detectado:', updates.fullName);
-        break;
+        const detectedName = match[1].trim();
+        
+        // Validar que no sea una palabra común (evitar falsos positivos)
+        const commonWords = ['si', 'sí', 'no', 'ok', 'claro', 'perfecto', 'gracias', 'hola', 'buenas'];
+        if (!commonWords.includes(detectedName.toLowerCase())) {
+          updates.fullName = detectedName;
+          console.log('[ALUNA] 👤 Nombre detectado:', updates.fullName);
+          break;
+        }
       }
     }
   }
   
-  // Teléfono - MEJORAR DETECCIÓN
+  // 📱 Teléfono - Detección mejorada con validación
+  // ✅ FIX: Solo detectar cuando mensaje contiene SOLO el teléfono (evitar detectar en conversación)
   if (!currentForm.data.phone) {
-    // Detectar teléfonos ecuatorianos (09X XXX XXXX o +593 9X XXX XXXX)
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    // Detectar teléfonos ecuatorianos
     const phonePatterns = [
       /\b(09\d{8})\b/, // 09XXXXXXXX
-      /\b(\+?593\s?9\d{8})\b/, // +593 9XXXXXXXX o 593 9XXXXXXXX
+      /\b(\+?593\s?9\d{8})\b/, // +593 9XXXXXXXX
       /\b(9\d{8})\b/ // 9XXXXXXXX
     ];
     
     for (const pattern of phonePatterns) {
-      const match = currentForm.data._lastMessage?.match(pattern);
+      const match = originalMessage.match(pattern);
       if (match && match[1]) {
-        let phone = match[1].replace(/\s/g, ''); // Remover espacios
+        let phone = match[1].replace(/\s/g, '');
         
         // Normalizar a formato +593
         if (phone.startsWith('09')) {

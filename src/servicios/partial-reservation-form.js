@@ -820,25 +820,74 @@ export function extractDataFromMessage(message, currentForm) {
  * Retorna: { form, updates, nextQuestion, needsMoreInfo, validationError }
  */
 export async function processMessageWithForm(userId, message, userProfile = null, freeTrialUsed = false) {
+  // 🎉 DETECCIÓN: Saludo inicial "quiero probar el servicio"
+  const isSpecialWelcome = /hola.*coworkia.*(quiero|necesito).*(probar|servicio)/i.test(message.toLowerCase());
+  
   // 1. Obtener o crear formulario (pasando si tiene free trial disponible)
   const form = await getOrCreateForm(userId, freeTrialUsed);
 
-  // 2. Si el perfil tiene email y el formulario no, auto-completar
+  // 2. Si es el saludo especial Y no hay datos en el formulario, generar mensaje de bienvenida
+  if (isSpecialWelcome && !form.spaceType && !form.date && !form.time) {
+    console.log('[FORM] 🎊 Detectado saludo especial "probar el servicio"');
+    
+    const userName = userProfile?.name ? ` ${userProfile.name}` : '';
+    const hotDeskInfo = freeTrialUsed
+      ? `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕`
+      : `💻 Hot Desk (Escritorio compartido - 1 persona)
+• 2 horas: $10
+• WiFi + café ☕
+• Primera visita GRATIS 🎁`;
+    
+    const welcomeMessage = `¡Hola${userName}! 👋 Bienvenido a Coworkia Business Center.
+
+🏢 ESPACIOS DE COWORKING:
+
+${hotDeskInfo}
+
+🏢 Sala de Reuniones (Privada para 3-4 personas)
+• 2 horas: $29
+• Pizarra + TV + WiFi + café ☕
+
+📍 Whymper 403, Edificio Finistere, Quito
+⏰ Lun-Vie 8:30-18h
+🚫 Cerrado: Sábados, domingos y feriados
+🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+
+¿Te gustaría reservar un espacio? Si es así:
+¿Qué día y hora prefieres? 📅`;
+    
+    return {
+      form,
+      updates: {},
+      nextQuestion: welcomeMessage,
+      needsMoreInfo: true,
+      summary: form.getSummary(),
+      userMessage: message,
+      validationError: null,
+      confirmationMessage: null,
+      canPauseAndResume: true,
+      isSpecialWelcome: true // Flag para que wassenger sepa que es bienvenida especial
+    };
+  }
+
+  // 3. Si el perfil tiene email y el formulario no, auto-completar
   if (userProfile?.email && !form.email) {
     form.email = userProfile.email;
     console.log('[FORM] 📧 Email auto-completado desde perfil:', userProfile.email);
   }
 
-  // 3. Extraer datos del mensaje
+  // 4. Extraer datos del mensaje
   const updates = extractDataFromMessage(message, form);
 
-  // 4. Actualizar formulario si hay datos nuevos
+  // 5. Actualizar formulario si hay datos nuevos
   if (Object.keys(updates).length > 0) {
     form.updateFields(updates);
     await saveForm(form);
   }
 
-  // 4. Verificar si está completo
+  // 6. Verificar si está completo
   const isComplete = form.isComplete();
   const missingFields = form.getMissingFields();
   

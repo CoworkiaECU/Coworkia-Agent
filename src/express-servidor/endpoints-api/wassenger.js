@@ -765,10 +765,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     
     // 🔍 DETECCIÓN TEMPRANA: Verificar si hay intención especial que debe ir directo al orquestador
     const { detectVirtualAgentSalesPromo, detectarSaludoConInteresServicio } = await import('../../deteccion-intenciones/detectar-intencion.js');
-    const hasSpecialIntent = detectVirtualAgentSalesPromo(processedText) || detectarSaludoConInteresServicio(processedText);
+    const hasVirtualAgentPromo = detectVirtualAgentSalesPromo(processedText).detected;
+    const hasServiceInterest = detectarSaludoConInteresServicio(processedText);
     
-    // Si hay intent especial, NO activar formulario - dejar que orquestador lo maneje
-    const shouldActivateForm = !hasSpecialIntent && (isReservationIntent(processedText) || hasActiveForm || isFormContinuation);
+    // 🎯 LÓGICA CORRECTA:
+    // - Promo de agente virtual (Enzo): NO activar formulario → orquestador
+    // - Saludo "quiero probar servicio": SÍ activar formulario → capturar datos
+    // - Cualquier otro mensaje con intención de reserva: SÍ activar formulario
+    const shouldActivateForm = !hasVirtualAgentPromo && (hasServiceInterest || isReservationIntent(processedText) || hasActiveForm || isFormContinuation);
     
     // 💼 ALUNA - Formulario de membresías
     if (profile.activeAgent === 'ALUNA') {

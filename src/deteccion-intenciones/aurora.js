@@ -277,16 +277,16 @@ Construimos un ecosistema de agentes virtuales que transforman la atención al c
 
 Tenemos adicionalmente especialistas en: bienes raíces, colisiones, médico, legal/compliance."
 
-━━━━━━━━━━━━━━━━━━━━━━━━
+⏱️ **[ESPERAR 6 SEGUNDOS]**
 
 "🎮 Pruébalo:
 
 Escribe @nombreagente + tu consulta
 Ejemplo, \\"@enzo necesito una estrategia de redes sociales\\"
 
-💰 Modo IA para tu empresa:
+💰 Activa el modo IA en tu empresa:
 
-Si te interesa este sistema para tu negocio, conecta con *@enzo* y pídele una cotización.
+Si te interesa este sistema IA para tu negocio, conecta con *@enzo* y pídele una cotización.
 
 📊 Resultados reales de la IA:
            • 80% reducción tiempo de respuesta
@@ -295,7 +295,7 @@ Si te interesa este sistema para tu negocio, conecta con *@enzo* y pídele una c
 
 💵 Inversión Agente IA desde $350/mes
 
-Coordinemos tu reunión, pide un demo de tu próximo Agente Virtual basado en IA"
+Coordinemos tu reunión, pide un demo de tu próximo Agente Virtual basado en IA."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ REGLAS OBLIGATORIAS:

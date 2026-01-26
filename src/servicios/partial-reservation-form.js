@@ -362,6 +362,7 @@ export class PartialReservationForm {
         message += `¿Deseas *CONFIRMAR* esta reserva con costo?\n\n`;
         message += `✅ Responde *SI* para confirmar\n`;
         message += `❌ Responde *NO* para cancelar`;
+        message += `\n\n[CONFIRMAR]`;
         
         console.log('[FORM] ✅ Confirmación CON COSTO + REFERRAL generada (freeTrialUsed=true)');
         return message;
@@ -383,6 +384,7 @@ export class PartialReservationForm {
       message += `💳 Pago: ${metodoPago}\n\n`;
       message += `¿*Confirmas esta reserva?*\n\n`;
       message += `Responde *SI* para continuar ${isFreeTrial ? '' : 'con el pago '}o *NO* para cancelar 👍`;
+      message += `\n\n[CONFIRMAR]`;
       
       console.log('[FORM] ✅ Confirmación final generada - formulario completo');
       return message;

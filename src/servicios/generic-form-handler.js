@@ -612,7 +612,11 @@ function extractPaulaData(lowerMsg, currentForm, updates) {
  * 🎫 ALUNA - Detectar datos de membresías
  */
 function extractAlunaData(lowerMsg, currentForm, updates) {
+  // 🔒 Guardar último mensaje para análisis contextual
+  updates._lastMessage = currentForm.data._lastMessage || '';
+  
   // Tipo de membresía - DETECTAR TODOS LOS FORMATOS
+  // 🚨 FIX: Solo detectar si NO existe ya para evitar resetear formulario
   if (!currentForm.data.membershipType) {
     // Detectar "Plan 10", "Plan 20", etc.
     if (lowerMsg.includes('plan 10') || lowerMsg.includes('plan10')) {
@@ -631,6 +635,8 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
       updates.membershipType = 'Oficina Virtual';
       console.log('[ALUNA] 📦 Detectado: Oficina Virtual');
     }
+  } else {
+    console.log('[ALUNA] ℹ️ membershipType ya existe:', currentForm.data.membershipType, '- NO sobrescribir');
   }
   
   // Fecha de inicio - DETECTAR "hoy", "mañana", "ya", "inmediatamente"

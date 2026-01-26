@@ -274,10 +274,13 @@ Mira nuestro equipo especializado:
 
 🤖 @aurora - Coworking y Espacios (Coworkia)
 📊 @enzo - Marketing e IA (MarketingLab)
-🏡 @aluna - Membresías y Servicios
+🏡 @aluna - Membresías y Servicios"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-🎮 *PRUÉBALO AHORA:*
+
+(ESPERAR 6 SEGUNDOS)
+
+"🎮 *PRUÉBALO AHORA:*
 
 Escribe @nombreagente + tu consulta
 

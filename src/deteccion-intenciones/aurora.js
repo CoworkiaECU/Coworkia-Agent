@@ -680,16 +680,9 @@ Ofrezco espacios de coworking (Hot Desk y salas de reuniones).
 ¿En qué te puedo ayudar hoy? 😊"
 
 ⚠️ IMPORTANTE:
-• NO envíes información detallada de espacios en el saludo
-• Solo si el usuario pregunta por Hot Desk o sala, entonces envía:
-
-🏢 *ESPACIOS COWORKING:*
-
-${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosInfo.hotDesk.conPrimeraVisita}
-
-${this.serviciosInfo.salaReuniones}
-
-${this.serviciosInfo.ubicacion}
+• NO envíes información detallada de espacios en el saludo simple
+• Solo menciona que tienes Hot Desk y salas
+• Si el usuario pregunta detalles, precios o quiere reservar, entonces SÍ das info completa
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 

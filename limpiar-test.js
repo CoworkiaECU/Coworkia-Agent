@@ -19,49 +19,56 @@ async function limpiarTest() {
   try {
     console.log('🧹 Limpiando números de prueba:', testNumbers.join(', '));
     
-    // 0. Limpiar reservations PRIMERO (foreign key constraint)
+    // 0. Limpiar pending_confirmations PRIMERO (foreign key desde users)
+    const pendingResult = await client.query(
+      'DELETE FROM pending_confirmations WHERE user_phone = ANY($1::text[])',
+      [testNumbers]
+    );
+    console.log(`✅ Confirmaciones eliminadas: ${pendingResult.rowCount}`);
+    
+    // 1. Limpiar agent_forms
+    const agentFormsResult = await client.query(
+      'DELETE FROM agent_forms WHERE user_phone = ANY($1::text[])',
+      [testNumbers]
+    );
+    console.log(`✅ Agent forms eliminados: ${agentFormsResult.rowCount}`);
+    
+    // 2. Limpiar reservations
     const reservationsResult = await client.query(
       'DELETE FROM reservations WHERE user_phone = ANY($1::text[]) RETURNING id',
       [testNumbers]
     );
     console.log(`✅ Reservations eliminadas: ${reservationsResult.rowCount}`);
     
-    // 1. Limpiar users
-    const usersResult = await client.query(
-      'DELETE FROM users WHERE phone_number = ANY($1::text[]) RETURNING phone_number',
-      [testNumbers]
-    );
-    console.log(`✅ Users eliminados: ${usersResult.rowCount}`);
-    
-    // 2. Limpiar partial_forms
+    // 3. Limpiar partial_forms (legacy)
     const formsResult = await client.query(
       'DELETE FROM partial_forms WHERE user_phone = ANY($1::text[])',
       [testNumbers]
     );
-    console.log(`✅ Forms eliminados: ${formsResult.rowCount}`);
+    console.log(`✅ Forms legacy eliminados: ${formsResult.rowCount}`);
     
-    // 3. Limpiar reservation_state
+    // 4. Limpiar reservation_state
     const stateResult = await client.query(
       'DELETE FROM reservation_state WHERE user_phone = ANY($1::text[])',
       [testNumbers]
     );
     console.log(`✅ States eliminados: ${stateResult.rowCount}`);
     
-    // 4. Limpiar interactions
+    // 5. Limpiar interactions
     const interactionsResult = await client.query(
       'DELETE FROM interactions WHERE user_phone = ANY($1::text[])',
       [testNumbers]
     );
     console.log(`✅ Interactions eliminadas: ${interactionsResult.rowCount}`);
     
-    // 5. Limpiar pending_confirmations
-    const confirmationsResult = await client.query(
-      'DELETE FROM pending_confirmations WHERE user_phone = ANY($1::text[])',
+    // 6. Limpiar users AL FINAL
+    const usersResult = await client.query(
+      'DELETE FROM users WHERE phone_number = ANY($1::text[]) RETURNING phone_number',
       [testNumbers]
     );
-    console.log(`✅ Confirmations eliminadas: ${confirmationsResult.rowCount}`);
+    console.log(`✅ Users eliminados: ${usersResult.rowCount}`);
     
-    console.log('\n✨ BD limpiada exitosamente - Lista para pruebas v621\n');
+    console.log('\n✨ BD limpiada - Lista para tests v634\n');
     
   } catch (error) {
     console.error('❌ Error limpiando BD:', error);

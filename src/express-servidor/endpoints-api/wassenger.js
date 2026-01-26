@@ -1275,15 +1275,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           agent: fromAgent 
         });
         
-        // ✅ CONTINUAR: Procesar mensaje del usuario con nuevo agente activo
-        console.log(`[HANDOFF] 💬 Continuando procesamiento con ${targetAgent}...`);
-        await enviarWhatsApp(userId, handoffMessages.entrada);
-        await saveConversationMessage(userId, { 
-          role: 'assistant', 
-          content: handoffMessages.entrada, 
-          agent: targetAgent 
-        });
-
         console.log(`[HANDOFF] ✅ Handover completado exitosamente`);
 
         // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente

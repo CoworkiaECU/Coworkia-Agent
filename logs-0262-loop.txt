@@ -1,0 +1,9 @@
+2026-01-26T21:43:18.776060+00:00 app[web.1]: 🤖 ALUNA:
+2026-01-26T21:43:18.776061+00:00 app[web.1]: 🤖 ALUNA:
+2026-01-26T21:43:18.776061+00:00 app[web.1]: 🤖 ALUNA:
+2026-01-26T21:43:20.668018+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:43:20.668018+00:00 app[web.1]: 'ALUNA',
+2026-01-26T21:43:20.671896+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:43:20.671896+00:00 app[web.1]: 'ALUNA',
+2026-01-26T21:43:20.671901+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"si","mediaUrl":null,"timestamp":1769463796,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T21:43:20.814841+00:00 app[web.1]: [2026-01-26T21:43:20.814Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=ALUNA action=send_response] ✅ Agent response sent

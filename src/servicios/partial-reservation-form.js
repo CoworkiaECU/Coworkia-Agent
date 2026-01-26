@@ -16,6 +16,7 @@
 
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import { detectarSaludoConInteresServicio } from '../deteccion-intenciones/detectar-intencion.js';
+import userRepository from '../database/userRepository.js';
 
 // 📲 Enlace genérico para referir amigos al sistema de Coworkia
 const REFERRAL_LINK = `https://wa.me/593994837117?text=${encodeURIComponent('¡Hola Coworkia! quiero probar el servicio')}`;
@@ -44,7 +45,7 @@ const NOMBRES_FERIADOS = {
  * 🎯 Clase que representa un formulario parcial de reserva
  */
 export class PartialReservationForm {
-  constructor(userId, existingData = {}, freeTrialUsed = false) {
+  constructor(userId, existingData = {}, freeTrialUsed = null) {
     this.userId = userId;
     this.spaceType = existingData.spaceType || null;      // 'hotDesk' | 'meetingRoom'
     this.date = existingData.date || null;                // '2025-11-12'
@@ -53,12 +54,35 @@ export class PartialReservationForm {
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
     this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
-    this.freeTrialUsed = freeTrialUsed;                   // ← Estado del free trial del usuario
+    this.freeTrialUsed = freeTrialUsed;                   // ← Estado del free trial del usuario (null = por cargar)
     this.updatedAt = new Date();
   }
 
   /**
-   * 📋 Actualiza un campo del formulario
+   * � Inicializa freeTrialUsed consultando BD (llamar antes de getMissingFields)
+   */
+  async initializeFreeTrialStatus() {
+    if (this.freeTrialUsed !== null) {
+      console.log('[FORM] ✅ freeTrialUsed ya inicializado:', this.freeTrialUsed);
+      return;
+    }
+
+    try {
+      const user = await userRepository.findByPhone(this.userId);
+      this.freeTrialUsed = user?.free_trial_used ?? false;
+      console.log('[FORM] 🔍 freeTrialUsed cargado desde BD:', {
+        userId: this.userId,
+        freeTrialUsed: this.freeTrialUsed,
+        userFound: !!user
+      });
+    } catch (error) {
+      console.error('[FORM] ❌ Error cargando freeTrialUsed, default false:', error);
+      this.freeTrialUsed = false;
+    }
+  }
+
+  /**
+   * �📋 Actualiza un campo del formulario
    */
   updateField(field, value) {
     if (this[field] !== undefined) {
@@ -93,11 +117,17 @@ export class PartialReservationForm {
     if (!this.email) missing.push('email');
     
     // 🎉 LÓGICA CORRECTA:
-    // - Cliente NUEVO (freeTrialUsed === false): NO pedir paymentMethod (es gratis)
+    // - Cliente NUEVO con HOT DESK (freeTrialUsed === false): NO pedir paymentMethod (es gratis)
     // - Cliente RECURRENTE (freeTrialUsed === true): SÍ pedir paymentMethod (debe pagar)
-    if (!this.paymentMethod && this.freeTrialUsed === true) {
+    // - Meeting Room SIEMPRE paga: SÍ pedir paymentMethod
+    const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+    
+    if (!this.paymentMethod && !isHotDeskFreeTrial) {
       missing.push('paymentMethod');
-      console.log('[FORM] ⚠️ Cliente recurrente sin método de pago');
+      console.log('[FORM] ⚠️ Cliente debe pagar - requiere paymentMethod:', {
+        freeTrialUsed: this.freeTrialUsed,
+        spaceType: this.spaceType
+      });
     }
     
     return missing;
@@ -326,50 +356,8 @@ export class PartialReservationForm {
     // ✅ CASO 1: Formulario COMPLETO - Confirmación final
     if (missing.length === 0) {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-      const pricing = this.calculateTotalWithTaxes();
       const isFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
-      const hasUsedFreeTrial = this.freeTrialUsed === true;
       
-      // Mapear método de pago a texto legible
-      const metodoPagoDisplay = {
-        'tarjeta': 'Tarjeta 💳',
-        'transferencia': 'Transferencia 🏦',
-        'efectivo': 'Efectivo 💵'
-      };
-      const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
-      
-      // 🆕 BRANCH 1: Usuario con free trial usado - Mostrar costo + sugerencia referido
-      if (hasUsedFreeTrial && this.spaceType === 'hotDesk') {
-        let message = `⚠️ *Segunda Reserva - Tiene Costo*\n\n`;
-        message += `Ya usaste tus 2 horas gratis 🎉\n\n`;
-        message += `📋 *Detalles de esta reserva:*\n`;
-        message += `📅 ${this.date}\n`;
-        message += `⏰ ${this.time} (${this.durationHours}h)\n`;
-        message += `💻 ${spaceName}\n`;
-        message += `📧 ${this.email}\n\n`;
-        message += `💰 *Costo:*\n`;
-        message += `Base: $10.00\n`;
-        message += `IVA (12%): $1.20\n`;
-        message += `Comisión tarjeta (3.5%): $0.35\n`;
-        message += `*TOTAL: $11.55*\n\n`;
-        message += `💳 Pago: ${metodoPago}\n\n`;
-        message += `───────────────────\n\n`;
-        message += `💡 *¿Sabías que...?*\n\n`;
-        message += `Tu amigo o colega TAMBIÉN puede registrarse y disfrutar de *2 horas gratis* 🎁\n\n`;
-        message += `📲 *Envíale este enlace:*\n`;
-        message += `${REFERRAL_LINK}\n\n`;
-        message += `Dile: _"Amigo, regístrate aquí para recibir tus dos horas gratis"_ 😊\n\n`;
-        message += `───────────────────\n\n`;
-        message += `¿Deseas *CONFIRMAR* esta reserva con costo?\n\n`;
-        message += `✅ Responde *SI* para confirmar\n`;
-        message += `❌ Responde *NO* para cancelar`;
-        message += `\n\n[CONFIRMAR]`;
-        
-        console.log('[FORM] ✅ Confirmación CON COSTO + REFERRAL generada (freeTrialUsed=true)');
-        return message;
-      }
-      
-      // 🆕 BRANCH 2: Primera reserva GRATIS o reservas sin free trial
       // ✅ Formatear fecha para mostrar día de semana + mes en español
       const formattedDate = this.formatDate(this.date);
       
@@ -379,15 +367,50 @@ export class PartialReservationForm {
       message += `💻 Espacio: ${spaceName}\n`;
       message += `📧 Email: ${this.email}\n`;
       
+      // 🎁 BRANCH 1: Cliente NUEVO con Hot Desk - GRATIS
       if (isFreeTrial) {
-        message += `💰 Total: GRATIS 🎉 (Primera visita)\n`;
-      } else {
-        message += `💰 Total: $${pricing.total.toFixed(2)} USD\n`;
+        message += `💰 Total: *GRATIS* 🎉 (Primera visita - 2h gratis)\n\n`;
+        message += `¿*Confirmas esta reserva?*\n\n`;
+        message += `Responde *SI* para confirmar o *NO* para cancelar 👍`;
+        message += `\n\n[CONFIRMAR]`;
+        
+        console.log('[FORM] ✅ Confirmación GRATIS generada (primera visita hotDesk)');
+        return message;
       }
       
+      // 💰 BRANCH 2: Cliente RECURRENTE o Meeting Room - CON COSTO
+      const pricing = this.calculateTotalWithTaxes();
+      
+      // Mapear método de pago a texto legible
+      const metodoPagoDisplay = {
+        'tarjeta': 'Tarjeta 💳',
+        'transferencia': 'Transferencia 🏦',
+        'efectivo': 'Efectivo 💵'
+      };
+      const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
+      
+      message += `\n💰 *Costo:*\n`;
+      message += `Base: $${pricing.base.toFixed(2)}\n`;
+      message += `IVA (12%): $${pricing.iva.toFixed(2)}\n`;
+      if (pricing.cardFee > 0) {
+        message += `Comisión tarjeta (3.5%): $${pricing.cardFee.toFixed(2)}\n`;
+      }
+      message += `*TOTAL: $${pricing.total.toFixed(2)} USD*\n\n`;
       message += `💳 Pago: ${metodoPago}\n\n`;
+      
+      // Si es segunda reserva de hotDesk, agregar referral
+      if (this.freeTrialUsed === true && this.spaceType === 'hotDesk') {
+        message += `───────────────────\n\n`;
+        message += `💡 *¿Sabías que...?*\n\n`;
+        message += `Tu amigo o colega TAMBIÉN puede registrarse y disfrutar de *2 horas gratis* 🎁\n\n`;
+        message += `📲 *Envíale este enlace:*\n`;
+        message += `${REFERRAL_LINK}\n\n`;
+        message += `Dile: _"Amigo, regístrate aquí para recibir tus dos horas gratis"_ 😊\n\n`;
+        message += `───────────────────\n\n`;
+      }
+      
       message += `¿*Confirmas esta reserva?*\n\n`;
-      message += `Responde *SI* para continuar ${isFreeTrial ? '' : 'con el pago '}o *NO* para cancelar 👍`;
+      message += `Responde *SI* para continuar con el pago o *NO* para cancelar 👍`;
       message += `\n\n[CONFIRMAR]`;
       
       console.log('[FORM] ✅ Confirmación final generada - formulario completo');
@@ -512,7 +535,9 @@ export async function getOrCreateForm(userId, freeTrialUsed = false, existingFor
     // 🎯 CASO 1: Form existente del sistema unificado (prioridad)
     if (existingFormData) {
       console.log('[FORM] 📜 Form existente del sistema unificado cargado para:', userId);
-      return PartialReservationForm.fromJSON(existingFormData, freeTrialUsed);
+      const form = PartialReservationForm.fromJSON(existingFormData, freeTrialUsed);
+      await form.initializeFreeTrialStatus();
+      return form;
     }
     
     // 🔄 CASO 2: Buscar en pending_confirmations (legacy, por compatibilidad)
@@ -520,7 +545,9 @@ export async function getOrCreateForm(userId, freeTrialUsed = false, existingFor
     
     if (existing && existing._type === 'partial_form' && existing._formData) {
       console.log('[FORM] 📂 Formulario legacy cargado desde pending_confirmations:', userId);
-      return PartialReservationForm.fromJSON(existing._formData, freeTrialUsed);
+      const form = PartialReservationForm.fromJSON(existing._formData, freeTrialUsed);
+      await form.initializeFreeTrialStatus();
+      return form;
     }
     
     if (existing && existing._type === 'direct') {
@@ -539,15 +566,21 @@ export async function getOrCreateForm(userId, freeTrialUsed = false, existingFor
       };
       
       console.log('[FORM] ✅ Datos preservados:', Object.keys(formData).filter(k => formData[k]));
-      return PartialReservationForm.fromJSON(formData, formData.freeTrialUsed);
+      const form = PartialReservationForm.fromJSON(formData, formData.freeTrialUsed);
+      await form.initializeFreeTrialStatus();
+      return form;
     }
     
     // 🆕 CASO 3: No hay datos previos - crear formulario nuevo
     console.log('[FORM] ✨ Nuevo formulario creado para:', userId);
-    return new PartialReservationForm(userId, {}, freeTrialUsed);
+    const form = new PartialReservationForm(userId, {}, freeTrialUsed);
+    await form.initializeFreeTrialStatus();
+    return form;
   } catch (error) {
     console.error('[FORM] ❌ Error obteniendo formulario:', error);
-    return new PartialReservationForm(userId, {}, freeTrialUsed);
+    const form = new PartialReservationForm(userId, {}, freeTrialUsed);
+    await form.initializeFreeTrialStatus();
+    return form;
   }
 }
 

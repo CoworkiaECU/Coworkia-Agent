@@ -1,0 +1,78 @@
+2026-01-26T22:14:30.508110+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:14:30.508110+00:00 app[web.1]: '{"userId":"+593987770788","spaceType":"hotDesk","date":"2026-01-27","time":"16:00","email":"yo@diegovillota.com","numPeople":1,"durationHours":2,"paymentMethod":"efectivo","totalPrice":0,"freeTrialUsed":false,"updatedAt":"2026-01-26T22:14:30.507Z"}'
+2026-01-26T22:14:30.523648+00:00 app[web.1]: [AGENT-FORM] 💾 Form guardado: AURORA para +593987770788
+2026-01-26T22:14:30.525370+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:14:30.526271+00:00 app[web.1]: [2026-01-26T22:14:30.526Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA action=process_message] 💬 User message
+2026-01-26T22:14:30.528013+00:00 app[web.1]: [2026-01-26T22:14:30.527Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA duration=1ms] ⚡ procesarMensaje completed
+2026-01-26T22:14:30.528014+00:00 app[web.1]: userId: '+593987770788',
+2026-01-26T22:14:32.131264+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:14:32.137525+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:14:32.137528+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593987770788","name":"DVil","type":"text","text":"quiero para mañana mismo a las 4pm","mediaUrl":null,"timestamp":1769465668,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T22:14:32.315819+00:00 app[web.1]: [2026-01-26T22:14:32.315Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T22:15:14.038800+00:00 app[web.1]: userId: '+593987770788',
+2026-01-26T22:15:14.038827+00:00 app[web.1]: [2026-01-26T22:15:14.038Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788] Processing incoming message
+2026-01-26T22:15:14.038852+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593987770788, iniciando espera
+2026-01-26T22:15:15.540182+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593987770788 (timer expirado)
+2026-01-26T22:15:15.540411+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.540463+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-26T22:15:15.540503+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593987770788', '2026-01-26' ]
+2026-01-26T22:15:15.540579+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.543684+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.587405+00:00 app[web.1]: [CACHE] 💾 SET para +593987770788 (total: 1)
+2026-01-26T22:15:15.587479+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-26T22:15:15.590398+00:00 app[web.1]: [NAME DEBUG] userId: +593987770788
+2026-01-26T22:15:15.590474+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593987770788
+2026-01-26T22:15:15.590542+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.593565+00:00 app[web.1]: '+593987770788'
+2026-01-26T22:15:15.614929+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.618162+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593987770788
+2026-01-26T22:15:15.618274+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:15:15.621122+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593987770788', 'AURORA' ]
+2026-01-26T22:15:15.622737+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593987770788
+2026-01-26T22:15:15.623127+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593987770788
+2026-01-26T22:15:15.623710+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:15:15.623712+00:00 app[web.1]: '{"userId":"+593987770788","spaceType":"hotDesk","date":"2026-01-27","time":"16:00","email":"yo@diegovillota.com","numPeople":1,"durationHours":2,"paymentMethod":"efectivo","totalPrice":0,"freeTrialUsed":false,"updatedAt":"2026-01-26T22:15:15.623Z"}'
+2026-01-26T22:15:15.659039+00:00 app[web.1]: [AGENT-FORM] 💾 Form guardado: AURORA para +593987770788
+2026-01-26T22:15:15.661634+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:15.669182+00:00 app[web.1]: [2026-01-26T22:15:15.669Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA action=process_message] 💬 User message
+2026-01-26T22:15:15.669437+00:00 app[web.1]: [2026-01-26T22:15:15.669Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA] ⚡ procesarMensaje completed
+2026-01-26T22:15:15.669511+00:00 app[web.1]: userId: '+593987770788',
+2026-01-26T22:15:18.127563+00:00 app[web.1]: [AURORA-PROCESS] 👤 Usuario: +593987770788
+2026-01-26T22:15:18.145776+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:15:18.148296+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:15:18.154508+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:15:18.157263+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:15:18.157273+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593987770788","name":"DVil","type":"text","text":"efectivo","mediaUrl":null,"timestamp":1769465713,"raw":{}},"confirmationActivated":true,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T22:15:18.310990+00:00 app[web.1]: [2026-01-26T22:15:18.310Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T22:19:44.466523+00:00 app[web.1]: userId: '+593987770788',
+2026-01-26T22:19:44.466567+00:00 app[web.1]: [2026-01-26T22:19:44.466Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788] Processing incoming message
+2026-01-26T22:19:44.466632+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593987770788, iniciando espera
+2026-01-26T22:19:45.967583+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593987770788 (timer expirado)
+2026-01-26T22:19:45.967887+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:45.967949+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-26T22:19:45.968003+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593987770788', '2026-01-26' ]
+2026-01-26T22:19:45.968077+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:45.971975+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:45.974161+00:00 app[web.1]: [CACHE] 💾 SET para +593987770788 (total: 1)
+2026-01-26T22:19:45.974216+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-26T22:19:45.977944+00:00 app[web.1]: [NAME DEBUG] userId: +593987770788
+2026-01-26T22:19:45.978353+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593987770788
+2026-01-26T22:19:45.978480+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:45.981026+00:00 app[web.1]: '+593987770788'
+2026-01-26T22:19:45.987909+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:45.990269+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593987770788
+2026-01-26T22:19:45.990629+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:19:45.995501+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593987770788', 'AURORA' ]
+2026-01-26T22:19:45.998541+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593987770788
+2026-01-26T22:19:45.999974+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593987770788
+2026-01-26T22:19:46.007622+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:46.008912+00:00 app[web.1]: [2026-01-26T22:19:46.008Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA action=process_message] 💬 User message
+2026-01-26T22:19:46.010856+00:00 app[web.1]: [2026-01-26T22:19:46.010Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=AURORA duration=2ms] ⚡ procesarMensaje completed
+2026-01-26T22:19:46.011048+00:00 app[web.1]: userId: '+593987770788',
+2026-01-26T22:19:48.290137+00:00 app[web.1]: [AURORA-PROCESS] 👤 Usuario: +593987770788
+2026-01-26T22:19:48.295387+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-26T22:19:48.705862+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:19:49.167996+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:19:49.173152+00:00 app[web.1]: '+593987770788',
+2026-01-26T22:19:49.173156+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593987770788","name":"DVil","type":"text","text":"si","mediaUrl":null,"timestamp":1769465968,"raw":{}},"confirmationActivated":true,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T22:19:49.316894+00:00 app[web.1]: [2026-01-26T22:19:49.316Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788 agent=AURORA action=send_response] ✅ Agent response sent

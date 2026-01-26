@@ -40,12 +40,16 @@ function formatUserDate(date) {
   
   // Array correcto: 0=domingo, 1=lunes, 2=martes, ..., 6=sábado
   const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const dayName = dayNames[dateObj.getDay()]; // getDay() en timezone local
+  const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  
+  const dayName = dayNames[dateObj.getDay()];
   
   // Parsear la fecha del string directamente para evitar issues de timezone
   const [year, month, day] = dateStr.split('-');
+  const monthName = monthNames[parseInt(month, 10) - 1];
   
-  return `${dayName} ${day}/${month}/${year}`;
+  // ✅ Formato: "Domingo 27 de enero 2026"
+  return `${dayName} ${parseInt(day, 10)} de ${monthName} ${year}`;
 }
 
 /**

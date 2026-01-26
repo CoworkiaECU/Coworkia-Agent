@@ -370,8 +370,11 @@ export class PartialReservationForm {
       }
       
       // 🆕 BRANCH 2: Primera reserva GRATIS o reservas sin free trial
+      // ✅ Formatear fecha para mostrar día de semana + mes en español
+      const formattedDate = this.formatDate(this.date);
+      
       let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
-      message += `📅 Fecha: ${this.date}\n`;
+      message += `📅 Fecha: ${formattedDate}\n`;
       message += `⏰ Horario: ${this.time} (${this.durationHours}h)\n`;
       message += `💻 Espacio: ${spaceName}\n`;
       message += `📧 Email: ${this.email}\n`;
@@ -395,10 +398,11 @@ export class PartialReservationForm {
     if (missing.length === 1 && missing[0] === 'paymentMethod') {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
       const basePrice = this.getBasePrice();
+      const formattedDate = this.formatDate(this.date);
       
       let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
       message += `🏢 Espacio: ${spaceName}\n`;
-      message += `📅 Fecha: ${this.date}\n`;
+      message += `📅 Fecha: ${formattedDate}\n`;
       message += `⏰ Hora: ${this.time}\n`;
       message += `📧 Email: ${this.email}\n`;
       message += `⏱️ Duración: ${this.durationHours}h\n`;
@@ -418,7 +422,28 @@ export class PartialReservationForm {
   }
 
   /**
-   * 💾 Convierte a objeto plano para almacenamiento
+   * � Formatea fecha para mostrar al usuario
+   * @param {string} date - Fecha en formato '2026-01-27'
+   * @returns {string} - Fecha formateada como "Domingo 27 de enero 2026"
+   */
+  formatDate(date) {
+    if (!date) return '';
+    
+    const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+    const dateObj = new Date(dateStr + 'T12:00:00-05:00');
+    
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    
+    const dayName = dayNames[dateObj.getDay()];
+    const [year, month, day] = dateStr.split('-');
+    const monthName = monthNames[parseInt(month, 10) - 1];
+    
+    return `${dayName} ${parseInt(day, 10)} de ${monthName} ${year}`;
+  }
+
+  /**
+   * �💾 Convierte a objeto plano para almacenamiento
    */
   toJSON() {
     // Calcular precio con impuestos:

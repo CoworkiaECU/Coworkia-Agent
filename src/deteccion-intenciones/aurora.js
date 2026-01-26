@@ -282,7 +282,7 @@ Tenemos adicionalmente especialistas en: bienes raíces, colisiones, médico, le
 "🎮 Pruébalo:
 
 Escribe @nombreagente + tu consulta
-Ejemplo, \\"@enzo necesito una estrategia de redes sociales\\"
+Ejemplo, "@enzo necesito una estrategia de redes sociales"
 
 💰 Activa el modo IA en tu empresa:
 

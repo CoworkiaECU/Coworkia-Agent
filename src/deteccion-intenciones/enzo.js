@@ -38,8 +38,8 @@ export const ENZO = {
   getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
     const handoverMessages = {
       'AURORA': {
-        es: 'Perfecto {nombre}, ya tienes tu estrategia de marketing. 🚀\n\nTe devuelvo con *Aurora* para lo que necesites. Si tienes dudas sobre campañas o estrategia digital, solo di *@Enzo* y aquí estaré.\n\n¡Éxitos con tu proyecto!',
-        en: 'Perfect {nombre}, you have your marketing strategy now. 🚀\n\nReturning you to *Aurora* for anything you need. If you have questions about campaigns or digital strategy, just say *@Enzo* and I\'ll be here.\n\nSuccess with your project!'
+        es: 'Listo {nombre}, te devuelvo con *Aurora* 😊\n\nSi en algún momento quieres cotizar una campaña, automatizar con IA o hablar de estrategia digital, solo escribe *@Enzo* y conversamos.\n\n¡Aquí cuando me necesites! 🚀',
+        en: 'Alright {nombre}, returning you to *Aurora* 😊\n\nIf you ever want to quote a campaign, automate with AI or talk about digital strategy, just write *@Enzo* and we\'ll chat.\n\nHere when you need me! 🚀'
       },
       'PAULA': {
         es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para marketing inmobiliario. 🏡\n\nPara dudas de marketing general, escribe *@Enzo*.\n\n¡Éxito!',

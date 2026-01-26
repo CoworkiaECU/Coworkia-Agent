@@ -1,0 +1,178 @@
+2026-01-26T20:56:21.714491+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593992320262
+2026-01-26T20:56:21.714970+00:00 app[web.1]: [FORM] 📊 Estado del formulario: {
+2026-01-26T20:56:21.715020+00:00 app[web.1]: [FORM] 🔓 Bypass efectivo activado - sin impuestos
+2026-01-26T20:56:21.715040+00:00 app[web.1]: [FORM] ✅ Confirmación final generada - formulario completo
+2026-01-26T20:56:21.715041+00:00 app[web.1]: [FORM] ✅ Formulario completo - generando confirmación final
+2026-01-26T20:56:21.716355+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:56:21.717095+00:00 app[web.1]: [2026-01-26T20:56:21.717Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA action=process_message] 💬 User message
+2026-01-26T20:56:21.717350+00:00 app[web.1]: [2026-01-26T20:56:21.717Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA] ⚡ procesarMensaje completed
+2026-01-26T20:56:21.717424+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:56:23.283108+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:56:23.286512+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:56:23.286517+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"si quiero reservar otro hot desk","mediaUrl":null,"timestamp":1769460979,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T20:56:23.421782+00:00 app[web.1]: [2026-01-26T20:56:23.421Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T20:57:05.731685+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:57:05.731713+00:00 app[web.1]: [2026-01-26T20:57:05.731Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262] Processing incoming message
+2026-01-26T20:57:05.731743+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593992320262, iniciando espera
+2026-01-26T20:57:07.233009+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593992320262 (timer expirado)
+2026-01-26T20:57:07.233257+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.233560+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:57:07.233756+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593992320262', '2026-01-26' ]
+2026-01-26T20:57:07.234007+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.310689+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.323727+00:00 app[web.1]: [CACHE] 💾 SET para +593992320262 (total: 1)
+2026-01-26T20:57:07.323775+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:57:07.327892+00:00 app[web.1]: [NAME DEBUG] userId: +593992320262
+2026-01-26T20:57:07.327956+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593992320262
+2026-01-26T20:57:07.328006+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.329203+00:00 app[web.1]: '+593992320262'
+2026-01-26T20:57:07.342927+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.353680+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593992320262
+2026-01-26T20:57:07.353781+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:07.383146+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593992320262', 'AURORA' ]
+2026-01-26T20:57:07.384905+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593992320262
+2026-01-26T20:57:07.385081+00:00 app[web.1]: [FORM] 🎯 Activando formulario: {
+2026-01-26T20:57:07.385083+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593992320262
+2026-01-26T20:57:07.385432+00:00 app[web.1]: [FORM] 📅 Detectado fecha relativa: 2026-01-27
+2026-01-26T20:57:07.385539+00:00 app[web.1]: [FORM] ⏰ Detectado hora: 10:00
+2026-01-26T20:57:07.385548+00:00 app[web.1]: [FORM] 🔄 Sobrescribiendo hora anterior: 10:00 → 10:00
+2026-01-26T20:57:07.385614+00:00 app[web.1]: [FORM] 📝 Múltiples campos actualizados: [ 'date', 'time' ]
+2026-01-26T20:57:07.385626+00:00 app[web.1]: [FORM] 📝 Campos actualizados: [ 'date', 'time' ]
+2026-01-26T20:57:07.385650+00:00 app[web.1]: [FORM] 📊 Estado del formulario: {
+2026-01-26T20:57:07.385668+00:00 app[web.1]: [FORM] 🔓 Bypass efectivo activado - sin impuestos
+2026-01-26T20:57:07.385686+00:00 app[web.1]: [FORM] ✅ Confirmación final generada - formulario completo
+2026-01-26T20:57:07.385686+00:00 app[web.1]: [FORM] ✅ Formulario completo - generando confirmación final
+2026-01-26T20:57:07.385711+00:00 app[web.1]: [FORM] 💰 Cliente nuevo Hot Desk - Precio: GRATIS
+2026-01-26T20:57:07.385761+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:07.385763+00:00 app[web.1]: '{"userId":"+593992320262","spaceType":"hotDesk","date":"2026-01-27","time":"10:00","email":"mktlab.ec@gmail.com","numPeople":1,"durationHours":2,"paymentMethod":"efectivo","totalPrice":0,"freeTrialUsed":false,"updatedAt":"2026-01-26T20:57:07.385Z"}'
+2026-01-26T20:57:07.394731+00:00 app[web.1]: [AGENT-FORM] 💾 Form guardado: AURORA para +593992320262
+2026-01-26T20:57:07.395805+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:07.396976+00:00 app[web.1]: [2026-01-26T20:57:07.396Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA action=process_message] 💬 User message
+2026-01-26T20:57:07.397200+00:00 app[web.1]: [2026-01-26T20:57:07.397Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA duration=1ms] ⚡ procesarMensaje completed
+2026-01-26T20:57:07.397267+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:57:09.659143+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:09.665197+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:09.665202+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"mañana 10am","mediaUrl":null,"timestamp":1769461019,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T20:57:09.841831+00:00 app[web.1]: [2026-01-26T20:57:09.841Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T20:57:37.078756+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:57:37.078792+00:00 app[web.1]: [2026-01-26T20:57:37.078Z] ℹ��� [INFO] [WEBHOOK] [user=+593992320262] Processing incoming message
+2026-01-26T20:57:37.078844+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593992320262, iniciando espera
+2026-01-26T20:57:38.579638+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593992320262 (timer expirado)
+2026-01-26T20:57:38.579947+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.579993+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:57:38.580029+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593992320262', '2026-01-26' ]
+2026-01-26T20:57:38.580074+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.656271+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.679940+00:00 app[web.1]: [CACHE] 💾 SET para +593992320262 (total: 1)
+2026-01-26T20:57:38.680012+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:57:38.689391+00:00 app[web.1]: [NAME DEBUG] userId: +593992320262
+2026-01-26T20:57:38.689467+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593992320262
+2026-01-26T20:57:38.689532+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.693550+00:00 app[web.1]: '+593992320262'
+2026-01-26T20:57:38.701645+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.703899+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593992320262
+2026-01-26T20:57:38.704041+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:38.718723+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593992320262', 'AURORA' ]
+2026-01-26T20:57:38.720581+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593992320262
+2026-01-26T20:57:38.720757+00:00 app[web.1]: [FORM] 🎯 Activando formulario: {
+2026-01-26T20:57:38.720770+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593992320262
+2026-01-26T20:57:38.721163+00:00 app[web.1]: [FORM] 💵 Detectado método: efectivo
+2026-01-26T20:57:38.721226+00:00 app[web.1]: [FORM] 📝 Múltiples campos actualizados: [ 'paymentMethod' ]
+2026-01-26T20:57:38.721236+00:00 app[web.1]: [FORM] 📝 Campos actualizados: [ 'paymentMethod' ]
+2026-01-26T20:57:38.721277+00:00 app[web.1]: [FORM] 📊 Estado del formulario: {
+2026-01-26T20:57:38.721295+00:00 app[web.1]: [FORM] 🔓 Bypass efectivo activado - sin impuestos
+2026-01-26T20:57:38.721316+00:00 app[web.1]: [FORM] ✅ Confirmación final generada - formulario completo
+2026-01-26T20:57:38.721317+00:00 app[web.1]: [FORM] ✅ Formulario completo - generando confirmación final
+2026-01-26T20:57:38.721375+00:00 app[web.1]: [FORM] 💰 Cliente nuevo Hot Desk - Precio: GRATIS
+2026-01-26T20:57:38.721432+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:38.721434+00:00 app[web.1]: '{"userId":"+593992320262","spaceType":"hotDesk","date":"2026-01-27","time":"10:00","email":"mktlab.ec@gmail.com","numPeople":1,"durationHours":2,"paymentMethod":"efectivo","totalPrice":0,"freeTrialUsed":false,"updatedAt":"2026-01-26T20:57:38.721Z"}'
+2026-01-26T20:57:38.735403+00:00 app[web.1]: [AGENT-FORM] 💾 Form guardado: AURORA para +593992320262
+2026-01-26T20:57:38.736635+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:57:38.739701+00:00 app[web.1]: [2026-01-26T20:57:38.739Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA action=process_message] 💬 User message
+2026-01-26T20:57:38.739983+00:00 app[web.1]: [2026-01-26T20:57:38.739Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA] ⚡ procesarMensaje completed
+2026-01-26T20:57:38.740075+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:57:41.024779+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:41.027966+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:57:41.027971+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"efectivo","mediaUrl":null,"timestamp":1769461056,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T20:57:41.162414+00:00 app[web.1]: [2026-01-26T20:57:41.162Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T20:59:25.590959+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:59:25.590981+00:00 app[web.1]: [2026-01-26T20:59:25.590Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262] Processing incoming message
+2026-01-26T20:59:25.591003+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593992320262, iniciando espera
+2026-01-26T20:59:27.092710+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593992320262 (timer expirado)
+2026-01-26T20:59:27.092940+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.093231+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:59:27.093377+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593992320262', '2026-01-26' ]
+2026-01-26T20:59:27.093569+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.186135+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.629117+00:00 app[web.1]: [CACHE] 💾 SET para +593992320262 (total: 1)
+2026-01-26T20:59:27.629204+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T20:59:27.634460+00:00 app[web.1]: [NAME DEBUG] userId: +593992320262
+2026-01-26T20:59:27.634533+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593992320262
+2026-01-26T20:59:27.634592+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.636044+00:00 app[web.1]: '+593992320262'
+2026-01-26T20:59:27.638791+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.639995+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593992320262
+2026-01-26T20:59:27.640099+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:59:27.645456+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593992320262', 'AURORA' ]
+2026-01-26T20:59:27.647251+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593992320262
+2026-01-26T20:59:27.647385+00:00 app[web.1]: [FORM] 🎯 Activando formulario: {
+2026-01-26T20:59:27.647402+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593992320262
+2026-01-26T20:59:27.647788+00:00 app[web.1]: [FORM] 📊 Estado del formulario: {
+2026-01-26T20:59:27.647823+00:00 app[web.1]: [FORM] 🔓 Bypass efectivo activado - sin impuestos
+2026-01-26T20:59:27.647866+00:00 app[web.1]: [FORM] ✅ Confirmación final generada - formulario completo
+2026-01-26T20:59:27.647867+00:00 app[web.1]: [FORM] ✅ Formulario completo - generando confirmación final
+2026-01-26T20:59:27.649237+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T20:59:27.650469+00:00 app[web.1]: [2026-01-26T20:59:27.650Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA action=process_message] 💬 User message
+2026-01-26T20:59:27.650736+00:00 app[web.1]: [2026-01-26T20:59:27.650Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA] ⚡ procesarMensaje completed
+2026-01-26T20:59:27.650799+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T20:59:30.486014+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:59:30.494223+00:00 app[web.1]: '+593992320262',
+2026-01-26T20:59:30.494226+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"si","mediaUrl":null,"timestamp":1769461164,"raw":{}},"confirmationActivated":false,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T20:59:30.626591+00:00 app[web.1]: [2026-01-26T20:59:30.626Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T21:00:38.913348+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T21:00:38.913525+00:00 app[web.1]: [2026-01-26T21:00:38.913Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262] Processing incoming message
+2026-01-26T21:00:38.913675+00:00 app[web.1]: [DEBOUNCE] 🆕 Primer mensaje de +593992320262, iniciando espera
+2026-01-26T21:00:40.415596+00:00 app[web.1]: [DEBOUNCE] ✅ Procesando mensajes de +593992320262 (timer expirado)
+2026-01-26T21:00:40.418079+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:40.418475+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T21:00:40.418677+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593992320262', '2026-01-26' ]
+2026-01-26T21:00:40.419101+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:43.687541+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:45.418381+00:00 app[web.1]: [TIMEOUT] ⏱️ loadProfile(+593992320262) timeout después de 5000ms
+2026-01-26T21:00:45.418410+00:00 app[web.1]: [TIMEOUT] 🔄 Usando fallback para loadProfile(+593992320262)
+2026-01-26T21:00:45.418411+00:00 app[web.1]: [TIMEOUT] ⚠️ loadProfile timeout, usando perfil vacío para +593992320262
+2026-01-26T21:00:45.418661+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593992320262', 10 ]
+2026-01-26T21:00:45.453942+00:00 app[web.1]: [NAME DEBUG] userId: +593992320262
+2026-01-26T21:00:45.454686+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593992320262
+2026-01-26T21:00:45.454943+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:45.456798+00:00 app[web.1]: '+593992320262'
+2026-01-26T21:00:45.727210+00:00 app[web.1]: [CACHE] 💾 SET para +593992320262 (total: 1)
+2026-01-26T21:00:45.839950+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:45.842194+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593992320262
+2026-01-26T21:00:45.842764+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:00:46.322165+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593992320262', 'AURORA' ]
+2026-01-26T21:00:46.382622+00:00 app[web.1]: [AGENT-FORM] 📂 Form cargado: AURORA para +593992320262
+2026-01-26T21:00:46.384767+00:00 app[web.1]: [FORM] 🎯 Activando formulario: {
+2026-01-26T21:00:46.385261+00:00 app[web.1]: [FORM] 📜 Form existente del sistema unificado cargado para: +593992320262
+2026-01-26T21:00:46.388082+00:00 app[web.1]: [FORM] 📊 Estado del formulario: {
+2026-01-26T21:00:46.388414+00:00 app[web.1]: [FORM] 🔓 Bypass efectivo activado - sin impuestos
+2026-01-26T21:00:46.388445+00:00 app[web.1]: [FORM] ✅ Confirmación final generada - formulario completo
+2026-01-26T21:00:46.388445+00:00 app[web.1]: [FORM] ✅ Formulario completo - generando confirmación final
+2026-01-26T21:00:46.628450+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT reservation_data, expires_at FROM pending_confirmations WHERE user_phone = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:46.637175+00:00 app[web.1]: [2026-01-26T21:00:46.637Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA action=process_message] 💬 User message
+2026-01-26T21:00:46.641241+00:00 app[web.1]: [2026-01-26T21:00:46.641Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593992320262 agent=AURORA duration=4ms] ⚡ procesarMensaje completed
+2026-01-26T21:00:46.641453+00:00 app[web.1]: userId: '+593992320262',
+2026-01-26T21:00:50.447469+00:00 app[web.1]: [AURORA-PROCESS] 👤 Usuario: +593992320262
+2026-01-26T21:00:50.457544+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:50.458722+00:00 app[web.1]: [POSTGRES DEBUG] run() SQL: UPDATE users SET email = $1, updated_at = $2 WHERE phone_number = $3 Params: [ 'mktlab.ec@gmail.com', '2026-01-26T21:00:50.458Z', '+593992320262' ]
+2026-01-26T21:00:50.463635+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:50.465769+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:00:50.478182+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:00:50.487895+00:00 app[web.1]: '+593992320262',
+2026-01-26T21:00:50.487913+00:00 app[web.1]: '{"envelope":{"channel":"whatsapp","provider":"wassenger","event":"message:in:new","userId":"+593992320262","name":"OneMind 0262","type":"text","text":"si","mediaUrl":null,"timestamp":1769461220,"raw":{}},"confirmationActivated":true,"replyContext":{"hasReplyContext":false,"contextType":"none","contextSource":"direct_message","confidence":"none","quotedLength":0,"wasEnriched":true}}'
+2026-01-26T21:00:50.659464+00:00 app[web.1]: [2026-01-26T21:00:50.659Z] ℹ️ [INFO] [WEBHOOK] [user=+593992320262 agent=AURORA action=send_response] ✅ Agent response sent
+2026-01-26T21:00:50.659497+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593992320262
+2026-01-26T21:00:50.659634+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:50.663568+00:00 app[web.1]: '+593992320262'
+2026-01-26T21:00:50.669566+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593992320262' ]
+2026-01-26T21:00:50.671528+00:00 app[web.1]: [MEMORIA] ✅ Perfil guardado para +593992320262

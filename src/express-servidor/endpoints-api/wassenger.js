@@ -308,8 +308,21 @@ async function handleFormResult(formResult, userId, agentName, profile) {
     return true; // Manejado - hacer return
   }
 
-  // ✅ Formulario completo → mensaje de confirmación
+  // ✅ Formulario completo → mensaje de confirmación + activar sistema confirmación
   if (formResult.isComplete) {
+    // 🔥 HOTFIX v636: Guardar confirmación pendiente si es Aurora
+    if (agentName === 'AURORA' && formResult.form) {
+      const { processAuroraConfirmationRequest } = await import('../../servicios/aurora-confirmation-helper.js');
+      const confirmationResult = await processAuroraConfirmationRequest('FORM_COMPLETE', profile, { form: formResult.form });
+      
+      if (confirmationResult.success) {
+        await enviarWhatsApp(userId, confirmationResult.confirmationMessage);
+        await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.confirmationMessage, agent: agentName });
+        return true; // Manejado - hacer return
+      }
+    }
+    
+    // Fallback: mensaje genérico si no es Aurora o falla
     const confirmationMessage = `Perfecto! Déjame confirmar todos los datos:
 
 📋 RESUMEN:

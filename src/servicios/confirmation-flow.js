@@ -397,9 +397,15 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       userProfile.email = pendingReservation.email; // Actualizar también en memoria para notificaciones
     }
     
-    // 🎁 Si es primera reserva gratis, marcar trial usado
-    if (pendingReservation.wasFree) {
-      console.log('[Confirmation] 🎁 Marcando trial gratis como usado');
+    // 🎁 CRÍTICO: Si es Hot Desk gratis (primera reserva), marcar trial usado
+    // BUG FIX v636: Verificar también que el precio sea 0 y que sea Hot Desk
+    const isFirstFreeHotDesk = (
+      pendingReservation.wasFree === true || 
+      (pendingReservation.totalPrice === 0 && pendingReservation.serviceType === 'hotDesk')
+    ) && !userProfile.freeTrialUsed;
+    
+    if (isFirstFreeHotDesk) {
+      console.log('[Confirmation] 🎁 Marcando trial gratis como usado (primera reserva Hot Desk)');
       userUpdates.freeTrialUsed = true; // ← camelCase para saveProfile
       userUpdates.freeTrialDate = new Date().toISOString(); // ← camelCase
     }

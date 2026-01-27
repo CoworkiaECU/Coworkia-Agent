@@ -8,8 +8,10 @@ const WASSENGER_IPS = [
   '34.125.216.155', // IP original
   '34.16.197.77',   // Nueva IP detectada 2026-01-08 02:00
   '34.16.255.249',  // Nueva IP detectada 2026-01-08 14:00
+  '34.50.184.66',   // Nueva IP detectada 2026-01-27 (testing OneMind)
   '35.223.0.0/16',  // Rango GCP us-central1
-  '34.16.0.0/16'    // Rango GCP us-central1 alternativo
+  '34.16.0.0/16',   // Rango GCP us-central1 alternativo
+  '34.50.0.0/16'    // Rango GCP us-central1 (34.50.x.x)
 ];
 
 /**
@@ -124,7 +126,7 @@ function isWassengerIP(ip) {
   }
   
   // Rangos CIDR (simplificado - solo verifica prefijo)
-  if (ip.startsWith('34.125.') || ip.startsWith('35.223.') || ip.startsWith('34.16.')) {
+  if (ip.startsWith('34.125.') || ip.startsWith('35.223.') || ip.startsWith('34.16.') || ip.startsWith('34.50.')) {
     return true;
   }
   

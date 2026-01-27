@@ -1271,40 +1271,48 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
 
         // ═══════════════════════════════════════════════════════════════
-        // 🔄 HANDOVER CON MENSAJE ÚNICO (GARANTIZA ORDEN 100%)
+        // 🔄 HANDOVER CON 3 MENSAJES SEPARADOS (DELAYS 7s)
         // ═══════════════════════════════════════════════════════════════
         
-        // ✅ PASO 1: Actualizar activeAgent ANTES de enviar mensaje
-        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
-        profile.activeAgent = targetAgent;
-        await saveProfile(userId, profile);
-        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
-        
-        // ✅ PASO 2: Enviar mensaje único con despedida + saludo
-        const mensajeHandoff = `${handoffMessages.despedida}\n\n━━━━━━━━━━━━━━━\n\n${handoffMessages.entrada}`;
-        
-        console.log(`[HANDOFF] 📨 Enviando handoff único: ${fromAgent} → ${targetAgent}`);
-        await enviarWhatsApp(userId, mensajeHandoff);
-        
-        // Guardar ambas partes en el historial
+        // ✅ PASO 1: Enviar despedida del agente actual
+        console.log(`[HANDOFF] 👋 Enviando despedida de ${fromAgent}`);
+        await enviarWhatsApp(userId, handoffMessages.despedida);
         await saveConversationMessage(userId, { 
           role: 'assistant', 
           content: handoffMessages.despedida, 
           agent: fromAgent 
         });
+        
+        // ⏱️ PASO 2: Delay 7 segundos
+        console.log(`[HANDOFF] ⏱️ Esperando 7s antes de actualizar agente...`);
+        await new Promise(r => setTimeout(r, 7000));
+        
+        // ✅ PASO 3: Actualizar activeAgent
+        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
+        profile.activeAgent = targetAgent;
+        await saveProfile(userId, profile);
+        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
+        
+        // ⏱️ PASO 4: Delay 7 segundos
+        console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo...`);
+        await new Promise(r => setTimeout(r, 7000));
+        
+        // ✅ PASO 5: Enviar saludo del nuevo agente
+        console.log(`[HANDOFF] 👋 Enviando saludo de ${targetAgent}`);
+        await enviarWhatsApp(userId, handoffMessages.entrada);
         await saveConversationMessage(userId, { 
           role: 'assistant', 
           content: handoffMessages.entrada, 
           agent: targetAgent 
         });
         
-        console.log(`[HANDOFF] ✅ Handover completado exitosamente`);
+        console.log(`[HANDOFF] ✅ Handover completado exitosamente (delays 7s aplicados)`);
 
         // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
         if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
           console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
           
-          await new Promise(r => setTimeout(r, 800)); // Delay adicional para contexto
+          await new Promise(r => setTimeout(r, 7000)); // Delay 7s para contexto
           
           await enviarWhatsApp(userId, formResult.resumeMessage);
           await saveConversationMessage(userId, { 

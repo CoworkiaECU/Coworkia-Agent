@@ -907,7 +907,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // ⏱️ T14: Iniciar tracking de transacción si necesita más info (inicio de reserva)
       if (formResult.needsMoreInfo && !profile.transactionStartedAt) {
-        profile.transactionStartedAt = Date.now();
+        profile.transactionStartedAt = new Date().toISOString();
         profile.transactionAgent = 'AURORA';
         profile.followUpSentAt = null;
         await saveProfile(userId, profile);
@@ -1067,7 +1067,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         // ⏱️ T14: Iniciar tracking de transacción en primera foto
         if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
-          profile.transactionStartedAt = Date.now();
+          profile.transactionStartedAt = new Date().toISOString();
           profile.transactionAgent = 'AXEL';
           profile.followUpSentAt = null;
           await saveProfile(userId, profile);
@@ -1309,7 +1309,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
       if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
-        profile.transactionStartedAt = Date.now();
+        profile.transactionStartedAt = new Date().toISOString();
         profile.transactionAgent = targetAgent;
         profile.followUpSentAt = null;
         console.log('[T14] ⏱️ Transacción iniciada en handoff:', { userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt });

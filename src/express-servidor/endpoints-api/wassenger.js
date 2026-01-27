@@ -59,36 +59,48 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
 /* ─────────────────────────────────────────────────────────────
    ⏱️ DEBOUNCE: Agrupar webhooks rápidos del mismo usuario
    Previene race conditions cuando usuarios envían múltiples
-   mensajes/fotos en < 2 segundos. Agrupa todo en un solo
+   mensajes/fotos en < 500ms. Agrupa todo en un solo
    procesamiento para evitar saturar el pool de PostgreSQL.
+   
+   OPTIMIZACIÓN: Solo aplica delay si hay mensajes múltiples
+   en ráfaga. Mensajes individuales se procesan inmediatamente.
 ───────────────────────────────────────────────────────────── */
-const pendingWebhooks = new Map(); // userId → { timer, handler }
-const DEBOUNCE_WINDOW_MS = 1500; // 1.5 segundos
+const pendingWebhooks = new Map(); // userId → { timer, handler, count }
+const DEBOUNCE_WINDOW_MS = 500; // 500ms - solo para ráfagas
 
 /**
- * Agrupa webhooks del mismo usuario que lleguen dentro de DEBOUNCE_WINDOW_MS.
- * Cada nuevo webhook cancela el timer anterior y lo reinicia.
- * Cuando el timer expira, ejecuta el handler con el último mensaje recibido.
+ * Agrupa webhooks del mismo usuario que lleguen en ráfaga rápida.
+ * Si es el primer mensaje, ejecuta INMEDIATAMENTE.
+ * Si llegan más mensajes en < 500ms, agrupa y espera.
  */
 function debounceUserWebhook(userId, handler) {
-  // Si ya hay un timer activo, cancelarlo
+  // Si ya hay un timer activo (ráfaga detectada)
   if (pendingWebhooks.has(userId)) {
     const existing = pendingWebhooks.get(userId);
     clearTimeout(existing.timer);
-    console.log(`[DEBOUNCE] 📦 Mensaje adicional de ${userId}, reiniciando timer`);
+    existing.count++;
+    console.log(`[DEBOUNCE] 📦 Mensaje ${existing.count} de ${userId}, reagrupando`);
+    
+    // Crear nuevo timer para la ráfaga
+    existing.timer = setTimeout(() => {
+      pendingWebhooks.delete(userId);
+      console.log(`[DEBOUNCE] ✅ Procesando ${existing.count} mensajes de ${userId}`);
+      handler();
+    }, DEBOUNCE_WINDOW_MS);
   } else {
-    console.log(`[DEBOUNCE] 🆕 Primer mensaje de ${userId}, iniciando espera`);
-  }
-  
-  // Crear nuevo timer
-  const timer = setTimeout(() => {
-    pendingWebhooks.delete(userId);
-    console.log(`[DEBOUNCE] ✅ Procesando mensajes de ${userId} (timer expirado)`);
+    // Primer mensaje - ejecutar INMEDIATAMENTE
+    console.log(`[DEBOUNCE] ⚡ Mensaje único de ${userId} - procesando inmediatamente`);
+    
+    // Marcar usuario como "en proceso" para detectar ráfagas
+    const timer = setTimeout(() => {
+      pendingWebhooks.delete(userId);
+    }, DEBOUNCE_WINDOW_MS);
+    
+    pendingWebhooks.set(userId, { timer, handler, count: 1 });
+    
+    // Ejecutar inmediatamente
     handler();
-  }, DEBOUNCE_WINDOW_MS);
-  
-  // Guardar handler y timer
-  pendingWebhooks.set(userId, { timer, handler });
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

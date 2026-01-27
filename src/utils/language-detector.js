@@ -161,7 +161,8 @@ export function detectLanguage(message, preferredLanguage = null) {
 
 /**
  * 🔍 Detecta comandos explícitos de cambio de idioma
- * Ejemplos: /english, /español, /japanese, cambiar idioma, switch language
+ * ⚡ MODO: Una sola palabra activa el idioma
+ * Ejemplos: "english", "español", "français"
  * @param {string} message - Mensaje del usuario
  * @returns {string|null} Código de idioma o null si no hay comando
  */
@@ -172,7 +173,27 @@ export function detectLanguageCommand(message) {
 
   const normalized = message.toLowerCase().trim();
 
-  // Comandos con barra diagonal - Solo ES/EN/QU
+  // ⚡ UNA PALABRA ACTIVA EL IDIOMA - Comandos simples
+  const singleWordCommands = {
+    'english': SUPPORTED_LANGUAGES.ENGLISH,
+    'inglés': SUPPORTED_LANGUAGES.ENGLISH,
+    'ingles': SUPPORTED_LANGUAGES.ENGLISH,
+    'español': SUPPORTED_LANGUAGES.SPANISH,
+    'espanol': SUPPORTED_LANGUAGES.SPANISH,
+    'spanish': SUPPORTED_LANGUAGES.SPANISH,
+    'français': 'fr',
+    'francais': 'fr',
+    'french': 'fr',
+    'quechua': SUPPORTED_LANGUAGES.QUECHUA,
+    'runasimi': SUPPORTED_LANGUAGES.QUECHUA
+  };
+
+  // Si el mensaje es EXACTAMENTE una palabra de idioma
+  if (singleWordCommands[normalized]) {
+    return singleWordCommands[normalized];
+  }
+
+  // Comandos con barra diagonal
   const slashCommands = {
     '/spanish': SUPPORTED_LANGUAGES.SPANISH,
     '/español': SUPPORTED_LANGUAGES.SPANISH,
@@ -180,6 +201,9 @@ export function detectLanguageCommand(message) {
     '/english': SUPPORTED_LANGUAGES.ENGLISH,
     '/inglés': SUPPORTED_LANGUAGES.ENGLISH,
     '/ingles': SUPPORTED_LANGUAGES.ENGLISH,
+    '/français': 'fr',
+    '/francais': 'fr',
+    '/french': 'fr',
     '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
     '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
@@ -211,6 +235,12 @@ export function detectLanguageCommand(message) {
         /can\s+you\s+speak\s+spanish/i,
         /hablas\s+español/i
       ], lang: SUPPORTED_LANGUAGES.SPANISH },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*francés/i,
+        /habla(r)?\s+francés/i,
+        /french\s+please/i,
+        /parlez\s+vous\s+français/i
+      ], lang: 'fr' },
     { patterns: [
         /cambiar?\s+(a|al)?\s*quechua/i, 
         /habla(r)?\s+quechua/i, 
@@ -277,6 +307,50 @@ export function getUserLanguage(message, preferredLanguage = null) {
 }
 
 /**
+ * 🌐 Traduce un mensaje al idioma solicitado usando OpenAI
+ * @param {string} message - Mensaje a traducir
+ * @param {string} targetLanguage - Idioma destino ('es', 'en', 'fr', 'qu')
+ * @returns {Promise<string>} Mensaje traducido
+ */
+export async function translateMessage(message, targetLanguage) {
+  try {
+    const { Configuration, OpenAIApi } = await import('openai');
+    
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+    const openai = new OpenAIApi(configuration);
+    
+    const languageNames = {
+      es: 'Spanish',
+      en: 'English',
+      fr: 'French',
+      qu: 'Quechua'
+    };
+    
+    const targetName = languageNames[targetLanguage] || 'English';
+    
+    const response = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [{
+        role: 'system',
+        content: `You are a professional translator. Translate the following message to ${targetName}. Maintain the tone, emojis, and formatting. Only return the translation, nothing else.`
+      }, {
+        role: 'user',
+        content: message
+      }],
+      temperature: 0.3,
+      max_tokens: 500
+    });
+    
+    return response.data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('[TRANSLATE] Error:', error);
+    return message; // Si falla, devolver original
+  }
+}
+
+/**
  * 📝 Genera mensaje de confirmación de cambio de idioma
  * @param {string} newLanguage - Nuevo idioma
  * @returns {string} Mensaje de confirmación en el nuevo idioma
@@ -285,6 +359,7 @@ export function getLanguageChangeConfirmation(newLanguage) {
   const confirmations = {
     es: '✅ Perfecto! Ahora te responderé en español 🇪🇸',
     en: '✅ Perfect! I will now respond in English 🇺🇸',
+    fr: '✅ Parfait! Je vais maintenant répondre en français 🇫🇷',
     qu: '✅ Allinmi! Kunan runasimipi rimanayki 🏔️'
   };
 

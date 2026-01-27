@@ -668,30 +668,58 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ✅ Registrar mensaje procesado para rate limiting
     recordMessage(userId);
 
-    // 🌍 DETECCIÓN DE IDIOMA (LIMPIA) - Solo primer mensaje
-    // Idiomas soportados: español (default), inglés (todos), quechua (solo Angela)
+    // � DETECCIÓN DE CAMBIO DE IDIOMA MANUAL
+    // Si usuario escribe "english", "español", "français", etc.
+    const languageCommand = detectLanguageCommand(text);
+    
+    if (languageCommand) {
+      console.log(`[LANGUAGE] 🔄 Usuario solicitó cambio a: ${languageCommand}`);
+      
+      // Actualizar idioma en perfil
+      current.preferredLanguage = languageCommand;
+      await saveProfile(userId, { ...current, preferredLanguage: languageCommand });
+      console.log(`[LANGUAGE] ✅ Idioma actualizado en BD: ${languageCommand}`);
+      
+      // Obtener último mensaje del agente
+      const conversationHistory = await getConversationHistory(userId);
+      const lastAssistantMessage = conversationHistory
+        .filter(msg => msg.role === 'assistant')
+        .pop();
+      
+      if (lastAssistantMessage && lastAssistantMessage.content) {
+        console.log('[LANGUAGE] 📤 Reenviando último mensaje traducido...');
+        
+        // Traducir último mensaje al nuevo idioma
+        const { translateMessage } = await import('../../utils/language-detector.js');
+        const translatedMessage = await translateMessage(lastAssistantMessage.content, languageCommand);
+        
+        // Enviar traducción sin mensaje de confirmación (silencioso)
+        await enviarWhatsApp(userId, translatedMessage);
+        
+        console.log('[LANGUAGE] ✅ Mensaje traducido enviado');
+        
+        // Terminar procesamiento - no responder nada más
+        return res.json({ status: 'ok', message: 'language_changed' });
+      } else {
+        // Si no hay mensaje anterior, solo confirmar cambio
+        const confirmation = getLanguageChangeConfirmation(languageCommand);
+        await enviarWhatsApp(userId, confirmation);
+        console.log('[LANGUAGE] ✅ Cambio confirmado (sin mensaje anterior)');
+        return res.json({ status: 'ok', message: 'language_changed_no_history' });
+      }
+    }
+
+    // 🌍 DETECCIÓN DE IDIOMA AUTOMÁTICA - Solo si no tiene idioma guardado
+    // Idiomas soportados: español (default), inglés, francés, quechua
     const isFirstMessage = !current.preferredLanguage;
     let userLanguage = current.preferredLanguage || 'es';
     
     if (isFirstMessage && text) {
-      const detected = getUserLanguage(text, 'es');
+      // MODO: Default español - el usuario debe pedir explícitamente otro idioma
+      userLanguage = 'es';
+      console.log('[LANGUAGE] 🌍 Primera interacción - idioma español por defecto');
       
-      // Solo cambiar a inglés si hay alta confianza
-      if (detected.language === 'en' && detected.confidence > 0.5) {
-        userLanguage = 'en';
-        console.log('[LANGUAGE] 🌍 Primer mensaje en inglés detectado');
-      }
-      // Quechua solo para Angela (si algún día lo necesita)
-      else if (detected.language === 'qu' && detected.confidence > 0.6) {
-        userLanguage = 'qu';
-        console.log('[LANGUAGE] 🌍 Primer mensaje en quechua detectado');
-      } else {
-        // Español detectado o default
-        userLanguage = 'es';
-        console.log('[LANGUAGE] 🌍 Primer mensaje en español detectado (o default)');
-      }
-      
-      // ✅ SIEMPRE guardar idioma detectado (incluso si es español)
+      // ✅ Guardar idioma default
       current.preferredLanguage = userLanguage;
       await saveProfile(userId, { ...current, preferredLanguage: userLanguage });
       console.log(`[LANGUAGE] ✅ Idioma guardado en BD: ${userLanguage}`);

@@ -725,8 +725,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       await saveProfile(userId, { ...current, preferredLanguage: languageCommand });
       console.log(`[LANGUAGE] ✅ Idioma actualizado en BD: ${languageCommand}`);
       
-      // Obtener último mensaje del agente
-      const conversationHistory = await getConversationHistory(userId);
+      // Obtener último mensaje del agente (ya tenemos conversationHistory arriba)
       const lastAssistantMessage = conversationHistory
         .filter(msg => msg.role === 'assistant')
         .pop();

@@ -1256,9 +1256,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         });
 
         // ✅ PASO 2: Delay para garantizar orden de entrega en WhatsApp
-        console.log(`[HANDOFF] ⏱️ Esperando 2 segundos para orden de entrega...`);
-        await new Promise(r => setTimeout(r, 2000)); // 2 segundos
-        console.log(`[HANDOFF] ⏱️ Delay aplicado (2s) - cambiando agente`);
+        console.log(`[HANDOFF] ⏱️ Esperando 5 segundos para orden de entrega...`);
+        await new Promise(r => setTimeout(r, 5000)); // 5 segundos
+        console.log(`[HANDOFF] ⏱️ Delay aplicado (5s) - cambiando agente`);
         
         // ✅ PASO 3: Actualizar activeAgent 
         console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);

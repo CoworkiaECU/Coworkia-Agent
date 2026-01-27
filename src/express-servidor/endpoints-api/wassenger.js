@@ -1243,34 +1243,27 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
 
         // ═══════════════════════════════════════════════════════════════
-        // 🔄 HANDOVER ELEGANTE CON ORDEN CORRECTO
+        // 🔄 HANDOVER CON MENSAJE ÚNICO (GARANTIZA ORDEN 100%)
         // ═══════════════════════════════════════════════════════════════
         
-        // ✅ PASO 1: Agente saliente se despide PRIMERO
-        console.log(`[HANDOFF] 👋 ${fromAgent} despidiéndose PRIMERO...`);
-        await enviarWhatsApp(userId, handoffMessages.despedida);
-        await saveConversationMessage(userId, { 
-          role: 'assistant', 
-          content: handoffMessages.despedida, 
-          agent: fromAgent 
-        });
-
-        // ✅ PASO 2: Delay para garantizar orden de entrega en WhatsApp
-        console.log(`[HANDOFF] ⏱️ Esperando 4 segundos para orden de entrega...`);
-        await new Promise(r => setTimeout(r, 4000)); // 4 segundos
-        console.log(`[HANDOFF] ⏱️ Delay aplicado (4s) - cambiando agente`);
-        
-        // ✅ PASO 3: Actualizar activeAgent 
+        // ✅ PASO 1: Actualizar activeAgent ANTES de enviar mensaje
         console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
         profile.activeAgent = targetAgent;
         await saveProfile(userId, profile);
         console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
         
-        // ✅ PASO 4: NUEVO agente saluda DESPUÉS (con delay adicional)
-        console.log(`[HANDOFF] ⏱️ Esperando 4 segundos antes del saludo...`);
-        await new Promise(r => setTimeout(r, 4000)); // 4 segundos adicional
-        console.log(`[HANDOFF] 👋 ${targetAgent} saludando DESPUÉS...`);
-        await enviarWhatsApp(userId, handoffMessages.entrada);
+        // ✅ PASO 2: Enviar mensaje único con despedida + saludo
+        const mensajeHandoff = `${handoffMessages.despedida}\n\n━━━━━━━━━━━━━━━\n\n${handoffMessages.entrada}`;
+        
+        console.log(`[HANDOFF] 📨 Enviando handoff único: ${fromAgent} → ${targetAgent}`);
+        await enviarWhatsApp(userId, mensajeHandoff);
+        
+        // Guardar ambas partes en el historial
+        await saveConversationMessage(userId, { 
+          role: 'assistant', 
+          content: handoffMessages.despedida, 
+          agent: fromAgent 
+        });
         await saveConversationMessage(userId, { 
           role: 'assistant', 
           content: handoffMessages.entrada, 

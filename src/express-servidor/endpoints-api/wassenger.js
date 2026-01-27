@@ -92,6 +92,43 @@ function debounceUserWebhook(userId, handler) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   🛡️ DEDUPLICACIÓN: Prevenir procesamiento de webhooks duplicados
+   Wassenger puede enviar el mismo webhook múltiples veces si:
+   - Timeout en su lado (no recibe 200 a tiempo)
+   - Retry automático por errores transitorios
+   - Race conditions en su infraestructura
+───────────────────────────────────────────────────────────── */
+const processedMessages = new Map(); // messageId → timestamp
+const MESSAGE_DEDUP_TTL_MS = 60000; // 1 minuto
+
+/**
+ * Verifica si un mensaje ya fue procesado recientemente
+ * @param {string} messageId - ID único del mensaje de Wassenger
+ * @returns {boolean} - true si ya fue procesado
+ */
+function isDuplicateMessage(messageId) {
+  if (!messageId) return false; // Sin ID, no se puede deduplicar
+  
+  // Limpiar mensajes antiguos (> 1 minuto)
+  const now = Date.now();
+  for (const [id, timestamp] of processedMessages.entries()) {
+    if (now - timestamp > MESSAGE_DEDUP_TTL_MS) {
+      processedMessages.delete(id);
+    }
+  }
+  
+  // Verificar si ya fue procesado
+  if (processedMessages.has(messageId)) {
+    console.log(`[DEDUP] 🚫 Mensaje duplicado ignorado: ${messageId}`);
+    return true;
+  }
+  
+  // Marcar como procesado
+  processedMessages.set(messageId, now);
+  return false;
+}
+
+/* ─────────────────────────────────────────────────────────────
    🧼 Helpers
 ───────────────────────────────────────────────────────────── */
 function safeStr(v) {
@@ -552,11 +589,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     let text = normalizeText(data);
     const type = normalizeType(data);
     const mediaUrl = buildMediaUrl(data);
+    const messageId = data.id || data.messageId || `${userId}_${Date.now()}`;
 
     if (debug) {
       console.log('[WASSENGER] Incoming:', {
         event: evt,
         userId: userId || 'NULL',
+        messageId,
         type,
         hasText: !!text,
         hasMedia: !!mediaUrl,
@@ -565,6 +604,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
 
     if (!userId) return;
+
+    // 🛡️ DEDUPLICACIÓN: Ignorar webhooks duplicados
+    if (isDuplicateMessage(messageId)) {
+      console.log(`[DEDUP] ⏭️ Ignorando webhook duplicado de ${userId}`);
+      return res.json({ status: 'ok', message: 'duplicate_ignored' });
+    }
 
     loggers.webhook.info('Processing incoming message', { userId, type, hasMedia: !!mediaUrl });
 

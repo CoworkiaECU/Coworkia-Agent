@@ -1256,9 +1256,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         });
 
         // ✅ PASO 2: Delay para garantizar orden de entrega en WhatsApp
-        console.log(`[HANDOFF] ⏱️ Esperando 5 segundos para orden de entrega...`);
-        await new Promise(r => setTimeout(r, 5000)); // 5 segundos
-        console.log(`[HANDOFF] ⏱️ Delay aplicado (5s) - cambiando agente`);
+        console.log(`[HANDOFF] ⏱️ Esperando 4 segundos para orden de entrega...`);
+        await new Promise(r => setTimeout(r, 4000)); // 4 segundos
+        console.log(`[HANDOFF] ⏱️ Delay aplicado (4s) - cambiando agente`);
         
         // ✅ PASO 3: Actualizar activeAgent 
         console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
@@ -1267,8 +1267,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
         
         // ✅ PASO 4: NUEVO agente saluda DESPUÉS (con delay adicional)
-        console.log(`[HANDOFF] ⏱️ Esperando 1.5 segundos antes del saludo...`);
-        await new Promise(r => setTimeout(r, 1500)); // 1.5 segundos adicional
+        console.log(`[HANDOFF] ⏱️ Esperando 4 segundos antes del saludo...`);
+        await new Promise(r => setTimeout(r, 4000)); // 4 segundos adicional
         console.log(`[HANDOFF] 👋 ${targetAgent} saludando DESPUÉS...`);
         await enviarWhatsApp(userId, handoffMessages.entrada);
         await saveConversationMessage(userId, { 

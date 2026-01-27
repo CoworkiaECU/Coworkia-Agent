@@ -1350,15 +1350,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         try {
           const { databaseService } = await import('../../database/database.js');
-          const leadId = `lead_${Date.now()}_${userId.replace(/\+/g, '')}`;
-          const now = new Date().toISOString();
+          const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           
           await databaseService.run(
             `INSERT INTO membership_leads (
-              id, user_phone, membership_type, client_name, email, phone,
-              status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [leadId, userId, planType, name, email, phone, 'pending_payment', now, now]
+              id, user_phone, membership_type, client_name, email, phone, 
+              monthly_fee, status, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())`,
+            [leadId, userId, planType, name, email, phone, parseFloat(price)]
           );
           
           console.log('[ALUNA-LEAD] ✅ Lead creado:', leadId);

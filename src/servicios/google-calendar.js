@@ -347,7 +347,46 @@ export async function testCalendarConnection() {
   }
 }
 
+/**
+ * 🗑️ Eliminar evento de Google Calendar
+ */
+export async function deleteCalendarEvent(eventId) {
+  console.log(`[CALENDAR] 🗑️  Eliminando evento: ${eventId}`);
+  
+  const calendar = await createCalendarClient();
+  if (!calendar) {
+    console.error('[CALENDAR] ❌ No se pudo crear cliente de calendario');
+    return {
+      success: false,
+      error: 'Cliente de Google Calendar no disponible'
+    };
+  }
+
+  const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+
+  try {
+    await calendar.events.delete({
+      calendarId: calendarId,
+      eventId: eventId
+    });
+
+    console.log(`[CALENDAR] ✅ Evento eliminado: ${eventId}`);
+    return {
+      success: true,
+      message: 'Evento eliminado de Google Calendar'
+    };
+    
+  } catch (error) {
+    console.error(`[CALENDAR] ❌ Error eliminando evento ${eventId}:`, error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 export default {
   createCalendarEvent,
-  testCalendarConnection
+  testCalendarConnection,
+  deleteCalendarEvent
 };

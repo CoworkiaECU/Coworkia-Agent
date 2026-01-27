@@ -1346,6 +1346,39 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
+    // 💼 Si es ALUNA, detectar y crear lead automáticamente
+    if (resultado.agenteKey === 'ALUNA' && reply.includes('[LEAD_DATA:')) {
+      const leadMatch = reply.match(/\[LEAD_DATA:([^|]+)\|(\d+)\|([^|]+)\|([^|]+)\|([^\]]+)\]/);
+      
+      if (leadMatch) {
+        const [_, planType, price, name, email, phone] = leadMatch;
+        
+        console.log('[ALUNA-LEAD] 💼 Creando lead automático:', { planType, price, name, email });
+        
+        try {
+          const { databaseService } = await import('../../database/database.js');
+          const leadId = `lead_${Date.now()}_${userId.replace(/\+/g, '')}`;
+          const now = new Date().toISOString();
+          
+          await databaseService.run(
+            `INSERT INTO membership_leads (
+              id, user_phone, membership_type, client_name, email, phone,
+              status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [leadId, userId, planType, name, email, phone, 'pending_payment', now, now]
+          );
+          
+          console.log('[ALUNA-LEAD] ✅ Lead creado:', leadId);
+          
+          // Limpiar el tag de la respuesta visible al usuario
+          finalReply = reply.replace(/\[LEAD_DATA:[^\]]+\]/g, '').trim();
+        } catch (error) {
+          console.error('[ALUNA-LEAD] ❌ Error creando lead:', error);
+          // No bloquear - continuar sin lead
+        }
+      }
+    }
+
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,

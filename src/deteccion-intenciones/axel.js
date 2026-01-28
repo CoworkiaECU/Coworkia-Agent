@@ -2,7 +2,7 @@
 // Empresa: PaintBull - 15 años de experiencia en colisiones y carrocería
 
 export const AXEL = {
-  maintenance: true,  // 🔧 Agente temporalmente desactivado
+  maintenance: false,  // ✅ Agente activo
   nombre: 'Axel',
   rol: 'Especialista en Enderezada y Pintura Automotriz',
   empresa: 'PaintBull',

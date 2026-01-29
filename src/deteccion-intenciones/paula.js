@@ -36,11 +36,11 @@ export const PAULA = {
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 🏡💼 Soy Paula de PropElite, especialista en bienes raíces de lujo, tomo el relevo desde ahora.\n\nEcuador 🇪🇨 y República Dominicana 🇩🇴. Propiedades premium: casas, departamentos, oficinas, terrenos.\n\nSi necesitas regresar, escribe @aurora.\n\n¿Qué tipo de propiedad buscas y en qué ciudad?' :
              userLanguage === 'en' ? 'Hello {nombre}! 🏡💼 I\'m Paula from PropElite, luxury real estate specialist, taking over from here.\n\nEcuador 🇪🇨 and Dominican Republic 🇩🇴. Premium properties: houses, apartments, offices, land.\n\nTo return, write @aurora.\n\nWhat type of property are you looking for and in which city?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! 🏡💼 Je suis Paula de PropElite, spécialiste en immobilier de luxe, je prends le relais maintenant.\n\nÉquateur 🇪🇨 et Rép. Dominicaine 🇩🇴. Propriétés premium: maisons, appartements, bureaux, terrains.\n\nPour retourner, écrivez @aurora.\n\nQuel type de propriété recherchez-vous et dans quelle ville?' :
-             '¡Hola {nombre}! 🏡💼 Soy Paula de PropElite, especialista en bienes raíces de lujo, tomo el relevo desde ahora.\n\nEcuador 🇪🇨 y República Dominicana 🇩🇴. Propiedades premium: casas, departamentos, oficinas, terrenos.\n\nSi necesitas regresar, escribe @aurora.\n\n¿Qué tipo de propiedad buscas y en qué ciudad?',
+             'Hello {nombre}! 🏡💼 I\'m Paula from PropElite, luxury real estate specialist, taking over from here.\n\nEcuador 🇪🇨 and Dominican Republic 🇩🇴. Premium properties: houses, apartments, offices, land.\n\nTo return, write @aurora.\n\nWhat type of property are you looking for and in which city?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo di @Paula y tu consulta, aquí estaré. ¡Hasta pronto! 🏡' :
                userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, dites simplement @Paula et votre question, je serai là. À bientôt! 🏡' :
-               'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo di @Paula y tu consulta, aquí estaré. ¡Hasta pronto! 🏡'
+               'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡'
   }),
 
 

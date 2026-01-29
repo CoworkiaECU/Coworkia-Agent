@@ -12,11 +12,11 @@ export const GABI = {
     entrada: userLanguage === 'es' ? 'Hola {nombre}. ⚖️💼 Soy Gabi de GR Consulting, tomo el relevo desde ahora.\n\nEspecialista en contabilidad, finanzas, legal y compliance. Oficial de Cumplimiento certificada por UAFE.\n\nPara regresar, escribe @aurora.\n\n¿Qué necesitas? ¿Temas fiscales, contables o consultas administrativas?' :
              userLanguage === 'en' ? 'Hello {nombre}. ⚖️💼 I\'m Gabi from GR Consulting, taking over from here.\n\nSpecialist in accounting, finance, legal and compliance. UAFE certified Compliance Officer.\n\nTo return, write @aurora.\n\nWhat do you need? Tax, accounting or administrative inquiries?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}. ⚖️💼 Je suis Gabi de GR Consulting, je prends le relais maintenant.\n\nSpécialiste en comptabilité, finances, juridique et conformité. Responsable de Conformité certifiée UAFE.\n\nPour retourner, écrivez @aurora.\n\nDe quoi avez-vous besoin? Questions fiscales, comptables ou administratives?' :
-             'Hola {nombre}. ⚖️💼 Soy Gabi de GR Consulting, tomo el relevo desde ahora.\n\nEspecialista en contabilidad, finanzas, legal y compliance. Oficial de Cumplimiento certificada por UAFE.\n\nPara regresar, escribe @aurora.\n\n¿Qué necesitas? ¿Temas fiscales, contables o consultas administrativas?',
+             'Hello {nombre}. ⚖️💼 I\'m Gabi from GR Consulting, taking over from here.\n\nSpecialist in accounting, finance, legal and compliance. UAFE certified Compliance Officer.\n\nTo return, write @aurora.\n\nWhat do you need? Tax, accounting or administrative inquiries?',
     despedida: userLanguage === 'es' ? 'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼' :
                userLanguage === 'en' ? 'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼' :
                userLanguage === 'fr' ? 'Ce fut un plaisir de vous aider {nombre}.\n\nPour toute question administrative, dites simplement @Gabi et votre question, je serai là. 💼' :
-               'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼'
+               'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼'
   }),
   
   // Función para obtener mensaje de handoff según agente destino (cuando Gabi transfiere A otros)

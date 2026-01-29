@@ -127,7 +127,7 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
     } else if (userLanguage === 'fr') {
       mensajeEntrada = `Rebonjour ${userName}! 😊✨ Je suis Aurora, je prends le relais maintenant.\n\n${previousAgentName} est disponible avec @${fromAgent.toLowerCase()} si vous en avez besoin, il se souviendra de votre dernière conversation.\n\nComment puis-je vous aider maintenant?`;
     } else {
-      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊✨ Soy Aurora, tomo el relevo desde ahora.\n\n${previousAgentName} está disponible con @${fromAgent.toLowerCase()} si lo necesitas, recordará tu última conversación.\n\n¿En qué te puedo asistir ahora?`;
+      mensajeEntrada = `Hello again ${userName}! 😊✨ I'm Aurora, taking over from here.\n\n${previousAgentName} is available with @${fromAgent.toLowerCase()} if you need them, they'll remember your last conversation.\n\nHow can I assist you now?`;
     }
   } else {
     // Mensaje de entrada estándar

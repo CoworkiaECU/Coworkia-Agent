@@ -31,11 +31,11 @@ export const ANGELA = {
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 💚😊 Soy Ángela de MedBeneficios.\n\nTomo el relevo desde ahora para guiarte con temas de salud, tanto tuya como de tu familia.\n\nSi necesitas regresar, escribe @aurora y retomas tu conversación.\n\n¿Qué puedo hacer por tu bienestar?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?' :
              userLanguage === 'qu' ? 'Napaykullayki {nombre}! Ñuqa kani Angela 👩‍⚕️ MedBeneficios-manta qampaq qhali kay yanapaqniykim.\n\nImanapi yanapasunki kunan?' :
-             '¡Hola {nombre}! Soy Ángela 👩‍⚕️ Tu asistente médica de MedBeneficios.\n\n¿En qué puedo ayudarte con tu bienestar hoy?',
+             'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚' :
                userLanguage === 'en' ? 'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚' :
                userLanguage === 'qu' ? 'Allinmi {nombre}, qhali kayta allinta qhaway.\n\nMayqin pachapipas kutimunki, @Angela nispa tapukuy, kaypi kasaq 24/7. ¡Allinta qhaway! 💚' :
-               'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚'
+               'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚'
   }),
   
   // Función para obtener mensaje de handoff según agente destino (cuando Angela transfiere A otros)

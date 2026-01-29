@@ -30,16 +30,10 @@ export const ANGELA = {
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 💚😊 Soy Ángela de MedBeneficios.\n\nTomo el relevo desde ahora para guiarte con temas de salud, tanto tuya como de tu familia.\n\nSi necesitas regresar, escribe @aurora y retomas tu conversación.\n\n¿Qué puedo hacer por tu bienestar?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?' :
-             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Angela 👩‍⚕️ Votre assistante médicale de MedBeneficios.\n\nComment puis-je vous aider avec votre bien-être aujourd\'hui?' :
-             userLanguage === 'it' ? 'Ciao {nombre}! Sono Angela 👩‍⚕️ La tua assistente medica di MedBeneficios.\n\nCome posso aiutarti con il tuo benessere oggi?' :
-             userLanguage === 'pt' ? 'Olá {nombre}! Sou Angela 👩‍⚕️ Sua assistente médica do MedBeneficios.\n\nComo posso ajudá-lo com seu bem-estar hoje?' :
              userLanguage === 'qu' ? 'Napaykullayki {nombre}! Ñuqa kani Angela 👩‍⚕️ MedBeneficios-manta qampaq qhali kay yanapaqniykim.\n\nImanapi yanapasunki kunan?' :
              '¡Hola {nombre}! Soy Ángela 👩‍⚕️ Tu asistente médica de MedBeneficios.\n\n¿En qué puedo ayudarte con tu bienestar hoy?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚' :
                userLanguage === 'en' ? 'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚' :
-               userLanguage === 'fr' ? 'Parfait {nombre}, prenez bien soin de votre santé.\n\nVous pouvez revenir à tout moment, dites simplement @Angela et votre question, je serai là 24/7. Prenez soin de vous! 💚' :
-               userLanguage === 'it' ? 'Perfetto {nombre}, abbi cura della tua salute.\n\nPuoi tornare in qualsiasi momento, basta dire @Angela e la tua domanda, sarò qui 24/7. Stammi bene! 💚' :
-               userLanguage === 'pt' ? 'Perfeito {nombre}, cuide bem da sua saúde.\n\nVocê pode retornar a qualquer momento, basta dizer @Angela e sua pergunta, estarei aqui 24/7. Cuide-se! 💚' :
                userLanguage === 'qu' ? 'Allinmi {nombre}, qhali kayta allinta qhaway.\n\nMayqin pachapipas kutimunki, @Angela nispa tapukuy, kaypi kasaq 24/7. ¡Allinta qhaway! 💚' :
                'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚'
   }),

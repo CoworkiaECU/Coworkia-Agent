@@ -1,13 +1,14 @@
 /**
  * 🌍 Sistema de Detección Automática de Idioma
  * Detecta el idioma del mensaje del usuario usando patrones nativos
- * Soporta: Español, English, Runasimi (Quechua Ecuador)
+ * Soporta: Español, English, Français, Runasimi (Quechua Ecuador)
  */
 
 // Códigos ISO 639-1 para idiomas soportados
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
+  FRENCH: 'fr',
   QUECHUA: 'qu'
 };
 
@@ -15,6 +16,7 @@ export const SUPPORTED_LANGUAGES = {
 export const LANGUAGE_NAMES = {
   es: 'Español',
   en: 'English',
+  fr: 'Français',
   qu: 'Runasimi'
 };
 
@@ -44,6 +46,18 @@ const LANGUAGE_PATTERNS = {
       'tomorrow', 'today', 'booking', 'reservation', 'help', 'price', 'information'
     ],
     specialChars: /\b(the|a|an|is|are|am|was|were|been|being)\b/i,
+    weight: 1.0
+  },
+
+  // French - Mots communs et structure
+  fr: {
+    commonWords: [
+      'bonjour', 'salut', 'merci', 'sil', 'vous', 'plaît', 'comment', 'quoi', 'quand',
+      'où', 'veux', 'besoin', 'avoir', 'être', 'suis', 'est', 'sont',
+      'pour', 'avec', 'sans', 'mais', 'parce', 'que', 'aussi', 'ici', 'maintenant',
+      'demain', 'aujourd', 'hui', 'réservation', 'information', 'aide', 'prix'
+    ],
+    specialChars: /[àâäéèêëïîôùûüÿœæç]/i,
     weight: 1.0
   },
 
@@ -181,9 +195,9 @@ export function detectLanguageCommand(message) {
     'español': SUPPORTED_LANGUAGES.SPANISH,
     'espanol': SUPPORTED_LANGUAGES.SPANISH,
     'spanish': SUPPORTED_LANGUAGES.SPANISH,
-    'français': 'fr',
-    'francais': 'fr',
-    'french': 'fr',
+    'français': SUPPORTED_LANGUAGES.FRENCH,
+    'francais': SUPPORTED_LANGUAGES.FRENCH,
+    'french': SUPPORTED_LANGUAGES.FRENCH,
     'quechua': SUPPORTED_LANGUAGES.QUECHUA,
     'runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
@@ -201,9 +215,9 @@ export function detectLanguageCommand(message) {
     '/english': SUPPORTED_LANGUAGES.ENGLISH,
     '/inglés': SUPPORTED_LANGUAGES.ENGLISH,
     '/ingles': SUPPORTED_LANGUAGES.ENGLISH,
-    '/français': 'fr',
-    '/francais': 'fr',
-    '/french': 'fr',
+    '/français': SUPPORTED_LANGUAGES.FRENCH,
+    '/francais': SUPPORTED_LANGUAGES.FRENCH,
+    '/french': SUPPORTED_LANGUAGES.FRENCH,
     '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
     '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
@@ -240,7 +254,7 @@ export function detectLanguageCommand(message) {
         /habla(r)?\s+francés/i,
         /french\s+please/i,
         /parlez\s+vous\s+français/i
-      ], lang: 'fr' },
+      ], lang: SUPPORTED_LANGUAGES.FRENCH },
     { patterns: [
         /cambiar?\s+(a|al)?\s*quechua/i, 
         /habla(r)?\s+quechua/i, 

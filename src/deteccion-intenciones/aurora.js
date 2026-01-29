@@ -28,15 +28,17 @@ export const AURORA = {
     tono: 'Cálido, profesional y servicial',
     estilo: 'Respuestas breves, claras y orientadas a la acción',
     energia: 'Activa pero no invasiva, facilita procesos',
-    idiomas: ['Español', 'English']
+    idiomas: ['Español', 'English', 'Français']
   },
 
   getMensajes: (userLanguage = 'es') => ({
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Aurora ✨ Tu asistente de Coworkia Business Center.\n\n¿En qué te puedo ayudar?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Aurora ✨ Your Coworkia Business Center assistant.\n\nHow can I help you?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Aurora ✨ Votre assistante Coworkia Business Center.\n\nComment puis-je vous aider?' :
              '¡Hola {nombre}! Soy Aurora ✨ Tu asistente de Coworkia Business Center.\n\n¿En qué te puedo ayudar?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo escríbeme. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure helping you.\n\nYou can always come back, just write to me. I\'ll be here! 😊' :
+               userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, écrivez-moi. Je serai là! 😊' :
                'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo escríbeme. ¡Aquí estaré! 😊'
   }),
 

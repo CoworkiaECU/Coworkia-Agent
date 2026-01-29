@@ -32,14 +32,10 @@ export const ADRIANA = {
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 🛡️💼 Soy Adriana de SegPopular, tomo el relevo desde ahora.\n\nEstoy aquí para asesorarte en seguros y proteger tu patrimonio. Con 17 años de experiencia y 33 licencias como broker.\n\nSi necesitas regresar a tu conversación anterior, escribe @aurora y retomas donde quedaste.\n\n¿Qué tipo de seguro necesitas? ¿Vehículo, vida, o prefieres que hablemos de tus opciones?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Adriana from SegPopular 🛡️\n\n🚗 Vehicle insurance specialist\n💰 Fast quote for your car\n\nWhat city is your vehicle in?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Adriana de SegPopular 🛡️\n\n🚗 Spécialiste assurance véhicule\n💰 Devis rapide pour votre voiture\n\nDans quelle ville se trouve votre véhicule?' :
-             userLanguage === 'it' ? 'Ciao {nombre}! Sono Adriana di SegPopular 🛡️\n\n🚗 Specialista assicurazioni veicoli\n💰 Preventivo rapido per la tua auto\n\nIn quale città si trova il tuo veicolo?' :
-             userLanguage === 'pt' ? 'Olá {nombre}! Sou Adriana da SegPopular 🛡️\n\n🚗 Especialista em seguros veiculares\n💰 Cotação rápida para seu carro\n\nEm que cidade está seu veículo?' :
              '¡Hola {nombre}! Soy Adriana de SegPopular 🛡️\n\n🚗 Especialista en seguros vehiculares\n💰 Cotización rápida para tu auto\n\n¿En qué ciudad está tu vehículo?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊' :
                userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure advising you.\n\nYou can always come back, just say @Adriana and your question. I\'ll be here! 😊' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous conseiller.\n\nVous pouvez revenir à tout moment, dites simplement @Adriana et votre question, je serai là. 😊' :
-               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere consigliarti.\n\nPuoi tornare in qualsiasi momento, basta dire @Adriana e la tua domanda, sarò qui. 😊' :
-               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer assessorá-lo.\n\nVocê pode retornar a qualquer momento, basta dizer @Adriana e sua pergunta, estarei aqui. 😊' :
                'Perfecto {nombre}, fue un placer asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Adriana y tu consulta, aquí estaré. 😊'
   }),
   

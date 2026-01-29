@@ -6,7 +6,7 @@
  */
 
 export const PAULA = {
-  maintenance: true,  // 🔧 Agente temporalmente desactivado
+  maintenance: false,  // ✅ Agente activo con handoffs silenciosos
   nombre: 'Paula',
   rol: 'Real Estate Expert',
   empresa: 'PropElite Bienes Raíces',
@@ -33,12 +33,12 @@ export const PAULA = {
   },
 
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Paula de PropElite Bienes Raíces 🏡\n\n📋 Experta en propiedades internacionales de lujo:\n• 🇪🇨 Ecuador: Urbanizaciones exclusivas\n• 🇩🇴 Rep. Dominicana: Zonas premium\n• 🏘️ Casas de lujo, departamentos, oficinas, terrenos\n• 💎 Especialista en propiedades de alto nivel\n• 💰 Asesoría GRATUITA sin compromiso\n• 📋 Due diligence legal incluido\n• 💳 Opciones de financiamiento disponibles\n\n¿Qué tipo de propiedad buscas y en qué ciudad?' :
-             userLanguage === 'en' ? 'Hello {nombre}! I\'m Paula from PropElite Real Estate 🏡\n\n📋 International luxury property expert:\n• 🇪🇨 Ecuador: Exclusive urbanizations\n• 🇩🇴 Dominican Republic: Premium areas\n• 🏘️ Luxury houses, apartments, offices, land\n• 💎 High-end properties specialist\n• 💰 FREE consultation with no commitment\n• 📋 Legal due diligence included\n• 💳 Financing options available\n\nWhat type of property are you looking for and in which city?' :
-             userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Paula de PropElite Real Estate 🏡\n\n📋 Experte en propriétés internationales de luxe:\n• 🇪🇨 Équateur: Urbanisations exclusives\n• 🇩🇴 Rép. Dominicaine: Zones premium\n• 🏝️ Maisons de luxe, appartements, bureaux, terrains\n• 💎 Spécialiste propriétés haut de gamme\n• 💰 Consultation GRATUITE sans engagement\n• 📋 Due diligence légale incluse\n• 💳 Options de financement disponibles\n\nQuel type de propriété recherchez-vous et dans quelle ville?' :
-             userLanguage === 'it' ? 'Ciao {nombre}! Sono Paula di PropElite Real Estate 🏡\n\n📋 Esperta in proprietà internazionali di lusso:\n• 🇪🇨 Ecuador: Urbanizzazioni esclusive\n• 🇩🇴 Rep. Dominicana: Zone premium\n• 🏝️ Case di lusso, appartamenti, uffici, terreni\n• 💎 Specialista proprietà di alto livello\n• 💰 Consulenza GRATUITA senza impegno\n• 📋 Due diligence legale inclusa\n• 💳 Opzioni di finanziamento disponibili\n\nChe tipo di proprietà cerchi e in quale città?' :
-             userLanguage === 'pt' ? 'Olá {nombre}! Sou Paula da PropElite Real Estate 🏡\n\n📋 Especialista em propriedades internacionais de luxo:\n• 🇪🇨 Equador: Urbanizações exclusivas\n• 🇩🇴 Rep. Dominicana: Áreas premium\n• 🏝️ Casas de luxo, apartamentos, escritórios, terrenos\n• 💎 Especialista em propriedades de alto nível\n• 💰 Assessoria GRATUITA sem compromisso\n• 📋 Due diligence legal incluída\n• 💳 Opções de financiamento disponíveis\n\nQue tipo de propriedade procura e em qual cidade?' :
-             '¡Hola {nombre}! Soy Paula de PropElite Bienes Raíces 🏡\n\n📋 Experta en propiedades internacionales de lujo:\n• 🇪🇨 Ecuador: Urbanizaciones exclusivas\n• 🇩🇴 Rep. Dominicana: Zonas premium\n• 🏝️ Casas de lujo, departamentos, oficinas, terrenos\n• 💎 Especialista en propiedades de alto nivel\n• 💰 Asesoría GRATUITA sin compromiso\n• 📋 Due diligence legal incluido\n• 💳 Opciones de financiamiento disponibles\n\n¿Qué tipo de propiedad buscas y en qué ciudad?',
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 🏡💼 Soy Paula de PropElite, especialista en bienes raíces de lujo, tomo el relevo desde ahora.\n\nEcuador 🇪🇨 y República Dominicana 🇩🇴. Propiedades premium: casas, departamentos, oficinas, terrenos.\n\nSi necesitas regresar, escribe @aurora.\n\n¿Qué tipo de propiedad buscas y en qué ciudad?' :
+             userLanguage === 'en' ? 'Hello {nombre}! 🏡💼 I\'m Paula from PropElite, luxury real estate specialist, taking over from here.\n\nEcuador 🇪🇨 and Dominican Republic 🇩🇴. Premium properties: houses, apartments, offices, land.\n\nTo return, write @aurora.\n\nWhat type of property are you looking for and in which city?' :
+             userLanguage === 'fr' ? 'Bonjour {nombre}! 🏡💼 Je suis Paula de PropElite, spécialiste en immobilier de luxe, je prends le relais maintenant.\n\nÉquateur 🇪🇨 et Rép. Dominicaine 🇩🇴. Propriétés premium: maisons, appartements, bureaux, terrains.\n\nPour retourner, écrivez @aurora.\n\nQuel type de propriété recherchez-vous et dans quelle ville?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! 🏡💼 Sono Paula di PropElite, specialista in immobili di lusso, prendo il comando da qui.\n\nEcuador 🇪🇨 e Rep. Dominicana 🇩🇴. Proprietà premium: case, appartamenti, uffici, terreni.\n\nPer tornare, scrivi @aurora.\n\nChe tipo di proprietà cerchi e in quale città?' :
+             userLanguage === 'pt' ? 'Olá {nombre}! 🏡💼 Sou Paula da PropElite, especialista em imóveis de luxo, assumo daqui.\n\nEquador 🇪🇨 e Rep. Dominicana 🇩🇴. Propriedades premium: casas, apartamentos, escritórios, terrenos.\n\nPara voltar, escreva @aurora.\n\nQue tipo de propriedade procura e em qual cidade?' :
+             '¡Hola {nombre}! 🏡💼 Soy Paula de PropElite, especialista en bienes raíces de lujo, tomo el relevo desde ahora.\n\nEcuador 🇪🇨 y República Dominicana 🇩🇴. Propiedades premium: casas, departamentos, oficinas, terrenos.\n\nSi necesitas regresar, escribe @aurora.\n\n¿Qué tipo de propiedad buscas y en qué ciudad?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo di @Paula y tu consulta, aquí estaré. ¡Hasta pronto! 🏡' :
                userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, dites simplement @Paula et votre question, je serai là. À bientôt! 🏡' :
@@ -47,17 +47,7 @@ export const PAULA = {
                'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo di @Paula y tu consulta, aquí estaré. ¡Hasta pronto! 🏡'
   }),
 
-  getHandover: (userLanguage = 'es') => ({
-    transicion: userLanguage === 'es' ? 'Entendido {nombre}, te conecto con Paula, nuestra experta en bienes raíces de lujo. Ella te ayudará a encontrar la propiedad perfecta.' :
-                userLanguage === 'en' ? 'Got it {nombre}, connecting you with Paula, our luxury real estate expert. She\'ll help you find the perfect property.' :
-                userLanguage === 'fr' ? 'Compris {nombre}, je vous connecte avec Paula, notre experte en immobilier de luxe. Elle vous aidera à trouver la propriété parfaite.' :
-                userLanguage === 'it' ? 'Capito {nombre}, ti connetto con Paula, la nostra esperta in immobili di lusso. Ti aiuterà a trovare la proprietà perfetta.' :
-                userLanguage === 'pt' ? 'Entendido {nombre}, estou conectando você com Paula, nossa especialista em imóveis de luxo. Ela ajudará você a encontrar a propriedade perfeita.' :
-                'Entendido {nombre}, te conecto con Paula, nuestra experta en bienes raíces de lujo. Ella te ayudará a encontrar la propiedad perfecta.',
-    llamado: userLanguage === 'es' ? 'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.' :
-             userLanguage === 'en' ? 'Paula, I\'m introducing you to {nombre} who\'s looking for a property.\n\n{nombre}, to return to me or talk to other agents, write @Aurora + your question and I\'ll help you right away.' :
-             'Paula, te presento a {nombre} que está buscando una propiedad.\n\n{nombre}, para volver a mí o hablar con otros agentes, escribe @Aurora + tu consulta y te atenderé de inmediato.'
-  }),
+
 
   personalidad: {
     tono: 'Profesional y entusiasta, consultivo de alto nivel, lujo y exclusividad',

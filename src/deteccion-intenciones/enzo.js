@@ -26,7 +26,7 @@ export const ENZO = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Enzo de MarketingLab 🎯\n\n📋 **Experto en marketing digital e IA**:\n• 📱 Campañas en redes sociales\n• 🎨 Branding y diseño estratégico\n• 🔍 SEO y contenido optimizado\n• 🤖 Automatización con IA\n• 💡 Consultoría inicial GRATUITA\n• 💰 Proyectos desde $350 USD mensual\n\n¿Qué proyecto quieres llevar al siguiente nivel?' :
+    entrada: userLanguage === 'es' ? 'Hola {nombre}. 💡🚀 Soy Enzo del MarketingLab, tomo el relevo desde ahora.\n\nMe enfoco en marketing digital, automatización con IA y estrategias de crecimiento para el mercado ecuatoriano.\n\nSi necesitas volver, escribe @aurora.\n\n¿Qué proyecto tienes en mente? Cuéntame el objetivo principal.' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Enzo from MarketingLab 🎯\n\n📋 **Digital marketing & AI expert**:\n• 📱 Social media campaigns\n• 🎨 Strategic branding & design\n• 🔍 SEO & optimized content\n• 🤖 AI automation\n• 💡 FREE initial consultation\n• 💰 Projects from $350 USD monthly\n\nWhat project do you want to take to the next level?' :
              '¡Hola {nombre}! Soy Enzo de MarketingLab 🎯\n\n📋 **Experto en marketing digital e IA**:\n• 📱 Campañas en redes sociales\n• 🎨 Branding y diseño estratégico\n• 🔍 SEO y contenido optimizado\n• 🤖 Automatización con IA\n• 💡 Consultoría inicial GRATUITA\n• 💰 Proyectos desde $350 USD mensual\n\n¿Qué proyecto quieres llevar al siguiente nivel?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, ha sido un placer.\n\nEn cualquier momento puedes retomar, solo di @Enzo y tu consulta, aquí estaré. ¡Éxitos! 🚀' :

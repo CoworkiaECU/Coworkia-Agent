@@ -119,18 +119,19 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   // Caso especial: Aurora detecta si viene de otro agente (returning user)
   if (toAgent === 'AURORA' && fromAgent !== 'AURORA') {
     // Usuario regresa a Aurora desde otro agente
+    const previousAgentName = AGENTES[fromAgent]?.nombre || fromAgent;
     if (userLanguage === 'es') {
-      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊\n\n¿En qué te puedo asistir?`;
+      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊✨ Soy Aurora, tomo el relevo desde ahora.\n\n${previousAgentName} está disponible con @${fromAgent.toLowerCase()} si lo necesitas, recordará tu última conversación.\n\n¿En qué te puedo asistir ahora?`;
     } else if (userLanguage === 'en') {
-      mensajeEntrada = `Hello again ${userName}! 😊\n\nHow can I assist you?`;
+      mensajeEntrada = `Hello again ${userName}! 😊✨ I'm Aurora, taking over from here.\n\n${previousAgentName} is available with @${fromAgent.toLowerCase()} if you need them, they'll remember your last conversation.\n\nHow can I assist you now?`;
     } else if (userLanguage === 'fr') {
-      mensajeEntrada = `Rebonjour ${userName}! 😊\n\nComment puis-je vous aider?`;
+      mensajeEntrada = `Rebonjour ${userName}! 😊✨ Je suis Aurora, je prends le relais maintenant.\n\n${previousAgentName} est disponible avec @${fromAgent.toLowerCase()} si vous en avez besoin, il se souviendra de votre dernière conversation.\n\nComment puis-je vous aider maintenant?`;
     } else if (userLanguage === 'it') {
-      mensajeEntrada = `Ciao di nuovo ${userName}! 😊\n\nCome posso aiutarti?`;
+      mensajeEntrada = `Ciao di nuovo ${userName}! 😊✨ Sono Aurora, prendo il comando da qui.\n\n${previousAgentName} è disponibile con @${fromAgent.toLowerCase()} se ne hai bisogno, ricorderà la tua ultima conversazione.\n\nCome posso aiutarti ora?`;
     } else if (userLanguage === 'pt') {
-      mensajeEntrada = `Olá novamente ${userName}! 😊\n\nComo posso ajudá-lo?`;
+      mensajeEntrada = `Olá novamente ${userName}! 😊✨ Sou Aurora, assumo daqui.\n\n${previousAgentName} está disponível com @${fromAgent.toLowerCase()} se precisar, lembrará de sua última conversa.\n\nComo posso ajudá-lo agora?`;
     } else {
-      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊\n\n¿En qué te puedo asistir?`;
+      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊✨ Soy Aurora, tomo el relevo desde ahora.\n\n${previousAgentName} está disponible con @${fromAgent.toLowerCase()} si lo necesitas, recordará tu última conversación.\n\n¿En qué te puedo asistir ahora?`;
     }
   } else {
     // Mensaje de entrada estándar

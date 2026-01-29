@@ -29,7 +29,7 @@ export const ADRIANA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Adriana de SegPopular 🛡️\n\n🚗 Especialista en seguros para vehículos LIVIANOS\n💰 Cotización rápida (autos, camionetas, SUVs)\n\n¿En qué ciudad está tu vehículo?' :
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 🛡️💼 Soy Adriana de SegPopular, tomo el relevo desde ahora.\n\nEstoy aquí para asesorarte en seguros y proteger tu patrimonio. Con 17 años de experiencia y 33 licencias como broker.\n\nSi necesitas regresar a tu conversación anterior, escribe @aurora y retomas donde quedaste.\n\n¿Qué tipo de seguro necesitas? ¿Vehículo, vida, o prefieres que hablemos de tus opciones?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Adriana from SegPopular 🛡️\n\n🚗 Vehicle insurance specialist\n💰 Fast quote for your car\n\nWhat city is your vehicle in?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Adriana de SegPopular 🛡️\n\n🚗 Spécialiste assurance véhicule\n💰 Devis rapide pour votre voiture\n\nDans quelle ville se trouve votre véhicule?' :
              userLanguage === 'it' ? 'Ciao {nombre}! Sono Adriana di SegPopular 🛡️\n\n🚗 Specialista assicurazioni veicoli\n💰 Preventivo rapido per la tua auto\n\nIn quale città si trova il tuo veicolo?' :

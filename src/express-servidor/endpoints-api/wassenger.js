@@ -65,37 +65,25 @@ async function executeHandoffSequence(userId, profile, fromAgent, targetAgent, u
     // 🎯 Obtener mensajes de handoff usando función unificada
     const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
     
-    console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
+    console.log(`[HANDOFF] 📨 Relevo silencioso ${fromAgent} → ${targetAgent} (agente anterior no se despide)`);
     
     // ═══════════════════════════════════════════════════════════════
-    // 🔄 HANDOVER CON DELAYS 7s ENTRE MENSAJES
+    // 🔄 HANDOFF SILENCIOSO - Solo el nuevo agente habla
+    // Solución para evitar desorden de mensajes en WhatsApp
     // ═══════════════════════════════════════════════════════════════
     
-    // ✅ PASO 1: Enviar despedida del agente actual
-    console.log(`[HANDOFF] 👋 Enviando despedida de ${fromAgent}`);
-    await enviarWhatsApp(userId, handoffMessages.despedida);
-    await saveConversationMessage(userId, { 
-      role: 'assistant', 
-      content: handoffMessages.despedida, 
-      agent: fromAgent 
-    });
-    
-    // ⏱️ PASO 2: Delay 7 segundos
-    console.log(`[HANDOFF] ⏱️ Esperando 7s antes de actualizar agente...`);
-    await new Promise(r => setTimeout(r, 7000));
-    
-    // ✅ PASO 3: Actualizar activeAgent
+    // ✅ PASO 1: Actualizar activeAgent inmediatamente
     console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
     profile.activeAgent = targetAgent;
     await saveProfile(userId, profile);
     console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
     
-    // ⏱️ PASO 4: Delay 7 segundos
-    console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo...`);
+    // ⏱️ PASO 2: Delay 7 segundos para preparar entrada
+    console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo del nuevo agente...`);
     await new Promise(r => setTimeout(r, 7000));
     
-    // ✅ PASO 5: Enviar saludo del nuevo agente
-    console.log(`[HANDOFF] 👋 Enviando saludo de ${targetAgent}`);
+    // ✅ PASO 3: Solo el nuevo agente se presenta y toma el relevo
+    console.log(`[HANDOFF] 👋 ${targetAgent} toma el relevo y se presenta`);
     await enviarWhatsApp(userId, handoffMessages.entrada);
     await saveConversationMessage(userId, { 
       role: 'assistant', 
@@ -103,7 +91,7 @@ async function executeHandoffSequence(userId, profile, fromAgent, targetAgent, u
       agent: targetAgent 
     });
     
-    console.log(`[HANDOFF] ✅ Handover completado exitosamente (delays 7s aplicados)`);
+    console.log(`[HANDOFF] ✅ Relevo completado - ${targetAgent} ahora activo`);
     
     // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
     if (targetAgent === 'AURORA' && formResult?.resumeMessage) {

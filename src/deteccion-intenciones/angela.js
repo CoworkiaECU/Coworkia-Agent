@@ -28,7 +28,7 @@ export const ANGELA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! Soy Ángela 👩‍⚕️ Tu asistente médica de MedBeneficios.\n\n¿En qué puedo ayudarte con tu bienestar hoy?' :
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 💚😊 Soy Ángela de MedBeneficios.\n\nTomo el relevo desde ahora para guiarte con temas de salud, tanto tuya como de tu familia.\n\nSi necesitas regresar, escribe @aurora y retomas tu conversación.\n\n¿Qué puedo hacer por tu bienestar?' :
              userLanguage === 'en' ? 'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Angela 👩‍⚕️ Votre assistante médicale de MedBeneficios.\n\nComment puis-je vous aider avec votre bien-être aujourd\'hui?' :
              userLanguage === 'it' ? 'Ciao {nombre}! Sono Angela 👩‍⚕️ La tua assistente medica di MedBeneficios.\n\nCome posso aiutarti con il tuo benessere oggi?' :

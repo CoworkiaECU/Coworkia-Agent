@@ -9,9 +9,9 @@ export const GABI = {
   descripcionCorta: 'especialista en finanzas, contabilidad, recursos humanos y legal',
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'en' ? 'Hello {nombre}, I\'m Gabi 💼 Your expert in finance, accounting, HR and legal at Coworkia Business Center.\n\nHow can I help you today?' :
-             userLanguage === 'qu' ? 'Allinllachu {nombre}, ñuqa Gabi kani 💼 Qullqi, yupay, llank\'aq runakunamanta, legal yachayniyuq Coworkia Business Center.\n\nImaynatataq yanapasqaykiman kunan?' :
-             'Hola {nombre}, soy Gabi 💼 Tu experta en finanzas, contabilidad, RRHH y legal del Coworkia Business Center.\n\n¿En qué puedo ayudarte hoy?',
+    entrada: userLanguage === 'en' ? 'Hello {nombre}. ⚖️💼 I\'m Gabi from GR Consulting, taking over from here.\n\nSpecialist in accounting, finance, legal and compliance. UAFE certified Compliance Officer.\n\nTo return, write @aurora.\n\nWhat do you need? Tax, accounting or administrative inquiries?' :
+             userLanguage === 'qu' ? 'Allinllachu {nombre}. ⚖️💼 Ñuqa Gabi kani GR Consulting-manta, kunan qatipani.\n\nYachayniyuq qullqi, yupay, legal, compliance. UAFE nisqapi Oficial de Cumplimiento.\n\n@aurora nispa kutimuy.\n\nImanatataq munasqanki? Qullqi, yupay, kamachiy tapuykuna?' :
+             'Hola {nombre}. ⚖️💼 Soy Gabi de GR Consulting, tomo el relevo desde ahora.\n\nEspecialista en contabilidad, finanzas, legal y compliance. Oficial de Cumplimiento certificada por UAFE.\n\nPara regresar, escribe @aurora.\n\n¿Qué necesitas? ¿Temas fiscales, contables o consultas administrativas?',
     despedida: userLanguage === 'en' ? 'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼' :
                userLanguage === 'qu' ? 'Allinmi yanapasqaykiku {nombre}.\n\nMayqin tapuypaqpas, @Gabi niy hinaspa tapuykita, kaypi kanki. 💼' :
                'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼'

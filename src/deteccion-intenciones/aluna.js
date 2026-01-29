@@ -27,9 +27,9 @@ export const ALUNA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 😊🏢 Soy Aluna, tomo el relevo desde ahora para asesorarte sobre nuestros planes y membresías de coworking.\n\nSi necesitas hablar con Aurora nuevamente, solo escribe @aurora y retomas la conversación donde la dejaste.\n\n¿Qué tipo de plan te interesa? Cuéntame sobre tu rutina de trabajo.' :
-             userLanguage === 'en' ? 'Hi {nombre}! 😊🏢 I\'m Aluna, taking over now to advise you on our coworking plans and memberships.\n\nIf you need to talk to Aurora again, just write @aurora and you\'ll pick up where you left off.\n\nWhat type of plan interests you? Tell me about your work routine.' :
-             '¡Hola {nombre}! 😊🏢 Soy Aluna, tomo el relevo desde ahora para asesorarte sobre nuestros planes y membresías de coworking.\n\nSi necesitas hablar con Aurora nuevamente, solo escribe @aurora y retomas la conversación donde la dejaste.\n\n¿Qué tipo de plan te interesa? Cuéntame sobre tu rutina de trabajo.',
+    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 😊🏢 Soy Aluna, especialista en membresías de Coworkia, tomo el relevo desde ahora.\n\nSi necesitas hablar con Aurora nuevamente, solo escribe @aurora y retomas la conversación donde la dejaste.\n\n¿Qué tipo de plan te interesa? Cuéntame sobre tu rutina de trabajo.' :
+             userLanguage === 'en' ? 'Hi {nombre}! 😊🏢 I\'m Aluna, Coworkia membership specialist, taking over now.\n\nIf you need to talk to Aurora again, just write @aurora and you\'ll pick up where you left off.\n\nWhat type of plan interests you? Tell me about your work routine.' :
+             '¡Hola {nombre}! 😊🏢 Soy Aluna, especialista en membresías de Coworkia, tomo el relevo desde ahora.\n\nSi necesitas hablar con Aurora nuevamente, solo escribe @aurora y retomas la conversación donde la dejaste.\n\n¿Qué tipo de plan te interesa? Cuéntame sobre tu rutina de trabajo.',
     despedida: userLanguage === 'es' ? 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊' :
                'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊'

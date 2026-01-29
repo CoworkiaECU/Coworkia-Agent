@@ -44,6 +44,103 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 const router = Router();
 
 /* ─────────────────────────────────────────────────────────────
+   🤝 HANDOFF HELPER - Secuencia unificada de handoffs
+───────────────────────────────────────────────────────────── */
+/**
+ * Ejecuta la secuencia completa de handoff entre agentes
+ * @param {string} userId - ID del usuario
+ * @param {Object} profile - Perfil del usuario
+ * @param {string} fromAgent - Agente actual
+ * @param {string} targetAgent - Agente destino
+ * @param {string} userName - Nombre del usuario
+ * @param {string} userLanguage - Idioma del usuario
+ * @param {Object} formResult - Resultado del formulario (opcional, para resumen en retorno a Aurora)
+ * @param {string} auroraInput - Input original (para saveInteraction)
+ * @param {Object} envelope - Evento original (para saveInteraction)
+ */
+async function executeHandoffSequence(userId, profile, fromAgent, targetAgent, userName, userLanguage, formResult, auroraInput, envelope) {
+  try {
+    const { getHandoffMessages, AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
+    
+    // 🎯 Obtener mensajes de handoff usando función unificada
+    const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
+    
+    console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
+    
+    // ═══════════════════════════════════════════════════════════════
+    // 🔄 HANDOVER CON DELAYS 7s ENTRE MENSAJES
+    // ═══════════════════════════════════════════════════════════════
+    
+    // ✅ PASO 1: Enviar despedida del agente actual
+    console.log(`[HANDOFF] 👋 Enviando despedida de ${fromAgent}`);
+    await enviarWhatsApp(userId, handoffMessages.despedida);
+    await saveConversationMessage(userId, { 
+      role: 'assistant', 
+      content: handoffMessages.despedida, 
+      agent: fromAgent 
+    });
+    
+    // ⏱️ PASO 2: Delay 7 segundos
+    console.log(`[HANDOFF] ⏱️ Esperando 7s antes de actualizar agente...`);
+    await new Promise(r => setTimeout(r, 7000));
+    
+    // ✅ PASO 3: Actualizar activeAgent
+    console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
+    profile.activeAgent = targetAgent;
+    await saveProfile(userId, profile);
+    console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
+    
+    // ⏱️ PASO 4: Delay 7 segundos
+    console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo...`);
+    await new Promise(r => setTimeout(r, 7000));
+    
+    // ✅ PASO 5: Enviar saludo del nuevo agente
+    console.log(`[HANDOFF] 👋 Enviando saludo de ${targetAgent}`);
+    await enviarWhatsApp(userId, handoffMessages.entrada);
+    await saveConversationMessage(userId, { 
+      role: 'assistant', 
+      content: handoffMessages.entrada, 
+      agent: targetAgent 
+    });
+    
+    console.log(`[HANDOFF] ✅ Handover completado exitosamente (delays 7s aplicados)`);
+    
+    // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
+    if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
+      console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
+      
+      await new Promise(r => setTimeout(r, 7000)); // Delay 7s para contexto
+      
+      await enviarWhatsApp(userId, formResult.resumeMessage);
+      await saveConversationMessage(userId, { 
+        role: 'assistant', 
+        content: formResult.resumeMessage, 
+        agent: 'AURORA' 
+      });
+      
+      console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
+    }
+    
+    // Guardar interacción
+    await saveInteraction({
+      userId,
+      agent: fromAgent,
+      agentName: AGENTES[fromAgent]?.nombre || 'Aurora Core',
+      intentReason: 'agent_handoff',
+      input: auroraInput,
+      output: `handoff ${fromAgent} -> ${targetAgent}`,
+      meta: { envelope, fromAgent, toAgent: targetAgent }
+    });
+    
+    return true;
+  } catch (e) {
+    console.error('[WASSENGER] handoff error:', e);
+    await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote con el especialista. Escribe "ayuda" y lo reintentamos.');
+    return false;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    🔒 Seguridad & estabilidad global (NO dentro del webhook)
 ───────────────────────────────────────────────────────────── */
 if (!globalThis.__AURORA_CORE_UNHANDLED__) {
@@ -1304,6 +1401,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = profile.activeAgent || 'AURORA';
       const userLanguage = profile.preferredLanguage || 'es';
+      const userName = profile.whatsappDisplayName || profile.name || 'amigo';
 
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
@@ -1315,90 +1413,20 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[T14] ⏱️ Transacción iniciada en handoff:', { userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt });
       }
 
-      try {
-        const { getHandoffMessages } = await import('../../deteccion-intenciones/orquestador.js');
-        
-        const userName = profile.whatsappDisplayName || profile.name || 'amigo';
-        const userLanguage = profile.preferredLanguage || 'es';
-
-        // 🎯 Obtener mensajes de handoff usando función unificada
-        const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
-
-        console.log(`[HANDOFF] 📨 Secuencia elegante ${fromAgent} → ${targetAgent}`);
-
-        // ═══════════════════════════════════════════════════════════════
-        // 🔄 HANDOVER CON 3 MENSAJES SEPARADOS (DELAYS 7s)
-        // ═══════════════════════════════════════════════════════════════
-        
-        // ✅ PASO 1: Enviar despedida del agente actual
-        console.log(`[HANDOFF] 👋 Enviando despedida de ${fromAgent}`);
-        await enviarWhatsApp(userId, handoffMessages.despedida);
-        await saveConversationMessage(userId, { 
-          role: 'assistant', 
-          content: handoffMessages.despedida, 
-          agent: fromAgent 
-        });
-        
-        // ⏱️ PASO 2: Delay 7 segundos
-        console.log(`[HANDOFF] ⏱️ Esperando 7s antes de actualizar agente...`);
-        await new Promise(r => setTimeout(r, 7000));
-        
-        // ✅ PASO 3: Actualizar activeAgent
-        console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
-        profile.activeAgent = targetAgent;
-        await saveProfile(userId, profile);
-        console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
-        
-        // ⏱️ PASO 4: Delay 7 segundos
-        console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo...`);
-        await new Promise(r => setTimeout(r, 7000));
-        
-        // ✅ PASO 5: Enviar saludo del nuevo agente
-        console.log(`[HANDOFF] 👋 Enviando saludo de ${targetAgent}`);
-        await enviarWhatsApp(userId, handoffMessages.entrada);
-        await saveConversationMessage(userId, { 
-          role: 'assistant', 
-          content: handoffMessages.entrada, 
-          agent: targetAgent 
-        });
-        
-        console.log(`[HANDOFF] ✅ Handover completado exitosamente (delays 7s aplicados)`);
-
-        // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
-        if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
-          console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
-          
-          await new Promise(r => setTimeout(r, 7000)); // Delay 7s para contexto
-          
-          await enviarWhatsApp(userId, formResult.resumeMessage);
-          await saveConversationMessage(userId, { 
-            role: 'assistant', 
-            content: formResult.resumeMessage, 
-            agent: 'AURORA' 
-          });
-          
-          console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
-        }
-
-        // Importar AGENTES para obtener nombre del agente
-        const { AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-        
-        await saveInteraction({
-          userId,
-          agent: fromAgent,
-          agentName: AGENTES[fromAgent]?.nombre || 'Aurora Core',
-          intentReason: 'agent_handoff',
-          input: auroraInput,
-          output: `handoff ${fromAgent} -> ${targetAgent}`,
-          meta: { envelope, fromAgent, toAgent: targetAgent }
-        });
-
-        return;
-      } catch (e) {
-        console.error('[WASSENGER] handoff error:', e);
-        await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote con el especialista. Escribe "ayuda" y lo reintentamos.');
-        return;
-      }
+      // ✅ Ejecutar handoff usando función unificada
+      const success = await executeHandoffSequence(
+        userId, 
+        profile, 
+        fromAgent, 
+        targetAgent, 
+        userName, 
+        userLanguage, 
+        formResult,
+        auroraInput,
+        envelope
+      );
+      
+      if (success) return;
     }
 
     // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core

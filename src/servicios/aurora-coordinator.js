@@ -1,8 +1,21 @@
 /**
- * 🎯 Aurora Coordinator - Sistema Inteligente de Coordinación Multi-Agente
+ * 🎯 Topic Manager - Sistema de Gestión de Tópicos de Conversación
  * 
- * Gestiona conversaciones por tópicos usando la base de datos unificada
- * Decide qué agente debe responder según contexto y tema activo
+ * Gestiona conversaciones por tópicos usando la base de datos unificada.
+ * Detecta el tema activo y asigna el agente apropiado.
+ * 
+ * ⚠️ IMPORTANTE: Sistema de handoffs unificado
+ * 
+ * Los handoffs (relevos entre agentes) se manejan EXCLUSIVAMENTE en:
+ * - src/deteccion-intenciones/orquestador.js → getHandoffMessages() (mensajes multiidioma)
+ * - src/express-servidor/endpoints-api/wassenger.js → lógica de ejecución con delays
+ * 
+ * Este archivo SOLO maneja:
+ * - Detección de tópicos
+ * - Mapeo tópico → agente
+ * - Gestión de tópicos activos/pausados en BD
+ * 
+ * NO maneja handoffs para evitar duplicación.
  */
 
 import { conversationAdapter } from '../database/conversationAdapter.js';
@@ -88,7 +101,7 @@ export async function getUserActiveTopics(userId) {
     const topics = await conversationAdapter.getActiveTopics(userId);
     return topics;
   } catch (error) {
-    console.error('[AURORA COORDINATOR] ❌ Error obteniendo tópicos:', error);
+    console.error('[TOPIC MANAGER] ❌ Error obteniendo tópicos:', error);
     return [];
   }
 }
@@ -119,156 +132,12 @@ export async function switchTopic(userId, newTopic, agent, metadata = {}) {
       metadata
     );
     
-    console.log(`[AURORA COORDINATOR] ✅ Tópico cambiado: ${previousTopic?.topic || 'ninguno'} → ${newTopic}`);
+    console.log(`[TOPIC MANAGER] ✅ Tópico cambiado: ${previousTopic?.topic || 'ninguno'} → ${newTopic}`);
     return result;
     
   } catch (error) {
-    console.error('[AURORA COORDINATOR] ❌ Error cambiando tópico:', error);
+    console.error('[TOPIC MANAGER] ❌ Error cambiando tópico:', error);
     return null;
-  }
-}
-
-/**
- * 🧠 Decide si Aurora debe hacer handover a otro agente
- */
-export async function shouldHandover(userId, message, currentAgent) {
-  // Si ya estamos en agente especializado, continuar con él
-  if (currentAgent !== 'AURORA') {
-    // Verificar si usuario menciona explícitamente a Aurora
-    if (message.toLowerCase().includes('@aurora')) {
-      return { handover: true, targetAgent: 'AURORA', reason: 'explicit_mention' };
-    }
-    
-    // Verificar si usuario menciona otro agente
-    const mentionedAgent = detectMentionedAgent(message);
-    if (mentionedAgent && mentionedAgent !== currentAgent) {
-      return { handover: true, targetAgent: mentionedAgent, reason: 'agent_switch' };
-    }
-    
-    return { handover: false };
-  }
-  
-  // Aurora está activa - detectar si debe derivar
-  const detectedTopic = detectTopicFromMessage(message);
-  const targetAgent = getAgentForTopic(detectedTopic);
-  
-  // Si el tópico requiere agente especializado (no Aurora)
-  if (targetAgent !== 'AURORA') {
-    return { 
-      handover: true, 
-      targetAgent, 
-      topic: detectedTopic,
-      reason: 'topic_specialization' 
-    };
-  }
-  
-  return { handover: false };
-}
-
-/**
- * 🔍 Detecta mención explícita de agente (@agente)
- * Case-insensitive y reconoce @ángela / @angela
- */
-function detectMentionedAgent(message) {
-  const msgLower = message.toLowerCase();
-  
-  // Normalizar: convertir á → a para facilitar matching
-  const msgNormalized = msgLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
-  const mentions = {
-    '@aurora': 'AURORA',
-    '@axel': 'AXEL',
-    '@adriana': 'ADRIANA',
-    '@enzo': 'ENZO',
-    '@angela': 'ANGELA',  // Funciona para @angela y @ángela (normalizado)
-    '@gabi': 'GABI',
-    '@aluna': 'ALUNA'
-  };
-  
-  for (const [mention, agent] of Object.entries(mentions)) {
-    if (msgNormalized.includes(mention)) {
-      return agent;
-    }
-  }
-  
-  return null;
-}
-
-/**
- * 💬 Genera mensaje de handover empático
- */
-export function generateHandoverMessage(fromAgent, toAgent, userName, topic) {
-  const messages = {
-    AURORA_TO_AXEL: `Perfecto ${userName}! 🚗\n\nTe conecto con *Axel* de *The PaintBull*.\nÉl analiza fotos de tu vehículo y te da cotización en minutos.\n\n*Axel*, te presento a ${userName}.\n\nCualquier cosa, mencióname con *@Aurora* ✨`,
-    
-    AURORA_TO_ADRIANA: `Entendido ${userName}! 🛡️\n\nTe conecto con *Adriana* de *PlusSecure*.\nElla te ayudará con tu seguro vehicular.\n\n*Adriana*, te presento a ${userName}.\n\nEstoy por aquí si necesitas: *@Aurora*`,
-    
-    AURORA_TO_ENZO: `Perfecto ${userName}! 💡\n\nTe conecto con *Enzo* del *MarketingLab*.\nExperto en campañas, contenido y automatización con IA.\n\n*Enzo*, te presento a ${userName}.\n\nPara volver conmigo: *@Aurora* ✨`,
-    
-    AURORA_TO_ANGELA: `Claro ${userName}! 💚\n\nTe conecto con *Ángela* de *MedBeneficios*.\nElla coordina citas médicas y procesa documentos de salud.\n\n*Ángela*, te presento a ${userName}.\n\nAquí estoy: *@Aurora*`,
-    
-    AURORA_TO_GABI: `Perfecto ${userName}! 💼\n\nTe conecto con *Gabi* de *GR Consulting*.\nEspecialista en finanzas, contabilidad y compliance.\n\n*Gabi*, te presento a ${userName}.\n\nCualquier cosa: *@Aurora* ✨`,
-    
-    AURORA_TO_ALUNA: `Genial ${userName}! 📋\n\nTe conecto con *Aluna* - especialista en planes.\nTe ayudará a encontrar la membresía perfecta.\n\n*Aluna*, te presento a ${userName}.\n\nEstoy aquí: *@Aurora*`,
-    
-    BACK_TO_AURORA: `De vuelta contigo ${userName}! ✨\n\n¿En qué más puedo ayudarte?`
-  };
-  
-  const key = `${fromAgent}_TO_${toAgent}`;
-  return messages[key] || messages.BACK_TO_AURORA;
-}
-
-/**
- * 📊 Obtiene resumen de conversación para Aurora
- */
-export async function getConversationSummaryForAurora(userId, lastNMessages = 10) {
-  try {
-    const summary = await conversationAdapter.getConversationSummaryForAurora(userId, lastNMessages);
-    return summary;
-  } catch (error) {
-    console.error('[AURORA COORDINATOR] ❌ Error obteniendo resumen:', error);
-    return null;
-  }
-}
-
-/**
- * 🔄 Gestiona el ciclo completo de handover
- */
-export async function executeHandover(userId, userName, fromAgent, toAgent, topic, message) {
-  try {
-    console.log(`[AURORA COORDINATOR] 🔄 Handover: ${fromAgent} → ${toAgent}`);
-    
-    // 1. Cambiar tópico activo
-    await switchTopic(userId, topic, toAgent, {
-      handoverFrom: fromAgent,
-      handoverAt: new Date().toISOString(),
-      originalMessage: message
-    });
-    
-    // 2. Guardar mensaje de handover
-    const handoverMsg = generateHandoverMessage(fromAgent, toAgent, userName, topic);
-    await conversationAdapter.saveConversationMessage(
-      userId,
-      'system',
-      handoverMsg,
-      topic,
-      { type: 'handover', from: fromAgent, to: toAgent }
-    );
-    
-    // 3. Retornar información del handover
-    return {
-      success: true,
-      newAgent: toAgent,
-      newTopic: topic,
-      handoverMessage: handoverMsg
-    };
-    
-  } catch (error) {
-    console.error('[AURORA COORDINATOR] ❌ Error ejecutando handover:', error);
-    return {
-      success: false,
-      error: error.message
-    };
   }
 }
 
@@ -296,11 +165,11 @@ export async function cleanupOldTopics(userId, daysOld = 7) {
       }
     }
     
-    console.log(`[AURORA COORDINATOR] 🧹 Limpiados ${cleaned} tópicos antiguos`);
+    console.log(`[TOPIC MANAGER] 🧹 Limpiados ${cleaned} tópicos antiguos`);
     return cleaned;
     
   } catch (error) {
-    console.error('[AURORA COORDINATOR] ❌ Error limpiando tópicos:', error);
+    console.error('[TOPIC MANAGER] ❌ Error limpiando tópicos:', error);
     return 0;
   }
 }

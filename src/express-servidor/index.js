@@ -222,12 +222,15 @@ async function startServer() {
 process.on('SIGTERM', () => {
   console.log('\n🛑 Recibida señal SIGTERM, cerrando...');
   stopScheduler();
+  // NO cerramos pool - Heroku mata el proceso de todas formas
+  // Cerrar pool causa "Cannot use a pool after calling end" en restart
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('\n🛑 Recibida señal SIGINT, cerrando...');
   stopScheduler();
+  // NO cerramos pool - proceso local se cierra inmediatamente
   process.exit(0);
 });
 

@@ -31,7 +31,52 @@
 - Mantener foco y claridad en cada respuesta
 - Ejemplo: "¿Ahora continúo con T4 (Aurora Vision AI) o prefieres que explique X primero?"
 
-### 🚨 ANÁLISIS DE PROBLEMAS - REGLA CRÍTICA
+### � MÉTODO DE TRABAJO: PROPUESTA → AJUSTES → EJECUCIÓN
+
+**Sistema de trabajo iterativo establecido 30 Ene 2026:**
+
+1. **Presentar solución completa EN PALABRAS:**
+   - Explicación amigable y clara del problema
+   - Mi propuesta de solución con arquitectura
+   - Ejemplos de flujos concretos (ANTES vs DESPUÉS)
+   - Qué archivos voy a crear/modificar/eliminar
+   - **NO mostrar código aún** - solo conceptos y flujos
+
+2. **Iterar con Diego hasta alineación:**
+   - Diego revisa la propuesta
+   - Señala ajustes necesarios
+   - Yo corrijo y re-explico
+   - Repetir hasta que Diego diga "verde nena"
+
+3. **Ejecutar SOLO después de "verde nena":**
+   - Crear TODO list si no existe
+   - Implementar código con lupa quirúrgica
+   - Testing obligatorio de cada cambio
+   - NO mezclar múltiples tareas en un commit
+
+**Ventajas de este método:**
+- ✅ Menos tiempo perdido en código que debe rehacerse
+- ✅ Alineación clara antes de ejecutar
+- ✅ Diego valida arquitectura antes de implementación
+- ✅ Comunicación más eficiente y productiva
+
+**Ejemplo práctico:**
+```
+Nena: "Detecté 3 puntos de decisión contradictorios. Mi solución: 
+       crear intent-resolver-v2.js que unifique todo. 
+       Ejemplo: Usuario con Aurora dice 'marketing' → Aurora sugiere @enzo
+       pero NO cambia automáticamente. ¿Te parece?"
+
+Diego: "Ajustar: Si usuario está con otro agente puede ir directo a cualquiera"
+
+Nena: "Perfecto, entonces TODAS las transiciones permitidas. Actualizo propuesta..."
+
+Diego: "verde nena"
+
+Nena: [AHORA SÍ ejecuta el código]
+```
+
+### �🚨 ANÁLISIS DE PROBLEMAS - REGLA CRÍTICA
 **SIEMPRE extraer logs completos antes de diagnosticar**
 - Screenshots/pantallazos son solo presentación visual del problema
 - **OBLIGATORIO**: Extraer logs de Heroku con el comando apropiado

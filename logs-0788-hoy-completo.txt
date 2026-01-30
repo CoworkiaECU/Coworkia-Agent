@@ -1,0 +1,23 @@
+2026-01-30T16:05:18.540957+00:00 app[web.1]: userId: '+593987770788',
+2026-01-30T16:05:18.541009+00:00 app[web.1]: [2026-01-30T16:05:18.540Z] ℹ️ [INFO] [WEBHOOK] [user=+593987770788] Processing incoming message
+2026-01-30T16:05:18.541053+00:00 app[web.1]: [DEBOUNCE] ⚡ Mensaje único de +593987770788 - procesando inmediatamente
+2026-01-30T16:05:18.541285+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-30T16:05:18.541386+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 ORDER BY created_at DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-30T16:05:18.541474+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM reservations WHERE user_phone = $1 AND status = 'confirmed' AND date >= $2 ORDER BY date ASC, start_time ASC Params: [ '+593987770788', '2026-01-30' ]
+2026-01-30T16:05:18.541575+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT just_confirmed_until FROM reservation_state WHERE user_phone = $1 Params: [ '+593987770788' ]
+2026-01-30T16:05:18.541735+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788' ]
+2026-01-30T16:05:18.541792+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788', 10 ]
+2026-01-30T16:05:18.541845+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788', '2026-01-30' ]
+2026-01-30T16:05:18.541941+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788' ]
+2026-01-30T16:05:18.543075+00:00 app[web.1]: [TIMEOUT] ⚠️ loadProfile timeout, usando perfil vacío para +593987770788
+2026-01-30T16:05:18.543147+00:00 app[web.1]: [POSTGRES DEBUG] all() SQL: SELECT * FROM interactions WHERE user_phone = $1 ORDER BY timestamp DESC LIMIT $2 Params: [ '+593987770788', 10 ]
+2026-01-30T16:05:18.543254+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788', 10 ]
+2026-01-30T16:05:18.543390+00:00 app[web.1]: [NAME DEBUG] userId: +593987770788
+2026-01-30T16:05:18.543483+00:00 app[web.1]: [CACHE] 🗑️ INVALIDATE para +593987770788
+2026-01-30T16:05:18.543560+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT * FROM users WHERE phone_number = $1 Params: [ '+593987770788' ]
+2026-01-30T16:05:18.543673+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788' ]
+2026-01-30T16:05:18.544332+00:00 app[web.1]: '+593987770788',
+2026-01-30T16:05:18.544427+00:00 app[web.1]: '+593987770788',
+2026-01-30T16:05:18.544783+00:00 app[web.1]: [POSTGRES DEBUG] get() SQL: SELECT form_data, form_progress, created_at, updated_at, expires_at FROM agent_forms WHERE user_phone = $1 AND agent_type = $2 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) AND cancelled_at IS NULL Params: [ '+593987770788', 'PAULA' ]
+2026-01-30T16:05:18.544880+00:00 app[web.1]: [POSTGRES ERROR] Params: [ '+593987770788', 'PAULA' ]
+2026-01-30T16:05:18.545351+00:00 app[web.1]: [2026-01-30T16:05:18.545Z] ℹ️ [INFO] [ORQUESTADOR] [user=+593987770788 agent=PAULA action=process_message] 💬 User message

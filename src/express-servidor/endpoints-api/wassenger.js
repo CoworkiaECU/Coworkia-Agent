@@ -6,6 +6,7 @@ import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
 import { loggers } from '../../utils/logger.js';
 import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
 import { validateAudio, getLocalizedAudioError } from '../../utils/audio-validator.js';
+import { sanitizeUrl, sanitizeForLog } from '../../utils/log-sanitizer.js';
 
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
@@ -625,34 +626,35 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
   // Responder inmediato para evitar timeouts
   res.json({ ok: true, processing: 'async' });
 
-  // Background
+  // Background con try/catch global
   setImmediate(async () => {
-    const userId = normalizeUserId(data);
-    const name = normalizeName(data);
-    let text = normalizeText(data);
-    const type = normalizeType(data);
-    const mediaUrl = buildMediaUrl(data);
-    const messageId = data.id || data.messageId || `${userId}_${Date.now()}`;
+    try {
+      const userId = normalizeUserId(data);
+      const name = normalizeName(data);
+      let text = normalizeText(data);
+      const type = normalizeType(data);
+      const mediaUrl = buildMediaUrl(data);
+      const messageId = data.id || data.messageId || `${userId}_${Date.now()}`;
 
-    if (debug) {
-      console.log('[WASSENGER] Incoming:', {
-        event: evt,
-        userId: userId || 'NULL',
-        messageId,
-        type,
-        hasText: !!text,
-        hasMedia: !!mediaUrl,
-        prod: isProd
-      });
-    }
+      if (debug) {
+        console.log('[WASSENGER] Incoming:', {
+          event: evt,
+          userId: userId || 'NULL',
+          messageId,
+          type,
+          hasText: !!text,
+          hasMedia: !!mediaUrl,
+          prod: isProd
+        });
+      }
 
-    if (!userId) return;
+      if (!userId) return;
 
-    // 🛡️ DEDUPLICACIÓN: Ignorar webhooks duplicados
-    if (isDuplicateMessage(messageId)) {
-      console.log(`[DEDUP] ⏭️ Ignorando webhook duplicado de ${userId}`);
-      return res.json({ status: 'ok', message: 'duplicate_ignored' });
-    }
+      // 🛡️ DEDUPLICACIÓN: Ignorar webhooks duplicados
+      if (isDuplicateMessage(messageId)) {
+        console.log(`[DEDUP] ⏭️ Ignorando webhook duplicado de ${userId}`);
+        return; // No res.json aquí - headers ya enviados
+      }
 
     loggers.webhook.info('Processing incoming message', { userId, type, hasMedia: !!mediaUrl });
 
@@ -785,14 +787,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         console.log('[LANGUAGE] ✅ Mensaje traducido enviado');
         
-        // Terminar procesamiento - no responder nada más
-        return res.json({ status: 'ok', message: 'language_changed' });
+        // Terminar procesamiento - no res.json (headers ya enviados)
+        return;
       } else {
         // Si no hay mensaje anterior, solo confirmar cambio
         const confirmation = getLanguageChangeConfirmation(languageCommand);
         await enviarWhatsApp(userId, confirmation);
         console.log('[LANGUAGE] ✅ Cambio confirmado (sin mensaje anterior)');
-        return res.json({ status: 'ok', message: 'language_changed_no_history' });
+        return; // No res.json (headers ya enviados)
       }
     }
 
@@ -1632,6 +1634,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
     }); // Cierre del debounceUserWebhook
+    } catch (error) {
+      console.error('[WASSENGER] ❌ Error crítico en procesamiento:', error);
+      // No podemos enviar res.json aquí (headers ya enviados)
+      // Loggear para monitoreo
+    }
   }); // Cierre del setImmediate
 }); // Cierre del router.post
 

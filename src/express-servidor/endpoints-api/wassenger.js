@@ -29,6 +29,10 @@ import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation }
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms } from '../../servicios/agent-form-manager.js';
 
+// 🆕 NUEVO SISTEMA V2 - Handoffs unificados
+import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
+import { executeHandoff, isHandoffInProgress } from '../../servicios/handoff-manager.js';
+
 import {
   loadProfile,
   saveProfile,
@@ -44,88 +48,30 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 const router = Router();
 
 /* ─────────────────────────────────────────────────────────────
-   🤝 HANDOFF HELPER - Secuencia unificada de handoffs
+   🤝 HANDOFF HELPER - DEPRECADO - Usar handoff-manager.js
+   Mantenido por compatibilidad temporal durante transición
 ───────────────────────────────────────────────────────────── */
 /**
- * Ejecuta la secuencia completa de handoff entre agentes
- * @param {string} userId - ID del usuario
- * @param {Object} profile - Perfil del usuario
- * @param {string} fromAgent - Agente actual
- * @param {string} targetAgent - Agente destino
- * @param {string} userName - Nombre del usuario
- * @param {string} userLanguage - Idioma del usuario
- * @param {Object} formResult - Resultado del formulario (opcional, para resumen en retorno a Aurora)
- * @param {string} auroraInput - Input original (para saveInteraction)
- * @param {Object} envelope - Evento original (para saveInteraction)
+ * @deprecated Usar executeHandoff de handoff-manager.js
+ * Esta función se mantiene temporalmente para compatibilidad
  */
-async function executeHandoffSequence(userId, profile, fromAgent, targetAgent, userName, userLanguage, formResult, auroraInput, envelope) {
-  try {
-    const { getHandoffMessages, AGENTES } = await import('../../deteccion-intenciones/orquestador.js');
-    
-    // 🎯 Obtener mensajes de handoff usando función unificada
-    const handoffMessages = getHandoffMessages(fromAgent, targetAgent, userName, userLanguage);
-    
-    console.log(`[HANDOFF] 📨 Relevo silencioso ${fromAgent} → ${targetAgent} (agente anterior no se despide)`);
-    
-    // ═══════════════════════════════════════════════════════════════
-    // 🔄 HANDOFF SILENCIOSO - Solo el nuevo agente habla
-    // Solución para evitar desorden de mensajes en WhatsApp
-    // ═══════════════════════════════════════════════════════════════
-    
-    // ✅ PASO 1: Actualizar activeAgent inmediatamente
-    console.log(`[HANDOFF] 🔄 Actualizando activeAgent: ${fromAgent} → ${targetAgent}`);
-    profile.activeAgent = targetAgent;
-    await saveProfile(userId, profile);
-    console.log(`[HANDOFF] ✅ activeAgent actualizado en BD: ${targetAgent}`);
-    
-    // ⏱️ PASO 2: Delay 7 segundos para preparar entrada
-    console.log(`[HANDOFF] ⏱️ Esperando 7s antes del saludo del nuevo agente...`);
-    await new Promise(r => setTimeout(r, 7000));
-    
-    // ✅ PASO 3: Solo el nuevo agente se presenta y toma el relevo
-    console.log(`[HANDOFF] 👋 ${targetAgent} toma el relevo y se presenta`);
-    await enviarWhatsApp(userId, handoffMessages.entrada);
-    await saveConversationMessage(userId, { 
-      role: 'assistant', 
-      content: handoffMessages.entrada, 
-      agent: targetAgent 
-    });
-    
-    console.log(`[HANDOFF] ✅ Relevo completado - ${targetAgent} ahora activo`);
-    
-    // 🔄 RETORNO A AURORA: Si tiene reserva pendiente, enviar resumen automáticamente
-    if (targetAgent === 'AURORA' && formResult?.resumeMessage) {
-      console.log('[HANDOFF] 🔄 Usuario regresa a Aurora con reserva pendiente - enviando resumen...');
-      
-      await new Promise(r => setTimeout(r, 7000)); // Delay 7s para contexto
-      
-      await enviarWhatsApp(userId, formResult.resumeMessage);
-      await saveConversationMessage(userId, { 
-        role: 'assistant', 
-        content: formResult.resumeMessage, 
-        agent: 'AURORA' 
-      });
-      
-      console.log('[HANDOFF] ✅ Resumen de reserva pendiente enviado');
-    }
-    
-    // Guardar interacción
-    await saveInteraction({
-      userId,
-      agent: fromAgent,
-      agentName: AGENTES[fromAgent]?.nombre || 'Aurora Core',
-      intentReason: 'agent_handoff',
-      input: auroraInput,
-      output: `handoff ${fromAgent} -> ${targetAgent}`,
-      meta: { envelope, fromAgent, toAgent: targetAgent }
-    });
-    
-    return true;
-  } catch (e) {
-    console.error('[WASSENGER] handoff error:', e);
-    await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote con el especialista. Escribe "ayuda" y lo reintentamos.');
-    return false;
-  }
+async function executeHandoffSequence_LEGACY(userId, profile, fromAgent, targetAgent, userName, userLanguage, formResult, auroraInput, envelope) {
+  console.warn('[WASSENGER] ⚠️ Usando executeHandoffSequence_LEGACY - migrar a handoff-manager.js');
+  
+  // Redireccionar al nuevo sistema
+  const result = await executeHandoff(
+    userId,
+    profile,
+    fromAgent,
+    targetAgent,
+    userName,
+    userLanguage,
+    saveProfile,
+    enviarWhatsApp,
+    saveConversationMessage
+  );
+  
+  return result.success;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1384,37 +1330,53 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       await clearJustConfirmed(userId);
     }
 
-    // 🤝 Handoff genérico (NO AXEL hardcode, NO GABI hardcode)
+    // 🤝 Handoff genérico - NUEVO SISTEMA V2
     if (resultado?.metadata?.agentHandoff) {
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = profile.activeAgent || 'AURORA';
       const userLanguage = profile.preferredLanguage || 'es';
       const userName = profile.whatsappDisplayName || profile.name || 'amigo';
 
+      console.log(`[WASSENGER-V2] 🔀 Handoff detectado: ${fromAgent} → ${targetAgent}`);
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
+      
+      // Prevenir handoffs concurrentes
+      if (isHandoffInProgress(userId)) {
+        console.warn(`[WASSENGER-V2] ⚠️ Handoff ya en progreso para ${userId}, esperando...`);
+        await new Promise(r => setTimeout(r, 2000));
+      }
       
       // ⏱️ T14: Iniciar transacción si viene de AURORA y va a agente especializado
       if (fromAgent === 'AURORA' && targetAgent !== 'AURORA' && !profile.transactionStartedAt) {
         profile.transactionStartedAt = new Date().toISOString();
         profile.transactionAgent = targetAgent;
         profile.followUpSentAt = null;
-        console.log('[T14] ⏱️ Transacción iniciada en handoff:', { userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt });
+        console.log('[T14] ⏱️ Transacción iniciada en handoff:', { 
+          userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt 
+        });
       }
 
-      // ✅ Ejecutar handoff usando función unificada
-      const success = await executeHandoffSequence(
-        userId, 
-        profile, 
-        fromAgent, 
-        targetAgent, 
-        userName, 
-        userLanguage, 
-        formResult,
-        auroraInput,
-        envelope
+      // ✅ Ejecutar handoff usando NUEVO SISTEMA V2
+      const handoffResult = await executeHandoff(
+        userId,
+        profile,
+        fromAgent,
+        targetAgent,
+        userName,
+        userLanguage,
+        saveProfile,
+        enviarWhatsApp,
+        saveConversationMessage
       );
       
-      if (success) return;
+      if (handoffResult.success) {
+        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente`);
+        return;
+      } else {
+        console.error(`[WASSENGER-V2] ❌ Handoff falló:`, handoffResult.error);
+        await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote. Escribe "ayuda" y lo reintentamos.');
+        return;
+      }
     }
 
     // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core

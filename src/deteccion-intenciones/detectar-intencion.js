@@ -553,83 +553,12 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 3) HANDOFFS IMPLÍCITOS: Keywords que activan cambio de agente automáticamente
-  // Estos son más fuertes que keywords sugeridos - fuerzan el handoff
-  
-  // Angela (Salud)
-  const angelaKeywords = [
-    'salud', 'medico', 'médico', 'doctor', 'consulta medica', 'medicina',
-    'bienestar', 'seguro medico', 'seguro médico', 'atencion medica',
-    'atención médica', 'empresa de salud', 'medbeneficio', 'angela'
-  ];
-  
-  if (angelaKeywords.some(k => text.includes(k))) {
-    return {
-      agent: 'ANGELA',
-      reason: 'implicit health keywords - handoff to Angela',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ANGELA', implicitHandoff: true }
-    };
-  }
-  
-  // Adriana (Seguros)
-  const adrianaKeywords = [
-    'seguro', 'poliza', 'póliza', 'aseguradora', 'asegurar',
-    'cobertura', 'cotizacion seguro', 'cotización seguro', 'segpopular',
-    'insurance', 'adriana'
-  ];
-  
-  if (adrianaKeywords.some(k => text.includes(k))) {
-    return {
-      agent: 'ADRIANA',
-      reason: 'implicit insurance keywords - handoff to Adriana',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ADRIANA', implicitHandoff: true }
-    };
-  }
-  
-  // Enzo (Marketing)
-  const enzoKeywords = [
-    'marketing', 'publicidad', 'redes sociales', 'social media',
-    'campana', 'campaña', 'estrategia digital', 'marketinglab',
-    'contenido digital', 'posicionamiento', 'seo', 'enzo'
-  ];
-  
-  if (enzoKeywords.some(k => text.includes(k))) {
-    return {
-      agent: 'ENZO',
-      reason: 'implicit marketing keywords - handoff to Enzo',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ENZO', implicitHandoff: true }
-    };
-  }
-  
-  // Axel (Reparación vehicular)
-  const axelKeywords = [
-    'choque', 'colision', 'colisión', 'rayado', 'abollado', 'golpe carro',
-    'daño vehicular', 'daño auto', 'reparar carro', 'pintura carro',
-    'paintbull', 'taller', 'axel'
-  ];
-  
-  if (axelKeywords.some(k => text.includes(k))) {
-    return {
-      agent: 'AXEL',
-      reason: 'implicit vehicle repair keywords - handoff to Axel',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL', implicitHandoff: true }
-    };
-  }
-  
-  // Gabi (Legal/Finanzas)
-  const gabiKeywords = [
-    'legal', 'abogado', 'abogada', 'contador', 'contabilidad',
-    'finanzas', 'impuestos', 'tributario', 'uafe', 'compliance',
-    'consulta legal', 'asesoria legal', 'gabi'
-  ];
-  
-  if (gabiKeywords.some(k => text.includes(k))) {
-    return {
-      agent: 'GABI',
-      reason: 'implicit legal/finance keywords - handoff to Gabi',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'GABI', implicitHandoff: true }
-    };
-  }
+  // 3) HANDOFFS IMPLÍCITOS - ELIMINADOS EN V2
+  // ⚠️ DEPRECADO: Keywords ya NO activan handoffs automáticos
+  // Ver: agent-keywords.js y intent-resolver-v2.js para nuevo sistema
+  // 
+  // REGLA V2: Solo @menciones explícitas ejecutan handoffs
+  // Keywords solo sugieren especialistas, pero mantienen agente actual
   
   // 4) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
   // El orquestador decidirá si cambiar según activeAgent

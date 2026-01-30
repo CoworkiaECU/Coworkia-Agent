@@ -356,6 +356,40 @@ function detectBotLight(data, userId) {
 }
 
 /**
+ * 🔄 Helper consistente para actualizar profile
+ * SIEMPRE actualiza: activeAgent (si cambia), agent_history, lastMessageAt
+ * 
+ * @param {string} userId - ID del usuario
+ * @param {Object} updates - Campos a actualizar en el profile
+ * @param {Object} metadata - Metadata adicional para agent_history (opcional)
+ * @returns {Object} - Profile actualizado
+ */
+async function updateProfile(userId, updates, metadata = {}) {
+  const current = await loadProfile(userId) || {};
+  
+  const newProfile = {
+    ...current,
+    ...updates,
+    lastMessageAt: new Date().toISOString() // SIEMPRE actualizar
+  };
+  
+  // Si cambió activeAgent, actualizar agent_history
+  if (updates.activeAgent && updates.activeAgent !== current.activeAgent) {
+    newProfile.agent_history = newProfile.agent_history || {};
+    newProfile.agent_history[updates.activeAgent] = newProfile.agent_history[updates.activeAgent] || [];
+    newProfile.agent_history[updates.activeAgent].push({
+      timestamp: new Date().toISOString(),
+      fromAgent: current.activeAgent || 'NONE',
+      ...metadata
+    });
+    
+    console.log(`[PROFILE] ✅ Agent actualizado: ${current.activeAgent || 'NONE'} → ${updates.activeAgent}`);
+  }
+  
+  return await saveProfile(userId, newProfile);
+}
+
+/**
  * 🎯 Maneja resultado de formulario de forma consistente para TODOS los agentes
  * Función compartida - DRY principle
  * Evita duplicación de lógica entre Aurora, Aluna, etc.
@@ -553,7 +587,7 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
     profile.transactionStartedAt = null;
     profile.transactionAgent = null;
     profile.followUpSentAt = null;
-    await saveProfile(userId, profile);
+    await updateProfile(userId, profile, { reason: 'quote_sent', quoteCode });
     console.log('[T14] ✅ Transacción completada (cotización enviada):', { userId, quoteCode });
     
     const duration = Date.now() - startTime;
@@ -767,7 +801,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // Actualizar idioma en perfil
       current.preferredLanguage = languageCommand;
-      await saveProfile(userId, { ...current, preferredLanguage: languageCommand });
+      await updateProfile(userId, { preferredLanguage: languageCommand }, { reason: 'language_command_change', language: languageCommand });
       console.log(`[LANGUAGE] ✅ Idioma actualizado en BD: ${languageCommand}`);
       
       // Obtener último mensaje del agente (ya tenemos conversationHistory arriba)
@@ -810,7 +844,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       // ✅ Guardar idioma default
       current.preferredLanguage = userLanguage;
-      await saveProfile(userId, { ...current, preferredLanguage: userLanguage });
+      await updateProfile(userId, { preferredLanguage: userLanguage }, { reason: 'first_message_language_detected' });
       console.log(`[LANGUAGE] ✅ Idioma guardado en BD: ${userLanguage}`);
     }
 
@@ -873,7 +907,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       console.log(`[NAME UPDATE] ✅ Nombre actualizado: "${current.whatsappDisplayName || 'NULL'}" → "${name}"`);
     }
 
-    await saveProfile(userId, profile);
+    await updateProfile(userId, profile, { reason: 'message_received' });
 
     // Guardar mensaje usuario con contexto reply si existe
     const replyContext = buildReplyContext(text || '', body, conversationHistory);
@@ -1353,6 +1387,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         profile.transactionStartedAt = new Date().toISOString();
         profile.transactionAgent = targetAgent;
         profile.followUpSentAt = null;
+        await updateProfile(userId, { 
+          transactionStartedAt: profile.transactionStartedAt, 
+          transactionAgent: targetAgent,
+          followUpSentAt: null
+        }, { reason: 'handoff_transaction_start', fromAgent, targetAgent });
         console.log('[T14] ⏱️ Transacción iniciada en handoff:', { 
           userId, from: fromAgent, to: targetAgent, timestamp: profile.transactionStartedAt 
         });

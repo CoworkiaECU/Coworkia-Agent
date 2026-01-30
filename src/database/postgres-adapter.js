@@ -32,7 +32,7 @@ class PostgresAdapter {
       ssl: {
         rejectUnauthorized: false // Heroku Postgres requiere SSL
       },
-      max: 20, // Máximo de conexiones
+      max: 10, // Reducido de 20 → 10 para ahorrar memoria
       connectionTimeoutMillis: 10000, // Timeout al obtener conexión
       idleTimeoutMillis: 30000 // Tiempo antes de cerrar conexión idle
     });

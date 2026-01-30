@@ -30,11 +30,11 @@ if (!fs.existsSync(DATA_DIR)) {
 /**
  * Cache en memoria para perfiles
  * TTL: 30 segundos para reducir queries repetitivas
- * MAX: 1000 perfiles (FIFO al superar límite)
+ * MAX: 100 perfiles (reducido para Heroku Eco)
  */
 const profileCache = new Map();
 const CACHE_TTL = 30000; // 30 segundos
-const MAX_CACHE_SIZE = 1000; // Máximo 1000 perfiles en cache
+const MAX_CACHE_SIZE = 100; // Reducido de 1000 → 100 para ahorrar memoria
 
 function getCachedProfile(userId) {
   const cached = profileCache.get(userId);

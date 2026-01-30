@@ -213,8 +213,9 @@ Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tare
 ## 🧪 PROTOCOLO DE PRUEBAS CON MÚLTIPLES CELULARES
 
 **Números de prueba activos:**
-- **0788** (593987770788): Celular principal de Diego
-- **0262** (593987770262): Celular prestado para testing
+- **0788** (+593987770788): Celular principal de Diego
+- **7117** (+593994837117): Celular de testing Sistema V2
+- **0262** (+593987770262): Celular prestado para testing (legacy)
 
 **Metodología de auditoría:**
 - Las **capturas de pantalla son SOLO presentación visual** del problema

@@ -15,19 +15,15 @@ await client.connect();
 for (const phone of PHONE_NUMBERS) {
   console.log(`📱 Limpiando: ${phone}`);
   
-  // 1. Forzar activeAgent = AURORA
+  // 1. Forzar active_agent = AURORA
   await client.query(
     `UPDATE users 
-     SET profile_data = jsonb_set(
-       COALESCE(profile_data, '{}'), 
-       '{activeAgent}', 
-       '"AURORA"'
-     ),
-     whatsapp_display_name = NULL
+     SET active_agent = 'AURORA',
+         whatsapp_display_name = NULL
      WHERE phone_number = $1`,
     [phone]
   );
-  console.log('   ✅ activeAgent → AURORA, nombre reseteado');
+  console.log('   ✅ active_agent → AURORA, nombre reseteado');
   
   // 2. Eliminar pending_confirmations
   const conf = await client.query('DELETE FROM pending_confirmations WHERE user_phone = $1', [phone]);

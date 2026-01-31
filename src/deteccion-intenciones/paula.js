@@ -411,7 +411,7 @@ export const PAULA = {
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, perfilContexto = {}) {
     const lang = userLanguage === 'es' ? 'Español' : 
                  userLanguage === 'en' ? 'English' : 'Español';
-    const { appointmentScheduled, lastPropertyViewed, propertyInterest } = perfilContexto;
+    const { appointmentScheduled, lastPropertyViewed, propertyInterest } = perfilContexto || {};
 
     let contextoAdicional = '';
     

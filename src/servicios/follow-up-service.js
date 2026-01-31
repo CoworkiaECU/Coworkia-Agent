@@ -34,8 +34,8 @@ export function isWithinAllowedHours() {
  */
 export async function findUsersNeedingFollowUp() {
   try {
-    const now = Date.now();
-    const twoHoursAgo = now - TWO_HOURS_MS;
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - TWO_HOURS_MS);
     
     // Buscar usuarios con transacciones >= 2h sin follow-up enviado
     const query = `

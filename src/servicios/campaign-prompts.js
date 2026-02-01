@@ -7,9 +7,9 @@
 // 🚀 CAMPAÑA PRINCIPAL: 2 HORAS GRATIS
 export const CAMPAIGN_PROMPTS = {
   
-  // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio
+  // Mensaje 1: ¡Hola Coworkia! quiero probar el servicio ☕️
   PROBAR_SERVICIO: {
-    trigger: "quiero probar el servicio|want to try the service|essayer le service",
+    trigger: "quiero probar|want to try|essayer|probar.*servicio|probar.*espacio|probar.*coworkia|try.*service|try.*space|try.*coworking",
     getResponse: (userLanguage = 'es') => ({
       es: `¡Hola {nombre}! 👋🏼 Soy Aurora, déjame coordinar tu espacio de inmediato.
 
@@ -84,7 +84,78 @@ Dites-moi et nous coordonnerons 😊`
     })
   },
 
-  // Mensaje 3: ¡Hola Paula! Me interesa Casa Jardín (Campaña PropElite)
+  // Mensaje 3: Aurora, ¿qué puede hacer un Agente Virtual como tú para mi empresa?
+  VENTA_AGENTES_VIRTUALES: {
+    trigger: "agente virtual.*empresa|virtual agent.*business|qu[eé] puede.*hacer.*agente|what can.*you do.*agent|qu[eé] puedes hacer|what can you do",
+    specialMode: 'virtualAgentSales', // Flag para usar prompt especial
+    getResponse: (userLanguage = 'es') => ({
+      es: `¡Hola {nombre}! 👋 Soy Aurora, un Agente Virtual de OneMind.
+
+Perfecto timing para esta pregunta 😊
+
+Te cuento que como *Agente Virtual Inteligente*, puedo ayudar a tu empresa con:
+
+🤖 *Atención al cliente 24/7*
+   → Sin descansos, siempre disponible
+
+📋 *Automatización de procesos*
+   → Reservas, cotizaciones, seguimiento
+
+💬 *Conversaciones naturales*
+   → Como esta que tenemos ahora
+
+📊 *Integración con tu negocio*
+   → CRM, pagos, calendarios, emails
+
+¿Te gustaría ver cómo un agente como yo podría funcionar en *tu empresa específica*?
+
+Cuéntame sobre tu negocio y te muestro un caso de uso concreto 🚀`,
+      en: `Hello {nombre}! 👋 I'm Aurora, a Virtual Agent from OneMind.
+
+Perfect timing for this question 😊
+
+As an *Intelligent Virtual Agent*, I can help your company with:
+
+🤖 *24/7 Customer service*
+   → No breaks, always available
+
+📋 *Process automation*
+   → Bookings, quotes, follow-ups
+
+💬 *Natural conversations*
+   → Like this one we're having now
+
+📊 *Business integration*
+   → CRM, payments, calendars, emails
+
+Would you like to see how an agent like me could work in *your specific business*?
+
+Tell me about your business and I'll show you a concrete use case 🚀`,
+      fr: `Bonjour {nombre}! 👋 Je suis Aurora, un Agent Virtuel de OneMind.
+
+Parfait timing pour cette question 😊
+
+En tant qu'*Agent Virtuel Intelligent*, je peux aider votre entreprise avec:
+
+🤖 *Service client 24/7*
+   → Sans pauses, toujours disponible
+
+📋 *Automatisation des processus*
+   → Réservations, devis, suivi
+
+💬 *Conversations naturelles*
+   → Comme celle que nous avons maintenant
+
+📊 *Intégration d'entreprise*
+   → CRM, paiements, calendriers, emails
+
+Voudriez-vous voir comment un agent comme moi pourrait fonctionner dans *votre entreprise spécifique*?
+
+Parlez-moi de votre entreprise et je vous montrerai un cas d'usage concret 🚀`
+    })
+  },
+
+  // Mensaje 4: ¡Hola Paula! Me interesa Casa Jardín (Campaña PropElite)
   CASA_JARDIN_PAULA: {
     trigger: "hola paula.*casa jard[ií]n|hello paula.*casa jard[ií]n",
     targetAgent: 'PAULA', // Activar Paula directamente
@@ -145,19 +216,30 @@ export function detectCampaignMessage(message) {
 
 /**
  * 🎨 Personaliza respuesta de campaña con nombre del usuario y respeta idioma
- * 🔍 Detecta si es cliente recurrente y NO ofrece trial gratis
+ * 🔍 Detecta si es cliente recurrente y ajusta mensaje (NO ofrece trial gratis si ya lo usó)
  * @param {Function} getTemplate - Función que retorna templates por idioma
  * @param {Object} userProfile - Perfil del usuario con preferredLanguage
+ * @param {string} campaignKey - Clave de la campaña (PROBAR_SERVICIO, etc)
  */
-export function personalizeCampaignResponse(getTemplate, userProfile) {
+export function personalizeCampaignResponse(getTemplate, userProfile, campaignKey = null) {
   const userName = userProfile?.name || '';
   const userLanguage = userProfile?.preferredLanguage || 'es';
+  const freeTrialUsed = userProfile?.freeTrialUsed || false;
   
   // Obtener template en el idioma correcto
   const templates = getTemplate(userLanguage);
-  const template = templates[userLanguage] || templates.es; // Fallback a español
+  let template = templates[userLanguage] || templates.es; // Fallback a español
   
-  console.log('[CAMPAIGN] 🎯 Template personalizado:', { userName, userLanguage });
+  // FIX 3: Si campaña PROBAR_SERVICIO y ya usó trial, ajustar mensaje
+  if (campaignKey === 'PROBAR_SERVICIO' && freeTrialUsed) {
+    // Remover mención de "gratis" del template
+    template = template.replace(/2 horas gratis.*🎁\)/g, '2 horas por $10)');
+    template = template.replace(/2 free hours.*🎁\)/g, '2 hours for $10)');
+    template = template.replace(/2 heures gratuites.*🎁\)/g, '2 heures pour $10)');
+    console.log('[CAMPAIGN] ⚠️ freeTrialUsed=true, removido "gratis" del mensaje');
+  }
+  
+  console.log('[CAMPAIGN] 🎯 Template personalizado:', { userName, userLanguage, freeTrialUsed, campaignKey });
   return template.replace(/{nombre}/g, userName);
 }
 

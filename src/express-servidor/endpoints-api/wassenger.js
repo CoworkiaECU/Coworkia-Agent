@@ -1311,21 +1311,41 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
-    // 🎯 DETECCIÓN DE CAMPAÑAS - Activar agente directo SIN handoff
+    // 🎯 DETECCIÓN DE CAMPAÑAS
     const campaignDetection = detectCampaignMessage(auroraInput);
-    if (campaignDetection.detected && CAMPAIGN_PROMPTS[campaignDetection.campaign]?.targetAgent) {
-      const targetAgent = CAMPAIGN_PROMPTS[campaignDetection.campaign].targetAgent;
-      console.log(`[CAMPAIGN] 🚀 ${targetAgent} activado: ${campaignDetection.campaign}`);
+    if (campaignDetection.detected) {
+      const campaign = CAMPAIGN_PROMPTS[campaignDetection.campaign];
       
-      profile.activeAgent = targetAgent;
-      profile.conversationCount = (profile.conversationCount || 0) + 1;
-      await saveProfile(userId, profile);
+      // FIX 4: Si tiene targetAgent, cambiar agente (ej: Paula)
+      if (campaign?.targetAgent) {
+        const targetAgent = campaign.targetAgent;
+        console.log(`[CAMPAIGN] 🚀 ${targetAgent} activado: ${campaignDetection.campaign}`);
+        
+        profile.activeAgent = targetAgent;
+        profile.conversationCount = (profile.conversationCount || 0) + 1;
+        await saveProfile(userId, profile);
+        
+        const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile, campaignDetection.campaign);
+        await enviarWhatsApp(userId, response);
+        await saveConversationMessage(userId, { role: 'assistant', content: response, agent: targetAgent });
+        await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent === 'PAULA' ? 'Paula - PropElite' : targetAgent, intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign } });
+        return;
+      }
       
-      const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile);
-      await enviarWhatsApp(userId, response);
-      await saveConversationMessage(userId, { role: 'assistant', content: response, agent: targetAgent });
-      await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent === 'PAULA' ? 'Paula - PropElite' : targetAgent, intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign } });
-      return;
+      // FIX 2: Si tiene specialMode (ej: venta agentes), NO cambiar agente pero usar prompt especial
+      if (campaign?.specialMode) {
+        console.log(`[CAMPAIGN] 🎯 specialMode=${campaign.specialMode} activado: ${campaignDetection.campaign}`);
+        
+        // Mantener AURORA pero con specialMode
+        profile.conversationCount = (profile.conversationCount || 0) + 1;
+        await saveProfile(userId, profile);
+        
+        const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile, campaignDetection.campaign);
+        await enviarWhatsApp(userId, response);
+        await saveConversationMessage(userId, { role: 'assistant', content: response, agent: 'AURORA' });
+        await saveInteraction({ userId, agent: 'AURORA', agentName: 'Aurora - Venta Agentes', intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign, specialMode: campaign.specialMode } });
+        return;
+      }
     }
 
         // Si hay media y es recibo, dejamos que Aurora lo maneje (sin meter agentes aquí)

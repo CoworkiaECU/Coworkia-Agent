@@ -41,43 +41,85 @@ export async function withTimeout(promise, timeoutMs, operationName = 'operation
 }
 
 /**
- * Wrapper especializado para loadProfile con fallback
+ * Wrapper especializado para loadProfile con fallback INTELIGENTE
+ * 
+ * Si timeout ocurre, intenta cargar SOLO user básico (query simple)
+ * para preservar activeAgent real en vez de usar AURORA default
+ * 
  * @param {Function} loadProfileFn - Función loadProfile original
  * @param {string} userId - ID del usuario
- * @param {number} timeoutMs - Timeout en milisegundos (default: 5000ms)
- * @returns {Promise} Perfil cargado o perfil vacío como fallback
+ * @param {number} timeoutMs - Timeout en milisegundos (default: 15000ms - aumentado de 5s)
+ * @returns {Promise} Perfil cargado o fallback inteligente
  */
-export async function loadProfileWithTimeout(loadProfileFn, userId, timeoutMs = 5000) {
-  const fallbackProfile = {
-    userId,
-    name: null,
-    email: null,
-    firstVisit: true,
-    activeAgent: 'AURORA',
-    preferredLanguage: 'es',
-    conversationCount: 0,
-    lastMessageAt: new Date(),
-    _fallback: true, // Flag para indicar que es fallback
-    _reason: 'timeout'
-  };
-  
+export async function loadProfileWithTimeout(loadProfileFn, userId, timeoutMs = 15000) {
   try {
+    // Intentar carga completa con timeout aumentado
     const profile = await withTimeout(
       loadProfileFn(userId),
       timeoutMs,
       `loadProfile(${userId})`,
-      fallbackProfile
+      null // No usar fallback automático
     );
-    
-    // Si es fallback, loggear para monitoreo
-    if (profile._fallback) {
-      console.warn(`[TIMEOUT] ⚠️ loadProfile timeout, usando perfil vacío para ${userId}`);
-    }
     
     return profile;
   } catch (error) {
-    console.error(`[TIMEOUT] ❌ Error en loadProfile:`, error.message);
-    return fallbackProfile;
+    // Si timeout, intentar fallback inteligente
+    if (error.message.includes('Timeout')) {
+      console.warn(`[TIMEOUT] ⚠️ loadProfile timeout, intentando fallback inteligente para ${userId}`);
+      
+      try {
+        // Importar dinámicamente para evitar circular dependency
+        const { default: userRepository } = await import('../database/userRepository.js');
+        
+        // Cargar SOLO user (query simple y rápida)
+        const user = await withTimeout(
+          userRepository.findByPhone(userId),
+          5000,
+          `userRepository.findByPhone(${userId})`,
+          null
+        );
+        
+        if (user) {
+          console.log(`[TIMEOUT] ✅ Fallback inteligente: activeAgent=${user.active_agent || 'AURORA'} preservado`);
+          
+          // Retornar perfil mínimo con activeAgent REAL de BD
+          return {
+            userId: user.phone_number,
+            name: user.name,
+            email: user.email,
+            whatsappDisplayName: user.whatsapp_display_name,
+            firstVisit: user.first_visit || false,
+            activeAgent: user.active_agent || 'AURORA', // ✅ Preservar agente real
+            preferredLanguage: user.preferred_language || 'es',
+            conversationCount: user.conversation_count || 0,
+            lastMessageAt: user.last_message_at || new Date(),
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+            reservationHistory: [],
+            upcomingReservations: [],
+            _fallback: 'intelligent', // Flag para monitoreo
+            _reason: 'timeout_with_user_query'
+          };
+        }
+      } catch (fallbackError) {
+        console.error(`[TIMEOUT] ❌ Fallback inteligente falló:`, fallbackError.message);
+      }
+    }
+    
+    // Último recurso: perfil completamente vacío
+    console.error(`[TIMEOUT] ❌ Usando perfil vacío por defecto para ${userId}`);
+    return {
+      userId,
+      name: null,
+      email: null,
+      firstVisit: true,
+      activeAgent: 'AURORA',
+      preferredLanguage: 'es',
+      conversationCount: 0,
+      lastMessageAt: new Date(),
+      _fallback: 'empty',
+      _reason: 'complete_failure'
+    };
   }
 }
 

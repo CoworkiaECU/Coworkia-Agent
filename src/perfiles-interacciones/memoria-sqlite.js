@@ -29,11 +29,15 @@ if (!fs.existsSync(DATA_DIR)) {
 
 /**
  * Cache en memoria para perfiles
- * TTL: 30 segundos para reducir queries repetitivas
+ * TTL: 120 segundos (aumentado de 30s para prevenir timeouts)
  * MAX: 100 perfiles (reducido para Heroku Eco)
+ * 
+ * OPTIMIZACIÓN v688: TTL más agresivo + invalidación selectiva
+ * Solo invalida si cambian campos críticos (activeAgent, email, etc)
+ * NO invalida si solo cambió lastMessageAt
  */
 const profileCache = new Map();
-const CACHE_TTL = 30000; // 30 segundos
+const CACHE_TTL = 120000; // 120 segundos (aumentado de 30s)
 const MAX_CACHE_SIZE = 100; // Reducido de 1000 → 100 para ahorrar memoria
 
 function getCachedProfile(userId) {
@@ -241,8 +245,18 @@ export async function loadProfile(userId) {
 export async function saveProfile(userId, partialProfile = {}) {
   await ensureDbInitialized();
   
-  // ⚡ P1: Invalidar caché al guardar
-  invalidateCachedProfile(userId);
+  // ⚡ P1: Invalidación selectiva de caché (v688 optimización)
+  // Solo invalidar si cambió activeAgent u otros campos críticos
+  // NO invalidar si solo cambió lastMessageAt (evita invalidación constante)
+  const shouldInvalidateCache = partialProfile.activeAgent 
+    || partialProfile.email 
+    || partialProfile.preferredLanguage
+    || partialProfile.whatsappDisplayName
+    || partialProfile.name;
+  
+  if (shouldInvalidateCache) {
+    invalidateCachedProfile(userId);
+  }
   
   try {
     // 🔥 SINCRONIZACIÓN NOMBRE: whatsapp_display_name es la fuente de verdad

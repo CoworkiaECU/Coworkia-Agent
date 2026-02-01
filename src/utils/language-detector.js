@@ -5,11 +5,13 @@
  */
 
 // Códigos ISO 639-1 para idiomas soportados
+// Alineado con handoff-messages.js: es, en, fr, it, pt
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
   FRENCH: 'fr',
-  QUECHUA: 'qu'
+  ITALIAN: 'it',
+  PORTUGUESE: 'pt'
 };
 
 // Nombres legibles de idiomas
@@ -17,7 +19,8 @@ export const LANGUAGE_NAMES = {
   es: 'Español',
   en: 'English',
   fr: 'Français',
-  qu: 'Runasimi'
+  it: 'Italiano',
+  pt: 'Português'
 };
 
 /**
@@ -61,17 +64,28 @@ const LANGUAGE_PATTERNS = {
     weight: 1.0
   },
 
-  // Quechua (Runasimi) - Palabras comunes Ecuador
-  qu: {
+  // Italian - Parole comuni e struttura
+  it: {
     commonWords: [
-      'allinllachu', 'allin', 'ima', 'may', 'maypi', 'mayman', 'imayna',
-      'ñuqa', 'qam', 'pay', 'ari', 'mana', 'yachani', 'munani',
-      'tukuy', 'kunan', 'paqarin', 'qayna', 'wasi', 'llaqta', 'pacha',
-      'llank', 'wasikunamanta', 'hayk', 'qullqi', 'tiyan', 'p\'unchaypaq',
-      'sapalla', 'ufisinata', 'reservay', 'tantakuna', 'kanchu', 'runasimi'
+      'ciao', 'buongiorno', 'salve', 'grazie', 'prego', 'come', 'cosa', 'quando',
+      'dove', 'voglio', 'bisogno', 'avere', 'essere', 'sono', 'siamo', 'hanno',
+      'per', 'con', 'senza', 'ma', 'perché', 'anche', 'qui', 'adesso',
+      'domani', 'oggi', 'prenotazione', 'informazione', 'aiuto', 'prezzo'
     ],
-    specialChars: /[ñqkw]/i,
-    weight: 1.2 // Peso ligeramente mayor por ser menos común
+    specialChars: /[àèéìòù]/i,
+    weight: 1.0
+  },
+
+  // Portuguese - Palavras comuns e estrutura
+  pt: {
+    commonWords: [
+      'olá', 'oi', 'bom', 'dia', 'obrigado', 'obrigada', 'por', 'favor', 'como', 'que', 'quando',
+      'onde', 'quero', 'preciso', 'ter', 'estar', 'sou', 'estou', 'são',
+      'para', 'com', 'sem', 'mas', 'porque', 'também', 'aqui', 'agora',
+      'amanhã', 'hoje', 'reserva', 'informação', 'ajuda', 'preço'
+    ],
+    specialChars: /[ãõáâàéêíóôúç]/i,
+    weight: 1.0
   }
 };
 
@@ -198,8 +212,11 @@ export function detectLanguageCommand(message) {
     'français': SUPPORTED_LANGUAGES.FRENCH,
     'francais': SUPPORTED_LANGUAGES.FRENCH,
     'french': SUPPORTED_LANGUAGES.FRENCH,
-    'quechua': SUPPORTED_LANGUAGES.QUECHUA,
-    'runasimi': SUPPORTED_LANGUAGES.QUECHUA
+    'italiano': SUPPORTED_LANGUAGES.ITALIAN,
+    'italian': SUPPORTED_LANGUAGES.ITALIAN,
+    'português': SUPPORTED_LANGUAGES.PORTUGUESE,
+    'portugues': SUPPORTED_LANGUAGES.PORTUGUESE,
+    'portuguese': SUPPORTED_LANGUAGES.PORTUGUESE
   };
 
   // Si el mensaje es EXACTAMENTE una palabra de idioma
@@ -218,8 +235,11 @@ export function detectLanguageCommand(message) {
     '/français': SUPPORTED_LANGUAGES.FRENCH,
     '/francais': SUPPORTED_LANGUAGES.FRENCH,
     '/french': SUPPORTED_LANGUAGES.FRENCH,
-    '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
-    '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
+    '/italiano': SUPPORTED_LANGUAGES.ITALIAN,
+    '/italian': SUPPORTED_LANGUAGES.ITALIAN,
+    '/português': SUPPORTED_LANGUAGES.PORTUGUESE,
+    '/portugues': SUPPORTED_LANGUAGES.PORTUGUESE,
+    '/portuguese': SUPPORTED_LANGUAGES.PORTUGUESE
   };
 
   // Buscar comandos con barra
@@ -256,10 +276,18 @@ export function detectLanguageCommand(message) {
         /parlez\s+vous\s+français/i
       ], lang: SUPPORTED_LANGUAGES.FRENCH },
     { patterns: [
-        /cambiar?\s+(a|al)?\s*quechua/i, 
-        /habla(r)?\s+quechua/i, 
-        /runasimita/i
-      ], lang: SUPPORTED_LANGUAGES.QUECHUA }
+        /cambiar?\s+(a|al)?\s*italiano/i,
+        /habla(r)?\s+italiano/i,
+        /italian\s+please/i,
+        /parli\s+italiano/i
+      ], lang: SUPPORTED_LANGUAGES.ITALIAN },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*portugués/i,
+        /habla(r)?\s+portugués/i,
+        /portuguese\s+please/i,
+        /fala\s+português/i,
+        /você\s+fala\s+português/i
+      ], lang: SUPPORTED_LANGUAGES.PORTUGUESE }
   ];
 
   for (const { patterns, lang } of naturalCommands) {
@@ -323,7 +351,7 @@ export function getUserLanguage(message, preferredLanguage = null) {
 /**
  * 🌐 Traduce un mensaje al idioma solicitado usando OpenAI
  * @param {string} message - Mensaje a traducir
- * @param {string} targetLanguage - Idioma destino ('es', 'en', 'fr', 'qu')
+ * @param {string} targetLanguage - Idioma destino ('es', 'en', 'fr', 'it', 'pt')
  * @returns {Promise<string>} Mensaje traducido
  */
 export async function translateMessage(message, targetLanguage) {
@@ -339,7 +367,8 @@ export async function translateMessage(message, targetLanguage) {
       es: 'Spanish',
       en: 'English',
       fr: 'French',
-      qu: 'Quechua'
+      it: 'Italian',
+      pt: 'Portuguese'
     };
     
     const targetName = languageNames[targetLanguage] || 'English';
@@ -374,7 +403,8 @@ export function getLanguageChangeConfirmation(newLanguage) {
     es: '✅ Perfecto! Ahora te responderé en español 🇪🇸',
     en: '✅ Perfect! I will now respond in English 🇺🇸',
     fr: '✅ Parfait! Je vais maintenant répondre en français 🇫🇷',
-    qu: '✅ Allinmi! Kunan runasimipi rimanayki 🏔️'
+    it: '✅ Perfetto! Adesso risponderò in italiano 🇮🇹',
+    pt: '✅ Perfeito! Agora vou responder em português 🇵🇹'
   };
 
   return confirmations[newLanguage] || confirmations.es;

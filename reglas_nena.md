@@ -192,12 +192,28 @@ Cuando implemento cambios en agentes (Vision AI, emails, formularios), CADA tare
 
 ## 📋 PROTOCOLO DE DEPLOY
 
+### Orden Obligatorio: GitHub → Heroku
+**SIEMPRE respaldar en GitHub ANTES de desplegar a Heroku**
+
+```bash
+# Flujo correcto (establecido 1 Feb 2026)
+git add .
+git commit -m "tipo: descripción clara"
+git push origin main          # ← PRIMERO GitHub (backup)
+git push heroku main          # ← DESPUÉS Heroku (producción)
+```
+
+**Razón**: GitHub es nuestro backup principal. Heroku puede tener rollbacks, pero GitHub es la fuente de verdad.
+
+### Pasos del Deploy
 1. Testing completo previo
 2. Mostrar previews de templates/emails antes de implementar
 3. Commits descriptivos: `tipo: descripción clara`
-4. Deploy frecuente pero controlado (v485 → v486 → v487...)
-5. Verificar que bot responde post-deploy
-6. Rollback rápido si algo falla en producción
+4. **Push a GitHub primero** (origin main)
+5. **Deploy a Heroku después** (heroku main)
+6. Verificar que bot responde post-deploy
+7. Rollback rápido si algo falla en producción
+8. Verificar sincronización: `Local = GitHub = Heroku`
 
 ---
 

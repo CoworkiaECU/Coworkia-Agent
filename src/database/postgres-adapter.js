@@ -823,11 +823,19 @@ class PostgresAdapter {
 
   /**
    * 🔌 Cierra la conexión
+   * 
+   * ⚠️ CRÍTICO: En Heroku NO cerramos el pool
+   * - Heroku mata el proceso en SIGTERM sin esperar graceful shutdown
+   * - Cerrar pool causa "Cannot use a pool after calling end" en restarts
+   * - El pool se limpia automáticamente cuando el proceso termina
+   * 
+   * Este método existe solo para compatibilidad de interfaz.
    */
   async close() {
     if (this.pool) {
-      await this.pool.end();
-      console.log('[POSTGRES] ✅ Conexiones cerradas');
+      // NO ejecutar pool.end() - causa crashes en Heroku
+      console.log('[POSTGRES] ℹ️ close() llamado - ignorando (Heroku no requiere graceful pool shutdown)');
+      // await this.pool.end(); // DESHABILITADO - Ver comentario arriba
     }
   }
   /**

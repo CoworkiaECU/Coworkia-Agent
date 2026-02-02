@@ -368,7 +368,7 @@ export async function clearGenericForm(userId) {
  * 
  * Cada agente tiene sus propios patrones de detección
  */
-export function extractDataFromMessage(message, agentName, currentForm) {
+export async function extractDataFromMessage(message, agentName, currentForm) {
   console.log(`[GENERIC-FORM] 🚀 Extrayendo datos para ${agentName}`);
   
   const updates = {};
@@ -449,7 +449,7 @@ export function extractDataFromMessage(message, agentName, currentForm) {
       extractAlunaData(lowerMsg, currentForm, updates);
       break;
     case 'GABI':
-      extractGabiData(lowerMsg, currentForm, updates);
+      await extractGabiData(lowerMsg, currentForm, updates);
       break;
   }
 
@@ -697,7 +697,7 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
 /**
  * ⚖️ GABI - Detectar datos de consultoría legal/contable
  */
-function extractGabiData(lowerMsg, currentForm, updates) {
+async function extractGabiData(lowerMsg, currentForm, updates) {
   // 🔒 Guardar último mensaje para análisis contextual
   updates._lastMessage = currentForm.data._lastMessage || '';
   
@@ -885,7 +885,7 @@ export async function processGenericFormMessage(userId, message, agentName) {
     const form = await getOrCreateGenericForm(userId, agentName);
     
     // 2. Extraer datos del mensaje
-    const updates = extractDataFromMessage(message, agentName, form);
+    const updates = await extractDataFromMessage(message, agentName, form);
     
     // 3. Actualizar formulario
     if (Object.keys(updates).length > 0) {

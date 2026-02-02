@@ -205,4 +205,3 @@ export default {
   cleanupExpiredSessions,
   getPhotoSessionStats
 };
-};

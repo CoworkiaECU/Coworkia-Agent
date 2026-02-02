@@ -60,22 +60,23 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       // Fallback: mostrar links si falla la conversión
       photosSection = `
         <div style="margin: 30px 0;">
-          <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
+          <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO (Referencia)</h3>
           <p style="color: #6B7280; font-size: 14px; margin-bottom: 15px;">
-            Fotos disponibles temporalmente (haz clic para ver):
+            Respaldo para The PaintBull - Fotos guardadas para verificación:
           </p>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+          <div style="background: #F9FAFB; border: 2px solid #E5E7EB; border-radius: 8px; padding: 20px;">
             ${photoUrls.map((url, idx) => `
-              <a href="${url}" target="_blank" style="text-decoration: none; display: block;">
-                <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden; transition: all 0.2s;">
-                  <div style="background: #F3F4F6; padding: 40px 20px; text-align: center;">
-                    <p style="margin: 0; color: #6B7280; font-size: 14px;">📷 Foto ${idx + 1}</p>
-                    <p style="margin: 5px 0 0 0; color: #DC2626; font-size: 12px; font-weight: 600;">Ver imagen →</p>
-                  </div>
-                </div>
-              </a>
+              <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
+                <span style="color: #DC2626; font-weight: 700; font-size: 14px;">📷 Foto ${idx + 1}:</span>
+                <a href="${url}" target="_blank" style="color: #2563EB; text-decoration: none; font-size: 13px; font-family: monospace; word-break: break-all;">
+                  ${url.length > 60 ? url.substring(0, 60) + '...' : url}
+                </a>
+              </div>
             `).join('')}
           </div>
+          <p style="color: #6B7280; font-size: 12px; margin-top: 10px; font-style: italic;">
+            ℹ️ Enlaces válidos por 30 días desde recepción. Respaldo para revisión técnica interna.
+          </p>
         </div>
       `;
     }

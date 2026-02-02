@@ -590,6 +590,12 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
     // Usuario puede seguir consultando con Axel sobre la cotización
     // Para cambiar de agente, usuario debe usar @aurora, @aluna, etc.
     
+    // 💾 Marcar sesión de fotos como completada en BD
+    const { completePhotoSession } = await import('../../database/axelPhotoRepository.js');
+    await completePhotoSession(userId, quoteCode).catch(err => {
+      console.error('[AXEL-QUOTE] ⚠️ Error marcando sesión completada:', err);
+    });
+    
     // ⏱️ T14: Limpiar transacción (cotización enviada exitosamente)
     profile.transactionStartedAt = null;
     profile.transactionAgent = null;

@@ -3,11 +3,13 @@
  * Sistema de recolección de fotos para cotizaciones
  * - Acepta 1-4 fotos por cotización
  * - Timeout de 30 segundos entre fotos
- * - Almacenamiento temporal en memoria
+ * - Almacenamiento temporal en memoria + backup en PostgreSQL
  * - Queue de procesamiento para respuestas ordenadas
  */
 
-// 🗂️ Almacén temporal de fotos por usuario
+import { savePhotoSession, getActivePhotoSession, completePhotoSession as markSessionCompleted } from '../database/axelPhotoRepository.js';
+
+// 🗂️ Almacén temporal de fotos por usuario (caché)
 const photoSessions = new Map();
 
 // 🔄 Queue de procesamiento por usuario (evita race conditions)
@@ -22,8 +24,9 @@ const MAX_PHOTOS = 4;
 
 /**
  * ➕ Agregar foto a la sesión del usuario
+ * 💾 Guarda inmediatamente en BD como backup
  */
-export function addPhoto(userId, photoUrl, photoType = 'image') {
+export async function addPhoto(userId, photoUrl, photoType = 'image') {
   console.log(`[AXEL-PHOTOS] 📸 Agregando foto para ${userId}`);
   
   // Obtener o crear sesión
@@ -56,6 +59,13 @@ export function addPhoto(userId, photoUrl, photoType = 'image') {
     session.lastPhotoTime = Date.now();
     
     console.log(`[AXEL-PHOTOS] ✅ Foto ${session.photos.length}/${MAX_PHOTOS} agregada`);
+    
+    // 💾 Guardar inmediatamente en BD como backup
+    const photoUrls = session.photos.map(p => p.url);
+    await savePhotoSession(userId, photoUrls).catch(err => {
+      console.error('[AXEL-PHOTOS] ⚠️ Error guardando en BD:', err);
+      // No fallar si BD falla, Map() sigue siendo source of truth temporal
+    });
   } else {
     console.log(`[AXEL-PHOTOS] ⚠️ Límite de ${MAX_PHOTOS} fotos alcanzado`);
   }
@@ -70,9 +80,29 @@ export function addPhoto(userId, photoUrl, photoType = 'image') {
 
 /**
  * 📋 Obtener estado de la sesión
+ * 🔄 Si no está en caché, busca en BD
  */
-export function getSession(userId) {
-  const session = photoSessions.get(userId);
+export async function getSession(userId) {
+  let session = photoSessions.get(userId);
+  
+  // Si no está en caché, intentar recuperar de BD
+  if (!session) {
+    console.log(`[AXEL-PHOTOS] 🔍 Sesión no en caché, buscando en BD...`);
+    const dbSession = await getActivePhotoSession(userId).catch(() => null);
+    
+    if (dbSession && dbSession.photoCount > 0) {
+      // Reconstruir sesión en caché desde BD
+      session = {
+        userId,
+        photos: dbSession.photoUrls.map(url => ({ url, type: 'image', timestamp: Date.now() })),
+        startTime: new Date(dbSession.createdAt).getTime(),
+        lastPhotoTime: new Date(dbSession.lastPhotoAt).getTime(),
+        timeoutId: null
+      };
+      photoSessions.set(userId, session);
+      console.log(`[AXEL-PHOTOS] ✅ Sesión recuperada de BD: ${dbSession.photoCount} fotos`);
+    }
+  }
   
   if (!session) {
     return null;

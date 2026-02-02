@@ -501,15 +501,21 @@ ${specialMode ? '- ⚠️ MODO ESPECIAL ACTIVO: Sigue el formato exacto del syst
 - Si el tema no es de tu especialidad, indícalo
 `.trim();
 
-  const systemPrompt =
-    typeof agente.getSystemPrompt === 'function'
-      ? agente.getSystemPrompt(
-          perfil.freeTrialUsed || false, 
-          perfil.preferredLanguage || 'es', 
-          perfil.conversationCount || 0,
-          specialMode
-        )
-      : agente.systemPrompt;
+  // 🔥 AXEL necesita await porque recupera fotos de BD
+  let systemPrompt;
+  if (typeof agente.getSystemPrompt === 'function') {
+    const promptResult = agente.getSystemPrompt(
+      perfil.freeTrialUsed || false, 
+      perfil.preferredLanguage || 'es', 
+      perfil.conversationCount || 0,
+      specialMode === undefined ? userId : specialMode // AXEL necesita userId como 4to parámetro
+    );
+    
+    // Si es Promise (AXEL), await
+    systemPrompt = promptResult instanceof Promise ? await promptResult : promptResult;
+  } else {
+    systemPrompt = agente.systemPrompt;
+  }
 
   // 🔧 Reemplazar placeholders con datos reales del usuario
   const userName = perfil.whatsappDisplayName || perfil.name || 'amigo';

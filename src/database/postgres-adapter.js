@@ -435,6 +435,22 @@ class PostgresAdapter {
         )
       `);
 
+      // 📸 Tabla de sesiones de fotos AXEL (backup y recuperación)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS axel_photo_sessions (
+          user_phone TEXT PRIMARY KEY,
+          photo_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+          photo_count INTEGER DEFAULT 0,
+          session_status TEXT DEFAULT 'active' CHECK (session_status IN ('active', 'completed', 'expired')),
+          quote_code TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_photo_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 days'),
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE,
+          FOREIGN KEY (quote_code) REFERENCES collision_quotes(quote_code) ON DELETE SET NULL
+        )
+      `);
+
       // Tabla de leads de marketing (Enzo - MarketingLab)
       await client.query(`
         CREATE TABLE IF NOT EXISTS marketing_leads (

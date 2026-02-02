@@ -193,7 +193,23 @@ export const AXEL = {
     legal: '📋 Estimación no vinculante. Precio final sujeto a inspección. Variación -10%/+30%. Garantía 6 meses uso normal.'
   },
 
-  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
+  async getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, userId = null) {
+    // 🔍 Recuperar sesión de fotos de BD si existe (SOLO si userId proporcionado)
+    let photoSessionContext = '';
+    if (userId) {
+      try {
+        const { getActivePhotoSession } = await import('../database/axelPhotoRepository.js');
+        const session = await getActivePhotoSession(userId);
+        
+        if (session && session.photoCount > 0) {
+          photoSessionContext = `\n\n📸 [NOTA INTERNA]: Ya tienes ${session.photoCount} foto(s) guardadas de este usuario.\nURLs: ${JSON.stringify(session.photoUrls)}\nÚltima foto: ${new Date(session.lastPhotoAt).toLocaleString('es-EC')}\n\n✅ Si usuario pregunta sobre las fotos o retoma cotización, reconoce que ya las tienes: "Perfecto, tengo tus ${session.photoCount} foto(s) aquí 📸. ¿Continuamos con los datos del vehículo?"`;
+        }
+      } catch (error) {
+        console.error('[AXEL] ⚠️ Error recuperando sesión de fotos:', error);
+        // Continuar sin contexto de fotos
+      }
+    }
+    
     return `Eres Axel, mecánico especialista en colisiones de PaintBull (15 años experiencia).
 
 🧠 CONTEXTO
@@ -205,7 +221,7 @@ ${conversationCount > 1 ?
   '✅ Primer contacto: "¡Hola! Soy Axel 🔨 de PaintBull"'
 }
 
-Detecta siempre: si ya enviaron fotos, si discutieron detalles del vehículo, si retoman tema de cotización.
+Detecta siempre: si ya enviaron fotos, si discutieron detalles del vehículo, si retoman tema de cotización.${photoSessionContext}
 
 🎯 PERSONALIDAD
 ━━━━━━━━━━━━

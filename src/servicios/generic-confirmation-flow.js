@@ -176,6 +176,26 @@ ${formData.companyName ? `🏢 *Empresa:* ${formData.companyName}` : ''}
 
 Responde *SI* para agendar visita o *NO* para cancelar.`;
 
+    case 'GABI':
+      return `Perfecto${userGreeting}! ⚖️
+
+📋 *CONFIRMA TU CONSULTORÍA:*
+
+⚖️ *Tipo:* ${formData.consultationType}
+${formData.companyName ? `🏢 *Empresa:* ${formData.companyName}` : ''}
+${formData.ruc && formData.ruc !== 'No tiene' ? `🆔 *RUC:* ${formData.ruc}` : ''}
+👤 *Nombre:* ${formData.fullName}
+📧 *Email:* ${formData.email || formData.phone}
+📱 *Teléfono:* ${formData.phone}
+📝 *Consulta:* ${formData.description}
+⏰ *Urgencia:* ${formData.urgency}
+
+¿*Confirmas estos datos?*
+
+Responde *SI* para agendar consulta GRATUITA o *NO* para cancelar.
+
+💡 *Primera consultoría: 30 min GRATIS*`;
+
     default:
       return `¿Confirmas estos datos?\n\nResponde *SI* para continuar o *NO* para cancelar.`;
   }
@@ -488,7 +508,16 @@ Tu interés en *${formData.membershipType}* fue registrado.
 
 📅 Te contactaremos a ${formData.email} para agendar un tour de las instalaciones.
 
-El equipo de Coworkia te contactará pronto. 🎫`
+El equipo de Coworkia te contactará pronto. 🎫`,
+
+    GABI: `✅ ¡Consulta registrada ${userName}!
+
+Tu consultoría de *${formData.consultationType}* fue agendada.
+
+📧 Te enviamos los detalles a ${formData.email || formData.phone}
+📅 Reunión inicial en 48h (GRATUITA - 30 min)
+
+El equipo de GR Consulting te contactará pronto. ⚖️`
   };
   
   let message = baseMessages[agentName] || '✅ Tu solicitud fue recibida correctamente.';
@@ -516,7 +545,8 @@ export async function processGenericNegativeConfirmation(userId, agentName) {
       AXEL: 'Ok, sin problema. Cuando necesites una cotización, escribe @axel. 🔨',
       ENZO: 'Perfecto. Cuando estés listo para tu proyecto, escribe @enzo. 🎯',
       PAULA: 'Entendido. Cuando quieras buscar propiedades, escribe @paula. 🏘️',
-      ALUNA: 'Ok. Cuando quieras conocer más sobre membresías, escribe @aluna. 🎫'
+      ALUNA: 'Ok. Cuando quieras conocer más sobre membresías, escribe @aluna. 🎫',
+      GABI: 'Entendido. Cuando necesites consultoría legal/contable, escribe @gabi. ⚖️'
     };
     
     return {

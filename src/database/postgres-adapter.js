@@ -439,6 +439,7 @@ class PostgresAdapter {
       await client.query(`
         CREATE TABLE IF NOT EXISTS marketing_leads (
           id TEXT PRIMARY KEY,
+          project_code TEXT UNIQUE NOT NULL,
           user_phone TEXT NOT NULL,
           project_type TEXT NOT NULL,
           company TEXT,
@@ -454,6 +455,46 @@ class PostgresAdapter {
           proposal_amount DECIMAL(10,2),
           status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'meeting_scheduled', 'proposal_sent', 'negotiating', 'accepted', 'rejected', 'cancelled')),
           assigned_to TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+      
+      // Agregar project_code si no existe (migración)
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'marketing_leads' AND column_name = 'project_code'
+          ) THEN
+            ALTER TABLE marketing_leads ADD COLUMN project_code TEXT UNIQUE;
+          END IF;
+        END $$;
+      `);
+
+      // Tabla de leads legal/contable (Gabi - GR Consulting) 🆕
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS legal_leads (
+          id TEXT PRIMARY KEY,
+          consultation_code TEXT UNIQUE NOT NULL,
+          user_phone TEXT NOT NULL,
+          consultation_type TEXT NOT NULL CHECK (consultation_type IN ('Contabilidad', 'Legal', 'RRHH', 'Fiscal', 'Otro')),
+          company TEXT,
+          ruc TEXT,
+          client_name TEXT NOT NULL,
+          email TEXT,
+          phone TEXT,
+          description TEXT,
+          urgency TEXT DEFAULT 'Normal' CHECK (urgency IN ('Urgente', 'Normal', 'Planificación')),
+          meeting_scheduled TIMESTAMP,
+          meeting_completed BOOLEAN DEFAULT FALSE,
+          quote_sent_at TIMESTAMP,
+          quote_amount DECIMAL(10,2),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'meeting_scheduled', 'quote_sent', 'negotiating', 'service_in_progress', 'completed', 'cancelled')),
+          assigned_to TEXT DEFAULT 'Gabi',
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -2,10 +2,10 @@
 // Coworkia Business Center - Administración y Compliance
 
 export const GABI = {
-  maintenance: true,  // 🔧 Agente temporalmente desactivado
+  maintenance: false,  // ✅ Agente ACTIVO - v691
   nombre: 'Gabi',
   rol: 'Experta en Finanzas, Contabilidad, RRHH y Legal',
-  empresa: 'Coworkia Business Center',
+  empresa: 'GR Consulting',
   descripcionCorta: 'especialista en finanzas, contabilidad, recursos humanos y legal',
   
   getMensajes: (userLanguage = 'es') => ({

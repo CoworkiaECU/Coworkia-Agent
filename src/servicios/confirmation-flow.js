@@ -901,6 +901,11 @@ async function processSpecializedConfirmation(userId, pendingData, userProfile) 
         result = await confirmRealEstateLead(userId, userProfile);
         break;
       }
+      case 'GABI': {
+        const { confirmLegalConsultation } = await import('./gabi-confirmation.js');
+        result = await confirmLegalConsultation(userId, userProfile);
+        break;
+      }
       // Agregar más agentes aquí cuando se implementen
       default:
         console.error(`[Confirmation] ⚠️ Agente no soportado: ${pendingData.agentName}`);

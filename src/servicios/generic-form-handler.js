@@ -299,6 +299,34 @@ export const FORM_SCHEMAS = {
       email: 'Perfecto. ¿A qué email te envío los detalles? 📧',
       phone: 'Y para coordinar, ¿cuál es tu mejor número de contacto? 📱'
     }
+  },
+
+  GABI: {
+    required: ['consultationType', 'fullName', 'email', 'phone', 'description', 'urgency'],
+    optional: ['companyName', 'ruc'],
+    defaults: {
+      urgency: 'Normal'
+    },
+    labels: {
+      consultationType: '⚖️ Tipo consulta',
+      companyName: '🏢 Empresa',
+      ruc: '🆔 RUC',
+      fullName: '👤 Nombre',
+      email: '📧 Email',
+      phone: '📱 Teléfono',
+      description: '📝 Descripción',
+      urgency: '⏰ Urgencia'
+    },
+    questions: {
+      consultationType: '¿Qué tipo de consultoría necesitas? (Contabilidad, Legal, RRHH, Fiscal, Otro)',
+      companyName: '¿Nombre de tu empresa? (Si eres persona natural escribe "Persona Natural")',
+      ruc: '¿Tienes RUC? Si no, escribe "No tengo"',
+      fullName: '¿Tu nombre completo?',
+      email: '¿Tu correo?',
+      phone: '¿Un número de contacto?',
+      description: 'Cuéntame brevemente sobre tu consulta o situación',
+      urgency: '¿Qué tan urgente es? (Urgente: 24h / Normal: 72h / Planificación: más de 1 semana)'
+    }
   }
 };
 
@@ -445,6 +473,9 @@ export function extractDataFromMessage(message, agentName, currentForm) {
       break;
     case 'ALUNA':
       extractAlunaData(lowerMsg, currentForm, updates);
+      break;
+    case 'GABI':
+      extractGabiData(lowerMsg, currentForm, updates);
       break;
   }
 
@@ -719,6 +750,153 @@ function extractAlunaData(lowerMsg, currentForm, updates) {
         console.log('[ALUNA] 📱 Teléfono detectado:', updates.phone);
         break;
       }
+    }
+  }
+}
+
+/**
+ * ⚖️ GABI - Detectar datos de consultoría legal/contable
+ */
+function extractGabiData(lowerMsg, currentForm, updates) {
+  // 🔒 Guardar último mensaje para análisis contextual
+  updates._lastMessage = currentForm.data._lastMessage || '';
+  
+  // Tipo de consultoría
+  if (!currentForm.data.consultationType) {
+    if (lowerMsg.includes('contab')) {
+      updates.consultationType = 'Contabilidad';
+      console.log('[GABI] ⚖️ Detectado: Contabilidad');
+    } else if (lowerMsg.includes('legal') || lowerMsg.includes('abogado') || lowerMsg.includes('contrato')) {
+      updates.consultationType = 'Legal';
+      console.log('[GABI] ⚖️ Detectado: Legal');
+    } else if (lowerMsg.includes('rrhh') || lowerMsg.includes('recursos humanos') || lowerMsg.includes('nomina') || lowerMsg.includes('nómina') || lowerMsg.includes('empleado')) {
+      updates.consultationType = 'RRHH';
+      console.log('[GABI] ⚖️ Detectado: RRHH');
+    } else if (lowerMsg.includes('fiscal') || lowerMsg.includes('sri') || lowerMsg.includes('impuesto') || lowerMsg.includes('tributar')) {
+      updates.consultationType = 'Fiscal';
+      console.log('[GABI] ⚖️ Detectado: Fiscal');
+    } else if (lowerMsg.includes('otro') || lowerMsg.includes('consulta general')) {
+      updates.consultationType = 'Otro';
+      console.log('[GABI] ⚖️ Detectado: Otro');
+    }
+  }
+  
+  // Empresa (opcional)
+  if (!currentForm.data.companyName) {
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    // Detectar "persona natural" explícitamente
+    if (lowerMsg.includes('persona natural') || lowerMsg.includes('no tengo empresa') || lowerMsg.includes('particular')) {
+      updates.companyName = 'Persona Natural';
+      console.log('[GABI] 🏢 Detectado: Persona Natural');
+    } else {
+      // Detectar nombre de empresa (capitalizado, 1-5 palabras)
+      const companyMatch = originalMessage.match(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s&.,-]{2,50})$/);
+      if (companyMatch && !lowerMsg.includes('@') && !lowerMsg.includes('.com')) {
+        updates.companyName = companyMatch[1].trim();
+        console.log('[GABI] 🏢 Empresa detectada:', updates.companyName);
+      }
+    }
+  }
+  
+  // RUC (opcional)
+  if (!currentForm.data.ruc) {
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    // Detectar "no tengo RUC"
+    if (lowerMsg.includes('no tengo') || lowerMsg.includes('sin ruc') || lowerMsg.includes('no') && lowerMsg.length < 5) {
+      updates.ruc = 'No tiene';
+      console.log('[GABI] 🆔 RUC: No tiene');
+    } else {
+      // Detectar RUC ecuatoriano (10 o 13 dígitos)
+      const rucMatch = originalMessage.match(/\b(\d{10}|\d{13})\b/);
+      if (rucMatch) {
+        updates.ruc = rucMatch[1];
+        console.log('[GABI] 🆔 RUC detectado:', updates.ruc);
+      }
+    }
+  }
+  
+  // Nombre completo
+  if (!currentForm.data.fullName) {
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    const namePatterns = [
+      /(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})/i,
+      /^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})$/,
+      /(?:sí|si|claro|ok)[,\s]+(?:soy|me llamo)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})/i
+    ];
+    
+    for (const pattern of namePatterns) {
+      const match = originalMessage.match(pattern);
+      if (match && match[1]) {
+        const detectedName = match[1].trim();
+        const commonWords = ['si', 'sí', 'no', 'ok', 'claro', 'gracias', 'hola'];
+        if (!commonWords.includes(detectedName.toLowerCase())) {
+          updates.fullName = detectedName;
+          console.log('[GABI] 👤 Nombre detectado:', updates.fullName);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Teléfono
+  if (!currentForm.data.phone) {
+    const originalMessage = currentForm.data._lastMessage || '';
+    
+    const phonePatterns = [
+      /\b(09\d{8})\b/,
+      /\b(\+?593\s?9\d{8})\b/,
+      /\b(9\d{8})\b/
+    ];
+    
+    for (const pattern of phonePatterns) {
+      const match = originalMessage.match(pattern);
+      if (match && match[1]) {
+        let phone = match[1].replace(/\s/g, '');
+        
+        if (phone.startsWith('09')) {
+          phone = `+593${phone.slice(1)}`;
+        } else if (phone.startsWith('9') && phone.length === 9) {
+          phone = `+593${phone}`;
+        } else if (phone.startsWith('593') && !phone.startsWith('+')) {
+          phone = `+${phone}`;
+        }
+        
+        updates.phone = phone;
+        console.log('[GABI] 📱 Teléfono detectado:', updates.phone);
+        break;
+      }
+    }
+  }
+  
+  // Descripción (texto libre > 20 caracteres que no sea otro campo)
+  if (!currentForm.data.description && currentForm.data._lastMessage) {
+    const msg = currentForm.data._lastMessage.trim();
+    
+    // Si es un mensaje largo y no coincide con otros campos, es descripción
+    if (msg.length > 20 && 
+        !msg.match(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+){1,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/) && // No es nombre
+        !msg.match(/\b(\d{10}|\d{13})\b/) && // No es RUC
+        !msg.match(/@/) && // No es email
+        !msg.match(/\d{9}/)) { // No es teléfono
+      updates.description = msg;
+      console.log('[GABI] 📝 Descripción detectada:', updates.description.substring(0, 50) + '...');
+    }
+  }
+  
+  // Urgencia
+  if (!currentForm.data.urgency) {
+    if (lowerMsg.includes('urgent') || lowerMsg.includes('rapido') || lowerMsg.includes('rápido') || lowerMsg.includes('ya') || lowerMsg.includes('asap') || lowerMsg.includes('24 hor')) {
+      updates.urgency = 'Urgente';
+      console.log('[GABI] ⏰ Urgencia: Urgente');
+    } else if (lowerMsg.includes('planific') || lowerMsg.includes('semana') || lowerMsg.includes('mes') || lowerMsg.includes('despues') || lowerMsg.includes('después') || lowerMsg.includes('flexible')) {
+      updates.urgency = 'Planificación';
+      console.log('[GABI] ⏰ Urgencia: Planificación');
+    } else if (lowerMsg.includes('normal') || lowerMsg.includes('regular') || lowerMsg.includes('estándar') || lowerMsg.includes('estandar')) {
+      updates.urgency = 'Normal';
+      console.log('[GABI] ⏰ Urgencia: Normal');
     }
   }
 }

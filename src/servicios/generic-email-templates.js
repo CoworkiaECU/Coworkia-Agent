@@ -913,7 +913,242 @@ export function generateAlunaEmailHTML(leadData) {
   `;
 }
 
-/**
- * � ALUNA - Coworkia Membresías
+/** * ⚖️ GABI - GR Consulting (Consultoría Legal y Contable)
+ * Colores: Azul profesional (#1E3A8A, #3B82F6, #1E40AF)
+ */
+export function generateGabiEmailHTML(leadData) {
+  const {
+    userName,
+    consultationType,
+    company,
+    ruc,
+    email,
+    phone,
+    description,
+    urgency,
+    consultationCode,
+    meetingDate,
+    meetingTime,
+    recipientType // 'admin' o 'client'
+  } = leadData;
+
+  // Mapeo de urgencias a colores
+  const urgencyColors = {
+    'Urgente': { bg: '#FEE2E2', text: '#DC2626', icon: '🚨' },
+    'Normal': { bg: '#FEF3C7', text: '#F59E0B', icon: '📅' },
+    'Planificación': { bg: '#DBEAFE', text: '#2563EB', icon: '📋' }
+  };
+
+  const urgencyStyle = urgencyColors[urgency] || urgencyColors['Normal'];
+
+  // Contenido específico para Admin vs Client
+  const headerTitle = recipientType === 'admin' 
+    ? '🔔 Nueva Solicitud de Consultoría' 
+    : '✅ Consultoría Confirmada';
+
+  const greeting = recipientType === 'admin'
+    ? `<p style="color: #6B7280; font-size: 16px; margin: 0 0 25px 0;">Se ha recibido una nueva solicitud de consultoría que requiere atención:</p>`
+    : `<p style="color: #6B7280; font-size: 16px; margin: 0 0 25px 0;">Gracias por confiar en GR Consulting. Hemos recibido tu solicitud de consultoría y estamos listos para ayudarte.</p>`;
+
+  const whatsappSection = recipientType === 'admin' ? `
+    <div style="text-align: center; margin: 25px 0;">
+      <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
+        💬 Contactar al cliente por WhatsApp
+      </p>
+      <a href="https://wa.me/${phone}?text=Hola%20${encodeURIComponent(userName)},%20soy%20de%20GR%20Consulting.%20Tu%20consulta%20${consultationCode}%20ha%20sido%20recibida." 
+         style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
+        📱 Abrir WhatsApp
+      </a>
+    </div>
+  ` : '';
+
+  const meetingSection = recipientType === 'client' && meetingDate ? `
+    <div style="background: rgba(30,58,138,0.05); border-radius: 12px; padding: 25px; margin: 25px 0; border-left: 4px solid #1E3A8A;">
+      <h3 style="color: #1E3A8A; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📆 Tu Reunión Está Agendada</h3>
+      <p style="color: #374151; margin: 8px 0;">
+        <strong>Fecha:</strong> ${meetingDate}
+      </p>
+      <p style="color: #374151; margin: 8px 0;">
+        <strong>Hora:</strong> ${meetingTime}
+      </p>
+      <p style="color: #374151; margin: 8px 0;">
+        <strong>Duración:</strong> 30 minutos
+      </p>
+      <p style="color: #6B7280; font-size: 14px; margin: 15px 0 0 0;">
+        💡 Recibirás un enlace de Google Meet antes de la reunión
+      </p>
+    </div>
+
+    <div style="background: rgba(16,185,129,0.05); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid rgba(16,185,129,0.2);">
+      <p style="color: #059669; font-size: 15px; margin: 0; font-weight: 600;">
+        🎁 Esta primera consultoría es GRATUITA (30 min)
+      </p>
+      <p style="color: #6B7280; font-size: 13px; margin: 8px 0 0 0;">
+        Si requieres servicios especializados adicionales, recibirás una cotización personalizada después de nuestra reunión.
+      </p>
+    </div>
+  ` : '';
+
+  const nextStepsSection = recipientType === 'client' ? `
+    <div style="background: #F9FAFB; border-radius: 12px; padding: 25px; margin: 25px 0;">
+      <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">📝 Próximos Pasos:</h3>
+      <p style="margin: 10px 0;">
+        <strong style="color: #1E3A8A;">1.</strong> Confirmaremos tu reunión vía WhatsApp
+      </p>
+      <p style="margin: 10px 0;">
+        <strong style="color: #1E3A8A;">2.</strong> Te enviaremos el enlace de Google Meet
+      </p>
+      <p style="margin: 10px 0;">
+        <strong style="color: #1E3A8A;">3.</strong> Analizaremos tu caso en detalle
+      </p>
+      <p style="margin: 10px 0;">
+        <strong style="color: #1E3A8A;">4.</strong> Te entregaremos una cotización personalizada (si aplica)
+      </p>
+    </div>
+  ` : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${recipientType === 'admin' ? 'Nueva Consultoría' : 'Consultoría Confirmada'} - GR Consulting</title>
+      ${DARK_MODE_CSS}
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
+      
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        
+        <!-- Header GR Consulting - Azul Profesional -->
+        <div style="background: linear-gradient(135deg, #1E3A8A, #3B82F6); text-align: center; padding: 40px 20px;">
+          <div style="background: white; width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <span style="font-size: 36px;">⚖️</span>
+          </div>
+          <h1 style="color: white; font-size: 28px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            GR Consulting
+          </h1>
+          <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 8px 0 0 0; font-weight: 500;">
+            Consultoría Legal y Contable
+          </p>
+        </div>
+
+        <!-- Contenido -->
+        <div style="padding: 35px 25px;">
+          
+          <!-- Título y Saludo -->
+          <h2 style="color: #1F2937; font-size: 22px; margin: 0 0 15px 0; font-weight: 700;">
+            ${headerTitle}
+          </h2>
+          ${greeting}
+
+          <!-- Código de Consultoría -->
+          <div style="background: linear-gradient(135deg, rgba(30,58,138,0.1), rgba(59,130,246,0.1)); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; border: 2px solid rgba(30,58,138,0.2);">
+            <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Código de Consultoría</p>
+            <p style="color: #1E3A8A; font-size: 24px; margin: 8px 0 0 0; font-weight: 700; letter-spacing: 2px;">${consultationCode}</p>
+          </div>
+
+          <!-- Datos del Cliente -->
+          <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(30,58,138,0.2);">
+            <h3 style="color: #374151; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">👤 Información del Cliente</h3>
+            
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">👤</span>
+                <span style="color: #374151; font-weight: 600; font-size: 16px;">${userName}</span>
+              </div>
+            </div>
+
+            ${company ? `
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🏢</span>
+                <span style="color: #374151; font-weight: 600; font-size: 16px;">${company}</span>
+              </div>
+            </div>
+            ` : ''}
+
+            ${ruc ? `
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🆔</span>
+                <span style="color: #374151; font-weight: 600; font-size: 16px;">RUC: ${ruc}</span>
+              </div>
+            </div>
+            ` : ''}
+
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📧</span>
+                <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
+              </div>
+            </div>
+
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📱</span>
+                <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Detalles de la Consultoría -->
+          <div style="background: #F9FAFB; border-radius: 12px; padding: 25px; margin: 25px 0;">
+            <h3 style="color: #374151; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">📋 Detalles de la Consultoría</h3>
+            
+            <div style="margin: 15px 0;">
+              <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; font-weight: 600;">Tipo de Consultoría</p>
+              <p style="color: #1E3A8A; font-size: 18px; margin: 5px 0; font-weight: 700;">${consultationType}</p>
+            </div>
+
+            <div style="margin: 15px 0;">
+              <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; font-weight: 600;">Nivel de Urgencia</p>
+              <div style="background: ${urgencyStyle.bg}; border-radius: 8px; padding: 10px; margin: 8px 0; display: inline-block;">
+                <span style="color: ${urgencyStyle.text}; font-weight: 700; font-size: 16px;">
+                  ${urgencyStyle.icon} ${urgency}
+                </span>
+              </div>
+            </div>
+
+            <div style="margin: 15px 0;">
+              <p style="color: #6B7280; font-size: 13px; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Descripción</p>
+              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(30,58,138,0.2);">
+                <p style="color: #374151; margin: 0; line-height: 1.6; font-size: 15px;">${description}</p>
+              </div>
+            </div>
+
+          </div>
+
+          ${meetingSection}
+
+          ${whatsappSection}
+
+          ${nextStepsSection}
+
+          <!-- Referencia -->
+          <div style="background: rgba(30,58,138,0.05); border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <p style="color: #6B7280; font-size: 13px; margin: 0;">
+              <strong>Referencia:</strong> ${consultationCode}
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(30,58,138,0.1), rgba(59,130,246,0.1)); border-radius: 12px;">
+            <p style="color: #1E3A8A; font-size: 18px; font-weight: 700; margin: 0;">Confianza y Profesionalismo ⚖️</p>
+            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Equipo GR Consulting</p>
+            <p style="color: #6B7280; font-size: 13px; margin: 12px 0 0 0;">
+              📧 consultas@grconsulting.ec | 📱 WhatsApp: +593 99 999 9999
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/** * � ALUNA - Coworkia Membresías
  * Colores: Verde agua (#4ECDC4, #44A08D)
  */

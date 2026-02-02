@@ -436,6 +436,7 @@ class PostgresAdapter {
       `);
 
       // 📸 Tabla de sesiones de fotos AXEL (backup y recuperación)
+      // Nota: Sin FK a users - AXEL puede recibir fotos de usuarios nuevos
       await client.query(`
         CREATE TABLE IF NOT EXISTS axel_photo_sessions (
           user_phone TEXT PRIMARY KEY,
@@ -445,8 +446,7 @@ class PostgresAdapter {
           quote_code TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_photo_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 days'),
-          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+          expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 days')
         )
       `);
 

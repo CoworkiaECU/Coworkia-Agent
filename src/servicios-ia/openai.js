@@ -156,7 +156,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
         content: response.choices[0]?.message?.content?.trim() || '',
         usage: response.usage
       };
-    }), fallback);
+    });
 
   } catch (error) {
     loggers.openai.error('Vision API error', { action: 'analyzeImage' }, error);

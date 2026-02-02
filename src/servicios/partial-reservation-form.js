@@ -183,25 +183,25 @@ export class PartialReservationForm {
     
     if (esPagoConTarjeta) {
       // TARJETAS (Visa, Mastercard, Diners, PayPal, Payphone, etc.)
-      // +3.5% comisión tarjeta + 12% IVA sobre base
+      // +3.5% comisión tarjeta + 15% IVA sobre base
       const cardFee = basePrice * 0.035;
       taxes.cardFee = parseFloat(cardFee.toFixed(2));
       
-      const iva = basePrice * 0.12;
+      const iva = basePrice * 0.15;
       taxes.iva = parseFloat(iva.toFixed(2));
       
       total = basePrice + taxes.cardFee + taxes.iva;
       console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + Comisión $${taxes.cardFee} + IVA $${taxes.iva} = $${total}`);
     } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
       // TRANSFERENCIAS BANCARIAS (Ecuador - sin comisión)
-      // Solo +12% IVA sobre base
-      const iva = basePrice * 0.12;
+      // Solo +15% IVA sobre base
+      const iva = basePrice * 0.15;
       taxes.iva = parseFloat(iva.toFixed(2));
       total = basePrice + taxes.iva;
       console.log(`[FORM] 🏦 Transferencia bancaria: Base $${basePrice} + IVA $${taxes.iva} = $${total}`);
     } else if (this.paymentMethod === 'efectivo') {
-      // EFECTIVO: Solo +12% IVA sobre base
-      const iva = basePrice * 0.12;
+      // EFECTIVO: Solo +15% IVA sobre base
+      const iva = basePrice * 0.15;
       taxes.iva = parseFloat(iva.toFixed(2));
       total = basePrice + taxes.iva;
       console.log(`[FORM] 💵 Efectivo: Base $${basePrice} + IVA $${taxes.iva} = $${total}`);

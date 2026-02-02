@@ -446,8 +446,7 @@ class PostgresAdapter {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_photo_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 days'),
-          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE,
-          FOREIGN KEY (quote_code) REFERENCES collision_quotes(quote_code) ON DELETE SET NULL
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
         )
       `);
 

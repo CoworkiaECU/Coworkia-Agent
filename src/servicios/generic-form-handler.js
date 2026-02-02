@@ -199,31 +199,7 @@ export const FORM_SCHEMAS = {
     }
   },
 
-  AXEL: {
-    required: ['damageType', 'vehicleBrand', 'vehicleModel', 'vehicleYear', 'fullName', 'email', 'phone'],
-    optional: ['damageDescription', 'photoUrls'],
-    defaults: { photoUrls: [] },
-    labels: {
-      damageType: '🔨 Tipo de daño',
-      vehicleBrand: '🚗 Marca',
-      vehicleModel: '🚗 Modelo',
-      vehicleYear: '📅 Año',
-      fullName: '👤 Nombre',
-      email: '📧 Email',
-      phone: '📱 Teléfono',
-      damageDescription: '📝 Descripción',
-      photoUrls: '📸 Fotos'
-    },
-    questions: {
-      damageType: '¿Qué tipo de daño tiene tu vehículo? (rayones, abolladura, pintura, choque)',
-      vehicleBrand: '¿Marca del vehículo?',
-      vehicleModel: '¿Modelo?',
-      vehicleYear: '¿Año del vehículo?',
-      fullName: '¿Tu nombre completo?',
-      email: '¿Tu correo para enviarte la cotización?',
-      phone: '¿Un número de contacto?'
-    }
-  },
+  // AXEL: Usa sistema especializado en axel-quote-form.js (no generic-form-handler)
 
   ENZO: {
     required: ['projectType', 'companyName', 'fullName', 'email', 'phone', 'budget', 'urgency'],
@@ -462,9 +438,7 @@ export function extractDataFromMessage(message, agentName, currentForm) {
     case 'ADRIANA':
       extractAdrianaData(lowerMsg, currentForm, updates);
       break;
-    case 'AXEL':
-      extractAxelData(lowerMsg, currentForm, updates);
-      break;
+    // AXEL: Usa axel-quote-form.js con extracción OpenAI (más precisa)
     case 'ENZO':
       extractEnzoData(lowerMsg, currentForm, updates);
       break;
@@ -531,42 +505,8 @@ function extractAdrianaData(lowerMsg, currentForm, updates) {
   }
 }
 
-/**
- * 🔨 AXEL - Detectar datos de colisiones
- */
-function extractAxelData(lowerMsg, currentForm, updates) {
-  // Tipo de daño
-  if (!currentForm.data.damageType) {
-    if (lowerMsg.includes('rayón') || lowerMsg.includes('rayon') || lowerMsg.includes('rayas')) {
-      updates.damageType = 'rayones';
-    } else if (lowerMsg.includes('abolladura') || lowerMsg.includes('golpe') || lowerMsg.includes('hundido')) {
-      updates.damageType = 'abolladura';
-    } else if (lowerMsg.includes('pintura')) {
-      updates.damageType = 'pintura';
-    } else if (lowerMsg.includes('choque') || lowerMsg.includes('accidente')) {
-      updates.damageType = 'choque';
-    }
-  }
-
-  // Marca del vehículo
-  const marcas = ['toyota', 'chevrolet', 'honda', 'nissan', 'mazda', 'hyundai', 'kia', 'ford', 'volkswagen'];
-  if (!currentForm.data.vehicleBrand) {
-    for (const marca of marcas) {
-      if (lowerMsg.includes(marca)) {
-        updates.vehicleBrand = marca.charAt(0).toUpperCase() + marca.slice(1);
-        break;
-      }
-    }
-  }
-
-  // Año del vehículo
-  if (!currentForm.data.vehicleYear) {
-    const yearMatch = lowerMsg.match(/\b(20\d{2}|19\d{2})\b/);
-    if (yearMatch) {
-      updates.vehicleYear = parseInt(yearMatch[1]);
-    }
-  }
-}
+// AXEL: Sistema especializado en src/servicios/axel-quote-form.js
+// Usa OpenAI para extracción más precisa (ej: "corolla 2015" → marca:Toyota, modelo:Corolla, año:2015)
 
 /**
  * 🎯 ENZO - Detectar datos de marketing

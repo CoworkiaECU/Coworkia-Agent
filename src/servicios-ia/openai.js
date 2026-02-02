@@ -68,7 +68,9 @@ export async function complete(prompt, opts = {}) {
 }
 
 /**
- * 👁️ Analiza imagen usando OpenAI Vision API
+ * 👁️ Analiza imagen(es) usando OpenAI Vision API
+ * Soporta 1 o múltiples imágenes en una sola llamada
+ * @param {string|string[]} imageUrl - URL única o array de URLs
  */
 export async function analyzeImage(imageUrl, prompt, opts = {}) {
   const {
@@ -90,25 +92,36 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
 
   try {
     const startTime = Date.now();
+    
+    // Convertir a array si es string único
+    const imageUrls = Array.isArray(imageUrl) ? imageUrl : [imageUrl];
+    
+    // Construir content array con texto + todas las imágenes
+    const contentArray = [
+      {
+        type: "text",
+        text: prompt
+      }
+    ];
+    
+    // Agregar cada imagen
+    for (const url of imageUrls) {
+      contentArray.push({
+        type: "image_url",
+        image_url: {
+          url: url,
+          detail: detail
+        }
+      });
+    }
+    
     return await openaiBreaker.execute(async () => {
       const response = await client.chat.completions.create({
         model,
         messages: [
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: prompt
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: imageUrl,
-                  detail: detail
-                }
-              }
-            ]
+            content: contentArray
           }
         ],
         temperature,
@@ -116,7 +129,11 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
       });
 
       const duration = Date.now() - startTime;
-      loggers.openai.timing('Vision API analysis', duration, { model, detail });
+      loggers.openai.timing('Vision API analysis', duration, { 
+        model, 
+        detail, 
+        imageCount: imageUrls.length 
+      });
 
       return {
         success: true,

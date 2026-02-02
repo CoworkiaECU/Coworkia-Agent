@@ -1020,16 +1020,13 @@ export function generateGabiEmailHTML(leadData) {
       
       <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
-        <!-- Header GR Consulting - Azul Profesional -->
-        <div style="background: linear-gradient(135deg, #1E3A8A, #3B82F6); text-align: center; padding: 40px 20px;">
-          <div style="background: white; width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-            <span style="font-size: 36px;">⚖️</span>
-          </div>
-          <h1 style="color: white; font-size: 28px; margin: 0; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            GR Consulting
+        <!-- Header GR Consulting - Texto Imponente -->
+        <div style="background: linear-gradient(135deg, #1E3A8A, #3B82F6); text-align: center; padding: 50px 20px;">
+          <h1 style="color: white; font-size: 42px; margin: 0 0 15px 0; font-weight: 900; text-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: 1px; font-family: 'Georgia', serif;">
+            GR CONSULTING
           </h1>
-          <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 8px 0 0 0; font-weight: 500;">
-            Consultoría Legal y Contable
+          <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0; font-weight: 600; letter-spacing: 0.5px;">
+            Asesoría Financiera, Legal y Cumplimiento UAFE
           </p>
         </div>
 

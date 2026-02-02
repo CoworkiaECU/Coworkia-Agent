@@ -19,18 +19,23 @@ export async function analyzeCollisionPhotos(photoUrls) {
       };
     }
 
-    console.log(`[AXEL-VISION] 👁️ Analizando ${photoUrls.length} foto(s)...`);
+    console.log(`[AXEL-VISION] 👁️ Analizando ${photoUrls.length} foto(s) simultáneamente...`);
 
     // Prompt especializado para análisis de daños vehiculares
     const visionPrompt = `Eres un experto en reparación de colisiones vehiculares con 15 años de experiencia.
 
-TAREA: Analiza estas fotos de un vehículo dañado y proporciona un diagnóstico profesional.
+TAREA: Analiza TODAS las fotos proporcionadas (${photoUrls.length} foto(s)) de un vehículo dañado y proporciona un diagnóstico profesional CONSOLIDADO.
+
+IMPORTANTE: 
+- Analiza TODAS las imágenes en conjunto
+- Identifica daños en diferentes ángulos/áreas del vehículo
+- Consolida tu análisis en una evaluación completa
 
 ESTRUCTURA DE RESPUESTA (formato JSON):
 {
   "severity": "LEVE|MODERADO|SEVERO",
-  "damageDetails": "Descripción detallada de los daños visibles",
-  "affectedParts": ["Lista", "de", "partes", "afectadas"],
+  "damageDetails": "Descripción detallada de TODOS los daños visibles en todas las fotos",
+  "affectedParts": ["Lista", "de", "todas", "las", "partes", "afectadas"],
   "hiddenDamageRisk": "BAJO|MEDIO|ALTO",
   "estimatedRepairDays": "X-X días",
   "urgentIssues": ["Problemas", "que", "requieren", "atención", "inmediata"]
@@ -41,10 +46,10 @@ CRITERIOS DE SEVERIDAD:
 - MODERADO: Daños en paneles, posible afectación de estructura leve, pintura comprometida
 - SEVERO: Daño estructural visible, múltiples paneles afectados, partes mecánicas expuestas
 
-Analiza las fotos y responde SOLO con el JSON solicitado:`;
+Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
 
-    // Analizar con Vision AI
-    const analysisResult = await analyzeImage(photoUrls[0], visionPrompt);
+    // Analizar TODAS las fotos con Vision AI en una sola llamada
+    const analysisResult = await analyzeImage(photoUrls, visionPrompt);
 
     if (!analysisResult.success) {
       console.error('[AXEL-VISION] ❌ Error en Vision API:', analysisResult.error);
@@ -57,7 +62,7 @@ Analiza las fotos y responde SOLO con el JSON solicitado:`;
     // Parsear respuesta JSON
     let analysisData;
     try {
-      const jsonMatch = analysisResult.analysis.match(/\{[\s\S]*\}/);
+      const jsonMatch = analysisResult.content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysisData = JSON.parse(jsonMatch[0]);
       } else {
@@ -67,9 +72,9 @@ Analiza las fotos y responde SOLO con el JSON solicitado:`;
       console.error('[AXEL-VISION] ⚠️ Error parseando JSON, usando análisis de texto:', parseError);
       // Fallback: extraer manualmente
       analysisData = {
-        severity: analysisResult.analysis.includes('SEVERO') ? 'SEVERO' : 
-                  analysisResult.analysis.includes('MODERADO') ? 'MODERADO' : 'LEVE',
-        damageDetails: analysisResult.analysis,
+        severity: analysisResult.content.includes('SEVERO') ? 'SEVERO' : 
+                  analysisResult.content.includes('MODERADO') ? 'MODERADO' : 'LEVE',
+        damageDetails: analysisResult.content,
         affectedParts: [],
         hiddenDamageRisk: 'MEDIO',
         estimatedRepairDays: '2-5 días',
@@ -80,7 +85,8 @@ Analiza las fotos y responde SOLO con el JSON solicitado:`;
     console.log('[AXEL-VISION] ✅ Análisis completado:', {
       severity: analysisData.severity,
       parts: analysisData.affectedParts?.length || 0,
-      risk: analysisData.hiddenDamageRisk
+      risk: analysisData.hiddenDamageRisk,
+      photosAnalyzed: photoUrls.length
     });
 
     return {
@@ -91,7 +97,7 @@ Analiza las fotos y responde SOLO con el JSON solicitado:`;
       hiddenDamageRisk: analysisData.hiddenDamageRisk || 'MEDIO',
       estimatedRepairDays: analysisData.estimatedRepairDays || '2-5 días',
       urgentIssues: analysisData.urgentIssues || [],
-      analysis: analysisResult.analysis,
+      analysis: analysisResult.content,
       photoCount: photoUrls.length
     };
 

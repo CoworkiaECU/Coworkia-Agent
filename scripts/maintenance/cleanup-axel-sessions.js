@@ -9,14 +9,14 @@
  */
 
 import { cleanupExpiredSessions, getPhotoSessionStats } from '../../src/database/axelPhotoRepository.js';
-import { initDatabase } from '../../src/database/postgres-adapter.js';
+import postgresAdapter from '../../src/database/postgres-adapter.js';
 
 async function main() {
   console.log('🧹 [AXEL-CLEANUP] Iniciando limpieza de sesiones de fotos...\n');
   
   try {
     // Inicializar BD
-    await initDatabase();
+    await postgresAdapter.initialize();
     console.log('✅ Conexión a PostgreSQL establecida\n');
     
     // Estadísticas ANTES de limpieza

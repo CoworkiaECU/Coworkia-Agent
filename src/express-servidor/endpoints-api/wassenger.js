@@ -1115,7 +1115,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           // 🔄 TODO en queue para garantizar orden
           await queueTask(userId, async () => {
-            const result = completeSession(userId);
+            const result = await completeSession(userId);
             
             if (result) {
               console.log('[WASSENGER] 📤 Enviando mensaje: Procesando fotos...');
@@ -1161,7 +1161,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
           startTimeout(userId, async () => {
-            const result = completeSession(userId);
+            const result = await completeSession(userId);
             if (result) {
               console.log(`[WASSENGER] ⏰ Auto-procesando ${result.photoCount} foto(s) después de timeout...`);
               await enviarWhatsApp(userId, `⏰ Tiempo límite alcanzado. Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
@@ -1176,7 +1176,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         // Si alcanzó el máximo, procesar DENTRO del queue
         if (photoStatus.currentCount >= photoStatus.maxPhotos) {
-          const result = completeSession(userId);
+          const result = await completeSession(userId);
           if (result) {
             console.log('[WASSENGER] 📸 Máximo de fotos alcanzado, procesando cotización...');
             await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Procesando cotización...`);

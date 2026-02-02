@@ -157,13 +157,33 @@ export function startTimeout(userId, onTimeoutCallback) {
 
 /**
  * ✅ Completar sesión y obtener fotos
+ * 🔄 Recupera de BD si no está en memoria
  */
-export function completeSession(userId) {
-  const session = photoSessions.get(userId);
+export async function completeSession(userId) {
+  let session = photoSessions.get(userId);
   
+  // 🔄 Si no está en memoria, recuperar de BD
   if (!session) {
-    console.log(`[AXEL-PHOTOS] ⚠️ No hay sesión para completar: ${userId}`);
-    return null;
+    console.log(`[AXEL-PHOTOS] 🔄 Sesión no en memoria, buscando en BD...`);
+    const { getActivePhotoSession } = await import('../database/axelPhotoRepository.js');
+    const dbSession = await getActivePhotoSession(userId).catch(err => {
+      console.error('[AXEL-PHOTOS] ❌ Error recuperando de BD:', err);
+      return null;
+    });
+    
+    if (!dbSession || !dbSession.photoUrls || dbSession.photoUrls.length === 0) {
+      console.log(`[AXEL-PHOTOS] ⚠️ No hay sesión para completar: ${userId}`);
+      return null;
+    }
+    
+    // Usar datos de BD
+    console.log(`[AXEL-PHOTOS] ✅ Sesión recuperada de BD: ${dbSession.photoUrls.length} fotos`);
+    return {
+      photos: dbSession.photoUrls,
+      photoCount: dbSession.photoUrls.length,
+      duration: 0,
+      fromDatabase: true
+    };
   }
   
   // Limpiar timeout

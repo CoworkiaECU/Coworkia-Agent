@@ -762,13 +762,18 @@ ${this.serviciosInfo.ubicacion}
 
 Cuando te pregunten "QUÉ ES COWORKIA", "QUÉ SERVICIOS TIENEN", "QUÉ VENDEDORES TIENEN", "QUÉ MÁS OFRECEN", usa EXACTAMENTE este mensaje:
 
-"En Coworkia Business Center trabajamos con especialistas en:
+"Coworkia es un ecosistema empresarial completo 🎯
 
+🏢 ESPACIOS DE TRABAJO:
+• Hot Desk: $10/2h ${freeTrialUsed ? '' : '(primera visita GRATIS 🎁)'}
+• Sala Reuniones: $29/2h (3-4 personas)
+
+👥 ESPECIALISTAS DISPONIBLES:
 ${this.serviciosInfo.especialistas}
 
 ${this.serviciosInfo.ejemploMenciones}
 
-¿Qué necesitas probar? 🚀"
+¿Qué te interesa probar? 🚀"
 
 ${this.serviciosInfo.notaMenciones}
 
@@ -831,17 +836,15 @@ Esto no es el futuro - es el presente en Coworkia 🚀
 
 3️⃣ "¿Dónde están?" → "📍 Whymper 403, Edificio Finistere, Quito.\n⏰ Lun-Vie 8:30-18h | Sáb 9-14h\n🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66"
 
-4️⃣ "¿Qué es Coworkia?" → "Espacio de trabajo colaborativo en Quito 🏢 ¿Te gustaría conocer?"
+4️⃣ Planes mensuales → "Para membresías puedes preguntar específicamente por ese tema"
 
-5️⃣ Planes mensuales → "Para membresías puedes preguntar específicamente por ese tema"
+5️⃣ Marketing/IA → "@enzo te puede ayudar, es nuestro experto"
 
-6️⃣ Marketing/IA → "@enzo te puede ayudar, es nuestro experto"
+6️⃣ Seguros → "@adriana es tu mejor opción, especialista en seguros"
 
-7️⃣ Seguros → "@adriana es tu mejor opción, especialista en seguros"
+7️⃣ Salud/bienestar → "@angela 💚 te ayudará con eso"
 
-8️⃣ Salud/bienestar → "@angela 💚 te ayudará con eso"
-
-9️⃣ Finanzas/Admin/Legal → "@gabi 💼 es experta en contabilidad, RRHH y temas legales"
+8️⃣ Finanzas/Admin/Legal → "@gabi 💼 es experta en contabilidad, RRHH y temas legales"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1135,30 +1138,6 @@ Para volver, escribe *@aurora*"
     handoverAluna: '{nombre}, te conecto con *Aluna* - nuestra experta en membresías y planes mensuales de Coworkia. 🏢\n\n*Aluna*, {nombre} quiere información sobre planes mensuales.\n\nPara volver, escribe *@Aurora*',
     
     handoverPaula: '{nombre}, te conecto con *Paula* de *PropElite Real Estate* - nuestra experta en bienes raíces de lujo. 🏡\n\n*Paula*, te presento a {nombre}. Está interesado en propiedades premium.\n\nPara volver, escribe *@Aurora*'
-  },
-  
-  // Función para generar mensaje de información general dinámicamente
-  getInformacionGeneral: function(freeTrialUsed = false) {
-    const hotDeskInfo = freeTrialUsed
-      ? this.serviciosInfo.hotDesk.sinPrimeraVisita
-      : this.serviciosInfo.hotDesk.conPrimeraVisita;
-
-    return `🏢 *Coworkia* - Espacios que inspiran
-
-*¿Qué ofrecemos?*
-
-${hotDeskInfo}
-
-${this.serviciosInfo.salaReuniones}
-
-📅 *Planes Mensuales*
-   • Pregunta por "membresía" para más info
-
-📍 *Ubicación:*
-   ${this.serviciosInfo.ubicacion}
-   🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
-
-¿Qué espacio te interesa?`;
   },
   
   // Función para obtener mensaje de handoff según agente destino

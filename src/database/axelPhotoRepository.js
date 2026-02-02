@@ -6,23 +6,25 @@
  * - Auto-limpieza después de 15 días
  */
 
-import { getDb } from './postgres-adapter.js';
+import postgresAdapter from './postgres-adapter.js';
 
 /**
  * 💾 Guardar o actualizar sesión de fotos
  */
 export async function savePhotoSession(userPhone, photoUrls) {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    await db.run(`
+    await client.query(`
       INSERT INTO axel_photo_sessions (
         user_phone,
         photo_urls,
         photo_count,
         session_status,
         last_photo_at
-      ) VALUES (?, ?, ?, 'active', CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP)
       ON CONFLICT (user_phone) DO UPDATE SET
         photo_urls = excluded.photo_urls,
         photo_count = excluded.photo_count,
@@ -38,6 +40,8 @@ export async function savePhotoSession(userPhone, photoUrls) {
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error guardando sesión:', error);
     return { success: false, error: error.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -45,10 +49,12 @@ export async function savePhotoSession(userPhone, photoUrls) {
  * 🔍 Obtener sesión activa de fotos
  */
 export async function getActivePhotoSession(userPhone) {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    const session = await db.get(`
+    const result = await client.query(`
       SELECT 
         user_phone,
         photo_urls,
@@ -59,18 +65,19 @@ export async function getActivePhotoSession(userPhone) {
         last_photo_at,
         expires_at
       FROM axel_photo_sessions
-      WHERE user_phone = ?
+      WHERE user_phone = $1
         AND session_status = 'active'
         AND expires_at > CURRENT_TIMESTAMP
     `, [userPhone]);
     
-    if (!session) {
+    if (result.rows.length === 0) {
       return null;
     }
     
+    const session = result.rows[0];
     return {
       userPhone: session.user_phone,
-      photoUrls: JSON.parse(session.photo_urls),
+      photoUrls: session.photo_urls, // JSONB ya viene parseado
       photoCount: session.photo_count,
       status: session.session_status,
       quoteCode: session.quote_code,
@@ -81,6 +88,8 @@ export async function getActivePhotoSession(userPhone) {
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error obteniendo sesión:', error);
     return null;
+  } finally {
+    client.release();
   }
 }
 
@@ -88,14 +97,16 @@ export async function getActivePhotoSession(userPhone) {
  * ✅ Marcar sesión como completada
  */
 export async function completePhotoSession(userPhone, quoteCode) {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    await db.run(`
+    await client.query(`
       UPDATE axel_photo_sessions
       SET session_status = 'completed',
-          quote_code = ?
-      WHERE user_phone = ?
+          quote_code = $1
+      WHERE user_phone = $2
     `, [quoteCode, userPhone]);
     
     console.log(`[AXEL-PHOTO-DB] ✅ Sesión completada: ${userPhone} → ${quoteCode}`);
@@ -103,6 +114,8 @@ export async function completePhotoSession(userPhone, quoteCode) {
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error completando sesión:', error);
     return { success: false, error: error.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -110,12 +123,14 @@ export async function completePhotoSession(userPhone, quoteCode) {
  * 🗑️ Eliminar sesión (cancelar)
  */
 export async function deletePhotoSession(userPhone) {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    await db.run(`
+    await client.query(`
       DELETE FROM axel_photo_sessions
-      WHERE user_phone = ?
+      WHERE user_phone = $1
     `, [userPhone]);
     
     console.log(`[AXEL-PHOTO-DB] 🗑️ Sesión eliminada: ${userPhone}`);
@@ -123,6 +138,8 @@ export async function deletePhotoSession(userPhone) {
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error eliminando sesión:', error);
     return { success: false, error: error.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -130,20 +147,25 @@ export async function deletePhotoSession(userPhone) {
  * 🧹 Limpiar sesiones expiradas (llamar desde cron diario)
  */
 export async function cleanupExpiredSessions() {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    const result = await db.run(`
+    const result = await client.query(`
       DELETE FROM axel_photo_sessions
       WHERE expires_at < CURRENT_TIMESTAMP
         AND session_status != 'completed'
     `);
     
-    console.log(`[AXEL-PHOTO-DB] 🧹 Limpieza: ${result.changes || 0} sesiones expiradas eliminadas`);
-    return { success: true, deleted: result.changes || 0 };
+    const deleted = result.rowCount || 0;
+    console.log(`[AXEL-PHOTO-DB] 🧹 Limpieza: ${deleted} sesiones expiradas eliminadas`);
+    return { success: true, deleted };
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error en limpieza:', error);
     return { success: false, error: error.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -151,10 +173,12 @@ export async function cleanupExpiredSessions() {
  * 📊 Obtener estadísticas
  */
 export async function getPhotoSessionStats() {
-  const db = getDb();
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
   
+  const client = await pool.connect();
   try {
-    const stats = await db.get(`
+    const result = await client.query(`
       SELECT 
         COUNT(*) as total,
         COUNT(CASE WHEN session_status = 'active' THEN 1 END) as active,
@@ -163,13 +187,16 @@ export async function getPhotoSessionStats() {
       FROM axel_photo_sessions
     `);
     
-    return stats;
+    return result.rows[0];
   } catch (error) {
     console.error('[AXEL-PHOTO-DB] ❌ Error obteniendo stats:', error);
     return { total: 0, active: 0, completed: 0, expired: 0 };
+  } finally {
+    client.release();
   }
 }
 
+// Exportar también como default para compatibilidad
 export default {
   savePhotoSession,
   getActivePhotoSession,
@@ -177,4 +204,5 @@ export default {
   deletePhotoSession,
   cleanupExpiredSessions,
   getPhotoSessionStats
+};
 };

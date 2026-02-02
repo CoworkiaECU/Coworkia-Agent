@@ -648,11 +648,14 @@ Construimos ecosistemas de agentes virtuales que transforman la atención al cli
 
 🎯 Conversa con nuestro equipo especializado:
 
-🤖 @aurora - Coworking y Espacios (Coworkia)
+🤖 @aurora - Coworking (Coworkia)
 📊 @enzo - Marketing e IA (MarketingLab)
 🏠 @aluna - Membresías (Business Center)
-
-Tenemos adicionalmente especialistas en: bienes raíces, colisiones, médico, legal, compliance, seguros y más.
+🏘️ @paula - Bienes Raíces (PropElite)
+🚗 @axel - Colisiones (PaintBull)
+💚 @angela - Salud (MedBeneficios)
+🛡️ @adriana - Seguros (SegPopular)
+⚖️ @gabi - Legal/Finanzas (GR Consulting)
 
 MENSAJE 2:
 🎮 Pruébalo:

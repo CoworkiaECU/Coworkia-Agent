@@ -107,12 +107,18 @@ export async function confirmLegalConsultation(userId, userProfile) {
     
     const adminEmail = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
     
+    // Preparar datos de RUC validado (si existe)
+    const rucInfo = formData._rucValidated && formData._rucData 
+      ? `${formData.ruc} - ${formData._rucData.razonSocial} (${formData._rucData.estado})` 
+      : (formData.ruc || 'No proporcionado');
+    
     const emailToAdmin = await generateEmailForAgent('GABI', 'admin', {
       consultationId: consultationCode,
       consultationType: formData.consultationType || 'General',
       clientName: formData.fullName,
       companyName: formData.companyName || 'Persona Natural',
-      ruc: formData.ruc || 'No proporcionado',
+      ruc: rucInfo,
+      rucValidated: formData._rucValidated === true ? '✅ Validado en SRI' : (formData._rucValidated === false ? '⚠️ RUC inválido' : ''),
       email: formData.email || 'No proporcionado',
       phone: formData.phone || userId,
       description: formData.description || 'Sin descripción',

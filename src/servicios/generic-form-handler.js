@@ -739,20 +739,53 @@ function extractGabiData(lowerMsg, currentForm, updates) {
     }
   }
   
-  // RUC (opcional)
+  // RUC (opcional con validación SRI)
   if (!currentForm.data.ruc) {
     const originalMessage = currentForm.data._lastMessage || '';
     
     // Detectar "no tengo RUC"
     if (lowerMsg.includes('no tengo') || lowerMsg.includes('sin ruc') || lowerMsg.includes('no') && lowerMsg.length < 5) {
       updates.ruc = 'No tiene';
+      updates._rucValidated = true;
       console.log('[GABI] 🆔 RUC: No tiene');
     } else {
       // Detectar RUC ecuatoriano (10 o 13 dígitos)
       const rucMatch = originalMessage.match(/\b(\d{10}|\d{13})\b/);
       if (rucMatch) {
-        updates.ruc = rucMatch[1];
-        console.log('[GABI] 🆔 RUC detectado:', updates.ruc);
+        const detectedRuc = rucMatch[1];
+        updates.ruc = detectedRuc;
+        console.log('[GABI] 🆔 RUC detectado:', detectedRuc);
+        
+        // Validar RUC con SRI en tiempo real
+        try {
+          const { validateRuc } = await import('./sri-validator.js');
+          const validation = await validateRuc(detectedRuc);
+          
+          if (validation.valid && validation.sriValid) {
+            updates._rucValidated = true;
+            updates._rucData = {
+              razonSocial: validation.razonSocial,
+              estado: validation.estado,
+              tipoContribuyente: validation.tipoContribuyente
+            };
+            
+            // Si empresa no fue proporcionada, usar razón social del SRI
+            if (!currentForm.data.companyName && validation.razonSocial && validation.razonSocial !== 'No disponible') {
+              updates.companyName = validation.razonSocial;
+              console.log('[GABI] 🏢 Razón Social obtenida del SRI:', validation.razonSocial);
+            }
+            
+            console.log('[GABI] ✅ RUC validado en SRI:', validation.estado);
+          } else {
+            updates._rucValidated = false;
+            updates._rucError = validation.message || 'RUC no válido';
+            console.log('[GABI] ⚠️ RUC inválido:', validation.message);
+          }
+        } catch (error) {
+          console.error('[GABI] ❌ Error validando RUC:', error.message);
+          // Continuar sin validación SRI
+          updates._rucValidated = 'error';
+        }
       }
     }
   }

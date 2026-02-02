@@ -160,7 +160,13 @@ export class PartialReservationForm {
     const basePrice = this.getBasePrice();
     
     if (!this.paymentMethod) {
-      return { base: basePrice, total: basePrice, taxes: {} };
+      return { 
+        base: basePrice, 
+        total: basePrice, 
+        iva: 0,
+        cardFee: 0,
+        taxes: {} 
+      };
     }
 
     let total = basePrice;
@@ -177,33 +183,35 @@ export class PartialReservationForm {
     
     if (esPagoConTarjeta) {
       // TARJETAS (Visa, Mastercard, Diners, PayPal, Payphone, etc.)
-      // +5% ISD (Impuesto Salida Divisas), luego +15% IVA sobre (base + ISD)
-      const isd = basePrice * 0.05;
-      taxes.isd = parseFloat(isd.toFixed(2));
+      // +3.5% comisión tarjeta + 12% IVA sobre base
+      const cardFee = basePrice * 0.035;
+      taxes.cardFee = parseFloat(cardFee.toFixed(2));
       
-      const subtotalConISD = basePrice + taxes.isd;
-      const iva = subtotalConISD * 0.15;
-      taxes.iva = Math.round(iva * 100) / 100;
+      const iva = basePrice * 0.12;
+      taxes.iva = parseFloat(iva.toFixed(2));
       
-      total = basePrice + taxes.isd + taxes.iva;
-      console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + ISD $${taxes.isd} + IVA $${taxes.iva} = $${total}`);
+      total = basePrice + taxes.cardFee + taxes.iva;
+      console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + Comisión $${taxes.cardFee} + IVA $${taxes.iva} = $${total}`);
     } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
-      // TRANSFERENCIAS BANCARIAS (Ecuador - sin ISD)
-      // Solo +15% IVA sobre base
-      const iva = basePrice * 0.15;
+      // TRANSFERENCIAS BANCARIAS (Ecuador - sin comisión)
+      // Solo +12% IVA sobre base
+      const iva = basePrice * 0.12;
       taxes.iva = parseFloat(iva.toFixed(2));
       total = basePrice + taxes.iva;
       console.log(`[FORM] 🏦 Transferencia bancaria: Base $${basePrice} + IVA $${taxes.iva} = $${total}`);
     } else if (this.paymentMethod === 'efectivo') {
-      // 🔓 BYPASS TEMPORAL: Efectivo sin impuestos (para testing)
-      // TODO: Remover cuando no se necesite más el bypass
-      total = basePrice;
-      console.log('[FORM] 🔓 Bypass efectivo activado - sin impuestos');
+      // EFECTIVO: Solo +12% IVA sobre base
+      const iva = basePrice * 0.12;
+      taxes.iva = parseFloat(iva.toFixed(2));
+      total = basePrice + taxes.iva;
+      console.log(`[FORM] 💵 Efectivo: Base $${basePrice} + IVA $${taxes.iva} = $${total}`);
     }
 
     return {
       base: parseFloat(basePrice.toFixed(2)),
       total: parseFloat(total.toFixed(2)),
+      iva: parseFloat((taxes.iva || 0).toFixed(2)),
+      cardFee: parseFloat((taxes.cardFee || 0).toFixed(2)),
       taxes
     };
   }

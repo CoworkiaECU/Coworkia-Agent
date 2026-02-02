@@ -13,8 +13,8 @@ const photoSessions = new Map();
 // 🔄 Queue de procesamiento por usuario (evita race conditions)
 const processingQueues = new Map();
 
-// ⏱️ Timeout de 30 segundos para considerar sesión completa
-const PHOTO_TIMEOUT_MS = 30000;
+// ⏱️ Timeout de 20 segundos para considerar sesión completa (reducido para procesamiento más rápido)
+const PHOTO_TIMEOUT_MS = 20000;
 
 // 📊 Límites de fotos
 const MIN_PHOTOS = 1;
@@ -97,7 +97,7 @@ export function getSession(userId) {
 /**
  * ⏰ Iniciar timeout para procesar automáticamente
  */
-export function startTimeout(userId) {
+export function startTimeout(userId, onTimeoutCallback) {
   const session = photoSessions.get(userId);
   
   if (!session) {
@@ -110,13 +110,19 @@ export function startTimeout(userId) {
     clearTimeout(session.timeoutId);
   }
   
-  // Crear nuevo timeout que marca flag en vez de ejecutar directamente
-  session.timeoutId = setTimeout(() => {
-    console.log(`[AXEL-PHOTOS] ⏰ Timeout alcanzado para ${userId} - marcando sesión lista`);
+  // Crear nuevo timeout que marca flag Y ejecuta callback
+  session.timeoutId = setTimeout(async () => {
+    console.log(`[AXEL-PHOTOS] ⏰ Timeout alcanzado para ${userId} (${session.photos.length} fotos)`);
     session.readyToProcess = true;
+    
+    // 🔥 FIX: Ejecutar callback para auto-procesar
+    if (onTimeoutCallback && typeof onTimeoutCallback === 'function') {
+      console.log(`[AXEL-PHOTOS] 🚀 Auto-procesando cotización...`);
+      await onTimeoutCallback();
+    }
   }, PHOTO_TIMEOUT_MS);
   
-  console.log(`[AXEL-PHOTOS] ⏱️ Timeout iniciado: ${PHOTO_TIMEOUT_MS}ms`);
+  console.log(`[AXEL-PHOTOS] ⏱️ Timeout iniciado: ${PHOTO_TIMEOUT_MS / 1000}s`);
 }
 
 /**

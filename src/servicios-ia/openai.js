@@ -116,17 +116,33 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
     }
     
     return await openaiBreaker.execute(async () => {
-      const response = await client.chat.completions.create({
-        model,
-        messages: [
-          {
-            role: "user",
-            content: contentArray
-          }
-        ],
-        temperature,
-        max_tokens,
-      });
+      // 🕐 Timeout de 45s para evitar colgar el sistema
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      
+      try {
+        const response = await client.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: "user",
+              content: contentArray
+            }
+          ],
+          temperature,
+          max_tokens,
+        }, { signal: controller.signal });
+        
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Vision API timeout (45s) - intenta con menos fotos');
+        }
+        throw error;
+      }
+    }).then(response => {
 
       const duration = Date.now() - startTime;
       loggers.openai.timing('Vision API analysis', duration, { 
@@ -140,7 +156,7 @@ export async function analyzeImage(imageUrl, prompt, opts = {}) {
         content: response.choices[0]?.message?.content?.trim() || '',
         usage: response.usage
       };
-    }, fallback);
+    }), fallback);
 
   } catch (error) {
     loggers.openai.error('Vision API error', { action: 'analyzeImage' }, error);

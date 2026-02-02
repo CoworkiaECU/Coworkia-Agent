@@ -97,27 +97,34 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
    OPTIMIZACIÓN: Solo aplica delay si hay mensajes múltiples
    en ráfaga. Mensajes individuales se procesan inmediatamente.
 ───────────────────────────────────────────────────────────── */
-const pendingWebhooks = new Map(); // userId → { timer, handler, count }
+const pendingWebhooks = new Map(); // userId → { timer, handlers: [], count }
 const DEBOUNCE_WINDOW_MS = 500; // 500ms - solo para ráfagas
 
 /**
  * Agrupa webhooks del mismo usuario que lleguen en ráfaga rápida.
  * Si es el primer mensaje, ejecuta INMEDIATAMENTE.
  * Si llegan más mensajes en < 500ms, agrupa y espera.
+ * 🔥 FIX: Guarda TODOS los handlers en array para procesarlos secuencialmente
  */
 function debounceUserWebhook(userId, handler) {
   // Si ya hay un timer activo (ráfaga detectada)
   if (pendingWebhooks.has(userId)) {
     const existing = pendingWebhooks.get(userId);
     clearTimeout(existing.timer);
+    existing.handlers.push(handler); // 🔥 Agregar handler al array
     existing.count++;
     console.log(`[DEBOUNCE] 📦 Mensaje ${existing.count} de ${userId}, reagrupando`);
     
     // Crear nuevo timer para la ráfaga
-    existing.timer = setTimeout(() => {
+    existing.timer = setTimeout(async () => {
+      const allHandlers = existing.handlers;
       pendingWebhooks.delete(userId);
-      console.log(`[DEBOUNCE] ✅ Procesando ${existing.count} mensajes de ${userId}`);
-      handler();
+      console.log(`[DEBOUNCE] ✅ Procesando ${allHandlers.length} mensajes de ${userId}`);
+      
+      // 🔥 Ejecutar TODOS los handlers secuencialmente
+      for (const h of allHandlers) {
+        await h();
+      }
     }, DEBOUNCE_WINDOW_MS);
   } else {
     // Primer mensaje - ejecutar INMEDIATAMENTE
@@ -128,7 +135,7 @@ function debounceUserWebhook(userId, handler) {
       pendingWebhooks.delete(userId);
     }, DEBOUNCE_WINDOW_MS);
     
-    pendingWebhooks.set(userId, { timer, handler, count: 1 });
+    pendingWebhooks.set(userId, { timer, handlers: [handler], count: 1 }); // 🔥 Array de handlers
     
     // Ejecutar inmediatamente
     handler();
@@ -1144,9 +1151,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // Mensajes de confirmación
         if (photoStatus.currentCount === 1) {
           console.log('[WASSENGER] 📤 Enviando mensaje: primera foto recibida');
-          await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} foto(s) más para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 30 segundos o escribe "listo".`);
-          // Iniciar timeout (marca flag en 30s)
-          startTimeout(userId);
+          await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} más (${photoStatus.maxPhotos} en total) para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 20 segundos o escribe "listo".`);
+          
+          // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
+          startTimeout(userId, async () => {
+            const result = completeSession(userId);
+            if (result) {
+              console.log(`[WASSENGER] ⏰ Auto-procesando ${result.photoCount} foto(s) después de timeout...`);
+              await enviarWhatsApp(userId, `⏰ Tiempo límite alcanzado. Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
+              await processAxelQuote(userId, result.photos, profile);
+              clearQueue(userId);
+            }
+          });
         } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
           console.log(`[WASSENGER] 📤 Enviando mensaje: foto ${photoStatus.currentCount} recibida`);
           await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);

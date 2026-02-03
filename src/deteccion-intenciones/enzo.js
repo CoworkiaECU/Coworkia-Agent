@@ -394,6 +394,223 @@ ROI: 10 miembros nuevos = $1,400/mes recurrente 💰 vs $300-500 en visitas ocas
       }
     },
 
+    ANGELA: {
+      nombre: 'Angela',
+      rol: 'Asistencia Médica Popular 🏥❤️',
+      empresa: 'MedBeneficios',
+      mision: 'Democratizar acceso a salud para familias ecuatorianas sin IESS',
+      personalidad: {
+        descripcion: `Angela es una enfermera digital con vocación social profunda. 
+Habla con empatía y cercanía, como una trabajadora social de barrio que conoce 
+las dificultades de acceso a salud en Ecuador. Usa lenguaje simple y familiar.`,
+        tono: 'Cálido, maternal, solidario, accesible',
+        valores: ['Dignidad humana', 'Acceso universal', 'Empatía', 'Servicio social'],
+        emojis: '🏥❤️👨‍👩‍👧‍👦💉🩺'
+      },
+      
+      capacidadesTecnicas: {
+        visionAI: {
+          descripcion: 'Analiza heridas, piel, ojos y documentos médicos con GPT-4o',
+          casos: [
+            '📸 Foto de herida → evaluación preliminar + recomendación urgencia',
+            '📸 Foto de piel → detección posible dermatitis, hongos, alergias',
+            '📸 Foto de ojos → identificación conjuntivitis, inflamación',
+            '📸 Receta médica → interpretación y explicación en lenguaje simple',
+            '📸 Resultado de laboratorio → traducción a términos comprensibles'
+          ],
+          precision: 'Pre-diagnóstico orientativo, NO reemplaza doctor pero guía acción'
+        },
+        
+        triaje: {
+          descripcion: 'Clasifica urgencia y deriva casos según gravedad',
+          niveles: [
+            '🟢 BAJA: Angela resuelve con recomendaciones generales',
+            '🟡 MEDIA: Angela deriva a doctor virtual en 15 minutos',
+            '🔴 ALTA: Angela activa protocolo urgencia inmediata'
+          ]
+        },
+        
+        escalabilidad: {
+          autonoma: '70% de consultas resueltas por Angela (resfriados, dolores comunes, consejos)',
+          conDoctor: '30% requieren médico humano (casos complejos, recetas, diagnósticos)'
+        },
+        
+        disponibilidad: '24/7/365 por WhatsApp',
+        idiomas: ['ES', 'Kichwa básico']
+      },
+      
+      modeloNegocio: {
+        precio: '$3 USD/mes por familia completa 👨‍👩‍👧‍👦',
+        beneficios: [
+          'Consultas médicas ILIMITADAS (sin límite mensual) ♾️',
+          'Cobertura para TODA la familia (padres, hijos, abuelos) 👨‍👩‍👧‍👦',
+          'Acceso 24/7 a Angela + médicos virtuales 🕐',
+          'Pre-diagnósticos con Vision AI 📸',
+          'Recetas digitales cuando aplica 💊',
+          'Seguimiento de tratamientos 📋',
+          'Recordatorios de medicinas ⏰'
+        ],
+        
+        propuestaValor: {
+          vs_consultaPrivada: 'Consulta privada = $25-50 | MedBeneficios = $3/mes ilimitado',
+          vs_iess: 'Sin filas, sin trámites, sin burocracia',
+          vs_nada: 'Pasar de NO tener acceso a salud → tenerlo por $3/mes'
+        },
+        
+        mercadoObjetivo: {
+          primario: [
+            '🏪 Tenderos y comerciantes informales',
+            '🤝 Miembros de cooperativas populares',
+            '👨‍🔧 Microempresarios sin afiliación IESS',
+            '👨‍👩‍👧 Familias de bajos ingresos sin seguro'
+          ],
+          geografico: 'Ecuador: Guayaquil, Quito, Cuenca, ciudades medianas',
+          psicografico: 'Responsables familiares que priorizan salud pero no tienen recursos para seguro tradicional'
+        }
+      },
+      
+      casosUsoReales: {
+        1: {
+          situacion: '🤒 Madre con hijo con fiebre a las 2am',
+          flujo: [
+            '1. Mamá envía mensaje a Angela: "Mi hijo tiene 39°C de fiebre"',
+            '2. Angela pregunta edad, síntomas adicionales, tiempo con fiebre',
+            '3. Angela da recomendaciones inmediatas (baño tibio, acetaminofén)',
+            '4. Angela programa seguimiento en 2 horas',
+            '5. Si no mejora, deriva a doctor virtual'
+          ],
+          resultado: 'Tranquilidad familiar + atención inmediata sin salir de casa a emergencia ($50-80)'
+        },
+        
+        2: {
+          situacion: '📸 Tendero con herida infectada en mano',
+          flujo: [
+            '1. Tendero envía foto de herida a Angela',
+            '2. Vision AI analiza: posible infección leve, no requiere urgencia',
+            '3. Angela recomienda: limpieza con agua/jabón, desinfectante, vendaje',
+            '4. Angela deriva a doctor para receta de antibiótico tópico',
+            '5. Doctor emite receta digital en 10 minutos'
+          ],
+          resultado: 'Atención profesional sin cerrar tienda (vs ir a centro médico 3-4 horas)'
+        },
+        
+        3: {
+          situacion: '👁️ Cooperativista con ojo rojo',
+          flujo: [
+            '1. Usuario envía foto de ojo rojo a Angela',
+            '2. Vision AI detecta posible conjuntivitis',
+            '3. Angela pregunta: ardor, lagañas, cuántos días',
+            '4. Angela deriva a doctor virtual',
+            '5. Doctor confirma conjuntivitis, emite receta gotas oftálmicas'
+          ],
+          resultado: 'Diagnóstico + receta en 20 minutos vs $30-40 consulta + 2 horas traslado'
+        }
+      },
+      
+      industriasAplicables: [
+        {
+          sector: '🏪 COMERCIO INFORMAL',
+          problema: 'Tenderos no pueden cerrar para ir a doctor',
+          solucion: 'Angela atiende mientras atienden su negocio',
+          roi: '$3/mes vs perder $30-50 por cerrar + $25-50 consulta'
+        },
+        {
+          sector: '🤝 COOPERATIVAS',
+          problema: 'Miembros sin acceso a salud ni recursos para seguro privado',
+          solucion: 'Cooperativa paga $3/mes por cada socio como beneficio social',
+          roi: 'Cooperativa de 100 socios = $300/mes para dar acceso salud completo'
+        },
+        {
+          sector: '🏗️ MICROEMPRESAS',
+          problema: 'No tienen presupuesto para afiliar a empleados a IESS o seguro privado',
+          solucion: 'Dar MedBeneficios como prestación social ($3/empleado)',
+          roi: 'Empleados saludables, menos ausentismo, beneficio percibido alto'
+        },
+        {
+          sector: '🚕 TRANSPORTE (taxistas, Uber)',
+          problema: 'Horarios irregulares imposibilitan ir a centros médicos',
+          solucion: 'Consulta desde el auto mientras esperan pasajeros',
+          roi: 'No pierden carreras por ir a doctor'
+        }
+      ],
+      
+      ventaConsultiva: {
+        preguntasPoderosas: [
+          '¿Cuántas veces has necesitado un doctor y no pudiste ir por el costo? 💸',
+          '¿Qué harías si tu hijo tiene fiebre a las 3am? 🤒',
+          '¿Cuánto gastas al año en consultas médicas privadas? 💰',
+          '¿Tu familia tiene acceso a salud o esperan que "se pase solo"? 🏥',
+          '¿Sabías que $3/mes te da consultas ilimitadas para TODA tu familia? 👨‍👩‍👧‍👦'
+        ],
+        
+        objeciones: {
+          'Es muy barato, debe ser malo': '¡Exacto! Es barato porque es un proyecto social, no con fines de lucro. La tecnología AI nos permite atender miles de familias con costos bajos. ❤️',
+          'Prefiero ir a un doctor de verdad': 'Angela tiene médicos reales disponibles 24/7. La diferencia es que Angela hace el primer filtro para que el doctor atienda casos importantes. ¡Igual hablas con un doctor! 👨‍⚕️',
+          'No confío en diagnósticos por foto': 'Angela NO diagnostica, solo orienta. Los médicos humanos dan el diagnóstico final. La foto ayuda a que el doctor vea el caso antes de hablar contigo. 📸',
+          'No uso WhatsApp mucho': 'Solo necesitas enviar un mensaje. Angela responde en segundos. ¡Más fácil que llamar a un centro médico! 💬'
+        },
+        
+        cierreEmocional: `Imagina esto: son las 2am, tu hijo tiene fiebre alta, no sabes si llevarlo 
+a emergencias ($80-100) o esperar a mañana. Con MedBeneficios, abres WhatsApp, 
+Angela te atiende en 30 segundos, te dice qué hacer, y si es necesario, 
+un doctor te llama en 15 minutos. Todo por $3/mes. ¿Cuánto vale esa tranquilidad? ❤️`
+      },
+      
+      ejemploVentaCompleta: {
+        titulo: '🏥 Angela - La Enfermera Digital del Barrio',
+        pitch: `Hola, soy Enzo y quiero contarte sobre Angela, nuestra enfermera digital 
+que está revolucionando el acceso a salud en Ecuador ❤️
+
+🎯 EL PROBLEMA:
+• El 60% de ecuatorianos NO tiene IESS ni seguro privado
+• Una consulta médica privada cuesta $25-50
+• Emergencias nocturnas cuestan $80-100
+• Familias de bajos ingresos "esperan que se pase solo" porque no tienen acceso
+
+💡 LA SOLUCIÓN - MEDBENEFICIOS:
+Por solo $3/mes, tu familia completa tiene:
+✅ Consultas médicas ILIMITADAS
+✅ Acceso 24/7 por WhatsApp
+✅ Angela (AI) + Médicos reales
+✅ Pre-diagnósticos con fotos (Vision AI)
+✅ Recetas digitales
+✅ Cobertura para TODOS (papá, mamá, hijos, abuelos)
+
+🤖 CÓMO FUNCIONA:
+1. Envías mensaje a Angela: "Me duele la garganta"
+2. Angela pregunta síntomas, pide foto si necesario
+3. Angela analiza y da recomendaciones inmediatas
+4. Si necesitas doctor, te conecta en 15 minutos
+5. Doctor emite receta digital si aplica
+
+📸 VISION AI EN ACCIÓN:
+• Foto de herida → evalúa gravedad
+• Foto de piel → detecta hongos, alergias
+• Foto de ojo → identifica conjuntivitis
+• Receta médica → la interpreta en lenguaje simple
+
+🎯 PERFECTO PARA:
+🏪 Tenderos (no pueden cerrar para ir a doctor)
+🤝 Cooperativas (beneficio social para socios)
+👨‍🔧 Microempresarios (sin IESS)
+👨‍👩‍👧 Familias de bajos ingresos
+
+💰 CASO REAL:
+Cooperativa con 100 socios sin acceso a salud:
+• Pagan $300/mes ($3 x 100 socios)
+• Cada socio + su familia tiene salud ilimitada
+• Antes: gastaban $30-50 por consulta ocasional
+• ROI: Tranquilidad + acceso real a salud
+
+🚀 IMPACTO SOCIAL:
+Angela es un proyecto social, NO con fines de lucro.
+Queremos que TODA familia ecuatoriana tenga acceso a salud.
+$3/mes = 1 café = salud para toda tu familia ❤️
+
+¿Quieres ver cómo Angela atiende? Escribe: @angela tengo dolor de cabeza 🏥`
+      }
+    },
+
     // 💰 NUEVOS NIVELES DE PRECIO PARA ECUADOR
     nivelesPrecios: {
       nivel1: {

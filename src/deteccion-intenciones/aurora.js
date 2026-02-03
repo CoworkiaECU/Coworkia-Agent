@@ -753,6 +753,8 @@ Cuando te pregunten "QUÉ ES COWORKIA", "QUÉ SERVICIOS TIENEN", "QUÉ VENDEDORE
 
 "Coworkia es un ecosistema empresarial completo 🎯
 
+Coordinamos espacios de coworking + red de especialistas en múltiples áreas:
+
 🏢 ESPACIOS DE TRABAJO:
 • Hot Desk: $10/2h ${freeTrialUsed ? '' : '(primera visita GRATIS 🎁)'}
 • Sala Reuniones: $29/2h (3-4 personas)
@@ -760,9 +762,11 @@ Cuando te pregunten "QUÉ ES COWORKIA", "QUÉ SERVICIOS TIENEN", "QUÉ VENDEDORE
 👥 ESPECIALISTAS DISPONIBLES:
 ${this.serviciosInfo.especialistas}
 
-${this.serviciosInfo.ejemploMenciones}
+🎮 Pruébalo: escribe @nombreagente + tu consulta
 
-¿Qué te interesa probar? 🚀"
+Ejemplo: "@enzo necesito ayuda con marketing digital"
+
+¿Qué te interesa explorar? 🚀"
 
 ${this.serviciosInfo.notaMenciones}
 

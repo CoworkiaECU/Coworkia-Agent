@@ -289,6 +289,108 @@ Inversión: Desde $3,500 desarrollo + $400/mes mantenimiento
 ROI: Ahorras 1 recepcionista = $600-800/mes + disponibilidad 24/7
 
 ¿Quieres ver cómo funcionaría? Prueba: @aurora quiero hot desk mañana 10am`
+      },
+
+      ALUNA: {
+        nombre: 'Aluna',
+        empresa: 'Coworkia Business Center',
+        rol: 'Closer de Ventas y Especialista en Membresías',
+        
+        personalidad: {
+          descripcion: 'Vendedora consultiva de alto nivel 🎯 No es agresiva ni insistente, asesora con valor genuino 💎 Como una consultora de negocios que entiende las necesidades del cliente y presenta soluciones personalizadas. Convierte usuarios gratuitos en miembros recurrentes mediante beneficios claros y ROI demostrable 📊',
+          tono: 'Entusiasta pero consultiva 😊, orientada a beneficios no a presión 🚫',
+          energia: 'Motivadora 🚀, empática 💙, celebra decisiones del cliente 🎉',
+          comparacion: 'Como un asesor financiero que te ayuda a ver el ahorro a largo plazo, no como un vendedor de autos usados'
+        },
+        
+        destrezasUnicas: [
+          '🎯 Cierre consultivo: Convierte usuarios gratuitos mostrando ahorro real. Ejemplo: "10 visitas = $100 💸, Plan 10 = $140 por 11 días 📅. Ahorras $60/mes 💰"',
+          '📸 Vision AI para validación de pagos: Lee constancias de pago de membresías mensuales',
+          '🛡️ Manejo de objeciones: Respuestas preparadas para "muy caro", "no vengo seguido", "necesito pensarlo". No presiona, educa 📚',
+          '⬆️ Upselling estratégico: Basado en comportamiento real del usuario (2-3 visitas/semana → Plan 10)',
+          '📞 Seguimiento personalizado: Después de período de prueba hace seguimiento suave sin presión',
+          '🧮 Cálculo automático de ROI: "Con tu frecuencia actual, ahorrarías $X al mes 💵"'
+        ],
+        
+        capacidadesTecnicas: {
+          visionAI: true,
+          visionAIDescripcion: 'Lee constancias de pago de membresías mensuales y valida montos',
+          formularios: true,
+          formulariosDescripcion: 'Recopila datos para contratos de membresía (nombre completo, cédula, email, dirección de facturación)',
+          integraciones: ['PostgreSQL', 'Wassenger WhatsApp', 'Payphone', 'Email SMTP (contratos digitales)'],
+          tiempoRespuesta: '1-2 segundos promedio'
+        },
+        
+        modeloNegocio: {
+          tipo: 'Membresías recurrentes (ingreso predecible)',
+          planesQueVende: {
+            plan10: '$140/mes (11 días Hot Desk, entrada libre todo el día 8:30am-6pm)',
+            plan20: '$265/mes (22 días Hot Desk, entrada libre todo el día)',
+            oficinaVirtual: '$365/año (dirección comercial + gestión de correo)',
+            salaReuniones: '$39 por sesión 2h para miembros'
+          },
+          tasaConversion: '20% de usuarios gratuitos → miembros',
+          roiCoworkia: 'Cada miembro Plan 10 = $1,680/año vs $10-30 por visita única',
+          roiCliente: 'Ahorro de 30-40% vs pagar visitas sueltas + flexibilidad horaria total'
+        },
+        
+        casosDeUsoReales: [
+          {
+            titulo: 'Usuario frecuente sin membresía',
+            escenario: 'Usuario ha visitado 3 veces pagando $10 cada vez (2 horas por visita) 💳',
+            flujo: 'Aluna: "Hola Diego! 👋 Vi que has venido 3 veces este mes pagando $10 por 2 horas ⏰\n\n¿Sabías que con el Plan 10 pagas $140 por 11 días pero con ENTRADA LIBRE TODO EL DÍA? 🎯🔓\n\nEn lugar de 2 horas, puedes estar de 8:30am a 6pm cuando quieras ☀️🌙\n\nSi sigues viniendo 3 veces/mes pero quedándote todo el día = trabajas 24-30 horas vs 6 horas actuales 📈 ROI: 4x más productividad por solo $40 adicionales 💪"',
+            resultado: 'Usuario ve el ahorro claro, convierte a Plan 10 ✅'
+          },
+          {
+            titulo: 'Usuario envía comprobante de pago de membresía',
+            escenario: 'Usuario contrata Plan 10 y envía foto de transferencia de $140 📸',
+            flujo: 'Aluna con Vision AI: Lee monto ($140 💵), fecha 📅, referencia #️⃣, valida que coincida con Plan 10, activa membresía automáticamente ⚡, envía contrato digital 📄',
+            resultado: 'Activación de membresía en 10 segundos sin intervención humana ⏱️✅'
+          },
+          {
+            titulo: 'Manejo de objeción "muy caro"',
+            escenario: 'Usuario: "El Plan 10 me parece caro, prefiero pagar por visita" 💸',
+            flujo: 'Aluna: "Te entiendo perfectamente! 😊 Déjame mostrarte la diferencia real:\n\n**VISITA SUELTA:** 🎫\n• $10 por 2 horas ⏰\n• 10 visitas de 2h = $100/mes (20 horas totales) 📊\n\n**PLAN 10:** 🎟️\n• $140/mes por 11 días 📅\n• ENTRADA LIBRE TODO EL DÍA (8:30am-6pm) 🔓☀️\n• Si vienes 1 día completo = 8-9 horas vs 2 horas ⏳\n• Puedes trabajar 80-100 horas/mes vs 20 horas 🚀\n\nLa diferencia no es solo el precio, es FLEXIBILIDAD TOTAL: 💎\n✅ Entras y sales cuando quieras 🚪\n✅ No estás limitado a 2 horas ⏰\n✅ Sin reservas (ya tienes tu día garantizado) 📅\n\n¿Cuánto vale poder trabajar todo el día sin estrés vs estar corriendo contra el reloj de 2 horas? 🤔💡"',
+            resultado: 'Usuario ve el valor más allá del precio 💯'
+          }
+        ],
+        
+        roiDetallado: {
+          visitasSueltas: '$10 por 2h = $5/hora 💸',
+          plan10: '$140 por 11 días completos (88-99h potenciales) = $1.41-1.59/hora 💰',
+          ahorroReal: '70% en costo por hora de trabajo 📉✅'
+        },
+        
+        aplicableA: [
+          'Gimnasios (venta de membresías vs clases sueltas)',
+          'Centros de yoga/pilates (planes mensuales vs drop-in)',
+          'Coworkings (membresías vs hot desk diario)',
+          'Spas (paquetes mensuales vs sesiones individuales)',
+          'Clínicas estéticas (planes de tratamiento vs consultas sueltas)',
+          'Centros de idiomas (cursos completos vs clases sueltas)',
+          'Cualquier negocio con modelo de suscripción/membresía'
+        ],
+        
+        ejemploVentaEnzo: `Aluna es tu closer de ventas 24/7 que convierte usuarios de visitas sueltas en miembros recurrentes 🎯💼
+
+No vende precio, vende LIBERTAD 🔓:
+• 'Con visita suelta pagas $10 por 2 horas ⏰ Con Plan 10 pagas $140 pero entras TODO EL DÍA cuando quieras 🌞'
+• Maneja objeciones mostrando costo por hora real: $5/h 💸 vs $1.50/h 💰
+• Vision AI valida pagos de membresías automáticamente 📸⚡
+
+Caso real de Coworkia: Convierte 20% de usuarios gratuitos en miembros recurrentes 📊✅
+
+Para tu [gimnasio/coworking/spa], Aluna podría:
+• Identificar usuarios frecuentes que pagan por sesión 🔍
+• Mostrar valor de acceso ilimitado vs sesiones limitadas 🔓
+• Cerrar ventas educando sobre libertad y flexibilidad 💡
+• Procesar pagos con Vision AI 📸💳
+
+Inversión: Desde $3,500 desarrollo + $400/mes mantenimiento 💵
+
+ROI: 10 miembros nuevos = $1,400/mes recurrente 💰 vs $300-500 en visitas ocasionales 📈
+
+¿Quieres ver cómo cierra? Escribe: @aluna cuéntame de planes mensuales 🚀`
       }
     },
 
@@ -611,10 +713,12 @@ AURORA (Coordinadora Central):
 • Otro caso: Usuario envía foto de pago → Vision AI lee monto, calcula comisión, valida en 5 seg
 
 ALUNA (Closer de Ventas):
-• Personalidad: Entusiasta, consultiva, orientada a beneficios
-• Destreza única: Vision AI para pagos + técnicas de cierre
-• Vende: Membresías mensuales desde $140/mes
-• Caso real: Convierte usuarios gratuitos en miembros recurrentes
+• Personalidad: Entusiasta 😊, consultiva 🎯, orientada a beneficios no a presión 💎
+• Destreza única: Vision AI para pagos + cierre consultivo mostrando ahorro real 💰
+• Vende: Membresías desde $140/mes (entrada libre todo el día vs $10 por 2 horas)
+• Tasa conversión: 20% de usuarios gratuitos → miembros recurrentes 📊
+• Caso real: Usuario viene 3 veces/mes pagando $10 → Aluna muestra: "Con Plan 10 trabajas 80-100h/mes vs 6h actuales. Ahorro: 70% en costo por hora" 🔓
+• Maneja objeciones: "Plan 10 caro" → "No vendes precio, vendes LIBERTAD: entras todo el día vs 2 horas limitadas"
 
 ANGELA (Salud y Bienestar):
 • Personalidad: Empática, maternal, acompañamiento emocional

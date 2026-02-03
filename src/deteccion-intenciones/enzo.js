@@ -1386,6 +1386,305 @@ Agencia con 3 agentes:
       }
     },
 
+    GABI: {
+      nombre: 'Gabi',
+      rol: 'Asistente Legal & Financiero AI 24/7 ⚖️💼',
+      empresa: 'GR Consulting',
+      mision: 'Resolver consultas legal/financiero/admin y derivar solo casos complejos',
+      
+      propuestaValor: {
+        equivalencia: '1 Gabi AI = 1 asistente administrativo 24/7 resolviendo 80% consultas',
+        ventajas: [
+          '🤖 Disponibilidad 24/7 (vs 8h/día asistente)',
+          '📚 Resuelve 80% consultas sin humano',
+          '⚡ Respuestas instantáneas (vs esperar turno)',
+          '💰 Ahorro $350-450/mes vs asistente tradicional',
+          '🎯 Humanos solo atienden casos complejos (20%)'
+        ]
+      },
+      
+      roiOperativo: {
+        asistenteTradicional: {
+          costoMensual: '$600 base + $150 beneficios = $750/mes',
+          disponibilidad: '160 horas/mes (8h x 20 días)',
+          capacidad: '50-60 consultas/mes',
+          consultasRepetitivas: '80% son las mismas preguntas (RUC, RISE, trámites)',
+          desperdicio: '128 horas/mes respondiendo lo mismo'
+        },
+        
+        gabiAI: {
+          costoMensual: '$300-400 desarrollo + mantenimiento OneMind',
+          disponibilidad: '720 horas/mes (24/7)',
+          capacidad: 'Ilimitadas consultas simultáneas',
+          resolucionAutonoma: '80% consultas resueltas sin intervención humana',
+          eficiencia: 'Humanos solo casos complejos (20%)'
+        },
+        
+        ahorro: {
+          mensual: '$350-450/mes ($750 - $400)',
+          anual: '$4,200-5,400/año',
+          adicional: 'Abogados/contadores 5x más productivos (solo casos complejos)',
+          tiempoAhorrado: '128 horas/mes que profesionales NO pierden en consultas repetitivas'
+        }
+      },
+      
+      personalidad: {
+        descripcion: `Gabi es una asistente administrativa experta en legal, finanzas y trámites.
+Clara, pedagógica, paciente. Explica lo complejo en lenguaje simple.
+Sabe cuándo puede resolver y cuándo debe derivar a profesional humano.`,
+        tono: 'Profesional, pedagógica, clara, accesible',
+        valores: ['Claridad', 'Educación', 'Eficiencia', 'Cumplimiento legal'],
+        emojis: '⚖️💼📋✅💰'
+      },
+      
+      capacidadesTecnicas: {
+        faqLegalFinanciero: {
+          descripcion: 'Base de conocimiento de consultas frecuentes',
+          temas: [
+            '📋 Trámites SRI: RUC, RISE, facturas electrónicas',
+            '💼 Constitución de empresas (Cía. Ltda, S.A., Unipersonal)',
+            '⚖️ Contratos: laborales, arrendamiento, servicios',
+            '💰 Consultas tributarias: declaraciones, retenciones',
+            '🏢 IESS: afiliación, planillas, obligaciones patronales',
+            '📄 Permisos de funcionamiento: bomberos, municipio, salud'
+          ]
+        },
+        
+        cotizacionServicios: {
+          descripcion: 'Cotiza servicios legales y contables automáticamente',
+          precios: {
+            constitucionEmpresas: '$800-1,500 (según tipo)',
+            contratos: '$200-500 (según complejidad)',
+            auditorias: '$1,000-3,000 (según tamaño empresa)',
+            consultoriaTributaria: '$300-800/mes',
+            declaracionesImpuestos: '$80-150/mes',
+            afiliacionIESS: '$50-100/empleado'
+          }
+        },
+        
+        clasificacionConsultas: {
+          simple: '🟢 FAQ/trámites → Gabi resuelve con guía paso a paso',
+          media: '🟡 Consulta específica → Gabi da orientación + sugiere agendar profesional',
+          compleja: '🔴 Caso legal/financiero → Gabi deriva inmediatamente a abogado/contador',
+          resolucionAutonoma: '80% resueltas por Gabi sin intervención humana'
+        },
+        
+        agendamientoProfesionales: {
+          descripcion: 'Coordina citas con abogados y contadores',
+          flujo: [
+            '1. Identifica consulta compleja',
+            '2. Ofrece agendar con profesional',
+            '3. Verifica disponibilidad',
+            '4. Confirma cita',
+            '5. Prepara resumen de caso para profesional'
+          ]
+        },
+        
+        seguimientoCasos: {
+          descripcion: 'Mantiene seguimiento de trámites y casos',
+          acciones: [
+            'Recordatorios de fechas límite (declaraciones, renovaciones)',
+            'Estado de trámites pendientes',
+            'Documentación faltante',
+            'Actualizaciones de casos en curso'
+          ]
+        },
+        
+        disponibilidad: '24/7/365 - Consultas fuera de horario laboral',
+        idiomas: ['ES', 'EN']
+      },
+      
+      modeloNegocio: {
+        consultas: 'Básicas GRATIS (80% resueltas por Gabi)',
+        servicios: 'Profesionales cobran solo casos complejos (20%)',
+        ventajaCliente: 'Respuestas instantáneas 24/7 sin costo',
+        ventajaEmpresa: 'Profesionales solo atienden casos que generan ingresos',
+        
+        mercadoObjetivo: {
+          primario: [
+            '💼 Emprendedores nuevos (necesitan orientación)',
+            '🏪 PYMES (consultas tributarias frecuentes)',
+            '🏢 Empresas establecidas (trámites recurrentes)',
+            '🚀 Startups (constitución, contratos, compliance)'
+          ],
+          geografico: 'Ecuador: todo el territorio',
+          psicografico: 'Empresarios que necesitan orientación legal/financiera accesible'
+        }
+      },
+      
+      casosUsoReales: {
+        1: {
+          situacion: '📋 Emprendedor nuevo: "¿Cómo saco RUC?"',
+          flujo: [
+            '1. Usuario: "Quiero abrir un negocio, ¿cómo saco RUC?"',
+            '2. Gabi: "¡Perfecto! Te explico el proceso paso a paso:"',
+            '3. Gabi lista: documentos, plataforma SRI, pasos, tiempo',
+            '4. Gabi: "¿Necesitas ayuda profesional o puedes hacerlo solo?"',
+            '5. Usuario: "Puedo solo"',
+            '6. Gabi: "Genial, aquí tu checklist descargable"',
+            '7. Usuario resuelve sin gastar en consultoría'
+          ],
+          resultado: 'Consulta resuelta en 5 min, 0 intervención humana, cliente satisfecho'
+        },
+        
+        2: {
+          situacion: '⚖️ Caso complejo: "Me demandan por incumplimiento contrato"',
+          flujo: [
+            '1. Usuario: "Me llegó una demanda por contrato"',
+            '2. Gabi: "Esto requiere abogado URGENTE. ¿Puedes enviar la demanda?"',
+            '3. Usuario envía documento',
+            '4. Gabi: "Agendé cita con abogado mañana 10am. Prepara: contrato original, comunicaciones, pagos"',
+            '5. Gabi prepara resumen para abogado',
+            '6. Abogado llega a cita CON contexto, no pierde tiempo en resumen'
+          ],
+          resultado: 'Cliente derivado inmediato, abogado atiende caso preparado, cobra $500 consultoría'
+        },
+        
+        3: {
+          situacion: '💰 PYME: "¿Cuándo declaro impuestos?"',
+          flujo: [
+            '1. Usuario: "Tengo RUC hace 3 meses, ¿cuándo declaro?"',
+            '2. Gabi: "Depende de tu 9° dígito. ¿Cuál es tu RUC?"',
+            '3. Usuario: "1234567890001"',
+            '4. Gabi: "Tu 9° dígito es 0. Declaras cada mes hasta el 10. Te envío calendario."',
+            '5. Gabi: "¿Quieres servicio de declaraciones automáticas? $120/mes"',
+            '6. Usuario contrata servicio'
+          ],
+          resultado: 'Consulta resuelta + venta de servicio recurrente $120/mes'
+        },
+        
+        4: {
+          situacion: '🏢 Empresa: "Necesito contratar empleados, ¿IESS?"',
+          flujo: [
+            '1. Usuario: "Voy a contratar 5 empleados, ¿qué hago con IESS?"',
+            '2. Gabi: "Te explico: afiliación obligatoria desde día 1, aportes 21.6%..."',
+            '3. Gabi: "¿Quieres que lo hagamos por ti? $50/empleado afiliación + $150/mes planillas"',
+            '4. Usuario: "$50 x 5 = $250 + $150/mes"',
+            '5. Usuario aprueba, Gabi agenda con contador',
+            '6. Contador procesa afiliaciones, GR cobra $400 primer mes + $150/mes recurrente'
+          ],
+          resultado: 'Lead cualificado + servicio recurrente $150/mes'
+        }
+      },
+      
+      industriasAplicables: [
+        {
+          sector: '💼 EMPRENDEDORES NUEVOS',
+          problema: 'No saben por dónde empezar, consultorías caras ($200-500)',
+          solucion: 'Gabi orienta gratis, cobra solo si necesitan servicio',
+          roi: 'Emprendedor ahorra $300 en consultas básicas'
+        },
+        {
+          sector: '🏪 PYMES',
+          problema: 'Consultas tributarias repetitivas consumen tiempo contador',
+          solucion: 'Gabi resuelve 80%, contador solo casos complejos',
+          roi: 'Contador 5x más productivo, atiende más clientes'
+        },
+        {
+          sector: '🏢 EMPRESAS',
+          problema: 'Asistente administrativo responde lo mismo 100 veces/mes',
+          solucion: 'Gabi automatiza FAQ, asistente hace trabajo estratégico',
+          roi: 'Ahorro $450/mes + asistente enfocado en tareas valiosas'
+        },
+        {
+          sector: '⚖️ FIRMAS LEGALES',
+          problema: 'Abogados pierden tiempo en consultas que no generan ingresos',
+          solucion: 'Gabi filtra, solo llegan casos que sí cobran',
+          roi: 'Abogados facturan 3x más con mismo horario'
+        }
+      ],
+      
+      ventaConsultiva: {
+        preguntasPoderosas: [
+          '¿Cuántas veces tu contador responde "¿cómo declaro?" por teléfono? 📞',
+          '¿Cuánto tiempo pierden tus profesionales en consultas repetitivas? ⏰',
+          '¿Sabías que 80% de consultas son FAQ que un AI resuelve? 🤖',
+          '¿Prefieres que tu abogado cobre $150/hora o responda "¿cómo saco RUC?" gratis? 💰'
+        ],
+        
+        objeciones: {
+          'Los clientes quieren hablar con humanos': 'Gabi NO reemplaza profesionales. Los LIBERA. Consultas básicas → Gabi. Casos complejos → abogado/contador. Cliente satisfecho en ambos casos. ⚖️',
+          'Las consultas gratis generan confianza': 'Exacto. Gabi da consultas gratis 24/7. Cuando necesitan servicio pago, YA confían en ti. Es marketing automatizado. 🎯',
+          'Es muy caro': '$400/mes vs $750 asistente. Ahorro: $350/mes. Beneficio extra: profesionales facturan 3x más porque NO pierden tiempo en FAQ. ROI: +$2,000/mes. 💰',
+          'No sé si funciona': 'Prueba 1 mes. Mide: cuántas consultas resuelve Gabi vs cuántas llegan a profesionales. Si no vale, cancelas. Sin compromiso. ✅'
+        },
+        
+        cierreEmocional: `Tus profesionales son EXPERTOS, no FAQ bots.
+Cada hora respondiendo "¿cómo saco RUC?" es dinero que NO entra.
+Gabi trabaja 24/7 resolviendo consultas básicas.
+Tus profesionales cierran casos que SÍ facturan.
+¿Prefieres profesionales frustrados con FAQ o cerrando casos de $500-3,000? ⚖️`
+      },
+      
+      ejemploVentaCompleta: {
+        titulo: '⚖️ Gabi - La Asistente IA que Libera a tus Profesionales',
+        pitch: `Hola, soy Enzo y te presento a Gabi, la revolución en consultoría legal/financiera ⚖️
+
+🎯 EL PROBLEMA:
+• Profesionales pierden 80% tiempo en consultas repetitivas
+• "¿Cómo saco RUC?" x 50 veces/mes = 25 horas perdidas
+• Asistente administrativo cuesta $750/mes solo para FAQ
+• Consultas nocturnas/fines de semana perdidas
+• Abogados/contadores frustrados respondiendo lo mismo
+
+💡 LA SOLUCIÓN - GR CONSULTING:
+
+🤖 1 GABI = 1 ASISTENTE 24/7 + 80% CONSULTAS RESUELTAS
+
+💰 AHORRO OPERATIVO:
+• Asistente tradicional: $750/mes (160h, responde FAQ)
+• Gabi AI: $400/mes (720h, resuelve 80% automático)
+• Ahorro: $350/mes = $4,200/año
+• Resultado: Profesionales 5x más productivos (solo casos complejos)
+
+✅ CAPACIDADES:
+• Responde FAQ legal/financiero/admin 24/7
+• Explica trámites: RUC, RISE, SRI, IESS
+• Cotiza servicios: constitución, contratos, auditorías
+• Deriva solo casos complejos a profesionales
+• Seguimiento automatizado
+
+📋 CLASIFICACIÓN AUTOMÁTICA:
+🟢 Simple (80%): Gabi resuelve con guía paso a paso
+🟡 Media (15%): Gabi orienta + sugiere profesional
+🔴 Compleja (5%): Gabi deriva inmediato a experto
+
+🚀 CÓMO FUNCIONA:
+1. Cliente: "¿Cómo saco RUC?"
+2. Gabi explica paso a paso (5 min)
+3. Cliente: "¿Puedo solo?" → Gabi da checklist
+4. Cliente: "Necesito ayuda" → Gabi agenda profesional
+
+⏱️ TIEMPO: Profesionales ahorran 128h/mes en FAQ
+
+🎯 PERFECTO PARA:
+💼 Emprendedores (orientación accesible 24/7)
+🏪 PYMES (consultas tributarias frecuentes)
+🏢 Empresas (trámites recurrentes automatizados)
+⚖️ Firmas legales (solo casos que facturan)
+
+💡 CASO REAL:
+Firma legal con 2 abogados:
+• Antes: 80 consultas/mes, 64 FAQ (80%), 16 casos pagos
+• Con Gabi: 80 consultas/mes, Gabi resuelve 64, abogados atienden 16
+• Resultado: Abogados facturan 3x más (solo casos pagos $500-3,000)
+
+🔥 ROI BRUTAL:
+• Profesionales dejan de perder tiempo en FAQ
+• Captura consultas 24/7 (fines de semana, madrugadas)
+• Convierte consultas gratis en ventas de servicios
+• Más facturación sin contratar más gente
+
+💰 SERVICIOS QUE COTIZA:
+• Constitución empresas: $800-1,500
+• Contratos: $200-500
+• Auditorías: $1,000-3,000
+• Consultoría tributaria: $300-800/mes
+
+¿Quieres que Gabi atienda tus consultas? Escribe: @gabi cómo saco RUC ⚖️`
+      }
+    },
+
     // 💰 NUEVOS NIVELES DE PRECIO PARA ECUADOR
     nivelesPrecios: {
       nivel1: {

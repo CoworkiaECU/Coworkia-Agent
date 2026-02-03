@@ -1107,6 +1107,285 @@ Genera lead educado para SegPopular
       }
     },
 
+    PAULA: {
+      nombre: 'Paula',
+      rol: 'Asesora Inmobiliaria AI 24/7 🏠💼',
+      empresa: 'PropElite',
+      mision: 'Calificar compradores con UAFE y conectar solo leads serios con agentes',
+      
+      propuestaValor: {
+        equivalencia: '1 Paula AI = 1 agente inmobiliario trabajando 24/7 + filtrado UAFE automático',
+        ventajas: [
+          '🤖 Disponibilidad 24/7 (vs 8h/día agente)',
+          '📋 Filtrado UAFE conversacional en 5 min',
+          '✅ Solo entrega leads calificados a agentes humanos',
+          '⚡ Agentes 3x más productivos (sin leads falsos)',
+          '💰 Ahorro $600/mes vs agente tradicional'
+        ]
+      },
+      
+      roiOperativo: {
+        agenteTradicional: {
+          costoMensual: '$800 base + comisiones + $200 oficina = $1,000/mes fijos',
+          disponibilidad: '160 horas/mes (8h x 20 días)',
+          capacidad: '30-40 leads/mes',
+          filtradoUAFE: '20-30 min manual por lead',
+          desperdicio: '70% leads no calificados = 112 horas/mes perdidas'
+        },
+        
+        paulaAI: {
+          costoMensual: '$300-400 desarrollo + mantenimiento OneMind',
+          disponibilidad: '720 horas/mes (24/7)',
+          capacidad: 'Ilimitados leads simultáneos',
+          filtradoUAFE: '5 min automático conversacional',
+          eficiencia: '95% leads entregados YA calificados'
+        },
+        
+        ahorro: {
+          mensual: '$600/mes ($1,000 - $400)',
+          anual: '$7,200/año',
+          adicional: 'Agentes humanos 3x más productivos (solo atienden leads reales)',
+          tiempoAhorrado: '112 horas/mes que agente ya NO pierde en leads falsos'
+        }
+      },
+      
+      personalidad: {
+        descripcion: `Paula es una agente inmobiliaria experta y consultiva.
+Amigable pero eficiente. Hace preguntas estratégicas para calificar compradores.
+Domina requisitos UAFE de manera conversacional, sin que se sienta interrogatorio.`,
+        tono: 'Profesional, consultiva, eficiente, amigable',
+        valores: ['Eficiencia', 'Calificación rigurosa', 'Transparencia', 'Cumplimiento UAFE'],
+        emojis: '🏠💼📋✅🔑'
+      },
+      
+      capacidadesTecnicas: {
+        catalogoAutomatico: {
+          descripcion: 'Base de datos de propiedades EN VENTA',
+          filtros: [
+            '💰 Rango de precio',
+            '📍 Ubicación/sector',
+            '📏 Metros cuadrados',
+            '🛏️ Número de dormitorios',
+            '🚗 Parqueaderos',
+            '🏢 Tipo (casa, depto, oficina)'
+          ]
+        },
+        
+        clasificacionUAFE: {
+          descripcion: 'Determina requisitos UAFE mediante conversación natural',
+          preguntasEstrategicas: [
+            '¿Cuál es tu fuente de ingresos principal?',
+            '¿Compras con financiamiento o efectivo?',
+            '¿Tienes capacidad de pago verificable?',
+            '¿Primera vivienda o inversión?',
+            '¿Trabajas independiente o en relación de dependencia?'
+          ],
+          clasificacion: [
+            '✅ CALIFICADO: Cumple UAFE + capacidad pago → Entrega a agente humano',
+            '🟡 REVISAR: Requiere documentación adicional → Solicita docs',
+            '❌ NO CALIFICADO: No cumple requisitos → Deriva opciones alternativas'
+          ],
+          tiempo: '5 minutos conversacional vs 20-30 min manual'
+        },
+        
+        agendamientoVisitas: {
+          descripcion: 'Coordina visitas automáticamente',
+          flujo: [
+            '1. Cliente calificado elige propiedad',
+            '2. Paula verifica disponibilidad agente',
+            '3. Paula agenda día/hora',
+            '4. Confirma con cliente y agente',
+            '5. Recordatorios automáticos 24h antes'
+          ]
+        },
+        
+        seguimiento: {
+          descripcion: 'Mantiene contacto hasta cierre de venta',
+          acciones: [
+            'Seguimiento post-visita',
+            'Recordatorios de documentación pendiente',
+            'Actualización de nuevas propiedades que calzan perfil',
+            'Notificación de reducciones de precio'
+          ]
+        },
+        
+        disponibilidad: '24/7/365 - Captura leads nocturnos y fines de semana',
+        idiomas: ['ES', 'EN']
+      },
+      
+      modeloNegocio: {
+        comision: '2-3% sobre precio de venta',
+        enfoque: 'Solo VENTA (NO arriendo)',
+        ventajaCliente: 'Atención 24/7 sin costo extra',
+        ventajaAgencia: 'Agentes solo atienden leads calificados = más cierres',
+        
+        mercadoObjetivo: {
+          primario: [
+            '🏠 Compradores de vivienda (primera o inversión)',
+            '🏢 Inversionistas inmobiliarios',
+            '🏗️ Desarrolladoras (venta de proyectos)',
+            '💼 Profesionales buscando oficinas'
+          ],
+          geografico: 'Ecuador: Quito, Guayaquil, Cuenca',
+          psicografico: 'Compradores serios con capacidad financiera verificable'
+        }
+      },
+      
+      casosUsoReales: {
+        1: {
+          situacion: '🏠 Comprador busca casa Quito $120k',
+          flujo: [
+            '1. Cliente: "Busco casa en Quito hasta $120,000"',
+            '2. Paula: "Perfecto. Para calificarte, ¿cuál es tu fuente de ingresos?"',
+            '3. Cliente: "Trabajo en relación de dependencia, $2,500/mes"',
+            '4. Paula: "¿Financiamiento o pago contado?"',
+            '5. Cliente: "Financiamiento con entrada $30k"',
+            '6. Paula clasifica: ✅ CALIFICADO (ingresos suficientes, entrada 25%)',
+            '7. Paula muestra 5 casas que calzan perfil',
+            '8. Cliente elige 2, Paula agenda visitas con agente humano',
+            '9. Agente humano solo invierte tiempo en lead REAL'
+          ],
+          resultado: 'Agente recibe lead precalificado, cierre en 15 días vs 45 días sin Paula'
+        },
+        
+        2: {
+          situacion: '❌ Filtrado de lead NO calificado',
+          flujo: [
+            '1. Usuario: "Quiero comprar depto $200k"',
+            '2. Paula: "Genial. ¿Cuál es tu capacidad de pago mensual?"',
+            '3. Usuario: "Gano $800/mes"',
+            '4. Paula calcula: $800 = capacidad $60k (no $200k)',
+            '5. Paula: "Con tus ingresos, calificas hasta $60-70k. ¿Quieres ver opciones?"',
+            '6. Paula reorienta búsqueda o deriva a financiamiento',
+            '7. Agente humano NO pierde tiempo en lead imposible'
+          ],
+          resultado: 'Ahorro 112h/mes que agentes perdían en leads sin capacidad de pago'
+        },
+        
+        3: {
+          situacion: '🏗️ Desarrolladora vende 20 deptos nuevos',
+          flujo: [
+            '1. Desarrolladora carga 20 unidades en catálogo Paula',
+            '2. Paula atiende 50 leads/semana 24/7',
+            '3. Paula filtra: 15 calificados + 35 no calificados',
+            '4. Agentes humanos solo atienden 15 calificados',
+            '5. Cierre: 8 ventas en 2 meses',
+            '6. Sin Paula: agentes hubiesen atendido 50, cerrado 3 (desperdicio tiempo)'
+          ],
+          resultado: 'Desarrolladora: 8 ventas vs 3 = +166% conversión con mismo equipo'
+        }
+      },
+      
+      industriasAplicables: [
+        {
+          sector: '🏠 AGENCIAS INMOBILIARIAS',
+          problema: 'Agentes pierden 70% tiempo con leads falsos/curiosos',
+          solucion: 'Paula filtra y solo entrega leads calificados UAFE',
+          roi: 'Agentes 3x más productivos, más ventas con mismo equipo'
+        },
+        {
+          sector: '🏗️ DESARROLLADORAS',
+          problema: 'Sala de ventas cara, horario limitado, leads sin calificar',
+          solucion: 'Paula atiende 24/7, precalifica, agenda solo leads reales',
+          roi: 'Ahorro sala de ventas física, +100% leads calificados'
+        },
+        {
+          sector: '🏦 FINANCIERAS/BANCOS',
+          problema: 'Solicitudes crédito sin precalificación = procesos inútiles',
+          solucion: 'Paula precalifica capacidad de pago antes de aplicar',
+          roi: 'Solo procesan solicitudes viables, menos rechazos'
+        }
+      ],
+      
+      ventaConsultiva: {
+        preguntasPoderosas: [
+          '¿Cuántas horas pierden tus agentes con leads que nunca cierran? 🕐',
+          '¿Qué pasaría si solo atendieras compradores YA calificados? 💡',
+          '¿Cuántos leads pierdes porque llaman a las 10pm y no hay nadie? 🌙',
+          '¿Sabes cuánto cuesta un agente atendiendo 30 leads falsos/mes? 💰'
+        ],
+        
+        objeciones: {
+          'Los clientes prefieren hablar con humanos': 'Paula NO reemplaza agentes. Los LIBERA. Paula filtra, agentes cierran. Cliente habla con humano cuando YA está calificado. 🤝',
+          'Es muy caro': 'Un agente cuesta $1,000/mes fijos. Paula $400/mes. Ahorro: $600/mes = $7,200/año. ¿Prefieres 3 agentes desperdiciando tiempo o 3 agentes cerrando ventas? 💰',
+          'Prefiero contratar más agentes': 'Perfecto. ¿Contratas 3 agentes a $3,000/mes para atender leads falsos, o contratas Paula a $400 + tus 3 agentes solo cierran? Tu ROI: +200% ventas. 📈',
+          'No sé si funciona': 'Prueba: Paula atiende 1 mes. Compara cuántos leads calificados entrega vs cuánto tiempo ahorran tus agentes. Si no funciona, cancelas. Sin compromiso. ✅'
+        },
+        
+        cierreEmocional: `Tus agentes son CLOSERS, no filtros.
+Cada hora que pierden con un lead falso es dinero que NO entra.
+Paula trabaja 24/7 filtrando. Tus agentes cierran ventas.
+¿Prefieres agentes frustrados con curiosos o agentes cerrando? 🏠`
+      },
+      
+      ejemploVentaCompleta: {
+        titulo: '🏠 Paula - La Agente IA que Triplica tu Productividad',
+        pitch: `Hola, soy Enzo y te presento a Paula, la revolución en bienes raíces 🏠
+
+🎯 EL PROBLEMA:
+• Agentes pierden 70% de tiempo con leads falsos
+• Llamadas nocturnas/fines de semana perdidas
+• Filtrado UAFE manual toma 20-30 min por lead
+• Agentes frustrados atendiendo curiosos sin capacidad de pago
+• Sala de ventas cara con horario limitado
+
+💡 LA SOLUCIÓN - PROPELITE:
+
+🤖 1 PAULA = 1 AGENTE 24/7 + FILTRO UAFE AUTOMÁTICO
+
+💰 AHORRO OPERATIVO:
+• Agente tradicional: $1,000/mes (160h, 70% leads falsos)
+• Paula AI: $400/mes (720h, 95% leads calificados)
+• Ahorro: $600/mes = $7,200/año
+• Resultado: Agentes 3x más productivos (solo atienden leads reales)
+
+✅ CAPACIDADES:
+• Catálogo automático propiedades VENTA
+• Filtrado UAFE conversacional en 5 min
+• Clasificación: ✅ calificado / ❌ no calificado
+• Agendamiento visitas automático
+• Seguimiento hasta cierre
+
+📋 CLASIFICACIÓN UAFE CONVERSACIONAL:
+Paula pregunta naturalmente:
+• Fuente de ingresos
+• Capacidad de pago
+• Financiamiento vs contado
+• Primera vivienda vs inversión
+
+Resultado: Solo entrega leads que SÍ pueden comprar
+
+🚀 CÓMO FUNCIONA:
+1. Cliente: "Busco casa $120k Quito"
+2. Paula: Preguntas UAFE conversacionales (5 min)
+3. Paula clasifica: ✅ CALIFICADO
+4. Paula muestra 5 opciones que calzan
+5. Cliente elige, Paula agenda visita
+6. Agente humano solo ve lead REAL
+
+⏱️ TIEMPO: Agente ahorra 112h/mes que gastaba en leads falsos
+
+🎯 PERFECTO PARA:
+🏠 Agencias inmobiliarias (más cierres, menos desperdicio)
+🏗️ Desarrolladoras (sala ventas 24/7 sin costo físico)
+🏦 Financieras (solo procesan solicitudes viables)
+
+💡 CASO REAL:
+Agencia con 3 agentes:
+• Antes: 90 leads/mes, 27 visitas, 3 cierres (3.3% conversión)
+• Con Paula: 90 leads/mes, Paula filtra 30 calificados, 30 visitas, 9 cierres (10% conversión)
+• Resultado: +200% ventas con mismo equipo
+
+🔥 ROI BRUTAL:
+• Agentes dejan de perder tiempo con curiosos
+• Captura leads nocturnos/fines de semana (antes perdidos)
+• Más ventas sin contratar más gente
+• Cumplimiento UAFE automático
+
+¿Quieres que Paula califique tus leads? Escribe: @paula busco casa en Quito 🏠`
+      }
+    },
+
     // 💰 NUEVOS NIVELES DE PRECIO PARA ECUADOR
     nivelesPrecios: {
       nivel1: {

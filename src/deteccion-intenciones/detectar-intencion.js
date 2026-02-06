@@ -1,10 +1,9 @@
 // Detector de intenciones: decide a qué agente activar según el mensaje del usuario.
-// Reglas:
-// - Aurora (por defecto): info, reservas, Hot Desk 1, cobros unitarios.
-// - Aluna: membresías/planes mensuales (Plan 10, Plan 20, oficina virtual).
-// - Adriana: solo con @Adriana explícito (seguros Segpopular).
-// - Enzo: solo si el usuario menciona @Enzo (experto en marketing/IA/ventas).
+// REGLA V2: 
+// - AURORA ↔ ALUNA: Detección automática mediante keywords (natural)
+// - Otros agentes: Solo @menciones explícitas
 
+// Keywords AURORA ↔ ALUNA (detección automática natural)
 const ALUNA_KEYWORDS = [
   'membresía', 'membresia', 'plan mensual', 'planes',
   'plan 10', 'plan10', 'plan 20', 'plan20',
@@ -406,6 +405,9 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   const isPostEmailSupport = POST_EMAIL_SUPPORT_PATTERNS.some(pattern => pattern.test(normalized));
   const isModificacionReserva = MODIFICACION_RESERVA_PATTERNS.some(pattern => pattern.test(normalized));
   const isCancelacion = detectarCancelacion(normalized);
+  
+  // ⚠️ IMPORTANTE: isCasualGreeting e isIdentityQuestion se evalúan DESPUÉS de @menciones
+  // para que las @menciones explícitas tengan prioridad sobre saludos
   const isCasualGreeting = detectarSaludoCasual(normalized);
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
@@ -453,25 +455,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 0.5) Saludo casual detectado - mantener agente actual pero marcar flag
-  if (isCasualGreeting) {
-    return {
-      agent: currentAgent, // Mantener agente actual
-      reason: 'casual greeting - no services offered',
-      flags: { casualGreeting: true }
-    };
-  }
-
-  // 0.6) Pregunta de identidad detectada - mantener agente actual pero marcar flag
-  if (isIdentityQuestion) {
-    return {
-      agent: currentAgent, // Mantener agente actual
-      reason: 'identity question - ecosystem presentation only',
-      flags: { identityQuestion: true }
-    };
-  }
-
   // 1) CAMBIOS EXPLÍCITOS DE AGENTE (con @código)
+  // ✅ PRIORIDAD MÁXIMA - Evaluado ANTES de saludos casuales
   // 🛡️ PROTECCIÓN: Ignorar @menciones en EJEMPLOS de Aurora (mensajes que contienen "Ejemplo:")
   const isAuroraExample = text.includes('Ejemplo:') || text.includes('ejemplo:');
   
@@ -511,19 +496,31 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     }
   }
 
-  // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)
-  // Solo para casos donde Aurora DEBE intervenir
-  
-  // 2.4) 📝 NUEVA RESERVA - Handoff implícito a Aurora desde cualquier agente
-  const isNewReservationRequest = /\b(quiero|necesito|quisiera|me gustar[íi]a)\s+(reservar|hacer\s+una\s+reserva|agendar|una\s+reserva|un\s+hot\s*desk|una\s+sala)/i.test(text);
-  if (isNewReservationRequest && currentAgent !== 'AURORA') {
-    console.log('[INTENT] 📝 Nueva reserva detectada desde', currentAgent, '→ Handoff implícito a AURORA');
+  // 1.5) Saludo casual detectado - mantener agente actual pero marcar flag
+  // Evaluado DESPUÉS de @menciones para que estas tengan prioridad
+  if (isCasualGreeting) {
     return {
-      agent: 'AURORA',
-      reason: 'new reservation request - implicit handoff to Aurora',
-      flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', implicitHandoff: true, reservationRequest: true }
+      agent: currentAgent, // Mantener agente actual
+      reason: 'casual greeting - no services offered',
+      flags: { casualGreeting: true }
     };
   }
+
+  // 1.6) Pregunta de identidad detectada - mantener agente actual pero marcar flag
+  if (isIdentityQuestion) {
+    return {
+      agent: currentAgent, // Mantener agente actual
+      reason: 'identity question - ecosystem presentation only',
+      flags: { identityQuestion: true }
+    };
+    if (/@aurora/i.test(text)) {
+      return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', returningToAurora: true } };
+    }
+  }
+
+  // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)
+  // Solo para casos donde Aurora DEBE intervenir
+  // NOTA V2: Handoffs implícitos ELIMINADOS. Solo @menciones explícitas cambian agente.
   
   // 2.5) 🔄 MODIFICACIÓN DE RESERVA EXISTENTE
   if (isModificacionReserva) {
@@ -553,40 +550,32 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 3) HANDOFFS IMPLÍCITOS - ELIMINADOS EN V2
-  // ⚠️ DEPRECADO: Keywords ya NO activan handoffs automáticos
-  // Ver: agent-keywords.js y intent-resolver-v2.js para nuevo sistema
-  // 
-  // REGLA V2: Solo @menciones explícitas ejecutan handoffs
-  // Keywords solo sugieren especialistas, pero mantienen agente actual
+  // 3) DETECCIÓN AUTOMÁTICA AURORA ↔ ALUNA (natural mediante keywords)
+  // Esta es la ÚNICA detección automática permitida
   
-  // 4) KEYWORDS que SUGIEREN agente pero NO fuerzan cambio
-  // El orquestador decidirá si cambiar según activeAgent
-  
-  // NOTA: Paula NO se activa por keywords, solo por @paula (handoff explícito)
-  // Aurora/orquestador responden preguntas sobre propiedades y sugieren usar @paula
-  
-  // Keywords Aluna (membresías)
+  // Keywords Aluna (membresías) - HANDOFF AUTOMÁTICO permitido
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
     return { 
       agent: 'ALUNA', 
-      reason: 'keywords membresías/planes',
+      reason: 'keywords membresías/planes (natural)',
       flags: { suggestedAgent: 'ALUNA', isKeywordMatch: true }
     };
   }
 
+  // Keywords Aurora (reservas/pagos) - HANDOFF AUTOMÁTICO permitido
   if (AURORA_KEYWORDS.some(k => text.includes(k))) {
     return { 
       agent: 'AURORA', 
-      reason: 'keywords reservas/pagos',
+      reason: 'keywords reservas/pagos (natural)',
       flags: { suggestedAgent: 'AURORA', isKeywordMatch: true }
     };
   }
 
-  // 5) Fallback: NO cambiar agente, dejar que orquestador use activeAgent
+  // 4) Fallback: MANTENER agente actual
+  // Otros agentes (Paula, Adriana, Enzo, etc.) SOLO cambian con @menciones
   return { 
-    agent: currentAgent, // Mantener agente actual
-    reason: 'no explicit trigger - maintaining active agent',
+    agent: currentAgent, 
+    reason: 'maintaining active agent - only @mentions change other agents',
     flags: { maintainingActive: true }
   };
 }

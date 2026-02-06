@@ -49,31 +49,9 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 const router = Router();
 
 /* ─────────────────────────────────────────────────────────────
-   🤝 HANDOFF HELPER - DEPRECADO - Usar handoff-manager.js
-   Mantenido por compatibilidad temporal durante transición
+   ✅ HANDOFF: Todos los handoffs usan executeHandoff() de 
+   handoff-manager.js - sistema centralizado con locks
 ───────────────────────────────────────────────────────────── */
-/**
- * @deprecated Usar executeHandoff de handoff-manager.js
- * Esta función se mantiene temporalmente para compatibilidad
- */
-async function executeHandoffSequence_LEGACY(userId, profile, fromAgent, targetAgent, userName, userLanguage, formResult, auroraInput, envelope) {
-  console.warn('[WASSENGER] ⚠️ Usando executeHandoffSequence_LEGACY - migrar a handoff-manager.js');
-  
-  // Redireccionar al nuevo sistema
-  const result = await executeHandoff(
-    userId,
-    profile,
-    fromAgent,
-    targetAgent,
-    userName,
-    userLanguage,
-    saveProfile,
-    enviarWhatsApp,
-    saveConversationMessage
-  );
-  
-  return result.success;
-}
 
 /* ─────────────────────────────────────────────────────────────
    🔒 Seguridad & estabilidad global (NO dentro del webhook)
@@ -1295,80 +1273,13 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       auroraInput = `[MEDIA:${type}] El usuario envió un archivo. URL: ${mediaUrl}`;
     }
 
-    // 🎯 DETECCIÓN CÓDIGO EXPRESO @agente - Handoff explícito
-    const handoffMatch = processedText.match(/@(aurora|aluna|enzo|axel|adriana|angela|gabi|paula)\b/i);
-    
-    if (handoffMatch) {
-      const targetAgent = handoffMatch[1].toUpperCase();
-      const fromAgent = profile.activeAgent || 'AURORA';
-      
-      console.log(`[HANDOFF] 🔄 Código expreso detectado: ${fromAgent} → ${targetAgent}`);
-      
-      // Guardar form del agente actual antes de cambiar
-      if (formResult?.form) {
-        await saveAgentForm(userId, fromAgent, formResult.form.toJSON(), 120);
-        console.log(`[HANDOFF] 💾 Form de ${fromAgent} guardado antes del cambio`);
-      }
-      
-      // Mensaje de despedida del agente actual
-      const despedida = `Listo ${profile.name || 'amigo'}, te dejo con ${targetAgent}. Estoy aquí cuando lo necesites, solo escribe @${fromAgent.toLowerCase()} y vuelvo contigo donde nos quedamos 😊`;
-      await enviarWhatsApp(userId, despedida);
-      await saveConversationMessage(userId, { role: 'assistant', content: despedida, agent: fromAgent });
-      
-      // Cambiar agente activo
-      profile.activeAgent = targetAgent;
-      profile.conversationCount = (profile.conversationCount || 0) + 1;
-      await saveProfile(userId, profile);
-      
-      // Cargar form del nuevo agente (si existe)
-      const newAgentForm = await getAgentForm(userId, targetAgent);
-      const welcomeBack = newAgentForm 
-        ? `¡Hola de nuevo! Veo que teníamos una conversación pendiente. ¿Continuamos? 😊`
-        : `¡Hola! Soy ${targetAgent}, ¿en qué puedo ayudarte? 😊`;
-      
-      await enviarWhatsApp(userId, welcomeBack);
-      await saveConversationMessage(userId, { role: 'assistant', content: welcomeBack, agent: targetAgent });
-      await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent, intentReason: 'handoff_explicit', input: processedText, output: welcomeBack, meta: { envelope, fromAgent, handoffType: 'explicit' } });
-      
-      return;
-    }
+    // 🎯 DETECCIÓN CÓDIGO EXPRESO @agente - ELIMINADO (duplicidad)
+    // Ahora detectar-intencion.js detecta @menciones y activa flags.agentHandoff
+    // que luego es procesado por executeHandoff() con locks y validaciones
 
-    // 🎯 DETECCIÓN DE CAMPAÑAS
-    const campaignDetection = detectCampaignMessage(auroraInput);
-    if (campaignDetection.detected) {
-      const campaign = CAMPAIGN_PROMPTS[campaignDetection.campaign];
-      
-      // FIX 4: Si tiene targetAgent, cambiar agente (ej: Paula)
-      if (campaign?.targetAgent) {
-        const targetAgent = campaign.targetAgent;
-        console.log(`[CAMPAIGN] 🚀 ${targetAgent} activado: ${campaignDetection.campaign}`);
-        
-        profile.activeAgent = targetAgent;
-        profile.conversationCount = (profile.conversationCount || 0) + 1;
-        await saveProfile(userId, profile);
-        
-        const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile, campaignDetection.campaign);
-        await enviarWhatsApp(userId, response);
-        await saveConversationMessage(userId, { role: 'assistant', content: response, agent: targetAgent });
-        await saveInteraction({ userId, agent: targetAgent, agentName: targetAgent === 'PAULA' ? 'Paula - PropElite' : targetAgent, intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign } });
-        return;
-      }
-      
-      // FIX 2: Si tiene specialMode (ej: venta agentes), NO cambiar agente pero usar prompt especial
-      if (campaign?.specialMode) {
-        console.log(`[CAMPAIGN] 🎯 specialMode=${campaign.specialMode} activado: ${campaignDetection.campaign}`);
-        
-        // Mantener AURORA pero con specialMode
-        profile.conversationCount = (profile.conversationCount || 0) + 1;
-        await saveProfile(userId, profile);
-        
-        const response = personalizeCampaignResponse(campaignDetection.getTemplate, profile, campaignDetection.campaign);
-        await enviarWhatsApp(userId, response);
-        await saveConversationMessage(userId, { role: 'assistant', content: response, agent: 'AURORA' });
-        await saveInteraction({ userId, agent: 'AURORA', agentName: 'Aurora - Venta Agentes', intentReason: `campaign_${campaignDetection.campaign}`, input: auroraInput, output: response, meta: { envelope, campaign: campaignDetection.campaign, specialMode: campaign.specialMode } });
-        return;
-      }
-    }
+    // 🎯 DETECCIÓN DE CAMPAÑAS (ya no hace handoffs directos)
+    // Las campañas con targetAgent deben usar detectar-intencion.js
+    // para activar flags.agentHandoff y usar executeHandoff() centralizado
 
         // Si hay media y es recibo, dejamos que Aurora lo maneje (sin meter agentes aquí)
     // Para que isReceiptImage funcione, armamos messageData estándar

@@ -7,7 +7,7 @@
  * ⚠️ IMPORTANTE: Sistema de handoffs unificado
  * 
  * Los handoffs (relevos entre agentes) se manejan EXCLUSIVAMENTE en:
- * - src/deteccion-intenciones/orquestador.js → getHandoffMessages() (mensajes multiidioma)
+ * - src/deteccion-intenciones/handoff-messages.js → getHandoffMessages() (mensajes multiidioma)
  * - src/express-servidor/endpoints-api/wassenger.js → lógica de ejecución con delays
  * 
  * Este archivo SOLO maneja:

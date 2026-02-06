@@ -19,52 +19,9 @@ import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
 
-/**
- * Detecta si Paula recibe mensaje fuera de su scope (bienes raíces)
- * @param {string} mensaje - Mensaje del usuario
- * @returns {Object|null} - { service, targetAgent } o null
- */
-function detectPaulaOutOfScope(mensaje) {
-  const text = mensaje.toLowerCase();
-  
-  // 1. Coworkia / Aurora keywords (espacios de trabajo)
-  const coworkiaRegex = /\b(coworkia|coworking|hot\s*desk|day\s*pass|sala.*reuni[oó]n|oficina.*compartida|membres[ií]a.*coworking|espacio.*trabajo|workspace|reserva.*sala|hot.*desk)\b/i;
-  if (coworkiaRegex.test(text)) {
-    return { service: 'coworkia', targetAgent: 'AURORA' };
-  }
-  
-  // 2. Seguros / Adriana keywords
-  const segurosRegex = /\b(seguro|poliza|póliza|asegurar|cobertura|cotizaci[oó]n.*seguro|segpopular|bmi|aig|chubb|sweaden|seguro.*vehic|seguro.*vida)\b/i;
-  if (segurosRegex.test(text)) {
-    return { service: 'seguros', targetAgent: 'ADRIANA' };
-  }
-  
-  // 3. Marketing / Enzo keywords
-  const marketingRegex = /\b(marketing|publicidad|redes.*sociales|social.*media|campa[ñn]a|estrategia.*digital|marketinglab|seo|sem|contenido.*digital|posicionamiento)\b/i;
-  if (marketingRegex.test(text)) {
-    return { service: 'marketing', targetAgent: 'ENZO' };
-  }
-  
-  // 4. Salud / Angela keywords
-  const saludRegex = /\b(salud|m[eé]dico|doctor|consulta.*m[eé]dica|medicina|bienestar|medbeneficios?|atenci[oó]n.*m[eé]dica)\b/i;
-  if (saludRegex.test(text)) {
-    return { service: 'salud', targetAgent: 'ANGELA' };
-  }
-  
-  // 5. Reparación vehicular / Axel keywords
-  const reparacionRegex = /\b(choque|colisi[oó]n|rayado|abollado|da[ñn]o.*vehicular|da[ñn]o.*carro|reparar.*carro|pintura.*carro|paintbull|taller|enderezada)\b/i;
-  if (reparacionRegex.test(text)) {
-    return { service: 'reparacion_vehicular', targetAgent: 'AXEL' };
-  }
-  
-  // 6. Legal/Finanzas / Gabi keywords
-  const legalRegex = /\b(legal|abogad[oa]|contador|contabilidad|finanzas|impuestos|tributario|uafe|compliance|consulta.*legal|asesor[ií]a.*legal)\b/i;
-  if (legalRegex.test(text)) {
-    return { service: 'legal_finanzas', targetAgent: 'GABI' };
-  }
-  
-  return null; // No detectó out-of-scope
-}
+// ⚠️ NOTA V2: detectPaulaOutOfScope() ELIMINADA
+// Ahora SOLO @menciones explícitas cambian de agente
+// Cada agente responde en su especialidad y sugiere @menciones si es necesario
 
 export const AGENTES = {
   AURORA,
@@ -77,78 +34,10 @@ export const AGENTES = {
   PAULA
 };
 
-/**
- * Función unificada para obtener mensajes de handoff entre agentes
- * @param {string} fromAgent - Agente actual (ej: 'AURORA')
- * @param {string} toAgent - Agente destino (ej: 'ANGELA')
- * @param {string} userName - Nombre del usuario
- * @param {string} userLanguage - Idioma preferido ('es', 'en', etc.)
- * @returns {Object} { despedida: string, entrada: string }
- */
-export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userLanguage = 'es') {
-  const agenteActual = AGENTES[fromAgent];
-  const nuevoAgente = AGENTES[toAgent];
-  
-  let mensajeDespedida = null;
-  let mensajeEntrada = null;
-  
-  // 1. MENSAJE DE DESPEDIDA del agente actual
-  
-  // Casos especiales: Aurora, Angela, Axel, Adriana, Aluna, Enzo y Gabi tienen mensajes específicos por agente destino
-  if ((fromAgent === 'AURORA' || fromAgent === 'ANGELA' || fromAgent === 'AXEL' || fromAgent === 'ADRIANA' || fromAgent === 'ALUNA' || fromAgent === 'ENZO' || fromAgent === 'GABI') && typeof agenteActual?.getHandover === 'function') {
-    mensajeDespedida = agenteActual.getHandover(toAgent, userName, userLanguage);
-  }
-  
-  // Si no hay mensaje específico, usar mensaje genérico del agente actual
-  if (!mensajeDespedida) {
-    if (typeof agenteActual?.getHandover === 'function') {
-      const handoverData = agenteActual.getHandover(userLanguage);
-      mensajeDespedida = handoverData?.llamado?.replace(/{nombre}/g, userName);
-    } else if (agenteActual?.handover?.llamado) {
-      mensajeDespedida = agenteActual.handover.llamado.replace(/{nombre}/g, userName);
-    }
-  }
-  
-  // Fallback genérico para despedida
-  if (!mensajeDespedida) {
-    mensajeDespedida = `${userName}, te conecto con ${nuevoAgente?.nombre || toAgent}.`;
-  }
-  
-  // 2. MENSAJE DE ENTRADA del nuevo agente
-  
-  // Caso especial: Aurora detecta si viene de otro agente (returning user)
-  if (toAgent === 'AURORA' && fromAgent !== 'AURORA') {
-    // Usuario regresa a Aurora desde otro agente
-    const previousAgentName = AGENTES[fromAgent]?.nombre || fromAgent;
-    if (userLanguage === 'es') {
-      mensajeEntrada = `¡Hola de nuevo ${userName}! 😊✨ Soy Aurora, tomo el relevo desde ahora.\n\n${previousAgentName} está disponible con @${fromAgent.toLowerCase()} si lo necesitas, recordará tu última conversación.\n\n¿En qué te puedo asistir ahora?`;
-    } else if (userLanguage === 'en') {
-      mensajeEntrada = `Hello again ${userName}! 😊✨ I'm Aurora, taking over from here.\n\n${previousAgentName} is available with @${fromAgent.toLowerCase()} if you need them, they'll remember your last conversation.\n\nHow can I assist you now?`;
-    } else if (userLanguage === 'fr') {
-      mensajeEntrada = `Rebonjour ${userName}! 😊✨ Je suis Aurora, je prends le relais maintenant.\n\n${previousAgentName} est disponible avec @${fromAgent.toLowerCase()} si vous en avez besoin, il se souviendra de votre dernière conversation.\n\nComment puis-je vous aider maintenant?`;
-    } else {
-      mensajeEntrada = `Hello again ${userName}! 😊✨ I'm Aurora, taking over from here.\n\n${previousAgentName} is available with @${fromAgent.toLowerCase()} if you need them, they'll remember your last conversation.\n\nHow can I assist you now?`;
-    }
-  } else {
-    // Mensaje de entrada estándar
-    if (typeof nuevoAgente?.getMensajes === 'function') {
-      const mensajes = nuevoAgente.getMensajes(userLanguage);
-      mensajeEntrada = mensajes?.entrada?.replace(/{nombre}/g, userName);
-    } else if (nuevoAgente?.mensajes?.entrada) {
-      mensajeEntrada = nuevoAgente.mensajes.entrada.replace(/{nombre}/g, userName);
-    }
-  }
-  
-  // Fallback genérico para entrada
-  if (!mensajeEntrada) {
-    mensajeEntrada = `¡Hola ${userName}! Soy ${nuevoAgente?.nombre || toAgent}. ¿En qué puedo ayudarte?`;
-  }
-  
-  return {
-    despedida: mensajeDespedida,
-    entrada: mensajeEntrada
-  };
-}
+// ✅ ELIMINADO: getHandoffMessages() DUPLICADA
+// Ahora existe UNA SOLA versión en:
+// src/deteccion-intenciones/handoff-messages.js
+// Que es importada por handoff-manager.js
 
 /**
  * Aurora Core decide TODO.
@@ -209,28 +98,15 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     flags: Object.keys(intent.flags || {}) 
   });
 
-  // � DETECCIÓN OUT-OF-SCOPE: Si agente especializado detecta keywords de otros servicios
-  if (activeAgent === 'PAULA') {
-    const outOfScope = detectPaulaOutOfScope(mensaje);
-    if (outOfScope) {
-      console.log('[ORQUESTADOR] 🔀 Paula detectó out-of-scope:', outOfScope.service, '→', outOfScope.targetAgent);
-      intent.agent = outOfScope.targetAgent;
-      intent.reason = `paula_handoff_to_${outOfScope.service}`;
-      intent.flags = { 
-        ...intent.flags, 
-        agentHandoff: true, 
-        fromAgent: activeAgent, 
-        targetAgent: outOfScope.targetAgent,
-        outOfScope: true 
-      };
-    }
-  }
+  // NOTA V2: Out-of-scope detection ELIMINADA
+  // Solo @menciones explicitas cambian de agente
+  // Cada agente mantiene su especialidad y sugiere otros agentes si es necesario
 
-  // 🗑️ MANEJO DE CANCELACIÓN: Solo limpiar si HAY flujo activo
+  // MANEJO DE CANCELACION: Solo limpiar si HAY flujo activo
   if (intent.flags?.cancelacion) {
-    console.log('[ORQUESTADOR] 🗑️ Cancelación detectada');
+    console.log('[ORQUESTADOR] Cancelacion detectada');
     
-    // ✅ Verificar si realmente hay algo que cancelar
+    // Verificar si realmente hay algo que cancelar
     const pendingNew = await getPendingConfirmation(userId);
     const hasPendingLegacy = await hasPendingConfirmation(userId);
     const hasPending = hasPendingLegacy || !!pendingNew;

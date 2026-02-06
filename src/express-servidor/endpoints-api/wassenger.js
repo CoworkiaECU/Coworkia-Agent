@@ -1119,7 +1119,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       console.log('[AXEL-DEBUG] ✅ Condición cumplida - procesando foto para Axel');
       // 🔄 TODO en queue para garantizar orden absoluto
       await queueTask(userId, async () => {
-        const photoStatus = addPhoto(userId, mediaUrl, type);
+        const photoStatus = await addPhoto(userId, mediaUrl, type);  // ✅ FIX: await agregado
         
         console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada`);
         

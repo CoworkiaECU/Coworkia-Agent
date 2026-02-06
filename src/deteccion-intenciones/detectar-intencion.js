@@ -293,7 +293,13 @@ export function detectVirtualAgentSalesPromo(text) {
     'sistema como ti',
     'bot como este',
     'bot como tu',
-    'asistente virtual'
+    'bot como ti',
+    'asistente virtual',
+    'virtual agent',
+    'agent like you',
+    'system like you',
+    'chatbot like',
+    'como este'
   ];
   
   const hasMention = mentionKeywords.some(k => normalized.includes(k));
@@ -314,7 +320,12 @@ export function detectVirtualAgentSalesPromo(text) {
     'capacidades',
     'funcionalidades',
     'que ofrece',
-    'que ofreces'
+    'que ofreces',
+    'what can you do',
+    'what can do',
+    'how does it work',
+    'capabilities',
+    'features'
   ];
   
   if (capabilityKeywords.some(k => normalized.includes(k))) {
@@ -327,6 +338,7 @@ export function detectVirtualAgentSalesPromo(text) {
     'para mi empresa',
     'para mi negocio',
     'para la empresa',
+    'para el negocio',
     'implementar',
     'contratar',
     'adquirir',
@@ -334,12 +346,38 @@ export function detectVirtualAgentSalesPromo(text) {
     'sistema para',
     'quiero uno',
     'quiero un sistema',
-    'necesito uno'
+    'necesito uno',
+    'for my business',
+    'for my company',
+    'for the business'
   ];
   
   if (businessKeywords.some(k => normalized.includes(k))) {
     score += 2;
     reasons.push('contexto_empresarial');
+  }
+  
+  // Categoría 3.5: Términos técnicos relacionados con agentes virtuales
+  const technicalKeywords = [
+    'chatbot',
+    'bot',
+    'sistema de ia',
+    'sistema ia',
+    'inteligencia artificial',
+    'agente virtual',
+    'virtual agent',
+    'asistente virtual',
+    'virtual assistant',
+    'crear agente',
+    'cotizar',
+    'cotizacion',
+    'quote',
+    'pricing'
+  ];
+  
+  if (technicalKeywords.some(k => normalized.includes(k))) {
+    score += 1;
+    reasons.push('terminos_tecnicos');
   }
   
   // Categoría 4: Palabras que indican interés en el producto
@@ -360,12 +398,12 @@ export function detectVirtualAgentSalesPromo(text) {
   
   // Decisión: score >= 4 = detectado (mención + contexto adicional significativo)
   const detected = score >= 4;
-  const confidence = Math.min(score / 8, 1); // Normalizar 0-1 (máximo posible: 8)
+  const confidence = Math.min(score / 9, 1); // Normalizar 0-1 (máximo posible: 9 = 3+2+2+1+1)
   
   if (detected) {
-    console.log(`[VIRTUAL-AGENT-PROMO] ✅ Detectado (score: ${score}/8, confidence: ${(confidence * 100).toFixed(0)}%, reasons: ${reasons.join(', ')})`);
+    console.log(`[VIRTUAL-AGENT-PROMO] ✅ Detectado (score: ${score}/9, confidence: ${(confidence * 100).toFixed(0)}%, reasons: ${reasons.join(', ')})`);
   } else {
-    console.log(`[VIRTUAL-AGENT-PROMO] ❌ No detectado (score: ${score}/8, insuficiente)`);
+    console.log(`[VIRTUAL-AGENT-PROMO] ❌ No detectado (score: ${score}/9, insuficiente)`);
   }
   
   return {

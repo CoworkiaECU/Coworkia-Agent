@@ -86,72 +86,90 @@ Dites-moi et nous coordonnerons 😊`
 
   // Mensaje 3: Aurora, ¿qué puede hacer un Agente Virtual como tú para mi empresa?
   VENTA_AGENTES_VIRTUALES: {
-    trigger: "agente virtual.*empresa|virtual agent.*business|qu[eé] puede.*hacer.*agente|what can.*you do.*agent|qu[eé] puedes hacer|what can you do",
+    trigger: "agente virtual|virtual agent|chatbot|sistema.*ia|crear agente|cotizar.*agente|cotizar.*sistema|capacidades.*agente|sistema como t[uú]|qu[eé] puede.*hacer|what can.*you do|what can.*do.*agent|bot como t[uú]",
     specialMode: 'virtualAgentSales', // Flag para usar prompt especial
     getResponse: (userLanguage = 'es') => ({
-      es: `¡Hola {nombre}! 👋 Soy Aurora, un Agente Virtual de OneMind.
+      es: `¡Hola {nombre}! 🤖✨ Excelente pregunta.
 
-Perfecto timing para esta pregunta 😊
+Soy Aurora de *OneMind* - El ecosistema de agentes virtuales de MarketingLab.
 
-Te cuento que como *Agente Virtual Inteligente*, puedo ayudar a tu empresa con:
+🎯 *LO QUE ESTÁS VIENDO AHORA ES EL SISTEMA:*
+Conversación natural 24/7, multiidioma, con contexto e inteligencia real.
 
-🤖 *Atención al cliente 24/7*
-   → Sin descansos, siempre disponible
+🤝 *NUESTRO ECOSISTEMA DE 8 AGENTES:*
 
-📋 *Automatización de procesos*
-   → Reservas, cotizaciones, seguimiento
+🏢 @aurora - Coworking (Coworkia)
+📊 @enzo - Marketing & Software (MarketingLab)
+🏠 @aluna - Membresías Business
+🏡 @paula - Bienes Raíces (PropElite)
+🚗 @axel - Colisiones (PaintBull)
+💚 @angela - Salud (MedBeneficios)
+🛡️ @adriana - Seguros (SegPopular)
+⚖️ @gabi - Legal/Finanzas (GR Consulting)
 
-💬 *Conversaciones naturales*
-   → Como esta que tenemos ahora
+🔥 *PRUÉBALO AHORA:* Escribe @aluna o @paula + tu consulta
 
-📊 *Integración con tu negocio*
-   → CRM, pagos, calendarios, emails
+💰 *DESARROLLO PERSONALIZADO:*
+Desde $350/mes - Agente entrenado para TU negocio
 
-¿Te gustaría ver cómo un agente como yo podría funcionar en *tu empresa específica*?
+🚀 *SIGUIENTE PASO:*
+Habla con @enzo del MarketingLab para cotización y demo personalizada.
 
-Cuéntame sobre tu negocio y te muestro un caso de uso concreto 🚀`,
-      en: `Hello {nombre}! 👋 I'm Aurora, a Virtual Agent from OneMind.
+¿Qué tipo de negocio tienes? Te muestro un caso de uso específico 😊`,
+      en: `Hello {nombre}! 🤖✨ Excellent question.
 
-Perfect timing for this question 😊
+I'm Aurora from *OneMind* - MarketingLab's virtual agent ecosystem.
 
-As an *Intelligent Virtual Agent*, I can help your company with:
+🎯 *WHAT YOU'RE SEEING NOW IS THE SYSTEM:*
+Natural 24/7 conversation, multilingual, with context and real intelligence.
 
-🤖 *24/7 Customer service*
-   → No breaks, always available
+🤝 *OUR 8-AGENT ECOSYSTEM:*
 
-📋 *Process automation*
-   → Bookings, quotes, follow-ups
+🏢 @aurora - Coworking (Coworkia)
+📊 @enzo - Marketing & Software (MarketingLab)
+🏠 @aluna - Business Memberships
+🏡 @paula - Real Estate (PropElite)
+🚗 @axel - Collision Repair (PaintBull)
+💚 @angela - Healthcare (MedBeneficios)
+🛡️ @adriana - Insurance (SegPopular)
+⚖️ @gabi - Legal/Finance (GR Consulting)
 
-💬 *Natural conversations*
-   → Like this one we're having now
+🔥 *TRY IT NOW:* Write @aluna or @paula + your question
 
-📊 *Business integration*
-   → CRM, payments, calendars, emails
+💰 *CUSTOM DEVELOPMENT:*
+From $350/month - Agent trained for YOUR business
 
-Would you like to see how an agent like me could work in *your specific business*?
+🚀 *NEXT STEP:*
+Talk to @enzo from MarketingLab for quote and personalized demo.
 
-Tell me about your business and I'll show you a concrete use case 🚀`,
-      fr: `Bonjour {nombre}! 👋 Je suis Aurora, un Agent Virtuel de OneMind.
+What kind of business do you have? I'll show you a specific use case 😊`,
+      fr: `Bonjour {nombre}! 🤖✨ Excellente question.
 
-Parfait timing pour cette question 😊
+Je suis Aurora de *OneMind* - L'écosystème d'agents virtuels de MarketingLab.
 
-En tant qu'*Agent Virtuel Intelligent*, je peux aider votre entreprise avec:
+🎯 *CE QUE VOUS VOYEZ MAINTENANT EST LE SYSTÈME:*
+Conversation naturelle 24/7, multilingue, avec contexte et vraie intelligence.
 
-🤖 *Service client 24/7*
-   → Sans pauses, toujours disponible
+🤝 *NOTRE ÉCOSYSTÈME DE 8 AGENTS:*
 
-📋 *Automatisation des processus*
-   → Réservations, devis, suivi
+🏢 @aurora - Coworking (Coworkia)
+📊 @enzo - Marketing & Software (MarketingLab)
+🏠 @aluna - Adhésions Business
+🏡 @paula - Immobilier (PropElite)
+🚗 @axel - Réparation Collision (PaintBull)
+💚 @angela - Santé (MedBeneficios)
+🛡️ @adriana - Assurances (SegPopular)
+⚖️ @gabi - Juridique/Finance (GR Consulting)
 
-💬 *Conversations naturelles*
-   → Comme celle que nous avons maintenant
+🔥 *ESSAYEZ MAINTENANT:* Écrivez @aluna ou @paula + votre question
 
-📊 *Intégration d'entreprise*
-   → CRM, paiements, calendriers, emails
+💰 *DÉVELOPPEMENT PERSONNALISÉ:*
+Dès $350/mois - Agent formé pour VOTRE entreprise
 
-Voudriez-vous voir comment un agent comme moi pourrait fonctionner dans *votre entreprise spécifique*?
+🚀 *PROCHAINE ÉTAPE:*
+Parlez à @enzo de MarketingLab pour devis et démo personnalisée.
 
-Parlez-moi de votre entreprise et je vous montrerai un cas d'usage concret 🚀`
+Quel type d'entreprise avez-vous? Je vous montre un cas d'usage spécifique 😊`
     })
   },
 

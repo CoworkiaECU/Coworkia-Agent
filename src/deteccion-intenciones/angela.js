@@ -28,10 +28,10 @@ export const ANGELA = {
   },
   
   getMensajes: (userLanguage = 'es') => ({
-    entrada: userLanguage === 'es' ? '¡Hola {nombre}! 💚😊 Soy Ángela de MedBeneficios.\n\nTomo el relevo desde ahora para guiarte con temas de salud, tanto tuya como de tu familia.\n\nSi necesitas regresar, escribe @aurora y retomas tu conversación.\n\n¿Qué puedo hacer por tu bienestar?' :
-             userLanguage === 'en' ? 'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?' :
-             userLanguage === 'qu' ? 'Napaykullayki {nombre}! Ñuqa kani Angela 👩‍⚕️ MedBeneficios-manta qampaq qhali kay yanapaqniykim.\n\nImanapi yanapasunki kunan?' :
-             'Hello {nombre}! I\'m Angela 👩‍⚕️ Your medical assistant from MedBeneficios.\n\nHow can I help you with your wellness today?',
+    entrada: userLanguage === 'es' ? 'Hola {nombre}. 💚 Soy Ángela de MedBeneficios - Asistente médica.\n\nAurora vuelve contigo cuando escribas @aurora + tu consulta, sabrá exactamente el contexto de la conversación y el punto exacto donde se quedaron.\n\n¿Qué puedo hacer por tu bienestar hoy?' :
+             userLanguage === 'en' ? 'Hello {nombre}. 💚 I\'m Angela from MedBeneficios - Medical Assistant.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat can I do for your wellness today?' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}. 💚 Ñuqa kani Angela MedBeneficios-manta - Hampiq yanapaq.\n\nAurora kutirimun @aurora nispa + tapuyniyki qillqaspayki, payqa yachanqa tukuy rimasqaykuta chaymanta maypi saqesqaykuta.\n\nImanapi yanapasunki qhali kayniykipaq kunan?' :
+             'Hello {nombre}. 💚 I\'m Angela from MedBeneficios - Medical Assistant.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat can I do for your wellness today?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, cuida mucho tu salud.\n\nEn cualquier momento puedes retomar, solo di @Ángela y tu consulta, aquí estaré 24/7. ¡Cuídate mucho! 💚' :
                userLanguage === 'en' ? 'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚' :
                userLanguage === 'qu' ? 'Allinmi {nombre}, qhali kayta allinta qhaway.\n\nMayqin pachapipas kutimunki, @Angela nispa tapukuy, kaypi kasaq 24/7. ¡Allinta qhaway! 💚' :

@@ -63,6 +63,11 @@ export const ALUNA = {
       'PAULA': {
         es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nPara dudas sobre coworking, escribe *@Aluna*.\n\n¡Hasta pronto!',
         en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nFor coworking questions, write *@Aluna*.\n\nSee you soon!'
+      },
+      'GABI': {
+        es: 'Perfecto {nombre}, te comunico con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nPara dudas sobre coworking o membresías, escribe *@Aluna*.\n\n¡Hasta pronto!',
+        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nFor coworking or membership questions, write *@Aluna*.\n\nSee you soon!',
+        fr: 'Parfait {nombre}, je te mets en contact avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour des questions sur le coworking ou les adhésions, écris *@Aluna*.\n\nÀ bientôt!'
       }
     };
     

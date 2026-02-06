@@ -449,53 +449,11 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   const isCasualGreeting = detectarSaludoCasual(normalized);
   const isIdentityQuestion = detectarPreguntaIdentidad(normalized);
   
-  // 0.5) Saludo con interés explícito en servicio - Aurora presenta coworking SOLO
-  const isSaludoConInteres = detectarSaludoConInteresServicio(text);
-  
-  if (isSaludoConInteres) {
-    return {
-      agent: currentAgent, // Mantener Aurora
-      reason: 'greeting with service interest - present coworking spaces',
-      flags: { 
-        serviceInterest: true,
-        requiresAurora: true,
-        skipOtherAgents: true // No mencionar otros agentes en respuesta
-      }
-    };
-  }
-  
-  // 🤖 Detectar mensaje promocional de venta de agentes virtuales
-  const virtualAgentPromo = detectVirtualAgentSalesPromo(text);
-  
-  // 0) PROMOCIÓN: Venta de sistema de agentes virtuales
-  if (virtualAgentPromo.detected) {
-    return {
-      agent: 'AURORA',
-      reason: 'virtual agent sales promotion - MarketingLab OneMind',
-      flags: { 
-        virtualAgentSalesPromo: true, 
-        requiresAurora: true,
-        skipDefaultGreeting: true,
-        requiresSpecialResponse: true,
-        confidence: virtualAgentPromo.confidence,
-        detectionScore: virtualAgentPromo.score,
-        detectionReasons: virtualAgentPromo.reasons
-      }
-    };
-  }
-  
-  // 0) Cancelación detectada - mantener agente actual pero marcar flag
-  if (isCancelacion) {
-    return {
-      agent: currentAgent, // Mantener agente actual
-      reason: 'user cancellation request',
-      flags: { cancelacion: true }
-    };
-  }
-
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 1) CAMBIOS EXPLÍCITOS DE AGENTE (con @código)
-  // ✅ PRIORIDAD MÁXIMA - Evaluado ANTES de saludos casuales
-  // 🛡️ PROTECCIÓN: Ignorar @menciones en EJEMPLOS de Aurora (mensajes que contienen "Ejemplo:")
+  // ⚡ PRIORIDAD ABSOLUTA - @menciones SIEMPRE tienen máxima prioridad
+  // 🛡️ PROTECCIÓN: Ignorar @menciones en EJEMPLOS de Aurora
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const isAuroraExample = text.includes('Ejemplo:') || text.includes('ejemplo:');
   
   if (!isAuroraExample) {
@@ -534,8 +492,58 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     }
   }
 
-  // 1.5) Saludo casual detectado - mantener agente actual pero marcar flag
-  // Evaluado DESPUÉS de @menciones para que estas tengan prioridad
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 2) DETECCIONES ESPECIALES - Evaluadas después de @menciones
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  // 2.1) Saludo con interés explícito en servicio
+  const isSaludoConInteres = detectarSaludoConInteresServicio(text);
+  
+  if (isSaludoConInteres) {
+    return {
+      agent: currentAgent, // Mantener Aurora
+      reason: 'greeting with service interest - present coworking spaces',
+      flags: { 
+        serviceInterest: true,
+        requiresAurora: true,
+        skipOtherAgents: true
+      }
+    };
+  }
+  
+  // 2.2) Detectar mensaje promocional de venta de agentes virtuales
+  const virtualAgentPromo = detectVirtualAgentSalesPromo(text);
+  
+  if (virtualAgentPromo.detected) {
+    return {
+      agent: 'AURORA',
+      reason: 'virtual agent sales promotion - MarketingLab OneMind',
+      flags: { 
+        virtualAgentSalesPromo: true, 
+        requiresAurora: true,
+        skipDefaultGreeting: true,
+        requiresSpecialResponse: true,
+        confidence: virtualAgentPromo.confidence,
+        detectionScore: virtualAgentPromo.score,
+        detectionReasons: virtualAgentPromo.reasons
+      }
+    };
+  }
+  
+  // 2.3) Cancelación detectada - mantener agente actual pero marcar flag
+  if (isCancelacion) {
+    return {
+      agent: currentAgent, // Mantener agente actual
+      reason: 'user cancellation request',
+      flags: { cancelacion: true }
+    };
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 3) SALUDOS Y PREGUNTAS DE IDENTIDAD
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  // 3.1) Saludo casual detectado - mantener agente actual pero marcar flag
   if (isCasualGreeting) {
     return {
       agent: currentAgent, // Mantener agente actual
@@ -544,23 +552,22 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 1.6) Pregunta de identidad detectada - mantener agente actual pero marcar flag
+  // 3.2) Pregunta de identidad detectada - mantener agente actual pero marcar flag
   if (isIdentityQuestion) {
     return {
       agent: currentAgent, // Mantener agente actual
       reason: 'identity question - ecosystem presentation only',
       flags: { identityQuestion: true }
     };
-    if (/@aurora/i.test(text)) {
-      return { agent: 'AURORA', reason: 'trigger @Aurora - retorno desde otro agente', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AURORA', returningToAurora: true } };
-    }
   }
 
-  // 2) CONTEXTOS ESPECIALES que requieren Aurora (independiente del agente activo)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 4) CONTEXTOS ESPECIALES que requieren Aurora
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Solo para casos donde Aurora DEBE intervenir
   // NOTA V2: Handoffs implícitos ELIMINADOS. Solo @menciones explícitas cambian agente.
   
-  // 2.5) 🔄 MODIFICACIÓN DE RESERVA EXISTENTE
+  // 4.1) Modificación de reserva existente
   if (isModificacionReserva) {
     return {
       agent: 'AURORA',
@@ -569,7 +576,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 2.6) 💳 Usuario pide link de pago
+  // 4.2) Usuario pide link de pago
   const isPaymentLinkRequest = PAYMENT_LINK_REQUEST_PATTERNS.some(pattern => pattern.test(normalized));
   if (isPaymentLinkRequest) {
     return {
@@ -579,7 +586,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 2.7) Usuario llega desde enlace del correo post-confirmación
+  // 4.3) Usuario llega desde enlace del correo post-confirmación
   if (isPostEmailSupport) {
     return {
       agent: 'AURORA',
@@ -588,8 +595,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 3) DETECCIÓN AUTOMÁTICA AURORA ↔ ALUNA (natural mediante keywords)
-  // Esta es la ÚNICA detección automática permitida
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 5) DETECCIÓN AUTOMÁTICA AURORA ↔ ALUNA
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Esta es la ÚNICA detección automática permitida (keywords natural)
   
   // Keywords Aluna (membresías) - HANDOFF AUTOMÁTICO permitido
   if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
@@ -609,8 +618,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     };
   }
 
-  // 4) Fallback: MANTENER agente actual
-  // Otros agentes (Paula, Adriana, Enzo, etc.) SOLO cambian con @menciones
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 6) FALLBACK: MANTENER agente actual
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Otros agentes solo cambian con @menciones explícitas
   return { 
     agent: currentAgent, 
     reason: 'maintaining active agent - only @mentions change other agents',

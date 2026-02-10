@@ -596,35 +596,62 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 5) DETECCIÓN AUTOMÁTICA AURORA ↔ ALUNA
+  // 5) STICKY AGENTS: Una vez activo un agente especializado,
+  //    se MANTIENE hasta comando @nombreagente explícito
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Esta es la ÚNICA detección automática permitida (keywords natural)
+  // REGLA: Solo @menciones explícitas cambian agentes especializados
+  // BENEFICIO: Conversaciones no se interrumpen por keywords accidentales
   
-  // Keywords Aluna (membresías) - HANDOFF AUTOMÁTICO permitido
-  if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
-    return { 
-      agent: 'ALUNA', 
-      reason: 'keywords membresías/planes (natural)',
-      flags: { suggestedAgent: 'ALUNA', isKeywordMatch: true }
+  const SPECIALIZED_AGENTS = ['ALUNA', 'ADRIANA', 'ENZO', 'ANGELA', 'AXEL', 'GABI', 'PAULA'];
+  
+  // 5.1) Si agente especializado está activo → MANTENER (sticky)
+  if (SPECIALIZED_AGENTS.includes(currentAgent)) {
+    console.log(`[DETECT-INTENT] 🔒 Sticky agent activo: ${currentAgent} - MANTENER hasta @mención`);
+    return {
+      agent: currentAgent,
+      reason: 'sticky_agent_active - only @mention changes agent',
+      flags: { 
+        maintainingActive: true,
+        ignoreKeywords: true,
+        requiresExplicitMention: true
+      }
     };
   }
-
-  // Keywords Aurora (reservas/pagos) - HANDOFF AUTOMÁTICO permitido
-  if (AURORA_KEYWORDS.some(k => text.includes(k))) {
-    return { 
-      agent: 'AURORA', 
-      reason: 'keywords reservas/pagos (natural)',
-      flags: { suggestedAgent: 'AURORA', isKeywordMatch: true }
-    };
+  
+  // 5.2) SOLO si Aurora está activa: detectar keywords para SUGERIR
+  //      (Aurora puede detectar temas, pero NO cambia automáticamente)
+  if (currentAgent === 'AURORA') {
+    // Detectar keywords Aluna (membresías)
+    if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
+      console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - sugiriendo @aluna');
+      return { 
+        agent: 'AURORA',  // ✅ Aurora sigue activa
+        reason: 'aurora_detected_aluna_topic - suggest only',
+        flags: { 
+          suggestedAgent: 'ALUNA',
+          requiresMention: true,  // Usuario debe decir @aluna
+          isKeywordMatch: true
+        }
+      };
+    }
+    
+    // Detectar keywords Aurora (reservas/pagos) - confirmar que es tema correcto
+    if (AURORA_KEYWORDS.some(k => text.includes(k))) {
+      return { 
+        agent: 'AURORA', 
+        reason: 'aurora_topic_confirmed',
+        flags: { confirmedAurora: true, isKeywordMatch: true }
+      };
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 6) FALLBACK: MANTENER agente actual
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Otros agentes solo cambian con @menciones explícitas
+  // Sin keywords detectadas ni comandos especiales → mantener agente
   return { 
     agent: currentAgent, 
-    reason: 'maintaining active agent - only @mentions change other agents',
+    reason: 'maintaining_active_agent',
     flags: { maintainingActive: true }
   };
 }

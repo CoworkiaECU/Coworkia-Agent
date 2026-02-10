@@ -29,6 +29,8 @@ import { buildReplyContext, getReplyContextMetadata } from '../../servicios/repl
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms } from '../../servicios/agent-form-manager.js';
+import { normalizeAgentName } from '../../utils/agent-normalizer.js';
+import { normalizeAgentName } from '../../utils/agent-normalizer.js';
 
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
@@ -395,7 +397,7 @@ async function handleFormResult(formResult, userId, agentName, profile) {
     await saveConversationMessage(userId, { role: 'assistant', content: errorMessage, agent: agentName });
     await saveInteraction({
       userId,
-      agent: agentName,
+      agent: normalizeAgentName(agentName),
       agentName: agentName === 'AURORA' ? 'Aurora Core' : agentName,
       intentReason: 'validation_error',
       input: formResult.userMessage || '',
@@ -1018,7 +1020,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             // 📊 Guardar interacción
             await saveInteraction({
               userId,
-              agent: profile.activeAgent || 'AURORA',
+              agent: normalizeAgentName(profile.activeAgent || 'AURORA'),
               agentName: profile.activeAgent || 'Aurora Core',
               intentReason: 'confirmation_response',
               input: processedText,
@@ -1055,7 +1057,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: newSystemPending.agentName });
           await saveInteraction({
             userId,
-            agent: newSystemPending.agentName,
+            agent: normalizeAgentName(newSystemPending.agentName),
             agentName: newSystemPending.agentName,
             intentReason: 'specialized_confirmation',
             input: processedText,
@@ -1236,7 +1238,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           await saveInteraction({
             userId,
-            agent: 'ANGELA',
+            agent: normalizeAgentName('ANGELA'),
             agentName: 'Angela - MedBeneficios',
             intentReason: 'medical_image_analysis',
             input: `[MEDICAL_IMAGE:${medicalAnalysis.imageType}] ${processedText || 'Imagen médica'}`,
@@ -1291,7 +1293,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       await saveConversationMessage(userId, { role: 'assistant', content: paymentResult.message, agent: 'AURORA' });
       await saveInteraction({
         userId,
-        agent: 'AURORA',
+        agent: normalizeAgentName('AURORA'),
         agentName: 'Aurora Core',
         intentReason: 'payment_verification',
         input: `[RECEIPT:${type}]`,
@@ -1303,12 +1305,46 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
+    
+    // 🔍 DEBUG: Estado ANTES del orquestador
+    console.log(`[WASSENGER-DEBUG] 📥 PRE-ORQUESTADOR - Usuario ${userId}:`);
+    console.log(`   activeAgent (profile): ${profile.activeAgent}`);
+    console.log(`   Mensaje: "${auroraInput.substring(0, 100)}..."`);
+    
     const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
       // 🔄 Pasar formulario parcial guardado si existe (para continuación de flujo)
       savedPartial: currentAgentForm,
       envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
     });
+    
+    // 🔍 DEBUG: Estado DESPUÉS del orquestador
+    console.log(`[WASSENGER-DEBUG] 📤 POST-ORQUESTADOR - Usuario ${userId}:`);
+    console.log(`   agenteKey decidido: ${resultado.agenteKey}`);
+    console.log(`   activeAgent anterior: ${profile.activeAgent}`);
+    console.log(`   ¿Cambió agente?: ${resultado.agenteKey !== profile.activeAgent}`);
+    console.log(`   Razón: ${resultado.razonSeleccion}`);
+    
+    // 🔥 FIX: Actualizar activeAgent SI CAMBIÓ (evita que Aurora "robe" conversaciones)
+    if (resultado.agenteKey && resultado.agenteKey !== profile.activeAgent) {
+      console.log(`[WASSENGER-FIX] 🔄 ACTUALIZANDO AGENTE: ${profile.activeAgent} → ${resultado.agenteKey}`);
+      
+      const previousAgent = profile.activeAgent;
+      profile.activeAgent = resultado.agenteKey;
+      
+      await updateProfile(userId, { 
+        activeAgent: resultado.agenteKey 
+      }, { 
+        reason: 'agent_change_post_orchestrator',
+        previousAgent: previousAgent,
+        newAgent: resultado.agenteKey,
+        intentReason: resultado.razonSeleccion
+      });
+      
+      console.log(`[WASSENGER-FIX] ✅ activeAgent actualizado en BD: ${resultado.agenteKey}`);
+    } else {
+      console.log(`[WASSENGER-DEBUG] ✅ Agente NO cambió, manteniendo: ${profile.activeAgent}`);
+    }
 
     // Cancelación (si orquestador lo marca)
     if (resultado?.metadata?.cancelacion) {
@@ -1438,12 +1474,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
-      agent: resultado.agenteKey
+      agent: normalizeAgentName(resultado.agenteKey)
     });
 
     await saveInteraction({
       userId,
-      agent: resultado.agenteKey,
+      agent: normalizeAgentName(resultado.agenteKey),
       agentName: resultado.agente || 'Aurora Core',
       intentReason: resultado.razonSeleccion,
       input: auroraInput,

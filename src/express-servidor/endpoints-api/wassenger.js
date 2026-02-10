@@ -2,7 +2,7 @@
 import { Router } from 'express';
 
 import { procesarMensaje } from '../../deteccion-intenciones/orquestador.js';
-import { complete, transcribeAudio } from '../../servicios-ia/openai.js';
+import { complete, transcribeAudio, generateSpeech } from '../../servicios-ia/openai.js';
 import { loggers } from '../../utils/logger.js';
 import { checkRateLimit, recordMessage } from '../../utils/rate-limiter.js';
 import { validateAudio, getLocalizedAudioError } from '../../utils/audio-validator.js';
@@ -331,6 +331,84 @@ async function enviarWhatsApp(numero, mensaje) {
     return { ok: response.ok, data };
   } catch (error) {
     loggers.wassenger.error('Error sending message', { userId: numero }, error);
+    return { ok: false, error: error.message };
+  }
+}
+
+/**
+ * 🔊 Envía audio/voz por WhatsApp usando Wassenger API
+ * @param {string} numero - Número de teléfono
+ * @param {Buffer} audioBuffer - Buffer del archivo de audio
+ * @param {object} opts - Opciones { filename, mimetype }
+ * @returns {Promise<{ok: boolean, data?: any, error?: string}>}
+ */
+async function enviarWhatsAppVoz(numero, audioBuffer, opts = {}) {
+  const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+  const WASSENGER_DEVICE = process.env.WASSENGER_DEVICE || process.env.WASSENGER_DEVICE_ID;
+  const BOT_NUMBER = process.env.WHATSAPP_BOT_NUMBER || process.env.WASSENGER_DEVICE_ID || process.env.WASSENGER_DEVICE;
+
+  if (!WASSENGER_TOKEN || !WASSENGER_DEVICE) {
+    console.warn('[WASSENGER] Token o Device no configurado');
+    return { ok: false, error: 'NO_WASSENGER_CONFIG' };
+  }
+
+  // No auto-mensajearse
+  if (BOT_NUMBER && numero.includes(String(BOT_NUMBER).replace(/\D/g, ''))) {
+    console.warn('[WASSENGER] Intento de enviar audio al propio bot bloqueado');
+    return { ok: false, error: 'SELF_MESSAGE_BLOCKED' };
+  }
+
+  try {
+    // Convertir buffer a base64
+    const base64Audio = audioBuffer.toString('base64');
+    const { filename = 'audio.mp3', mimetype = 'audio/mpeg' } = opts;
+
+    console.log(`[WASSENGER] 🔊 Enviando audio a ${numero} (${audioBuffer.length} bytes)`);
+
+    // Wassenger acepta base64 en el campo media
+    const response = await dispatchHttpRequest({
+      url: 'https://api.wassenger.com/v1/messages',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Token: WASSENGER_TOKEN },
+      body: JSON.stringify({
+        phone: numero,
+        media: {
+          file: `data:${mimetype};base64,${base64Audio}`,
+          filename
+        },
+        device: WASSENGER_DEVICE
+      }),
+      circuitId: 'wassenger:messages',
+      timeoutMs: 15000, // Más tiempo para archivos
+      maxRetries: 2
+    });
+
+    const data = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      loggers.wassenger.warn('Failed to send audio', { 
+        userId: numero, 
+        status: response.status,
+        audioSize: audioBuffer.length 
+      });
+      return { ok: false, error: `HTTP ${response.status}`, data };
+    }
+
+    console.log(`[WASSENGER] ✅ Audio enviado exitosamente a ${numero}`);
+    loggers.wassenger.info('Audio sent successfully', { 
+      userId: numero, 
+      audioSize: audioBuffer.length,
+      filename 
+    });
+    
+    return { ok: true, data };
+
+  } catch (error) {
+    console.error(`[WASSENGER] ❌ Error enviando audio a ${numero}:`, error.message);
+    loggers.wassenger.error('Error sending audio', { 
+      userId: numero, 
+      audioSize: audioBuffer?.length 
+    }, error);
     return { ok: false, error: error.message };
   }
 }
@@ -732,8 +810,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return; // 🛑 No procesar
     }
 
+    // 🔊 Detectar si usuario envió audio (para responder con voz)
+    const userSentAudio = (type === 'audio' || type === 'voice' || type === 'ptt');
+
     // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN)
-    if (type === 'audio' || type === 'voice' || type === 'ptt') {
+    if (userSentAudio) {
       if (!mediaUrl) return;
       
       // Obtener idioma del usuario (si ya está guardado)
@@ -741,6 +822,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userLanguage = current.preferredLanguage || 'es';
       
       console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
+      console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
       
       // ✅ Validar audio antes de transcribir
       const validation = validateAudio(mediaUrl);
@@ -1500,6 +1582,32 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log(`   - Partes detectadas: ${messageProcessed.parts.length}`);
     console.log(`   - Delay entre partes: ${messageProcessed.delayMs}ms`);
     
+    // 🔊 Helper para enviar mensaje (texto o audio según contexto)
+    const sendMessageToUser = async (messageText) => {
+      if (userSentAudio) {
+        // Usuario envió audio → responder con TTS
+        console.log(`[TTS] 🔊 Generando respuesta de voz...`);
+        
+        const ttsResult = await generateSpeech(messageText, {
+          language: profile.preferredLanguage || 'es'
+        });
+        
+        if (ttsResult.success && ttsResult.buffer) {
+          return await enviarWhatsAppVoz(userId, ttsResult.buffer, {
+            filename: 'aurora_voice.mp3',
+            mimetype: 'audio/mpeg'
+          });
+        } else {
+          // Fallback a texto si TTS falla
+          console.warn(`[TTS] ⚠️ TTS falló, enviando texto: ${ttsResult.error}`);
+          return await enviarWhatsApp(userId, messageText);
+        }
+      } else {
+        // Usuario envió texto → responder con texto (normal)
+        return await enviarWhatsApp(userId, messageText);
+      }
+    };
+
     if (messageProcessed.shouldDelay && messageProcessed.parts.length > 1) {
       // Enviar múltiples mensajes con delay
       console.log(`[MESSAGE-SPLIT] 📨 Dividiendo mensaje en ${messageProcessed.parts.length} partes`);
@@ -1517,15 +1625,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           await new Promise(resolve => setTimeout(resolve, messageProcessed.delayMs));
         }
         
-        // Enviar mensaje
-        await enviarWhatsApp(userId, part);
+        // Enviar mensaje (texto o audio según contexto)
+        await sendMessageToUser(part);
         
         // Guardar cada parte en historial
         await saveConversationMessage(userId, {
           role: 'assistant',
           content: part,
           agent: resultado.agenteKey,
-          metadata: { partNumber: i + 1, totalParts: messageProcessed.parts.length }
+          metadata: { partNumber: i + 1, totalParts: messageProcessed.parts.length, sentAsAudio: userSentAudio }
         });
       }
       
@@ -1534,7 +1642,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       // Enviar mensaje único (comportamiento original)
       const cleanedMessage = cleanPromptMarkers(finalReply);
       console.log(`[MESSAGE-SPLIT] Enviando mensaje único (${cleanedMessage.length} chars)`);
-      await enviarWhatsApp(userId, cleanedMessage);
+      await sendMessageToUser(cleanedMessage);
     }
     
     loggers.webhook.agentResponse(userId, resultado.agenteKey, true);

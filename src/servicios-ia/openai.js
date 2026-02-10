@@ -522,3 +522,121 @@ Analiza la imagen ahora:`;
   }
 }
 
+/**
+ * 🔊 Genera audio speech desde texto usando OpenAI TTS
+ * @param {string} text - Texto a convertir en audio
+ * @param {object} opts - Opciones { voice, language, speed, format }
+ * @returns {Promise<{success: boolean, buffer?: Buffer, error?: string, metadata?: object}>}
+ */
+export async function generateSpeech(text, opts = {}) {
+  const {
+    language = 'es',
+    speed = 1.0,
+    format = 'mp3',
+    model = 'tts-1' // tts-1 o tts-1-hd (más calidad)
+  } = opts;
+
+  // 🎤 Mapeo idioma → voz OpenAI
+  const VOICE_MAP = {
+    es: 'alloy',   // Neutral, clara, profesional
+    en: 'nova',    // Femenina, cálida, amable
+    fr: 'shimmer', // Cálida, expresiva
+    it: 'alloy',   // Neutral para italiano
+    pt: 'alloy',   // Neutral para portugués
+    qu: 'alloy'    // Neutral para quechua
+  };
+
+  const voice = opts.voice || VOICE_MAP[language] || 'alloy';
+
+  // ⚠️ Validaciones
+  if (!text || text.trim().length === 0) {
+    return {
+      success: false,
+      error: 'Texto vacío o inválido'
+    };
+  }
+
+  if (text.length > 4096) {
+    loggers.openai.warn('Text too long for TTS, truncating', { length: text.length });
+    text = text.substring(0, 4096);
+  }
+
+  console.log(`[TTS] 🔊 Generando audio...`);
+  console.log(`[TTS] Texto:`, text.substring(0, 100));
+  console.log(`[TTS] Idioma: ${language}, Voz: ${voice}`);
+
+  const startTime = Date.now();
+
+  // 🛡️ Protección con circuit breaker
+  const fallback = () => {
+    loggers.openai.warn('TTS fallback triggered', { action: 'generateSpeech', language, voice });
+    return { success: false, error: 'TTS service unavailable' };
+  };
+
+  try {
+    return await openaiBreaker.execute(async () => {
+      // 🕐 Timeout (TTS puede tardar en textos largos)
+      const timeoutMs = 30000; // 30 segundos
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('TTS timeout')), timeoutMs)
+      );
+
+      const ttsPromise = client.audio.speech.create({
+        model,
+        voice,
+        input: text,
+        speed,
+        response_format: format
+      });
+
+      const response = await Promise.race([ttsPromise, timeoutPromise]);
+
+      // Convertir stream a buffer
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      const duration = Date.now() - startTime;
+      console.log(`[TTS] ✅ Audio generado en ${duration}ms (${buffer.length} bytes)`);
+
+      loggers.openai.info('TTS generated successfully', {
+        action: 'generateSpeech',
+        language,
+        voice,
+        textLength: text.length,
+        audioSize: buffer.length,
+        duration
+      });
+
+      return {
+        success: true,
+        buffer,
+        metadata: {
+          voice,
+          language,
+          model,
+          format,
+          textLength: text.length,
+          audioSize: buffer.length,
+          duration
+        }
+      };
+    }, fallback);
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error(`[TTS] ❌ Error generando audio (${duration}ms):`, error.message);
+
+    loggers.openai.error('TTS generation failed', {
+      action: 'generateSpeech',
+      language,
+      voice,
+      textLength: text.length,
+      duration
+    }, error);
+
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+

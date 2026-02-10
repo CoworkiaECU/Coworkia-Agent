@@ -165,21 +165,33 @@ export function getLocalizedAudioError(error, language = 'es') {
     'URL inválida': {
       es: '🎤 Audio inválido. Por favor, envía otro audio.',
       en: '🎤 Invalid audio. Please send another audio.',
+      fr: '🎤 Audio invalide. Veuillez envoyer un autre audio.',
+      it: '🎤 Audio non valido. Per favore invia un altro audio.',
+      pt: '🎤 Áudio inválido. Por favor, envie outro áudio.',
       qu: '🎤 Mana allin audio. Ama hina huk audio apachimuy.'
     },
     'formato': { // Contiene "formato"
       es: '🎤 Formato de audio no soportado. Envía: voz, nota de voz o archivo de audio.',
       en: '🎤 Audio format not supported. Send: voice, voice note or audio file.',
+      fr: '🎤 Format audio non supporté. Envoyez: voix, note vocale ou fichier audio.',
+      it: '🎤 Formato audio non supportato. Invia: voce, nota vocale o file audio.',
+      pt: '🎤 Formato de áudio não suportado. Envie: voz, nota de voz ou arquivo de áudio.',
       qu: '🎤 Audio formato mana yanapasqa. Apachiy: kunka, kunka qillqa utaq audio willakuna.'
     },
     'grande': { // Contiene "grande" o "largo"
       es: '🎤 Audio demasiado grande. Máximo: 25MB. Envía uno más corto.',
       en: '🎤 Audio too large. Maximum: 25MB. Send a shorter one.',
+      fr: '🎤 Audio trop volumineux. Maximum: 25MB. Envoyez-en un plus court.',
+      it: '🎤 Audio troppo grande. Massimo: 25MB. Invia uno più breve.',
+      pt: '🎤 Áudio muito grande. Máximo: 25MB. Envie um mais curto.',
       qu: '🎤 Audio ancha hatun. Máximo: 25MB. Huk aswan pisi apachiy.'
     },
     'corto': { // Contiene "corto"
       es: '🎤 Audio demasiado corto. Graba al menos 1 segundo.',
       en: '🎤 Audio too short. Record at least 1 second.',
+      fr: '🎤 Audio trop court. Enregistrez au moins 1 seconde.',
+      it: '🎤 Audio troppo breve. Registra almeno 1 secondo.',
+      pt: '🎤 Áudio muito curto. Grave pelo menos 1 segundo.',
       qu: '🎤 Audio ancha pisi. Grabay 1 segundo nisqamanta.'
     }
   };
@@ -195,6 +207,9 @@ export function getLocalizedAudioError(error, language = 'es') {
   const fallback = {
     es: '🎤 No pude procesar tu audio. ¿Puedes escribirlo por texto? 😊',
     en: "🎤 I couldn't process your audio. Could you write it as text? 😊",
+    fr: "🎤 Je n'ai pas pu traiter votre audio. Pouvez-vous l'écrire en texte? 😊",
+    it: "🎤 Non ho potuto elaborare il tuo audio. Puoi scriverlo come testo? 😊",
+    pt: "🎤 Não consegui processar seu áudio. Pode escrever em texto? 😊",
     qu: '🎤 Mana atinichu audio ruwayta. ¿Qillqasqapi apachiwankimanchu? 😊'
   };
 

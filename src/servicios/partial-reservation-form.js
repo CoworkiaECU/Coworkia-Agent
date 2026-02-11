@@ -281,8 +281,10 @@ export class PartialReservationForm {
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
       
       case 'paymentMethod':
-        // 🎉 Si tiene free trial disponible, no pedir método de pago
-        if (this.freeTrialUsed === false) {
+        // 🎉 FREE TRIAL solo para Hot Desk nuevos (misma lógica que getMissingFields)
+        const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+        
+        if (isHotDeskFreeTrial) {
           return '✅ ¡Tu reserva será GRATIS! 🎉';
         }
         return `¿Cómo deseas pagar?\n\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "tarjeta" o "transferencia"`;

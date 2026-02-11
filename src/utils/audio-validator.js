@@ -21,14 +21,37 @@ const MIN_DURATION_SECONDS = 1; // Mínimo 1 segundo
 /**
  * Valida formato de archivo de audio
  * @param {string} url - URL del archivo de audio
+ * @param {string} mimeType - MIME type del audio (opcional)
  * @returns {{valid: boolean, format?: string, error?: string}}
  */
-export function validateAudioFormat(url) {
+export function validateAudioFormat(url, mimeType = null) {
   if (!url || typeof url !== 'string') {
     return { valid: false, error: 'URL inválida' };
   }
 
-  // Extraer extensión de la URL
+  // 1. Primero intentar con mime type si está disponible
+  if (mimeType) {
+    const mimeToFormat = {
+      'audio/mpeg': 'mp3',
+      'audio/mp3': 'mp3',
+      'audio/mp4': 'mp4',
+      'audio/m4a': 'm4a',
+      'audio/wav': 'wav',
+      'audio/wave': 'wav',
+      'audio/webm': 'webm',
+      'audio/ogg': 'ogg',
+      'audio/opus': 'ogg',
+      'audio/x-m4a': 'm4a',
+      'audio/aac': 'm4a'
+    };
+    
+    const format = mimeToFormat[mimeType.toLowerCase()];
+    if (format && SUPPORTED_FORMATS.includes(format)) {
+      return { valid: true, format };
+    }
+  }
+
+  // 2. Fallback: Extraer extensión de la URL
   const urlLower = url.toLowerCase();
   const format = SUPPORTED_FORMATS.find(fmt => 
     urlLower.includes(`.${fmt}`) || urlLower.includes(`/${fmt}`)
@@ -107,7 +130,7 @@ export function validateAudioDuration(durationSeconds) {
 /**
  * Validación completa de audio antes de transcribir
  * @param {string} audioUrl - URL del archivo de audio
- * @param {Object} metadata - Metadatos opcionales (size, duration)
+ * @param {Object} metadata - Metadatos opcionales (size, duration, mimeType)
  * @returns {{valid: boolean, warnings: string[], errors: string[], details: Object}}
  */
 export function validateAudio(audioUrl, metadata = {}) {
@@ -115,8 +138,8 @@ export function validateAudio(audioUrl, metadata = {}) {
   const errors = [];
   const details = {};
 
-  // 1. Validar formato
-  const formatCheck = validateAudioFormat(audioUrl);
+  // 1. Validar formato (con mime type si está disponible)
+  const formatCheck = validateAudioFormat(audioUrl, metadata.mimeType);
   if (!formatCheck.valid) {
     errors.push(formatCheck.error);
   } else {

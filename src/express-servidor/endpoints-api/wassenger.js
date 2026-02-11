@@ -823,11 +823,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
       console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
       
-      // ✅ Validar audio antes de transcribir
-      const validation = validateAudio(mediaUrl);
+      // ✅ Validar audio antes de transcribir (con mime type de Wassenger)
+      const audioMetadata = {
+        mimeType: data.media?.mime || data.media?.mimetype,
+        size: data.media?.size || data.media?.fileSize
+      };
+      
+      const validation = validateAudio(mediaUrl, audioMetadata);
       
       if (!validation.valid) {
         console.error('[Whisper] ❌ Audio inválido:', validation.errors);
+        console.error('[Whisper] Debug - URL:', mediaUrl);
+        console.error('[Whisper] Debug - Metadata:', audioMetadata);
         const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
         await enviarWhatsApp(userId, errorMsg);
         return;

@@ -1502,6 +1502,50 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       systemPromptStart: resultado.systemPrompt?.substring(0, 200)
     });
     
+    // 🔧 VALIDACIÓN CRÍTICA: Si orquestador ya devolvió respuesta lista, NO llamar OpenAI
+    // Casos: mantenimiento de agente, cancelación, error específico
+    if (resultado.respuesta && resultado.shouldReply === true) {
+      console.log('[WASSENGER] 📤 Respuesta directa del orquestador (no requiere OpenAI)');
+      
+      const agentDisplayNames = {
+        'AURORA': 'Aurora Core',
+        'ALUNA': 'Aluna - Closer Membresías',
+        'ADRIANA': 'Adriana - SegPopular',
+        'ENZO': 'Enzo - MarketingLab',
+        'ANGELA': 'Angela - MedBeneficios',
+        'AXEL': 'Axel - PaintBull',
+        'GABI': 'Gabi - GR Consulting',
+        'PAULA': 'Paula - PropElite'
+      };
+      
+      const finalReply = resultado.respuesta;
+      const responseAgent = resultado.agenteKey || resultado.metadata?.agent || profile.activeAgent;
+      
+      await enviarWhatsApp(userId, finalReply);
+      await saveConversationMessage(userId, { 
+        role: 'assistant', 
+        content: finalReply, 
+        agent: responseAgent 
+      });
+      
+      await saveInteraction({
+        userId,
+        agent: normalizeAgentName(responseAgent),
+        agentName: agentDisplayNames[responseAgent] || responseAgent,
+        intentReason: resultado.metadata?.maintenance ? 'agent_maintenance' : resultado.razonSeleccion || 'direct_response',
+        input: processedText.substring(0, 500),
+        output: finalReply,
+        meta: { 
+          ...resultado.metadata,
+          envelope,
+          maintenance: resultado.metadata?.maintenance || false,
+          intendedAgent: resultado.metadata?.intendedAgent || null
+        }
+      });
+      
+      return; // ✅ Terminar sin llamar a OpenAI
+    }
+    
     let reply = await complete(resultado.prompt, {
       temperature: ['ENZO', 'ADRIANA', 'ALUNA'].includes(resultado.agenteKey) ? 0.7 : 0.4,
       max_tokens: ['ENZO', 'ADRIANA', 'ALUNA', 'PAULA'].includes(resultado.agenteKey) ? 1200 : 350, // Paula necesita más tokens para fichas completas

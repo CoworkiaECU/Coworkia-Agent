@@ -25,51 +25,37 @@ export const AXEL = {
       'AURORA': {
         es: 'Perfecto {nombre}, ya tienes tu cotización completa. 🚗\n\nTe devuelvo con *Aurora* para lo que necesites. Cualquier duda sobre el trabajo o el proceso, solo di *@Axel* y aquí estaré.\n\n¡Éxito con tu reparación!',
         en: 'Perfect {nombre}, you have your complete quote now. 🚗\n\nReturning you to *Aurora* for anything you need. Any questions about the work or process, just say *@Axel* and I\'ll be here.\n\nGood luck with your repair!',
-        fr: 'Parfait {nombre}, tu as ton devis complet maintenant. 🚗\n\nJe te renvoie à *Aurora* pour tout ce dont tu as besoin. Pour toute question sur le travail ou le processus, dis simplement *@Axel* et je serai là.\n\nBonne chance pour ta réparation!',
-        it: 'Perfetto {nombre}, ora hai il tuo preventivo completo. 🚗\n\nTi riporto da *Aurora* per qualsiasi cosa ti serva. Per qualsiasi domanda sul lavoro o sul processo, basta dire *@Axel* e sarò qui.\n\nBuona fortuna con la tua riparazione!',
-        pt: 'Perfeito {nombre}, você tem sua cotação completa agora. 🚗\n\nDevolvendo você para *Aurora* para o que precisar. Qualquer dúvida sobre o trabalho ou processo, só dizer *@Axel* e estarei aqui.\n\nBoa sorte com seu reparo!'
+        fr: 'Parfait {nombre}, tu as ton devis complet maintenant. 🚗\n\nJe te renvoie à *Aurora* pour tout ce dont tu as besoin. Pour toute question sur le travail ou le processus, dis simplement *@Axel* et je serai là.\n\nBonne chance pour ta réparation!'
       },
       'ANGELA': {
         es: 'Entendido {nombre}, te comunico con *Angela* de *MedBeneficios* para tu consulta de salud. 💚\n\nCualquier duda sobre tu vehículo, escribe *@Axel* y vuelvo contigo.\n\n¡Cuídate mucho!',
         en: 'Got it {nombre}, connecting you with *Angela* from *MedBeneficios* for your health inquiry. 💚\n\nAny questions about your vehicle, write *@Axel* and I\'ll come back.\n\nTake care!',
-        fr: 'Compris {nombre}, je te connecte avec *Angela* de *MedBeneficios* pour ta consultation santé. 💚\n\nPour toute question sur ton véhicule, écris *@Axel* et je reviens.\n\nPrends soin de toi!',
-        it: 'Capito {nombre}, ti connetto con *Angela* di *MedBeneficios* per la tua richiesta sanitaria. 💚\n\nQualsiasi domanda sul tuo veicolo, scrivi *@Axel* e torno.\n\nStammi bene!',
-        pt: 'Entendido {nombre}, conectando você com *Angela* da *MedBeneficios* para sua consulta de saúde. 💚\n\nQualquer dúvida sobre seu veículo, escreva *@Axel* e volto.\n\nCuide-se!'
+        fr: 'Compris {nombre}, je te connecte avec *Angela* de *MedBeneficios* pour ta consultation santé. 💚\n\nPour toute question sur ton véhicule, écris *@Axel* et je reviens.\n\nPrends soin de toi!'
       },
       'ADRIANA': {
         es: 'Perfecto {nombre}, te dejo con *Adriana* de *SegPopular* para tu cotización de seguro vehicular. 🛡️\n\nPara dudas sobre la reparación, solo di *@Axel*.\n\n¡Protege tu inversión!',
         en: 'Perfect {nombre}, connecting you with *Adriana* from *SegPopular* for your vehicle insurance quote. 🛡️\n\nFor questions about the repair, just say *@Axel*.\n\nProtect your investment!',
-        fr: 'Parfait {nombre}, je te laisse avec *Adriana* de *SegPopular* pour ton devis d\'assurance automobile. 🛡️\n\nPour des questions sur la réparation, dis simplement *@Axel*.\n\nProtège ton investissement!',
-        it: 'Perfetto {nombre}, ti lascio con *Adriana* di *SegPopular* per il tuo preventivo assicurazione auto. 🛡️\n\nPer domande sulla riparazione, basta dire *@Axel*.\n\nProteggi il tuo investimento!',
-        pt: 'Perfeito {nombre}, deixo você com *Adriana* da *SegPopular* para sua cotação de seguro veicular. 🛡️\n\nPara dúvidas sobre o reparo, só dizer *@Axel*.\n\nProteja seu investimento!'
+        fr: 'Parfait {nombre}, je te laisse avec *Adriana* de *SegPopular* pour ton devis d\'assurance automobile. 🛡️\n\nPour des questions sur la réparation, dis simplement *@Axel*.\n\nProtège ton investissement!'
       },
       'ENZO': {
         es: 'Entendido {nombre}, te conecto con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nCualquier duda sobre tu vehículo, escribe *@Axel*.\n\n¡Éxitos!',
         en: 'Got it {nombre}, connecting you with *Enzo* from *MarketingLab* for your consultation. 💡\n\nAny questions about your vehicle, write *@Axel*.\n\nSuccess!',
-        fr: 'Compris {nombre}, je te connecte avec *Enzo* de *MarketingLab* pour ta consultation. 💡\n\nPour toute question sur ton véhicule, écris *@Axel*.\n\nSuccès!',
-        it: 'Capito {nombre}, ti connetto con *Enzo* di *MarketingLab* per la tua consulenza. 💡\n\nQualsiasi domanda sul tuo veicolo, scrivi *@Axel*.\n\nSuccesso!',
-        pt: 'Entendido {nombre}, conectando você com *Enzo* da *MarketingLab* para sua consultoria. 💡\n\nQualquer dúvida sobre seu veículo, escreva *@Axel*.\n\nSucesso!'
+        fr: 'Compris {nombre}, je te connecte avec *Enzo* de *MarketingLab* pour ta consultation. 💡\n\nPour toute question sur ton véhicule, écris *@Axel*.\n\nSuccès!'
       },
       'GABI': {
         es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nPara temas de tu vehículo, solo di *@Axel*.\n\n¡Hasta pronto!',
         en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nFor vehicle matters, just say *@Axel*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te laisse avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour les questions sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!',
-        it: 'Perfetto {nombre}, ti lascio con *Gabi* di *GR Consulting* per la tua richiesta amministrativa. ⚖️\n\nPer questioni sul tuo veicolo, basta dire *@Axel*.\n\nA presto!',
-        pt: 'Perfeito {nombre}, deixo você com *Gabi* da *GR Consulting* para sua consulta administrativa. ⚖️\n\nPara assuntos do seu veículo, só dizer *@Axel*.\n\nAté breve!'
+        fr: 'Parfait {nombre}, je te laisse avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour les questions sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!'
       },
       'ALUNA': {
         es: 'Entendido {nombre}, te comunico con *Aluna* para info de planes de coworking. 🏢\n\nPara dudas sobre tu vehículo, escribe *@Axel*.\n\n¡Hasta luego!',
         en: 'Got it {nombre}, connecting you with *Aluna* for coworking plan info. 🏢\n\nFor vehicle questions, write *@Axel*.\n\nSee you!',
-        fr: 'Compris {nombre}, je te connecte avec *Aluna* pour les infos sur les plans de coworking. 🏢\n\nPour des questions sur ton véhicule, écris *@Axel*.\n\nÀ plus!',
-        it: 'Capito {nombre}, ti connetto con *Aluna* per info sui piani di coworking. 🏢\n\nPer domande sul tuo veicolo, scrivi *@Axel*.\n\nCi vediamo!',
-        pt: 'Entendido {nombre}, conectando você com *Aluna* para info de planos de coworking. 🏢\n\nPara dúvidas sobre seu veículo, escreva *@Axel*.\n\nAté logo!'
+        fr: 'Compris {nombre}, je te connecte avec *Aluna* pour les infos sur les plans de coworking. 🏢\n\nPour des questions sur ton véhicule, écris *@Axel*.\n\nÀ plus!'
       },
       'PAULA': {
         es: 'Perfecto {nombre}, te dejo con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nCualquier duda sobre tu vehículo, solo di *@Axel*.\n\n¡Hasta pronto!',
         en: 'Perfect {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nAny questions about your vehicle, just say *@Axel*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te laisse avec *Paula* de *PropElite* pour ta consultation immobilière. 🏡\n\nPour toute question sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!',
-        it: 'Perfetto {nombre}, ti lascio con *Paula* di *PropElite* per la tua richiesta immobiliare. 🏡\n\nQualsiasi domanda sul tuo veicolo, basta dire *@Axel*.\n\nA presto!',
-        pt: 'Perfeito {nombre}, deixo você com *Paula* da *PropElite* para sua consulta imobiliária. 🏡\n\nQualquer dúvida sobre seu veículo, só dizer *@Axel*.\n\nAté breve!'
+        fr: 'Parfait {nombre}, je te laisse avec *Paula* de *PropElite* pour ta consultation immobilière. 🏡\n\nPour toute question sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!'
       }
     };
     
@@ -85,7 +71,7 @@ export const AXEL = {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',
     energia: 'Positivo y solucionador, tranquiliza al usuario estresado',
-    idiomas: ['Español', 'English'],
+    idiomas: ['Español', 'English', 'Français'],
     nunca: 'Robótico, técnico en exceso, exigente con fotos, párrafos largos'
   },
   
@@ -231,7 +217,7 @@ Empático, honesto, cercano. Habla como mecánico de confianza que tranquiliza.
 - Tono: "Tranquilo, lo arreglamos"
 - NUNCA seas robótico o técnico en exceso
 
-Idioma: ${userLanguage === 'es' ? 'Español - usa tú directo' : userLanguage === 'en' ? 'English - use you directly' : 'Español - usa tú directo'}
+Idioma: ${userLanguage === 'es' ? 'Español - usa tú directo' : userLanguage === 'en' ? 'English - use you directly' : userLanguage === 'fr' ? 'Français - utilise tu directement' : 'Español - usa tú directo'}
 
 🔄 FLUJO AUTOMÁTICO
 ━━━━━━━━━━━━

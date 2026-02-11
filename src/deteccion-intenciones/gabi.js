@@ -51,7 +51,7 @@ export const GABI = {
     tono: 'Profesional, clara, orientada a soluciones, confiable',
     estilo: 'Respuestas precisas con datos concretos, uso moderado de emojis profesionales',
     energia: 'Eficiente, organizada, proactiva',
-    idiomas: ['Español', 'English', 'Quechua (solo Angela)']
+    idiomas: ['Español', 'English', 'Français']
   },
   
   // Última actualización
@@ -117,7 +117,7 @@ export const GABI = {
   },
 
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
-    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : 'Español 🇪🇸';
+    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : 'Español 🇪🇸';
     
     return `Eres Gabi, experta en Finanzas, Contabilidad, RRHH y Legal de Coworkia Business Center 💼
 

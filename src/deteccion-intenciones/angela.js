@@ -44,57 +44,36 @@ export const ANGELA = {
       'AURORA': {
         es: 'Entendido {nombre}, de inmediato te comunico con *Aurora*. 💚\n\nRecuerda que estaré aquí pendiente de tu cotización vehicular, solo tienes que decir *@Angela* y aquí estaré.\n\n¡Cuídate mucho!',
         en: 'Got it {nombre}, connecting you with *Aurora* right away. 💚\n\nRemember I\'ll be here for your vehicle quote, just say *@Angela* and I\'ll be here.\n\nTake care!',
-        fr: 'Compris {nombre}, je te connecte avec *Aurora* immédiatement. 💚\n\nRappelle-toi que je serai là pour ton devis véhicule, dis simplement *@Angela* et je serai là.\n\nPrends soin de toi!',
-        it: 'Capito {nombre}, ti connetto subito con *Aurora*. 💚\n\nRicorda che sarò qui per il tuo preventivo veicolo, basta dire *@Angela* e sarò qui.\n\nStammi bene!',
-        pt: 'Entendido {nombre}, conectando você com *Aurora* imediatamente. 💚\n\nLembre-se que estarei aqui para sua cotação veicular, só dizer *@Angela* e estarei aqui.\n\nCuide-se!',
         qu: 'Yachaninam {nombre}, kunan *Aurora*-wan tʼinkisaq. 💚\n\nYuyariway kaypi kasaq autokipi qullqita yachanaykipaq, *@Angela* nispa kaypi kanki.\n\n¡Allinta qhaway!'
       },
       'AXEL': {
         es: 'Perfecto {nombre}, te conecto con *Axel* de *The PaintBull* para la cotización de tu vehículo. 🚗\n\nRecuerda que estaré aquí para cualquier consulta médica, solo di *@Angela*.\n\n¡Cuídate!',
         en: 'Perfect {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle quote. 🚗\n\nRemember I\'ll be here for any medical questions, just say *@Angela*.\n\nTake care!',
-        fr: 'Parfait {nombre}, je te connecte avec *Axel* de *The PaintBull* pour le devis de ton véhicule. 🚗\n\nRappelle-toi que je serai là pour toute question médicale, dis simplement *@Angela*.\n\nPrends soin de toi!',
-        it: 'Perfetto {nombre}, ti connetto con *Axel* di *The PaintBull* per il preventivo del tuo veicolo. 🚗\n\nRicorda che sarò qui per qualsiasi domanda medica, basta dire *@Angela*.\n\nStammi bene!',
-        pt: 'Perfeito {nombre}, conectando você com *Axel* da *The PaintBull* para cotação do seu veículo. 🚗\n\nLembre-se que estarei aqui para qualquer pergunta médica, só dizer *@Angela*.\n\nCuide-se!',
         qu: 'Allinmi {nombre}, *Axel*-wan tʼinkisaq *The PaintBull*-manta autokipa qullqita yachanaykipaq. 🚗\n\nYuyariway kaypi kasaq ima hampiq tapuykunapaqpas, *@Angela* nispa.\n\n¡Allinta qhaway!'
       },
       'ADRIANA': {
         es: 'Entendido {nombre}, te comunico con *Adriana* de *SegPopular* para tu consulta de seguros. 🛡️\n\nCualquier tema de salud, escribe *@Angela* y aquí estaré.\n\n¡Cuídate mucho! 💚',
         en: 'Got it {nombre}, connecting you with *Adriana* from *SegPopular* for your insurance inquiry. 🛡️\n\nAny health topic, write *@Angela* and I\'ll be here.\n\nTake care! 💚',
-        fr: 'Compris {nombre}, je te connecte avec *Adriana* de *SegPopular* pour ta question d\'assurance. 🛡️\n\nTout sujet de santé, écris *@Angela* et je serai là.\n\nPrends soin de toi! 💚',
-        it: 'Capito {nombre}, ti connetto con *Adriana* di *SegPopular* per la tua richiesta assicurativa. 🛡️\n\nQualsiasi argomento di salute, scrivi *@Angela* e sarò qui.\n\nStammi bene! 💚',
-        pt: 'Entendido {nombre}, conectando você com *Adriana* da *SegPopular* para sua consulta de seguros. 🛡️\n\nQualquer assunto de saúde, escreva *@Angela* e estarei aqui.\n\nCuide-se! 💚',
         qu: 'Yachaninam {nombre}, *Adriana*-wan tʼinkisaq *SegPopular*-manta seguros nisqamanta yachanaykipaq. 🛡️\n\nIma hampiq tapuypas, *@Angela* nispa qillqay kaypi kasaq.\n\n¡Allinta qhaway! 💚'
       },
       'ENZO': {
         es: 'Perfecto {nombre}, te dejo con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nPara cualquier consulta de salud, escribe *@Angela*.\n\n¡Cuídate! 💚',
         en: 'Perfect {nombre}, connecting you with *Enzo* from *MarketingLab* for your consulting. 💡\n\nFor any health questions, write *@Angela*.\n\nTake care! 💚',
-        fr: 'Parfait {nombre}, je te laisse avec *Enzo* de *MarketingLab* pour ta consultation. 💡\n\nPour toute question de santé, écris *@Angela*.\n\nPrends soin de toi! 💚',
-        it: 'Perfetto {nombre}, ti lascio con *Enzo* di *MarketingLab* per la tua consulenza. 💡\n\nPer qualsiasi domanda sulla salute, scrivi *@Angela*.\n\nStammi bene! 💚',
-        pt: 'Perfeito {nombre}, deixo você com *Enzo* da *MarketingLab* para sua consultoria. 💡\n\nPara qualquer pergunta de saúde, escreva *@Angela*.\n\nCuide-se! 💚',
         qu: 'Allinmi {nombre}, *Enzo*-wan saqiykiku *MarketingLab*-manta yachachiyniykipaq. 💡\n\nIma hampiq tapuypas, *@Angela* nispa qillqay.\n\n¡Allinta qhaway! 💚'
       },
       'GABI': {
         es: 'Entendido {nombre}, te conecto con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nRecuerda que estoy aquí para temas de salud, solo di *@Angela*.\n\n¡Cuídate mucho! 💚',
         en: 'Got it {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nRemember I\'m here for health topics, just say *@Angela*.\n\nTake care! 💚',
-        fr: 'Compris {nombre}, je te connecte avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nRappelle-toi que je suis là pour les questions de santé, dis simplement *@Angela*.\n\nPrends soin de toi! 💚',
-        it: 'Capito {nombre}, ti connetto con *Gabi* di *GR Consulting* per la tua richiesta amministrativa. ⚖️\n\nRicorda che sono qui per argomenti di salute, basta dire *@Angela*.\n\nStammi bene! 💚',
-        pt: 'Entendido {nombre}, conectando você com *Gabi* da *GR Consulting* para sua consulta administrativa. ⚖️\n\nLembre-se que estou aqui para assuntos de saúde, só dizer *@Angela*.\n\nCuide-se! 💚',
         qu: 'Yachaninam {nombre}, *Gabi*-wan tʼinkisaq *GR Consulting*-manta kamachiy tapuyniykipaq. ⚖️\n\nYuyariway kaypi kani hampiq tapuykunapaq, *@Angela* nispa.\n\n¡Allinta qhaway! 💚'
       },
       'ALUNA': {
         es: 'Perfecto {nombre}, te comunico con *Aluna* para información de planes. 🏢\n\nPara temas de salud, escribe *@Angela* cuando quieras.\n\n¡Cuídate! 💚',
         en: 'Perfect {nombre}, connecting you with *Aluna* for plan information. 🏢\n\nFor health topics, write *@Angela* anytime.\n\nTake care! 💚',
-        fr: 'Parfait {nombre}, je te connecte avec *Aluna* pour les informations de plans. 🏢\n\nPour les questions de santé, écris *@Angela* quand tu veux.\n\nPrends soin de toi! 💚',
-        it: 'Perfetto {nombre}, ti connetto con *Aluna* per informazioni sui piani. 🏢\n\nPer argomenti di salute, scrivi *@Angela* quando vuoi.\n\nStammi bene! 💚',
-        pt: 'Perfeito {nombre}, conectando você com *Aluna* para informações de planos. 🏢\n\nPara assuntos de saúde, escreva *@Angela* quando quiser.\n\nCuide-se! 💚',
         qu: 'Allinmi {nombre}, *Aluna*-wan tʼinkisaq plankunamanta willakunaykipaq. 🏢\n\nHampiq tapuykunapaq, *@Angela* nispa qillqay mayqin pachapipas.\n\n¡Allinta qhaway! 💚'
       },
       'PAULA': {
         es: 'Entendido {nombre}, te dejo con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nCualquier tema de salud, escribe *@Angela*.\n\n¡Cuídate mucho! 💚',
         en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nAny health topic, write *@Angela*.\n\nTake care! 💚',
-        fr: 'Compris {nombre}, je te laisse avec *Paula* de *PropElite* pour ta consultation immobilière. 🏡\n\nTout sujet de santé, écris *@Angela*.\n\nPrends soin de toi! 💚',
-        it: 'Capito {nombre}, ti lascio con *Paula* di *PropElite* per la tua richiesta immobiliare. 🏡\n\nQualsiasi argomento di salute, scrivi *@Angela*.\n\nStammi bene! 💚',
-        pt: 'Entendido {nombre}, deixo você com *Paula* da *PropElite* para sua consulta imobiliária. 🏡\n\nQualquer assunto de saúde, escreva *@Angela*.\n\nCuide-se! 💚',
         qu: 'Yachaninam {nombre}, *Paula*-wan saqiykiku *PropElite*-manta wasikunamanta tapuyniykipaq. 🏡\n\nIma hampiq tapuypas, *@Angela* nispa qillqay.\n\n¡Allinta qhaway! 💚'
       }
     };

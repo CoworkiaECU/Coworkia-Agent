@@ -34,6 +34,7 @@ import { normalizeAgentName } from '../../utils/agent-normalizer.js';
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
 import { executeHandoff, isHandoffInProgress } from '../../servicios/handoff-manager.js';
+import { updateAgent as updateAgentState } from '../../servicios/agent-state-manager.js';
 
 import {
   loadProfile,
@@ -1422,24 +1423,33 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log(`   activeAgent anterior: ${profile.activeAgent}`);
     console.log(`   ¿Cambió agente?: ${resultado.agenteKey !== profile.activeAgent}`);
     console.log(`   Razón: ${resultado.razonSeleccion}`);
+    console.log(`   ¿Es handoff?: ${!!resultado?.metadata?.agentHandoff}`);
     
-    // 🔥 FIX: Actualizar activeAgent SI CAMBIÓ (evita que Aurora "robe" conversaciones)
+    // 🏎️ MERCEDES BENZ v735: Usar AgentStateManager centralizado
+    // UN SOLO lugar actualiza activeAgent - cero race conditions
     if (resultado.agenteKey && resultado.agenteKey !== profile.activeAgent) {
-      console.log(`[WASSENGER-FIX] 🔄 ACTUALIZANDO AGENTE: ${profile.activeAgent} → ${resultado.agenteKey}`);
+      console.log(`[WASSENGER-V735] 🔄 Solicitando cambio de agente: ${profile.activeAgent} → ${resultado.agenteKey}`);
       
-      const previousAgent = profile.activeAgent;
-      profile.activeAgent = resultado.agenteKey;
+      const updateResult = await updateAgentState(
+        userId,
+        resultado.agenteKey,
+        {
+          reason: resultado?.metadata?.agentHandoff ? 'handoff' : 'orchestrator',
+          fromAgent: profile.activeAgent,
+          metadata: resultado.metadata,
+          intentReason: resultado.razonSeleccion
+        },
+        saveProfile,
+        profile
+      );
       
-      await updateProfile(userId, { 
-        activeAgent: resultado.agenteKey 
-      }, { 
-        reason: 'agent_change_post_orchestrator',
-        previousAgent: previousAgent,
-        newAgent: resultado.agenteKey,
-        intentReason: resultado.razonSeleccion
-      });
-      
-      console.log(`[WASSENGER-FIX] ✅ activeAgent actualizado en BD: ${resultado.agenteKey}`);
+      if (updateResult.success) {
+        // Actualizar profile local para mantener consistencia
+        profile.activeAgent = resultado.agenteKey;
+        console.log(`[WASSENGER-V735] ✅ AgentStateManager actualizó: ${updateResult.fromAgent} → ${updateResult.toAgent}`);
+      } else {
+        console.error(`[WASSENGER-V735] ❌ AgentStateManager falló:`, updateResult.error);
+      }
     } else {
       console.log(`[WASSENGER-DEBUG] ✅ Agente NO cambió, manteniendo: ${profile.activeAgent}`);
     }

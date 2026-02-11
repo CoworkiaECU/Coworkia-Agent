@@ -1,18 +1,22 @@
 /**
- * 🤝 HANDOFF MANAGER - Gestor Centralizado de Transiciones
+ * 🤝 HANDOFF MANAGER - Gestor de UX de Transiciones
  * 
- * Ejecuta handoffs entre agentes de forma segura y trazable.
+ * Ejecuta la experiencia de usuario de handoffs entre agentes.
  * 
- * CARACTERÍSTICAS:
+ * CARACTERÍSTICAS v735 (Mercedes Benz):
  * - Validación de transiciones
  * - Handoff silencioso (solo nuevo agente habla)
  * - Guarda forms del agente anterior
- * - Actualización de activeAgent con lock
- * - Memoria conversacional por agente
+ * - Delay de 7s para transición suave
+ * - Mensaje de bienvenida personalizado
  * - Logs detallados de cada handoff
  * 
+ * CAMBIO ARQUITECTURAL:
+ * - AgentStateManager actualiza activeAgent (con lock)
+ * - HandoffManager solo maneja UX (forms, delay, mensajes)
+ * 
  * @author Aurora Core - Coworkia
- * @date 30 Ene 2026
+ * @date 11 Feb 2026 (v735 refactor)
  */
 
 import { validateTransition, logTransition } from '../deteccion-intenciones/agent-transitions.js';
@@ -20,48 +24,17 @@ import { getAgentForm, saveAgentForm, clearAgentForm } from './agent-form-manage
 import { loggers } from '../utils/logger.js';
 
 /**
- * Locks para prevenir race conditions en saveProfile
- * Map<userId, Promise>
- */
-const userLocks = new Map();
-
-/**
- * Adquiere lock para un usuario
- * @param {string} userId - ID del usuario
- * @returns {Promise<Function>} - Función release() para liberar lock
- */
-async function acquireLock(userId) {
-  // Si ya hay un lock, esperar a que termine
-  while (userLocks.has(userId)) {
-    await userLocks.get(userId);
-  }
-  
-  // Crear nuevo lock
-  let releaseFn;
-  const lockPromise = new Promise(resolve => {
-    releaseFn = resolve;
-  });
-  
-  userLocks.set(userId, lockPromise);
-  
-  // Retornar función para liberar
-  return () => {
-    userLocks.delete(userId);
-    releaseFn();
-  };
-}
-
-/**
  * Ejecuta handoff completo entre agentes
  * 
- * FLUJO:
+ * FLUJO v735 (Mercedes Benz):
  * 1. Validar transición
  * 2. Guardar form del agente actual (si existe)
- * 3. Adquirir lock para activeAgent
- * 4. Actualizar activeAgent en BD
- * 5. Liberar lock
- * 6. Enviar mensaje de entrada del nuevo agente (silencioso)
- * 7. Guardar en conversación
+ * 3. Delay para transición suave (7s)
+ * 4. Enviar mensaje de bienvenida del nuevo agente
+ * 5. Guardar en conversación
+ * 
+ * NOTA: activeAgent ya fue actualizado por AgentStateManager ANTES de llamar esta función.
+ *       Este manager solo se encarga de la UX del handoff (forms, delay, mensaje).
  * 
  * @param {string} userId - ID del usuario
  * @param {Object} profile - Perfil del usuario
@@ -69,7 +42,7 @@ async function acquireLock(userId) {
  * @param {string} toAgent - Agente destino
  * @param {string} userName - Nombre del usuario
  * @param {string} userLanguage - Idioma del usuario
- * @param {Function} saveProfile - Función para guardar perfil
+ * @param {Function} saveProfile - Función para guardar perfil (NO USADA en v735)
  * @param {Function} sendMessage - Función para enviar mensaje
  * @param {Function} saveConversation - Función para guardar conversación
  * @returns {Promise<Object>} - { success, fromAgent, toAgent, message }
@@ -81,7 +54,7 @@ export async function executeHandoff(
   toAgent,
   userName = 'amigo',
   userLanguage = 'es',
-  saveProfile,
+  saveProfile, // Mantenido por compatibilidad pero NO usado
   sendMessage,
   saveConversation
 ) {
@@ -106,7 +79,8 @@ export async function executeHandoff(
       };
     }
     
-    console.log(`[HANDOFF-MANAGER] 🤝 Iniciando handoff: ${fromAgent} → ${toAgent}`);
+    console.log(`[HANDOFF-MANAGER] 🤝 Iniciando handoff UX: ${fromAgent} → ${toAgent}`);
+    console.log(`[HANDOFF-MANAGER] ℹ️  AgentStateManager ya actualizó BD - solo manejamos UX`);
     logTransition(fromAgent, toAgent, true, 'starting');
     
     // 2️⃣ Guardar form del agente actual (si existe)
@@ -124,43 +98,7 @@ export async function executeHandoff(
       // No fallar handoff por error en form
     }
     
-    // 3️⃣ Adquirir lock para actualización de activeAgent
-    const release = await acquireLock(userId);
-    
-    try {
-      // 4️⃣ Actualizar activeAgent en BD (con lock)
-      console.log(`[HANDOFF-MANAGER] 🔄 Actualizando activeAgent: ${fromAgent} → ${toAgent}`);
-      
-      profile.activeAgent = toAgent;
-      profile.conversationCount = (profile.conversationCount || 0) + 1;
-      
-      // Agregar a historial de agentes
-      if (!profile.agentHistory) {
-        profile.agentHistory = {};
-      }
-      
-      if (!profile.agentHistory[toAgent]) {
-        profile.agentHistory[toAgent] = {
-          firstContact: new Date().toISOString(),
-          contactCount: 1,
-          lastMessages: []
-        };
-      } else {
-        profile.agentHistory[toAgent].contactCount++;
-      }
-      
-      profile.agentHistory[toAgent].lastContact = new Date().toISOString();
-      
-      await saveProfile(userId, profile);
-      
-      console.log(`[HANDOFF-MANAGER] ✅ activeAgent actualizado en BD: ${toAgent}`);
-      
-    } finally {
-      // 5️⃣ Liberar lock SIEMPRE
-      release();
-    }
-    
-    // 6️⃣ Delay para transición suave (7 segundos)
+    // 3️⃣ Delay para transición suave (7 segundos)
     console.log(`[HANDOFF-MANAGER] ⏱️ Esperando 7s para transición suave...`);
     await new Promise(resolve => setTimeout(resolve, 7000));
     
@@ -238,23 +176,28 @@ export async function executeHandoff(
 
 /**
  * Verifica si un handoff está en progreso para un usuario
- * (Para evitar handoffs concurrentes)
+ * (DEPRECADO v735: AgentStateManager.isUpdateInProgress() es el correcto)
  * 
  * @param {string} userId - ID del usuario
  * @returns {boolean}
+ * @deprecated Usar AgentStateManager.isUpdateInProgress()
  */
 export function isHandoffInProgress(userId) {
-  return userLocks.has(userId);
+  // Siempre devolver false - esta función ya no usa locks propios
+  console.warn('[HANDOFF-MANAGER] ⚠️ isHandoffInProgress() deprecada - usar AgentStateManager.isUpdateInProgress()');
+  return false;
 }
 
 /**
  * Obtiene estadísticas de handoffs (para monitoreo)
  * @returns {Object} - { activeHandoffs, totalLocks }
+ * @deprecated v735: Locks movidos a AgentStateManager
  */
 export function getHandoffStats() {
+  console.warn('[HANDOFF-MANAGER] ⚠️ getHandoffStats() deprecada - locks en AgentStateManager');
   return {
-    activeHandoffs: userLocks.size,
-    userIds: Array.from(userLocks.keys())
+    activeHandoffs: 0,
+    userIds: []
   };
 }
 

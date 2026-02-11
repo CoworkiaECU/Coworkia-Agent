@@ -359,12 +359,27 @@ export async function transcribeAudio(audioUrl, options = {}) {
 
     // Descargar el audio desde la URL con headers apropiados
     console.log('[Whisper] 🌐 Descargando audio desde Wassenger...');
+    
+    // 🔐 BUG FIX v734: Agregar Authorization header para Wassenger API
+    const headers = {
+      'User-Agent': 'coworkia-agent/1.0',
+      'Accept': 'audio/*,*/*'
+    };
+    
+    // Si es URL de Wassenger API, agregar token de autorización
+    if (audioUrl.includes('api.wassenger.com')) {
+      const wassengerApiKey = process.env.WASSENGER_API_KEY;
+      if (wassengerApiKey) {
+        headers['Authorization'] = `Bearer ${wassengerApiKey}`;
+        console.log('[Whisper] 🔐 Token de autorización agregado');
+      } else {
+        console.warn('[Whisper] ⚠️ WASSENGER_API_KEY no configurado - download puede fallar');
+      }
+    }
+    
     const response = await fetch(audioUrl, {
       method: 'GET',
-      headers: {
-        'User-Agent': 'coworkia-agent/1.0',
-        'Accept': 'audio/*,*/*'
-      }
+      headers
     });
     
     if (!response.ok) {

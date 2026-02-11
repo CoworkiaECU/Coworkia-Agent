@@ -1425,6 +1425,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log(`   Razón: ${resultado.razonSeleccion}`);
     console.log(`   ¿Es handoff?: ${!!resultado?.metadata?.agentHandoff}`);
     
+    // 🔒 GUARDAR fromAgent ANTES de actualizar (fix bug handoff loop)
+    const originalFromAgent = profile.activeAgent || 'AURORA';
+    
     // 🏎️ MERCEDES BENZ v735: Usar AgentStateManager centralizado
     // UN SOLO lugar actualiza activeAgent - cero race conditions
     if (resultado.agenteKey && resultado.agenteKey !== profile.activeAgent) {
@@ -1466,7 +1469,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🤝 Handoff genérico - NUEVO SISTEMA V2
     if (resultado?.metadata?.agentHandoff) {
       const targetAgent = resultado.metadata.targetAgent;
-      const fromAgent = profile.activeAgent || 'AURORA';
+      const fromAgent = originalFromAgent; // ← Usar original, NO el actualizado
       const userLanguage = profile.preferredLanguage || 'es';
       const userName = profile.whatsappDisplayName || profile.name || 'amigo';
 

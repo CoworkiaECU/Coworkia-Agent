@@ -357,12 +357,29 @@ export async function transcribeAudio(audioUrl, options = {}) {
       console.warn(`[Whisper] ⚠️ Idioma '${language}' no soportado, usando '${whisperLanguage}'`);
     }
 
-    // Descargar el audio desde la URL
-    const response = await fetch(audioUrl);
+    // Descargar el audio desde la URL con headers apropiados
+    console.log('[Whisper] 🌐 Descargando audio desde Wassenger...');
+    const response = await fetch(audioUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'coworkia-agent/1.0',
+        'Accept': 'audio/*,*/*'
+      }
+    });
+    
     if (!response.ok) {
-      throw new Error(`Error descargando audio: ${response.status}`);
+      const errorBody = await response.text().catch(() => 'Sin detalles');
+      console.error('[Whisper] ❌ Error HTTP al descargar:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody.substring(0, 200),
+        url: audioUrl.substring(0, 100) + '...'
+      });
+      throw new Error(`Error descargando audio: ${response.status} - ${response.statusText}`);
     }
 
+    console.log('[Whisper] ✅ Audio descargado exitosamente');
+    
     // Obtener el buffer del audio
     const audioBuffer = await response.arrayBuffer();
     const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });

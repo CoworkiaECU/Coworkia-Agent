@@ -814,7 +814,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN)
     if (userSentAudio) {
-      if (!mediaUrl) return;
+      if (!mediaUrl) {
+        console.error('[Whisper] ❌ No se encontró URL de audio en el mensaje');
+        console.error('[Whisper] Debug - data.media:', JSON.stringify(data.media, null, 2));
+        return;
+      }
       
       // Obtener idioma del usuario (si ya está guardado)
       const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
@@ -822,6 +826,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       
       console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
       console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
+      console.log('[Whisper] 📋 Debug - Media data:', {
+        url: mediaUrl?.substring(0, 100),
+        mime: data.media?.mime,
+        size: data.media?.size,
+        hasLinks: !!data.media?.links
+      });
       
       // ✅ Validar audio antes de transcribir (con mime type de Wassenger)
       const audioMetadata = {

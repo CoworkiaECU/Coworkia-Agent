@@ -490,6 +490,15 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   lineas.push(`USUARIO: ${perfil.name || 'Cliente'}`);
   if (perfil.email) lineas.push(`Email: ${perfil.email}`);
 
+  // 📸 Instrucciones clave para AXEL (fotos agrupadas)
+  if (targetAgent === 'AXEL' || intent?.flags?.axelPhotoInstructions) {
+    lineas.push('\n📸 FLUJO AXEL (fotos)');
+    lineas.push('• Acepta hasta 4 fotos. Usuario escribe "listo" al terminar.');
+    lineas.push('• Agrupa 20s y responde un solo mensaje (no foto por foto).');
+    lineas.push('• Resume daños y pregunta si falta algo. Sugiere: "no tengo" | "me falta cotizar <pieza>".');
+    lineas.push('• Pide marca, modelo, año y email para enviar cotización HTML con fotos comprimidas.');
+  }
+
   // 🤖 PROMPTS ESPECIALES: Contexto mínimo (system prompt tiene todas las instrucciones)
   const isVirtualAgentSales = intent?.flags?.virtualAgentSalesPromo === true;
   const isServiceInterestGreeting = intent?.flags?.serviceInterest === true;

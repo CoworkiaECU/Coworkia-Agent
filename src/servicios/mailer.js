@@ -3,12 +3,18 @@ import nodemailer from 'nodemailer';
 
 dotenv.config();
 
+const NODE_ENV = process.env.NODE_ENV || 'production';
 export const EMAIL_USER = process.env.EMAIL_USER || process.env.GMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS || process.env.GMAIL_PASS;
 const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
 const DEBUG_EMAIL = process.env.DEBUG_EMAIL === 'true';
 
+const IS_TEST = NODE_ENV === 'test';
+
 async function createTransporter() {
+  // En tests no abrimos conexiones SMTP ni emitimos logs
+  if (IS_TEST) return null;
+
   console.log('[MAILER] 🔧 Inicializando transportador de email');
   console.log('[MAILER] - Usuario configurado:', EMAIL_USER ? '✅' : '❌');
   console.log('[MAILER] - Servicio:', EMAIL_SERVICE);

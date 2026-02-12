@@ -271,7 +271,7 @@ function generateConfirmationEmailHTML(reservationData) {
  * 📧 Función genérica para enviar emails HTML
  * Útil para cotizaciones de Axel y otros casos personalizados
  */
-export async function sendEmail({ to, subject, html, from }) {
+export async function sendEmail({ to, subject, html, from, cc, bcc, attachments }) {
   try {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
@@ -288,8 +288,11 @@ export async function sendEmail({ to, subject, html, from }) {
     const mailOptions = {
       from: fromAddress,
       to: to,
+      cc,
+      bcc,
       subject: subject,
-      html: html
+      html: html,
+      attachments
     };
     
     const info = await transporter.sendMail(mailOptions);

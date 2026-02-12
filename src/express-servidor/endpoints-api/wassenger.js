@@ -14,7 +14,7 @@ import { analyzeMedicalImage } from '../../servicios/angela-vision-analysis.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue } from '../../servicios/axel-photo-collector.js';
-import { processAxelFormMessage, generateFormSummary } from '../../servicios/axel-quote-form.js';
+import { processAxelFormMessage, generateFormSummary, generateFormPrompt } from '../../servicios/axel-quote-form.js';
 import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
 import { generateQuote } from '../../servicios/axel-quote-generator.js';
@@ -557,26 +557,22 @@ function detectFormContinuation(text) {
 ───────────────────────────────────────────────────────────── */
 async function processAxelQuote(userId, photoUrls, profile) {
   const startTime = Date.now();
-  const DELAY_BETWEEN_MESSAGES = 800; // 800ms entre mensajes para garantizar orden
   
   try {
     loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
     
-    // 1. Procesar formulario - verificar si tenemos todos los datos
+    // 1. Procesar formulario - verificar datos existentes (no regresar temprano)
     const formResult = await processAxelFormMessage(userId, '');
-    
-    if (formResult.needsMoreInfo) {
-      // Faltan datos del formulario
-      console.log('[AXEL-QUOTE] ⏳ Formulario incompleto, solicitando datos...');
-      await enviarWhatsApp(userId, `Perfecto! Ya tengo las fotos 📸\n\nAhora necesito algunos datos para preparar tu cotización:\n\n${formResult.prompt}`);
-      return { success: true, needsMoreData: true };
-    }
-    
-    // 2. Analizar fotos con Vision AI
-    console.log('[AXEL-QUOTE] 📤 Enviando mensaje: Analizando daños...');
-    await enviarWhatsApp(userId, `Analizando daños con IA... 🤖`);
-    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_MESSAGES));
-    
+    const vehicleData = {
+      marca: formResult?.data?.marca || 'Pendiente',
+      modelo: formResult?.data?.modelo || 'Pendiente',
+      año: formResult?.data?.año || 'Pendiente',
+      nombre: formResult?.data?.nombre,
+      email: formResult?.data?.email
+    };
+    const missingFields = formResult?.missingFields || [];
+
+    // 2. Analizar fotos con Vision AI (agrupado)
     loggers.axel.info('Analyzing collision photos', { userId, photoCount: photoUrls.length });
     const visionAnalysis = await analyzeCollisionPhotos(photoUrls);
     
@@ -585,13 +581,9 @@ async function processAxelQuote(userId, photoUrls, profile) {
       return { success: false, error: visionAnalysis.error };
     }
     
-    // 3. Generar cotización con IA
-    console.log('[AXEL-QUOTE] 📤 Enviando mensaje: Preparando cotización...');
-    await enviarWhatsApp(userId, `Preparando cotización personalizada... 📋`);
-    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_MESSAGES));
-    
+    // 3. Generar cotización con IA (aunque falten datos, usando placeholders)
     const quoteResult = await generateQuote({
-      vehicleData: formResult.data,
+      vehicleData,
       damageAnalysis: visionAnalysis,
       photoUrls
     });
@@ -603,32 +595,29 @@ async function processAxelQuote(userId, photoUrls, profile) {
     
     // 4. Generar código único
     const { code: quoteCode } = await generateQuoteCode();
-    
-    // 5. Enviar cotización por WhatsApp
-    console.log('[AXEL-QUOTE] 📤 Enviando cotización final...');
-    const whatsappMessage = `
-🎯 *COTIZACIÓN PAINTBULL*
 
-${quoteResult.quote}
+    // 5. Mensaje único al usuario (resumen + solicitud de datos faltantes)
+    const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 6).join(', ') || 'No detectado';
+    const damageDetails = (visionAnalysis.damageDetails || '').slice(0, 480);
+    const hiddenRisk = visionAnalysis.hiddenDamageRisk || 'MEDIO';
+    const estimatedDays = visionAnalysis.estimatedRepairDays || '2-5 días';
+    const missingNote = missingFields.length > 0
+      ? `\n📌 Para cerrar necesito: ${missingFields.join(', ')} (modelo, año, marca y email si falta).`
+      : '';
+    const emailLine = vehicleData.email
+      ? `📧 Te envío la cotización en HTML (con fotos comprimidas) a ${vehicleData.email}.`
+      : '📧 Pásame tu email para enviarte la cotización HTML con las fotos en versión ligera.';
 
-📋 *Código:* ${quoteCode}
+    const finalMessage = `✅ Recibí y analicé ${photoUrls.length} foto(s) en conjunto.\n\n🔍 Resumen de daños:\n• Severidad: ${visionAnalysis.severity}\n• Detalle: ${damageDetails}\n• Partes afectadas: ${affectedParts}\n• Riesgo de daños ocultos: ${hiddenRisk}\n• Tiempo estimado: ${estimatedDays}\n\n💰 Cotización referencial (rangos):\n${quoteResult.quote}\n\n¿Esto es correcto o falta algo por cotizar? Responde: "no tengo" | "me falta cotizar <pieza>".${missingNote}\n\n${emailLine}\nVoy a adjuntar las fotos al correo en versión liviana.`;
 
----
+    await enviarWhatsApp(userId, finalMessage);
 
-📧 *Te envío copia detallada por email...*
-
-_The PaintBull - Expertos en colisiones_ 🚗💥
-    `.trim();
-    
-    await enviarWhatsApp(userId, whatsappMessage);
-    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_MESSAGES));
-    
-    // 6. Enviar email con cotización formal
-    if (formResult.data.email) {
+    // 6. Enviar email con cotización formal si hay email
+    if (vehicleData.email) {
       const emailResult = await sendQuoteEmail({
-        customerName: formResult.data.nombre || profile.whatsappDisplayName || 'Cliente',
-        customerEmail: formResult.data.email,
-        vehicleData: formResult.data,
+        customerName: vehicleData.nombre || profile.whatsappDisplayName || 'Cliente',
+        customerEmail: vehicleData.email,
+        vehicleData,
         damageAnalysis: visionAnalysis.analysis,
         quote: quoteResult.quote,
         priceRange: quoteResult.priceRange,
@@ -636,19 +625,12 @@ _The PaintBull - Expertos en colisiones_ 🚗💥
         quoteCode: quoteCode
       });
       
-      if (emailResult.success) {
-        console.log('[AXEL-QUOTE] 📤 Enviando confirmación de email...');
-        await enviarWhatsApp(userId, `✅ Email enviado a ${formResult.data.email}\n\nRevisa tu bandeja de entrada (y spam por si acaso).`);
-      } else {
+      if (!emailResult.success) {
         console.error('[AXEL-QUOTE] ❌ Error enviando email:', emailResult.error);
       }
     }
     
-    // 7. Cotización completada - Axel permanece activo
-    // Usuario puede seguir consultando con Axel sobre la cotización
-    // Para cambiar de agente, usuario debe usar @aurora, @aluna, etc.
-    
-    // 💾 Marcar sesión de fotos como completada en BD
+    // 7. Marcar sesión de fotos como completada en BD
     const { completePhotoSession } = await import('../../database/axelPhotoRepository.js');
     await completePhotoSession(userId, quoteCode).catch(err => {
       console.error('[AXEL-QUOTE] ⚠️ Error marcando sesión completada:', err);
@@ -1008,7 +990,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 📸 Si hay imagen pero no texto, usar placeholder descriptivo
     const messageContent = processedText || (mediaUrl && type === 'image' ? '[Usuario envió imagen]' : '');
 
-    await saveConversationMessage(userId, { role: 'user', content: messageContent });
+    await saveConversationMessage(userId, {
+      role: 'user',
+      content: messageContent,
+      agent: profile.activeAgent || 'AURORA'
+    });
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
@@ -1179,13 +1165,27 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 📸 AXEL PHOTO COLLECTOR: Manejar texto durante sesión activa
     console.log(`[AXEL-DEBUG] 💬 Texto recibido - activeAgent: ${profile.activeAgent}, processedText: "${processedText}"`);
     if (profile.activeAgent === 'AXEL' && !mediaUrl && processedText) {
-      const session = getSession(userId);
+      const normalizedText = processedText.toLowerCase().trim();
+      const noMoreItems = ['no tengo', 'no tengo nada', 'no tengo mas', 'no tengo más'].includes(normalizedText);
+
+      if (noMoreItems) {
+        const formStatus = await processAxelFormMessage(userId, '');
+        const missingFields = formStatus?.missingFields || [];
+        const prompt = generateFormPrompt(missingFields, formStatus?.data || {});
+        if (prompt) {
+          await enviarWhatsApp(userId, `Perfecto, seguimos. Para cerrar la cotización necesito:
+
+${prompt}`);
+          return;
+        }
+      }
+
+      const session = await getSession(userId);
       console.log(`[AXEL-DEBUG] 📊 Sesión actual:`, session ? `${session.photoCount} fotos, readyToProcess: ${session.readyToProcess}` : 'null');
       
       if (session && session.photoCount > 0) {
         // Detectar comandos de finalización O timeout expirado
         const finalizationCommands = ['listo', 'ya', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
-        const normalizedText = processedText.toLowerCase().trim();
         const isFinalizationCommand = finalizationCommands.some(cmd => normalizedText === cmd || normalizedText.includes(cmd));
         const shouldProcess = isFinalizationCommand || session.readyToProcess;
         
@@ -1197,8 +1197,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             const result = await completeSession(userId);
             
             if (result) {
-              console.log('[WASSENGER] 📤 Enviando mensaje: Procesando fotos...');
-              await enviarWhatsApp(userId, `Perfecto! Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
+              console.log('[WASSENGER] 🚀 Procesando fotos con IA (respuesta única)...');
               await processAxelQuote(userId, result.photos, profile);
               clearQueue(userId);
             }
@@ -1236,21 +1235,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // Mensajes de confirmación
         if (photoStatus.currentCount === 1) {
           console.log('[WASSENGER] 📤 Enviando mensaje: primera foto recibida');
-          await enviarWhatsApp(userId, `Perfecto, recibí la primera foto 📸\n\nPuedes enviar hasta ${photoStatus.maxPhotos - 1} más (${photoStatus.maxPhotos} en total) para una mejor evaluación.\n\nSi tienes alguna pregunta entre fotos, adelante! Cuando termines, espera 20 segundos o escribe "listo".`);
+          await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos (20s máx) y te responderé con un solo análisis y cotización. No respondo foto por foto, espero a tenerlas todas.`);
           
           // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
           startTimeout(userId, async () => {
             const result = await completeSession(userId);
             if (result) {
               console.log(`[WASSENGER] ⏰ Auto-procesando ${result.photoCount} foto(s) después de timeout...`);
-              await enviarWhatsApp(userId, `⏰ Tiempo límite alcanzado. Procesando ${result.photoCount} foto(s) para tu cotización... 🔍`);
               await processAxelQuote(userId, result.photos, profile);
               clearQueue(userId);
             }
           });
-        } else if (photoStatus.currentCount < photoStatus.maxPhotos) {
-          console.log(`[WASSENGER] 📤 Enviando mensaje: foto ${photoStatus.currentCount} recibida`);
-          await enviarWhatsApp(userId, `Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} recibida ✅\n\n${photoStatus.canAddMore ? 'Puedes enviar más fotos, hacer preguntas o escribir "listo" para procesar.' : 'Ya tengo suficientes fotos. Procesando...'}`);
         }
         
         // Si alcanzó el máximo, procesar DENTRO del queue
@@ -1258,7 +1253,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           const result = await completeSession(userId);
           if (result) {
             console.log('[WASSENGER] 📸 Máximo de fotos alcanzado, procesando cotización...');
-            await enviarWhatsApp(userId, `✅ ${result.photoCount} fotos recibidas. Procesando cotización...`);
             await processAxelQuote(userId, result.photos, profile);
             clearQueue(userId);
           }

@@ -472,7 +472,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     }
 
     if (/@axel/i.test(text)) {
-      return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL' } };
+      return { agent: 'AXEL', reason: 'trigger @Axel', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'AXEL', axelPhotoInstructions: true } };
     }
 
     if (/@gabi/i.test(text)) {

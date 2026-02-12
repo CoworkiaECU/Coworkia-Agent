@@ -144,6 +144,26 @@ export async function deletePhotoSession(userPhone) {
 }
 
 /**
+ * 🗑️ Eliminar todas las sesiones (uso administrativo)
+ */
+export async function deleteAllPhotoSessions() {
+  const pool = postgresAdapter.pool;
+  if (!pool) throw new Error('PostgreSQL pool no inicializado');
+  const client = await pool.connect();
+  try {
+    const result = await client.query('DELETE FROM axel_photo_sessions');
+    const deleted = result.rowCount || 0;
+    console.log(`[AXEL-PHOTO-DB] 🗑️ Todas las sesiones eliminadas: ${deleted}`);
+    return { success: true, deleted };
+  } catch (error) {
+    console.error('[AXEL-PHOTO-DB] ❌ Error eliminando todas las sesiones:', error);
+    return { success: false, error: error.message };
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * 🧹 Limpiar sesiones expiradas (llamar desde cron diario)
  */
 export async function cleanupExpiredSessions() {
@@ -202,6 +222,7 @@ export default {
   getActivePhotoSession,
   completePhotoSession,
   deletePhotoSession,
+  deleteAllPhotoSessions,
   cleanupExpiredSessions,
   getPhotoSessionStats
 };

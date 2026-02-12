@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "cloudinary": "^2.8.0",
+    "sharp": "^0.33.2",
     "cors": "^2.8.5",
     "cron": "^4.3.4",
     "dotenv": "^16.4.5",

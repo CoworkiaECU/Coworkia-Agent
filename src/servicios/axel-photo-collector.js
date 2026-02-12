@@ -7,7 +7,7 @@
  * - Queue de procesamiento para respuestas ordenadas
  */
 
-import { savePhotoSession, getActivePhotoSession, completePhotoSession as markSessionCompleted } from '../database/axelPhotoRepository.js';
+import { savePhotoSession, getActivePhotoSession, completePhotoSession as markSessionCompleted, deletePhotoSession, deleteAllPhotoSessions } from '../database/axelPhotoRepository.js';
 
 // 🗂️ Almacén temporal de fotos por usuario (caché)
 const photoSessions = new Map();
@@ -226,6 +226,39 @@ export function cancelSession(userId) {
   console.log(`[AXEL-PHOTOS] 🗑️ Sesión cancelada para ${userId}`);
   
   return true;
+}
+
+/**
+ * 🧹 Resetear sesión específica (memoria + BD opcional)
+ */
+export async function resetUserSession(userId, { purgeDb = true } = {}) {
+  cancelSession(userId);
+  if (purgeDb) {
+    await deletePhotoSession(userId).catch(err => {
+      console.error('[AXEL-PHOTOS] ⚠️ Error eliminando sesión en BD:', err);
+    });
+  }
+  return { success: true };
+}
+
+/**
+ * 🧹 Resetear todas las sesiones en memoria y opcionalmente en BD (uso administrativo)
+ */
+export async function resetAllSessions({ purgeDb = false } = {}) {
+  // Limpiar timeouts en memoria
+  photoSessions.forEach(session => {
+    if (session.timeoutId) clearTimeout(session.timeoutId);
+  });
+  photoSessions.clear();
+  processingQueues.clear();
+  console.log('[AXEL-PHOTOS] 🧹 Memoria limpiada (todas las sesiones)');
+
+  if (purgeDb) {
+    await deleteAllPhotoSessions().catch(err => {
+      console.error('[AXEL-PHOTOS] ⚠️ Error purgando sesiones en BD:', err);
+    });
+  }
+  return { success: true };
 }
 
 /**

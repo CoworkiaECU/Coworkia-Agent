@@ -5,10 +5,45 @@
 
 import { sendEmail } from './email.js';
 
+const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || 'villotaj71@gmail.com';
+
+async function fetchAndCompressPhoto(url) {
+  try {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    try {
+      const sharpModule = await import('sharp');
+      const sharp = sharpModule.default || sharpModule;
+      const resized = await sharp(buffer)
+        .rotate()
+        .resize({ width: 960, withoutEnlargement: true })
+        .jpeg({ quality: 60, progressive: true })
+        .toBuffer();
+      return {
+        base64: `data:image/jpeg;base64,${resized.toString('base64')}`,
+        buffer: resized,
+        contentType: 'image/jpeg'
+      };
+    } catch (err) {
+      console.warn('[QUOTE-EMAIL] ⚠️ No se pudo comprimir con sharp, usando base64 original:', err.message);
+      return {
+        base64: `data:image/jpeg;base64,${buffer.toString('base64')}`,
+        buffer,
+        contentType: 'image/jpeg'
+      };
+    }
+  } catch (err) {
+    console.error('[QUOTE-EMAIL] ❌ Error descargando/comprimiendo foto:', err.message);
+    return null;
+  }
+}
+
 /**
  * 🎨 Genera HTML del email de cotización (estilo The PaintBull)
  */
-async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoUrls = [], quoteCode }) {
+async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoAssets = [], quoteCode }) {
   const formatDate = new Date().toLocaleDateString('es-EC', {
     weekday: 'long',
     year: 'numeric',
@@ -19,66 +54,24 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   // Sección de fotos - convertir URLs a base64
   let photosSection = '';
   
-  if (photoUrls && photoUrls.length > 0) {
-    try {
-      // Importar función para descargar y convertir a base64
-      const photosBase64 = await Promise.all(
-        photoUrls.map(async (url) => {
-          try {
-            const response = await fetch(url);
-            const arrayBuffer = await response.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            const base64 = buffer.toString('base64');
-            return `data:image/jpeg;base64,${base64}`;
-          } catch (err) {
-            console.error('[QUOTE-EMAIL] ❌ Error descargando foto:', err.message);
-            return null;
-          }
-        })
-      );
-      
-      const validPhotos = photosBase64.filter(p => p !== null);
-      
-      if (validPhotos.length > 0) {
+  if (photoAssets && photoAssets.length > 0) {
+    const validPhotos = photoAssets.filter(p => p !== null);
+    
+    if (validPhotos.length > 0) {
         photosSection = `
           <div style="margin: 30px 0;">
             <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-              ${validPhotos.map((base64Img, idx) => `
+              ${validPhotos.map((asset, idx) => `
                 <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
-                  <img src="${base64Img}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block; max-height: 300px; object-fit: cover;" />
+                  <img src="${asset.base64}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block; max-height: 300px; object-fit: cover;" />
                 </div>
               `).join('')}
             </div>
           </div>
         `;
-      } else {
-        console.log('[QUOTE-EMAIL] ⚠️ No se pudieron descargar fotos, se omite sección');
-      }
-    } catch (error) {
-      console.error('[QUOTE-EMAIL] ❌ Error procesando fotos:', error);
-      // Fallback: mostrar links si falla la conversión
-      photosSection = `
-        <div style="margin: 30px 0;">
-          <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO (Referencia)</h3>
-          <p style="color: #6B7280; font-size: 14px; margin-bottom: 15px;">
-            Respaldo para The PaintBull - Fotos guardadas para verificación:
-          </p>
-          <div style="background: #F9FAFB; border: 2px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-            ${photoUrls.map((url, idx) => `
-              <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
-                <span style="color: #DC2626; font-weight: 700; font-size: 14px;">📷 Foto ${idx + 1}:</span>
-                <a href="${url}" target="_blank" style="color: #2563EB; text-decoration: none; font-size: 13px; font-family: monospace; word-break: break-all;">
-                  ${url.length > 60 ? url.substring(0, 60) + '...' : url}
-                </a>
-              </div>
-            `).join('')}
-          </div>
-          <p style="color: #6B7280; font-size: 12px; margin-top: 10px; font-style: italic;">
-            ℹ️ Enlaces válidos por 30 días desde recepción. Respaldo para revisión técnica interna.
-          </p>
-        </div>
-      `;
+    } else {
+      console.log('[QUOTE-EMAIL] ⚠️ No se pudieron procesar fotos, se omite sección');
     }
   }
 
@@ -281,22 +274,34 @@ export async function sendQuoteEmail({
     console.log('[QUOTE-EMAIL] 📧 Enviando cotización por email a:', customerEmail);
     console.log('[QUOTE-EMAIL] 🔢 Código de cotización:', quoteCode);
 
+    const photoAssets = (await Promise.all(photoUrls.map(fetchAndCompressPhoto)));
+    const validPhotoAssets = photoAssets.filter(Boolean);
+
     const htmlContent = await generateQuoteEmailHTML({
       customerName,
       vehicleData,
       damageAnalysis,
       quote,
       priceRange,
-      photoUrls,
+      photoAssets: validPhotoAssets,
       quoteCode
     });
 
     const subject = `🚗 Cotización ${quoteCode} - ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}`;
 
+    // Adjuntar fotos comprimidas como respaldo para el jefe de taller
+    const attachments = validPhotoAssets.map((asset, idx) => ({
+      filename: `foto-${idx + 1}.jpg`,
+      content: asset.buffer,
+      contentType: asset.contentType || 'image/jpeg'
+    }));
+
     const result = await sendEmail({
       to: customerEmail,
+      cc: WORKSHOP_CC,
       subject: subject,
-      html: htmlContent
+      html: htmlContent,
+      attachments
     });
 
     if (result.success) {

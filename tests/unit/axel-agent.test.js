@@ -10,8 +10,8 @@
  */
 
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import { detectarIntencion } from '../deteccion-intenciones/detectar-intencion.js';
-import { AXEL } from '../deteccion-intenciones/axel.js';
+import { detectarIntencion } from '../../src/deteccion-intenciones/detectar-intencion.js';
+import { AXEL } from '../../src/deteccion-intenciones/axel.js';
 
 describe('🚗 Agente AXEL - Tests Completos', () => {
   
@@ -276,7 +276,7 @@ describe('🚗 Agente AXEL - Tests Completos', () => {
   describe('7. Integración con Sistema', () => {
     
     test('debe estar registrado en AGENTES', async () => {
-      const { AGENTES } = await import('../deteccion-intenciones/orquestador.js');
+      const { AGENTES } = await import('../../src/deteccion-intenciones/orquestador.js');
       
       expect(AGENTES.AXEL).toBeDefined();
       expect(AGENTES.AXEL.nombre).toBe('Axel');

@@ -597,18 +597,26 @@ async function processAxelQuote(userId, photoUrls, profile) {
     const { code: quoteCode } = await generateQuoteCode();
 
     // 5. Mensaje único al usuario (resumen + solicitud de datos faltantes)
-    const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 6).join(', ') || 'No detectado';
-    const damageDetails = (visionAnalysis.damageDetails || '').slice(0, 480);
+    const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 4).join(', ') || 'No detectado';
+    const damageDetails = (visionAnalysis.damageDetails || '').slice(0, 300);
     const hiddenRisk = visionAnalysis.hiddenDamageRisk || 'MEDIO';
     const estimatedDays = visionAnalysis.estimatedRepairDays || '2-5 días';
     const missingNote = missingFields.length > 0
-      ? `\n📌 Para cerrar necesito: ${missingFields.join(', ')} (modelo, año, marca y email si falta).`
+      ? `📌 Falta: ${missingFields.join(', ')} (modelo/año/email).`
       : '';
     const emailLine = vehicleData.email
-      ? `📧 Te envío la cotización en HTML (con fotos comprimidas) a ${vehicleData.email}.`
-      : '📧 Pásame tu email para enviarte la cotización HTML con las fotos en versión ligera.';
+      ? `📧 Envío la cotización con fotos a ${vehicleData.email}.`
+      : '📧 Pásame tu email para enviarte la cotización con fotos.';
 
-    const finalMessage = `✅ Recibí y analicé ${photoUrls.length} foto(s) en conjunto.\n\n🔍 Resumen de daños:\n• Severidad: ${visionAnalysis.severity}\n• Detalle: ${damageDetails}\n• Partes afectadas: ${affectedParts}\n• Riesgo de daños ocultos: ${hiddenRisk}\n• Tiempo estimado: ${estimatedDays}\n\n💰 Cotización referencial (rangos):\n${quoteResult.quote}\n\n¿Esto es correcto o falta algo por cotizar? Responde: "no tengo" | "me falta cotizar <pieza>".${missingNote}\n\n${emailLine}\nVoy a adjuntar las fotos al correo en versión liviana.`;
+    const finalMessage = [
+      `✅ Analicé ${photoUrls.length} foto(s).`,
+      `🔍 Severidad: ${visionAnalysis.severity} | Riesgo ocultos: ${hiddenRisk}`,
+      `🔧 Partes: ${affectedParts}`,
+      `💰 Rangos referenciales:\n${quoteResult.quote.trim()}`,
+      `⏱️ Tiempo estimado: ${estimatedDays}`,
+      missingNote,
+      `${emailLine}`
+    ].filter(Boolean).join('\n');
 
     await enviarWhatsApp(userId, finalMessage);
 

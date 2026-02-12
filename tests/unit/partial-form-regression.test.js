@@ -186,4 +186,33 @@ describe('🧠 Formulario parcial - Flujo progresivo', () => {
     expect(restored.email).toBe('test@ejemplo.com');
     expect(restored.numPeople).toBe(4);
   });
+
+  test('Hot Desk en ventana gratis no pide método de pago', () => {
+    const form = new PartialReservationForm('test-user');
+    form.updateField('spaceType', 'hotDesk');
+    form.updateField('date', '2026-02-13');
+    form.updateField('time', '08:45');
+    form.updateField('email', 'trial@example.com');
+
+    const missing = form.getMissingFields();
+    expect(missing).not.toContain('paymentMethod');
+
+    const json = form.toJSON();
+    expect(json.freeTrialWindowEligible).toBe(true);
+    expect(json.totalPrice).toBe(0);
+  });
+
+  test('Hot Desk fuera de ventana sí requiere pago', () => {
+    const form = new PartialReservationForm('test-user');
+    form.updateField('spaceType', 'hotDesk');
+    form.updateField('date', '2026-02-13');
+    form.updateField('time', '10:31');
+    form.updateField('email', 'trial@example.com');
+
+    const missing = form.getMissingFields();
+    expect(missing).toContain('paymentMethod');
+
+    const json = form.toJSON();
+    expect(json.freeTrialWindowEligible).toBe(false);
+  });
 });

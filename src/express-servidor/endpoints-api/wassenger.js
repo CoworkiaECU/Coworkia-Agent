@@ -559,6 +559,7 @@ function detectFormContinuation(text) {
 ───────────────────────────────────────────────────────────── */
 const axelQuoteLocks = new Set();
 const axelMissingPromptAt = new Map();
+const axelEmailConsent = new Map();
 const AXEL_MISSING_PROMPT_COOLDOWN_MS = 45000;
 
 async function upsertCollisionQuote({
@@ -742,29 +743,38 @@ ${prompt}`);
       sessionFingerprint
     });
 
-    // 5. Mensaje único al usuario (resumen + solicitud de datos faltantes)
+    // 5. Mensaje único al usuario (resumen corto) + pregunta cerrada para email
     const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 4).join(', ') || 'No detectado';
-    const damageDetails = (visionAnalysis.damageDetails || '').slice(0, 300);
     const hiddenRisk = visionAnalysis.hiddenDamageRisk || 'MEDIO';
     const estimatedDays = visionAnalysis.estimatedRepairDays || '2-5 días';
-    const missingNote = missingFields.length > 0
-      ? `📌 Falta: ${missingFields.join(', ')} (modelo/año/email).`
-      : '';
-    const emailLine = vehicleData.email
-      ? `📧 Envío la cotización con fotos a ${vehicleData.email}.`
-      : '📧 Pásame tu email para enviarte la cotización con fotos.';
 
-    const finalMessage = [
+    const priceLine = quoteResult.priceRange
+      ? `💰 Estimación: $${quoteResult.priceRange.min} - $${quoteResult.priceRange.max} USD`
+      : '💰 Estimación: rango pendiente';
+
+    const smsSummary = [
       `✅ Analicé ${photoUrls.length} foto(s).`,
       `🔍 Severidad: ${visionAnalysis.severity} | Riesgo ocultos: ${hiddenRisk}`,
       `🔧 Partes: ${affectedParts}`,
-      `💰 Rangos referenciales:\n${quoteResult.quote.trim()}`,
+      priceLine,
       `⏱️ Tiempo estimado: ${estimatedDays}`,
-      missingNote,
-      `${emailLine}`
+      `📧 ¿Quieres más detalles por mail? Responde SI o NO.`
     ].filter(Boolean).join('\n');
 
-    await enviarWhatsApp(userId, finalMessage);
+    await enviarWhatsApp(userId, smsSummary);
+
+    // Guardar pendiente de confirmación de email (texto largo para email)
+    axelEmailConsent.set(userId, {
+      quoteCode,
+      email: vehicleData.email,
+      customerName: vehicleData.nombre || profile.whatsappDisplayName || 'Cliente',
+      vehicleData,
+      damageAnalysis: visionAnalysis,
+      quote: quoteResult.quote,
+      priceRange: quoteResult.priceRange,
+      photoUrls,
+      sessionFingerprint: sessionFingerprint || quoteCode
+    });
 
     // Observabilidad: registrar evento de cotización generada
     await saveInteraction({
@@ -778,41 +788,10 @@ ${prompt}`);
         quoteCode,
         photoCount: photoUrls.length,
         correlationId: sessionFingerprint || quoteCode,
-        missingFields
+        missingFields,
+        emailPending: true
       }
     });
-
-    // 6. Enviar email con cotización formal si hay email
-    if (vehicleData.email) {
-      const emailResult = await sendQuoteEmail({
-        customerName: vehicleData.nombre || profile.whatsappDisplayName || 'Cliente',
-        customerEmail: vehicleData.email,
-        vehicleData,
-        damageAnalysis: visionAnalysis.analysis,
-        quote: quoteResult.quote,
-        priceRange: quoteResult.priceRange,
-        photoUrls: photoUrls,
-        quoteCode: quoteCode
-      });
-      
-      if (!emailResult.success) {
-        console.error('[AXEL-QUOTE] ❌ Error enviando email:', emailResult.error);
-      } else {
-        await saveInteraction({
-          userId,
-          agent: 'AXEL',
-          agentName: 'Axel - PaintBull',
-          intentReason: 'email_sent',
-          input: vehicleData.email,
-          output: 'quote_email_sent',
-          meta: {
-            quoteCode,
-            correlationId: sessionFingerprint || quoteCode,
-            email: vehicleData.email
-          }
-        });
-      }
-    }
     
     // 7. Marcar sesión de fotos como completada en BD
     const { completePhotoSession } = await import('../../database/axelPhotoRepository.js');
@@ -1182,6 +1161,56 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       agent: profile.activeAgent || 'AURORA'
     });
 
+    // 📧 Flujo de consentimiento de email post-cotización (SI/NO)
+    if (profile.activeAgent === 'AXEL' && axelEmailConsent.has(userId) && processedText) {
+      const consentData = axelEmailConsent.get(userId);
+      const t = (processedText || '').trim().toLowerCase();
+      const isYes = ['si', 'sí', 'yes', 'y', 'claro', 'ok'].includes(t);
+      const isNo = ['no', 'nop', 'nope'].includes(t);
+
+      if (isYes || isNo) {
+        if (isYes) {
+          const emailResult = await sendQuoteEmail({
+            customerName: consentData.customerName,
+            customerEmail: consentData.email,
+            vehicleData: consentData.vehicleData,
+            damageAnalysis: consentData.damageAnalysis,
+            quote: consentData.quote,
+            priceRange: consentData.priceRange,
+            photoUrls: consentData.photoUrls,
+            quoteCode: consentData.quoteCode
+          });
+
+          if (emailResult.success) {
+            await enviarWhatsApp(userId, `✉️ Listo, envié la cotización detallada a ${consentData.email}. ¿Quieres agregar algo más?`);
+            await saveInteraction({
+              userId,
+              agent: 'AXEL',
+              agentName: 'Axel - PaintBull',
+              intentReason: 'email_sent',
+              input: consentData.email,
+              output: 'quote_email_sent',
+              meta: {
+                quoteCode: consentData.quoteCode,
+                correlationId: consentData.sessionFingerprint || consentData.quoteCode,
+                email: consentData.email
+              }
+            });
+          } else {
+            await enviarWhatsApp(userId, `⚠️ No pude enviar el email (${emailResult.error}). Lo intento de nuevo o te contacto manualmente.`);
+          }
+        } else {
+          await enviarWhatsApp(userId, '👍 Entendido, no envío email. ¿Quieres agregar algo más a la cotización?');
+        }
+
+        axelEmailConsent.delete(userId);
+        return; // Manejado
+      } else {
+        await enviarWhatsApp(userId, 'Responde solo SI o NO para enviar la cotización por email.');
+        return; // Manejado
+      }
+    }
+
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
@@ -1391,7 +1420,7 @@ ${prompt}`);
         ];
         const cleanedText = normalizedText.replace(/[!.]/g, '').trim();
         const isFinalizationCommand = finalizationPatterns.some(rx => rx.test(cleanedText));
-        const shouldProcess = isFinalizationCommand || session.readyToProcess;
+        const shouldProcess = isFinalizationCommand; // Solo procesar cuando diga "listo" u orden similar
         
         if (shouldProcess) {
           console.log(`[WASSENGER] ✅ ${isFinalizationCommand ? 'Comando de finalización' : 'Timeout alcanzado'}: "${processedText}"`);
@@ -1439,7 +1468,7 @@ ${prompt}`);
         // Mensajes de confirmación
         if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
           console.log('[WASSENGER] 📤 Enviando mensaje: primera foto recibida');
-          await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos (20s máx) y te responderé con un solo análisis y cotización. No respondo foto por foto, espero a tenerlas todas.`);
+          await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos en una sola respuesta con análisis y cotización. No respondo foto por foto, espero a tenerlas todas.`);
           markFirstAckSent(userId);
 
           // Observabilidad: evento photo_received
@@ -1458,35 +1487,26 @@ ${prompt}`);
           
           // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
           startTimeout(userId, async () => {
-            const result = await completeSession(userId);
-            if (result) {
-              console.log(`[WASSENGER] ⏰ Auto-procesando ${result.photoCount} foto(s) después de timeout...`);
-              await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
-              await saveInteraction({
-                userId,
-                agent: 'AXEL',
-                agentName: 'Axel - PaintBull',
-                intentReason: 'photo_timeout',
-                input: '[PHOTO_TIMEOUT]',
-                output: 'auto_process',
-                meta: {
-                  correlationId: result.sessionFingerprint || null,
-                  photoCount: result.photoCount
-                }
-              });
-              clearQueue(userId);
-            }
+            const reminder = `⏳ Pasaron 20s sin nuevas fotos. Cuando tengas todas listas escribe "listo" y proceso el análisis en una sola respuesta.`;
+            await enviarWhatsApp(userId, reminder);
+            await saveInteraction({
+              userId,
+              agent: 'AXEL',
+              agentName: 'Axel - PaintBull',
+              intentReason: 'photo_timeout_reminder',
+              input: '[PHOTO_TIMEOUT]',
+              output: 'reminder_sent',
+              meta: {
+                correlationId: photoStatus.sessionFingerprint || null,
+                photoCount: photoStatus.currentCount
+              }
+            });
           });
         }
         
         // Si alcanzó el máximo, procesar DENTRO del queue
         if (photoStatus.currentCount >= photoStatus.maxPhotos) {
-          const result = await completeSession(userId);
-          if (result) {
-            console.log('[WASSENGER] 📸 Máximo de fotos alcanzado, procesando cotización...');
-            await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
-            clearQueue(userId);
-          }
+          await enviarWhatsApp(userId, `📸 Ya tengo ${photoStatus.maxPhotos} fotos. Escribe "listo" cuando quieras que analice y cotice en una sola respuesta.`);
         }
       });
       

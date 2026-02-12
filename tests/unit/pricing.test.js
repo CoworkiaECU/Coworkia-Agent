@@ -104,4 +104,18 @@ describe('💰 Cálculo de Precios', () => {
       expect(result.error).toContain('Número de personas debe ser al menos 1');
     });
   });
+
+  describe('Métodos de pago', () => {
+    test('Payphone agrega 5% sobre subtotal con IVA', () => {
+      const result = calculateReservationCost('hotDesk', 2, 1, 'payphone');
+      expect(result.payphoneFee).toBe(0.58);
+      expect(result.totalPrice).toBe(12.08);
+    });
+
+    test('Transferencia no agrega comisión', () => {
+      const result = calculateReservationCost('meetingRoom', 2, 3, 'transferencia');
+      expect(result.payphoneFee).toBe(0);
+      expect(result.totalPrice).toBe(result.subtotalWithIVA);
+    });
+  });
 });

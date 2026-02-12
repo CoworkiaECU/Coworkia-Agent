@@ -15,6 +15,7 @@ import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue } from '../../servicios/axel-photo-collector.js';
 import { processAxelFormMessage, generateFormSummary, generateFormPrompt } from '../../servicios/axel-quote-form.js';
+import { saveQuote } from '../../servicios/axel-quote-db.js';
 import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
 import { generateQuote } from '../../servicios/axel-quote-generator.js';
@@ -555,14 +556,14 @@ function detectFormContinuation(text) {
 }/* ─────────────────────────────────────────────────────────────
    💰 AXEL QUOTE PROCESSOR
 ───────────────────────────────────────────────────────────── */
-async function processAxelQuote(userId, photoUrls, profile) {
+async function processAxelQuote(userId, photoUrls, profile, latestUserText = '') {
   const startTime = Date.now();
   
   try {
     loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
     
-    // 1. Procesar formulario - verificar datos existentes (no regresar temprano)
-    const formResult = await processAxelFormMessage(userId, '');
+    // 1. Procesar formulario con el texto real
+    const formResult = await processAxelFormMessage(userId, latestUserText || '');
     const vehicleData = {
       marca: formResult?.data?.marca || 'Pendiente',
       modelo: formResult?.data?.modelo || 'Pendiente',
@@ -571,6 +572,17 @@ async function processAxelQuote(userId, photoUrls, profile) {
       email: formResult?.data?.email
     };
     const missingFields = formResult?.missingFields || [];
+
+    // 🚧 Bloquear cotización formal si faltan datos críticos
+    if (missingFields.length > 0) {
+      const prompt = generateFormPrompt(missingFields, formResult?.data || {});
+      if (prompt) {
+        await enviarWhatsApp(userId, `📝 Para enviarte la cotización formal necesito:
+
+${prompt}`);
+      }
+      return { success: false, error: 'missing_fields', missingFields };
+    }
 
     // 2. Analizar fotos con Vision AI (agrupado)
     loggers.axel.info('Analyzing collision photos', { userId, photoCount: photoUrls.length });
@@ -595,6 +607,19 @@ async function processAxelQuote(userId, photoUrls, profile) {
     
     // 4. Generar código único
     const { code: quoteCode } = await generateQuoteCode();
+
+    // 4.5 Guardar cotización en BD (trazabilidad)
+    await saveQuote({
+      quoteCode,
+      userPhone: userId,
+      vehicleData,
+      damageAnalysis: visionAnalysis,
+      quoteDetails: quoteResult.quote,
+      priceRange: quoteResult.priceRange,
+      customerName: vehicleData.nombre || profile.whatsappDisplayName || 'Cliente',
+      customerEmail: vehicleData.email || null,
+      photoUrls
+    }).catch(err => console.error('[AXEL-QUOTE] ⚠️ Error guardando cotización:', err));
 
     // 5. Mensaje único al usuario (resumen + solicitud de datos faltantes)
     const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 4).join(', ') || 'No detectado';
@@ -1177,7 +1202,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const noMoreItems = ['no tengo', 'no tengo nada', 'no tengo mas', 'no tengo más'].includes(normalizedText);
 
       if (noMoreItems) {
-        const formStatus = await processAxelFormMessage(userId, '');
+        const formStatus = await processAxelFormMessage(userId, processedText || '');
         const missingFields = formStatus?.missingFields || [];
         const prompt = generateFormPrompt(missingFields, formStatus?.data || {});
         if (prompt) {
@@ -1188,13 +1213,21 @@ ${prompt}`);
         }
       }
 
+      // Actualizar formulario con texto libre mientras se cargan fotos (sin molestar al usuario)
+      if (processedText) {
+        await processAxelFormMessage(userId, processedText).catch(err => {
+          console.error('[AXEL-FORM] ⚠️ Error actualizando con texto libre:', err);
+        });
+      }
+
       const session = await getSession(userId);
       console.log(`[AXEL-DEBUG] 📊 Sesión actual:`, session ? `${session.photoCount} fotos, readyToProcess: ${session.readyToProcess}` : 'null');
       
       if (session && session.photoCount > 0) {
         // Detectar comandos de finalización O timeout expirado
-        const finalizationCommands = ['listo', 'ya', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
-        const isFinalizationCommand = finalizationCommands.some(cmd => normalizedText === cmd || normalizedText.includes(cmd));
+        const finalizationCommands = ['listo', 'ya', 'ya esta', 'ya está', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
+        const cleanedText = normalizedText.replace(/[!.]/g, '').trim();
+        const isFinalizationCommand = finalizationCommands.includes(cleanedText);
         const shouldProcess = isFinalizationCommand || session.readyToProcess;
         
         if (shouldProcess) {
@@ -1206,7 +1239,7 @@ ${prompt}`);
             
             if (result) {
               console.log('[WASSENGER] 🚀 Procesando fotos con IA (respuesta única)...');
-              await processAxelQuote(userId, result.photos, profile);
+              await processAxelQuote(userId, result.photos, profile, processedText || '');
               clearQueue(userId);
             }
           });

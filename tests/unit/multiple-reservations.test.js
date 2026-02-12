@@ -1,6 +1,6 @@
 // src/__tests__/multiple-reservations.test.js
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import { generateConsolidatedTicket, calculateReservationPrice } from '../servicios/campaign-prompts.js';
+import { generateConsolidatedTicket, calculateReservationPrice } from '../../src/servicios/campaign-prompts.js';
 
 describe('🎫 Sistema de Múltiples Reservas', () => {
   describe('calculateReservationPrice()', () => {
@@ -9,14 +9,16 @@ describe('🎫 Sistema de Múltiples Reservas', () => {
       expect(price).toBe(10);
     });
 
-    test('Hot Desk - 2 personas = $20', () => {
+    test('Hot Desk - 2 personas = $10 (individual, no multiplica)', () => {
       const price = calculateReservationPrice('hotDesk', 2, false);
-      expect(price).toBe(20);
+      // Hot Desk es INDIVIDUAL - precio fijo $10
+      expect(price).toBe(10);
     });
 
-    test('Hot Desk - 3 personas = $30', () => {
+    test('Hot Desk - 3 personas = $10 (individual, no multiplica)', () => {
       const price = calculateReservationPrice('hotDesk', 3, false);
-      expect(price).toBe(30);
+      // Hot Desk es INDIVIDUAL - precio fijo $10
+      expect(price).toBe(10);
     });
 
     test('Sala de Reuniones = $29 (fijo, sin importar personas)', () => {

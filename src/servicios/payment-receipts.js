@@ -528,6 +528,12 @@ async function analyzeReceiptImage(messageData, expectedAmount, userId = null) {
         transactionTime: paymentData.transactionTime,
         paymentMethod: paymentData.paymentMethod || 'PayPhone',
         transactionStatus: paymentData.transactionStatus,
+        // Bank transfer fields for validation
+        accountNumberDestination: paymentData.accountNumberDestination,
+        accountHolderSource: paymentData.accountHolderSource,
+        transactionDescription: paymentData.transactionDescription,
+        bankSender: paymentData.bankSender,
+        bankReceiver: paymentData.bankReceiver,
         isTestReceipt: isDiegoTest,
         confidence: paymentData.confidence || 0
       };
@@ -549,6 +555,12 @@ async function analyzeReceiptImage(messageData, expectedAmount, userId = null) {
         transactionTime: paymentData.transactionTime,
         paymentMethod: paymentData.paymentMethod || 'PayPhone',
         transactionStatus: paymentData.transactionStatus,
+        // Bank transfer fields for validation
+        accountNumberDestination: paymentData.accountNumberDestination,
+        accountHolderSource: paymentData.accountHolderSource,
+        transactionDescription: paymentData.transactionDescription,
+        bankSender: paymentData.bankSender,
+        bankReceiver: paymentData.bankReceiver,
         isTestReceipt: isDiegoTest,
         confidence: paymentData.confidence || 0
       };

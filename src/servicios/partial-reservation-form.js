@@ -154,7 +154,7 @@ export class PartialReservationForm {
 
   /**
    * 💵 Calcula el total con impuestos según método de pago
-   * IMPORTANTE: IVA se aplica sobre el subtotal (base + ISD) en tarjetas
+   * FÓRMULA: Base → +15% IVA → Subtotal → +5% comisión proveedor (solo tarjetas)
    */
   calculateTotalWithTaxes() {
     const basePrice = this.getBasePrice();
@@ -175,25 +175,26 @@ export class PartialReservationForm {
     // Normalizar método de pago para cálculo de impuestos
     const metodoPago = this.paymentMethod?.toLowerCase();
     
-    // Métodos de pago con TARJETA (aplican ISD 5% + IVA 15%)
+    // Métodos de pago con TARJETA (aplican comisión 5% + IVA 15%)
     const esPagoConTarjeta = [
       'tarjeta', 'payphone', 'visa', 'mastercard', 'diners', 'paypal',
       'credito', 'debito', 'american express', 'amex', 'alia'
     ].some(metodo => metodoPago?.includes(metodo));
     
     if (esPagoConTarjeta) {
-      // TARJETAS (Visa, Mastercard, Diners, PayPal, Payphone, etc.)
-      // +3.5% comisión tarjeta + 15% IVA sobre base
-      const cardFee = basePrice * 0.035;
-      taxes.cardFee = parseFloat(cardFee.toFixed(2));
-      
+      // TARJETAS: Base → +15% IVA → Subtotal → +5% comisión proveedor
+      // Ejemplo: $10 → +$1.50 = $11.50 → +$0.575 = $12.08 USD
       const iva = basePrice * 0.15;
       taxes.iva = parseFloat(iva.toFixed(2));
       
-      total = basePrice + taxes.cardFee + taxes.iva;
-      console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + Comisión $${taxes.cardFee} + IVA $${taxes.iva} = $${total}`);
+      const subtotalWithIVA = basePrice + iva;
+      const cardFee = subtotalWithIVA * 0.05; // 5% sobre (base + IVA)
+      taxes.cardFee = parseFloat(cardFee.toFixed(2));
+      
+      total = subtotalWithIVA + taxes.cardFee;
+      console.log(`[FORM] 💳 Pago con tarjeta (${this.paymentMethod}): Base $${basePrice} + IVA $${taxes.iva} = $${subtotalWithIVA.toFixed(2)} + Comisión $${taxes.cardFee} = $${total}`);
     } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
-      // TRANSFERENCIAS BANCARIAS (Ecuador - sin comisión)
+      // TRANSFERENCIAS BANCARIAS (sin comisión)
       // Solo +15% IVA sobre base
       const iva = basePrice * 0.15;
       taxes.iva = parseFloat(iva.toFixed(2));

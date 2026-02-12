@@ -412,14 +412,18 @@ export function generateConsolidatedTicket(reservations) {
   
   // Agregar total
   if (total > 0) {
-    ticket += `\n💰 *TOTAL A PAGAR: $${total.toFixed(2)}*\n\n`;
+    // Calcular total con IVA para transferencia/efectivo
+    const totalConIVA = total * 1.15;
     
-    // Calcular recargo 5% para tarjeta
-    const totalConRecargo = (total * 1.05).toFixed(2);
+    // Calcular total con tarjeta: (base + IVA) + 5% comisión
+    // Ejemplo: $10 → +15% IVA = $11.50 → +5% comisión = $12.08
+    const comisionTarjeta = totalConIVA * 0.05;
+    const totalConTarjeta = totalConIVA + comisionTarjeta;
     
+    ticket += `\n💰 *TOTAL A PAGAR: $${totalConIVA.toFixed(2)}* (con IVA 15%)\n\n`;
     ticket += `💳 *FORMAS DE PAGO:*\n`;
-    ticket += `• Transferencia/Payphone: *$${total.toFixed(2)}*\n`;
-    ticket += `• Tarjeta débito/crédito: *$${totalConRecargo}* (+5% recargo)\n\n`;
+    ticket += `• Transferencia/Efectivo: *$${totalConIVA.toFixed(2)}*\n`;
+    ticket += `• Tarjeta débito/crédito: *$${totalConTarjeta.toFixed(2)}* (incluye comisión 5%)\n\n`;
     
     ticket += `📸 Envíame el comprobante cuando hayas pagado`;
   } else if (hasFreeReservation && reservations.length === 1) {

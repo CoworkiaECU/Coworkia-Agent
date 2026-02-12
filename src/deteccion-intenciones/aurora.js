@@ -590,9 +590,9 @@ Para tu reserva del {espacio} el {fecha} a las {hora}:
 🔗 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 
 💰 *DESGLOSE:*
-• Subtotal: {monto} USD
+• Servicio: {base} USD
 • IVA 15%: {iva} USD
-• Comisión Payphone 5%: {comision} USD
+• Comisión proveedor 5%: {comision} USD
 ━━━━━━━━━━━━━━━━━
 💵 *TOTAL:* {total} USD
 

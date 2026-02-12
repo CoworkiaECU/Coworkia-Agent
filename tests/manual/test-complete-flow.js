@@ -3,8 +3,8 @@
  * Valida todas las funciones críticas antes de iniciar pruebas reales
  */
 
-import { PartialReservationForm, extractDataFromMessage } from '../src/servicios/partial-reservation-form.js';
-import { detectCampaignMessage, personalizeCampaignResponse } from '../src/servicios/campaign-prompts.js';
+import { PartialReservationForm, extractDataFromMessage } from '../../src/servicios/partial-reservation-form.js';
+import { detectCampaignMessage, personalizeCampaignResponse } from '../../src/servicios/campaign-prompts.js';
 
 console.log('🧪 INICIANDO TESTS DE VALIDACIÓN\n');
 
@@ -99,10 +99,13 @@ if (transferCalc.total === 11.50 && transferCalc.taxes.iva === 1.50) {
 console.log('\n📋 TEST 6: Impuestos Tarjeta');
 formHotDesk.paymentMethod = 'tarjeta';
 const cardCalc = formHotDesk.calculateTotalWithTaxes();
-if (cardCalc.total === 12.00 && cardCalc.taxes.isd === 0.50 && cardCalc.taxes.iva === 1.50) {
-  console.log('✅ Tarjeta: $10 + 5% ISD + 15% IVA = $12.00');
+// Fórmula: $10 → +15% IVA = $11.50 → +5% comisión = $12.08
+if (cardCalc.total === 12.08 && cardCalc.cardFee === 0.58 && cardCalc.iva === 1.50) {
+  console.log('✅ Tarjeta: $10 + 15% IVA = $11.50 + 5% comisión = $12.08');
 } else {
   console.log('❌ ERROR: Cálculo tarjeta incorrecto:', cardCalc);
+  console.log(`   Esperado: total=12.08, cardFee=0.58, iva=1.50`);
+  console.log(`   Recibido: total=${cardCalc.total}, cardFee=${cardCalc.cardFee}, iva=${cardCalc.iva}`);
   process.exit(1);
 }
 

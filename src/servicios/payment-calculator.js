@@ -80,10 +80,13 @@ export function calculateReservationCost(serviceType, hours, people = 1, payment
   const iva = basePrice * IVA_PERCENTAGE;
   const subtotalWithIVA = basePrice + iva;
 
-  // Calcular comisión Payphone (5% sobre subtotal + IVA) SOLO si paga con tarjeta
+  // Calcular comisión proveedor (5% sobre subtotal con IVA) SOLO si paga con tarjeta
+  // Fórmula: Base → +15% IVA → Subtotal → +5% comisión
+  // Ejemplo: $10 → +$1.50 = $11.50 → +$0.58 = $12.08 USD
+  // IMPORTANTE: Redondear la comisión ANTES de sumar para evitar $12.07 por punto flotante
   let payphoneFee = 0;
   if (paymentMethod === 'payphone' || paymentMethod === 'tarjeta') {
-    payphoneFee = subtotalWithIVA * PAYPHONE_FEE_PERCENTAGE;
+    payphoneFee = parseFloat((subtotalWithIVA * PAYPHONE_FEE_PERCENTAGE).toFixed(2));
   }
 
   const totalPrice = subtotalWithIVA + payphoneFee;

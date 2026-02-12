@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from '@jest/globals';
-import { validateReservation } from '../servicios/reservation-validation.js';
+import { validateReservation } from '../../src/servicios/reservation-validation.js';
 
 describe('Aurora Validation Errors Structure', () => {
   test('validation.errors debe contener objetos con reason, no strings', () => {

@@ -35,7 +35,11 @@ describe('📸 Transcripción de Comprobantes', () => {
       ];
 
       formats.forEach(({ input, expected }) => {
-        const cleaned = input.replace(/[$,]/g, '').replace(',', '.');
+        // Preservar separador decimal: eliminar símbolo monetario pero no la coma
+        const cleaned = input
+          .replace(/\$/g, '') // quita solo el símbolo $
+          .replace(',', '.'); // convierte coma decimal a punto
+
         expect(parseFloat(cleaned)).toBe(expected);
       });
     });

@@ -4,30 +4,16 @@
  * Recopila progresivamente: marca, modelo, año, nombre, email
  */
 
-import databaseService from '../database/database.js';
+import { saveAgentForm, getAgentForm, clearAgentForm } from './agent-form-manager.js';
 
 /**
  * 📝 Guarda/actualiza formulario parcial de Axel en DB
  */
 export async function saveAxelForm(userPhone, formData) {
   try {
-    console.log('[AXEL-FORM] 💾 Guardando formulario:', { userPhone, formData });
-
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 2); // Expira en 2 horas
-
-    await databaseService.run(
-      `INSERT INTO partial_forms (user_phone, form_data, form_type, expires_at)
-       VALUES (?, ?, 'axel_quote', ?)
-       ON CONFLICT(user_phone) DO UPDATE SET 
-         form_data = excluded.form_data,
-         expires_at = excluded.expires_at`,
-      [userPhone, JSON.stringify(formData), expiresAt.toISOString()]
-    );
-
-    console.log('[AXEL-FORM] ✅ Formulario guardado exitosamente');
+    console.log('[AXEL-FORM] 💾 Guardando formulario (agent_forms):', { userPhone });
+    await saveAgentForm(userPhone, 'AXEL', formData, 120);
     return { success: true };
-
   } catch (error) {
     console.error('[AXEL-FORM] ❌ Error guardando formulario:', error);
     return { success: false, error: error.message };
@@ -39,26 +25,11 @@ export async function saveAxelForm(userPhone, formData) {
  */
 export async function getAxelForm(userPhone) {
   try {
-    const row = await databaseService.get(
-      `SELECT form_data, cancelled_at 
-       FROM partial_forms 
-       WHERE user_phone = ? AND form_type = 'axel_quote'`,
-      [userPhone]
-    );
-
-    if (!row) {
+    const formData = await getAgentForm(userPhone, 'AXEL');
+    if (!formData) {
       return { exists: false, data: null };
     }
-
-    const formData = JSON.parse(row.form_data);
-    
-    return {
-      exists: true,
-      data: formData,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    };
-
+    return { exists: true, data: formData };
   } catch (error) {
     console.error('[AXEL-FORM] ❌ Error recuperando formulario:', error);
     return { exists: false, data: null, error: error.message };
@@ -70,11 +41,8 @@ export async function getAxelForm(userPhone) {
  */
 export async function deleteAxelForm(userPhone) {
   try {
-    await databaseService.run(
-      `DELETE FROM partial_forms WHERE user_phone = ? AND form_type = 'axel_quote'`,
-      [userPhone]
-    );
-    console.log('[AXEL-FORM] 🗑️ Formulario eliminado');
+    await clearAgentForm(userPhone, 'AXEL');
+    console.log('[AXEL-FORM] 🗑️ Formulario eliminado (agent_forms)');
     return { success: true };
   } catch (error) {
     console.error('[AXEL-FORM] ❌ Error eliminando formulario:', error);

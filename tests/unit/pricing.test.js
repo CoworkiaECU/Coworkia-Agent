@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from '@jest/globals';
-import { calculateReservationCost } from '../servicios/payment-calculator.js';
+import { calculateReservationCost } from '../../src/servicios/payment-calculator.js';
 
 describe('💰 Cálculo de Precios', () => {
   

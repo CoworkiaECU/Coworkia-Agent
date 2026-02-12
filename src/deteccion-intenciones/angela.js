@@ -89,7 +89,7 @@ export const ANGELA = {
     tono: 'Cálido, amigable y sencillo',
     estilo: 'Lenguaje cercano, emojis médicos, bloques máximo 4 líneas',
     energia: 'Comprensiva y orientada al bienestar del socio',
-    idiomas: ['Español', 'English', 'Runasimi']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua']
   },
 
   responsabilidades: [

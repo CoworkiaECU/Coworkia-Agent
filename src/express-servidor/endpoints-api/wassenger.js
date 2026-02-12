@@ -13,13 +13,14 @@ import { processMembershipPayment, findPendingMembershipLead } from '../../servi
 import { analyzeMedicalImage } from '../../servicios/angela-vision-analysis.js';
 import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue } from '../../servicios/axel-photo-collector.js';
+import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue, markFirstAckSent } from '../../servicios/axel-photo-collector.js';
 import { processAxelFormMessage, generateFormSummary, generateFormPrompt } from '../../servicios/axel-quote-form.js';
 import { saveQuote } from '../../servicios/axel-quote-db.js';
 import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
 import { generateQuote } from '../../servicios/axel-quote-generator.js';
 import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
+import { query } from '../../database/database.js';
 import { processMembershipForm } from '../../servicios/membership-form.js';
 
 import { detectCampaignMessage, personalizeCampaignResponse, CAMPAIGN_PROMPTS } from '../../servicios/campaign-prompts.js';
@@ -556,8 +557,108 @@ function detectFormContinuation(text) {
 }/* ─────────────────────────────────────────────────────────────
    💰 AXEL QUOTE PROCESSOR
 ───────────────────────────────────────────────────────────── */
-async function processAxelQuote(userId, photoUrls, profile, latestUserText = '') {
+const axelQuoteLocks = new Set();
+const axelMissingPromptAt = new Map();
+const AXEL_MISSING_PROMPT_COOLDOWN_MS = 45000;
+
+async function upsertCollisionQuote({
+  quoteCode,
+  userPhone,
+  vehicleData,
+  visionAnalysis,
+  quoteResult,
+  photoUrls,
+  customerName,
+  customerEmail,
+  sessionFingerprint
+}) {
+  const damageType = visionAnalysis?.severity || 'collision';
+  const priceMin = quoteResult?.priceRange?.min || null;
+  const priceMax = quoteResult?.priceRange?.max || null;
+  const currency = quoteResult?.priceRange?.currency || 'USD';
+  const damageDescription = visionAnalysis?.analysis?.summary || visionAnalysis?.analysis?.description || null;
+
+  const sql = `
+    INSERT INTO collision_quotes (
+      id,
+      quote_code,
+      user_phone,
+      damage_type,
+      client_name,
+      vehicle_brand,
+      vehicle_model,
+      vehicle_year,
+      email,
+      phone,
+      damage_description,
+      photo_urls,
+      damage_analysis,
+      quote_details,
+      price_min,
+      price_max,
+      currency,
+      session_fingerprint,
+      status,
+      quote_sent_at,
+      created_at
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'quoted', NOW(), NOW()
+    )
+    ON CONFLICT (quote_code) DO UPDATE SET
+      client_name = EXCLUDED.client_name,
+      vehicle_brand = EXCLUDED.vehicle_brand,
+      vehicle_model = EXCLUDED.vehicle_model,
+      vehicle_year = EXCLUDED.vehicle_year,
+      email = EXCLUDED.email,
+      phone = EXCLUDED.phone,
+      damage_description = EXCLUDED.damage_description,
+      photo_urls = EXCLUDED.photo_urls,
+      damage_analysis = EXCLUDED.damage_analysis,
+      quote_details = EXCLUDED.quote_details,
+      price_min = EXCLUDED.price_min,
+      price_max = EXCLUDED.price_max,
+      currency = EXCLUDED.currency,
+      session_fingerprint = EXCLUDED.session_fingerprint,
+      status = EXCLUDED.status,
+      quote_sent_at = EXCLUDED.quote_sent_at,
+      updated_at = NOW();
+  `;
+
+  const values = [
+    `col-${quoteCode}`,
+    quoteCode,
+    userPhone,
+    damageType,
+    customerName || null,
+    vehicleData?.marca || null,
+    vehicleData?.modelo || null,
+    vehicleData?.año || null,
+    customerEmail || null,
+    userPhone,
+    damageDescription,
+    JSON.stringify(photoUrls || []),
+    JSON.stringify(visionAnalysis || {}),
+    quoteResult?.quote || null,
+    priceMin,
+    priceMax,
+    currency,
+    sessionFingerprint || null
+  ];
+
+  try {
+    await query(sql, values);
+    console.log('[AXEL-QUOTE] 🗄️ collision_quotes upserted', { quoteCode });
+  } catch (error) {
+    console.error('[AXEL-QUOTE] ❌ Error upserting collision_quotes:', error);
+  }
+}
+async function processAxelQuote(userId, photoUrls, profile, latestUserText = '', sessionFingerprint = null) {
   const startTime = Date.now();
+  if (axelQuoteLocks.has(userId)) {
+    loggers.axel.warn('Quote already in progress, skipping duplicate trigger', { userId, photoCount: photoUrls.length });
+    return { success: false, error: 'quote_in_progress' };
+  }
+  axelQuoteLocks.add(userId);
   
   try {
     loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
@@ -577,9 +678,16 @@ async function processAxelQuote(userId, photoUrls, profile, latestUserText = '')
     if (missingFields.length > 0) {
       const prompt = generateFormPrompt(missingFields, formResult?.data || {});
       if (prompt) {
-        await enviarWhatsApp(userId, `📝 Para enviarte la cotización formal necesito:
+        const now = Date.now();
+        const lastPrompt = axelMissingPromptAt.get(userId) || 0;
+        if (now - lastPrompt >= AXEL_MISSING_PROMPT_COOLDOWN_MS) {
+          await enviarWhatsApp(userId, `📝 Para enviarte la cotización formal necesito:
 
 ${prompt}`);
+          axelMissingPromptAt.set(userId, now);
+        } else {
+          console.log('[AXEL-QUOTE] ⏳ Saltando prompt repetido (cooldown)', { userId });
+        }
       }
       return { success: false, error: 'missing_fields', missingFields };
     }
@@ -621,6 +729,19 @@ ${prompt}`);
       photoUrls
     }).catch(err => console.error('[AXEL-QUOTE] ⚠️ Error guardando cotización:', err));
 
+    // 4.6 Guardar también en collision_quotes para reporting unificado
+    await upsertCollisionQuote({
+      quoteCode,
+      userPhone: userId,
+      vehicleData,
+      visionAnalysis,
+      quoteResult,
+      photoUrls,
+      customerName: vehicleData.nombre || profile.whatsappDisplayName || 'Cliente',
+      customerEmail: vehicleData.email || null,
+      sessionFingerprint
+    });
+
     // 5. Mensaje único al usuario (resumen + solicitud de datos faltantes)
     const affectedParts = (visionAnalysis.affectedParts || []).slice(0, 4).join(', ') || 'No detectado';
     const damageDetails = (visionAnalysis.damageDetails || '').slice(0, 300);
@@ -645,6 +766,22 @@ ${prompt}`);
 
     await enviarWhatsApp(userId, finalMessage);
 
+    // Observabilidad: registrar evento de cotización generada
+    await saveInteraction({
+      userId,
+      agent: 'AXEL',
+      agentName: 'Axel - PaintBull',
+      intentReason: 'axel_quote_generated',
+      input: latestUserText || `[${photoUrls.length} fotos]`,
+      output: finalMessage,
+      meta: {
+        quoteCode,
+        photoCount: photoUrls.length,
+        correlationId: sessionFingerprint || quoteCode,
+        missingFields
+      }
+    });
+
     // 6. Enviar email con cotización formal si hay email
     if (vehicleData.email) {
       const emailResult = await sendQuoteEmail({
@@ -660,6 +797,20 @@ ${prompt}`);
       
       if (!emailResult.success) {
         console.error('[AXEL-QUOTE] ❌ Error enviando email:', emailResult.error);
+      } else {
+        await saveInteraction({
+          userId,
+          agent: 'AXEL',
+          agentName: 'Axel - PaintBull',
+          intentReason: 'email_sent',
+          input: vehicleData.email,
+          output: 'quote_email_sent',
+          meta: {
+            quoteCode,
+            correlationId: sessionFingerprint || quoteCode,
+            email: vehicleData.email
+          }
+        });
       }
     }
     
@@ -685,6 +836,8 @@ ${prompt}`);
     loggers.axel.error('Quote processing failed', { userId }, error);
     await enviarWhatsApp(userId, `Hubo un problema técnico. Déjame contactarte manualmente para ayudarte.`);
     return { success: false, error: error.message };
+  } finally {
+    axelQuoteLocks.delete(userId);
   }
 }
 function isOldMessage(data) {
@@ -1225,9 +1378,19 @@ ${prompt}`);
       
       if (session && session.photoCount > 0) {
         // Detectar comandos de finalización O timeout expirado
-        const finalizationCommands = ['listo', 'ya', 'ya esta', 'ya está', 'procesar', 'terminar', 'ok', 'dale', 'enviar'];
+        const finalizationPatterns = [
+          /^listo$/,
+          /^ya$/,
+          /^ya\s+esta$/,
+          /^ya\s+está$/,
+          /^procesar$/,
+          /^terminar$/,
+          /^ok$/,
+          /^dale$/,
+          /^enviar$/
+        ];
         const cleanedText = normalizedText.replace(/[!.]/g, '').trim();
-        const isFinalizationCommand = finalizationCommands.includes(cleanedText);
+        const isFinalizationCommand = finalizationPatterns.some(rx => rx.test(cleanedText));
         const shouldProcess = isFinalizationCommand || session.readyToProcess;
         
         if (shouldProcess) {
@@ -1239,7 +1402,7 @@ ${prompt}`);
             
             if (result) {
               console.log('[WASSENGER] 🚀 Procesando fotos con IA (respuesta única)...');
-              await processAxelQuote(userId, result.photos, profile, processedText || '');
+              await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
               clearQueue(userId);
             }
           });
@@ -1274,16 +1437,43 @@ ${prompt}`);
         }
         
         // Mensajes de confirmación
-        if (photoStatus.currentCount === 1) {
+        if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
           console.log('[WASSENGER] 📤 Enviando mensaje: primera foto recibida');
           await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos (20s máx) y te responderé con un solo análisis y cotización. No respondo foto por foto, espero a tenerlas todas.`);
+          markFirstAckSent(userId);
+
+          // Observabilidad: evento photo_received
+          await saveInteraction({
+            userId,
+            agent: 'AXEL',
+            agentName: 'Axel - PaintBull',
+            intentReason: 'photo_received',
+            input: '[PHOTO]',
+            output: 'ack_first_photo',
+            meta: {
+              correlationId: photoStatus.sessionFingerprint || null,
+              photoCount: photoStatus.currentCount
+            }
+          });
           
           // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
           startTimeout(userId, async () => {
             const result = await completeSession(userId);
             if (result) {
               console.log(`[WASSENGER] ⏰ Auto-procesando ${result.photoCount} foto(s) después de timeout...`);
-              await processAxelQuote(userId, result.photos, profile);
+              await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
+              await saveInteraction({
+                userId,
+                agent: 'AXEL',
+                agentName: 'Axel - PaintBull',
+                intentReason: 'photo_timeout',
+                input: '[PHOTO_TIMEOUT]',
+                output: 'auto_process',
+                meta: {
+                  correlationId: result.sessionFingerprint || null,
+                  photoCount: result.photoCount
+                }
+              });
               clearQueue(userId);
             }
           });
@@ -1294,7 +1484,7 @@ ${prompt}`);
           const result = await completeSession(userId);
           if (result) {
             console.log('[WASSENGER] 📸 Máximo de fotos alcanzado, procesando cotización...');
-            await processAxelQuote(userId, result.photos, profile);
+            await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
             clearQueue(userId);
           }
         }
@@ -1664,7 +1854,10 @@ ${prompt}`);
     await saveConversationMessage(userId, {
       role: 'assistant',
       content: finalReply,
-      agent: normalizeAgentName(resultado.agenteKey)
+      agent: normalizeAgentName(resultado.agenteKey),
+      metadata: {
+        correlationId: resultado.agenteKey === 'AXEL' ? resultado?.quoteCode || null : null
+      }
     });
 
     await saveInteraction({
@@ -1683,6 +1876,7 @@ ${prompt}`);
 
     // 📨 Dividir mensaje automáticamente si es largo/estructurado
     const messageProcessed = splitLongMessage(finalReply);
+    const shouldSplit = resultado.agenteKey !== 'AXEL' && messageProcessed.shouldDelay && messageProcessed.parts.length > 1;
     
     console.log(`[MESSAGE-SPLIT] Análisis de mensaje:`);
     console.log(`   - Longitud original: ${finalReply.length} caracteres`);
@@ -1716,7 +1910,7 @@ ${prompt}`);
       }
     };
 
-    if (messageProcessed.shouldDelay && messageProcessed.parts.length > 1) {
+    if (shouldSplit) {
       // Enviar múltiples mensajes con delay
       console.log(`[MESSAGE-SPLIT] 📨 Dividiendo mensaje en ${messageProcessed.parts.length} partes`);
       

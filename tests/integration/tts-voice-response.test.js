@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { test as jestTest, expect } from '@jest/globals';
+
 /**
  * 🔊 TESTS E2E: Flujo Voz→Voz (Whisper STT + TTS)
  * 
@@ -365,8 +367,11 @@ if (testsFallados === 0) {
   console.log('✅ Fallback a texto funciona');
   console.log('✅ Arquitectura bidireccional validada');
   console.log('✅ Sistema production-ready');
-  process.exit(0);
 } else {
   console.error(`\n❌ ${testsFallados} test(s) E2E fallaron`);
-  process.exit(1);
+  throw new Error(`Flujo Whisper→TTS falló ${testsFallados} test(s)`);
 }
+
+jestTest('tts voice response pseudo-suite', () => {
+  expect(testsFallados).toBe(0);
+});

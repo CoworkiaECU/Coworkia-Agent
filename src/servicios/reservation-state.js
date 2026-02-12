@@ -118,8 +118,8 @@ export async function getPendingConfirmation(userPhone) {
     if (data.formData && data.type === 'partial_form') {
       const form = data.formData;
       
-      // 💰 CALCULAR wasFree: Si freeTrialUsed === false, la reserva es GRATIS
-      const wasFree = form.freeTrialUsed === false;
+      // 💰 CALCULAR wasFree: Solo si la ventana free trial aplica (08:30-10:30)
+      const wasFree = form.freeTrialWindowEligible === true;
       
       // Normalizar datos para createReservation()
       const normalized = {

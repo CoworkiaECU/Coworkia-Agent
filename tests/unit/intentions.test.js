@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { detectarIntencion } from '../deteccion-intenciones/detectar-intencion.js';
+import { detectarIntencion } from '../../src/deteccion-intenciones/detectar-intencion.js';
 
 describe('🧠 Detección de intenciones', () => {
   test('link de confirmación activa modo soporte post-email', () => {

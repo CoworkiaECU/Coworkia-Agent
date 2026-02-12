@@ -12,6 +12,8 @@
  * Validan integración entre audio-validator, transcribeAudio y wassenger
  */
 
+import { test as jestTest, expect } from '@jest/globals';
+
 import { 
   validateAudio, 
   getLocalizedAudioError 
@@ -315,8 +317,11 @@ if (failedTests === 0) {
   console.log('✅ Warnings manejados correctamente');
   console.log('✅ Fallback a español funcionando');
   console.log('✅ Sistema production-ready\n');
-  process.exit(0);
 } else {
   console.log(`\n⚠️  ${failedTests} tests fallaron - Revisar flujo wassenger.js\n`);
-  process.exit(1);
+  throw new Error(`Flujo Whisper falló ${failedTests} tests`);
 }
+
+jestTest('whisper wassenger pseudo-suite', () => {
+  expect(failedTests).toBe(0);
+});

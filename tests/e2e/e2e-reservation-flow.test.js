@@ -10,9 +10,9 @@
  */
 
 import { jest } from '@jest/globals';
-import databaseService from '../database/database.js';
-import { checkAvailability } from '../servicios/calendario.js';
-import { PartialReservationForm, extractDataFromMessage, saveForm, getOrCreateForm } from '../servicios/partial-reservation-form.js';
+import databaseService from './database/database.js';
+import { checkAvailability } from '../../src/servicios/calendario.js';
+import { PartialReservationForm, extractDataFromMessage, saveForm, getOrCreateForm } from '../../src/servicios/partial-reservation-form.js';
 
 describe('🔄 E2E: Flujo Completo de Reserva', () => {
   const testPhone = '+593987654321';
@@ -123,7 +123,7 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
       expect(result.available).toBe(true);
     });
 
-    test('debe rechazar horario fuera de working hours (antes 7am o después 8pm)', async () => {
+    test('debe rechazar horario fuera de working hours (antes 8:30am o después 7pm)', async () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const fecha = tomorrow.toISOString().split('T')[0];
@@ -173,6 +173,55 @@ describe('🔄 E2E: Flujo Completo de Reserva', () => {
   });
 
   describe('🔒 Conflictos y disponibilidad real', () => {
+    test('debe marcar ocupado si hay más de 5 reservas en el mismo horario', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const fecha = tomorrow.toISOString().split('T')[0];
+      
+      await databaseService.run(
+        `INSERT OR IGNORE INTO users (phone_number, free_trial_used) VALUES (?, ?)`,
+        [testPhone, 0]
+      );
+
+      // Crear 6 reservas confirmadas en el mismo horario
+      for (let i = 0; i < 6; i++) {
+        await databaseService.run(
+          `INSERT INTO reservations (id, user_phone, service_type, date, start_time, end_time, duration_hours, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [`test-max-${i}`, `${testPhone}-${i}`, 'hotDesk', fecha, '10:00', '12:00', 2, 'confirmed']
+        );
+      }
+
+      const result = await checkAvailability(fecha, '10:00', 2, 'hotDesk');
+      expect(result.available).toBe(false);
+      expect(result.reason).toMatch(/ocupado|máximo|no disponible/i);
+    });
+
+    test('debe sugerir alternativas dejando 15 minutos libres entre reservas', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const fecha = tomorrow.toISOString().split('T')[0];
+      
+      await databaseService.run(
+        `INSERT OR IGNORE INTO users (phone_number, free_trial_used) VALUES (?, ?)`,
+        [testPhone, 0]
+      );
+      
+      // Bloquear 10:00-12:00
+      await databaseService.run(
+        `INSERT INTO reservations (id, user_phone, service_type, date, start_time, end_time, duration_hours, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        ['test-gap', testPhone, 'hotDesk', fecha, '10:00', '12:00', 2, 'confirmed']
+      );
+      
+      const result = await checkAvailability(fecha, '10:00', 2, 'hotDesk');
+      expect(result.available).toBe(false);
+      expect(result.alternatives).toBeDefined();
+      // No debe proponer inmediatamente a las 12:00 porque falta el buffer de 15 minutos
+      const times = (result.alternatives || []).map(a => a.time);
+      expect(times).not.toContain('12:00');
+    });
+
     test('debe detectar conflicto con reserva existente', async () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);

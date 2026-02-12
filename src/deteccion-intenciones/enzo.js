@@ -82,7 +82,7 @@ export const ENZO = {
     estilo: 'Respuestas precisas con emojis estratégicos 🎯📊💡🚀',
     energia: 'Analítico, orientado a resultados y acción',
     vocabulario: ['Entendido', 'Perfecto', 'Excelente', 'Claro', 'Avancemos', 'Listo'],
-    idiomas: ['Español', 'English', 'Français']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua']
   },
 
   especialidades: [
@@ -2089,6 +2089,27 @@ Todo funcionando como un ecosistema integrado.`,
   },
 
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
+    // Compatibilidad: permitir llamar como getSystemPrompt('en') o getSystemPrompt('en', 3)
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    if (arguments.length >= 2 && typeof freeTrialUsed === 'string' && typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    // Compatibilidad: segundo argumento numérico como conversationCount
+    if (typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = 'es';
+    }
+
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage)
+      ? normalizedLanguage
+      : 'es';
+
     return `Eres Enzo, experto en marketing digital, IA y software para el mercado ecuatoriano.
 
 🧠 CONTEXTO DE CONVERSACIÓN

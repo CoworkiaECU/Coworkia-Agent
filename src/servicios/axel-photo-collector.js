@@ -38,7 +38,9 @@ export async function addPhoto(userId, photoUrl, photoType = 'image') {
       photos: [],
       startTime: Date.now(),
       lastPhotoTime: Date.now(),
-      timeoutId: null
+      timeoutId: null,
+        firstAckSent: false,
+        sessionFingerprint: `${userId}-${Date.now()}`
     };
     photoSessions.set(userId, session);
     console.log(`[AXEL-PHOTOS] ✨ Nueva sesión creada para ${userId}`);
@@ -74,7 +76,9 @@ export async function addPhoto(userId, photoUrl, photoType = 'image') {
     currentCount: session.photos.length,
     maxPhotos: MAX_PHOTOS,
     canAddMore: session.photos.length < MAX_PHOTOS,
-    isReady: session.photos.length >= MIN_PHOTOS
+    isReady: session.photos.length >= MIN_PHOTOS,
+    firstAckSent: session.firstAckSent,
+    sessionFingerprint: session.sessionFingerprint
   };
 }
 
@@ -97,7 +101,9 @@ export async function getSession(userId) {
         photos: dbSession.photoUrls.map(url => ({ url, type: 'image', timestamp: Date.now() })),
         startTime: new Date(dbSession.createdAt).getTime(),
         lastPhotoTime: new Date(dbSession.lastPhotoAt).getTime(),
-        timeoutId: null
+        timeoutId: null,
+        firstAckSent: true, // Suponemos que ya se notificó al usuario
+        sessionFingerprint: `${userId}-${new Date(dbSession.createdAt).getTime()}`
       };
       photoSessions.set(userId, session);
       console.log(`[AXEL-PHOTOS] ✅ Sesión recuperada de BD: ${dbSession.photoCount} fotos`);
@@ -120,8 +126,20 @@ export async function getSession(userId) {
     isExpired: elapsed >= PHOTO_TIMEOUT_MS,
     canAddMore: session.photos.length < MAX_PHOTOS,
     isReady: session.photos.length >= MIN_PHOTOS,
-    readyToProcess: session.readyToProcess || false
+    readyToProcess: session.readyToProcess || false,
+    firstAckSent: session.firstAckSent || false,
+    sessionFingerprint: session.sessionFingerprint
   };
+}
+
+/**
+ * 📌 Marcar que ya se envió el mensaje de primera foto
+ */
+export function markFirstAckSent(userId) {
+  const session = photoSessions.get(userId);
+  if (!session) return false;
+  session.firstAckSent = true;
+  return true;
 }
 
 /**
@@ -182,7 +200,8 @@ export async function completeSession(userId) {
       photos: dbSession.photoUrls,
       photoCount: dbSession.photoUrls.length,
       duration: 0,
-      fromDatabase: true
+      fromDatabase: true,
+      sessionFingerprint: `${userId}-${new Date(dbSession.createdAt).getTime()}`
     };
   }
   
@@ -203,7 +222,8 @@ export async function completeSession(userId) {
   return {
     photos,
     photoCount,
-    duration: Date.now() - session.startTime
+    duration: Date.now() - session.startTime,
+    sessionFingerprint: session.sessionFingerprint
   };
 }
 
@@ -343,10 +363,12 @@ export default {
   startTimeout,
   completeSession,
   cancelSession,
+  resetUserSession,
   canProcessQuote,
   getStats,
   queueTask,
   clearQueue,
+  markFirstAckSent,
   MIN_PHOTOS,
   MAX_PHOTOS,
   PHOTO_TIMEOUT_MS

@@ -439,7 +439,7 @@ ${compositePayment ? `
 • Autorización: ${paymentData.authorizationNumber || 'N/A'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ *PAGO VERIFICADO Y CONFIRMADO*
+✅ *PAGO VERIFICADO AUTOMÁTICAMENTE*
 
 🏢 *Coworkia Business Center*
 📍 Whymper 403, Edificio Finistere, Quito

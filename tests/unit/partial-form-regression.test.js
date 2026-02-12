@@ -6,13 +6,13 @@
 import { describe, test, expect, jest } from '@jest/globals';
 
 // Mock de reservation-state para tests unitarios
-jest.unstable_mockModule('../servicios/reservation-state.js', () => ({
+jest.unstable_mockModule('../../src/servicios/reservation-state.js', () => ({
   getPendingConfirmation: jest.fn(),
   setPendingConfirmation: jest.fn(),
   clearPendingConfirmation: jest.fn()
 }));
 
-const { extractDataFromMessage, PartialReservationForm } = await import('../servicios/partial-reservation-form.js');
+const { extractDataFromMessage, PartialReservationForm } = await import('../../src/servicios/partial-reservation-form.js');
 
 describe('🧪 Detección de datos en frases reales', () => {
   

@@ -10,6 +10,8 @@
  * Paridad con Vision AI: Testing exhaustivo antes de deploy
  */
 
+import { test as jestTest, expect } from '@jest/globals';
+
 import { 
   validateAudioFormat,
   validateAudioSize,
@@ -272,8 +274,12 @@ console.log('='.repeat(60));
 
 if (failedTests === 0) {
   console.log('\n🎉 TODOS LOS TESTS PASARON - audio-validator.js 100% funcional\n');
-  process.exit(0);
 } else {
   console.log(`\n⚠️  ${failedTests} tests fallaron - Revisar implementación\n`);
-  process.exit(1);
+  throw new Error(`audio-validator falló ${failedTests} test(s)`);
 }
+
+// Registrar un test mínimo para que Jest marque la suite
+jestTest('audio-validator pseudo-suite', () => {
+  expect(failedTests).toBe(0);
+});

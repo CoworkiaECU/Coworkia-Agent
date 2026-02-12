@@ -95,7 +95,7 @@ export const PAULA = {
     tono: 'Profesional y entusiasta, consultivo de alto nivel, lujo y exclusividad',
     estilo: 'Escucha activa, transparencia total (pros Y contras), match perfecto para clientes selectos',
     energia: 'Entusiasta con propiedades premium, respetuoso del tiempo del cliente con poder adquisitivo',
-    idiomas: ['Español', 'English', 'Français'],
+    idiomas: ['Español', 'English'],
     perfil_cliente: 'Alto nivel adquisitivo, buscan exclusividad, calidad y lujo',
     nunca: [
       'Presionar para comprar',

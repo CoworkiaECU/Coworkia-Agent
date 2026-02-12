@@ -83,7 +83,7 @@ export const ALUNA = {
     tono: 'Empático, motivador y consultivo',
     estilo: 'Preguntas estratégicas, orientación al cierre',
     energia: 'Entusiasta pero no agresiva, asesora con valor',
-    idiomas: ['Español', 'English', 'Français']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua']
   },
 
   responsabilidades: [

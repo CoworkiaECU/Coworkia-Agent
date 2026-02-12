@@ -48,8 +48,9 @@ CRITERIOS DE SEVERIDAD:
 
 Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
 
-    // Analizar TODAS las fotos con Vision AI en una sola llamada
-    const analysisResult = await analyzeImage(photoUrls, visionPrompt);
+    // Analizar solo la primera foto (limitación actual documentada)
+    const primaryPhoto = photoUrls[0];
+    const analysisResult = await analyzeImage(primaryPhoto, visionPrompt);
 
     if (!analysisResult.success) {
       console.error('[AXEL-VISION] ❌ Error en Vision API:', analysisResult.error);
@@ -62,7 +63,8 @@ Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
     // Parsear respuesta JSON
     let analysisData;
     try {
-      const jsonMatch = analysisResult.content.match(/\{[\s\S]*\}/);
+      const rawContent = analysisResult.content || analysisResult.analysis || '';
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysisData = JSON.parse(jsonMatch[0]);
       } else {
@@ -71,10 +73,11 @@ Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
     } catch (parseError) {
       console.error('[AXEL-VISION] ⚠️ Error parseando JSON, usando análisis de texto:', parseError);
       // Fallback: extraer manualmente
+      const fallbackText = analysisResult.content || analysisResult.analysis || '';
       analysisData = {
-        severity: analysisResult.content.includes('SEVERO') ? 'SEVERO' : 
-                  analysisResult.content.includes('MODERADO') ? 'MODERADO' : 'LEVE',
-        damageDetails: analysisResult.content,
+        severity: fallbackText.includes('SEVERO') ? 'SEVERO' : 
+                  fallbackText.includes('MODERADO') ? 'MODERADO' : 'LEVE',
+        damageDetails: fallbackText,
         affectedParts: [],
         hiddenDamageRisk: 'MEDIO',
         estimatedRepairDays: '2-5 días',
@@ -97,7 +100,7 @@ Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
       hiddenDamageRisk: analysisData.hiddenDamageRisk || 'MEDIO',
       estimatedRepairDays: analysisData.estimatedRepairDays || '2-5 días',
       urgentIssues: analysisData.urgentIssues || [],
-      analysis: analysisResult.content,
+      analysis: analysisResult.content || analysisResult.analysis,
       photoCount: photoUrls.length
     };
 

@@ -40,11 +40,11 @@ describe('🎯 Routing Edge Cases', () => {
       expect(intent.reason).toContain('sticky_agent');
     });
 
-    test('usuario con AURORA dice "membresía" → sugiere ALUNA', () => {
+    test('usuario con AURORA dice "membresía" → deriva a ALUNA', () => {
       const intent = detectarIntencion('quiero info de membresías', 'AURORA');
-      // Aurora detecta tema Aluna y sugiere pero mantiene control
-      expect(intent.agent).toBe('AURORA');
-      expect(intent.reason).toContain('aluna_topic');
+      // Aurora detecta tema Aluna y deriva al especialista
+      expect(intent.agent).toBe('ALUNA');
+      expect(intent.reason).toContain('aluna_keyword');
       expect(intent.flags?.suggestedAgent).toBe('ALUNA');
     });
 

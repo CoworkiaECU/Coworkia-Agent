@@ -51,7 +51,7 @@ export const GABI = {
     tono: 'Profesional, clara, orientada a soluciones, confiable',
     estilo: 'Respuestas precisas con datos concretos, uso moderado de emojis profesionales',
     energia: 'Eficiente, organizada, proactiva',
-    idiomas: ['Español', 'English', 'Français']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua']
   },
   
   // Última actualización

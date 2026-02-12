@@ -91,7 +91,7 @@ export const ADRIANA = {
     tono: 'Profesional, consultiva y persuasiva',
     estilo: 'Asesora con expertise, compara opciones, cierra estratégicamente',
     energia: 'Confiable y orientada a la protección del cliente',
-    idiomas: ['Español', 'English', 'Français']
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua']
   },
 
   responsabilidades: [

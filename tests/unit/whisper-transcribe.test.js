@@ -12,6 +12,8 @@
  * Para producción: configurar OPENAI_API_KEY y probar con audios reales
  */
 
+import { test as jestTest, expect } from '@jest/globals';
+
 console.log('\n🎤 TESTS INTEGRACIÓN: transcribeAudio()\n');
 console.log('═══════════════════════════════════════════════════════════\n');
 
@@ -307,8 +309,12 @@ if (failedTests === 0) {
   console.log('✅ Español, English, Français, Italiano, Português, Quechua soportados');
   console.log('✅ Fallback automático a español funcionando');
   console.log('✅ Paridad con language-detector.js confirmada\n');
-  process.exit(0);
 } else {
   console.log(`\n⚠️  ${failedTests} tests fallaron - Revisar implementación\n`);
-  process.exit(1);
+  throw new Error(`transcribeAudio falló ${failedTests} test(s)`);
 }
+
+// Registrar suite para Jest y validar que el runner manual pasó
+jestTest('whisper transcribe pseudo-suite', () => {
+  expect(failedTests).toBe(0);
+});

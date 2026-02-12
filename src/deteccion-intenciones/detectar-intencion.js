@@ -5,7 +5,7 @@
 
 // Keywords AURORA ↔ ALUNA (detección automática natural)
 const ALUNA_KEYWORDS = [
-  'membresía', 'membresia', 'plan mensual', 'planes',
+  'membresía', 'membresias', 'membresías', 'membresia', 'plan mensual', 'planes',
   'plan 10', 'plan10', 'plan 20', 'plan20',
   'oficina virtual', 'virtual office', 'sala reuniones', 'meeting room'
 ];
@@ -184,6 +184,22 @@ const IDENTITY_QUESTION_PATTERNS = [
   /que\s+servicios\s+ofrecen/,
   /cuales\s+son\s+tus\s+servicios/,
   /que\s+es\s+coworkia/
+];
+
+// Keywords de colisión/daño vehicular para AXEL
+const AXEL_COLLISION_KEYWORDS = [
+  'choque', 'chocar', 'chocaron', 'accidente', 'colision', 'colisión',
+  'abolladura', 'abollado', 'golpe', 'parachoques', 'paragolpes', 'fender',
+  'latonería', 'pintura', 'pintar', 'reparar carro', 'reparar auto', 'enderezar',
+  'cotizar daño', 'costo reparar', 'cotizacion carro', 'cotizacion auto', 'rayon', 'raspon'
+];
+
+const AXEL_DATA_KEYWORDS = [
+  'marca', 'modelo', 'ano', 'año', 'email', 'correo', 'mail', 'nombre'
+];
+
+const AXEL_PHOTO_KEYWORDS = [
+  'foto', 'fotos', 'imagen', 'imagenes', 'imágenes', 'envié foto', 'subi foto', 'subí foto'
 ];
 
 /**
@@ -483,6 +499,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
       return { agent: 'PAULA', reason: 'trigger @Paula', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'PAULA' } };
     }
 
+    if (/@tomi/i.test(text)) {
+      return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
+    }
+
     if (/@aluna/i.test(text)) {
       return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
     }
@@ -532,6 +552,15 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   
   // 2.3) Cancelación detectada - mantener agente actual pero marcar flag
   if (isCancelacion) {
+    // 🟡 Caso especial: mensaje "ya no... mejor cuéntame de las membresías" debe pasar a Aluna
+    if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
+      return {
+        agent: 'ALUNA',
+        reason: 'frustrated_user_pivots_to_memberships',
+        flags: { cancelacion: true, suggestedAgent: 'ALUNA' }
+      };
+    }
+
     return {
       agent: currentAgent, // Mantener agente actual
       reason: 'user cancellation request',
@@ -603,6 +632,27 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   // BENEFICIO: Conversaciones no se interrumpen por keywords accidentales
   
   const SPECIALIZED_AGENTS = ['ALUNA', 'ADRIANA', 'ENZO', 'ANGELA', 'AXEL', 'GABI', 'PAULA'];
+
+  // 5.0) Si AXEL está activo, seguir detectando señales relevantes sin cambiar de agente
+  if (currentAgent === 'AXEL') {
+    const hasCollisionIntent = AXEL_COLLISION_KEYWORDS.some(k => normalized.includes(k));
+    const hasDataIntent = AXEL_DATA_KEYWORDS.some(k => normalized.includes(k));
+    const hasPhotoIntent = AXEL_PHOTO_KEYWORDS.some(k => normalized.includes(k));
+
+    if (hasCollisionIntent || hasDataIntent || hasPhotoIntent) {
+      return {
+        agent: 'AXEL',
+        reason: 'axel_sticky_intent_detected',
+        flags: {
+          maintainingActive: true,
+          requiresExplicitMention: true,
+          axelQuoteIntent: hasCollisionIntent,
+          axelDataCompletionIntent: hasDataIntent,
+          axelPhotoCompletionIntent: hasPhotoIntent
+        }
+      };
+    }
+  }
   
   // 5.1) Si agente especializado está activo → MANTENER (sticky)
   if (SPECIALIZED_AGENTS.includes(currentAgent)) {
@@ -619,18 +669,20 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   }
   
   // 5.2) SOLO si Aurora está activa: detectar keywords para SUGERIR
-  //      (Aurora puede detectar temas, pero NO cambia automáticamente)
+  //      (Aurora puede detectar temas y escalar a agentes especializados)
   if (currentAgent === 'AURORA') {
     // Detectar keywords Aluna (membresías)
     if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
-      console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - sugiriendo @aluna');
+      console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - sugerir ALUNA');
       return { 
-        agent: 'AURORA',  // ✅ Aurora sigue activa
-        reason: 'aurora_detected_aluna_topic - suggest only',
+        agent: 'ALUNA',
+        reason: 'aurora_aluna_keyword',
         flags: { 
           suggestedAgent: 'ALUNA',
-          requiresMention: true,  // Usuario debe decir @aluna
-          isKeywordMatch: true
+          fromAgent: currentAgent,
+          targetAgent: 'ALUNA',
+          isKeywordMatch: true,
+          maintainingActive: true
         }
       };
     }
@@ -639,7 +691,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     if (AURORA_KEYWORDS.some(k => text.includes(k))) {
       return { 
         agent: 'AURORA', 
-        reason: 'aurora_topic_confirmed',
+        reason: 'aurora_keyword_confirmed',
         flags: { confirmedAurora: true, isKeywordMatch: true }
       };
     }

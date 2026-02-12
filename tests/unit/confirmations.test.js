@@ -7,10 +7,10 @@ import { describe, test, expect, beforeEach } from '@jest/globals';
 import { 
   isPositiveResponse, 
   isNegativeResponse
-} from '../servicios/confirmation-flow.js';
+} from '../../src/servicios/confirmation-flow.js';
 import {
   shouldActivateConfirmation 
-} from '../servicios/aurora-confirmation-helper.js';
+} from '../../src/servicios/aurora-confirmation-helper.js';
 
 describe('🎯 Sistema de Confirmaciones', () => {
   

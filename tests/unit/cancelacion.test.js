@@ -2,7 +2,7 @@
  * Tests para verificar flujo de cancelación
  */
 
-import { detectarCancelacion } from '../deteccion-intenciones/detectar-intencion.js';
+import { detectarCancelacion } from '../../src/deteccion-intenciones/detectar-intencion.js';
 
 describe('Detección de cancelación', () => {
   test('detecta "cancela" simple', () => {

@@ -176,7 +176,7 @@ export function detectLanguage(message, preferredLanguage = null) {
   }
 
   // Calcular confianza normalizada (0-1)
-  const confidence = Math.min(maxScore / 10, 1.0);
+  const confidence = Math.min(maxScore / 5, 1.0);
 
   return {
     language: detectedLang,
@@ -322,7 +322,17 @@ export function getUserLanguage(message, preferredLanguage = null) {
 
   // 2. Detectar idioma del mensaje actual
   const detected = detectLanguage(message, preferredLanguage);
-  
+
+  // 2.1 Si detecta idioma distinto al preferido con confianza moderada, permitir cambio
+  const isLanguageSwitch = preferredLanguage && detected.language !== preferredLanguage;
+  if (isLanguageSwitch && detected.confidence >= 0.3) {
+    return {
+      ...detected,
+      confidence: Math.max(detected.confidence, 0.8),
+      source: 'auto_detected_language_switch'
+    };
+  }
+
   // 3. Si la confianza es alta (>0.7), usar idioma detectado
   if (detected.confidence > 0.7) {
     return {

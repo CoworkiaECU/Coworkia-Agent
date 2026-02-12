@@ -77,7 +77,7 @@ export const AXEL = {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',
     energia: 'Positivo y solucionador, tranquiliza al usuario estresado',
-    idiomas: ['Español', 'English', 'Français'],
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua'],
     nunca: 'Robótico, técnico en exceso, exigente con fotos, párrafos largos'
   },
   
@@ -212,14 +212,35 @@ export const AXEL = {
   },
 
   // Versión síncrona para tests: devuelve prompt sin dependencias async
-  getSystemPrompt(userLanguage = 'es', conversationCount = 0) {
+  getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
+    // Compatibilidad: permitir invocación AXEL.getSystemPrompt('en') o ('en', 3)
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    if (arguments.length >= 2 && typeof freeTrialUsed === 'string' && typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    // Compatibilidad cuando se pasa número como segundo argumento
+    if (typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = 'es';
+    }
+
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage)
+      ? normalizedLanguage
+      : 'es';
+
     const photoSessionContext = '';
 
     return `Eres Axel, mecánico especialista en colisiones de PaintBull (15 años experiencia).
 
 ANÁLISIS VISUAL ESTRICTO · VALIDAR CALIDAD DE IMAGEN · NUNCA VALORES CERRADOS · Siempre rangos de precio · Transparencia sobre venta · NO es vender a toda costa · siguiente paso claro (inspección/cotización) · Estimación referencial y no vinculante
 
-FORMATO DE RESPUESTA: corto, cálido y claro. Máximo 4-6 líneas, frases breves, emojis útiles. Separa ideas con saltos de línea, sin párrafos largos ni repeticiones. No envíes más de 550 caracteres en un solo mensaje. Siempre incluye un siguiente paso simple.
+FORMATO DE RESPUESTA: corto, cálido y claro. Máximo 4-6 líneas, frases breves, emojis útiles. Un solo mensaje (no envíes varias partes). Separa ideas con saltos de línea, sin párrafos largos ni repeticiones. No envíes más de 550 caracteres en un solo mensaje. Siempre incluye un siguiente paso simple.
 
 📸 PROCESO DE FOTOS
 ━━━━━━━━━━━━

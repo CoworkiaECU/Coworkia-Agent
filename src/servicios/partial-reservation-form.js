@@ -41,11 +41,26 @@ const NOMBRES_FERIADOS = {
   '04-10': 'Viernes Santo'
 };
 
+function timeStrToMinutes(timeStr) {
+  if (!timeStr || !/\d{1,2}:\d{2}/.test(timeStr)) return null;
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function isFreeTrialWindowEligible(spaceType, timeStr) {
+  if (spaceType !== 'hotDesk') return false;
+  const mins = timeStrToMinutes(timeStr);
+  if (mins === null) return false;
+  const start = 8 * 60 + 30; // 08:30
+  const end = 10 * 60 + 30;  // 10:30
+  return mins >= start && mins <= end;
+}
+
 /**
  * 🎯 Clase que representa un formulario parcial de reserva
  */
 export class PartialReservationForm {
-  constructor(userId, existingData = {}, freeTrialUsed = null) {
+  constructor(userId, existingData = {}, freeTrialUsed = false) {
     this.userId = userId;
     this.spaceType = existingData.spaceType || null;      // 'hotDesk' | 'meetingRoom'
     this.date = existingData.date || null;                // '2025-11-12'
@@ -54,7 +69,7 @@ export class PartialReservationForm {
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
     this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
-    this.freeTrialUsed = freeTrialUsed;                   // ← Estado del free trial del usuario (null = por cargar)
+    this.freeTrialUsed = existingData.freeTrialUsed ?? freeTrialUsed ?? false; // ← Estado del free trial del usuario (null = por cargar)
     this.updatedAt = new Date();
   }
 
@@ -116,11 +131,9 @@ export class PartialReservationForm {
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
     
-    // 🎉 LÓGICA CORRECTA:
-    // - Cliente NUEVO con HOT DESK (freeTrialUsed === false): NO pedir paymentMethod (es gratis)
-    // - Cliente RECURRENTE (freeTrialUsed === true): SÍ pedir paymentMethod (debe pagar)
-    // - Meeting Room SIEMPRE paga: SÍ pedir paymentMethod
-    const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+    // Free trial solo entre 08:30 y 10:30 para hot desk; fuera de esa ventana se paga siempre
+    const isWindowEligible = isFreeTrialWindowEligible(this.spaceType, this.time);
+    const isHotDeskFreeTrial = isWindowEligible && this.spaceType === 'hotDesk';
     
     if (!this.paymentMethod && !isHotDeskFreeTrial) {
       missing.push('paymentMethod');
@@ -371,7 +384,7 @@ export class PartialReservationForm {
     // ✅ CASO 1: Formulario COMPLETO - Confirmación final
     if (missing.length === 0) {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-      const isFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+      const isFreeTrial = isFreeTrialWindowEligible(this.spaceType, this.time);
       
       // ✅ Formatear fecha para mostrar día de semana + mes en español
       const formattedDate = this.formatDate(this.date);
@@ -463,13 +476,12 @@ export class PartialReservationForm {
    */
   toJSON() {
     // Calcular precio con impuestos:
-    // - Cliente nuevo HOT DESK (freeTrialUsed = false + hotDesk): totalPrice = 0
+    // - HOT DESK en ventana 08:30-10:30: totalPrice = 0
     // - Sala reuniones SIEMPRE paga (meetingRoom): calcular precio
-    // - Cliente recurrente (freeTrialUsed = true): calcular con impuestos
+    // - Fuera de ventana siempre paga
     let pricing = { total: 0 };
     
-    // ✅ REGLA: Solo Hot Desk puede ser gratis para nuevos clientes
-    const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
+    const isHotDeskFreeTrial = isFreeTrialWindowEligible(this.spaceType, this.time);
     
     if (isHotDeskFreeTrial) {
       // Cliente nuevo con Hot Desk - GRATIS
@@ -495,7 +507,8 @@ export class PartialReservationForm {
       durationHours: this.durationHours,
       paymentMethod: this.paymentMethod,
       totalPrice: pricing.total,  // ← Calcular total con impuestos
-      freeTrialUsed: this.freeTrialUsed,  // ← Preservar estado del free trial
+      freeTrialUsed: this.freeTrialUsed,  // ← Valor original (no se consume fuera de ventana)
+      freeTrialWindowEligible: isHotDeskFreeTrial,
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -644,7 +657,7 @@ export function extractDataFromMessage(message, currentForm) {
     'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
     'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
   };
-  const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(\w+)/);
+  const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/);
   
   // 🗓️ Detectar "lunes 19 enero 2026" o "lunes 19 enero" o "lunes 19"
   const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?\b/);
@@ -1028,4 +1041,21 @@ Estamos abiertos:
     confirmationMessage, // 🆕 Mensaje especial de confirmación con precios
     canPauseAndResume: true // 🆕 Indica que el formulario soporta pausar/reanudar
   };
+}
+
+// 💾 Persiste el formulario parcial en pending_confirmations (tabla legacy usada por tests)
+export async function saveForm(form, ttlMinutes = 120) {
+  try {
+    const payload = {
+      type: 'partial_form',
+      formData: form.toJSON(),
+      _type: 'partial_form'
+    };
+
+    await setPendingConfirmation(form.userId, payload, ttlMinutes);
+    return true;
+  } catch (error) {
+    console.error('[FORM] ❌ Error guardando formulario parcial:', error);
+    return false;
+  }
 }

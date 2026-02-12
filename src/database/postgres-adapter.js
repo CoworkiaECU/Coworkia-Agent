@@ -422,6 +422,7 @@ class PostgresAdapter {
           price_min DECIMAL(10,2),
           price_max DECIMAL(10,2),
           currency TEXT DEFAULT 'USD',
+          session_fingerprint TEXT,
           inspection_scheduled TIMESTAMP,
           inspection_completed BOOLEAN DEFAULT FALSE,
           quote_amount DECIMAL(10,2),
@@ -433,6 +434,12 @@ class PostgresAdapter {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
         )
+      `);
+
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_collision_quotes_fingerprint
+        ON collision_quotes(session_fingerprint)
+        WHERE session_fingerprint IS NOT NULL;
       `);
 
       // 📸 Tabla de sesiones de fotos AXEL (backup y recuperación)

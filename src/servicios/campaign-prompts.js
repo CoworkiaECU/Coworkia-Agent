@@ -396,8 +396,10 @@ export function generateConsolidatedTicket(reservations) {
     } else {
       // Lógica de precios
       if (espacio === 'Hot Desk') {
-        precio = `$${personas * 10}`;
-        total += personas * 10;
+        // Hot Desk se cobra por persona
+        const hotDeskPrice = personas * 10;
+        precio = `$${hotDeskPrice}`;
+        total += hotDeskPrice;
       } else if (espacio === 'Sala de Reuniones') {
         precio = '$29';
         total += 29;
@@ -412,19 +414,14 @@ export function generateConsolidatedTicket(reservations) {
   
   // Agregar total
   if (total > 0) {
-    // Calcular total con IVA para transferencia/efectivo
-    const totalConIVA = total * 1.15;
-    
-    // Calcular total con tarjeta: (base + IVA) + 5% comisión
-    // Ejemplo: $10 → +15% IVA = $11.50 → +5% comisión = $12.08
-    const comisionTarjeta = totalConIVA * 0.05;
-    const totalConTarjeta = totalConIVA + comisionTarjeta;
-    
-    ticket += `\n💰 *TOTAL A PAGAR: $${totalConIVA.toFixed(2)}* (con IVA 15%)\n\n`;
+    const formatBase = (amount) => Number.isInteger(amount) ? amount.toString() : amount.toFixed(2);
+    const totalConTarjeta = total * 1.05;
+
+    ticket += `\n💰 *TOTAL A PAGAR: $${formatBase(total)}*\n\n`;
     ticket += `💳 *FORMAS DE PAGO:*\n`;
-    ticket += `• Transferencia/Efectivo: *$${totalConIVA.toFixed(2)}*\n`;
+    ticket += `• Transferencia/Efectivo: *$${total.toFixed(2)}*\n`;
     ticket += `• Tarjeta débito/crédito: *$${totalConTarjeta.toFixed(2)}* (incluye comisión 5%)\n\n`;
-    
+
     ticket += `📸 Envíame el comprobante cuando hayas pagado`;
   } else if (hasFreeReservation && reservations.length === 1) {
     ticket += `\n🎉 ¡Tu primera visita es totalmente gratis!\n`;

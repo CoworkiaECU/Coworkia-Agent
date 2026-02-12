@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { test as jestTest, expect } from '@jest/globals';
+
 /**
  * 🔊 TESTS UNITARIOS: generateSpeech() - OpenAI TTS
  * 
@@ -297,8 +299,12 @@ if (testsFallados === 0) {
   console.log('✅ Validaciones de entrada funcionando');
   console.log('✅ Metadata completa en respuestas');
   console.log('✅ Paridad con Whisper (6 idiomas)');
-  process.exit(0);
 } else {
   console.error(`\n❌ ${testsFallados} test(s) fallaron`);
-  process.exit(1);
+  throw new Error(`generateSpeech falló ${testsFallados} test(s)`);
 }
+
+// Asegura que Jest marque el archivo como suite y valide resultados
+jestTest('generateSpeech pseudo-suite', () => {
+  expect(testsFallados).toBe(0);
+});

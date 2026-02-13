@@ -29,21 +29,41 @@ const MAX_PHOTOS = 4;
 export async function addPhoto(userId, photoUrl, photoType = 'image') {
   console.log(`[AXEL-PHOTOS] 📸 Agregando foto para ${userId}`);
   
-  // Obtener o crear sesión
+  // Obtener sesión de caché o BD
   let session = photoSessions.get(userId);
   
   if (!session) {
-    session = {
-      userId,
-      photos: [],
-      startTime: Date.now(),
-      lastPhotoTime: Date.now(),
-      timeoutId: null,
+    // 🔄 Intentar recuperar de BD antes de crear nueva
+    console.log(`[AXEL-PHOTOS] 🔍 Sesión no en caché, buscando en BD...`);
+    const dbSession = await getActivePhotoSession(userId).catch(() => null);
+    
+    if (dbSession && dbSession.photoCount > 0) {
+      // Reconstruir sesión en caché desde BD
+      session = {
+        userId,
+        photos: dbSession.photoUrls.map(url => ({ url, type: 'image', timestamp: Date.now() })),
+        startTime: new Date(dbSession.createdAt).getTime(),
+        lastPhotoTime: new Date(dbSession.lastPhotoAt).getTime(),
+        timeoutId: null,
+        firstAckSent: true, // Ya se notificó al usuario
+        sessionFingerprint: `${userId}-${new Date(dbSession.createdAt).getTime()}`
+      };
+      photoSessions.set(userId, session);
+      console.log(`[AXEL-PHOTOS] ♻️ Sesión recuperada de BD: ${dbSession.photoCount} fotos`);
+    } else {
+      // Crear nueva sesión solo si no existe en BD
+      session = {
+        userId,
+        photos: [],
+        startTime: Date.now(),
+        lastPhotoTime: Date.now(),
+        timeoutId: null,
         firstAckSent: false,
         sessionFingerprint: `${userId}-${Date.now()}`
-    };
-    photoSessions.set(userId, session);
-    console.log(`[AXEL-PHOTOS] ✨ Nueva sesión creada para ${userId}`);
+      };
+      photoSessions.set(userId, session);
+      console.log(`[AXEL-PHOTOS] ✨ Nueva sesión creada para ${userId}`);
+    }
   }
   
   // Limpiar timeout anterior

@@ -499,10 +499,6 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
       return { agent: 'PAULA', reason: 'trigger @Paula', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'PAULA' } };
     }
 
-    if (/@tomi/i.test(text)) {
-      return { agent: 'TOMI', reason: 'trigger @Tomi', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'TOMI' } };
-    }
-
     if (/@aluna/i.test(text)) {
       return { agent: 'ALUNA', reason: 'trigger @Aluna', flags: { agentHandoff: true, fromAgent: currentAgent, targetAgent: 'ALUNA' } };
     }

@@ -43,54 +43,6 @@ export const PAULA = {
                'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡'
   }),
 
-  // Función para obtener mensaje de handoff según agente destino
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Perfecto {nombre}, te devuelvo con *Aurora* 😊\n\nSi quieres ver más propiedades, agendar visitas o consultar sobre alguna ficha específica, solo escribe *@Paula* y retomamos donde quedamos.\n\n¡Éxito con tu búsqueda inmobiliaria! 🏡',
-        en: 'Perfect {nombre}, returning you to *Aurora* 😊\n\nIf you want to see more properties, schedule visits or ask about specific listings, just write *@Paula* and we\'ll continue where we left off.\n\nSuccess with your property search! 🏡',
-        fr: 'Parfait {nombre}, je te renvoie à *Aurora* 😊\n\nSi tu veux voir plus de propriétés, programmer des visites ou consulter une fiche spécifique, écris simplement *@Paula* et nous reprendrons là où nous en étions.\n\nSuccès dans ta recherche immobilière! 🏡'
-      },
-      'ADRIANA': {
-        es: 'Perfecto {nombre}, te comunico con *Adriana* de *SegPopular* para cotizar seguro de vehículo. 🛡️\n\nPara retomar la búsqueda de inmuebles, escribe *@Paula*.\n\n¡Protege tu inversión!',
-        en: 'Perfect {nombre}, connecting you with *Adriana* from *SegPopular* for vehicle insurance quotes. 🛡️\n\nTo resume your property search, write *@Paula*.\n\nProtect your investment!',
-        fr: 'Parfait {nombre}, je te mets en contact avec *Adriana* de *SegPopular* pour devis d\'assurance véhicule. 🛡️\n\nPour reprendre la recherche immobilière, écris *@Paula*.\n\nProtège ton investissement!'
-      },
-      'ENZO': {
-        es: 'Entendido {nombre}, te conecto con *Enzo* de *MarketingLab* para tu proyecto de marketing digital. 💡\n\nPara dudas sobre propiedades, escribe *@Paula*.\n\n¡Éxito con tu proyecto!',
-        en: 'Got it {nombre}, connecting you with *Enzo* from *MarketingLab* for your digital marketing project. 💡\n\nFor property questions, write *@Paula*.\n\nSuccess with your project!',
-        fr: 'Compris {nombre}, je te connecte avec *Enzo* de *MarketingLab* pour ton projet de marketing digital. 💡\n\nPour des questions sur les propriétés, écris *@Paula*.\n\nSuccès avec ton projet!'
-      },
-      'GABI': {
-        es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para temas legales y financieros de tu propiedad. ⚖️\n\nPara temas inmobiliarios, solo di *@Paula*.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for legal and financial matters of your property. ⚖️\n\nFor real estate matters, just say *@Paula*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te laisse avec *Gabi* de *GR Consulting* pour les questions juridiques et financières de ta propriété. ⚖️\n\nPour les questions immobilières, dis simplement *@Paula*.\n\nÀ bientôt!'
-      },
-      'AXEL': {
-        es: 'Entendido {nombre}, te comunico con *Axel* de *The PaintBull* para tu vehículo. 🚗\n\nPara retomar la búsqueda de propiedades, escribe *@Paula*.\n\n¡Éxito!',
-        en: 'Got it {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle. 🚗\n\nTo resume property search, write *@Paula*.\n\nSuccess!',
-        fr: 'Compris {nombre}, je te connecte avec *Axel* de *The PaintBull* pour ton véhicule. 🚗\n\nPour reprendre la recherche de propriétés, écris *@Paula*.\n\nSuccès!'
-      },
-      'ANGELA': {
-        es: 'Perfecto {nombre}, te dejo con *Ángela* de *MedBeneficios* para tu consulta de salud. 💚\n\nPara temas inmobiliarios, solo di *@Paula*.\n\n¡Cuídate!',
-        en: 'Perfect {nombre}, connecting you with *Angela* from *MedBeneficios* for your health inquiry. 💚\n\nFor real estate matters, just say *@Paula*.\n\nTake care!',
-        fr: 'Parfait {nombre}, je te laisse avec *Angela* de *MedBeneficios* pour ta consultation santé. 💚\n\nPour les questions immobilières, dis simplement *@Paula*.\n\nPrends soin de toi!'
-      },
-      'ALUNA': {
-        es: 'Entendido {nombre}, te comunico con *Aluna* para membresías de coworking. 😊\n\nPara retomar la búsqueda de propiedades, escribe *@Paula*.\n\n¡Éxito!',
-        en: 'Got it {nombre}, connecting you with *Aluna* for coworking memberships. 😊\n\nTo resume property search, write *@Paula*.\n\nSuccess!',
-        fr: 'Compris {nombre}, je te connecte avec *Aluna* pour les adhésions de coworking. 😊\n\nPour reprendre la recherche de propriétés, écris *@Paula*.\n\nSuccès!'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    // Fallback inteligente: userLanguage → 'en' → 'es'
-    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-
   personalidad: {
     tono: 'Profesional y entusiasta, consultivo de alto nivel, lujo y exclusividad',
     estilo: 'Escucha activa, transparencia total (pros Y contras), match perfecto para clientes selectos',

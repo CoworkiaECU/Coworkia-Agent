@@ -39,12 +39,12 @@ class MetricsCollector {
       agents: {
         AURORA: { activations: 0, avgResponseTime: 0 },
         ALUNA: { activations: 0, avgResponseTime: 0 },
-        TOMI: { activations: 0, avgResponseTime: 0 },
         ENZO: { activations: 0, avgResponseTime: 0 },
         ADRIANA: { activations: 0, avgResponseTime: 0 },
         ANGELA: { activations: 0, avgResponseTime: 0 },
         AXEL: { activations: 0, avgResponseTime: 0 },
-        GABI: { activations: 0, avgResponseTime: 0 }
+        GABI: { activations: 0, avgResponseTime: 0 },
+        PAULA: { activations: 0, avgResponseTime: 0 }
       },
       
       // Métricas de OpenAI

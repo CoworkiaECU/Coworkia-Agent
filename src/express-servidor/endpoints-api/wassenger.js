@@ -35,7 +35,8 @@ import { normalizeAgentName } from '../../utils/agent-normalizer.js';
 
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
-import { executeHandoff, isHandoffInProgress } from '../../servicios/handoff-manager.js';
+import { executeHandoff } from '../../servicios/handoff-manager.js';
+import { isUpdateInProgress } from '../../servicios/agent-state-manager.js';
 import { updateAgent as updateAgentState } from '../../servicios/agent-state-manager.js';
 
 import {
@@ -1657,9 +1658,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       console.log(`[WASSENGER-V2] 🔀 Handoff detectado: ${fromAgent} → ${targetAgent}`);
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
-      // Prevenir handoffs concurrentes
-      if (isHandoffInProgress(userId)) {
-        console.warn(`[WASSENGER-V2] ⚠️ Handoff ya en progreso para ${userId}, esperando...`);
+      // Prevenir handoffs concurrentes (AgentStateManager gestiona locks)
+      if (isUpdateInProgress(userId)) {
+        console.warn(`[WASSENGER-V2] ⚠️ Actualización de agente en progreso para ${userId}, esperando...`);
         await new Promise(r => setTimeout(r, 2000));
       }
       

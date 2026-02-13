@@ -143,22 +143,6 @@ Responde *SI* para recibir tu cotización o *NO* para cancelar.`;
 
 Responde *SI* para agendar reunión o *NO* para cancelar.`;
 
-    case 'TOMI':
-      return `Perfecto${userGreeting}! 🏘️
-
-📋 *CONFIRMA TU BÚSQUEDA:*
-
-🏘️ *Operación:* ${formData.operationType}
-🏠 *Tipo:* ${formData.propertyType}
-📍 *Zona:* ${formData.zone}
-💰 *Presupuesto:* ${formData.budgetRange}
-👤 *Nombre:* ${formData.fullName}
-📧 *Email:* ${formData.email}
-📱 *Teléfono:* ${formData.phone}
-
-¿*Confirmas estos datos?*
-
-Responde *SI* para que busque opciones o *NO* para cancelar.`;
 
     case 'ALUNA':
       return `Perfecto${userGreeting}! 🎫
@@ -354,32 +338,6 @@ async function saveLeadToDatabase(agentName, userId, formData) {
         formData.budget,
         formData.urgency,
         formData.description || '',
-        now
-      ];
-      break;
-      
-    case 'TOMI':
-      query = `
-        INSERT INTO real_estate_leads (
-          id, user_phone, operation_type, property_type, preferred_zone,
-          budget_range, client_name, email, phone, requirements, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-      `;
-      params = [
-        leadId,
-        userId,
-        formData.operationType,
-        formData.propertyType,
-        formData.zone,
-        formData.budgetRange,
-        formData.fullName,
-        formData.email,
-        formData.phone,
-        JSON.stringify({
-          bedrooms: formData.bedrooms,
-          amenities: formData.amenities,
-          squareMeters: formData.squareMeters
-        }),
         now
       ];
       break;

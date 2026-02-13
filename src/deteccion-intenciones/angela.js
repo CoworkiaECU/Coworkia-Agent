@@ -37,54 +37,7 @@ export const ANGELA = {
                userLanguage === 'qu' ? 'Allinmi {nombre}, qhali kayta allinta qhaway.\n\nMayqin pachapipas kutimunki, @Angela nispa tapukuy, kaypi kasaq 24/7. ¡Allinta qhaway! 💚' :
                'Perfect {nombre}, take good care of your health.\n\nYou can always come back, just say @Angela and your question, I\'ll be here 24/7. Take care! 💚'
   }),
-  
-  // Función para obtener mensaje de handoff según agente destino (cuando Angela transfiere A otros)
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Entendido {nombre}, de inmediato te comunico con *Aurora*. 💚\n\nRecuerda que estaré aquí pendiente de tu cotización vehicular, solo tienes que decir *@Angela* y aquí estaré.\n\n¡Cuídate mucho!',
-        en: 'Got it {nombre}, connecting you with *Aurora* right away. 💚\n\nRemember I\'ll be here for your vehicle quote, just say *@Angela* and I\'ll be here.\n\nTake care!',
-        qu: 'Yachaninam {nombre}, kunan *Aurora*-wan tʼinkisaq. 💚\n\nYuyariway kaypi kasaq autokipi qullqita yachanaykipaq, *@Angela* nispa kaypi kanki.\n\n¡Allinta qhaway!'
-      },
-      'AXEL': {
-        es: 'Perfecto {nombre}, te conecto con *Axel* de *The PaintBull* para la cotización de tu vehículo. 🚗\n\nRecuerda que estaré aquí para cualquier consulta médica, solo di *@Angela*.\n\n¡Cuídate!',
-        en: 'Perfect {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle quote. 🚗\n\nRemember I\'ll be here for any medical questions, just say *@Angela*.\n\nTake care!',
-        qu: 'Allinmi {nombre}, *Axel*-wan tʼinkisaq *The PaintBull*-manta autokipa qullqita yachanaykipaq. 🚗\n\nYuyariway kaypi kasaq ima hampiq tapuykunapaqpas, *@Angela* nispa.\n\n¡Allinta qhaway!'
-      },
-      'ADRIANA': {
-        es: 'Entendido {nombre}, te comunico con *Adriana* de *SegPopular* para tu consulta de seguros. 🛡️\n\nCualquier tema de salud, escribe *@Angela* y aquí estaré.\n\n¡Cuídate mucho! 💚',
-        en: 'Got it {nombre}, connecting you with *Adriana* from *SegPopular* for your insurance inquiry. 🛡️\n\nAny health topic, write *@Angela* and I\'ll be here.\n\nTake care! 💚',
-        qu: 'Yachaninam {nombre}, *Adriana*-wan tʼinkisaq *SegPopular*-manta seguros nisqamanta yachanaykipaq. 🛡️\n\nIma hampiq tapuypas, *@Angela* nispa qillqay kaypi kasaq.\n\n¡Allinta qhaway! 💚'
-      },
-      'ENZO': {
-        es: 'Perfecto {nombre}, te dejo con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nPara cualquier consulta de salud, escribe *@Angela*.\n\n¡Cuídate! 💚',
-        en: 'Perfect {nombre}, connecting you with *Enzo* from *MarketingLab* for your consulting. 💡\n\nFor any health questions, write *@Angela*.\n\nTake care! 💚',
-        qu: 'Allinmi {nombre}, *Enzo*-wan saqiykiku *MarketingLab*-manta yachachiyniykipaq. 💡\n\nIma hampiq tapuypas, *@Angela* nispa qillqay.\n\n¡Allinta qhaway! 💚'
-      },
-      'GABI': {
-        es: 'Entendido {nombre}, te conecto con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nRecuerda que estoy aquí para temas de salud, solo di *@Angela*.\n\n¡Cuídate mucho! 💚',
-        en: 'Got it {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nRemember I\'m here for health topics, just say *@Angela*.\n\nTake care! 💚',
-        qu: 'Yachaninam {nombre}, *Gabi*-wan tʼinkisaq *GR Consulting*-manta kamachiy tapuyniykipaq. ⚖️\n\nYuyariway kaypi kani hampiq tapuykunapaq, *@Angela* nispa.\n\n¡Allinta qhaway! 💚'
-      },
-      'ALUNA': {
-        es: 'Perfecto {nombre}, te comunico con *Aluna* para información de planes. 🏢\n\nPara temas de salud, escribe *@Angela* cuando quieras.\n\n¡Cuídate! 💚',
-        en: 'Perfect {nombre}, connecting you with *Aluna* for plan information. 🏢\n\nFor health topics, write *@Angela* anytime.\n\nTake care! 💚',
-        qu: 'Allinmi {nombre}, *Aluna*-wan tʼinkisaq plankunamanta willakunaykipaq. 🏢\n\nHampiq tapuykunapaq, *@Angela* nispa qillqay mayqin pachapipas.\n\n¡Allinta qhaway! 💚'
-      },
-      'PAULA': {
-        es: 'Entendido {nombre}, te dejo con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nCualquier tema de salud, escribe *@Angela*.\n\n¡Cuídate mucho! 💚',
-        en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nAny health topic, write *@Angela*.\n\nTake care! 💚',
-        qu: 'Yachaninam {nombre}, *Paula*-wan saqiykiku *PropElite*-manta wasikunamanta tapuyniykipaq. 🏡\n\nIma hampiq tapuypas, *@Angela* nispa qillqay.\n\n¡Allinta qhaway! 💚'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    const message = agentMessages[userLanguage] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-  
+
   personalidad: {
     tono: 'Cálido, amigable y sencillo',
     estilo: 'Lenguaje cercano, emojis médicos, bloques máximo 4 líneas',

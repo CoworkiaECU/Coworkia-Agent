@@ -36,47 +36,6 @@ export const ENZO = {
                'Perfect {nombre}, it\'s been a pleasure.\n\nYou can always come back, just say @Enzo and your question. I\'ll be here! Success! 🚀'
   }),
   
-  // Función para obtener mensaje de handoff según agente destino (cuando Enzo transfiere A otros)
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Listo {nombre}, te devuelvo con *Aurora* 😊\n\nSi en algún momento quieres cotizar una campaña, automatizar con IA o hablar de estrategia digital, solo escribe *@Enzo* y conversamos.\n\n¡Aquí cuando me necesites! 🚀',
-        en: 'Alright {nombre}, returning you to *Aurora* 😊\n\nIf you ever want to quote a campaign, automate with AI or talk about digital strategy, just write *@Enzo* and we\'ll chat.\n\nHere when you need me! 🚀'
-      },
-      'PAULA': {
-        es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para marketing inmobiliario. 🏡\n\nPara dudas de marketing general, escribe *@Enzo*.\n\n¡Éxito!',
-        en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for real estate marketing. 🏡\n\nFor general marketing questions, write *@Enzo*.\n\nSuccess!'
-      },
-      'GABI': {
-        es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para facturación y contratos. ⚖️\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for billing and contracts. ⚖️\n\nFor marketing matters, just say *@Enzo*.\n\nSee you soon!'
-      },
-      'ADRIANA': {
-        es: 'Entendido {nombre}, te comunico con *Adriana* de *SegPopular* para tu seguro. 🛡️\n\nPara dudas de marketing, escribe *@Enzo*.\n\n¡Protege tu inversión!',
-        en: 'Got it {nombre}, connecting you with *Adriana* from *SegPopular* for your insurance. 🛡️\n\nFor marketing questions, write *@Enzo*.\n\nProtect your investment!'
-      },
-      'AXEL': {
-        es: 'Perfecto {nombre}, te dejo con *Axel* de *The PaintBull* para tu vehículo. 🚗\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Éxito!',
-        en: 'Perfect {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle. 🚗\n\nFor marketing matters, just say *@Enzo*.\n\nSuccess!'
-      },
-      'ALUNA': {
-        es: 'Entendido {nombre}, te comunico con *Aluna* para planes de coworking. 🏢\n\nPara dudas de marketing, escribe *@Enzo*.\n\n¡Hasta luego!',
-        en: 'Got it {nombre}, connecting you with *Aluna* for coworking plans. 🏢\n\nFor marketing questions, write *@Enzo*.\n\nSee you!'
-      },
-      'ANGELA': {
-        es: 'Perfecto {nombre}, te dejo con *Angela* de *MedBeneficios* para tu salud. 💚\n\nPara temas de marketing, solo di *@Enzo*.\n\n¡Cuídate!',
-        en: 'Perfect {nombre}, connecting you with *Angela* from *MedBeneficios* for your health. 💚\n\nFor marketing matters, just say *@Enzo*.\n\nTake care!'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    // Fallback inteligente: userLanguage → 'en' → 'es'
-    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-  
   personalidad: {
     tono: 'Técnico pero accesible, directo y práctico',
     estilo: 'Respuestas precisas con emojis estratégicos 🎯📊💡🚀',

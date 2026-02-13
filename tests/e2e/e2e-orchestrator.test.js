@@ -118,19 +118,6 @@ describe('🎭 Orquestador de Agentes', () => {
       // "plan 10" es más específico que "reservar"
       expect(result.agent).toBe('ALUNA');
     });
-    
-    test('Tomi SOLO se activa con @tomi (no con keywords)', async () => {
-      const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
-      
-      // "casa" + ciudad → NO activa Tomi, Aurora responde
-      let result = detectarIntencion('Busco casa en Quito');
-      expect(result.agent).toBe('AURORA');
-      expect(result.agent).not.toBe('TOMI');
-      
-      // Solo @tomi activa Tomi
-      result = detectarIntencion('@tomi busco casa en Quito');
-      expect(result.agent).toBe('TOMI');
-    });
   });
   
   describe('🟢 Prioridad 4: Mantener Agente Actual', () => {
@@ -244,18 +231,6 @@ describe('🎭 Orquestador de Agentes', () => {
       // Luego quiere membresía
       result = detectarIntencion('Pero me interesa el plan mensual');
       expect(result.agent).toBe('ALUNA');
-    });
-    
-    test('Keywords "casa" NO activan Tomi (solo @tomi)', async () => {
-      const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
-      
-      // "casa" en cualquier contexto → Aurora responde
-      let result = detectarIntencion('Busco casa para comprar');
-      expect(result.agent).toBe('AURORA');
-      
-      // "casa" casual → Aurora responde
-      result = detectarIntencion('Trabajo desde casa');
-      expect(result.agent).not.toBe('TOMI');
     });
     
     test('Usuario frustrado cambia de tema abruptamente', async () => {

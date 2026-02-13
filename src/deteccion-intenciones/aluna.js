@@ -36,49 +36,7 @@ export const ALUNA = {
                userLanguage === 'fr' ? 'Génial {nombre}, ce fut un plaisir de vous conseiller.\n\nVous pouvez revenir à tout moment, dites simplement @Aluna et votre question. Je serai là! 😊' :
                'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊'
   }),
-  
-  // Función para obtener mensaje de handoff según agente destino (cuando Aluna transfiere A otros)
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Perfecto {nombre}, te devuelvo con *Aurora* para lo que necesites. 🏢\n\nSi tienes dudas sobre planes o membresías, solo di *@Aluna* y aquí estaré.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, returning you to *Aurora* for anything you need. 🏢\n\nIf you have questions about plans or memberships, just say *@Aluna* and I\'ll be here.\n\nSee you soon!'
-      },
-      'AXEL': {
-        es: 'Entendido {nombre}, te comunico con *Axel* de *The PaintBull* para tu cotización vehicular. 🚗\n\nPara dudas sobre planes, escribe *@Aluna*.\n\n¡Éxito!',
-        en: 'Got it {nombre}, connecting you with *Axel* from *The PaintBull* for your vehicle quote. 🚗\n\nFor plan questions, write *@Aluna*.\n\nSuccess!'
-      },
-      'ADRIANA': {
-        es: 'Perfecto {nombre}, te dejo con *Adriana* de *SegPopular* para tu seguro vehicular. 🛡️\n\nPara temas de planes, solo di *@Aluna*.\n\n¡Protege tu inversión!',
-        en: 'Perfect {nombre}, connecting you with *Adriana* from *SegPopular* for your vehicle insurance. 🛡️\n\nFor plan matters, just say *@Aluna*.\n\nProtect your investment!'
-      },
-      'ANGELA': {
-        es: 'Entendido {nombre}, te comunico con *Angela* de *MedBeneficios* para tu consulta de salud. 💚\n\nPara dudas sobre coworking, escribe *@Aluna*.\n\n¡Cuídate!',
-        en: 'Got it {nombre}, connecting you with *Angela* from *MedBeneficios* for your health inquiry. 💚\n\nFor coworking questions, write *@Aluna*.\n\nTake care!'
-      },
-      'ENZO': {
-        es: 'Perfecto {nombre}, te dejo con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nPara temas de planes, solo di *@Aluna*.\n\n¡Éxitos!',
-        en: 'Perfect {nombre}, connecting you with *Enzo* from *MarketingLab* for your consultation. 💡\n\nFor plan matters, just say *@Aluna*.\n\nSuccess!'
-      },
-      'PAULA': {
-        es: 'Entendido {nombre}, te comunico con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nPara dudas sobre coworking, escribe *@Aluna*.\n\n¡Hasta pronto!',
-        en: 'Got it {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nFor coworking questions, write *@Aluna*.\n\nSee you soon!'
-      },
-      'GABI': {
-        es: 'Perfecto {nombre}, te comunico con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nPara dudas sobre coworking o membresías, escribe *@Aluna*.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nFor coworking or membership questions, write *@Aluna*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te mets en contact avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour des questions sur le coworking ou les adhésions, écris *@Aluna*.\n\nÀ bientôt!'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    // Fallback inteligente: userLanguage → 'en' → 'es'
-    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-  
+
   personalidad: {
     tono: 'Empático, motivador y consultivo',
     estilo: 'Preguntas estratégicas, orientación al cierre',

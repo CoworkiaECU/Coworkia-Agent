@@ -130,15 +130,7 @@ Han pasado 2 horas desde tu consulta administrativa.
 
 Con gusto te ayudo cuando lo necesites.
 
-¡Hasta pronto!`,
-
-    TOMI: `Hola ${name} 💻
-
-Han pasado 2 horas desde tu consulta de soporte técnico.
-
-Si surge algo más, aquí estoy para ayudarte.
-
-¡Saludos!`
+¡Hasta pronto!`
   };
   
   return messages[agent] || messages.AURORA;

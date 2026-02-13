@@ -25,54 +25,6 @@ export const AXEL = {
                'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can resume anytime, just say @Axel and your question. I\'ll be waiting. See you! 🔧'
   }),
   
-  // Función para obtener mensaje de handoff según agente destino (cuando Axel transfiere A otros)
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Perfecto {nombre}, ya tienes tu cotización completa. 🚗\n\nTe devuelvo con *Aurora* para lo que necesites. Cualquier duda sobre el trabajo o el proceso, solo di *@Axel* y aquí estaré.\n\n¡Éxito con tu reparación!',
-        en: 'Perfect {nombre}, you have your complete quote now. 🚗\n\nReturning you to *Aurora* for anything you need. Any questions about the work or process, just say *@Axel* and I\'ll be here.\n\nGood luck with your repair!',
-        fr: 'Parfait {nombre}, tu as ton devis complet maintenant. 🚗\n\nJe te renvoie à *Aurora* pour tout ce dont tu as besoin. Pour toute question sur le travail ou le processus, dis simplement *@Axel* et je serai là.\n\nBonne chance pour ta réparation!'
-      },
-      'ANGELA': {
-        es: 'Entendido {nombre}, te comunico con *Angela* de *MedBeneficios* para tu consulta de salud. 💚\n\nCualquier duda sobre tu vehículo, escribe *@Axel* y vuelvo contigo.\n\n¡Cuídate mucho!',
-        en: 'Got it {nombre}, connecting you with *Angela* from *MedBeneficios* for your health inquiry. 💚\n\nAny questions about your vehicle, write *@Axel* and I\'ll come back.\n\nTake care!',
-        fr: 'Compris {nombre}, je te connecte avec *Angela* de *MedBeneficios* pour ta consultation santé. 💚\n\nPour toute question sur ton véhicule, écris *@Axel* et je reviens.\n\nPrends soin de toi!'
-      },
-      'ADRIANA': {
-        es: 'Perfecto {nombre}, te dejo con *Adriana* de *SegPopular* para tu cotización de seguro vehicular. 🛡️\n\nPara dudas sobre la reparación, solo di *@Axel*.\n\n¡Protege tu inversión!',
-        en: 'Perfect {nombre}, connecting you with *Adriana* from *SegPopular* for your vehicle insurance quote. 🛡️\n\nFor questions about the repair, just say *@Axel*.\n\nProtect your investment!',
-        fr: 'Parfait {nombre}, je te laisse avec *Adriana* de *SegPopular* pour ton devis d\'assurance automobile. 🛡️\n\nPour des questions sur la réparation, dis simplement *@Axel*.\n\nProtège ton investissement!'
-      },
-      'ENZO': {
-        es: 'Entendido {nombre}, te conecto con *Enzo* de *MarketingLab* para tu consultoría. 💡\n\nCualquier duda sobre tu vehículo, escribe *@Axel*.\n\n¡Éxitos!',
-        en: 'Got it {nombre}, connecting you with *Enzo* from *MarketingLab* for your consultation. 💡\n\nAny questions about your vehicle, write *@Axel*.\n\nSuccess!',
-        fr: 'Compris {nombre}, je te connecte avec *Enzo* de *MarketingLab* pour ta consultation. 💡\n\nPour toute question sur ton véhicule, écris *@Axel*.\n\nSuccès!'
-      },
-      'GABI': {
-        es: 'Perfecto {nombre}, te dejo con *Gabi* de *GR Consulting* para tu consulta administrativa. ⚖️\n\nPara temas de tu vehículo, solo di *@Axel*.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, connecting you with *Gabi* from *GR Consulting* for your administrative inquiry. ⚖️\n\nFor vehicle matters, just say *@Axel*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te laisse avec *Gabi* de *GR Consulting* pour ta consultation administrative. ⚖️\n\nPour les questions sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!'
-      },
-      'ALUNA': {
-        es: 'Entendido {nombre}, te comunico con *Aluna* para info de planes de coworking. 🏢\n\nPara dudas sobre tu vehículo, escribe *@Axel*.\n\n¡Hasta luego!',
-        en: 'Got it {nombre}, connecting you with *Aluna* for coworking plan info. 🏢\n\nFor vehicle questions, write *@Axel*.\n\nSee you!',
-        fr: 'Compris {nombre}, je te connecte avec *Aluna* pour les infos sur les plans de coworking. 🏢\n\nPour des questions sur ton véhicule, écris *@Axel*.\n\nÀ plus!'
-      },
-      'PAULA': {
-        es: 'Perfecto {nombre}, te dejo con *Paula* de *PropElite* para tu consulta inmobiliaria. 🏡\n\nCualquier duda sobre tu vehículo, solo di *@Axel*.\n\n¡Hasta pronto!',
-        en: 'Perfect {nombre}, connecting you with *Paula* from *PropElite* for your real estate inquiry. 🏡\n\nAny questions about your vehicle, just say *@Axel*.\n\nSee you soon!',
-        fr: 'Parfait {nombre}, je te laisse avec *Paula* de *PropElite* pour ta consultation immobilière. 🏡\n\nPour toute question sur ton véhicule, dis simplement *@Axel*.\n\nÀ bientôt!'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    // Fallback inteligente: userLanguage → 'en' → 'es'
-    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-  
   personalidad: {
     tono: 'Empático, cálido pero honesto, cercano y humano',
     estilo: 'Conversación natural como mecánico experimentado que explica con paciencia',

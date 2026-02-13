@@ -19,34 +19,6 @@ export const GABI = {
                'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼'
   }),
   
-  // Función para obtener mensaje de handoff según agente destino (cuando Gabi transfiere A otros)
-  getHandover: function(targetAgent, userName = 'amigo', userLanguage = 'es') {
-    const handoverMessages = {
-      'AURORA': {
-        es: 'Perfecto {nombre}, ya tienes la información contable/legal que necesitabas. 💼\n\nTe devuelvo con *Aurora* para lo que necesites. Si tienes dudas administrativas, solo di *@Gabi* y aquí estaré.\n\n¡Éxito con tu negocio!',
-        en: 'Perfect {nombre}, you have the accounting/legal information you needed. 💼\n\nReturning you to *Aurora* for anything you need. If you have administrative questions, just say *@Gabi* and I\'ll be here.\n\nSuccess with your business!',
-        qu: 'Allinmi {nombre}, qullqi/legal willaykunata tarisqayki. 💼\n\n*Aurora*man kutichisqayki imapaqpas. Administración tapuykunapaq, *@Gabi* niy, kaypi kanki.\n\nAllin kachun negocioypi!'
-      },
-      'ALUNA': {
-        es: 'Entendido {nombre}, ya revisamos tu información de pagos/membresía. 💼\n\nTe comunico con *Aluna* para tus planes de coworking. Para dudas de facturación, escribe *@Gabi*.\n\n¡Hasta luego!',
-        en: 'Got it {nombre}, we reviewed your payment/membership information. 💼\n\nConnecting you with *Aluna* for your coworking plans. For billing questions, write *@Gabi*.\n\nSee you!',
-        qu: 'Riqsisqaña {nombre}, qullqi/membresía willaykunata qhawasqanchik. 💼\n\n*Aluna*man t\'inkisqayki coworking plankuna. Facturación tapuypaq, *@Gabi* qillqay.\n\nTupananchiskama!'
-      },
-      'ADRIANA': {
-        es: 'Perfecto {nombre}, ya hablamos sobre cumplimiento y regulaciones. 💼\n\nTe dejo con *Adriana* de *SegPopular* para tu seguro. Para temas legales/contables, di *@Gabi*.\n\n¡Protege tu inversión!',
-        en: 'Perfect {nombre}, we discussed compliance and regulations. 💼\n\nConnecting you with *Adriana* from *SegPopular* for your insurance. For legal/accounting matters, say *@Gabi*.\n\nProtect your investment!',
-        qu: 'Allinmi {nombre}, cumplimiento, regulaciones rimasqanchik. 💼\n\n*Adriana* *SegPopular*manta seguromanta. Legal/qullqi tapuypaq, *@Gabi* niy.\n\nQolqeykita jark\'ay!'
-      }
-    };
-    
-    const agentMessages = handoverMessages[targetAgent];
-    if (!agentMessages) return null;
-    
-    // Fallback inteligente: userLanguage → 'en' → 'es'
-    const message = agentMessages[userLanguage] || agentMessages['en'] || agentMessages['es'];
-    return message.replace(/{nombre}/g, userName);
-  },
-  
   personalidad: {
     tono: 'Profesional, clara, orientada a soluciones, confiable',
     estilo: 'Respuestas precisas con datos concretos, uso moderado de emojis profesionales',

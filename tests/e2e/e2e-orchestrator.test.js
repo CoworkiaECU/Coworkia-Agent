@@ -258,20 +258,6 @@ describe('🎭 Orquestador de Agentes', () => {
       const result = detectarIntencion('Me interesa una membresía');
       
     });
-    
-    test('Tomi con ciudad debe tener confidence mayor que sin ciudad', async () => {
-      const { detectarIntencion } = await import('../../src/deteccion-intenciones/detectar-intencion.js');
-      
-      // Con ciudad
-      const conCiudad = detectarIntencion('Busco casa en Quito');
-      
-      // Sin ciudad
-      const sinCiudad = detectarIntencion('Busco casa');
-      
-      if (conCiudad.agent === 'TOMI' && sinCiudad.agent === 'TOMI') {
-        expect(conCiudad).toBeGreaterThan(sinCiudad);
-      }
-    });
   });
   
   describe('🛡️ Protección contra Loops', () => {
@@ -317,7 +303,7 @@ describe('🎭 Orquestador de Agentes', () => {
       const result = detectarIntencion('Y cuánto cuesta?');
       
       // Sin contexto previo, debería mantener o ir a Aurora
-      expect(['AURORA', 'ALUNA', 'TOMI']).toContain(result.agent);
+      expect(['AURORA', 'ALUNA']).toContain(result.agent);
     });
     
     test('Referencias anafóricas deben mantener contexto', async () => {

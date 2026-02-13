@@ -9,18 +9,14 @@ class UserRepository {
    * 🔍 Busca un usuario por su número de teléfono
    */
   async findByPhone(phoneNumber) {
-    console.log('[USER-REPO DEBUG] Llamando ensureInitialized()');
     databaseService.ensureInitialized();
-    console.log('[USER-REPO DEBUG] ensureInitialized() completado');
     
     const query = `
       SELECT * FROM users 
       WHERE phone_number = ?
     `;
     
-    console.log('[USER-REPO DEBUG] Antes de databaseService.get()');
     const user = await databaseService.get(query, [phoneNumber]);
-    console.log('[USER-REPO DEBUG] Después de get(), user:', user ? 'FOUND' : 'NULL');
     
     if (user) {
       // Convertir valores SQLite a JavaScript
@@ -28,7 +24,6 @@ class UserRepository {
       user.free_trial_used = Boolean(user.free_trial_used);
     }
     
-    console.log('[USER-REPO DEBUG] Retornando user:', user ? 'FOUND' : 'NULL');
     return user;
   }
 

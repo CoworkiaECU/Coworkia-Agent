@@ -148,14 +148,14 @@
       │  (detectar-intencion.js:177)                              │
       │                                                            │
       │  Orden de prioridad:                                      │
-      │  1. @mentions explícitas (@aurora, @enzo, @tomi, etc)     │
+      │  1. @mentions explícitas (@aurora, @enzo, @paula, etc)     │
       │  2. Contextos especiales:                                 │
       │     - Post-email support → requiere AURORA                │
       │     - Modificación reserva → requiere AURORA              │
       │     - Solicitud de link de pago → requiere AURORA         │
       │  3. Keywords por agente:                                  │
       │     - ALUNA_KEYWORDS: membresía, plan mensual, etc        │
-      │     - TOMI_KEYWORDS: bienes raíces, casa, ecuador, etc    │
+      │     - PAULA_KEYWORDS: bienes raíces, casa, propiedad, etc │
       │     - AURORA_KEYWORDS: reserva, hot desk, sala            │
       │  4. Saludos casuales → mantener agente activo             │
       │  5. Por defecto → mantener agente activo                  │
@@ -452,7 +452,7 @@ await enviarWhatsApp(userId, finalReply)
 5. `@angela` → activeAgent = 'ANGELA'
 6. `@axel` o colisión → activeAgent = 'AXEL'
 7. `@gabi` o finanzas → activeAgent = 'GABI'
-8. `@tomi` o keywords inmobiliaria → activeAgent = 'TOMI'
+8. `@paula` o keywords inmobiliaria → activeAgent = 'PAULA'
 
 ---
 

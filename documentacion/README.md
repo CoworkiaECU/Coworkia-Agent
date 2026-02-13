@@ -122,10 +122,10 @@ Sistema Multi-Agente Coworkia
 │   ├── Procesos admin
 │   └── Soporte legal
 │
-└── 💼 TOMI (Inversiones)
-    ├── Análisis inversión
-    ├── Portafolios
-    └── Estrategias financieras
+└── 🏡 PAULA (PropElite)
+    ├── Bienes raíces
+    ├── Propiedades premium
+    └── Agendamiento visitas
 ```
 
 ---

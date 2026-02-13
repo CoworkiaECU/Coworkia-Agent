@@ -40,7 +40,7 @@ Coworkia es un **ecosistema multi-agente** donde cada agente representa una empr
         │                           │
    ┌────▼────┐          ┌───────────┴────────────┐
    │  Aluna  │          │  Enzo  Angela  Adriana │
-   │(Planes) │          │  Axel    Gabi   Tomi   │
+   │(Planes) │          │  Axel    Gabi   Paula  │
    └─────────┘          └────────────────────────┘
 ```
 
@@ -116,13 +116,14 @@ Solo Aurora y Aluna (agentes de coworking) reciben contexto de reservas. Los dem
   - Gestión administrativa
 - **Contexto que recibe:** NINGUNO de coworking
 
-### **8. TOMI - Soporte Técnico**
-- **Rol:** Asistente técnico interno
+### **8. PAULA - PropElite Bienes Raíces**
+- **Empresa:** PropElite
+- **Rol:** Asesora inmobiliaria premium
 - **Responsabilidades:**
-  - Ayuda con el sistema
-  - Troubleshooting
-  - Documentación
-- **Contexto que recibe:** Acceso completo (staff)
+  - Búsqueda de propiedades
+  - Agendamiento de visitas
+  - Asesoría inmobiliaria
+- **Contexto que recibe:** NINGUNO de coworking
 
 ---
 

@@ -1138,6 +1138,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       agent: profile.activeAgent || 'AURORA'
     });
 
+    // 📋 Inicializar formResult para todo el scope
+    let formResult = { form: null, needsMoreInfo: false, updates: {} };
+
     // ═══════════════════════════════════════════════════════════════════════
     // 🎨 AXEL FLOW: Cotizaciones de pintura con fotos
     // ═══════════════════════════════════════════════════════════════════════
@@ -1198,7 +1201,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
-    let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
     const hasActiveForm = !!currentAgentForm;
     const isFormContinuation = detectFormContinuation(processedText);

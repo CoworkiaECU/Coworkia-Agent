@@ -1,77 +1,72 @@
 # Scripts Database - Coworkia Agent
 
-Herramientas operacionales para PostgreSQL. Refactorizado en Enero 2026.
+Herramientas operacionales para PostgreSQL. Actualizado Febrero 2026.
 
 ---
 
-## Scripts Activos
+## 📁 Scripts Activos (8)
 
 ### Auditoría y Diagnóstico
-- **`audit-full-database.js`** - Auditoría completa PostgreSQL (estructura, índices, FK, issues)
+- **`audit-full-database.js`** - Auditoría completa PostgreSQL (estructura, índices, FK, performance)
 - **`audit-reservations.js`** - Auditoría específica del sistema de reservas
-- **`check-reservations.js`** - Ver estado de reservas activas
-- **`check-user-reservations.js`** - Reservas de usuario específico
-- **`check-axel-status.js`** - Diagnóstico estado Axel (The PaintBull)
+- **`check-reservations.js`** - Ver estado de todas las reservas activas
+- **`check-user-reservations.js`** - Ver reservas de usuario específico
 - **`monitor-pending.js`** - Monitorear confirmaciones pendientes
 
 ### Limpieza y Mantenimiento
-- **`cleanup-expired-data.js`** - Limpieza automática: confirmaciones expiradas, interacciones antiguas, reservas pasadas
+- **`cleanup-expired-data.js`** - Limpieza automática: confirmaciones expiradas, interacciones antiguas, reservas pasadas (usado en producción)
 - **`cleanup-partial-forms.js`** - Limpiar formularios parciales abandonados
 
 ### Gestión de Reservas
-- **`manage-reservations.js`** - CRUD completo de reservas
+- **`manage-reservations.js`** - CRUD completo de reservas (usado en npm scripts)
 
 ---
 
-## Uso Común
+## 🚀 Uso Común
 
 ```bash
-# Ver reservas de usuario
+# Ver reservas activas
+node scripts/database/check-reservations.js
+
+# Ver reservas de usuario específico
 node scripts/database/check-user-reservations.js +593987654321
 
-# Limpieza automática (recomendado: semanal)
+# Limpieza automática (ejecutado por Heroku Scheduler)
 node scripts/database/cleanup-expired-data.js
 
 # Auditoría completa de PostgreSQL
 node scripts/database/audit-full-database.js
 
-# Auditoría sistema reservas
+# Auditoría sistema de reservas
 node scripts/database/audit-reservations.js
+
+# Gestión de reservas (CRUD)
+npm run reservations
 ```
 
 ---
 
-## Archivos Relacionados
+## 📦 Scripts de Producción
 
-### ../migrations-archive/
-Migrations ejecutadas una sola vez (YA APLICADAS):
-- `migrate-heroku.js` - Migración 001-unified-conversations
-- `run-axel-migration.js` - Crear tabla axel_quotes  
-- `cleanup-obsolete-tables.js` - Limpieza tablas legacy
-- `migrate-active-agent.js` - Campo activeAgent
-- `migrate-add-tracking-columns.js` - Tracking columns
-- `migrate-postgres-schema.js` - SQLite → PostgreSQL
-- `fix-corrupt-data.js` - Fix datos corruptos
-- `fix-unique-index.js` - Fix índice único
+Los siguientes scripts están integrados en el sistema:
 
- **NO ejecutar** - Solo referencia histórica
-
-### ../maintenance/
-Ver `scripts/maintenance/` para:
-- `manual-agent-reset.js` - Reset manual de agentes (T9)
-- `reset-server-state.js` - Reset estado servidor
+- **`cleanup-expired-data.js`** → `npm run cleanup` y Heroku Scheduler
+- **`manage-reservations.js`** → `npm run reservations`
+- **`audit-reservations.js`** → `npm run audit`
 
 ---
 
-## Historial de Refactor
+## 📝 Notas
 
-**Enero 2026:** Limpieza exhaustiva /scripts/database
-- Eliminados: 6 archivos obsoletos/duplicados/peligrosos
-- Movidos: 3 migrations a archive
-- Renombrado: audit-database → audit-full-database
-- **Antes:** 19 archivos | **Después:** 9 archivos activos
+- Todos los scripts usan PostgreSQL (única base de datos)
+- Conexión vía `DATABASE_URL` environment variable
+- Scripts incluyen manejo de errores y logs estructurados
+- **NO** ejecutar scripts de limpieza en producción sin respaldo
 
-Ver `auditoria-scripts-database.md` para análisis completo.
+---
 
-- Migrations archivadas: Ya aplicadas en producción
-- Tests manuales: Para desarrollo local
+## 🗂️ Relacionados
+
+- `../maintenance/` - Scripts de mantenimiento del sistema
+- `../migrations/` - Migraciones SQL de esquema
+- `../deployment/` - Scripts de deploy y configuración

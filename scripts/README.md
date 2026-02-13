@@ -46,51 +46,39 @@ cd scripts/deployment
 
 Scripts para mantenimiento, auditoría y limpieza de base de datos.
 
-### Auditoría
+### Auditoría y Diagnóstico
 | Script | Descripción |
 |--------|-------------|
-| `audit-database.js` | Auditoría completa de integridad DB |
-| `audit-field-usage.js` | Análisis de uso de campos |
-| `audit-reservations.js` | Auditoría de reservas |
-
-### Consultas
-| Script | Descripción |
-|--------|-------------|
-| `check-axel-status.js` | Ver estado de cotizaciones Axel |
-| `check-reservations.js` | Ver todas las reservas |
+| `audit-full-database.js` | Auditoría completa de integridad PostgreSQL |
+| `audit-reservations.js` | Auditoría específica del sistema de reservas |
+| `check-reservations.js` | Ver estado de todas las reservas activas |
 | `check-user-reservations.js` | Ver reservas de usuario específico |
 | `monitor-pending.js` | Monitorear confirmaciones pendientes |
 
-### Limpieza
+### Limpieza y Mantenimiento
 | Script | Descripción |
 |--------|-------------|
-| `cleanup-all-cache.js` | Limpia todos los caches |
-| `cleanup-expired-data.js` | Elimina datos expirados |
-| `cleanup-obsolete-tables.js` | Elimina tablas obsoletas |
-| `cleanup-partial-forms.js` | Limpia formularios incompletos |
-| `cleanup-past-reservations.js` | Archiva reservas pasadas |
-| `clean-obsolete-files.sh` | Limpia archivos obsoletos del filesystem |
-| `clean-user-data.js` | Limpia datos de usuario específico (GDPR) |
-| `clear-database.js` | ⚠️ Borra TODA la base de datos |
-| `clear-pending-confirmation.js` | Limpia confirmaciones pendientes |
+| `cleanup-expired-data.js` | Elimina datos expirados (usado en producción) |
+| `cleanup-partial-forms.js` | Limpia formularios parciales abandonados |
 
-### Gestión
+### Gestión de Reservas
 | Script | Descripción |
 |--------|-------------|
-| `manage-reservations.js` | CRUD completo de reservas |
-| `migrate-heroku.js` | Migración de datos a Heroku |
-| `run-axel-migration.js` | Migrar datos legacy de Axel |
+| `manage-reservations.js` | CRUD completo de reservas (usado en npm scripts) |
 
 **Uso típico:**
 ```bash
-# Auditar DB
-node scripts/database/audit-database.js
+# Auditar DB completo
+node scripts/database/audit-full-database.js
 
-# Ver reservas de hoy
+# Ver reservas activas
 node scripts/database/check-reservations.js
 
-# Limpiar datos expirados
+# Limpiar datos expirados (ejecutado automáticamente)
 node scripts/database/cleanup-expired-data.js
+
+# Gestión de reservas
+npm run reservations
 ```
 
 ---
@@ -208,53 +196,53 @@ node scripts/maintenance/reset-test-user.mjs
 
 **Para producción:**
 ```bash
-# Deploy
+# Deploy a Heroku
 cd scripts/deployment
 ./deploy-heroku.sh
 
-# Auditar DB
-node scripts/database/audit-database.js
+# Auditar PostgreSQL completo
+node scripts/database/audit-full-database.js
 
-# Limpiar datos expirados (ejecuta automáticamente vía cron)
+# Limpiar datos expirados (ejecuta automáticamente)
 node scripts/database/cleanup-expired-data.js
 ```
 
 **Para debugging:**
 ```bash
-# Ver reservas
+# Ver reservas activas
 node scripts/database/check-reservations.js
 
-# Ver estado Axel
-node scripts/database/check-axel-status.js
+# Ver reservas de usuario específico
+node scripts/database/check-user-reservations.js +593987654321
 
 # Monitorear pendientes
 node scripts/database/monitor-pending.js
+
+# Auditoría completa
+node scripts/database/audit-full-database.js
 ```
 
 ---
 
-## ⚠️ Scripts Peligrosos
+## ⚠️ Scripts de Producción
 
-Estos scripts hacen cambios irreversibles. Usar con precaución:
+Los siguientes scripts están integrados en el sistema productivo:
 
-- ❌ `database/clear-database.js` - Borra TODA la base de datos
-- ⚠️ `database/cleanup-obsolete-tables.js` - Elimina tablas
-- ⚠️ `deployment/reset-postgres-heroku.sh` - Reset PostgreSQL en Heroku
+- **`cleanup-expired-data.js`** - Ejecutado por Heroku Scheduler cada 2 horas
+- **`manage-reservations.js`** - Usado vía `npm run reservations`
+- **`audit-reservations.js`** - Usado vía `npm run audit`
 
-**Siempre hacer backup antes de ejecutar scripts destructivos.**
+**Siempre hacer backup antes de ejecutar scripts en producción.**
 
 ---
 
 ## 📝 Mantenimiento
 
-**Scripts que se ejecutan automáticamente (Cron):**
-- `cleanup-expired-data.js` - Cada 2 horas
+**Scripts que se ejecutan automáticamente:**
+- `cleanup-expired-data.js` - Cada 2 horas (Heroku Scheduler)
 - Sistema de follow-up - Cada 1 hora
-- Healthcheck - Cada 10 minutos (Heroku Scheduler)
-
-**Scripts deprecados:**
-Ver `scripts/migrations-archive/` para scripts históricos no usados.
+- Healthcheck - Cada 10 minutos
 
 ---
 
-**Última actualización:** v415 - Enero 2026
+**Última actualización:** v753 - Febrero 2026

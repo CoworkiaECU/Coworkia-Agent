@@ -1,85 +1,62 @@
 # 🔄 Scripts de Migración - Base de Datos
 
-Esta carpeta contiene scripts de migración para actualizar la estructura de la base de datos PostgreSQL en Heroku.
-
-## 📋 Lista de Migraciones
-
-### 001 - Sistema Unificado de Conversaciones Multi-Agente
-
-**Archivo:** `001-unified-conversations.js`  
-**Fecha:** 2026-01-11  
-**Estado:** ✅ Listo para ejecutar
-
-**Descripción:**
-Implementa el sistema unificado de conversaciones que permite:
-- Separación de conversaciones por tema/contexto
-- Almacenamiento de archivos (imágenes, PDFs)
-- Tracking de temas activos por usuario
-- Soporte nativo para múltiples agentes
-
-**Tablas creadas:**
-- `agent_conversations` - Conversaciones estructuradas
-- `conversation_files` - Archivos adjuntos
-- `active_topics` - Tracking de temas activos
-
-**Modificaciones:**
-- Agrega columnas `active_agents` y `context_preferences` a tabla `users`
-- Migra datos existentes de `interactions` a `agent_conversations`
-- Crea índices optimizados para performance
+Esta carpeta contiene migraciones SQL ejecutadas en PostgreSQL (Heroku). Actualizado Febrero 2026.
 
 ---
 
-## 🚀 Cómo Ejecutar una Migración
+## 📁 Migraciones SQL (7)
 
-### Opción 1: Localmente (conectado a Heroku)
+Todas las migraciones están **APLICADAS** en producción:
 
-1. **Asegurarse de tener backup:**
-   ```bash
-   heroku pg:backups:capture --app coworkia-agent
-   ```
+1. **`002-add-follow-up-columns.sql`** - Sistema follow-up automático
+2. **`003-add-missing-columns.sql`** - Columnas faltantes en tablas existentes
+3. **`004-add-payphone-fields.sql`** - Campos específicos para Payphone
+4. **`006-create-photo-sessions-table.sql`** - Tabla sesiones fotos Axel
+5. **`007-add-collision-session-fingerprint.sql`** - Control colisión sesiones
+6. **`create-axel-quotes-table.sql`** - Tabla cotizaciones Axel
+7. **`README.md`** - Esta documentación
 
-2. **Configurar DATABASE_URL en .env:**
-   ```bash
-   # En tu .env local
-   DATABASE_URL=postgres://...
-   ```
+---
 
-3. **Ejecutar migración:**
-   ```bash
-   node scripts/migrations/001-unified-conversations.js
-   ```
+## 🚀 Cómo Ejecutar una Migración SQL
 
-### Opción 2: Directamente en Heroku
+### Opción 1: Heroku CLI (Recomendado)
 
-1. **Crear backup:**
-   ```bash
-   heroku pg:backups:capture --app coworkia-agent
-   ```
+```bash
+# 1. Crear backup
+heroku pg:backups:capture --app coworkia-agent
 
-2. **Ejecutar migración:**
-   ```bash
-   heroku run node scripts/migrations/001-unified-conversations.js --app coworkia-agent
-   ```
+# 2. Ejecutar migración SQL
+heroku pg:psql --app coworkia-agent < scripts/migrations/tu-migracion.sql
+
+# 3. Verificar
+heroku pg:psql --app coworkia-agent
+\dt
+\q
+```
+
+### Opción 2: Localmente (con DATABASE_URL)
+
+```bash
+# Asegurarse de tener DATABASE_URL en .env
+psql $DATABASE_URL < scripts/migrations/tu-migracion.sql
+```
 
 ---
 
 ## ✅ Verificación Post-Migración
 
-Después de ejecutar una migración, verificar que todo esté correcto:
-
 ```bash
-# Conectarse a la base de datos
+# Conectarse a PostgreSQL
 heroku pg:psql --app coworkia-agent
 
-# Verificar que las tablas existen
+# Ver todas las tablas
 \dt
 
-# Verificar conteo de registros
-SELECT COUNT(*) FROM agent_conversations;
-SELECT COUNT(*) FROM conversation_files;
-SELECT COUNT(*) FROM active_topics;
+# Verificar estructura de tabla específica
+\d nombre_tabla
 
-# Verificar que los índices están creados
+# Verificar índices
 \di
 
 # Salir
@@ -88,41 +65,35 @@ SELECT COUNT(*) FROM active_topics;
 
 ---
 
-## ⚠️ Importante
+## 📝 Notas Importantes
 
-- **Siempre hacer backup antes de ejecutar una migración**
-- Las migraciones son **transaccionales** - si algo falla, se hace rollback automático
-- Las migraciones **NO eliminan** tablas legacy - se mantienen como respaldo
-- Esperar confirmación de éxito antes de continuar con más cambios
-
----
-
-## 📊 Estado de Migraciones
-
-| # | Nombre | Estado | Fecha Ejecución | Notas |
-|---|--------|--------|-----------------|-------|
-| 001 | Conversaciones Unificadas | ⏳ Pendiente | - | Listo para ejecutar |
+- **Todas las migraciones en esta carpeta YA ESTÁN APLICADAS en producción**
+- **Siempre hacer backup antes de ejecutar SQL en producción:**  
+  `heroku pg:backups:capture --app coworkia-agent`
+- Las migraciones SQL **NO** son automáticamente transaccionales - usar `BEGIN; ... COMMIT;` si es crítico
+- Mantener archivos SQL limpios y bien documentados
+- NO ejecutar migraciones antiguas de nuevo a menos que sea necesario
 
 ---
 
-## 🔮 Próximas Migraciones
+## 🗂️ Relacionados
 
-- **002** - Índices adicionales para Aurora (si es necesario)
-- **003** - Sistema de notificaciones push (futuro)
-- **004** - Integración con analytics (futuro)
+- `../database/` - Scripts operacionales y auditoría
+- `../maintenance/` - Scripts de mantenimiento del sistema
+- `../../documentacion/03-arquitectura-sistemas/` - Documentación arquitectura
 
 ---
 
-## 📞 Soporte
+## 🔧 Rollback de Migración
 
-Si una migración falla:
+Si una migración causa problemas:
 
-1. Revisar el error en la consola
-2. Verificar que DATABASE_URL esté correcta
-3. Confirmar que el backup existe
-4. Si es necesario, restaurar desde backup:
-   ```bash
-   heroku pg:backups:restore --app coworkia-agent
-   ```
+```bash
+# Opción 1: Restaurar último backup
+heroku pg:backups:restore --app coworkia-agent
 
-Para más detalles, ver: [ARQUITECTURA-CONVERSACIONES-UNIFICADAS.md](../../documentacion/ARQUITECTURA-CONVERSACIONES-UNIFICADAS.md)
+# Opción 2: Ejecutar SQL manual de rollback
+heroku pg:psql --app coworkia-agent
+DROP TABLE nombre_tabla; -- Con cuidado!
+```
+

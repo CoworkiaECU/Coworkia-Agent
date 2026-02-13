@@ -1098,35 +1098,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     let detectedName = null;
     const firstVisit = current?.firstVisit === undefined ? true : current.firstVisit;
     
-    // 🔍 LOG DEBUG: Verificar qué nombre está guardado vs. lo que llega de WhatsApp
-    console.log(`[NAME DEBUG] userId: ${userId}`);
-    console.log(`[NAME DEBUG] current.name (BD): "${current.name || 'NULL'}"`);
-    console.log(`[NAME DEBUG] name (WhatsApp): "${name || 'NULL'}"`);
-    console.log(`[NAME DEBUG] current.whatsappDisplayName (BD): "${current.whatsappDisplayName || 'NULL'}"`);
-    console.log(`[NAME DEBUG] firstVisit: ${firstVisit}`);
-    
-    // 1️⃣ PRIORIDAD: Si llega nombre de WhatsApp, SIEMPRE usarlo (puede haber cambiado)
+    // Detectar nombre: WhatsApp > BD > mensaje (si first visit)
     if (name) {
       detectedName = cleanWhatsAppName(name);
-      console.log(`[NAME DEBUG] ✅ Usando nombre de WhatsApp: "${name}" → limpio: "${detectedName}"`);
-    }
-    // 2️⃣ FALLBACK: Usar nombre guardado en BD
-    else if (current.name) {
+    } else if (current.name) {
       detectedName = current.name;
-      console.log(`[NAME DEBUG] ⚠️ Usando nombre guardado en BD: "${detectedName}"`);
-    }
-    // 3️⃣ ÚLTIMO RECURSO: Intentar extraer del mensaje
-    else if (firstVisit && text) {
+    } else if (firstVisit && text) {
       const nameFromMessage = extractNameFromMessage(text);
       if (nameFromMessage) {
         detectedName = nameFromMessage;
-        console.log(`[NAME DEBUG] 📝 Nombre detectado del mensaje: "${nameFromMessage}"`);
       }
-    }
-    
-    // Si aún no hay nombre, dejar en null para que use fallback "amigo"
-    if (!detectedName) {
-      console.log(`[NAME DEBUG] ❌ No se pudo detectar nombre, se usará fallback genérico`);
     }
 
     const profile = {
@@ -1140,11 +1121,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       conversationCount: (current.conversationCount || 0) + 1,
       conversacionEnCurso
     };
-
-    // 🔄 SIEMPRE actualizar nombre si cambia en WhatsApp
-    if (name && name !== current.whatsappDisplayName) {
-      console.log(`[NAME UPDATE] ✅ Nombre actualizado: "${current.whatsappDisplayName || 'NULL'}" → "${name}"`);
-    }
 
     await updateProfile(userId, profile, { reason: 'message_received' });
 
@@ -1161,55 +1137,64 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       agent: profile.activeAgent || 'AURORA'
     });
 
-    // 📧 Flujo de consentimiento de email post-cotización (SI/NO)
-    if (profile.activeAgent === 'AXEL' && axelEmailConsent.has(userId) && processedText) {
-      const consentData = axelEmailConsent.get(userId);
-      const t = (processedText || '').trim().toLowerCase();
-      const isYes = ['si', 'sí', 'yes', 'y', 'claro', 'ok'].includes(t);
-      const isNo = ['no', 'nop', 'nope'].includes(t);
+    // ═══════════════════════════════════════════════════════════════════════
+    // 🎨 AXEL FLOW: Cotizaciones de pintura con fotos
+    // ═══════════════════════════════════════════════════════════════════════
+    if (profile.activeAgent === 'AXEL') {
+      // ────────────────────────────────────────────────────────────────────
+      // PASO 1: Consentimiento email (SI/NO post-cotización)
+      // ────────────────────────────────────────────────────────────────────
+      if (axelEmailConsent.has(userId) && processedText) {
+        const consentData = axelEmailConsent.get(userId);
+        const normalized = processedText.trim().toLowerCase();
+        const isYes = ['si', 'sí', 'yes', 'y', 'claro', 'ok'].includes(normalized);
+        const isNo = ['no', 'nop', 'nope'].includes(normalized);
 
-      if (isYes || isNo) {
-        if (isYes) {
-          const emailResult = await sendQuoteEmail({
-            customerName: consentData.customerName,
-            customerEmail: consentData.email,
-            vehicleData: consentData.vehicleData,
-            damageAnalysis: consentData.damageAnalysis,
-            quote: consentData.quote,
-            priceRange: consentData.priceRange,
-            photoUrls: consentData.photoUrls,
-            quoteCode: consentData.quoteCode
-          });
-
-          if (emailResult.success) {
-            await enviarWhatsApp(userId, `✉️ Listo, envié la cotización detallada a ${consentData.email}. ¿Quieres agregar algo más?`);
-            await saveInteraction({
-              userId,
-              agent: 'AXEL',
-              agentName: 'Axel - PaintBull',
-              intentReason: 'email_sent',
-              input: consentData.email,
-              output: 'quote_email_sent',
-              meta: {
-                quoteCode: consentData.quoteCode,
-                correlationId: consentData.sessionFingerprint || consentData.quoteCode,
-                email: consentData.email
-              }
+        if (isYes || isNo) {
+          if (isYes && consentData.email) {
+            const emailResult = await sendQuoteEmail({
+              customerName: consentData.customerName,
+              customerEmail: consentData.email,
+              vehicleData: consentData.vehicleData,
+              damageAnalysis: consentData.damageAnalysis,
+              quote: consentData.quote,
+              priceRange: consentData.priceRange,
+              photoUrls: consentData.photoUrls,
+              quoteCode: consentData.quoteCode
             });
-          } else {
-            await enviarWhatsApp(userId, `⚠️ No pude enviar el email (${emailResult.error}). Lo intento de nuevo o te contacto manualmente.`);
-          }
-        } else {
-          await enviarWhatsApp(userId, '👍 Entendido, no envío email. ¿Quieres agregar algo más a la cotización?');
-        }
 
-        axelEmailConsent.delete(userId);
-        return; // Manejado
-      } else {
-        await enviarWhatsApp(userId, 'Responde solo SI o NO para enviar la cotización por email.');
-        return; // Manejado
+            const message = emailResult.success
+              ? `✉️ Listo, envié la cotización detallada a ${consentData.email}. ¿Necesitas algo más?`
+              : `⚠️ No pude enviar el email (${emailResult.error}). Te contacto manualmente.`;
+            
+            await enviarWhatsApp(userId, message);
+            
+            if (emailResult.success) {
+              await saveInteraction({
+                userId,
+                agent: 'AXEL',
+                agentName: 'Axel - PaintBull',
+                intentReason: 'email_sent',
+                input: consentData.email,
+                output: 'quote_email_sent',
+                meta: {
+                  quoteCode: consentData.quoteCode,
+                  correlationId: consentData.sessionFingerprint || consentData.quoteCode,
+                  email: consentData.email
+                }
+              });
+            }
+          } else {
+            await enviarWhatsApp(userId, '👍 Entendido, no envío email. ¿Necesitas algo más?');
+          }
+
+          axelEmailConsent.delete(userId);
+          return;
+        } else {
+          await enviarWhatsApp(userId, 'Por favor responde solo SI o NO para confirmar el envío de la cotización por email.');
+          return;
+        }
       }
-    }
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
@@ -1377,140 +1362,105 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       if (resumeMessage) formResult.resumeMessage = resumeMessage;
     }
 
-    // 📸 AXEL PHOTO COLLECTOR: Manejar texto durante sesión activa
-    console.log(`[AXEL-DEBUG] 💬 Texto recibido - activeAgent: ${profile.activeAgent}, processedText: "${processedText}"`);
-    if (profile.activeAgent === 'AXEL' && !mediaUrl && processedText) {
-      const normalizedText = processedText.toLowerCase().trim();
-      const noMoreItems = ['no tengo', 'no tengo nada', 'no tengo mas', 'no tengo más'].includes(normalizedText);
-
-      if (noMoreItems) {
-        const formStatus = await processAxelFormMessage(userId, processedText || '');
-        const missingFields = formStatus?.missingFields || [];
-        const prompt = generateFormPrompt(missingFields, formStatus?.data || {});
-        if (prompt) {
-          await enviarWhatsApp(userId, `Perfecto, seguimos. Para cerrar la cotización necesito:
-
-${prompt}`);
-          return;
-        }
-      }
-
-      // Actualizar formulario con texto libre mientras se cargan fotos (sin molestar al usuario)
-      if (processedText) {
-        await processAxelFormMessage(userId, processedText).catch(err => {
-          console.error('[AXEL-FORM] ⚠️ Error actualizando con texto libre:', err);
-        });
-      }
-
-      const session = await getSession(userId);
-      console.log(`[AXEL-DEBUG] 📊 Sesión actual:`, session ? `${session.photoCount} fotos, readyToProcess: ${session.readyToProcess}` : 'null');
-      
-      if (session && session.photoCount > 0) {
-        // Detectar comandos de finalización O timeout expirado
-        const finalizationPatterns = [
-          /^listo$/,
-          /^ya$/,
-          /^ya\s+esta$/,
-          /^ya\s+está$/,
-          /^procesar$/,
-          /^terminar$/,
-          /^ok$/,
-          /^dale$/,
-          /^enviar$/
-        ];
-        const cleanedText = normalizedText.replace(/[!.]/g, '').trim();
-        const isFinalizationCommand = finalizationPatterns.some(rx => rx.test(cleanedText));
-        const shouldProcess = isFinalizationCommand; // Solo procesar cuando diga "listo" u orden similar
-        
-        if (shouldProcess) {
-          console.log(`[WASSENGER] ✅ ${isFinalizationCommand ? 'Comando de finalización' : 'Timeout alcanzado'}: "${processedText}"`);
+      // ────────────────────────────────────────────────────────────────────
+      // PASO 2: Manejo de fotos (agregar a sesión)
+      // ────────────────────────────────────────────────────────────────────
+      if (mediaUrl && type === 'image') {
+        await queueTask(userId, async () => {
+          const photoStatus = await addPhoto(userId, mediaUrl, type);
           
-          // 🔄 TODO en queue para garantizar orden
-          await queueTask(userId, async () => {
-            const result = await completeSession(userId);
-            
-            if (result) {
-              console.log('[WASSENGER] 🚀 Procesando fotos con IA (respuesta única)...');
-              await processAxelQuote(userId, result.photos, profile, processedText || '', result.sessionFingerprint);
-              clearQueue(userId);
-            }
-          });
+          // Tracking de transacción en primera foto
+          if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
+            profile.transactionStartedAt = new Date().toISOString();
+            profile.transactionAgent = 'AXEL';
+            profile.followUpSentAt = null;
+            await saveProfile(userId, profile);
+          }
           
-          return;
-        } else {
-          // 🔧 FIX 2: Es una pregunta/texto normal - dejar que Axel responda pero MANTENER sesión activa
-          console.log(`[WASSENGER] 💬 Texto durante sesión de fotos: "${processedText}" - Manteniendo sesión activa (${session.photoCount} fotos guardadas)`);
-          console.log(`[AXEL-DEBUG] ⏸️ Sesión preservada - Axel puede responder preguntas sin perder fotos`);
-          // El flujo continúa normalmente hacia procesarMensaje, sesión se mantiene
-        }
-      }
-    }
+          // Mensaje de bienvenida en primera foto
+          if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
+            await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos en una sola respuesta con análisis y cotización.`);
+            markFirstAckSent(userId);
 
-    // 📸 AXEL PHOTO COLLECTOR: Manejar fotos cuando Axel está activo
-    console.log(`[AXEL-DEBUG] 📸 Foto recibida - activeAgent: ${profile.activeAgent}, mediaUrl: ${mediaUrl ? 'SI' : 'NO'}, type: ${type}`);
-    if (mediaUrl && type === 'image' && profile.activeAgent === 'AXEL') {
-      console.log('[AXEL-DEBUG] ✅ Condición cumplida - procesando foto para Axel');
-      // 🔄 TODO en queue para garantizar orden absoluto
-      await queueTask(userId, async () => {
-        const photoStatus = await addPhoto(userId, mediaUrl, type);  // ✅ FIX: await agregado
-        
-        console.log(`[WASSENGER] 📸 Foto ${photoStatus.currentCount}/${photoStatus.maxPhotos} agregada`);
-        
-        // ⏱️ T14: Iniciar tracking de transacción en primera foto
-        if (photoStatus.currentCount === 1 && !profile.transactionStartedAt) {
-          profile.transactionStartedAt = new Date().toISOString();
-          profile.transactionAgent = 'AXEL';
-          profile.followUpSentAt = null;
-          await saveProfile(userId, profile);
-          console.log('[T14] ⏱️ Transacción AXEL iniciada:', { userId, timestamp: profile.transactionStartedAt });
-        }
-        
-        // Mensajes de confirmación
-        if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
-          console.log('[WASSENGER] 📤 Enviando mensaje: primera foto recibida');
-          await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos en una sola respuesta con análisis y cotización. No respondo foto por foto, espero a tenerlas todas.`);
-          markFirstAckSent(userId);
-
-          // Observabilidad: evento photo_received
-          await saveInteraction({
-            userId,
-            agent: 'AXEL',
-            agentName: 'Axel - PaintBull',
-            intentReason: 'photo_received',
-            input: '[PHOTO]',
-            output: 'ack_first_photo',
-            meta: {
-              correlationId: photoStatus.sessionFingerprint || null,
-              photoCount: photoStatus.currentCount
-            }
-          });
-          
-          // 🔥 FIX: Pasar callback para auto-procesamiento después de timeout
-          startTimeout(userId, async () => {
-            const reminder = `⏳ Pasaron 20s sin nuevas fotos. Cuando tengas todas listas escribe "listo" y proceso el análisis en una sola respuesta.`;
-            await enviarWhatsApp(userId, reminder);
             await saveInteraction({
               userId,
               agent: 'AXEL',
               agentName: 'Axel - PaintBull',
-              intentReason: 'photo_timeout_reminder',
-              input: '[PHOTO_TIMEOUT]',
-              output: 'reminder_sent',
+              intentReason: 'photo_received',
+              input: '[PHOTO]',
+              output: 'ack_first_photo',
               meta: {
-                correlationId: photoStatus.sessionFingerprint || null,
+                correlationId: photoStatus.sessionFingerprint,
                 photoCount: photoStatus.currentCount
               }
             });
-          });
+            
+            // Timeout reminder
+            startTimeout(userId, async () => {
+              await enviarWhatsApp(userId, `⏳ Pasaron 20s sin nuevas fotos. Cuando tengas todas listas escribe "listo" para procesar.`);
+              await saveInteraction({
+                userId,
+                agent: 'AXEL',
+                agentName: 'Axel - PaintBull',
+                intentReason: 'photo_timeout_reminder',
+                input: '[PHOTO_TIMEOUT]',
+                output: 'reminder_sent',
+                meta: { photoCount: photoStatus.currentCount }
+              });
+            });
+          }
+          
+          // Mensaje cuando alcanza el máximo
+          if (photoStatus.currentCount >= photoStatus.maxPhotos) {
+            await enviarWhatsApp(userId, `📸 Ya tengo ${photoStatus.maxPhotos} fotos. Escribe "listo" cuando quieras que analice y cotice.`);
+          }
+        });
+        
+        return;
+      }
+
+      // ────────────────────────────────────────────────────────────────────
+      // PASO 3: Comando "listo" (procesar cotización)
+      // ────────────────────────────────────────────────────────────────────
+      if (!mediaUrl && processedText) {
+        const session = await getSession(userId);
+        
+        if (session && session.photoCount > 0) {
+          const normalized = processedText.toLowerCase().trim().replace(/[!.]/g, '');
+          const finalizationPatterns = [
+            /^listo$/,
+            /^ya$/,
+            /^ya\s+esta$/,
+            /^ya\s+está$/,
+            /^procesar$/,
+            /^ok$/,
+            /^dale$/
+          ];
+          
+          const isFinalizationCommand = finalizationPatterns.some(rx => rx.test(normalized));
+          
+          if (isFinalizationCommand) {
+            await queueTask(userId, async () => {
+              const result = await completeSession(userId);
+              
+              if (result) {
+                await processAxelQuote(userId, result.photos, profile, processedText, result.sessionFingerprint);
+                clearQueue(userId);
+              }
+            });
+            
+            return;
+          }
         }
         
-        // Si alcanzó el máximo, procesar DENTRO del queue
-        if (photoStatus.currentCount >= photoStatus.maxPhotos) {
-          await enviarWhatsApp(userId, `📸 Ya tengo ${photoStatus.maxPhotos} fotos. Escribe "listo" cuando quieras que analice y cotice en una sola respuesta.`);
-        }
-      });
-      
-      return; // No continuar con flujo normal
+        // ────────────────────────────────────────────────────────────────────
+        // PASO 4: Texto normal (actualizar formulario, continuar orquestador)
+        // ────────────────────────────────────────────────────────────────────
+        // Actualizar formulario silenciosamente con datos del usuario
+        await processAxelFormMessage(userId, processedText).catch(() => {});
+        
+        // Continuar con orquestador para respuestas conversacionales
+      }
     }
     
     // 💼 ALUNA PAYMENT RECEIPTS: Verificar comprobantes de membresías
@@ -1650,25 +1600,11 @@ ${prompt}`);
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     
-    // 🔍 DEBUG: Estado ANTES del orquestador
-    console.log(`[WASSENGER-DEBUG] 📥 PRE-ORQUESTADOR - Usuario ${userId}:`);
-    console.log(`   activeAgent (profile): ${profile.activeAgent}`);
-    console.log(`   Mensaje: "${auroraInput.substring(0, 100)}..."`);
-    
     const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {
       ...formResult,
-      // 🔄 Pasar formulario parcial guardado si existe (para continuación de flujo)
       savedPartial: currentAgentForm,
-      envelope // <- Aurora Core recibe el evento completo si tu orquestador lo usa
+      envelope
     });
-    
-    // 🔍 DEBUG: Estado DESPUÉS del orquestador
-    console.log(`[WASSENGER-DEBUG] 📤 POST-ORQUESTADOR - Usuario ${userId}:`);
-    console.log(`   agenteKey decidido: ${resultado.agenteKey}`);
-    console.log(`   activeAgent anterior: ${profile.activeAgent}`);
-    console.log(`   ¿Cambió agente?: ${resultado.agenteKey !== profile.activeAgent}`);
-    console.log(`   Razón: ${resultado.razonSeleccion}`);
-    console.log(`   ¿Es handoff?: ${!!resultado?.metadata?.agentHandoff}`);
     
     // 🔒 GUARDAR fromAgent ANTES de actualizar (fix bug handoff loop)
     const originalFromAgent = profile.activeAgent || 'AURORA';

@@ -783,7 +783,7 @@ ${prompt}`);
       agentName: 'Axel - PaintBull',
       intentReason: 'axel_quote_generated',
       input: latestUserText || `[${photoUrls.length} fotos]`,
-      output: finalMessage,
+      output: smsSummary,
       meta: {
         quoteCode,
         photoCount: photoUrls.length,

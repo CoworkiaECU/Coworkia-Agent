@@ -18,6 +18,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import gabiRepository from '../database/gabiRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
@@ -67,38 +68,25 @@ export async function confirmLegalConsultation(userId, userProfile) {
 
   try {
     // ==========================================
-    // 1️⃣ GUARDAR EN BASE DE DATOS
+    // 1️⃣ GUARDAR EN BASE DE DATOS usando gabiRepository
     // ==========================================
     
-    const consultationId = `legal_${Date.now()}_${userId.replace(/\+/g, '')}`;
     const consultationCode = await generateConsultationCode();
     
-    const insertQuery = `
-      INSERT INTO legal_leads (
-        id, consultation_code, user_phone, consultation_type, company,
-        ruc, client_name, email, phone, description,
-        urgency, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const insertParams = [
-      consultationId,
-      consultationCode,
-      userId,
-      formData.consultationType || 'General',
-      formData.companyName || null,
-      formData.ruc || null,
-      formData.fullName,
-      formData.email || null,
-      formData.phone || userId,
-      formData.description || '',
-      formData.urgency || 'Normal',
-      'pending',
-      new Date().toISOString(),
-      new Date().toISOString()
-    ];
+    const leadData = {
+      consultationCode: consultationCode,
+      userId: userId,
+      consultationType: formData.consultationType || 'General',
+      company: formData.companyName || null,
+      ruc: formData.ruc || null,
+      clientName: formData.fullName,
+      email: formData.email || null,
+      phone: formData.phone || userId,
+      description: formData.description || '',
+      urgency: formData.urgency || 'Normal'
+    };
     
-    await databaseService.run(insertQuery, insertParams);
+    const { id: consultationId } = await gabiRepository.saveLegalLead(leadData);
     console.log(`[LEGAL-CONFIRM] ✅ Consulta guardada: ${consultationId}`);
 
     // ==========================================

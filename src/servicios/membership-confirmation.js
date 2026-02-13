@@ -11,6 +11,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import alunaRepository from '../database/alunaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
@@ -122,36 +123,27 @@ export async function confirmMembershipLead(userId, userProfile) {
 
   try {
     // ==========================================
-    // 1️⃣ GUARDAR EN BASE DE DATOS
+    // 1️⃣ GUARDAR EN BASE DE DATOS usando alunaRepository
     // ==========================================
     
-    const leadId = await generateLeadCode();
+    const membershipCode = await generateLeadCode();
     const membershipDetails = getMembershipDetails(formData.membershipType);
     
-    const insertQuery = `
-      INSERT INTO membership_leads (
-        id, user_phone, membership_type, start_date, client_name, 
-        email, phone, special_requirements, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const now = new Date().toISOString();
-
-    const insertParams = [
-      leadId,
-      userId,
-      membershipDetails.name,
-      formData.startDate || null,
-      formData.fullName,
-      formData.email || null,
-      formData.phone,
-      formData.specialRequirements || null,
-      'pending_visit',
-      now,
-      now
-    ];
-
-    await databaseService.run(insertQuery, insertParams);
+    const leadData = {
+      id: `MB-${Date.now()}_${userId.replace(/\+/g, '')}`,
+      membershipCode: membershipCode,
+      userId: userId,
+      membershipType: membershipDetails.name,
+      startDate: formData.startDate || null,
+      clientName: formData.fullName,
+      email: formData.email || null,
+      phone: formData.phone,
+      companyName: null,
+      specialRequirements: formData.specialRequirements || null,
+      monthlyFee: membershipDetails.price
+    };
+    
+    const { id: leadId } = await alunaRepository.saveMembershipLead(leadData);
     console.log(`[MEMBERSHIP-CONFIRM] ✅ Lead guardado: ${leadId}`);
 
     // ==========================================

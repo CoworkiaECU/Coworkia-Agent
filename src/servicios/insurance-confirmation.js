@@ -18,6 +18,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import adrianaRepository from '../database/adrianaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 
@@ -90,90 +91,39 @@ export async function processInsuranceConfirmation(userId, message, userProfile)
 
   try {
     // ==========================================
-    // 1️⃣ GUARDAR EN BASE DE DATOS
+    // 1️⃣ GUARDAR EN BASE DE DATOS usando adrianaRepository
     // ==========================================
     
-    const leadId = `insurance_${Date.now()}_${userId.replace(/\+/g, '')}`;
     const quoteCode = await generateQuoteCode();
     
     const leadData = {
-      id: leadId,
-      quote_code: quoteCode,
-      user_phone: userId,
-      agent_name: 'ADRIANA',
-      insurance_type: formData.insuranceType || 'Seguro para Vehículos livianos',
+      quoteCode: quoteCode,
+      userId: userId,
+      insuranceType: formData.insuranceType || 'Seguro para Vehículos livianos',
       city: formData.city,
-      commercial_value: formData.commercialValue,
+      commercialValue: formData.commercialValue,
       plate: formData.plate,
-      vehicle_brand: formData.vehicleBrand,
-      vehicle_model: formData.vehicleModel,
-      vehicle_year: formData.vehicleYear,
+      vehicleBrand: formData.vehicleBrand,
+      vehicleModel: formData.vehicleModel,
+      vehicleYear: formData.vehicleYear,
       motor: formData.motor,
       chasis: formData.chasis,
-      origin_country: formData.originCountry,
-      license_type: formData.licenseType,
-      license_expiry: formData.licenseExpiry,
-      client_name: formData.fullName,
+      originCountry: formData.originCountry,
+      licenseType: formData.licenseType,
+      licenseExpiry: formData.licenseExpiry,
+      clientName: formData.fullName,
       cedula: formData.cedula,
       email: formData.email || null,
       phone: formData.phone,
-      matricula_images: JSON.stringify(formData.matriculaImages || []),
-      licencia_images: JSON.stringify(formData.licenciaImages || []),
-      quoted_premium: premium.totalPremium,
-      premium_breakdown: JSON.stringify(premium),
-      status: 'quoted',
-      quote_sent_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      matriculaImages: formData.matriculaImages || [],
+      licenciaImages: formData.licenciaImages || [],
+      quotedPremium: premium.totalPremium,
+      premiumBreakdown: premium
     };
 
     console.log('[INSURANCE-CONFIRM] 💾 Guardando lead en insurance_leads...');
     
-    // Usar databaseService.run() como en reservationRepository.js
-    const insertQuery = `
-      INSERT INTO insurance_leads (
-        id, quote_code, user_phone, agent_name, insurance_type,
-        city, commercial_value, plate, vehicle_brand, vehicle_model, vehicle_year,
-        motor, chasis, origin_country, license_type, license_expiry,
-        client_name, cedula, email, phone,
-        matricula_images, licencia_images,
-        quoted_premium, premium_breakdown,
-        status, quote_sent_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const insertParams = [
-      leadData.id,
-      leadData.quote_code,
-      leadData.user_phone,
-      leadData.agent_name,
-      leadData.insurance_type,
-      leadData.city,
-      leadData.commercial_value,
-      leadData.plate,
-      leadData.vehicle_brand,
-      leadData.vehicle_model,
-      leadData.vehicle_year,
-      leadData.motor,
-      leadData.chasis,
-      leadData.origin_country,
-      leadData.license_type,
-      leadData.license_expiry,
-      leadData.client_name,
-      leadData.cedula,
-      leadData.email,
-      leadData.phone,
-      leadData.matricula_images,
-      leadData.licencia_images,
-      leadData.quoted_premium,
-      leadData.premium_breakdown,
-      leadData.status,
-      leadData.quote_sent_at,
-      leadData.created_at,
-      leadData.updated_at
-    ];
-    
-    await databaseService.run(insertQuery, insertParams);
+    const { id: leadId } = await adrianaRepository.saveInsuranceLead(leadData);
     console.log(`[INSURANCE-CONFIRM] ✅ Lead guardado: ${leadId}`);
 
     // ==========================================

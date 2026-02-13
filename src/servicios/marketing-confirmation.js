@@ -17,6 +17,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import enzoRepository from '../database/enzoRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 
@@ -65,38 +66,25 @@ export async function confirmMarketingProject(userId, userProfile) {
 
   try {
     // ==========================================
-    // 1️⃣ GUARDAR EN BASE DE DATOS
+    // 1️⃣ GUARDAR EN BASE DE DATOS usando enzoRepository
     // ==========================================
     
-    const projectId = `marketing_${Date.now()}_${userId.replace(/\+/g, '')}`;
     const projectCode = await generateProjectCode();
     
-    const insertQuery = `
-      INSERT INTO marketing_leads (
-        id, project_code, user_phone, project_type, company,
-        client_name, email, phone, budget_range, urgency,
-        description, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const insertParams = [
-      projectId,
-      projectCode,
-      userId,
-      formData.projectType || 'Consultoría',
-      formData.companyName || null,
-      formData.fullName,
-      formData.email || null,
-      formData.phone || null,
-      formData.budget || 'Por definir',
-      formData.urgency || 'Flexible',
-      formData.description || '',
-      'pending',
-      new Date().toISOString(),
-      new Date().toISOString()
-    ];
+    const leadData = {
+      projectCode: projectCode,
+      userId: userId,
+      projectType: formData.projectType || 'Consultoría',
+      company: formData.companyName || null,
+      clientName: formData.fullName,
+      email: formData.email || null,
+      phone: formData.phone || null,
+      budgetRange: formData.budget || 'Por definir',
+      urgency: formData.urgency || 'Flexible',
+      description: formData.description || ''
+    };
     
-    await databaseService.run(insertQuery, insertParams);
+    const { id: projectId } = await enzoRepository.saveMarketingLead(leadData);
     console.log(`[MARKETING-CONFIRM] ✅ Proyecto guardado: ${projectId}`);
 
     // ==========================================

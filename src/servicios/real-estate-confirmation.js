@@ -19,6 +19,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import paulaRepository from '../database/paulaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { confirmPropertyVisit } from './paula-confirmation-helper.js';
@@ -111,7 +112,7 @@ async function confirmPropertyLead(userId, userProfile) {
 
   try {
     // ==========================================
-    // 1️⃣ GUARDAR EN BASE DE DATOS
+    // 1️⃣ GUARDAR EN BASE DE DATOS usando paulaRepository
     // ==========================================
     
     const leadId = await generateLeadCode();
@@ -126,31 +127,20 @@ async function confirmPropertyLead(userId, userProfile) {
       specialRequirements: formData.specialRequirements || null
     };
 
-    const insertQuery = `
-      INSERT INTO real_estate_leads (
-        id, user_phone, operation_type, property_type, preferred_zone,
-        budget_range, client_name, email, phone, requirements,
-        status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const insertParams = [
-      leadId,
-      userId,
-      formData.operationType || 'compra',
-      formData.propertyType,
-      formData.city,
-      formData.budgetRange,
-      formData.fullName,
-      formData.email || null,
-      formData.phone || null,
-      JSON.stringify(requirements),
-      'pending',
-      new Date().toISOString(),
-      new Date().toISOString()
-    ];
+    const leadData = {
+      id: leadId,
+      userId: userId,
+      operationType: formData.operationType || 'compra',
+      propertyType: formData.propertyType,
+      preferredZone: formData.city,
+      budgetRange: formData.budgetRange,
+      clientName: formData.fullName,
+      email: formData.email || null,
+      phone: formData.phone || null,
+      requirements: requirements
+    };
     
-    await databaseService.run(insertQuery, insertParams);
+    await paulaRepository.saveRealEstateLead(leadData);
     console.log(`[REAL-ESTATE-CONFIRM] ✅ Lead guardado: ${leadId}`);
 
     // ==========================================

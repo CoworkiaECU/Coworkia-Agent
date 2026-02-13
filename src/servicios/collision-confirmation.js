@@ -18,6 +18,7 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
+import axelRepository from '../database/axelRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { analyzeCollisionPhotos } from './axel-vision-analysis.js';
@@ -141,52 +142,38 @@ export async function confirmCollisionQuote(userId, userProfile) {
     });
 
     // ==========================================
-    // 3️⃣ GUARDAR EN BASE DE DATOS
+    // 3️⃣ GUARDAR EN BASE DE DATOS usando axelRepository
     // ==========================================
     
-    const quoteId = `collision_${Date.now()}_${userId.replace(/\+/g, '')}`;
     const quoteCode = await generateQuoteCode();
     
-    const insertQuery = `
-      INSERT INTO collision_quotes (
-        id, quote_code, user_phone, damage_type, client_name,
-        vehicle_brand, vehicle_model, vehicle_year, email, phone,
-        damage_description, photo_urls, damage_analysis,
-        quote_details, price_min, price_max, currency,
-        status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const insertParams = [
-      quoteId,
-      quoteCode,
-      userId,
-      formData.damageType || 'General',
-      formData.fullName,
-      formData.vehicleBrand,
-      formData.vehicleModel,
-      formData.vehicleYear,
-      formData.email || null,
-      formData.phone || null,
-      formData.damageDescription || '',
-      JSON.stringify(formData.photoUrls || []),
-      JSON.stringify({
+    const quoteData = {
+      id: `collision_${Date.now()}_${userId.replace(/\+/g, '')}`,
+      quoteCode: quoteCode,
+      userId: userId,
+      damageType: formData.damageType || 'General',
+      clientName: formData.fullName,
+      vehicleBrand: formData.vehicleBrand,
+      vehicleModel: formData.vehicleModel,
+      vehicleYear: formData.vehicleYear,
+      email: formData.email || null,
+      phone: formData.phone || null,
+      damageDescription: formData.damageDescription || '',
+      photoUrls: formData.photoUrls || [],
+      damageAnalysis: {
         severity: damageAnalysis.severity,
         details: damageAnalysis.damageDetails,
         parts: damageAnalysis.affectedParts,
         risk: damageAnalysis.hiddenDamageRisk,
         estimatedDays: damageAnalysis.estimatedRepairDays
-      }),
-      quoteDetails,
-      priceRange.min,
-      priceRange.max,
-      'USD',
-      'pending',
-      new Date().toISOString(),
-      new Date().toISOString()
-    ];
+      },
+      quoteDetails: quoteDetails,
+      priceMin: priceRange.min,
+      priceMax: priceRange.max,
+      sessionFingerprint: null
+    };
     
-    await databaseService.run(insertQuery, insertParams);
+    const { id: quoteId } = await axelRepository.saveCollisionQuote(quoteData);
     console.log(`[COLLISION-CONFIRM] ✅ Cotización guardada: ${quoteId}`);
 
     // ==========================================

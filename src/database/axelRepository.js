@@ -98,3 +98,133 @@ export async function cleanExpiredPartialQuotes() {
   console.log(`[AXEL-REPO] 🧹 Cotizaciones parciales expiradas eliminadas: ${result.changes || 0}`);
   return result.changes || 0;
 }
+
+// ============================================================================
+// COLLISION QUOTES - Cotizaciones completas
+// ============================================================================
+
+/**
+ * 💾 Guardar cotización de colisión completa
+ */
+export async function saveCollisionQuote(quoteData) {
+  await databaseService.ensureInitialized();
+  
+  const {
+    id,
+    quoteCode,
+    userId,
+    damageType,
+    clientName,
+    vehicleBrand,
+    vehicleModel,
+    vehicleYear,
+    email,
+    phone,
+    damageDescription,
+    photoUrls = [],
+    damageAnalysis = {},
+    quoteDetails,
+    priceMin,
+    priceMax,
+    sessionFingerprint
+  } = quoteData;
+
+  await databaseService.run(
+    `INSERT INTO collision_quotes (
+      id, quote_code, user_phone, damage_type, client_name,
+      vehicle_brand, vehicle_model, vehicle_year, email, phone,
+      damage_description, photo_urls, damage_analysis, quote_details,
+      price_min, price_max, currency, session_fingerprint,
+      status, quote_sent_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, CURRENT_TIMESTAMP)`,
+    [
+      id, quoteCode, userId, damageType, clientName,
+      vehicleBrand, vehicleModel, vehicleYear, email, phone,
+      damageDescription, JSON.stringify(photoUrls), JSON.stringify(damageAnalysis),
+      quoteDetails, priceMin, priceMax, 'USD', sessionFingerprint,
+      'quoted'
+    ]
+  );
+
+  console.log(`[AXEL-REPO] ✅ Cotización de colisión guardada: ${quoteCode}`);
+  return { id, quoteCode };
+}
+
+/**
+ * 🔍 Obtener cotización por código
+ */
+export async function getCollisionQuote(quoteCode) {
+  await databaseService.ensureInitialized();
+  
+  const result = await databaseService.get(
+    `SELECT * FROM collision_quotes WHERE quote_code = $1`,
+    [quoteCode]
+  );
+
+  if (result) {
+    // Parse JSONB fields
+    result.photo_urls = typeof result.photo_urls === 'string'
+      ? JSON.parse(result.photo_urls)
+      : result.photo_urls;
+    result.damage_analysis = typeof result.damage_analysis === 'string'
+      ? JSON.parse(result.damage_analysis)
+      : result.damage_analysis;
+  }
+
+  return result || null;
+}
+
+/**
+ * 🔍 Obtener cotizaciones por usuario
+ */
+export async function getCollisionQuotesByUser(userId) {
+  await databaseService.ensureInitialized();
+  
+  const results = await databaseService.all(
+    `SELECT * FROM collision_quotes WHERE user_phone = $1 ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  return results || [];
+}
+
+/**
+ * 🔄 Actualizar estado de cotización
+ */
+export async function updateCollisionQuoteStatus(quoteCode, status, notes = null) {
+  await databaseService.ensureInitialized();
+  
+  const params = [status, quoteCode];
+  let query = `UPDATE collision_quotes SET status = $1, updated_at = CURRENT_TIMESTAMP`;
+  
+  if (notes) {
+    query += `, notes = $3`;
+    params.push(notes);
+  }
+  
+  query += ` WHERE quote_code = $2`;
+  
+  await databaseService.run(query, params);
+  console.log(`[AXEL-REPO] ✅ Cotización actualizada: ${quoteCode} → ${status}`);
+}
+
+/**
+ * 📊 Obtener estadísticas de cotizaciones
+ */
+export async function getCollisionQuotesStats() {
+  await databaseService.ensureInitialized();
+  
+  const stats = await databaseService.get(`
+    SELECT 
+      COUNT(*) as total,
+      COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+      COUNT(CASE WHEN status = 'quoted' THEN 1 END) as quoted,
+      COUNT(CASE WHEN status = 'accepted' THEN 1 END) as accepted,
+      COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
+      COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+      AVG((price_min + price_max) / 2) as avg_quote
+    FROM collision_quotes
+  `);
+
+  return stats || {};
+}

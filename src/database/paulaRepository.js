@@ -168,3 +168,159 @@ export async function clearPendingConfirmation(userId) {
 
   console.log(`[PAULA-REPO] 🗑️ Confirmación pendiente eliminada: ${userId}`);
 }
+
+// ============================================================================
+// REAL ESTATE LEADS - Leads inmobiliarios completos
+// ============================================================================
+
+/**
+ * 💾 Guardar lead inmobiliario completo
+ */
+export async function saveRealEstateLead(leadData) {
+  await databaseService.ensureInitialized();
+  
+  const {
+    id,
+    userId,
+    operationType,
+    propertyType,
+    preferredZone,
+    budgetRange,
+    clientName,
+    email,
+    phone,
+    requirements = {}
+  } = leadData;
+
+  await databaseService.run(
+    `INSERT INTO real_estate_leads (
+      id, user_phone, operation_type, property_type,
+      preferred_zone, budget_range, client_name, email, phone,
+      requirements, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    [
+      id, userId, operationType, propertyType,
+      preferredZone, budgetRange, clientName, email, phone,
+      JSON.stringify(requirements), 'pending'
+    ]
+  );
+
+  console.log(`[PAULA-REPO] ✅ Lead inmobiliario guardado: ${id}`);
+  return { id };
+}
+
+/**
+ * 🔍 Obtener lead por ID
+ */
+export async function getRealEstateLead(leadId) {
+  await databaseService.ensureInitialized();
+  
+  const result = await databaseService.get(
+    `SELECT * FROM real_estate_leads WHERE id = $1`,
+    [leadId]
+  );
+
+  if (result) {
+    result.requirements = typeof result.requirements === 'string'
+      ? JSON.parse(result.requirements)
+      : result.requirements;
+    result.properties_shown = typeof result.properties_shown === 'string'
+      ? JSON.parse(result.properties_shown)
+      : result.properties_shown;
+  }
+
+  return result || null;
+}
+
+/**
+ * 🔍 Obtener leads por usuario
+ */
+export async function getRealEstateLeadsByUser(userId) {
+  await databaseService.ensureInitialized();
+  
+  const results = await databaseService.all(
+    `SELECT * FROM real_estate_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  return results || [];
+}
+
+/**
+ * 🔄 Actualizar estado de lead
+ */
+export async function updateRealEstateLeadStatus(leadId, status, notes = null) {
+  await databaseService.ensureInitialized();
+  
+  const params = [status, leadId];
+  let query = `UPDATE real_estate_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
+  
+  if (notes) {
+    query += `, notes = $3`;
+    params.push(notes);
+  }
+  
+  query += ` WHERE id = $2`;
+  
+  await databaseService.run(query, params);
+  console.log(`[PAULA-REPO] ✅ Lead actualizado: ${leadId} → ${status}`);
+}
+
+/**
+ * 📅 Agendar visita
+ */
+export async function schedulePropertyViewing(leadId, viewingDate) {
+  await databaseService.ensureInitialized();
+  
+  await databaseService.run(
+    `UPDATE real_estate_leads 
+     SET viewing_scheduled = $1, status = 'viewing_scheduled', updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2`,
+    [viewingDate, leadId]
+  );
+
+  console.log(`[PAULA-REPO] 📅 Visita agendada: ${leadId}`);
+}
+
+/**
+ * 🏠 Agregar propiedad mostrada
+ */
+export async function addPropertyShown(leadId, propertyData) {
+  await databaseService.ensureInitialized();
+  
+  const lead = await getRealEstateLead(leadId);
+  if (!lead) return;
+
+  const propertiesShown = lead.properties_shown || [];
+  propertiesShown.push(propertyData);
+
+  await databaseService.run(
+    `UPDATE real_estate_leads 
+     SET properties_shown = $1, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2`,
+    [JSON.stringify(propertiesShown), leadId]
+  );
+
+  console.log(`[PAULA-REPO] 🏠 Propiedad agregada al historial: ${leadId}`);
+}
+
+/**
+ * 📊 Obtener estadísticas de leads
+ */
+export async function getRealEstateLeadsStats() {
+  await databaseService.ensureInitialized();
+  
+  const stats = await databaseService.get(`
+    SELECT 
+      COUNT(*) as total,
+      COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+      COUNT(CASE WHEN status = 'viewing_scheduled' THEN 1 END) as viewings_scheduled,
+      COUNT(CASE WHEN status = 'negotiating' THEN 1 END) as negotiating,
+      COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed,
+      COUNT(CASE WHEN operation_type = 'Compra' THEN 1 END) as buyers,
+      COUNT(CASE WHEN operation_type = 'Arriendo' THEN 1 END) as renters
+    FROM real_estate_leads
+  `);
+
+  return stats || {};
+}

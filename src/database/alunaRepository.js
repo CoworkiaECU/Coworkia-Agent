@@ -168,3 +168,115 @@ export async function clearPendingConfirmation(userId) {
 
   console.log(`[ALUNA-REPO] 🗑️ Confirmación pendiente eliminada: ${userId}`);
 }
+
+// ============================================================================
+// MEMBERSHIP LEADS - Leads de membresía completas
+// ============================================================================
+
+/**
+ * 💾 Guardar lead de membresía completa
+ */
+export async function saveMembershipLead(leadData) {
+  await databaseService.ensureInitialized();
+  
+  const {
+    id,
+    membershipCode,
+    userId,
+    membershipType,
+    startDate,
+    clientName,
+    email,
+    phone,
+    companyName,
+    specialRequirements,
+    monthlyFee
+  } = leadData;
+
+  await databaseService.run(
+    `INSERT INTO membership_leads (
+      id, membership_code, user_phone, membership_type,
+      start_date, client_name, email, phone,
+      company_name, special_requirements, monthly_fee,
+      status, quote_sent_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)`,
+    [
+      id, membershipCode, userId, membershipType,
+      startDate, clientName, email, phone,
+      companyName, specialRequirements, monthlyFee,
+      'quoted'
+    ]
+  );
+
+  console.log(`[ALUNA-REPO] ✅ Lead de membresía guardado: ${membershipCode}`);
+  return { id, membershipCode };
+}
+
+/**
+ * 🔍 Obtener lead por código
+ */
+export async function getMembershipLead(membershipCode) {
+  await databaseService.ensureInitialized();
+  
+  const result = await databaseService.get(
+    `SELECT * FROM membership_leads WHERE membership_code = $1`,
+    [membershipCode]
+  );
+
+  return result || null;
+}
+
+/**
+ * 🔍 Obtener leads por usuario
+ */
+export async function getMembershipLeadsByUser(userId) {
+  await databaseService.ensureInitialized();
+  
+  const results = await databaseService.all(
+    `SELECT * FROM membership_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  return results || [];
+}
+
+/**
+ * 🔄 Actualizar estado de lead
+ */
+export async function updateMembershipLeadStatus(membershipCode, status, notes = null) {
+  await databaseService.ensureInitialized();
+  
+  const params = [status, membershipCode];
+  let query = `UPDATE membership_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
+  
+  if (notes) {
+    query += `, notes = $3`;
+    params.push(notes);
+  }
+  
+  query += ` WHERE membership_code = $2`;
+  
+  await databaseService.run(query, params);
+  console.log(`[ALUNA-REPO] ✅ Lead actualizado: ${membershipCode} → ${status}`);
+}
+
+/**
+ * 📊 Obtener estadísticas de leads
+ */
+export async function getMembershipLeadsStats() {
+  await databaseService.ensureInitialized();
+  
+  const stats = await databaseService.get(`
+    SELECT 
+      COUNT(*) as total,
+      COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+      COUNT(CASE WHEN status = 'quoted' THEN 1 END) as quoted,
+      COUNT(CASE WHEN status = 'accepted' THEN 1 END) as accepted,
+      COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+      COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled,
+      AVG(monthly_fee) as avg_monthly_fee
+    FROM membership_leads
+  `);
+
+  return stats || {};
+}

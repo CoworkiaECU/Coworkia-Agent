@@ -49,7 +49,9 @@ export const SUGGESTION_KEYWORDS = {
   ADRIANA: [
     'seguro', 'poliza', 'póliza', 'aseguradora', 'asegurar',
     'cobertura', 'cotizacion seguro', 'cotización seguro', 
-    'segpopular', 'insurance', 'seguro vehicular', 'seguro vida'
+    'segpopular', 'insurance', 'seguro vehicular', 'seguro vida',
+    'asegurar auto', 'asegurar carro', 'seguro carro', 'seguro auto',
+    'todo riesgo', 'terceros', 'robo vehicular', 'accidente vehicular'
   ],
 
   // Enzo - Marketing e IA (MarketingLab)
@@ -67,7 +69,9 @@ export const SUGGESTION_KEYWORDS = {
     'consulta medica', 'consulta médica', 'medicina',
     'bienestar', 'seguro medico', 'seguro médico',
     'atencion medica', 'atención médica', 'empresa de salud',
-    'medbeneficio', 'medbeneficios', 'cita medica', 'cita médica'
+    'medbeneficio', 'medbeneficios', 'cita medica', 'cita médica',
+    'enfermedad', 'sintoma', 'síntoma', 'dolor', 'fiebre',
+    'gripe', 'tos', 'farmacia', 'medicamento', 'receta'
   ],
 
   // Axel - Reparación vehicular (PaintBull)

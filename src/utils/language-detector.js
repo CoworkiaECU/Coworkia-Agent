@@ -1,17 +1,18 @@
 /**
  * 🌍 Sistema de Detección Automática de Idioma
  * Detecta el idioma del mensaje del usuario usando patrones nativos
- * Soporta: Español, English, Français, Runasimi (Quechua Ecuador)
+ * Soporta: Español, English, Français, Italiano, Português, Runasimi (Quechua)
  */
 
 // Códigos ISO 639-1 para idiomas soportados
-// Alineado con handoff-messages.js: es, en, fr, it, pt
+// Alineado con handoff-messages.js: es, en, fr, it, pt, qu
 export const SUPPORTED_LANGUAGES = {
   SPANISH: 'es',
   ENGLISH: 'en',
   FRENCH: 'fr',
   ITALIAN: 'it',
-  PORTUGUESE: 'pt'
+  PORTUGUESE: 'pt',
+  QUECHUA: 'qu'
 };
 
 // Nombres legibles de idiomas
@@ -20,7 +21,8 @@ export const LANGUAGE_NAMES = {
   en: 'English',
   fr: 'Français',
   it: 'Italiano',
-  pt: 'Português'
+  pt: 'Português',
+  qu: 'Quechua (Runasimi)'
 };
 
 /**
@@ -85,6 +87,18 @@ const LANGUAGE_PATTERNS = {
       'amanhã', 'hoje', 'reserva', 'informação', 'ajuda', 'preço'
     ],
     specialChars: /[ãõáâàéêíóôúç]/i,
+    weight: 1.0
+  },
+
+  // Quechua (Runasimi) - Palabras comunes
+  qu: {
+    commonWords: [
+      'allinllachu', 'imaynalla', 'ima', 'maypi', 'hayka', 'pi',
+      'munani', 'necesitani', 'yachani', 'kani', 'atini',
+      'kay', 'chay', 'huk', 'kunan', 'paqarin', 'qayna',
+      'yanapay', 'chanin', 'willay', 'tapuy'
+    ],
+    specialChars: /[qkhw]/i, // Letras características del quechua
     weight: 1.0
   }
 };
@@ -216,7 +230,9 @@ export function detectLanguageCommand(message) {
     'italian': SUPPORTED_LANGUAGES.ITALIAN,
     'português': SUPPORTED_LANGUAGES.PORTUGUESE,
     'portugues': SUPPORTED_LANGUAGES.PORTUGUESE,
-    'portuguese': SUPPORTED_LANGUAGES.PORTUGUESE
+    'portuguese': SUPPORTED_LANGUAGES.PORTUGUESE,
+    'quechua': SUPPORTED_LANGUAGES.QUECHUA,
+    'runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
 
   // Si el mensaje es EXACTAMENTE una palabra de idioma
@@ -239,7 +255,9 @@ export function detectLanguageCommand(message) {
     '/italian': SUPPORTED_LANGUAGES.ITALIAN,
     '/português': SUPPORTED_LANGUAGES.PORTUGUESE,
     '/portugues': SUPPORTED_LANGUAGES.PORTUGUESE,
-    '/portuguese': SUPPORTED_LANGUAGES.PORTUGUESE
+    '/portuguese': SUPPORTED_LANGUAGES.PORTUGUESE,
+    '/quechua': SUPPORTED_LANGUAGES.QUECHUA,
+    '/runasimi': SUPPORTED_LANGUAGES.QUECHUA
   };
 
   // Buscar comandos con barra
@@ -287,7 +305,14 @@ export function detectLanguageCommand(message) {
         /portuguese\s+please/i,
         /fala\s+português/i,
         /você\s+fala\s+português/i
-      ], lang: SUPPORTED_LANGUAGES.PORTUGUESE }
+      ], lang: SUPPORTED_LANGUAGES.PORTUGUESE },
+    { patterns: [
+        /cambiar?\s+(a|al)?\s*quechua/i,
+        /habla(r)?\s+quechua/i,
+        /habla(r)?\s+runasimi/i,
+        /quechua\s+please/i,
+        /runasimi/i
+      ], lang: SUPPORTED_LANGUAGES.QUECHUA }
   ];
 
   for (const { patterns, lang } of naturalCommands) {
@@ -414,7 +439,8 @@ export function getLanguageChangeConfirmation(newLanguage) {
     en: '✅ Perfect! I will now respond in English 🇺🇸',
     fr: '✅ Parfait! Je vais maintenant répondre en français 🇫🇷',
     it: '✅ Perfetto! Adesso risponderò in italiano 🇮🇹',
-    pt: '✅ Perfeito! Agora vou responder em português 🇵🇹'
+    pt: '✅ Perfeito! Agora vou responder em português 🇵🇹',
+    qu: '✅ Allinmi! Kunanqa Runasimillapi kutichisqayki 🇵🇪'
   };
 
   return confirmations[newLanguage] || confirmations.es;

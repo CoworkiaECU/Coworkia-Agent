@@ -68,7 +68,8 @@ const ENTRY_TEMPLATES = {
     en: 'Hi {userName}! {emoji} I\'m {toAgent}, {context}.\n\nHow can I help you?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, {context}.\n\nComment puis-je vous aider?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, {context}.\n\nCome posso aiutarti?',
-    pt: 'Olá {userName}! {emoji} Sou {toAgent}, {context}.\n\nComo posso ajudá-lo?'
+    pt: 'Olá {userName}! {emoji} Sou {toAgent}, {context}.\n\nComo posso ajudá-lo?',
+    qu: 'Allinllachu {userName}! {emoji} Ñuqaqa {toAgent} kani, {context}.\n\nImaynatataq yanapasqayki?'
   },
   
   // Usuario regresa al agente (ya estuvo antes)
@@ -77,7 +78,8 @@ const ENTRY_TEMPLATES = {
     en: 'Hello again {userName}! {emoji} I\'m {toAgent}, we meet again.\n\nI remember our last conversation. How else can I help you now?',
     fr: 'Rebonjour {userName}! {emoji} Je suis {toAgent}, nous nous retrouvons.\n\nJe me souviens de notre dernière conversation. Comment puis-je encore vous aider?',
     it: 'Ciao di nuovo {userName}! {emoji} Sono {toAgent}, ci ritroviamo.\n\nRicordo la nostra ultima conversazione. Come posso aiutarti adesso?',
-    pt: 'Olá novamente {userName}! {emoji} Sou {toAgent}, nos encontramos novamente.\n\nLembro da nossa última conversa. Como posso ajudá-lo agora?'
+    pt: 'Olá novamente {userName}! {emoji} Sou {toAgent}, nos encontramos novamente.\n\nLembro da nossa última conversa. Como posso ajudá-lo agora?',
+    qu: 'Allinllachu wakmanta {userName}! {emoji} Ñuqaqa {toAgent} kani, wakmanta tupanakunchis.\n\nYuyarini ñawpaq rimanakuyninchista. Kunantaq imaynatataq yanapasqayki?'
   },
   
   // Handoff desde otro agente (transición activa)
@@ -86,7 +88,8 @@ const ENTRY_TEMPLATES = {
     en: 'Hello {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\n{fromAgentName} is available with @{fromAgentHandle} if you need them.\n\nHow can I help you now with {context}?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\n{fromAgentName} est disponible avec @{fromAgentHandle} si vous en avez besoin.\n\nComment puis-je vous aider avec {context}?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\n{fromAgentName} è disponibile con @{fromAgentHandle} se ne hai bisogno.\n\nCome posso aiutarti con {context}?',
-    pt: 'Olá {userName}! {emoji} Sou {toAgent}, assumo daqui.\n\n{fromAgentName} está disponível com @{fromAgentHandle} se precisar.\n\nComo posso ajudá-lo com {context}?'
+    pt: 'Olá {userName}! {emoji} Sou {toAgent}, assumo daqui.\n\n{fromAgentName} está disponível com @{fromAgentHandle} se precisar.\n\nComo posso ajudá-lo com {context}?',
+    qu: 'Allinllachu {userName}! {emoji} Ñuqaqa {toAgent} kani, kaypi qallarikunin.\n\n{fromAgentName} kachkan @{fromAgentHandle}wan sichu necesitanki.\n\nImaynatataq yanapasqayki kunan {context}wan?'
   }
 };
 
@@ -95,7 +98,7 @@ const ENTRY_TEMPLATES = {
  * @param {string} toAgent - Agente que toma el control
  * @param {string} fromAgent - Agente anterior (null si es primera vez)
  * @param {string} userName - Nombre del usuario
- * @param {string} userLanguage - Idioma ('es', 'en', 'fr', 'it', 'pt')
+ * @param {string} userLanguage - Idioma ('es', 'en', 'fr', 'it', 'pt', 'qu')
  * @param {boolean} isReturning - Si el usuario ya habló con este agente antes
  * @returns {string} Mensaje de entrada
  */

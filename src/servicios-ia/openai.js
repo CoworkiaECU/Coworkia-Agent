@@ -357,43 +357,82 @@ export async function transcribeAudio(audioUrl, options = {}) {
       console.warn(`[Whisper] ⚠️ Idioma '${language}' no soportado, usando '${whisperLanguage}'`);
     }
 
-    // Descargar el audio desde la URL con headers apropiados
+    // Descargar audio con retry y timeout (Wassenger puede tardar)
     console.log('[Whisper] 🌐 Descargando audio desde Wassenger...');
     
-    // 🔐 BUG FIX v734: Agregar Authorization header para Wassenger API
     const headers = {
       'User-Agent': 'coworkia-agent/1.0',
       'Accept': 'audio/*,*/*'
     };
     
-    // Si es URL de Wassenger API, agregar token de autorización
     if (audioUrl.includes('api.wassenger.com')) {
       const wassengerApiKey = process.env.WASSENGER_API_KEY;
       if (wassengerApiKey) {
         headers['Authorization'] = `Bearer ${wassengerApiKey}`;
         console.log('[Whisper] 🔐 Token de autorización agregado');
       } else {
-        console.warn('[Whisper] ⚠️ WASSENGER_API_KEY no configurado - download puede fallar');
+        console.warn('[Whisper] ⚠️ WASSENGER_API_KEY no configurado');
       }
     }
     
-    const response = await fetch(audioUrl, {
-      method: 'GET',
-      headers
-    });
+    // Retry con exponential backoff (3 intentos)
+    let response;
+    let lastError;
+    const maxRetries = 3;
     
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'Sin detalles');
-      console.error('[Whisper] ❌ Error HTTP al descargar:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorBody.substring(0, 200),
-        url: audioUrl.substring(0, 100) + '...'
-      });
-      throw new Error(`Error descargando audio: ${response.status} - ${response.statusText}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[Whisper] 📥 Intento ${attempt}/${maxRetries}`);
+        
+        // Timeout de 120 segundos (Wassenger tarda ~100s en fallar)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000);
+        
+        response = await fetch(audioUrl, {
+          method: 'GET',
+          headers,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeout);
+        
+        if (response.ok) {
+          console.log('[Whisper] ✅ Audio descargado exitosamente');
+          break;
+        }
+        
+        // Error HTTP - guardar y reintentar
+        const errorBody = await response.text().catch(() => 'Sin detalles');
+        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        console.warn(`[Whisper] ⚠️ Intento ${attempt} falló:`, {
+          status: response.status,
+          body: errorBody.substring(0, 200)
+        });
+        
+        // Esperar antes de reintentar (1s, 2s, 4s)
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.log(`[Whisper] ⏳ Esperando ${delay}ms antes de reintentar...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+      } catch (error) {
+        lastError = error;
+        console.warn(`[Whisper] ⚠️ Intento ${attempt} error:`, error.message);
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
-
-    console.log('[Whisper] ✅ Audio descargado exitosamente');
+    
+    // Si todos los intentos fallaron
+    if (!response || !response.ok) {
+      console.error('[Whisper] ❌ Descarga falló después de', maxRetries, 'intentos');
+      throw lastError || new Error('Download failed after retries');
+    }
     
     // Obtener el buffer del audio
     const audioBuffer = await response.arrayBuffer();

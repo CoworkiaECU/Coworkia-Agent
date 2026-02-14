@@ -1037,11 +1037,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           }
           
           // 🎤 Transcribir
-          const tr = await transcribeAudio(mediaUrl, {
-            language: userLanguage,
-            agentName: 'orquestador',
-            userName: name || userId
-          });
+          let tr;
+          try {
+            tr = await transcribeAudio(mediaUrl, {
+              language: userLanguage,
+              agentName: 'orquestador',
+              userName: name || userId
+            });
+          } catch (error) {
+            // Capturar errores de descarga/transcripción
+            tr = { success: false, error: error.message || 'Error desconocido' };
+          }
           
           if (!tr?.success || !tr?.text) {
             console.error('[Whisper] ❌ Error en transcripción:', tr?.error);

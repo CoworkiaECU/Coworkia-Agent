@@ -366,23 +366,19 @@ async function enviarWhatsAppVoz(numero, audioBuffer, opts = {}) {
 
     console.log(`[WASSENGER] 🔊 Paso 1/2: Subiendo audio (${audioBuffer.length} bytes)`);
 
-    // Paso 1: Subir archivo a Wassenger y obtener file ID
+    // Paso 1: Subir archivo a Wassenger usando fetch directo (FormData)
     const FormData = (await import('form-data')).default;
     const formData = new FormData();
     formData.append('file', audioBuffer, { filename, contentType: mimetype });
     formData.append('device', WASSENGER_DEVICE);
 
-    const uploadResponse = await dispatchHttpRequest({
-      url: 'https://api.wassenger.com/v1/files',
+    const uploadResponse = await fetch('https://api.wassenger.com/v1/files', {
       method: 'POST',
-      headers: { 
-        ...formData.getHeaders(),
-        'Token': WASSENGER_TOKEN 
+      headers: {
+        'Token': WASSENGER_TOKEN,
+        ...formData.getHeaders()
       },
-      body: formData,
-      circuitId: 'wassenger:files',
-      timeoutMs: 30000, // Más tiempo para upload
-      maxRetries: 2
+      body: formData
     });
 
     const uploadData = await uploadResponse.json().catch(() => ({}));
@@ -1957,10 +1953,23 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         });
         
         if (ttsResult.success && ttsResult.buffer) {
-          return await enviarWhatsAppVoz(userId, ttsResult.buffer, {
-            filename: 'aurora_voice.mp3',
-            mimetype: 'audio/mpeg'
-          });
+          try {
+            const voiceResult = await enviarWhatsAppVoz(userId, ttsResult.buffer, {
+              filename: 'aurora_voice.mp3',
+              mimetype: 'audio/mpeg'
+            });
+            
+            // Si el audio falló, enviar texto como respaldo
+            if (!voiceResult.ok) {
+              console.warn(`[TTS] ⚠️ Envío de audio falló, usando texto: ${voiceResult.error}`);
+              return await enviarWhatsApp(userId, messageText);
+            }
+            
+            return voiceResult;
+          } catch (error) {
+            console.error(`[TTS] ❌ Error enviando audio, fallback a texto:`, error.message);
+            return await enviarWhatsApp(userId, messageText);
+          }
         } else {
           // Fallback a texto si TTS falla
           console.warn(`[TTS] ⚠️ TTS falló, enviando texto: ${ttsResult.error}`);

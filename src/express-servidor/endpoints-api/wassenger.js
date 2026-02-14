@@ -999,7 +999,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return; // 🛑 No procesar
     }
 
-    // 🔊 Detectar si usuario envió audio (para responder con voz)
+    // 🎤 Detectar si usuario envió audio (para transcribir con Whisper)
     const userSentAudio = (type === 'audio' || type === 'voice' || type === 'ptt');
     
     // ✅ Obtener perfil una sola vez (se usará en múltiples flujos)
@@ -1030,7 +1030,6 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       } else {
         // URL de audio disponible - procesar normalmente
         console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
-        console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
         console.log('[Whisper] 📋 Debug - Media data:', {
           url: mediaUrl?.substring(0, 100),
           mime: data.media?.mime,
@@ -1942,43 +1941,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     console.log(`   - Partes detectadas: ${messageProcessed.parts.length}`);
     console.log(`   - Delay entre partes: ${messageProcessed.delayMs}ms`);
     
-    // 🔊 Helper para enviar mensaje (texto o audio según contexto)
+    // � SIEMPRE responder con TEXTO (TTS deshabilitado - causaba fallos)
     const sendMessageToUser = async (messageText) => {
-      if (userSentAudio) {
-        // Usuario envió audio → responder con TTS
-        console.log(`[TTS] 🔊 Generando respuesta de voz...`);
-        
-        const ttsResult = await generateSpeech(messageText, {
-          language: profile.preferredLanguage || 'es'
-        });
-        
-        if (ttsResult.success && ttsResult.buffer) {
-          try {
-            const voiceResult = await enviarWhatsAppVoz(userId, ttsResult.buffer, {
-              filename: 'aurora_voice.mp3',
-              mimetype: 'audio/mpeg'
-            });
-            
-            // Si el audio falló, enviar texto como respaldo
-            if (!voiceResult.ok) {
-              console.warn(`[TTS] ⚠️ Envío de audio falló, usando texto: ${voiceResult.error}`);
-              return await enviarWhatsApp(userId, messageText);
-            }
-            
-            return voiceResult;
-          } catch (error) {
-            console.error(`[TTS] ❌ Error enviando audio, fallback a texto:`, error.message);
-            return await enviarWhatsApp(userId, messageText);
-          }
-        } else {
-          // Fallback a texto si TTS falla
-          console.warn(`[TTS] ⚠️ TTS falló, enviando texto: ${ttsResult.error}`);
-          return await enviarWhatsApp(userId, messageText);
-        }
-      } else {
-        // Usuario envió texto → responder con texto (normal)
-        return await enviarWhatsApp(userId, messageText);
-      }
+      return await enviarWhatsApp(userId, messageText);
     };
 
     if (shouldSplit) {

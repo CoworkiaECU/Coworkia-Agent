@@ -963,7 +963,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     
     // ✅ Obtener perfil una sola vez (se usará en múltiples flujos)
     const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
-    const userLanguage = current.preferredLanguage || 'es';
+    let userLanguage = current.preferredLanguage || 'es';
 
     // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN + FALLBACKS)
     if (userSentAudio) {

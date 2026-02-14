@@ -960,73 +960,124 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 🔊 Detectar si usuario envió audio (para responder con voz)
     const userSentAudio = (type === 'audio' || type === 'voice' || type === 'ptt');
+    
+    // ✅ Obtener perfil una sola vez (se usará en múltiples flujos)
+    const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+    const userLanguage = current.preferredLanguage || 'es';
 
-    // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN)
+    // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN + FALLBACKS)
     if (userSentAudio) {
       if (!mediaUrl) {
         console.error('[Whisper] ❌ No se encontró URL de audio en el mensaje');
         console.error('[Whisper] Debug - data.media:', JSON.stringify(data.media, null, 2));
-        return;
+        
+        // ✅ FALLBACK: Continuar con texto genérico en el idioma del usuario
+        console.log('[Whisper] 🔄 Fallback activado - sin URL de audio');
+        text = userLanguage === 'en' 
+          ? 'I sent an audio but it could not be accessed. Can you help me?'
+          : userLanguage === 'fr'
+          ? 'J\'ai envoyé un audio mais il n\'a pas pu être accédé. Pouvez-vous m\'aider?'
+          : userLanguage === 'it'
+          ? 'Ho inviato un audio ma non è stato accessibile. Puoi aiutarmi?'
+          : userLanguage === 'pt'
+          ? 'Enviei um áudio mas não pôde ser acessado. Pode me ajudar?'
+          : userLanguage === 'qu'
+          ? 'Huk audio apachirqani, mana atisqachu yaykuy. Yanapawankimanchu?'
+          : 'Envié un audio pero no pudo accederse. ¿Puedes ayudarme?';
+        
+        console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+      } else {
+        // URL de audio disponible - procesar normalmente
+        console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
+        console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
+        console.log('[Whisper] 📋 Debug - Media data:', {
+          url: mediaUrl?.substring(0, 100),
+          mime: data.media?.mime,
+          size: data.media?.size,
+          hasLinks: !!data.media?.links
+        });
+        
+        // ✅ Validar audio antes de transcribir (con mime type de Wassenger)
+        const audioMetadata = {
+          mimeType: data.media?.mime || data.media?.mimetype,
+          size: data.media?.size || data.media?.fileSize
+        };
+        
+        const validation = validateAudio(mediaUrl, audioMetadata);
+        
+        if (!validation.valid) {
+          console.error('[Whisper] ❌ Audio inválido:', validation.errors);
+          console.error('[Whisper] Debug - URL:', mediaUrl);
+          console.error('[Whisper] Debug - Metadata:', audioMetadata);
+          
+          // ✅ FALLBACK: Enviar error + continuar con texto genérico
+          console.log('[Whisper] 🔄 Fallback activado - validación fallida');
+          const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
+          await enviarWhatsApp(userId, errorMsg);
+          
+          text = userLanguage === 'en' 
+            ? 'I sent an audio with format issues. Can you help me?'
+            : userLanguage === 'fr'
+            ? 'J\'ai envoyé un audio avec des problèmes de format. Pouvez-vous m\'aider?'
+            : userLanguage === 'it'
+            ? 'Ho inviato un audio con problemi di formato. Puoi aiutarmi?'
+            : userLanguage === 'pt'
+            ? 'Enviei um áudio com problemas de formato. Pode me ajudar?'
+            : userLanguage === 'qu'
+            ? 'Huk audio apachirqani formato sasachakuywan. Yanapawankimanchu?'
+            : 'Envié un audio con problemas de formato. ¿Puedes ayudarme?';
+          
+          console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+        } else {
+          // Validación exitosa - continuar con transcripción
+          
+          // ⚠️ Warnings (tamaño grande, etc.)
+          if (validation.warnings.length > 0) {
+            console.warn('[Whisper] ⚠️ Advertencias:', validation.warnings);
+          }
+          
+          // 🎤 Transcribir
+          const tr = await transcribeAudio(mediaUrl, {
+            language: userLanguage,
+            agentName: 'orquestador',
+            userName: name || userId
+          });
+          
+          if (!tr?.success || !tr?.text) {
+            console.error('[Whisper] ❌ Error en transcripción:', tr?.error);
+            
+            // ✅ FALLBACK: Enviar error + continuar con texto genérico
+            console.log('[Whisper] 🔄 Fallback activado - transcripción fallida');
+            const errorMsg = getLocalizedAudioError(tr?.error || 'Error desconocido', userLanguage);
+            await enviarWhatsApp(userId, errorMsg);
+            
+            text = userLanguage === 'en' 
+              ? 'I sent an audio but it could not be processed. Can you help me?'
+              : userLanguage === 'fr'
+              ? 'J\'ai envoyé un audio mais il n\'a pas pu être traité. Pouvez-vous m\'aider?'
+              : userLanguage === 'it'
+              ? 'Ho inviato un audio ma non è stato elaborato. Puoi aiutarmi?'
+              : userLanguage === 'pt'
+              ? 'Enviei um áudio mas não pôde ser processado. Pode me ajudar?'
+              : userLanguage === 'qu'
+              ? 'Huk audio apachirqani, mana atikunchu ruwakuy. Yanapawankimanchu?'
+              : 'Envié un audio pero no pudo procesarse. ¿Puedes ayudarme?';
+            
+            console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+          } else {
+            // Transcripción exitosa
+            text = tr.text;
+            console.log(`[Whisper] ✅ Audio transcrito (${tr.language}):`, text.substring(0, 100));
+          }
+        }
       }
-      
-      // Obtener idioma del usuario (si ya está guardado)
-      const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
-      const userLanguage = current.preferredLanguage || 'es';
-      
-      console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
-      console.log(`[TTS] 🔊 Usuario envió audio - responderé con voz`);
-      console.log('[Whisper] 📋 Debug - Media data:', {
-        url: mediaUrl?.substring(0, 100),
-        mime: data.media?.mime,
-        size: data.media?.size,
-        hasLinks: !!data.media?.links
-      });
-      
-      // ✅ Validar audio antes de transcribir (con mime type de Wassenger)
-      const audioMetadata = {
-        mimeType: data.media?.mime || data.media?.mimetype,
-        size: data.media?.size || data.media?.fileSize
-      };
-      
-      const validation = validateAudio(mediaUrl, audioMetadata);
-      
-      if (!validation.valid) {
-        console.error('[Whisper] ❌ Audio inválido:', validation.errors);
-        console.error('[Whisper] Debug - URL:', mediaUrl);
-        console.error('[Whisper] Debug - Metadata:', audioMetadata);
-        const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
-        await enviarWhatsApp(userId, errorMsg);
-        return;
-      }
-      
-      // ⚠️ Warnings (tamaño grande, etc.)
-      if (validation.warnings.length > 0) {
-        console.warn('[Whisper] ⚠️ Advertencias:', validation.warnings);
-      }
-      
-      // 🎤 Transcribir
-      const tr = await transcribeAudio(mediaUrl, {
-        language: userLanguage,
-        agentName: 'orquestador',
-        userName: name || userId
-      });
-      
-      if (!tr?.success || !tr?.text) {
-        console.error('[Whisper] ❌ Error en transcripción:', tr?.error);
-        const errorMsg = getLocalizedAudioError(tr?.error || 'Error desconocido', userLanguage);
-        await enviarWhatsApp(userId, errorMsg);
-        return;
-      }
-      
-      text = tr.text;
-      console.log(`[Whisper] ✅ Audio transcrito (${tr.language}):`, text.substring(0, 100));
     }
 
     // Construir “evento” para Aurora Core
     const envelope = buildMessageEnvelope({ userId, name, text, type, mediaUrl, data, evt });
 
-    // Perfil + historial
-    const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+    // ✅ Perfil ya cargado antes del bloque if (userSentAudio) - línea 967
+    // Cargar historial de conversación
     let conversationHistory = await loadConversationHistory(userId, 10).catch(() => []);
 
     // ✅ Registrar mensaje procesado para rate limiting
@@ -1075,7 +1126,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🌍 DETECCIÓN DE IDIOMA AUTOMÁTICA - Solo si no tiene idioma guardado
     // Idiomas soportados: español (default), inglés, francés, quechua
     const isFirstMessage = !current.preferredLanguage;
-    let userLanguage = current.preferredLanguage || 'es';
+    // Reasignar userLanguage si es necesario (ya declarado en línea 966)
+    userLanguage = current.preferredLanguage || 'es';
     
     if (isFirstMessage && text) {
       // MODO: Default español - el usuario debe pedir explícitamente otro idioma

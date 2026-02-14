@@ -205,6 +205,7 @@ function trackSentMessage(userId, text) {
   const textHash = text.trim().substring(0, 50).toLowerCase();
   const key = `${userId}:${textHash}`;
   sentMessages.set(key, Date.now());
+  console.log(`[DEDUP] 📝 Registrado mensaje propio: ${textHash.substring(0, 30)}...`);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -360,6 +361,10 @@ async function enviarWhatsApp(numero, mensaje) {
   }
 
   try {
+    // ✅ Registrar mensaje ANTES de enviar (prevenir race condition)
+    // Si el webhook llega antes de que trackSentMessage se ejecute, ya lo tendremos en cache
+    trackSentMessage(numero, mensaje);
+    
     const response = await dispatchHttpRequest({
       url: 'https://api.wassenger.com/v1/messages',
       method: 'POST',
@@ -372,16 +377,21 @@ async function enviarWhatsApp(numero, mensaje) {
 
     const data = await response.json().catch(() => ({}));
     
-    if (response.ok) {
-      // ✅ Registrar mensaje enviado para detectar ecos en webhooks
-      trackSentMessage(numero, mensaje);
-    } else {
+    if (!response.ok) {
       loggers.wassenger.warn('Failed to send message', { userId: numero, status: response.status });
+      // Si falló el envío, remover del cache (no se envió realmente)
+      const textHash = mensaje.trim().substring(0, 50).toLowerCase();
+      const key = `${numero}:${textHash}`;
+      sentMessages.delete(key);
     }
     
     return { ok: response.ok, data };
   } catch (error) {
     loggers.wassenger.error('Error sending message', { userId: numero }, error);
+    // Si hubo excepción, remover del cache
+    const textHash = mensaje.trim().substring(0, 50).toLowerCase();
+    const key = `${numero}:${textHash}`;
+    sentMessages.delete(key);
     return { ok: false, error: error.message };
   }
 }

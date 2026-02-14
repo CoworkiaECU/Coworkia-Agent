@@ -362,58 +362,94 @@ async function enviarWhatsAppVoz(numero, audioBuffer, opts = {}) {
   }
 
   try {
-    // Convertir buffer a base64
-    const base64Audio = audioBuffer.toString('base64');
     const { filename = 'audio.mp3', mimetype = 'audio/mpeg' } = opts;
 
-    console.log(`[WASSENGER] 🔊 Enviando audio a ${numero} (${audioBuffer.length} bytes)`);
+    console.log(`[WASSENGER] 🔊 Paso 1/2: Subiendo audio (${audioBuffer.length} bytes)`);
 
-    // Wassenger acepta base64 en el campo media
-    const response = await dispatchHttpRequest({
+    // Paso 1: Subir archivo a Wassenger y obtener file ID
+    const FormData = (await import('form-data')).default;
+    const formData = new FormData();
+    formData.append('file', audioBuffer, { filename, contentType: mimetype });
+    formData.append('device', WASSENGER_DEVICE);
+
+    const uploadResponse = await dispatchHttpRequest({
+      url: 'https://api.wassenger.com/v1/files',
+      method: 'POST',
+      headers: { 
+        ...formData.getHeaders(),
+        'Token': WASSENGER_TOKEN 
+      },
+      body: formData,
+      circuitId: 'wassenger:files',
+      timeoutMs: 30000, // Más tiempo para upload
+      maxRetries: 2
+    });
+
+    const uploadData = await uploadResponse.json().catch(() => ({}));
+    
+    if (!uploadResponse.ok || !uploadData.id) {
+      console.error(`[WASSENGER] ❌ Error subiendo archivo:`, {
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        body: JSON.stringify(uploadData),
+        audioSize: audioBuffer.length
+      });
+      return { ok: false, error: `Upload failed: HTTP ${uploadResponse.status}`, data: uploadData };
+    }
+
+    const fileId = uploadData.id;
+    console.log(`[WASSENGER] ✅ Archivo subido, ID: ${fileId}`);
+
+    // Paso 2: Enviar mensaje con el file ID
+    console.log(`[WASSENGER] 🔊 Paso 2/2: Enviando mensaje con audio a ${numero}`);
+
+    const messageResponse = await dispatchHttpRequest({
       url: 'https://api.wassenger.com/v1/messages',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Token: WASSENGER_TOKEN },
       body: JSON.stringify({
         phone: numero,
         media: {
-          file: `data:${mimetype};base64,${base64Audio}`,
+          file: fileId,  // ID del archivo subido (24 chars hex)
           filename
         },
         device: WASSENGER_DEVICE
       }),
       circuitId: 'wassenger:messages',
-      timeoutMs: 15000, // Más tiempo para archivos
+      timeoutMs: 15000,
       maxRetries: 2
     });
 
-    const data = await response.json().catch(() => ({}));
+    const messageData = await messageResponse.json().catch(() => ({}));
     
-    if (!response.ok) {
-      console.error(`[WASSENGER] ❌ Error HTTP al enviar audio:`, {
-        status: response.status,
-        statusText: response.statusText,
-        body: JSON.stringify(data),
-        audioSize: audioBuffer.length,
+    if (!messageResponse.ok) {
+      console.error(`[WASSENGER] ❌ Error enviando mensaje:`, {
+        status: messageResponse.status,
+        statusText: messageResponse.statusText,
+        body: JSON.stringify(messageData),
+        fileId,
         userId: numero
       });
-      loggers.wassenger.warn('Failed to send audio', { 
+      loggers.wassenger.warn('Failed to send audio message', { 
         userId: numero, 
-        status: response.status,
-        statusText: response.statusText,
-        errorBody: data,
+        status: messageResponse.status,
+        statusText: messageResponse.statusText,
+        errorBody: messageData,
+        fileId,
         audioSize: audioBuffer.length 
       });
-      return { ok: false, error: `HTTP ${response.status}`, data };
+      return { ok: false, error: `Message failed: HTTP ${messageResponse.status}`, data: messageData };
     }
 
     console.log(`[WASSENGER] ✅ Audio enviado exitosamente a ${numero}`);
     loggers.wassenger.info('Audio sent successfully', { 
       userId: numero, 
       audioSize: audioBuffer.length,
+      fileId,
       filename 
     });
     
-    return { ok: true, data };
+    return { ok: true, data: messageData };
 
   } catch (error) {
     console.error(`[WASSENGER] ❌ Error enviando audio a ${numero}:`, error.message);

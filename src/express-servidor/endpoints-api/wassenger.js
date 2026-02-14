@@ -131,8 +131,10 @@ function debounceUserWebhook(userId, handler) {
    - Timeout en su lado (no recibe 200 a tiempo)
    - Retry automático por errores transitorios
    - Race conditions en su infraestructura
+   - Webhooks de mensajes que EL SISTEMA envió (fromMe debería ser true pero a veces no llega)
 ───────────────────────────────────────────────────────────── */
 const processedMessages = new Map(); // messageId → timestamp
+const sentMessages = new Map(); // Hash de (userId + texto) → timestamp para detectar eco
 const MESSAGE_DEDUP_TTL_MS = 60000; // 1 minuto
 
 /**
@@ -160,6 +162,49 @@ function isDuplicateMessage(messageId) {
   // Marcar como procesado
   processedMessages.set(messageId, now);
   return false;
+}
+
+/**
+ * Verifica si un webhook es de un mensaje que el sistema acaba de enviar (eco)
+ * Wassenger envía webhooks incluso de mensajes enviados por el bot,
+ * aunque fromMe debería ser true, a veces no viene o llega incorrectamente.
+ * @param {string} userId - Número de teléfono del usuario
+ * @param {string} text - Texto del mensaje
+ * @returns {boolean} - true si es eco de un mensaje propio
+ */
+function isEchoMessage(userId, text) {
+  if (!userId || !text) return false;
+  
+  // Limpiar cache antiguo (> 1 minuto)
+  const now = Date.now();
+  for (const [key, timestamp] of sentMessages.entries()) {
+    if (now - timestamp > MESSAGE_DEDUP_TTL_MS) {
+      sentMessages.delete(key);
+    }
+  }
+  
+  // Hash único: userId + primeros 50 caracteres del texto (para comparación rápida)
+  const textHash = text.trim().substring(0, 50).toLowerCase();
+  const key = `${userId}:${textHash}`;
+  
+  if (sentMessages.has(key)) {
+    console.log(`[DEDUP] 🔁 Eco detectado - ignorando mensaje propio de ${userId}`);
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Registra un mensaje enviado por el sistema para detectar ecos en webhooks
+ * @param {string} userId - Número de teléfono
+ * @param {string} text - Texto enviado
+ */
+function trackSentMessage(userId, text) {
+  if (!userId || !text) return;
+  const textHash = text.trim().substring(0, 50).toLowerCase();
+  const key = `${userId}:${textHash}`;
+  sentMessages.set(key, Date.now());
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -327,7 +372,10 @@ async function enviarWhatsApp(numero, mensaje) {
 
     const data = await response.json().catch(() => ({}));
     
-    if (!response.ok) {
+    if (response.ok) {
+      // ✅ Registrar mensaje enviado para detectar ecos en webhooks
+      trackSentMessage(numero, mensaje);
+    } else {
       loggers.wassenger.warn('Failed to send message', { userId: numero, status: response.status });
     }
     
@@ -944,10 +992,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
       if (!userId) return;
 
-      // 🛡️ DEDUPLICACIÓN: Ignorar webhooks duplicados
+      // 🛡️ DEDUPLICACIÓN: Ignorar webhooks duplicados o ecos
       if (isDuplicateMessage(messageId)) {
         console.log(`[DEDUP] ⏭️ Ignorando webhook duplicado de ${userId}`);
         return; // No res.json aquí - headers ya enviados
+      }
+      
+      // 🔁 ECO: Ignorar webhooks de mensajes que el sistema acaba de enviar
+      if (isEchoMessage(userId, text)) {
+        console.log(`[DEDUP] 🔁 Ignorando eco - mensaje enviado por el sistema`);
+        return;
       }
 
     loggers.webhook.info('Processing incoming message', { userId, type, hasMedia: !!mediaUrl });

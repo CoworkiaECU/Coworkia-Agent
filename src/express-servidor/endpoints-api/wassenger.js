@@ -389,9 +389,18 @@ async function enviarWhatsAppVoz(numero, audioBuffer, opts = {}) {
     const data = await response.json().catch(() => ({}));
     
     if (!response.ok) {
+      console.error(`[WASSENGER] ❌ Error HTTP al enviar audio:`, {
+        status: response.status,
+        statusText: response.statusText,
+        body: JSON.stringify(data),
+        audioSize: audioBuffer.length,
+        userId: numero
+      });
       loggers.wassenger.warn('Failed to send audio', { 
         userId: numero, 
         status: response.status,
+        statusText: response.statusText,
+        errorBody: data,
         audioSize: audioBuffer.length 
       });
       return { ok: false, error: `HTTP ${response.status}`, data };

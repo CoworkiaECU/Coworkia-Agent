@@ -1076,21 +1076,23 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.error('[Whisper] ❌ No se encontró URL de audio en el mensaje');
         console.error('[Whisper] Debug - data.media:', JSON.stringify(data.media, null, 2));
         
-        // ✅ FALLBACK: Continuar con texto genérico en el idioma del usuario
+        // ✅ FALLBACK: Enviar mensaje directamente y terminar (NO procesar con Aurora)
         console.log('[Whisper] 🔄 Fallback activado - sin URL de audio');
-        text = userLanguage === 'en' 
-          ? 'I sent an audio but it could not be accessed. Can you help me?'
+        const fallbackMsg = userLanguage === 'en' 
+          ? '🎤 I could not access your audio. Can you write it as text? 😊'
           : userLanguage === 'fr'
-          ? 'J\'ai envoyé un audio mais il n\'a pas pu être accédé. Pouvez-vous m\'aider?'
+          ? '🎤 Je n\'ai pas pu accéder à votre audio. Pouvez-vous l\'écrire en texte? 😊'
           : userLanguage === 'it'
-          ? 'Ho inviato un audio ma non è stato accessibile. Puoi aiutarmi?'
+          ? '🎤 Non ho potuto accedere al tuo audio. Puoi scriverlo come testo? 😊'
           : userLanguage === 'pt'
-          ? 'Enviei um áudio mas não pôde ser acessado. Pode me ajudar?'
+          ? '🎤 Não pude acessar seu áudio. Pode escrevê-lo como texto? 😊'
           : userLanguage === 'qu'
-          ? 'Huk audio apachirqani, mana atisqachu yaykuy. Yanapawankimanchu?'
-          : 'Envié un audio pero no pudo accederse. ¿Puedes ayudarme?';
+          ? '🎤 Mana atisqachu audio kaqman yaykuy. Qillqasqa qillqayta atiwaqchu? 😊'
+          : '🎤 No pude procesar tu audio. ¿Puedes escribirlo por texto? 😊';
         
-        console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+        console.log('[Whisper] 📤 Enviando mensaje fallback y deteniendo flujo');
+        await enviarWhatsApp(userId, fallbackMsg);
+        return; // ← Detener flujo, NO procesar con Aurora
       } else {
         // URL de audio disponible - procesar normalmente
         console.log(`[Whisper] 🎤 Procesando audio para usuario ${userId} en idioma: ${userLanguage}`);
@@ -1114,24 +1116,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.error('[Whisper] Debug - URL:', mediaUrl);
           console.error('[Whisper] Debug - Metadata:', audioMetadata);
           
-          // ✅ FALLBACK: Enviar error + continuar con texto genérico
+          // ✅ FALLBACK: Enviar mensaje de error y terminar (NO procesar con Aurora)
           console.log('[Whisper] 🔄 Fallback activado - validación fallida');
           const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
+          console.log('[Whisper] 📤 Enviando mensaje de error y deteniendo flujo');
           await enviarWhatsApp(userId, errorMsg);
-          
-          text = userLanguage === 'en' 
-            ? 'I sent an audio with format issues. Can you help me?'
-            : userLanguage === 'fr'
-            ? 'J\'ai envoyé un audio avec des problèmes de format. Pouvez-vous m\'aider?'
-            : userLanguage === 'it'
-            ? 'Ho inviato un audio con problemi di formato. Puoi aiutarmi?'
-            : userLanguage === 'pt'
-            ? 'Enviei um áudio com problemas de formato. Pode me ajudar?'
-            : userLanguage === 'qu'
-            ? 'Huk audio apachirqani formato sasachakuywan. Yanapawankimanchu?'
-            : 'Envié un audio con problemas de formato. ¿Puedes ayudarme?';
-          
-          console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+          return; // ← Detener flujo, NO procesar con Aurora
         } else {
           // Validación exitosa - continuar con transcripción
           
@@ -1156,24 +1146,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           if (!tr?.success || !tr?.text) {
             console.error('[Whisper] ❌ Error en transcripción:', tr?.error);
             
-            // ✅ FALLBACK: Enviar error + continuar con texto genérico
+            // ✅ FALLBACK: Enviar mensaje de error y terminar (NO procesar con Aurora)
             console.log('[Whisper] 🔄 Fallback activado - transcripción fallida');
             const errorMsg = getLocalizedAudioError(tr?.error || 'Error desconocido', userLanguage);
+            console.log('[Whisper] 📤 Enviando mensaje de error y deteniendo flujo');
             await enviarWhatsApp(userId, errorMsg);
-            
-            text = userLanguage === 'en' 
-              ? 'I sent an audio but it could not be processed. Can you help me?'
-              : userLanguage === 'fr'
-              ? 'J\'ai envoyé un audio mais il n\'a pas pu être traité. Pouvez-vous m\'aider?'
-              : userLanguage === 'it'
-              ? 'Ho inviato un audio ma non è stato elaborato. Puoi aiutarmi?'
-              : userLanguage === 'pt'
-              ? 'Enviei um áudio mas não pôde ser processado. Pode me ajudar?'
-              : userLanguage === 'qu'
-              ? 'Huk audio apachirqani, mana atikunchu ruwakuy. Yanapawankimanchu?'
-              : 'Envié un audio pero no pudo procesarse. ¿Puedes ayudarme?';
-            
-            console.log('[Whisper] 📝 Continuando con texto fallback:', text);
+            return; // ← Detener flujo, NO procesar con Aurora
           } else {
             // Transcripción exitosa
             text = tr.text;

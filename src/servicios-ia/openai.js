@@ -375,63 +375,46 @@ export async function transcribeAudio(audioUrl, options = {}) {
       }
     }
     
-    // Retry con exponential backoff (3 intentos)
+    // Un solo intento con timeout corto (Wassenger o funciona rápido, o falla)
     let response;
     let lastError;
-    const maxRetries = 3;
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`[Whisper] 📥 Intento ${attempt}/${maxRetries}`);
-        
-        // Timeout de 120 segundos (Wassenger tarda ~100s en fallar)
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000);
-        
-        response = await fetch(audioUrl, {
-          method: 'GET',
-          headers,
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeout);
-        
-        if (response.ok) {
-          console.log('[Whisper] ✅ Audio descargado exitosamente');
-          break;
-        }
-        
-        // Error HTTP - guardar y reintentar
+    try {
+      console.log('[Whisper] 📥 Descargando audio (timeout: 30s)');
+      
+      // Timeout de 30 segundos - si tarda más, activar fallback
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      
+      response = await fetch(audioUrl, {
+        method: 'GET',
+        headers,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
         const errorBody = await response.text().catch(() => 'Sin detalles');
         lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
         
-        console.warn(`[Whisper] ⚠️ Intento ${attempt} falló:`, {
+        console.warn('[Whisper] ⚠️ Descarga falló:', {
           status: response.status,
           body: errorBody.substring(0, 200)
         });
-        
-        // Esperar antes de reintentar (1s, 2s, 4s)
-        if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
-          console.log(`[Whisper] ⏳ Esperando ${delay}ms antes de reintentar...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-        
-      } catch (error) {
-        lastError = error;
-        console.warn(`[Whisper] ⚠️ Intento ${attempt} error:`, error.message);
-        
-        if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+      } else {
+        console.log('[Whisper] ✅ Audio descargado exitosamente');
       }
+      
+    } catch (error) {
+      lastError = error;
+      console.warn('[Whisper] ⚠️ Error en descarga:', error.message);
     }
     
-    // Si todos los intentos fallaron
+    // Si falló, activar fallback inmediatamente
     if (!response || !response.ok) {
-      console.error('[Whisper] ❌ Descarga falló después de', maxRetries, 'intentos');
-      throw lastError || new Error('Download failed after retries');
+      console.error('[Whisper] ❌ Descarga falló - activando fallback');
+      throw lastError || new Error('Download failed');
     }
     
     // Obtener el buffer del audio

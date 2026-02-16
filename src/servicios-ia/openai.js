@@ -419,15 +419,19 @@ export async function transcribeAudio(audioUrl, options = {}) {
     
     // Obtener el buffer del audio
     const audioBuffer = await response.arrayBuffer();
-    const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });
+    const buffer = Buffer.from(audioBuffer);
     
-    // Node.js no tiene File, pero OpenAI SDK acepta Blob directamente
-    const audioSizeKB = (audioBuffer.byteLength / 1024).toFixed(2);
+    const audioSizeKB = (buffer.byteLength / 1024).toFixed(2);
     console.log('[Whisper] Tamaño del audio:', audioSizeKB, 'KB');
+
+    // Crear File object con nombre (requerido por OpenAI SDK en Node.js)
+    const audioFile = await OpenAI.toFile(buffer, 'audio.ogg', {
+      type: 'audio/ogg'
+    });
 
     // Transcribir con Whisper (multiidioma)
     const transcription = await client.audio.transcriptions.create({
-      file: audioBlob,
+      file: audioFile,
       model: 'whisper-1',
       language: whisperLanguage,
       response_format: 'text'

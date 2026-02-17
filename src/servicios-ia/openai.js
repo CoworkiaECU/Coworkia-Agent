@@ -373,6 +373,10 @@ export async function transcribeAudio(audioUrl, options = {}) {
       } else {
         console.warn('[Whisper] ⚠️ WASSENGER_API_KEY no configurado');
       }
+      
+      // Dar tiempo a Wassenger para cachear archivo desde WhatsApp
+      console.log('[Whisper] ⏳ Esperando 3s para que Wassenger procese el archivo...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
     
     // Un solo intento con timeout corto (Wassenger o funciona rápido, o falla)

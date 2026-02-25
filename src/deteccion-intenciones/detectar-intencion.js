@@ -262,7 +262,13 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
       return {
         agent: 'ALUNA',
         reason: 'frustrated_user_pivots_to_memberships',
-        flags: { cancelacion: true, suggestedAgent: 'ALUNA' }
+        flags: { 
+          cancelacion: true, 
+          agentHandoff: true, // 🔥 FIX: Activar handoff para transición fluida
+          suggestedAgent: 'ALUNA',
+          fromAgent: currentAgent,
+          targetAgent: 'ALUNA'
+        }
       };
     }
 
@@ -378,16 +384,16 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   if (currentAgent === 'AURORA') {
     // Detectar keywords Aluna (membresías)
     if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
-      console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - sugerir ALUNA');
+      console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - cambiar a ALUNA');
       return { 
         agent: 'ALUNA',
-        reason: 'aurora_aluna_keyword',
+        reason: 'aurora_aluna_keyword_handoff',
         flags: { 
+          agentHandoff: true, // 🔥 FIX: Activar handoff para que Aluna envíe mensaje de entrada
           suggestedAgent: 'ALUNA',
           fromAgent: currentAgent,
           targetAgent: 'ALUNA',
-          isKeywordMatch: true,
-          maintainingActive: true
+          isKeywordMatch: true
         }
       };
     }

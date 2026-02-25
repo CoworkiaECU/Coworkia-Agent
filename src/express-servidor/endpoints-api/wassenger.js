@@ -980,8 +980,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
   // Background con try/catch global
   setImmediate(async () => {
+    let userId = null;
     try {
-      const userId = normalizeUserId(data);
+      userId = normalizeUserId(data);
       const name = normalizeName(data);
       let text = normalizeText(data);
       const type = normalizeType(data);
@@ -1031,6 +1032,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ⏱️ DEBOUNCE: Agrupar mensajes rápidos del mismo usuario
     // TODOS los webhooks que pasen los filtros básicos entran al debounce
     debounceUserWebhook(userId, async () => {
+      try {
       // 🚦 Rate limiting - Prevenir spam/abuso
       const rateLimitCheck = checkRateLimit(userId);
     if (!rateLimitCheck.allowed) {
@@ -2149,11 +2151,38 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // No interrumpir flujo principal si falla
       }
     }
+      } catch (error) {
+        console.error('[WASSENGER] ❌ Error en debounce handler:', {
+          userId,
+          message: error.message,
+          stack: error.stack
+        });
+
+        try {
+          await enviarWhatsApp(
+            userId,
+            'Disculpa, tuve un problema técnico procesando tu mensaje. ¿Puedes reenviarlo en unos segundos? 🙏'
+          );
+        } catch (sendError) {
+          console.error('[WASSENGER] ❌ Error enviando fallback tras fallo en debounce:', {
+            userId,
+            message: sendError.message
+          });
+        }
+      }
     }); // Cierre del debounceUserWebhook
     } catch (error) {
       console.error('[WASSENGER] ❌ Error crítico en procesamiento:', error);
-      // No podemos enviar res.json aquí (headers ya enviados)
-      // Loggear para monitoreo
+      try {
+        if (userId) {
+          await enviarWhatsApp(
+            userId,
+            'Disculpa, tuve un problema técnico procesando tu mensaje. ¿Puedes intentarlo de nuevo? 🙏'
+          );
+        }
+      } catch (sendError) {
+        console.error('[WASSENGER] ❌ Error enviando fallback en catch global:', sendError);
+      }
     }
   }); // Cierre del setImmediate
 }); // Cierre del router.post

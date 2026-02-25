@@ -479,6 +479,10 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         wasFree: true
       });
       
+      let confirmationDeliveryLine = userProfile.email
+        ? '📧 Te enviaré la confirmación por email en unos segundos.'
+        : 'ℹ️ No tengo tu email registrado todavía para enviarte la confirmación.';
+
       if (userProfile.email) {
         console.log('[Confirmation] 📧 Enviando notificaciones INLINE (email + calendar)...');
         
@@ -511,9 +515,14 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
           } else {
             console.error('[Confirmation] 🚨 CRÍTICO: NINGUNA notificación se envió - Revisión manual requerida');
           }
+
+          confirmationDeliveryLine = notificationResults.email?.success
+            ? '📧 Te envié la confirmación por email.'
+            : '⚠️ La reserva quedó confirmada. El email falló; si quieres, te lo reenvío enseguida.';
         } catch (notifError) {
           console.error('[Confirmation] ❌ ERROR al enviar notificaciones:', notifError.message);
           console.error('[Confirmation] Stack:', notifError.stack);
+          confirmationDeliveryLine = '⚠️ La reserva quedó confirmada. Hubo un problema enviando el email; si quieres, te lo reenvío enseguida.';
         }
       } else {
         console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
@@ -529,7 +538,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 💰 *Precio:* ¡GRATIS! (primera visita)
 
-📧 Te he enviado la confirmación por email.
+    ${confirmationDeliveryLine}
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
@@ -553,8 +562,9 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       });
       
       // Enviar notificaciones
+      let notificationResults = null;
       if (userProfile.email) {
-        await sendReservationNotifications({
+        notificationResults = await sendReservationNotifications({
           email: userProfile.email,
           userName: userProfile.name || 'Cliente',
           date: confirmedDate,
@@ -568,6 +578,12 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
           reservation: reservationRecord
         });
       }
+
+      const confirmationDeliveryLine = notificationResults?.email?.success
+        ? '📧 Te envié la confirmación por email.'
+        : userProfile.email
+        ? '⚠️ La reserva quedó confirmada. El email falló; si quieres, te lo reenvío enseguida.'
+        : 'ℹ️ No tengo tu email registrado todavía para enviarte la confirmación.';
       
       return {
         success: true,
@@ -580,7 +596,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 ✅ Pagarás directamente al llegar
 
-📧 Te he enviado la confirmación por email.
+    ${confirmationDeliveryLine}
 
 📍 *Ubicación:* Whymper 403, Edificio Finistere
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66

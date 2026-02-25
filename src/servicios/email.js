@@ -339,7 +339,7 @@ export async function sendReservationConfirmation(reservationData) {
   const mailOptions = {
     from: {
       name: 'Coworkia Secretaría',
-      address: 'secretaria.coworkia@gmail.com'
+      address: DEFAULT_FROM_EMAIL
     },
     to: [email],
     cc: 'coworkia.ec@gmail.com', // Copia al administrador

@@ -29,9 +29,13 @@ export async function sendConfirmationEmail(emailData) {
         timeout: 10000
       }
     );
+
+    if (!result?.success) {
+      throw new Error(result?.error || 'sendReservationConfirmation returned success=false');
+    }
     
     console.log(`${logPrefix} ✅ Email enviado exitosamente`);
-    return { success: true, result };
+    return { success: true, ...result };
     
   } catch (error) {
     console.error(`${logPrefix} ❌ FALLO CRÍTICO enviando email después de reintentos:`, {

@@ -82,7 +82,7 @@ echo -e "${GREEN}✅ WASSENGER_WEBHOOK_SECRET configurado${NC}"
 
 echo ""
 echo -e "${YELLOW}📋 IMPORTANTE: Configura este token en Wassenger:${NC}"
-echo "   URL: https://$APP_NAME.herokuapp.com/api/v1/webhooks/wassenger"
+echo "   URL: https://$APP_NAME.herokuapp.com/webhooks/wassenger"
 echo "   Header: x-webhook-signature"
 echo "   Algoritmo: HMAC-SHA256"
 echo "   Secret: $WEBHOOK_SECRET"

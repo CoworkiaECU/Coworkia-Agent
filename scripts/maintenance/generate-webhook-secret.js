@@ -35,7 +35,7 @@ console.log('');
 
 console.log('2️⃣  ACTUALIZAR EN PANEL DE WASSENGER:');
 console.log('   ─────────────────────────────────────────────────────');
-console.log('   URL del webhook: https://tu-app.herokuapp.com/api/v1/webhooks/wassenger');
+console.log('   URL del webhook: https://tu-app.herokuapp.com/webhooks/wassenger');
 console.log('');
 console.log('   Si usas HMAC (RECOMENDADO):');
 console.log('     • Header: x-webhook-signature');

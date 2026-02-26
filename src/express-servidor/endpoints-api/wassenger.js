@@ -1822,8 +1822,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           return;
         }
 
-        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente`);
-        return;
+        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente - continuando con respuesta del agente`);
       } else {
         console.error(`[WASSENGER-V2] ❌ Handoff falló:`, handoffResult.error);
         await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote. Escribe "ayuda" y lo reintentamos.');

@@ -251,49 +251,6 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate to English, k
   },
 
   /**
-   * 🆕 NUEVO: System prompt EXCLUSIVO para saludo con interés en servicio
-   */
-  getServiceInterestPrompt: function(freeTrialUsed = false, userLanguage = 'es') {
-    const hotDeskInfo = freeTrialUsed 
-      ? this.serviciosInfo.hotDesk.sinPrimeraVisita
-      : this.serviciosInfo.hotDesk.conPrimeraVisita;
-    
-    return `Eres Aurora, recepcionista de Coworkia Business Center.
-
-🎯 CONTEXTO CRÍTICO:
-El usuario acaba de saludar mostrando INTERÉS EXPLÍCITO en probar servicios de coworking.
-
-🏢 TU MISIÓN:
-Dar bienvenida cálida y simple, presentar espacios brevemente, pedir día/hora.
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-📋 RESPUESTA EXACTA A DAR:
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-"¡Hola {nombre}! 👋 Bienvenido a Coworkia.
-
-Perfecto, te cuento que tenemos:
-
-${hotDeskInfo}
-
-${this.serviciosInfo.salaReuniones}
-
-📅 *¿Qué día y hora te gustaría venir?*"
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ REGLAS OBLIGATORIAS:
-- USA EXACTAMENTE este formato (más simple y directo)
-- NO incluyas dirección, horarios o mapa en el saludo inicial
-- Si el usuario pregunta ubicación DESPUÉS → ahí sí la das
-- NO menciones otros agentes (@enzo, @adriana, etc.)
-- NO ofrezcas planes mensuales (eso es Aluna)
-- Call to action directo: pedir día y hora
-- Tono cálido y conversacional, no formal
-
-${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire response to English, keeping it warm and simple.' : ''}`;
-  },
-
-  /**
    * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    * 🚨 DETECCIÓN PRIORITARIA #1: FLUJO ESPECIAL "CASA JARDÍN"
    * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -360,18 +317,13 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate the entire re
    * @param {boolean} freeTrialUsed - Si el usuario ya usó su día gratis
    * @param {string} userLanguage - Idioma preferido del usuario (es, en)
    * @param {number} conversationCount - Número de mensajes previos en la conversación
-   * @param {string|null} specialMode - Modo especial: 'VIRTUAL_AGENT_SALES' o 'SERVICE_INTEREST_GREETING'
+  * @param {string|null} specialMode - Modo especial: 'VIRTUAL_AGENT_SALES'
    * @returns {string} System prompt personalizado
    */
   getSystemPrompt: function(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, specialMode = null) {
     // 🔴 MODO ESPECIAL: Venta de sistema OneMind
     if (specialMode === 'VIRTUAL_AGENT_SALES') {
       return this.getVirtualAgentSalesPrompt(userLanguage);
-    }
-    
-    // 🔴 MODO ESPECIAL: Saludo con interés en servicio
-    if (specialMode === 'SERVICE_INTEREST_GREETING') {
-      return this.getServiceInterestPrompt(freeTrialUsed, userLanguage);
     }
     
     // ... continúa con system prompt normal

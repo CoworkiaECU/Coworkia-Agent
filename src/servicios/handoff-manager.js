@@ -12,8 +12,8 @@
  * - Logs detallados de cada handoff
  * 
  * CAMBIO ARQUITECTURAL:
- * - AgentStateManager actualiza activeAgent (con lock)
- * - HandoffManager solo maneja UX (forms, delay, mensajes)
+ * - HandoffManager maneja UX de transición (forms, delay, mensajes)
+ * - El commit final de activeAgent se hace DESPUÉS en wassenger.js
  * 
  * @author Aurora Core - Coworkia
  * @date 11 Feb 2026 (v735 refactor)
@@ -33,8 +33,9 @@ import { loggers } from '../utils/logger.js';
  * 4. Enviar mensaje de bienvenida del nuevo agente
  * 5. Guardar en conversación
  * 
- * NOTA: activeAgent ya fue actualizado por AgentStateManager ANTES de llamar esta función.
- *       Este manager solo se encarga de la UX del handoff (forms, delay, mensaje).
+ * NOTA: Esta función NO persiste activeAgent.
+ *       Solo ejecuta la transición visible para el usuario.
+ *       El commit de estado se realiza después de un handoff exitoso.
  * 
  * @param {string} userId - ID del usuario
  * @param {Object} profile - Perfil del usuario

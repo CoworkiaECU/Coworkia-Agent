@@ -84,12 +84,12 @@ const ENTRY_TEMPLATES = {
   
   // Handoff desde otro agente (transición activa)
   HANDOFF: {
-    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\n{fromAgentName} está disponible con @{fromAgentHandle} si lo necesitas.\n\n¿Cómo puedo asistirte ahora con {context}?',
-    en: 'Hello {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\n{fromAgentName} is available with @{fromAgentHandle} if you need them.\n\nHow can I help you now with {context}?',
-    fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\n{fromAgentName} est disponible avec @{fromAgentHandle} si vous en avez besoin.\n\nComment puis-je vous aider avec {context}?',
-    it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\n{fromAgentName} è disponibile con @{fromAgentHandle} se ne hai bisogno.\n\nCome posso aiutarti con {context}?',
-    pt: 'Olá {userName}! {emoji} Sou {toAgent}, assumo daqui.\n\n{fromAgentName} está disponível com @{fromAgentHandle} se precisar.\n\nComo posso ajudá-lo com {context}?',
-    qu: 'Allinllachu {userName}! {emoji} Ñuqaqa {toAgent} kani, kaypi qallarikunin.\n\n{fromAgentName} kachkan @{fromAgentHandle}wan sichu necesitanki.\n\nImaynatataq yanapasqayki kunan {context}wan?'
+    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nEstoy disponible desde donde te quedaste cuando me llamas con @{toAgentHandle}.\n\n¿En qué te puedo ayudar hoy con {context}?',
+    en: 'Hi {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\nI\'m available right where you left off when you call me with @{toAgentHandle}.\n\nHow can I help you today with {context}?',
+    fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\nJe suis disponible là où vous vous êtes arrêté quand vous m\'appelez avec @{toAgentHandle}.\n\nComment puis-je vous aider aujourd\'hui avec {context}?',
+    it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\nSono disponibile da dove sei rimasto quando mi chiami con @{toAgentHandle}.\n\nCome posso aiutarti oggi con {context}?',
+    pt: 'Olá {userName}! {emoji} Sou {toAgent}, assumo daqui.\n\nEstou disponível de onde você parou quando me chama com @{toAgentHandle}.\n\nComo posso ajudá-lo hoje com {context}?',
+    qu: 'Allinllachu {userName}! {emoji} Ñuqaqa {toAgent} kani, kaypi qallarikuni.\n\nKaypi kani maypi qhiparqanki, @{toAgentHandle}wan waqyamuptiki.\n\nImaynata yanapayki kunan {context}manta?'
   }
 };
 
@@ -124,6 +124,7 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
     '{userName}': userName,
     '{emoji}': info.emoji,
     '{toAgent}': info.name,
+    '{toAgentHandle}': toAgent?.toLowerCase() || '',
     '{context}': info.context,
     '{fromAgentName}': fromInfo?.name || fromAgent,
     '{fromAgentHandle}': fromAgent?.toLowerCase() || ''

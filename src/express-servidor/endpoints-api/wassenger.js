@@ -11,7 +11,7 @@ import { sanitizeUrl, sanitizeForLog } from '../../utils/log-sanitizer.js';
 import { processPaymentReceipt, isReceiptImage } from '../../servicios/payment-receipts.js';
 import { processMembershipPayment, findPendingMembershipLead } from '../../servicios/membership-payment-verification.js';
 import { analyzeMedicalImage } from '../../servicios/angela-vision-analysis.js';
-import { processConfirmationResponse, hasPendingConfirmation, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
+import { processConfirmationResponse, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
 import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue, markFirstAckSent } from '../../servicios/axel-photo-collector.js';
 import { processAxelFormMessage, generateFormSummary, generateFormPrompt } from '../../servicios/axel-quote-form.js';
@@ -1409,96 +1409,56 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       if (handled) return;
     }
 
-    // Si hay confirmación pendiente, SOLO procesar si responde SI/NO
-    // Verificar tanto el sistema legacy (profile.pendingConfirmation) como el nuevo sistema (getPendingConfirmation)
-    const legacyPending = hasPendingConfirmation(profile);
-    const newSystemPending = await getPendingConfirmation(userId).catch(() => null);
-    const hasPending = legacyPending || newSystemPending;
-    
-    if (hasPending) {
-      // Sistema legacy (Aurora)
-      if (legacyPending) {
-        const hasValidData = profile.pendingConfirmation?.date && profile.pendingConfirmation?.startTime;
-        if (!hasValidData) {
-          await clearPendingConfirmation(userId);
-          profile.pendingConfirmation = null;
-        } else {
-          const isPos = isPositiveResponse(processedText);
-          const isNeg = isNegativeResponse(processedText);
-          
-          // 🎯 BACKUP OPTIMIZATION: Solo procesar SI/NO explícitos para evitar falsos positivos
-          if (isPos || isNeg) {
-            console.log('[WASSENGER] ✅ Usuario tiene confirmación pendiente Y respuesta es SI/NO');
-            
-            const confirmationResult = await processConfirmationResponse(processedText, profile);
-            
-            // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
-            if (confirmationResult.success && isPos) {
-              profile.transactionStartedAt = null;
-              profile.transactionAgent = null;
-              profile.followUpSentAt = null;
-              await saveProfile(userId, profile);
-              console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
-            }
-            
-            // 📤 Enviar respuesta de confirmación
-            await enviarWhatsApp(userId, confirmationResult.message);
-            
-            // 💾 Guardar en historial
-            await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: profile.activeAgent || 'AURORA' });
-            
-            // 📊 Guardar interacción
-            await saveInteraction({
-              userId,
-              agent: normalizeAgentName(profile.activeAgent || 'AURORA'),
-              agentName: profile.activeAgent || 'Aurora Core',
-              intentReason: 'confirmation_response',
-              input: processedText,
-              output: confirmationResult.message,
-              meta: { 
-                envelope, 
-                confirmationSuccess: confirmationResult.success,
-                actionType: confirmationResult.actionType,
-                needsAction: confirmationResult.needsAction
-              }
-            });
-            
-            // 🚫 CRÍTICO: RETURN para no continuar con orquestador
-            console.log('[WASSENGER] 🛑 Confirmación procesada - NO continuar con orquestador');
-            return;
+    // Si hay confirmación pendiente en sistema unificado, SOLO procesar SI/NO explícito
+    const pendingConfirmation = await getPendingConfirmation(userId).catch(() => null);
+    if (pendingConfirmation) {
+      const isPos = isPositiveResponse(processedText);
+      const isNeg = isNegativeResponse(processedText);
+
+      if (isPos || isNeg) {
+        console.log(`[WASSENGER] ✅ Confirmación pendiente (${pendingConfirmation.agentName || 'AURORA'}) y respuesta SI/NO`);
+
+        const confirmationResult = await processConfirmationResponse(processedText, profile);
+
+        // ⏱️ T14: Limpiar transacción si confirmación exitosa (transacción completada)
+        if (confirmationResult.success && isPos) {
+          profile.transactionStartedAt = null;
+          profile.transactionAgent = null;
+          profile.followUpSentAt = null;
+          await saveProfile(userId, profile);
+          console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
+        }
+
+        const interactionAgent = pendingConfirmation.agentName || profile.activeAgent || 'AURORA';
+        const intentReason = pendingConfirmation.agentName ? 'specialized_confirmation' : 'confirmation_response';
+
+        await enviarWhatsApp(userId, confirmationResult.message);
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: confirmationResult.message,
+          agent: interactionAgent
+        });
+        await saveInteraction({
+          userId,
+          agent: normalizeAgentName(interactionAgent),
+          agentName: interactionAgent,
+          intentReason,
+          input: processedText,
+          output: confirmationResult.message,
+          meta: {
+            envelope,
+            confirmationSuccess: confirmationResult.success,
+            actionType: confirmationResult.actionType,
+            needsAction: confirmationResult.needsAction
           }
-          
-          // Si no es SI/NO explícito, continuar con orquestador normal
-          console.log('[WASSENGER] ⚠️ Confirmación pendiente pero respuesta NO es SI/NO - continuar con agente');
-        }
-      } 
-      // Sistema nuevo (ALUNA, PAULA, etc.)
-      else if (newSystemPending) {
-        const isPos = isPositiveResponse(processedText);
-        const isNeg = isNegativeResponse(processedText);
-        
-        if (isPos || isNeg) {
-          console.log(`[WASSENGER] ✅ ${newSystemPending.agentName} - Confirmación pendiente y respuesta SI/NO`);
-          
-          const confirmationResult = await processConfirmationResponse(processedText, profile);
-          
-          // 📤 Enviar respuesta
-          await enviarWhatsApp(userId, confirmationResult.message);
-          await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: newSystemPending.agentName });
-          await saveInteraction({
-            userId,
-            agent: normalizeAgentName(newSystemPending.agentName),
-            agentName: newSystemPending.agentName,
-            intentReason: 'specialized_confirmation',
-            input: processedText,
-            output: confirmationResult.message,
-            meta: { envelope, success: confirmationResult.success }
-          });
-          
-          console.log('[WASSENGER] 🛑 Confirmación especializada procesada');
-          return;
-        }
+        });
+
+        console.log('[WASSENGER] 🛑 Confirmación procesada - NO continuar con orquestador');
+        return;
       }
+
+      // Si no es SI/NO explícito, continuar con orquestador normal
+      console.log('[WASSENGER] ⚠️ Confirmación pendiente pero respuesta NO es SI/NO - continuar con agente');
     }
 
     // Si el usuario reanuda reserva (mensaje de continuación si aplica)
@@ -1754,16 +1714,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 🔒 GUARDAR fromAgent ANTES de actualizar (fix bug handoff loop)
     const originalFromAgent = profile.activeAgent || 'AURORA';
     
-    // 🏎️ MERCEDES BENZ v735: Usar AgentStateManager centralizado
-    // UN SOLO lugar actualiza activeAgent - cero race conditions
-    if (resultado.agenteKey && resultado.agenteKey !== profile.activeAgent) {
+    // 🏎️ MERCEDES BENZ v735: Actualización de agente centralizada
+    // Regla: handoff actualiza agente DESPUÉS de completar transición UX.
+    const shouldChangeAgent = resultado.agenteKey && resultado.agenteKey !== profile.activeAgent;
+    const isHandoffFlow = resultado?.metadata?.agentHandoff === true;
+
+    if (shouldChangeAgent && !isHandoffFlow) {
       console.log(`[WASSENGER-V735] 🔄 Solicitando cambio de agente: ${profile.activeAgent} → ${resultado.agenteKey}`);
-      
+
       const updateResult = await updateAgentState(
         userId,
         resultado.agenteKey,
         {
-          reason: resultado?.metadata?.agentHandoff ? 'handoff' : 'orchestrator',
+          reason: 'orchestrator',
           fromAgent: profile.activeAgent,
           metadata: resultado.metadata,
           intentReason: resultado.razonSeleccion
@@ -1771,15 +1734,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         saveProfile,
         profile
       );
-      
+
       if (updateResult.success) {
-        // Actualizar profile local para mantener consistencia
         profile.activeAgent = resultado.agenteKey;
         console.log(`[WASSENGER-V735] ✅ AgentStateManager actualizó: ${updateResult.fromAgent} → ${updateResult.toAgent}`);
       } else {
         console.error(`[WASSENGER-V735] ❌ AgentStateManager falló:`, updateResult.error);
       }
-    } else {
+    } else if (!shouldChangeAgent) {
       console.log(`[WASSENGER-DEBUG] ✅ Agente NO cambió, manteniendo: ${profile.activeAgent}`);
     }
 
@@ -1837,6 +1799,29 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       );
       
       if (handoffResult.success) {
+        // 🏎️ Commit del estado de agente SOLO después de transición exitosa
+        const updateResult = await updateAgentState(
+          userId,
+          targetAgent,
+          {
+            reason: 'handoff',
+            fromAgent,
+            metadata: resultado.metadata,
+            intentReason: resultado.razonSeleccion
+          },
+          saveProfile,
+          profile
+        );
+
+        if (updateResult.success) {
+          profile.activeAgent = targetAgent;
+          console.log(`[WASSENGER-V735] ✅ Commit handoff: ${updateResult.fromAgent} → ${updateResult.toAgent}`);
+        } else {
+          console.error('[WASSENGER-V735] ❌ Handoff UX completado pero commit de agente falló:', updateResult.error);
+          await enviarWhatsApp(userId, 'Hice el relevo, pero tuve un problema guardando el estado. Escribe de nuevo @' + targetAgent.toLowerCase() + ' por favor.');
+          return;
+        }
+
         console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente`);
         return;
       } else {

@@ -13,8 +13,6 @@ import { detectarIntencion, detectarSolicitudRecibo } from './detectar-intencion
 import { loggers } from '../utils/logger.js';
 import { detectLanguage, detectLanguageCommand } from '../utils/language-detector.js';
 import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
-import { hasPendingConfirmation } from '../servicios/confirmation-flow.js';
-import { clearPendingConfirmation as clearLegacyPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
@@ -108,8 +106,7 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     
     // Verificar si realmente hay algo que cancelar
     const pendingNew = await getPendingConfirmation(userId);
-    const hasPendingLegacy = await hasPendingConfirmation(userId);
-    const hasPending = hasPendingLegacy || !!pendingNew;
+    const hasPending = !!pendingNew;
     const hasPartialForm = !!(formData?.resumed || formData?.partial);
     
     if (hasPending || hasPartialForm) {
@@ -123,12 +120,6 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
         if (pendingNew) {
           await clearPendingConfirmation(userId);
           console.log('[ORQUESTADOR] ✅ Confirmación pendiente (reservation-state) limpiada');
-        }
-
-        // Limpiar confirmaciones pendientes
-        if (hasPendingLegacy) {
-          await clearLegacyPendingConfirmation(userId);
-          console.log('[ORQUESTADOR] ✅ Confirmación pendiente (legacy) limpiada');
         }
         
         // Limpiar formulario parcial
@@ -327,8 +318,6 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
   let specialMode = null;
   if (intent.flags?.virtualAgentSalesPromo) {
     specialMode = 'VIRTUAL_AGENT_SALES';
-  } else if (intent.flags?.serviceInterest) {
-    specialMode = 'SERVICE_INTEREST_GREETING';
   }
 
   // 6. Consultar reservas si el usuario pregunta por ellas
@@ -501,16 +490,8 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
 
   // 🤖 PROMPTS ESPECIALES: Contexto mínimo (system prompt tiene todas las instrucciones)
   const isVirtualAgentSales = intent?.flags?.virtualAgentSalesPromo === true;
-  const isServiceInterestGreeting = intent?.flags?.serviceInterest === true;
-
   if (isVirtualAgentSales) {
     lineas.push('\n🔴 MODO: DEMO_SISTEMA_ONEMIND');
-    // NO agregar más instrucciones - el system prompt especializado ya las tiene
-    return lineas.join('\n');
-  }
-
-  if (isServiceInterestGreeting) {
-    lineas.push('\n🔴 MODO: SALUDO_CON_INTERES_SERVICIO');
     // NO agregar más instrucciones - el system prompt especializado ya las tiene
     return lineas.join('\n');
   }

@@ -15,42 +15,42 @@
 const AGENT_INFO = {
   AURORA: {
     name: 'Aurora',
-    context: 'coordinadora de Coworkia - reservas y pagos',
+    context: 'reservas y coordinación de Coworkia',
     emoji: '✨'
   },
   ALUNA: {
     name: 'Aluna',
-    context: 'especialista en membresías y planes mensuales',
+    context: 'membresías y planes mensuales',
     emoji: '🌙'
   },
   ADRIANA: {
     name: 'Adriana',
-    context: 'broker de seguros - SegPopular',
+    context: 'seguros y coberturas',
     emoji: '🛡️'
   },
   ENZO: {
     name: 'Enzo',
-    context: 'experto en marketing e IA - MarketingLab',
+    context: 'marketing e IA para negocios',
     emoji: '🚀'
   },
   ANGELA: {
     name: 'Ángela',
-    context: 'especialista médica - MedBeneficios',
+    context: 'salud y bienestar',
     emoji: '👩‍⚕️'
   },
   AXEL: {
     name: 'Axel',
-    context: 'mecánico automotriz - PaintBull',
+    context: 'colisiones y reparación vehicular',
     emoji: '🔧'
   },
   GABI: {
     name: 'Gabi',
-    context: 'asesora legal y financiera - GR Consulting',
+    context: 'legal y finanzas',
     emoji: '⚖️'
   },
   PAULA: {
     name: 'Paula',
-    context: 'agente inmobiliaria - PropElite',
+    context: 'bienes raíces',
     emoji: '🏡'
   }
 };
@@ -64,7 +64,7 @@ const AGENT_INFO = {
 const ENTRY_TEMPLATES = {
   // Usuario nuevo llega al agente (sin historial previo)
   FIRST_TIME: {
-    es: '¡Hola {userName}! {emoji} Soy {toAgent}, {context}.\n\n¿En qué puedo ayudarte?',
+    es: '¡Hola {userName}! {emoji} Soy {toAgent}.\n\nTe ayudo con {context}. ¿Qué necesitas hoy?',
     en: 'Hi {userName}! {emoji} I\'m {toAgent}, {context}.\n\nHow can I help you?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, {context}.\n\nComment puis-je vous aider?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, {context}.\n\nCome posso aiutarti?',
@@ -74,7 +74,7 @@ const ENTRY_TEMPLATES = {
   
   // Usuario regresa al agente (ya estuvo antes)
   RETURNING: {
-    es: '¡Hola de nuevo {userName}! {emoji} Soy {toAgent}, nos volvemos a encontrar.\n\nRecuerdo nuestra última conversación. ¿En qué más puedo ayudarte ahora?',
+    es: '¡Hola de nuevo {userName}! {emoji} Soy {toAgent}.\n\nRetomemos donde quedamos. ¿En qué te ayudo ahora con {context}?',
     en: 'Hello again {userName}! {emoji} I\'m {toAgent}, we meet again.\n\nI remember our last conversation. How else can I help you now?',
     fr: 'Rebonjour {userName}! {emoji} Je suis {toAgent}, nous nous retrouvons.\n\nJe me souviens de notre dernière conversation. Comment puis-je encore vous aider?',
     it: 'Ciao di nuovo {userName}! {emoji} Sono {toAgent}, ci ritroviamo.\n\nRicordo la nostra ultima conversazione. Come posso aiutarti adesso?',
@@ -84,7 +84,7 @@ const ENTRY_TEMPLATES = {
   
   // Handoff desde otro agente (transición activa)
   HANDOFF: {
-    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nEstoy disponible desde donde te quedaste cuando me llamas con @{toAgentHandle}.\n\n¿En qué te puedo ayudar hoy con {context}?',
+    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nTe ayudo con {context}. ¿Qué necesitas ahora?',
     en: 'Hi {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\nI\'m available right where you left off when you call me with @{toAgentHandle}.\n\nHow can I help you today with {context}?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\nJe suis disponible là où vous vous êtes arrêté quand vous m\'appelez avec @{toAgentHandle}.\n\nComment puis-je vous aider aujourd\'hui avec {context}?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\nSono disponibile da dove sei rimasto quando mi chiami con @{toAgentHandle}.\n\nCome posso aiutarti oggi con {context}?',

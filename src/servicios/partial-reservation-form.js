@@ -950,61 +950,88 @@ ${hotDeskInfo}
     const requestedDate = new Date(form.date + 'T00:00:00-05:00');
     const dayOfWeek = requestedDate.getDay();
     
+    // Validar sábado (day === 6)
+    if (dayOfWeek === 6) {
+      // Sugerir el lunes siguiente
+      const nextMonday = new Date(requestedDate);
+      nextMonday.setDate(requestedDate.getDate() + 2);
+      const nextMondayStr = nextMonday.toISOString().split('T')[0];
+
+      validationError = {
+        type: 'closed_saturday',
+        message: `🚫 Los sábados Coworkia está cerrado, lo siento 😊
+
+Estamos abiertos:
+📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
+
+¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
+
+📌 Si necesitas un espacio este sábado por un *pedido especial*, escríbele directamente al administrador:
+👉 https://wa.me/593987770788`,
+        suggestedDate: nextMondayStr
+      };
+
+      console.log('[FORM] 🚫 Validación: Sábado detectado -', form.date);
+    }
     // Validar domingo (day === 0)
-    if (dayOfWeek === 0) {
+    else if (dayOfWeek === 0) {
       // Calcular próximo lunes
       const nextMonday = new Date(requestedDate);
       nextMonday.setDate(requestedDate.getDate() + 1);
       const nextMondayStr = nextMonday.toISOString().split('T')[0];
-      
+
       validationError = {
         type: 'closed_sunday',
         message: `🚫 Los domingos Coworkia está cerrado, lo siento 😊
 
 Estamos abiertos:
-📅 Lunes a viernes: 8:30 AM - 6:00 PM
-📅 Sábado: 9:00 AM - 2:00 PM
+📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
 
-¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️`,
+¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
+
+📌 Si necesitas un espacio este domingo por un *pedido especial*, escríbele directamente al administrador:
+👉 https://wa.me/593987770788`,
         suggestedDate: nextMondayStr
       };
-      
+
       console.log('[FORM] 🚫 Validación: Domingo detectado -', form.date);
     }
     // Validar feriado
     else if (FERIADOS_ECUADOR.includes(form.date)) {
       const monthDay = form.date.substring(5);
       const nombreFeriado = NOMBRES_FERIADOS[monthDay] || 'Feriado';
-      
-      // Buscar próximo día hábil (no domingo, no feriado)
+
+      // Buscar próximo día hábil (lun-vie, no feriado)
       let nextWorkingDay = new Date(requestedDate);
       let daysToAdd = 1;
-      
-      while (daysToAdd <= 7) {
+
+      while (daysToAdd <= 9) {
         nextWorkingDay.setDate(requestedDate.getDate() + daysToAdd);
         const nextDateStr = nextWorkingDay.toISOString().split('T')[0];
         const nextDayOfWeek = nextWorkingDay.getDay();
-        
-        // Si no es domingo Y no es feriado, es día hábil
-        if (nextDayOfWeek !== 0 && !FERIADOS_ECUADOR.includes(nextDateStr)) {
+
+        // Día hábil = lunes a viernes (1-5) y no feriado
+        if (nextDayOfWeek >= 1 && nextDayOfWeek <= 5 && !FERIADOS_ECUADOR.includes(nextDateStr)) {
           validationError = {
             type: 'closed_holiday',
             message: `🎉 ${nombreFeriado} - Coworkia está cerrado ese día 😊
 
 Estamos abiertos:
-📅 Lunes a viernes: 8:30 AM - 6:00 PM
-📅 Sábado: 9:00 AM - 2:00 PM
+📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
 
-¿Qué tal si reservas para el ${nextDateStr}? 🗓️`,
+¿Qué tal si reservas para el ${nextDateStr}? 🗓️
+
+📌 Si necesitas un espacio en este feriado por un *pedido especial*, escríbele directamente al administrador:
+👉 https://wa.me/593987770788`,
             suggestedDate: nextDateStr,
             holidayName: nombreFeriado
           };
           break;
         }
-        
+
         daysToAdd++;
       }
-      
+
       console.log('[FORM] 🎉 Validación: Feriado detectado -', nombreFeriado, form.date);
     }
   }

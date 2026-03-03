@@ -64,7 +64,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
           sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 2 horas: $10
 • WiFi + café ☕`
@@ -88,7 +88,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
 • 2 hours: $10
 • WiFi + coffee ☕
-• First visit FREE 🎁`,
+• First visit FREE 🎁 (8:00am–12:00pm)`,
           sinPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
 • 2 hours: $10
 • WiFi + coffee ☕`
@@ -112,7 +112,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
 • 2 heures: $10
 • WiFi + café ☕
-• Première visite GRATUITE 🎁`,
+• Première visite GRATUITE 🎁 (8h00–12h00)`,
           sinPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
 • 2 heures: $10
 • WiFi + café ☕`
@@ -142,7 +142,7 @@ export const AURORA = {
       conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
       sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 2 horas: $10
 • WiFi + café ☕`
@@ -184,7 +184,7 @@ Ejemplo:
       },
       prueba: {
         nombre: '2 Horas Gratis',
-        condicion: 'Primera visita, previa reserva',
+        condicion: 'Primera visita, Hot Desk, horario 08:00–12:00, previa reserva',
         proceso: 'Agendar con Aurora, confirmar asistencia'
       }
     },
@@ -386,7 +386,7 @@ RESPONDE EXACTAMENTE:
 Coordinamos espacios de coworking + red de especialistas en múltiples áreas:
 
 🏢 ESPACIOS DE TRABAJO:
-• Hot Desk: $10/2h ${freeTrialUsed ? '' : '(primera visita GRATIS 🎁)'}
+• Hot Desk: $10/2h ${freeTrialUsed ? '' : '(primera visita GRATIS 🎁 horario 08:00–12:00)'}
 • Sala Reuniones: $29/2h (3-4 personas)
 
 👥 ESPECIALISTAS DISPONIBLES:

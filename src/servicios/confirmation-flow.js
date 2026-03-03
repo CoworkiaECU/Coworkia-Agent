@@ -655,6 +655,41 @@ https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 📲 Envíame tu comprobante para confirmar automáticamente ✅`;
     }
 
+    // 📧 Enviar email de confirmación para reservas de pago (tarjeta / transferencia)
+    let confirmationEmailLine = '';
+    if (userProfile.email) {
+      try {
+        console.log('[Confirmation] 📧 Enviando email de confirmación (pago pendiente) a:', userProfile.email);
+        const notificationResults = await sendReservationNotifications({
+          email: userProfile.email,
+          userName: userProfile.name || 'Cliente',
+          date: confirmedDate,
+          startTime: confirmedStart,
+          endTime: confirmedEnd,
+          serviceType: pendingReservation.serviceType || 'hotDesk',
+          guestCount: pendingReservation.guestCount || 0,
+          wasFree: false,
+          durationHours: pendingReservation.durationHours || 2,
+          totalPrice: costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.totalPrice,
+          reservation: reservationRecord
+        });
+
+        confirmationEmailLine = notificationResults?.email?.success
+          ? '\n📧 Te enviamos la confirmación por email.'
+          : '';
+
+        if (notificationResults?.email?.success) {
+          console.log('[Confirmation] ✅ Email de confirmación enviado exitosamente');
+        } else {
+          console.warn('[Confirmation] ⚠️ Email de confirmación no se pudo enviar:', notificationResults?.email?.error);
+        }
+      } catch (emailError) {
+        console.error('[Confirmation] ❌ Error enviando email de confirmación:', emailError.message);
+      }
+    } else {
+      console.warn('[Confirmation] ⚠️ Sin email registrado, omitiendo envío de confirmación');
+    }
+
     return {
       success: true,
       message: `✅ *¡Reserva confirmada${userName}!* 🎉
@@ -664,7 +699,7 @@ https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
 🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
 ${priceBreakdown}
 🔢 *Referencia:* ${reservationRecord.id}
-${paymentInstructions}
+${paymentInstructions}${confirmationEmailLine}
 
 📍 Whymper 403, Edificio Finistere
 🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,

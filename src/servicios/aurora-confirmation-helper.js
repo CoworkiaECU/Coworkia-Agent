@@ -404,6 +404,7 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
           serviceType: _serviceType,
           email: form.email || userProfile.email,
           numPeople: form.numPeople || 1,
+          paymentMethod: form.paymentMethod || null, // 💳 efectivo | transferencia | tarjeta
           totalPrice: 0, // Se calculará después
           // wasFree: primera visita + hotDesk + dentro ventana 08:00–12:00
           wasFree: !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {

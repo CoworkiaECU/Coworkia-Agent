@@ -51,8 +51,8 @@ function isFreeTrialWindowEligible(spaceType, timeStr) {
   if (spaceType !== 'hotDesk') return false;
   const mins = timeStrToMinutes(timeStr);
   if (mins === null) return false;
-  const start = 8 * 60 + 30; // 08:30
-  const end = 10 * 60 + 30;  // 10:30
+  const start = 8 * 60;  // 08:00
+  const end   = 12 * 60; // 12:00
   return mins >= start && mins <= end;
 }
 
@@ -131,8 +131,8 @@ export class PartialReservationForm {
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
     
-    // Free trial: primera visita (freeTrialUsed=false) con Hot Desk → gratis, sin importar la hora
-    const isFreeTrialApplicable = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+    // Free trial: primera visita + hotDesk dentro de la ventana 08:00–12:00
+    const isFreeTrialApplicable = !this.freeTrialUsed && isFreeTrialWindowEligible(this.spaceType, this.time);
 
     if (!this.paymentMethod && !isFreeTrialApplicable) {
       missing.push('paymentMethod');
@@ -294,8 +294,8 @@ export class PartialReservationForm {
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
       
       case 'paymentMethod':
-        // 🎉 FREE TRIAL: primera visita + Hot Desk (sin restricción de hora)
-        if (!this.freeTrialUsed && this.spaceType === 'hotDesk') {
+        // 🎉 FREE TRIAL: primera visita + hotDesk dentro de ventana 08:00–12:00
+        if (!this.freeTrialUsed && isFreeTrialWindowEligible(this.spaceType, this.time)) {
           return '✅ ¡Tu primera visita es GRATIS! 🎁 No necesitas pagar nada.';
         }
         return `¿Cómo prefieres pagar?\n\n💵 Efectivo\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "efectivo", "tarjeta" o "transferencia"`;
@@ -385,8 +385,8 @@ export class PartialReservationForm {
       // ✅ Formatear fecha para mostrar día de semana + mes en español
       const formattedDate = this.formatDate(this.date);
       
-      // Free trial: primera visita + Hot Desk (cualquier hora)
-      const isFreeTrial = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+      // Free trial: primera visita + hotDesk dentro de ventana 08:00–12:00
+      const isFreeTrial = !this.freeTrialUsed && isFreeTrialWindowEligible(this.spaceType, this.time);
 
       let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
       message += `📅 Fecha: ${formattedDate}\n`;
@@ -480,12 +480,12 @@ export class PartialReservationForm {
     // - Fuera de ventana siempre paga
     let pricing = { total: 0 };
     
-    const isHotDeskFreeTrial = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+    const isHotDeskFreeTrial = !this.freeTrialUsed && isFreeTrialWindowEligible(this.spaceType, this.time);
 
     if (isHotDeskFreeTrial) {
-      // Primera visita con Hot Desk - GRATIS
+      // Primera visita con Hot Desk dentro de ventana 08:00–12:00 - GRATIS
       pricing = { total: 0 };
-      console.log('[FORM] 💰 Primera visita Hot Desk - Precio: GRATIS');
+      console.log('[FORM] 💰 Primera visita Hot Desk en ventana 08:00–12:00 - Precio: GRATIS');
     } else if (this.paymentMethod) {
       // Sala reuniones O cliente recurrente - CALCULAR PRECIO
       pricing = this.calculateTotalWithTaxes();

@@ -405,8 +405,11 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
           email: form.email || userProfile.email,
           numPeople: form.numPeople || 1,
           totalPrice: 0, // Se calculará después
-          // wasFree: primera visita SOLO aplica para hotDesk (no sala de reuniones)
-          wasFree: !userProfile.freeTrialUsed && _serviceType === 'hotDesk'
+          // wasFree: primera visita + hotDesk + dentro ventana 08:00–12:00
+          wasFree: !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {
+            const mins = form.time ? parseInt(form.time.split(':')[0]) * 60 + parseInt(form.time.split(':')[1] || '0') : -1;
+            return mins >= 8 * 60 && mins <= 12 * 60;
+          })()
         };
         
         console.log('[AURORA-PROCESS] ✅ Datos construidos desde formulario:', reservationData);

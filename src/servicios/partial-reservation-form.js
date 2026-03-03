@@ -131,11 +131,10 @@ export class PartialReservationForm {
     if (!this.time) missing.push('time');
     if (!this.email) missing.push('email');
     
-    // Free trial solo entre 08:30 y 10:30 para hot desk; fuera de esa ventana se paga siempre
-    const isWindowEligible = isFreeTrialWindowEligible(this.spaceType, this.time);
-    const isHotDeskFreeTrial = isWindowEligible && this.spaceType === 'hotDesk';
-    
-    if (!this.paymentMethod && !isHotDeskFreeTrial) {
+    // Free trial: primera visita (freeTrialUsed=false) con Hot Desk → gratis, sin importar la hora
+    const isFreeTrialApplicable = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+
+    if (!this.paymentMethod && !isFreeTrialApplicable) {
       missing.push('paymentMethod');
       console.log('[FORM] ⚠️ Cliente debe pagar - requiere paymentMethod:', {
         freeTrialUsed: this.freeTrialUsed,
@@ -295,13 +294,11 @@ export class PartialReservationForm {
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
       
       case 'paymentMethod':
-        // 🎉 FREE TRIAL solo para Hot Desk nuevos (misma lógica que getMissingFields)
-        const isHotDeskFreeTrial = this.freeTrialUsed === false && this.spaceType === 'hotDesk';
-        
-        if (isHotDeskFreeTrial) {
-          return '✅ ¡Tu reserva será GRATIS! 🎉';
+        // 🎉 FREE TRIAL: primera visita + Hot Desk (sin restricción de hora)
+        if (!this.freeTrialUsed && this.spaceType === 'hotDesk') {
+          return '✅ ¡Tu primera visita es GRATIS! 🎁 No necesitas pagar nada.';
         }
-        return `¿Cómo deseas pagar?\n\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "tarjeta" o "transferencia"`;
+        return `¿Cómo prefieres pagar?\n\n💵 Efectivo\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "efectivo", "tarjeta" o "transferencia"`;
       
       default:
         return `¿Podrías darme más detalles sobre tu reserva${userName}?`;
@@ -384,11 +381,13 @@ export class PartialReservationForm {
     // ✅ CASO 1: Formulario COMPLETO - Confirmación final
     if (missing.length === 0) {
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-      const isFreeTrial = isFreeTrialWindowEligible(this.spaceType, this.time);
-      
+
       // ✅ Formatear fecha para mostrar día de semana + mes en español
       const formattedDate = this.formatDate(this.date);
       
+      // Free trial: primera visita + Hot Desk (cualquier hora)
+      const isFreeTrial = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+
       let message = `📋 *CONFIRMA TU RESERVA:*\n\n`;
       message += `📅 Fecha: ${formattedDate}\n`;
       message += `⏰ Horario: ${this.time} (${this.durationHours}h)\n`;
@@ -481,12 +480,12 @@ export class PartialReservationForm {
     // - Fuera de ventana siempre paga
     let pricing = { total: 0 };
     
-    const isHotDeskFreeTrial = isFreeTrialWindowEligible(this.spaceType, this.time);
-    
+    const isHotDeskFreeTrial = !this.freeTrialUsed && this.spaceType === 'hotDesk';
+
     if (isHotDeskFreeTrial) {
-      // Cliente nuevo con Hot Desk - GRATIS
+      // Primera visita con Hot Desk - GRATIS
       pricing = { total: 0 };
-      console.log('[FORM] 💰 Cliente nuevo Hot Desk - Precio: GRATIS');
+      console.log('[FORM] 💰 Primera visita Hot Desk - Precio: GRATIS');
     } else if (this.paymentMethod) {
       // Sala reuniones O cliente recurrente - CALCULAR PRECIO
       pricing = this.calculateTotalWithTaxes();
@@ -1033,7 +1032,8 @@ Estamos abiertos:
   return {
     form,
     updates,
-    nextQuestion: confirmationMessage || nextQuestion,  // Usar confirmationMessage si existe
+    isComplete,                                          // ← necesario para handleFormResult
+    nextQuestion: confirmationMessage || nextQuestion,   // Usar confirmationMessage si existe
     needsMoreInfo: !isComplete,
     summary: form.getSummary(),
     userMessage: message, // Para detectar frustración

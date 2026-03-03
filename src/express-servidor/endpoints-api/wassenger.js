@@ -600,6 +600,11 @@ async function handleFormResult(formResult, userId, agentName, profile) {
       if (confirmationResult.success) {
         await enviarWhatsApp(userId, confirmationResult.confirmationMessage);
         await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.confirmationMessage, agent: agentName });
+        // 🔧 FIX: Limpiar agent_form para que el "SI" del usuario NO vuelva a activar el
+        // formulario. Sin este clear, hasActiveForm = true en el siguiente mensaje, lo que
+        // hace que handleFormResult intercepte el "SI" antes de que llegue al check de
+        // pending_confirmation, causando un loop de resumen de confirmación infinito.
+        await clearAgentForm(userId, agentName);
         return true; // Manejado - hacer return
       }
     }
@@ -1285,7 +1290,79 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 🎨 AXEL FLOW: Cotizaciones de pintura con fotos
+    // � AURORA FLOW: Confirmaciones SI/NO y formulario de reservas
+    // CRÍTICO: debe ejecutarse ANTES del orquestador/LLM para que "Si"/"No"
+    // llegue a processConfirmationResponse en lugar de al modelo de lenguaje.
+    // ═══════════════════════════════════════════════════════════════════════
+    if (profile.activeAgent === 'AURORA' && processedText) {
+      const { detectVirtualAgentSalesPromo: _dvVAP, detectarSaludoConInteresServicio: _dSCIS } = await import('../../deteccion-intenciones/detectar-intencion.js');
+      const _hasVAP = _dvVAP(processedText).detected;
+      const _hasSI  = _dSCIS(processedText);
+      const _hasAF  = !!currentAgentForm;
+      const _hasFCont = detectFormContinuation(processedText);
+      const _shouldForm = !_hasVAP && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
+
+      // ① Interceptar SI/NO pendiente ANTES de ir al LLM
+      const _auroraEarlyPending = await getPendingConfirmation(userId).catch(() => null);
+      if (_auroraEarlyPending) {
+        const _isPos = isPositiveResponse(processedText);
+        const _isNeg = isNegativeResponse(processedText);
+        if (_isPos || _isNeg) {
+          console.log('[AURORA-FLOW] ✅ Interceptando SI/NO (pendingConfirmation) antes del LLM');
+          const _confResult = await processConfirmationResponse(processedText, profile);
+          if (_confResult.success && _isPos) {
+            profile.transactionStartedAt = null;
+            profile.transactionAgent     = null;
+            profile.followUpSentAt       = null;
+            await saveProfile(userId, profile);
+            console.log('[T14] ✅ Transacción Aurora completada:', { userId });
+          }
+          await enviarWhatsApp(userId, _confResult.message);
+          await saveConversationMessage(userId, { role: 'assistant', content: _confResult.message, agent: 'AURORA' });
+          await saveInteraction({
+            userId,
+            agent: normalizeAgentName('AURORA'),
+            agentName: 'Aurora Core',
+            intentReason: 'aurora_confirmation_response',
+            input: processedText,
+            output: _confResult.message,
+            meta: { envelope, confirmationSuccess: _confResult.success }
+          });
+          return;
+        }
+      }
+
+      // ② Formulario de reservas (progresivo, sin LLM)
+      if (_shouldForm) {
+        console.log('[AURORA-FLOW] 📋 Activando formulario de reserva:', {
+          isReservationIntent: isReservationIntent(processedText),
+          hasActiveForm: _hasAF,
+          isFormContinuation: _hasFCont
+        });
+        formResult = await processMessageWithForm(userId, processedText, profile, currentAgentForm);
+        formResult.userMessage = text;
+
+        // Guardar form si hay actualizaciones
+        if (formResult.form && formResult.updates && Object.keys(formResult.updates).length > 0) {
+          await saveAgentForm(userId, 'AURORA', formResult.form.toJSON(), 120);
+        }
+
+        // ⏱️ T14: Iniciar tracking de transacción al comenzar captura de datos
+        if (formResult.needsMoreInfo && !profile.transactionStartedAt) {
+          profile.transactionStartedAt = new Date().toISOString();
+          profile.transactionAgent = 'AURORA';
+          profile.followUpSentAt = null;
+          await saveProfile(userId, profile);
+          console.log('[T14] ⏱️ Transacción AURORA iniciada:', { userId, timestamp: profile.transactionStartedAt });
+        }
+
+        const _handled = await handleFormResult(formResult, userId, 'AURORA', profile);
+        if (_handled) return;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // �🎨 AXEL FLOW: Cotizaciones de pintura con fotos
     // ═══════════════════════════════════════════════════════════════════════
     if (profile.activeAgent === 'AXEL') {
       // ────────────────────────────────────────────────────────────────────
@@ -1379,6 +1456,42 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
     
+    // 🔧 FIX: Verificar pending_confirmation ANTES del form handler para Aurora.
+    // Si el usuario responde SI/NO a un resumen de confirmación pendiente, procesarlo
+    // de inmediato sin pasar por el formulario (evita el loop infinito de confirmación).
+    if (profile.activeAgent === 'AURORA') {
+      const earlyPending = await getPendingConfirmation(userId).catch(() => null);
+      if (earlyPending) {
+        const isPos = isPositiveResponse(processedText);
+        const isNeg = isNegativeResponse(processedText);
+        if (isPos || isNeg) {
+          console.log('[WASSENGER] 🔧 FIX: Interceptando SI/NO antes del form handler - confirmación pendiente');
+          const confirmationResult = await processConfirmationResponse(processedText, profile);
+
+          if (confirmationResult.success && isPos) {
+            profile.transactionStartedAt = null;
+            profile.transactionAgent = null;
+            profile.followUpSentAt = null;
+            await saveProfile(userId, profile);
+          }
+
+          const interactionAgent = earlyPending.agentName || profile.activeAgent || 'AURORA';
+          await enviarWhatsApp(userId, confirmationResult.message);
+          await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.message, agent: interactionAgent });
+          await saveInteraction({
+            userId,
+            agent: normalizeAgentName(interactionAgent),
+            agentName: interactionAgent,
+            intentReason: 'confirmation_response_early',
+            input: processedText,
+            output: confirmationResult.message,
+            meta: { envelope, confirmationSuccess: confirmationResult.success }
+          });
+          return;
+        }
+      }
+    }
+
     // 🏢 AURORA - Formulario de reservas
     if (shouldActivateForm && profile.activeAgent === 'AURORA') {
       console.log('[FORM] 🎯 Activando formulario:', { 

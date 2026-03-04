@@ -1,9 +1,7 @@
 // Script para verificar y corregir el estado del free trial de un usuario
-import { databaseService } from '../src/database/database.js';
+import databaseService from '../src/database/database.js';
 
 const phone = '+593987770788';
-
-await databaseService.initialize();
 
 // 1. Ver estado actual
 const user = await databaseService.get(

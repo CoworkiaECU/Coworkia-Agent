@@ -1057,7 +1057,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       console.log(`[WEBHOOK] 🚫 Tipo bloqueado: ${type} de usuario ${userId}`);
       
       // Obtener idioma del usuario para mensaje personalizado
-      const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+      const current = await loadProfileWithTimeout(loadProfile, userId, 15000).catch(() => ({})) || {};
       const userLanguage = current.preferredLanguage || 'es';
       
       const blockedMessages = {
@@ -1074,7 +1074,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     const userSentAudio = (type === 'audio' || type === 'voice' || type === 'ptt');
     
     // ✅ Obtener perfil una sola vez (se usará en múltiples flujos)
-    const current = await loadProfileWithTimeout(loadProfile, userId, 5000).catch(() => ({})) || {};
+    const current = await loadProfileWithTimeout(loadProfile, userId, 15000).catch(() => ({})) || {};
     let userLanguage = current.preferredLanguage || 'es';
 
     // 🎤 Voz → transcribir (MULTIIDIOMA + VALIDACIÓN + FALLBACKS)

@@ -621,38 +621,26 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     
     let priceBreakdown = '';
     if (!costBreakdown.error) {
-      priceBreakdown = `
-🧾 *Desglose:*
-• Servicio: $${costBreakdown.basePrice.toFixed(2)}
-• IVA (15%): $${costBreakdown.iva.toFixed(2)}${costBreakdown.payphoneFee > 0 ? `
-• Comisión tarjeta (5%): $${costBreakdown.payphoneFee.toFixed(2)}` : ''}
-━━━━━━━━━━━━━━━━
-💰 *TOTAL: $${costBreakdown.totalPrice.toFixed(2)} USD*
-`;
+      priceBreakdown = costBreakdown.payphoneFee > 0
+        ? `💵 *Total:* $${costBreakdown.totalPrice.toFixed(2)} USD (incluye IVA y comisión tarjeta)`
+        : `💵 *Total:* $${costBreakdown.subtotalWithIVA.toFixed(2)} USD (incluye IVA)`;
     } else {
-      priceBreakdown = `💰 *Total: $${pendingReservation.totalPrice} USD*`;
+      priceBreakdown = `💵 *Total:* $${pendingReservation.totalPrice} USD`;
     }
     
     // 🆕 v283: Mostrar solo el método de pago seleccionado
     let paymentInstructions = '';
     
     if (paymentMethod === 'transferencia') {
-      paymentInstructions = `
-🏦 *TRANSFERENCIA BANCARIA:*
-Produbanco - Cta Ahorros: 20059783069
-Cédula: 1702683499
-Titular: Gonzalo Villota Izurieta
-💰 Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.subtotalWithIVA.toFixed(2)}
-
-📲 Envíame tu comprobante para confirmar automáticamente ✅`;
+      paymentInstructions = `🏦 *Transferencia bancaria:*
+    Produbanco · Cta Ahorros 20059783069
+    Titular: Gonzalo Villota Izurieta · Cédula: 1702683499
+    📲 Envíame tu comprobante para confirmar automáticamente ✅`;
     } else {
       // Default: tarjeta/payphone
-      paymentInstructions = `
-💳 *PAGO CON TARJETA (Payphone):*
-https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
-💰 Total: $${costBreakdown.error ? pendingReservation.totalPrice : costBreakdown.totalPrice.toFixed(2)}
-
-📲 Envíame tu comprobante para confirmar automáticamente ✅`;
+      paymentInstructions = `💳 *Pago con tarjeta (Payphone):*
+    https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA
+    📲 Envíame tu comprobante para confirmar automáticamente ✅`;
     }
 
     // 📧 Enviar email de confirmación para reservas de pago (tarjeta / transferencia)

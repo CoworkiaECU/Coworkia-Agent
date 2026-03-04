@@ -252,7 +252,10 @@ export async function saveProfile(userId, partialProfile = {}) {
     || partialProfile.email 
     || partialProfile.preferredLanguage
     || partialProfile.whatsappDisplayName
-    || partialProfile.name;
+    || partialProfile.name
+    || partialProfile.firstVisit !== undefined
+    || partialProfile.freeTrialUsed !== undefined
+    || partialProfile.freeTrialDate !== undefined;
   
   if (shouldInvalidateCache) {
     invalidateCachedProfile(userId);

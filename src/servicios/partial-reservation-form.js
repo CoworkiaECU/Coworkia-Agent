@@ -418,9 +418,9 @@ export class PartialReservationForm {
       
       message += `\n💰 *Costo:*\n`;
       message += `Base: $${pricing.base.toFixed(2)}\n`;
-      message += `IVA (12%): $${pricing.iva.toFixed(2)}\n`;
+      message += `IVA (15%): $${pricing.iva.toFixed(2)}\n`;
       if (pricing.cardFee > 0) {
-        message += `Comisión tarjeta (3.5%): $${pricing.cardFee.toFixed(2)}\n`;
+        message += `Comisión tarjeta (5%): $${pricing.cardFee.toFixed(2)}\n`;
       }
       message += `*TOTAL: $${pricing.total.toFixed(2)} USD*\n\n`;
       message += `💳 Pago: ${metodoPago}\n\n`;

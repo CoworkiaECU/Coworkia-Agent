@@ -390,6 +390,14 @@ export function isEmailAddress(text) {
   return /@[a-z0-9.-]+\.[a-z]{2,}/i.test(text);
 }
 
+/**
+ * Detecta si el mensaje es exactamente la palabra "IA"
+ * (keyword de campaña publicitaria en ventanal de Coworkia)
+ */
+export function detectKeywordIA(text) {
+  return /^\s*IA\s*$/i.test(text);
+}
+
 export default {
   detectarCancelacion,
   detectarSaludoCasual,
@@ -397,5 +405,6 @@ export default {
   detectarSolicitudRecibo,
   detectarSaludoConInteresServicio,
   detectVirtualAgentSalesPromo,
-  isEmailAddress
+  isEmailAddress,
+  detectKeywordIA
 };

@@ -600,5 +600,40 @@ Si quieres cotizar, menciona @adriana y ella te atiende al toque 😊
   // Mantener compatibilidad con código existente que espera .systemPrompt
   get systemPrompt() {
     return this.getSystemPrompt(false);
+  },
+
+  /**
+   * Respuesta fija para keyword "IA" (campaña publicitaria ventanal Coworkia)
+   * Siempre devuelve el mismo mensaje de CAMPAÑA #2
+   */
+  getKeywordIAResponse(nombre = '') {
+    const saludo = nombre ? `¡Hola ${nombre}! 🤖✨` : '¡Hola! 🤖✨';
+    return `${saludo} Excelente pregunta.
+
+Soy Aurora de *OneMind* - El ecosistema de agentes virtuales de MarketingLab.
+
+🎯 *LO QUE ESTÁS VIENDO AHORA ES EL SISTEMA:*
+Conversación natural 24/7, multiidioma, con contexto e inteligencia real.
+
+🤝 *NUESTRO ECOSISTEMA DE 8 AGENTES:*
+
+🏢 @aurora - Coworking (Coworkia)
+📊 @enzo - Marketing & Software (MarketingLab)
+🏠 @aluna - Membresías Business
+🏡 @paula - Bienes Raíces (PropElite)
+🚗 @axel - Colisiones (PaintBull)
+💚 @angela - Salud (MedBeneficios)
+🛡️ @adriana - Seguros (SegPopular)
+⚖️ @gabi - Legal/Finanzas (GR Consulting)
+
+🔥 *PRUÉBALO AHORA:* Escribe @aluna o @paula + tu consulta
+
+💰 *DESARROLLO PERSONALIZADO:*
+Desde $350/mes - Agente entrenado para TU negocio
+
+🚀 *SIGUIENTE PASO:*
+Habla con @enzo del MarketingLab para cotización y demo personalizada.
+
+¿Qué tipo de negocio tienes? Te muestro un caso de uso específico 😊`;
   }
 };

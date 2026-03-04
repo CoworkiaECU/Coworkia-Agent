@@ -10,6 +10,7 @@ import { AXEL } from './axel.js';
 import { GABI } from './gabi.js';
 import { PAULA } from './paula.js';
 import { detectarIntencion, detectarSolicitudRecibo } from './detectar-intencion.js';
+import { detectKeywordIA } from './intent-detection-helpers.js';
 import { loggers } from '../utils/logger.js';
 import { detectLanguage, detectLanguageCommand } from '../utils/language-detector.js';
 import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
@@ -47,7 +48,18 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
 
   loggers.orquestador.userMessage(userId, activeAgent, mensaje);
 
-  // 🌍 Detectar idioma automáticamente en cada mensaje
+  // � KEYWORD CAMPAÑA: respuesta fija cuando usuario envía solo "IA"
+  if (detectKeywordIA(mensaje)) {
+    const nombre = perfil.nombre || '';
+    console.log(`[KEYWORD-IA] 🎯 Keyword "IA" detectada para ${userId} — respondiendo CAMPAÑA #2`);
+    return {
+      respuesta: AURORA.getKeywordIAResponse(nombre),
+      agente: 'AURORA',
+      activeAgent: activeAgent
+    };
+  }
+
+  // �🌍 Detectar idioma automáticamente en cada mensaje
   const languageCommand = detectLanguageCommand(mensaje);
   const languageDetection = detectLanguage(mensaje, perfil.preferredLanguage);
   

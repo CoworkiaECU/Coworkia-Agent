@@ -27,7 +27,7 @@ const freeReservation = reservations.find(r => r.was_free == true || r.was_free 
 if (freeReservation) {
   console.log('\n🎁 Reserva gratis encontrada:', freeReservation.id);
   await databaseService.run(
-    `UPDATE users SET free_trial_used = 1, free_trial_date = $1 WHERE phone_number = $2`,
+    `UPDATE users SET free_trial_used = true, free_trial_date = $1 WHERE phone_number = $2`,
     [freeReservation.created_at, phone]
   );
   console.log('✅ free_trial_used corregido a 1');
@@ -37,10 +37,10 @@ if (freeReservation) {
   if (confirmedHotDesk) {
     console.log('🏢 Reserva Hot Desk confirmada encontrada:', confirmedHotDesk.id, '— marcando trial como usado');
     await databaseService.run(
-      `UPDATE users SET free_trial_used = 1, free_trial_date = $1 WHERE phone_number = $2`,
+      `UPDATE users SET free_trial_used = true, free_trial_date = $1 WHERE phone_number = $2`,
       [confirmedHotDesk.created_at, phone]
     );
-    console.log('✅ free_trial_used corregido a 1');
+    console.log('✅ free_trial_used corregido a true');
   }
 }
 

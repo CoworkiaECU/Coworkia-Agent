@@ -396,6 +396,28 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
         const endHour = parseInt(hour) + (form.durationHours || 2);
         
         const _serviceType = form.spaceType === 'meetingRoom' ? 'meetingRoom' : 'hotDesk';
+        const _isFreeWindow = !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {
+          const mins = form.time ? parseInt(form.time.split(':')[0]) * 60 + parseInt(form.time.split(':')[1] || '0') : -1;
+          return mins >= 8 * 60 && mins <= 12 * 60;
+        })();
+
+        // ✅ Resolver totalPrice de forma robusta:
+        // 1) valor explícito en form.totalPrice
+        // 2) cálculo de la instancia PartialReservationForm (calculateTotalWithTaxes)
+        // 3) fallback a precio base
+        let resolvedTotalPrice = Number.isFinite(Number(form.totalPrice)) ? Number(form.totalPrice) : 0;
+        if (resolvedTotalPrice <= 0 && typeof form.calculateTotalWithTaxes === 'function' && form.paymentMethod) {
+          const pricing = form.calculateTotalWithTaxes();
+          resolvedTotalPrice = Number.isFinite(Number(pricing?.total)) ? Number(pricing.total) : 0;
+        }
+        if (resolvedTotalPrice <= 0 && typeof form.getBasePrice === 'function') {
+          const base = Number(form.getBasePrice());
+          resolvedTotalPrice = Number.isFinite(base) ? base : 0;
+        }
+        if (_isFreeWindow) {
+          resolvedTotalPrice = 0;
+        }
+
         reservationData = {
           date: form.date,
           startTime: form.time,
@@ -405,14 +427,9 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
           email: form.email || userProfile.email,
           numPeople: form.numPeople || 1,
           paymentMethod: form.paymentMethod || null, // 💳 efectivo | transferencia | tarjeta
-          // ✅ Preservar precio calculado por el formulario (incluye IVA/comisión según método de pago)
-          // Si no viene, fallback a 0 y se manejará después según flujo.
-          totalPrice: Number.isFinite(Number(form.totalPrice)) ? Number(form.totalPrice) : 0,
+          totalPrice: resolvedTotalPrice,
           // wasFree: primera visita + hotDesk + dentro ventana 08:00–12:00
-          wasFree: !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {
-            const mins = form.time ? parseInt(form.time.split(':')[0]) * 60 + parseInt(form.time.split(':')[1] || '0') : -1;
-            return mins >= 8 * 60 && mins <= 12 * 60;
-          })()
+          wasFree: _isFreeWindow
         };
         
         console.log('[AURORA-PROCESS] ✅ Datos construidos desde formulario:', reservationData);

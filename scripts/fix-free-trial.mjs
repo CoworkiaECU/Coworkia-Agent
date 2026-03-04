@@ -3,6 +3,8 @@ import databaseService from '../src/database/database.js';
 
 const phone = '+593987770788';
 
+await databaseService.initialize();
+
 // 1. Ver estado actual
 const user = await databaseService.get(
   'SELECT phone_number, name, free_trial_used, free_trial_date, first_visit FROM users WHERE phone_number = $1',

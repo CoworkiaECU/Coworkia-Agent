@@ -279,7 +279,13 @@ export async function saveProfile(userId, partialProfile = {}) {
       email: partialProfile.email,
       whatsapp_display_name: displayName, // Guardar también el display name
       first_visit: partialProfile.firstVisit,
-      free_trial_used: partialProfile.freeTrialUsed,
+      // 🛡️ free_trial_used: solo escribir si se marca como USADO (true/1)
+      // NUNCA sobreescribir a false/0 — evita race condition donde el perfil
+      // en memoria (freeTrialUsed=0) se guarda un instante DESPUÉS de que
+      // confirmation-flow lo marcó como 1 en BD.
+      free_trial_used: partialProfile.freeTrialUsed === true || partialProfile.freeTrialUsed === 1
+        ? true
+        : undefined,
       free_trial_date: partialProfile.freeTrialDate,
       conversation_count: partialProfile.conversationCount,
       last_message_at: partialProfile.lastMessageAt || new Date().toISOString(),

@@ -405,7 +405,9 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
           email: form.email || userProfile.email,
           numPeople: form.numPeople || 1,
           paymentMethod: form.paymentMethod || null, // 💳 efectivo | transferencia | tarjeta
-          totalPrice: 0, // Se calculará después
+          // ✅ Preservar precio calculado por el formulario (incluye IVA/comisión según método de pago)
+          // Si no viene, fallback a 0 y se manejará después según flujo.
+          totalPrice: Number.isFinite(Number(form.totalPrice)) ? Number(form.totalPrice) : 0,
           // wasFree: primera visita + hotDesk + dentro ventana 08:00–12:00
           wasFree: !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {
             const mins = form.time ? parseInt(form.time.split(':')[0]) * 60 + parseInt(form.time.split(':')[1] || '0') : -1;

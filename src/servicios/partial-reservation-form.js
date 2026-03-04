@@ -17,6 +17,7 @@
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import { detectarSaludoConInteresServicio } from '../deteccion-intenciones/detectar-intencion.js';
 import userRepository from '../database/userRepository.js';
+import reservationRepository from '../database/reservationRepository.js';
 
 // 📲 Enlace genérico para referir amigos al sistema de Coworkia
 const REFERRAL_LINK = `https://wa.me/593994837117?text=${encodeURIComponent('¡Hola Coworkia! quiero probar el servicio')}`;
@@ -60,7 +61,7 @@ function isFreeTrialWindowEligible(spaceType, timeStr) {
  * 🎯 Clase que representa un formulario parcial de reserva
  */
 export class PartialReservationForm {
-  constructor(userId, existingData = {}, freeTrialUsed = false) {
+  constructor(userId, existingData = {}, freeTrialUsed = null) {
     this.userId = userId;
     this.spaceType = existingData.spaceType || null;      // 'hotDesk' | 'meetingRoom'
     this.date = existingData.date || null;                // '2025-11-12'
@@ -69,7 +70,7 @@ export class PartialReservationForm {
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
     this.durationHours = existingData.durationHours || 2; // default 2h
     this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
-    this.freeTrialUsed = existingData.freeTrialUsed ?? freeTrialUsed ?? false; // ← Estado del free trial del usuario (null = por cargar)
+    this.freeTrialUsed = existingData.freeTrialUsed ?? freeTrialUsed ?? null; // ← null = resolver desde BD/historial
     this.updatedAt = new Date();
   }
 
@@ -77,22 +78,41 @@ export class PartialReservationForm {
    * � Inicializa freeTrialUsed consultando BD (llamar antes de getMissingFields)
    */
   async initializeFreeTrialStatus() {
-    if (this.freeTrialUsed !== null) {
-      console.log('[FORM] ✅ freeTrialUsed ya inicializado:', this.freeTrialUsed);
-      return;
-    }
-
     try {
+      // Si viene explícitamente en true desde contexto persistido, respetarlo
+      if (this.freeTrialUsed === true) {
+        console.log('[FORM] ✅ freeTrialUsed ya inicializado en true');
+        return;
+      }
+
       const user = await userRepository.findByPhone(this.userId);
-      this.freeTrialUsed = user?.free_trial_used ?? false;
+
+      // Señales fuertes de trial usado en perfil
+      const profileShowsUsed = Boolean(user?.free_trial_used) || Boolean(user?.free_trial_date);
+
+      // Señales fuertes de usuario recurrente en reservas
+      const userReservations = await reservationRepository.findByUser(this.userId, 30);
+      const hasConfirmedReservations = userReservations.some(r => r.status === 'confirmed');
+      const hasAnyFreeReservation = userReservations.some(r => Boolean(r.was_free));
+      const hasConfirmedHotDesk = userReservations.some(r => r.status === 'confirmed' && r.service_type === 'hotDesk');
+
+      // Regla de seguridad comercial:
+      // Si hay historial confirmado o señales de trial usado, NO volver a ofrecer trial gratis.
+      this.freeTrialUsed = profileShowsUsed || hasAnyFreeReservation || hasConfirmedReservations || hasConfirmedHotDesk;
+
       console.log('[FORM] 🔍 freeTrialUsed cargado desde BD:', {
         userId: this.userId,
         freeTrialUsed: this.freeTrialUsed,
-        userFound: !!user
+        userFound: !!user,
+        profileShowsUsed,
+        hasConfirmedReservations,
+        hasAnyFreeReservation,
+        hasConfirmedHotDesk
       });
     } catch (error) {
       console.error('[FORM] ❌ Error cargando freeTrialUsed, default false:', error);
-      this.freeTrialUsed = false;
+      // Fallback conservador: no ofrecer trial cuando no se puede verificar estado
+      this.freeTrialUsed = true;
     }
   }
 
@@ -515,7 +535,7 @@ export class PartialReservationForm {
   /**
    * 📂 Crea formulario desde objeto almacenado
    */
-  static fromJSON(data, freeTrialUsed = false) {
+  static fromJSON(data, freeTrialUsed = null) {
     return new PartialReservationForm(data.userId, {
       spaceType: data.spaceType,
       date: data.date,
@@ -535,7 +555,7 @@ export class PartialReservationForm {
  * Si se proporciona existingFormData, lo usa directamente
  * Esto permite que wassenger pase el form cargado de agent_forms
  */
-export async function getOrCreateForm(userId, freeTrialUsed = false, existingFormData = null) {
+export async function getOrCreateForm(userId, freeTrialUsed = null, existingFormData = null) {
   try {
     // 🎯 CASO 1: Form existente del sistema unificado (prioridad)
     if (existingFormData) {
@@ -874,7 +894,7 @@ export async function processMessageWithForm(userId, message, userProfile = null
   const isSpecialWelcome = detectarSaludoConInteresServicio(message);
   
   // 1. Obtener o crear formulario (prioriza existingFormData del sistema unificado)
-  const freeTrialUsed = userProfile?.freeTrialUsed || false;
+  const freeTrialUsed = userProfile?.freeTrialUsed ?? null;
   const form = await getOrCreateForm(userId, freeTrialUsed, existingFormData);
 
   // 2. Si es el saludo especial Y no hay datos en el formulario, generar mensaje de bienvenida

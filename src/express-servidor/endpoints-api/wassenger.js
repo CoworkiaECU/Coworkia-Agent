@@ -51,6 +51,7 @@ import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../../servicios/reservation-state.js';
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
+import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 
 const router = Router();
 
@@ -1303,6 +1304,27 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           const reply = result.success
             ? `✅ *Propuesta enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n💼 ${result.areaLabel}\n\nCopia a secretaría ✓`
             : `❌ Error enviando propuesta: ${result.error}`;
+          await enviarWhatsApp(userId, reply);
+          return;
+        }
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Axel — cotización demo con caso real de la memoria
+    // Solo activo cuando: userId === ADMIN_PHONE + agente AXEL + email presente
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'AXEL') {
+      if (isAxelBossQuoteCommand(processedText)) {
+        const quoteData = parseAxelDemoQuoteData(processedText);
+        if (quoteData?.email) {
+          console.log('[BOSS-CMD] 👔 Cotización AXEL demo solicitada por jefe:', quoteData);
+          await enviarWhatsApp(userId, `⚙️ Buscando caso real en memoria para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n🚗 Tomando fotos y análisis de siniestro guardado`);
+          const result = await sendAxelDemoCotizacion(quoteData);
+          const reply = result.success
+            ? `✅ *Cotización enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n🚗 ${result.vehicleData?.marca} ${result.vehicleData?.modelo} ${result.vehicleData?.año}\n📸 ${result.hasRealPhotos ? 'Con fotos reales del siniestro' : 'Demo estático (sin fotos aún)'}\n🔑 ${result.quoteCode}`
+            : `❌ Error enviando cotización: ${result.error}`;
           await enviarWhatsApp(userId, reply);
           return;
         }

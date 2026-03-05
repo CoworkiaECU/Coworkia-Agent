@@ -43,6 +43,7 @@ export async function addPhoto(userId, photoUrl, photoType = 'image') {
         lastPhotoTime: new Date(dbSession.lastPhotoAt).getTime(),
         timeoutId: null,
         firstAckSent: true,
+        maxPhotosAckSent: true,
         sessionFingerprint: `${userId}-${new Date(dbSession.createdAt).getTime()}`
       };
       photoSessions.set(userId, session);
@@ -55,6 +56,7 @@ export async function addPhoto(userId, photoUrl, photoType = 'image') {
         lastPhotoTime: Date.now(),
         timeoutId: null,
         firstAckSent: false,
+        maxPhotosAckSent: false,
         sessionFingerprint: `${userId}-${Date.now()}`
       };
       photoSessions.set(userId, session);
@@ -88,6 +90,7 @@ export async function addPhoto(userId, photoUrl, photoType = 'image') {
     canAddMore: session.photos.length < MAX_PHOTOS,
     isReady: session.photos.length >= MIN_PHOTOS,
     firstAckSent: session.firstAckSent,
+    maxPhotosAckSent: session.maxPhotosAckSent || false,
     sessionFingerprint: session.sessionFingerprint
   };
 }
@@ -112,6 +115,7 @@ export async function getSession(userId) {
         lastPhotoTime: new Date(dbSession.lastPhotoAt).getTime(),
         timeoutId: null,
         firstAckSent: true,
+        maxPhotosAckSent: true,
         sessionFingerprint: `${userId}-${new Date(dbSession.createdAt).getTime()}`
       };
       photoSessions.set(userId, session);
@@ -136,6 +140,7 @@ export async function getSession(userId) {
     isReady: session.photos.length >= MIN_PHOTOS,
     readyToProcess: session.readyToProcess || false,
     firstAckSent: session.firstAckSent || false,
+    maxPhotosAckSent: session.maxPhotosAckSent || false,
     sessionFingerprint: session.sessionFingerprint
   };
 }
@@ -147,6 +152,16 @@ export function markFirstAckSent(userId) {
   const session = photoSessions.get(userId);
   if (!session) return false;
   session.firstAckSent = true;
+  return true;
+}
+
+/**
+ * 📌 Marcar que ya se envió el mensaje de fotos completas (evita duplicados)
+ */
+export function markMaxPhotosAckSent(userId) {
+  const session = photoSessions.get(userId);
+  if (!session) return false;
+  session.maxPhotosAckSent = true;
   return true;
 }
 
@@ -363,6 +378,7 @@ export default {
   queueTask,
   clearQueue,
   markFirstAckSent,
+  markMaxPhotosAckSent,
   MIN_PHOTOS,
   MAX_PHOTOS,
   PHOTO_TIMEOUT_MS

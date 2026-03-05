@@ -121,10 +121,13 @@ REGLAS CRÍTICAS:
 - Todos los valores numéricos sin signo $, solo el número entero.
 - SOLO responde con el JSON, sin markdown, sin explicaciones previas ni posteriores.`;
 
-    // Usar analyzeImage si hay fotos para que el modelo VEA los daños directamente
-    // Si no hay fotos, fallback a complete() con solo texto
+    // Si ya tenemos análisis detallado por pieza (del paso de visión previo), usar
+    // complete() texto-solo — más fiable y evita segunda llamada vision con URLs que
+    // podrían expirar. Solo usar analyzeImage si no hay datos de análisis previo.
+    const hasDetailedDamageData = damageAnalysis.damages_by_panel && damageAnalysis.damages_by_panel.length > 0;
     let raw;
-    if (photoUrls.length > 0) {
+    if (!hasDetailedDamageData && photoUrls.length > 0) {
+      // Sin análisis previo: usar vision directamente
       const visionResult = await analyzeImage(photoUrls, quotePrompt, {
         temperature: 0.2,
         max_tokens: 1800,
@@ -134,6 +137,7 @@ REGLAS CRÍTICAS:
       raw = visionResult.success ? visionResult.content : null;
       if (!raw) throw new Error(visionResult.error || 'Error en Vision API para cotización');
     } else {
+      // Datos de análisis disponibles: texto-solo es más fiable
       raw = await complete(quotePrompt, {
         temperature: 0.2,
         max_tokens: 1800,

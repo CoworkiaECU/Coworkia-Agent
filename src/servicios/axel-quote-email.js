@@ -96,7 +96,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 
   // Grid de thumbnails inline con CID
   const photoGrid = photoAssets.length > 0
-    ? `<div style="margin-top:16px;">
+    ? `<div style="margin-bottom:28px;">
         <div style="color:#6B7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📸 Fotos del siniestro</div>
         <div style="display:grid;grid-template-columns:repeat(${Math.min(photoAssets.length, 4)},1fr);gap:6px;">
           ${photoAssets.map((_, i) => `<img src="cid:foto-${i+1}@paintbull" alt="Foto ${i+1}" width="100%" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid #E5E7EB;display:block;" />`).join('')}
@@ -105,6 +105,13 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     : '';
 
   const waLink = `https://wa.me/593994837117?text=Hola%2C+quiero+confirmar+mi+cotizaci%C3%B3n+${quoteCode}`;
+
+  // Vehicle display — replace 'Pendiente' with sensible fallbacks
+  const vMarca = vehicleData.marca && vehicleData.marca !== 'Pendiente' ? vehicleData.marca : '';
+  const vModelo = vehicleData.modelo && vehicleData.modelo !== 'Pendiente' ? vehicleData.modelo : '';
+  const vAño = vehicleData.año && vehicleData.año !== 'Pendiente' ? vehicleData.año : '';
+  const vehicleTitle = [vMarca, vModelo].filter(Boolean).join(' ') || 'Por inspeccionar';
+  const vehicleYearLine = vAño ? `Año ${vAño}` : 'Inspección presencial';
 
   const ecosistemaItems = [
     ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
@@ -127,7 +134,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Cotización The PaintBull — ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}</title>
+  <title>Cotización The PaintBull — ${vehicleTitle}</title>
   <style>
 @media (prefers-color-scheme: dark) {
   body.email-body { background-color:#111827 !important; }
@@ -170,10 +177,9 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   <!-- ══ PRECIO TOTAL — VISIBLE DE INMEDIATO ══ -->
   ${priceRange ? `
   <div class="section-white" style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
-    <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
+    <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Invesión estimada para su reparación</div>
     <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
     <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
-    ${photoGrid}
   </div>` : ''}
 
   <!-- ══ CUERPO ══ -->
@@ -183,8 +189,8 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
       <div style="flex:1;min-width:200px;background:#FFF8F8;border:1px solid #FECACA;border-radius:14px;padding:20px;">
         <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Vehículo</div>
-        <div style="color:#111827;font-size:22px;font-weight:800;line-height:1.2;">${vehicleData.marca} ${vehicleData.modelo}</div>
-        <div style="color:#6B7280;font-size:15px;margin-top:4px;">Año ${vehicleData.año}</div>
+        <div style="color:#111827;font-size:22px;font-weight:800;line-height:1.2;">${vehicleTitle}</div>
+        <div style="color:#6B7280;font-size:15px;margin-top:4px;">${vehicleYearLine}</div>
       </div>
       <div style="flex:1;min-width:160px;background:${sv.bg};border:1px solid ${sv.dot}33;border-radius:14px;padding:20px;text-align:center;">
         <div style="font-size:32px;margin-bottom:8px;">🔍</div>
@@ -201,6 +207,8 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:10px;">Áreas con daño detectado</div>
       <div>${partsBadges}</div>
     </div>` : ''}
+
+    ${photoGrid}
 
     <!-- Resumen de daños -->
     ${q?.resumen_danos ? `
@@ -339,7 +347,7 @@ export async function sendQuoteEmail({
       quoteCode
     });
 
-    const subject = `🚗 Cotización ${quoteCode} - ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}`;
+    const subject = `🚗 Cotización ${quoteCode} - ${vehicleTitle}`;
 
     // Adjuntar fotos: inline con CID para thumbnails del HTML, no sueltas al final
     const attachments = validPhotoAssets.map((asset, idx) => ({

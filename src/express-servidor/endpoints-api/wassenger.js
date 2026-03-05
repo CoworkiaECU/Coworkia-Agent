@@ -13,7 +13,7 @@ import { processMembershipPayment, findPendingMembershipLead } from '../../servi
 import { analyzeMedicalImage } from '../../servicios/angela-vision-analysis.js';
 import { processConfirmationResponse, isPositiveResponse, isNegativeResponse } from '../../servicios/confirmation-flow.js';
 import { enhanceAuroraResponse } from '../../servicios/aurora-confirmation-helper.js';
-import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue, markFirstAckSent } from '../../servicios/axel-photo-collector.js';
+import { addPhoto, getSession, completeSession, canProcessQuote, startTimeout, queueTask, clearQueue, markFirstAckSent, markMaxPhotosAckSent } from '../../servicios/axel-photo-collector.js';
 import { processAxelFormMessage, generateFormSummary, generateFormPrompt } from '../../servicios/axel-quote-form.js';
 import { saveQuote } from '../../servicios/axel-quote-db.js';
 import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
@@ -1738,7 +1738,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           // Mensaje de bienvenida en primera foto
           if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
-            await enviarWhatsApp(userId, `📸 Recibí tu primera foto. Envíame hasta ${photoStatus.maxPhotos} en total y, cuando termines, escribe "listo". Agruparé las fotos en una sola respuesta con análisis y cotización.`);
+            await enviarWhatsApp(userId, `📸 Foto recibida. Envía hasta ${photoStatus.maxPhotos} y escribe *listo* cuando termines.`);
             markFirstAckSent(userId);
 
             await saveInteraction({
@@ -1769,9 +1769,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             });
           }
           
-          // Mensaje cuando alcanza el máximo
-          if (photoStatus.currentCount >= photoStatus.maxPhotos) {
-            await enviarWhatsApp(userId, `📸 Ya tengo ${photoStatus.maxPhotos} fotos. Escribe "listo" cuando quieras que analice y cotice.`);
+          // Mensaje cuando alcanza el máximo (solo una vez, evita duplicados)
+          if (photoStatus.currentCount >= photoStatus.maxPhotos && !photoStatus.maxPhotosAckSent) {
+            await enviarWhatsApp(userId, `✅ Ya tengo las ${photoStatus.maxPhotos} fotos. Escribe *listo* para analizar y cotizar.`);
+            markMaxPhotosAckSent(userId);
           }
         });
         

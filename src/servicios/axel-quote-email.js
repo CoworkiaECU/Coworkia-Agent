@@ -114,10 +114,10 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
     ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
   ].map(([icon, name, desc]) => `
-    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
+    <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:13px;text-align:left;">
       <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
+      <div style="color:#111827;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+      <div style="color:#6B7280;font-size:10px;">${desc}</div>
     </div>`).join('');
 
   return `<!DOCTYPE html>
@@ -125,10 +125,20 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>Cotización The PaintBull — ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}</title>
+  <style>
+@media (prefers-color-scheme: dark) {
+  body.email-body { background-color:#111827 !important; }
+  .email-wrap { background-color:#111827 !important; }
+  .section-white { background:#1E293B !important; }
+  .footer-section { background:#1E293B !important; border-top-color:#374151 !important; }
+}
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
-<div style="max-width:660px;margin:30px auto;">
+<body class="email-body" style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<div class="email-wrap" style="max-width:660px;margin:30px auto;">
 
   <!-- ══ HEADER ══ -->
   <div style="background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
@@ -159,7 +169,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 
   <!-- ══ PRECIO TOTAL — VISIBLE DE INMEDIATO ══ -->
   ${priceRange ? `
-  <div style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
+  <div class="section-white" style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
     <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
     <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
     <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
@@ -167,7 +177,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   </div>` : ''}
 
   <!-- ══ CUERPO ══ -->
-  <div style="background:white;padding:36px 40px 10px;">
+  <div class="section-white" style="background:white;padding:36px 40px 10px;">
 
     <!-- Vehículo + Severidad -->
     <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
@@ -248,17 +258,17 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     </div>
 
     <!-- CTA -->
-    <div style="background:linear-gradient(145deg,#111827,#1F2937);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
-      <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:8px;">¿Listo para dejar tu vehículo como nuevo?</div>
+    <div style="background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
+      <div style="color:rgba(255,255,255,0.85);font-size:13px;margin-bottom:8px;">¿Listo para dejar tu vehículo como nuevo?</div>
       <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">Agenda tu cita ahora</div>
-      <div style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px;">Respuesta en menos de 1 hora · Presupuesto sin compromiso</div>
-      <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#DC2626,#B91C1C);color:white;padding:16px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(220,38,38,0.5);letter-spacing:0.3px;">
+      <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:24px;">Respuesta en menos de 1 hora · Presupuesto sin compromiso</div>
+      <a href="${waLink}" style="display:inline-block;background:white;color:#DC2626;padding:16px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,0.25);letter-spacing:0.3px;">
         🔧 Confirmar cotización ${quoteCode} →
       </a>
       <div style="margin-top:24px;">
-        <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:14px 20px;display:inline-block;">
-          <div style="color:rgba(255,255,255,0.5);font-size:12px;">📍 Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
-          <div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:4px;">📱 +593 99 483 7117 · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:#EF4444;text-decoration:none;">Ver en mapa →</a></div>
+        <div style="background:rgba(0,0,0,0.18);border-radius:10px;padding:14px 20px;display:inline-block;">
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;">📍 Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
+          <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;">📱 +593 99 483 7117 · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:white;text-decoration:none;">Ver en mapa →</a></div>
         </div>
       </div>
     </div>
@@ -274,22 +284,22 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   </div>
 
   <!-- ══ CO-BRANDING COWORKIA ══ -->
-  <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
-    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
-      <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
-      <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
+  <div class="footer-section" style="background:white;border-radius:0 0 20px 20px;padding:44px;text-align:center;border-top:1px solid #F3F4F6;">
+    <div style="border-top:1px solid #F3F4F6;padding-top:32px;margin-bottom:28px;">
+      <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
+      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
       <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
     </div>
-    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
+    <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${ecosistemaItems}</div>
-    <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
-      <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+    <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin-bottom:22px;">
+      <p style="color:#7F1D1D;font-size:12px;line-height:1.8;margin:0;">
         Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
-        <strong style="color:rgba(255,255,255,0.75);">Tu vehículo en las mejores manos de Ecuador.</strong>
+        <strong style="color:#991B1B;">Tu vehículo en las mejores manos de Ecuador.</strong>
       </p>
     </div>
-    <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
-      Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Axel</strong> · The PaintBull<br>
+    <div style="color:#9CA3AF;font-size:11px;line-height:1.7;">
+      Cotización generada por <strong style="color:#6B7280;">Axel</strong> · The PaintBull<br>
       Coworkia Intelligence System · ${formatDate}
     </div>
   </div>

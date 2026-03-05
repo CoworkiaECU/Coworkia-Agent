@@ -50,8 +50,12 @@ import {
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../../servicios/reservation-state.js';
+import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 
 const router = Router();
+
+// 👔 Número del jefe — activa comandos directos de cotización desde WhatsApp
+const ADMIN_PHONE = process.env.ADMIN_PHONE || null;
 
 /* ─────────────────────────────────────────────────────────────
    ✅ HANDOFF: Todos los handoffs usan executeHandoff() de 
@@ -1285,12 +1289,33 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       agent: profile.activeAgent || 'AURORA'
     });
 
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Gabi — cotización por orden directa del jefe
+    // Solo activo cuando: userId === ADMIN_PHONE + agente GABI + email presente
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'GABI') {
+      if (isBossQuoteCommand(processedText)) {
+        const quoteData = parseGabiQuoteData(processedText);
+        if (quoteData?.email) {
+          console.log('[BOSS-CMD] 👔 Cotización GABI solicitada por jefe:', quoteData);
+          await enviarWhatsApp(userId, `⚙️ Preparando propuesta para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n💼 ${quoteData.area}`);
+          const result = await sendGabiConsultoriaEmail(quoteData);
+          const reply = result.success
+            ? `✅ *Propuesta enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n💼 ${result.areaLabel}\n\nCopia a secretaría ✓`
+            : `❌ Error enviando propuesta: ${result.error}`;
+          await enviarWhatsApp(userId, reply);
+          return;
+        }
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
     // 📋 Inicializar variables de formulario para todo el scope
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
 
     // ═══════════════════════════════════════════════════════════════════════
-    // � AURORA FLOW: Confirmaciones SI/NO y formulario de reservas
+    // 🔒 AURORA FLOW: Confirmaciones SI/NO y formulario de reservas
     // CRÍTICO: debe ejecutarse ANTES del orquestador/LLM para que "Si"/"No"
     // llegue a processConfirmationResponse en lugar de al modelo de lenguaje.
     // ═══════════════════════════════════════════════════════════════════════

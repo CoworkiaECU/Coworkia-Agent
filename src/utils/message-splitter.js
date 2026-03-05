@@ -204,6 +204,10 @@ export function cleanPromptMarkers(message) {
   // Remover marcadores que solo son para el LLM
   let cleaned = message;
   
+  // Remover comandos de flujo de Paula (nunca deben llegar al usuario)
+  cleaned = cleaned.replace(/#PROCESS_FORM/gi, '');
+  cleaned = cleaned.replace(/\[CONFIRMAR_VISITA\][^\n]*/gi, '');
+
   // Remover comentarios de espera que quedaron
   cleaned = cleaned.replace(/⏱️\s*\*\*\[ESPERAR\s+\d+\s+SEGUNDOS?\]\*\*/gi, '');
   

@@ -54,6 +54,8 @@ import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
+import { processRealEstateForm } from '../../servicios/real-estate-form.js';
+import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
 const router = Router();
 
@@ -616,6 +618,19 @@ async function handleFormResult(formResult, userId, agentName, profile) {
       }
     }
     
+    // 🏡 PAULA / ALUNA: Guardar confirmación pendiente para que el "SI" active el handler correcto
+    if (formResult.form && ['ALUNA', 'PAULA'].includes(agentName)) {
+      const { savePendingConfirmation } = await import('../../perfiles-interacciones/memoria-sqlite.js');
+      await savePendingConfirmation(userId, {
+        agentName: agentName,
+        formData: formResult.form.data,
+        summary: formResult.summary
+      });
+      // Limpiar agent_form para que el "SI" no vuelva a entrar al form handler
+      await clearAgentForm(userId, agentName);
+      console.log(`[${agentName}-FORM] ✅ Pending confirmation guardada con agentName=${agentName}`);
+    }
+
     // Fallback: mensaje genérico si no es Aurora o falla
     const confirmationMessage = `Perfecto! Déjame confirmar todos los datos:
 
@@ -1546,6 +1561,24 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         }
       }
     }
+
+    // 🏡 PAULA - Formulario de búsqueda inmobiliaria
+    // PRE-LLM: Si ya hay un form activo para PAULA, continuar recopilando datos sin llamar al LLM
+    if (profile.activeAgent === 'PAULA') {
+      const paulaForm = await getAgentForm(userId, 'PAULA').catch(() => null);
+      if (paulaForm) {
+        console.log('[PAULA-FORM] 🏡 Continuando formulario inmobiliario');
+        try {
+          formResult = await processRealEstateForm(userId, processedText, profile);
+          formResult.userMessage = text;
+          const handled = await handleFormResult(formResult, userId, 'PAULA', profile);
+          if (handled) return;
+        } catch (error) {
+          console.error('[PAULA-FORM] ❌ Error procesando formulario:', error);
+          // Continuar con flujo normal en caso de error
+        }
+      }
+    }
     
     // 🔧 FIX: Verificar pending_confirmation ANTES del form handler para Aurora.
     // Si el usuario responde SI/NO a un resumen de confirmación pendiente, procesarlo
@@ -2136,6 +2169,37 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         } catch (error) {
           console.error('[ALUNA-LEAD] ❌ Error creando lead:', error);
           // No bloquear - continuar sin lead
+        }
+      }
+    }
+
+    // 🏡 PAULA - Detectar [CONFIRMAR_VISITA] y #PROCESS_FORM en respuesta del LLM
+    if (resultado.agenteKey === 'PAULA') {
+      // ① Activar pending confirmation de visita si LLM incluyó el tag
+      if (shouldActivateVisitConfirmation(reply)) {
+        const activated = await activateVisitConfirmation(userId, reply, profile);
+        console.log('[PAULA-FLOW] 🏡 Confirmación de visita activada:', activated);
+      }
+      // Strip [CONFIRMAR_VISITA] + cualquier contenido de esa línea del reply visible
+      finalReply = finalReply.replace(/\[CONFIRMAR_VISITA\][^\n]*/gi, '').trim();
+
+      // ② Si LLM emitió #PROCESS_FORM, inicializar formulario y enviar primera pregunta
+      if (reply.includes('#PROCESS_FORM')) {
+        finalReply = finalReply.replace(/#PROCESS_FORM/gi, '').trim();
+        try {
+          const initForm = await processRealEstateForm(userId, processedText, profile);
+          if (initForm?.form) {
+            await saveAgentForm(userId, 'PAULA', initForm.form.toJSON(), 60);
+          }
+          // Primera pregunta del formulario como mensaje de seguimiento
+          if (initForm?.nextQuestion) {
+            // Pequeño delay para que llegue después del intro del LLM
+            await new Promise(r => setTimeout(r, 1200));
+            await enviarWhatsApp(userId, initForm.nextQuestion);
+            await saveConversationMessage(userId, { role: 'assistant', content: initForm.nextQuestion, agent: 'PAULA' });
+          }
+        } catch (e) {
+          console.error('[PAULA-FORM] ❌ Error iniciando formulario post-LLM:', e.message);
         }
       }
     }

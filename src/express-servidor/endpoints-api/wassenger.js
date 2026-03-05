@@ -52,6 +52,7 @@ import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../../servicios/reservation-state.js';
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
+import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
 
 const router = Router();
 
@@ -1328,6 +1329,25 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           await enviarWhatsApp(userId, reply);
           return;
         }
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Enzo — cotización IA personalizada para MarketingLab
+    // El jefe dicta TODO: empresa, contacto, necesidad. OpenAI estructura y genera propuesta
+    // Solo activo cuando: userId === ADMIN_PHONE + agente ENZO + email presente
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'ENZO') {
+      if (isEnzoBossQuoteCommand(processedText)) {
+        console.log('[BOSS-CMD] 👔 Cotización ENZO solicitada por jefe — procesando con OpenAI...');
+        await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡`);
+        const result = await sendEnzoCotizacion(processedText);
+        const reply = result.success
+          ? `✅ *Propuesta enviada por Enzo*\n🏢 ${result.empresa}\n👤 ${result.contacto}\n📧 ${result.email}\n🤖 Nivel: ${result.nivel}\n💰 $${result.precio?.toLocaleString()} USD`
+          : `❌ Error al generar propuesta Enzo: ${result.error}`;
+        await enviarWhatsApp(userId, reply);
+        return;
       }
     }
     // ══════════════════════════════════════════════════════════════════════

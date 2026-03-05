@@ -62,6 +62,10 @@ const router = Router();
 // 👔 Número del jefe — activa comandos directos de cotización desde WhatsApp
 const ADMIN_PHONE = process.env.ADMIN_PHONE || null;
 
+// Normaliza número de teléfono para comparación: quita +, espacios, guiones
+const normalizePhone = (p) => p ? String(p).replace(/[\s+\-().]/g, '') : '';
+const isAdminPhone = (userId) => ADMIN_PHONE && normalizePhone(userId) === normalizePhone(ADMIN_PHONE);
+
 /* ─────────────────────────────────────────────────────────────
    ✅ HANDOFF: Todos los handoffs usan executeHandoff() de 
    handoff-manager.js - sistema centralizado con locks
@@ -1311,7 +1315,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 👔 BOSS COMMANDS: Gabi — cotización por orden directa del jefe
     // Solo activo cuando: userId === ADMIN_PHONE + agente GABI + email presente
     // ══════════════════════════════════════════════════════════════════════
-    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'GABI') {
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'GABI') {
       if (isBossQuoteCommand(processedText)) {
         const quoteData = parseGabiQuoteData(processedText);
         if (quoteData?.email) {
@@ -1332,7 +1336,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // 👔 BOSS COMMANDS: Axel — cotización demo con caso real de la memoria
     // Solo activo cuando: userId === ADMIN_PHONE + agente AXEL + email presente
     // ══════════════════════════════════════════════════════════════════════
-    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'AXEL') {
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'AXEL') {
       if (isAxelBossQuoteCommand(processedText)) {
         const quoteData = parseAxelDemoQuoteData(processedText);
         if (quoteData?.email) {
@@ -1354,7 +1358,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // El jefe dicta TODO: empresa, contacto, necesidad. OpenAI estructura y genera propuesta
     // Solo activo cuando: userId === ADMIN_PHONE + agente ENZO + email presente
     // ══════════════════════════════════════════════════════════════════════
-    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'ENZO') {
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'ENZO') {
       if (isEnzoBossQuoteCommand(processedText)) {
         console.log('[BOSS-CMD] 👔 Cotización ENZO solicitada por jefe — procesando con OpenAI...');
         await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡`);
@@ -1373,7 +1377,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // Boss especifica propiedad (#1/#3/#6/#7) o envía overview de las 4 casas
     // Solo activo cuando: userId === ADMIN_PHONE + agente PAULA + email presente
     // ══════════════════════════════════════════════════════════════════════
-    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'PAULA') {
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'PAULA') {
       if (isPaulaBossQuoteCommand(processedText)) {
         const quoteData = parsePaulaQuoteData(processedText);
         if (quoteData?.email) {

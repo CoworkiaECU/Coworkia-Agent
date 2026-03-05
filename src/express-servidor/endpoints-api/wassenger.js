@@ -795,34 +795,16 @@ async function processAxelQuote(userId, photoUrls, profile, latestUserText = '',
   try {
     loggers.axel.info('Starting quote processing', { userId, photoCount: photoUrls.length });
     
-    // 1. Procesar formulario con el texto real
-    const formResult = await processAxelFormMessage(userId, latestUserText || '');
+    // 1. Cargar datos del formulario guardado (si los hay) para enriquecer vehicleData
+    const formResult = await processAxelFormMessage(userId, latestUserText || '').catch(() => null);
     const vehicleData = {
       marca: formResult?.data?.marca || 'Pendiente',
       modelo: formResult?.data?.modelo || 'Pendiente',
       año: formResult?.data?.año || 'Pendiente',
-      nombre: formResult?.data?.nombre,
-      email: formResult?.data?.email
+      nombre: formResult?.data?.nombre || profile?.whatsappDisplayName || null,
+      email: formResult?.data?.email || null
     };
-    const missingFields = formResult?.missingFields || [];
-
-    // 🚧 Bloquear cotización formal si faltan datos críticos
-    if (missingFields.length > 0) {
-      const prompt = generateFormPrompt(missingFields, formResult?.data || {});
-      if (prompt) {
-        const now = Date.now();
-        const lastPrompt = axelMissingPromptAt.get(userId) || 0;
-        if (now - lastPrompt >= AXEL_MISSING_PROMPT_COOLDOWN_MS) {
-          await enviarWhatsApp(userId, `📝 Para enviarte la cotización formal necesito:
-
-${prompt}`);
-          axelMissingPromptAt.set(userId, now);
-        } else {
-          console.log('[AXEL-QUOTE] ⏳ Saltando prompt repetido (cooldown)', { userId });
-        }
-      }
-      return { success: false, error: 'missing_fields', missingFields };
-    }
+    // El análisis procede siempre — si falta email se pide después al confirmar envío.
 
     // 2. Analizar fotos con Vision AI (agrupado)
     loggers.axel.info('Analyzing collision photos', { userId, photoCount: photoUrls.length });
@@ -1480,12 +1462,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       // ────────────────────────────────────────────────────────────────────
       if (axelEmailConsent.has(userId) && processedText) {
         const consentData = axelEmailConsent.get(userId);
-        const normalized = processedText.trim().toLowerCase();
-        const isYes = ['si', 'sí', 'yes', 'y', 'claro', 'ok'].includes(normalized);
-        const isNo = ['no', 'nop', 'nope'].includes(normalized);
 
-        if (isYes || isNo) {
-          if (isYes && consentData.email) {
+        // Sub-estado: esperando que el usuario escriba su email
+        if (consentData.awaitingEmail) {
+          const emailMatch = processedText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
+          if (emailMatch) {
+            consentData.email = emailMatch[0];
+            consentData.awaitingEmail = false;
+            axelEmailConsent.set(userId, consentData);
             const emailResult = await sendQuoteEmail({
               customerName: consentData.customerName,
               customerEmail: consentData.email,
@@ -1496,33 +1480,63 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               photoUrls: consentData.photoUrls,
               quoteCode: consentData.quoteCode
             });
-
             const message = emailResult.success
               ? `✉️ Listo, envié la cotización detallada a ${consentData.email}. ¿Necesitas algo más?`
               : `⚠️ No pude enviar el email (${emailResult.error}). Te contacto manualmente.`;
-            
             await enviarWhatsApp(userId, message);
-            
             if (emailResult.success) {
               await saveInteraction({
-                userId,
-                agent: 'AXEL',
-                agentName: 'Axel - PaintBull',
-                intentReason: 'email_sent',
-                input: consentData.email,
-                output: 'quote_email_sent',
-                meta: {
-                  quoteCode: consentData.quoteCode,
-                  correlationId: consentData.sessionFingerprint || consentData.quoteCode,
-                  email: consentData.email
-                }
+                userId, agent: 'AXEL', agentName: 'Axel - PaintBull',
+                intentReason: 'email_sent', input: consentData.email, output: 'quote_email_sent',
+                meta: { quoteCode: consentData.quoteCode, correlationId: consentData.sessionFingerprint || consentData.quoteCode, email: consentData.email }
               });
+            }
+            axelEmailConsent.delete(userId);
+          } else {
+            await enviarWhatsApp(userId, '✉️ No detecté un email válido. Por favor escribe solo tu dirección de correo (ej: tu@mail.com)');
+          }
+          return;
+        }
+
+        const normalized = processedText.trim().toLowerCase();
+        const isYes = ['si', 'sí', 'yes', 'y', 'claro', 'ok'].includes(normalized);
+        const isNo = ['no', 'nop', 'nope'].includes(normalized);
+
+        if (isYes || isNo) {
+          if (isYes) {
+            if (consentData.email) {
+              const emailResult = await sendQuoteEmail({
+                customerName: consentData.customerName,
+                customerEmail: consentData.email,
+                vehicleData: consentData.vehicleData,
+                damageAnalysis: consentData.damageAnalysis,
+                quote: consentData.quote,
+                priceRange: consentData.priceRange,
+                photoUrls: consentData.photoUrls,
+                quoteCode: consentData.quoteCode
+              });
+              const message = emailResult.success
+                ? `✉️ Listo, envié la cotización detallada a ${consentData.email}. ¿Necesitas algo más?`
+                : `⚠️ No pude enviar el email (${emailResult.error}). Te contacto manualmente.`;
+              await enviarWhatsApp(userId, message);
+              if (emailResult.success) {
+                await saveInteraction({
+                  userId, agent: 'AXEL', agentName: 'Axel - PaintBull',
+                  intentReason: 'email_sent', input: consentData.email, output: 'quote_email_sent',
+                  meta: { quoteCode: consentData.quoteCode, correlationId: consentData.sessionFingerprint || consentData.quoteCode, email: consentData.email }
+                });
+              }
+              axelEmailConsent.delete(userId);
+            } else {
+              // No tenemos email — pedirlo ahora
+              consentData.awaitingEmail = true;
+              axelEmailConsent.set(userId, consentData);
+              await enviarWhatsApp(userId, '✉️ ¿A qué correo te envío la cotización? Escribe tu email.');
             }
           } else {
             await enviarWhatsApp(userId, '👍 Entendido, no envío email. ¿Necesitas algo más?');
+            axelEmailConsent.delete(userId);
           }
-
-          axelEmailConsent.delete(userId);
           return;
         } else {
           await enviarWhatsApp(userId, 'Por favor responde solo SI o NO para confirmar el envío de la cotización por email.');

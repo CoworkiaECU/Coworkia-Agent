@@ -6,6 +6,7 @@
 import { sendEmail } from './email.js';
 
 const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || 'villotaj71@gmail.com';
+const ADMIN_CC = 'mktlab.ec@gmail.com';
 
 async function fetchAndCompressPhoto(url) {
   try {
@@ -338,7 +339,7 @@ export async function sendQuoteEmail({
 
     const result = await sendEmail({
       to: customerEmail,
-      cc: WORKSHOP_CC,
+      cc: [WORKSHOP_CC, ADMIN_CC].join(','),
       subject: subject,
       html: htmlContent,
       attachments

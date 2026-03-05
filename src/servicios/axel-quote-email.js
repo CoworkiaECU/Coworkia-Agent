@@ -294,6 +294,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 
 </div>
 </body>
+`;
 }
 
 /**

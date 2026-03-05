@@ -436,10 +436,21 @@ class PostgresAdapter {
         )
       `);
 
-      // 🔄 Compatibilidad: agregar columna si tabla existente no la tiene
+      // 🔄 Compatibilidad: agregar columnas si tabla existente no las tiene
       await client.query(`
         ALTER TABLE collision_quotes
         ADD COLUMN IF NOT EXISTS session_fingerprint TEXT;
+      `);
+
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS quote_code TEXT;
+      `);
+
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_collision_quotes_quote_code
+        ON collision_quotes(quote_code)
+        WHERE quote_code IS NOT NULL;
       `);
 
       await client.query(`

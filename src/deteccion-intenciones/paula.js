@@ -175,7 +175,7 @@ export const PAULA = {
           },
           estado: 'disponible',
           ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
-          fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
+          fotos_link: 'https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
         },
@@ -219,7 +219,7 @@ export const PAULA = {
           },
           estado: 'disponible',
           ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
-          fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
+          fotos_link: 'https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
         },
@@ -263,7 +263,7 @@ export const PAULA = {
           },
           estado: 'disponible',
           ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
-          fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
+          fotos_link: 'https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
         },
@@ -308,7 +308,7 @@ export const PAULA = {
           },
           estado: 'disponible',
           ubicacion_maps: 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA',
-          fotos_link: 'https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY',
+          fotos_link: 'https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d',
           fotos: 'múltiples',
           nota_importante: 'Distribuciones modificables según necesidades del cliente. Rediseños hasta 40m² sin costo adicional. Sin costo por reducir área.'
         }
@@ -572,7 +572,7 @@ La joya de la corona - Para quienes no aceptan menos que lo mejor.
 ✅ Sin costo por reducir área
 
 📸 Fotos profesionales:
-https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY
+https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d
 
 📍 Ubicación en Google Maps:
 https://maps.app.goo.gl/tamnA6UwAeJgxAVaA
@@ -627,7 +627,7 @@ PROYECTO ESTRELLA: "Casas Jardín" (El Morenal)
 🏗️ Constructor: G.M.A. Arquitectos (Izurieta Vergara)
 🏡 Urbanización privada, POCAS casas, MUCHO LUJO Y EXCLUSIVIDAD
 ✅ YA CONSTRUIDAS - Listas para habitar 2025
-📸 Fotos: https://hausiecuador-my.sharepoint.com/:f:/g/personal/ronald_hausi_io/EuMvdqc0XrZGiACz9yI0mEoBIiZE_d7Aiz0bApE2FiJTzg?e=JJaaDY
+📸 Fotos: https://hausiecuador-my.sharepoint.com/personal/ronald_hausi_io/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fronald%5Fhausi%5Fio%2FDocuments%2FPROYECTOS%20HAUSI%2FPROYECTOS%20ANTIGUOS%2FARQUITECTOS%20IZURIETA%2FEl%20Morenal%2Fmarca%20de%20agua&viewid=dd71bdbc%2D6c8a%2D4fcd%2Daec8%2Dec6d1597b57d
 
 4 Casas Disponibles (todas 3 dormitorios):
 • Casa #1: 380m² terreno, 245m² construidos, jardín 207m² → $340,587

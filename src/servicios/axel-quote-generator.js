@@ -51,76 +51,71 @@ export async function generateQuote({ vehicleData, damageAnalysis, photoUrls = [
     console.log('[QUOTE-GEN] Vehículo:', vehicleData);
     console.log('[QUOTE-GEN] Severidad:', damageAnalysis.severity);
 
-    const quotePrompt = `Eres un especialista en cotizaciones de reparación vehicular de The PaintBull con 15 años de experiencia.
+    const quotePrompt = `Eres el especialista en cotizaciones de The PaintBull, taller de colisiones y pintura en Quito, Ecuador. 15 años de experiencia.
 
-**DATOS DEL VEHÍCULO:**
-- Marca: ${vehicleData.marca}
-- Modelo: ${vehicleData.modelo}
-- Año: ${vehicleData.año}
+VEHÍCULO: ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}
+SEVERIDAD: ${damageAnalysis.severity}
+DAÑOS DETECTADOS: ${JSON.stringify(damageAnalysis.affectedParts || [])}
+DETALLE ANÁLISIS: ${damageAnalysis.damageDetails || (damageAnalysis.analysis && damageAnalysis.analysis.summary) || JSON.stringify(damageAnalysis.analysis) || ''}
+RIESGO DAÑOS OCULTOS: ${damageAnalysis.hiddenDamageRisk || 'MEDIO'}
+TIEMPO ESTIMADO: ${damageAnalysis.estimatedRepairDays || '3-5 días'}
 
-**ANÁLISIS DE DAÑOS (Vision AI):**
-Severidad: ${damageAnalysis.severity}
-Detalles: ${damageAnalysis.damageDetails || damageAnalysis.analysis}
+TARIFARIO REFERENCIAL (USD):
+- Mano de obra enderezada: $25/h | pintura: $30/h | pulido: $20/h
+- Pintura panel pequeño: $80-$150 | mediano: $150-$300 | grande: $300-$500
+- Repuestos: faro $80-$250, parachoques $150-$400, retrovisor $30-$120
 
-**TARIFARIO THE PAINTBULL:**
-${JSON.stringify(TARIFARIO, null, 2)}
+TAREA: Genera una cotización estructurada en JSON exactamente así (sin texto extra, solo JSON válido):
+{
+  "resumen_danos": "2-3 frases técnicas y vendedoras describiendo los daños",
+  "trabajos": [
+    { "item": "nombre del trabajo", "detalle": "descripción breve del proceso", "rango_min": 120, "rango_max": 180 }
+  ],
+  "subtotal_mano_obra": { "min": 0, "max": 0 },
+  "subtotal_materiales": { "min": 0, "max": 0 },
+  "subtotal_repuestos": { "min": 0, "max": 0 },
+  "total_min": 0,
+  "total_max": 0,
+  "dias_entrega": "X-X días hábiles",
+  "garantia": "descripción corta de la garantía del taller",
+  "nota_inspeccion": "frase corta sobre por qué la inspección física es clave"
+}
 
-**TAREA:**
-Genera una cotización profesional y realista para reparar estos daños. Incluye:
+REGLAS:
+- Si daño LEVE: total $200-$800. Si MODERADO: $800-$2000. Si GRAVE: $2000-$5000.
+- Máximo 6 trabajos en el array.
+- Todos los valores numéricos sin signo $, solo el número entero.
+- SOLO responde con el JSON, sin markdown, sin explicación.`;
 
-1. **RESUMEN DE DAÑOS** (2-3 líneas): Describe los daños principales detectados
-
-2. **TRABAJOS REQUERIDOS** (lista detallada):
-   - Enderezada/desabollado (si aplica)
-   - Preparación y masillado
-   - Pintura y acabado
-   - Reemplazo de partes (si es necesario)
-
-3. **DESGLOSE DE COSTOS** (formato tabla):
-   - Mano de obra: XX-XX horas a $XX/hora = $XXX-$XXX
-   - Materiales: $XXX-$XXX
-   - Repuestos (si aplica): $XXX-$XXX
-   - **TOTAL ESTIMADO: $XXX - $XXX USD**
-
-4. **TIEMPO ESTIMADO**: X-X días hábiles
-
-5. **NOTAS IMPORTANTES**:
-   - Esta es una cotización preliminar basada en análisis fotográfico
-   - Inspección física puede revelar daños adicionales
-   - Precios sujetos a cambios según disponibilidad de partes
-
-**FORMATO DE RESPUESTA:**
-Usa formato WhatsApp (negritas con *texto*, viñetas con •, emojis apropiados)
-Sé claro, profesional pero cercano
-Siempre da RANGOS de precio (mínimo-máximo), no valores exactos
-
-**IMPORTANTE:**
-- Si es daño LEVE: estimar entre $200-$800
-- Si es daño MODERADO: estimar entre $800-$2000
-- Siempre mencionar que se requiere inspección física para diagnóstico final
-- Ser honesto sobre posibles daños ocultos
-
-Genera la cotización ahora:`;
-
-    const quote = await complete(quotePrompt, {
-      temperature: 0.3,
-      max_tokens: 1000,
+    const raw = await complete(quotePrompt, {
+      temperature: 0.2,
+      max_tokens: 900,
       model: 'gpt-4o-mini'
     });
 
     console.log('[QUOTE-GEN] ✅ Cotización generada');
 
-    // Extraer rango de precio del texto generado
-    const priceMatch = quote.match(/\$(\d+)\s*-\s*\$(\d+)/);
-    const priceRange = priceMatch ? {
-      min: parseInt(priceMatch[1]),
-      max: parseInt(priceMatch[2])
-    } : null;
+    // Parsear JSON estructurado
+    let quoteData;
+    try {
+      const jsonText = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      quoteData = JSON.parse(jsonText);
+    } catch (parseErr) {
+      console.warn('[QUOTE-GEN] ⚠️ No se pudo parsear JSON, fallback a texto:', parseErr.message);
+      quoteData = { raw_text: raw };
+    }
+
+    const priceRange = (quoteData.total_min && quoteData.total_max)
+      ? { min: quoteData.total_min, max: quoteData.total_max }
+      : (() => {
+          const m = raw.match(/\$(\d+)\s*-\s*\$(\d+)/);
+          return m ? { min: parseInt(m[1]), max: parseInt(m[2]) } : null;
+        })();
 
     return {
       success: true,
-      quote: quote,
-      priceRange: priceRange,
+      quote: quoteData,
+      priceRange,
       metadata: {
         vehicleData,
         severity: damageAnalysis.severity,

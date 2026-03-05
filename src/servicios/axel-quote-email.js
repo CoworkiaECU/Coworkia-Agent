@@ -45,237 +45,255 @@ async function fetchAndCompressPhoto(url) {
  */
 async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysis, quote, priceRange, photoAssets = [], quoteCode }) {
   const formatDate = new Date().toLocaleDateString('es-EC', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
-  // Sección de fotos - convertir URLs a base64
-  let photosSection = '';
-  
-  if (photoAssets && photoAssets.length > 0) {
-    const validPhotos = photoAssets.filter(p => p !== null);
-    
-    if (validPhotos.length > 0) {
-        photosSection = `
-          <div style="margin: 30px 0;">
-            <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">📸 FOTOS DEL VEHÍCULO</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-              ${validPhotos.map((asset, idx) => `
-                <div style="border: 2px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
-                  <img src="${asset.base64}" alt="Foto ${idx + 1}" style="width: 100%; height: auto; display: block; max-height: 300px; object-fit: cover;" />
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-    } else {
-      console.log('[QUOTE-EMAIL] ⚠️ No se pudieron procesar fotos, se omite sección');
-    }
+  // quote puede ser objeto JSON estructurado o fallback texto plano
+  const q = (quote && typeof quote === 'object' && !quote.raw_text) ? quote : null;
+
+  // Severidad badge
+  const severityMap = {
+    LEVE:    { bg: '#DCFCE7', color: '#166534', dot: '#22C55E', label: 'DAÑO LEVE' },
+    MODERADO:{ bg: '#FEF3C7', color: '#92400E', dot: '#F59E0B', label: 'DAÑO MODERADO' },
+    GRAVE:   { bg: '#FEE2E2', color: '#991B1B', dot: '#EF4444', label: 'DAÑO GRAVE' },
+  };
+  const sv = severityMap[damageAnalysis.severity] || severityMap.MODERADO;
+
+  // Afected parts badges
+  const parts = (damageAnalysis.affectedParts || []).slice(0, 6);
+  const partsBadges = parts.map(p =>
+    `<span style="display:inline-block;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;margin:3px;">${p}</span>`
+  ).join('');
+
+  // Construir filas de trabajos desde JSON estructurado
+  let trabajosHTML = '';
+  let desgloseHTML = '';
+
+  if (q && Array.isArray(q.trabajos) && q.trabajos.length > 0) {
+    trabajosHTML = q.trabajos.map((t, i) => `
+      <tr style="background:${i % 2 === 0 ? '#FAFAFA' : 'white'};">
+        <td style="padding:14px 16px;font-size:14px;font-weight:600;color:#111827;border-bottom:1px solid #F3F4F6;">${t.item}</td>
+        <td style="padding:14px 16px;font-size:13px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${t.detalle}</td>
+        <td style="padding:14px 16px;font-size:14px;font-weight:700;color:#DC2626;text-align:right;white-space:nowrap;border-bottom:1px solid #F3F4F6;">$${t.rango_min}–$${t.rango_max}</td>
+      </tr>`).join('');
+
+    const rows = [
+      q.subtotal_mano_obra?.min ? ['🔧 Mano de obra', q.subtotal_mano_obra.min, q.subtotal_mano_obra.max] : null,
+      q.subtotal_materiales?.min ? ['🎨 Materiales', q.subtotal_materiales.min, q.subtotal_materiales.max] : null,
+      q.subtotal_repuestos?.min ? ['🔩 Repuestos', q.subtotal_repuestos.min, q.subtotal_repuestos.max] : null,
+    ].filter(Boolean);
+
+    desgloseHTML = rows.map(([label, min, max]) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F3F4F6;">
+        <span style="color:#6B7280;font-size:14px;">${label}</span>
+        <span style="color:#374151;font-size:14px;font-weight:600;">$${min} – $${max}</span>
+      </div>`).join('');
+  } else {
+    // Fallback: mostrar texto plano si el JSON falló
+    const rawText = (quote && quote.raw_text) ? quote.raw_text : (typeof quote === 'string' ? quote : '');
+    trabajosHTML = `<tr><td colspan="3" style="padding:20px;font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">${rawText}</td></tr>`;
   }
 
-  // Badge de severidad
-  const severityBadge = damageAnalysis.severity === 'LEVE' 
-    ? '<span style="background: #DCFCE7; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">🟢 DAÑO LEVE</span>'
-    : '<span style="background: #FEF3C7; color: #92400E; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">🟡 DAÑO MODERADO</span>';
+  // Foto counter badge (fotos van solo como adjuntos, no inline)
+  const photoCountBadge = photoAssets.length > 0
+    ? `<div style="display:inline-flex;align-items:center;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 16px;margin-top:12px;">
+        <span style="font-size:18px;">📎</span>
+        <span style="color:#DC2626;font-size:13px;font-weight:600;">${photoAssets.length} foto${photoAssets.length > 1 ? 's' : ''} del siniestro adjunta${photoAssets.length > 1 ? 's' : ''} a este correo</span>
+      </div>`
+    : '';
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Cotización The PaintBull - ${vehicleData.marca} ${vehicleData.modelo}</title>
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
-      
-      <div style="max-width: 700px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        
-        <!-- Header The PaintBull con Diana -->
-        <div style="background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); text-align: center; padding: 50px 30px; position: relative;">
-          
-          <!-- Logo Diana (círculos concéntricos rojo y blanco) -->
-          <div style="margin: 0 auto 25px; width: 140px; height: 140px; position: relative;">
-            <div style="position: absolute; width: 140px; height: 140px; border-radius: 50%; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></div>
-            <div style="position: absolute; top: 12px; left: 12px; width: 116px; height: 116px; border-radius: 50%; background: #DC2626;"></div>
-            <div style="position: absolute; top: 24px; left: 24px; width: 92px; height: 92px; border-radius: 50%; background: white;"></div>
-            <div style="position: absolute; top: 36px; left: 36px; width: 68px; height: 68px; border-radius: 50%; background: #DC2626;"></div>
-            <div style="position: absolute; top: 52px; left: 52px; width: 36px; height: 36px; border-radius: 50%; background: white;"></div>
-          </div>
+  const waLink = `https://wa.me/593994837117?text=Hola%2C+quiero+confirmar+mi+cotizaci%C3%B3n+${quoteCode}`;
 
-          <div style="color: white; font-size: 42px; font-weight: 700; letter-spacing: -1px; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-            The PaintBull
-          </div>
-          <div style="color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 400; letter-spacing: 1px; margin-bottom: 25px;">
-            Expertos en Enderezada y Pintura Vehicular
-          </div>
+  const ecosistemaItems = [
+    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
+    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
+    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
+  ].map(([icon, name, desc]) => `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
+      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
+      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
+    </div>`).join('');
 
-          <!-- Banner de cotización -->
-          <div style="background: rgba(255,255,255,0.97); color: #1F2937; padding: 25px 35px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
-            <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #DC2626;">💰 Cotización Personalizada</h1>
-            <p style="margin: 10px 0 5px 0; color: #6B7280; font-size: 15px;">${formatDate}</p>
-            <p style="margin: 5px 0 0 0; color: #111827; font-size: 14px; font-weight: 600;">Cliente: ${customerName}</p>
-            <p style="margin: 5px 0 0 0; color: #DC2626; font-size: 13px; font-weight: 700; letter-spacing: 1px;">Código: ${quoteCode}</p>
-          </div>
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cotización The PaintBull — ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}</title>
+</head>
+<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<div style="max-width:660px;margin:30px auto;">
+
+  <!-- ══ HEADER ══ -->
+  <div style="background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-40px;left:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none;"></div>
+
+    <!-- Diana logo -->
+    <div style="margin:0 auto 22px;width:82px;height:82px;position:relative;">
+      <div style="position:absolute;inset:0;border-radius:50%;background:white;box-shadow:0 4px 18px rgba(0,0,0,0.25);"></div>
+      <div style="position:absolute;top:10px;left:10px;right:10px;bottom:10px;border-radius:50%;background:#DC2626;"></div>
+      <div style="position:absolute;top:20px;left:20px;right:20px;bottom:20px;border-radius:50%;background:white;"></div>
+      <div style="position:absolute;top:30px;left:30px;right:30px;bottom:30px;border-radius:50%;background:#DC2626;"></div>
+      <div style="position:absolute;top:38px;left:38px;right:38px;bottom:38px;border-radius:50%;background:white;"></div>
+    </div>
+
+    <div style="color:white;font-size:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">The PaintBull</div>
+    <div style="color:rgba(255,255,255,0.75);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">Colisiones & Pintura Vehicular · Quito</div>
+
+    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;text-align:left;min-width:280px;">
+      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Cotización preparada para</div>
+      <div style="color:#111827;font-size:22px;font-weight:700;margin-bottom:4px;">${customerName}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+        <span style="color:#6B7280;font-size:13px;">${formatDate}</span>
+        <span style="background:#DC2626;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:1px;">${quoteCode}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PRECIO TOTAL — VISIBLE DE INMEDIATO ══ -->
+  ${priceRange ? `
+  <div style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
+    <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
+    <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
+    <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
+    ${photoCountBadge}
+  </div>` : ''}
+
+  <!-- ══ CUERPO ══ -->
+  <div style="background:white;padding:36px 40px 10px;">
+
+    <!-- Vehículo + Severidad -->
+    <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;background:#FFF8F8;border:1px solid #FECACA;border-radius:14px;padding:20px;">
+        <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Vehículo</div>
+        <div style="color:#111827;font-size:22px;font-weight:800;line-height:1.2;">${vehicleData.marca} ${vehicleData.modelo}</div>
+        <div style="color:#6B7280;font-size:15px;margin-top:4px;">Año ${vehicleData.año}</div>
+      </div>
+      <div style="flex:1;min-width:160px;background:${sv.bg};border:1px solid ${sv.dot}33;border-radius:14px;padding:20px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:8px;">🔍</div>
+        <div style="background:${sv.bg};border:2px solid ${sv.dot};border-radius:8px;padding:6px 14px;display:inline-block;">
+          <span style="color:${sv.color};font-size:13px;font-weight:700;">${sv.label}</span>
         </div>
+        <div style="color:${sv.color};font-size:12px;margin-top:10px;opacity:0.8;">Riesgo daños ocultos: <strong>${damageAnalysis.hiddenDamageRisk || 'MEDIO'}</strong></div>
+      </div>
+    </div>
 
-        <div style="padding: 40px 35px;">
-          
-          <!-- Datos del vehículo -->
-          <div style="background: linear-gradient(135deg, rgba(220,38,38,0.08), rgba(185,28,28,0.08)); border-left: 4px solid #DC2626; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
-            <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 22px; font-weight: 700; display: flex; align-items: center;">
-              🚗 <span style="margin-left: 10px;">VEHÍCULO</span>
-            </h2>
-            
-            <div style="background: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <table style="width: 100%; font-size: 16px;">
-                <tr>
-                  <td style="padding: 10px 0; color: #6B7280; font-weight: 500; width: 40%;">Marca:</td>
-                  <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 18px;">${vehicleData.marca}</td>
-                </tr>
-                <tr style="border-top: 1px solid #F3F4F6;">
-                  <td style="padding: 10px 0; color: #6B7280; font-weight: 500;">Modelo:</td>
-                  <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 18px;">${vehicleData.modelo}</td>
-                </tr>
-                <tr style="border-top: 1px solid #F3F4F6;">
-                  <td style="padding: 10px 0; color: #6B7280; font-weight: 500;">Año:</td>
-                  <td style="padding: 10px 0; color: #111827; font-weight: 600;">${vehicleData.año}</td>
-                </tr>
-                <tr style="border-top: 1px solid #F3F4F6;">
-                  <td style="padding: 10px 0; color: #6B7280; font-weight: 500;">Severidad:</td>
-                  <td style="padding: 10px 0;">${severityBadge}</td>
-                </tr>
-              </table>
-            </div>
-          </div>
+    <!-- Partes afectadas -->
+    ${parts.length > 0 ? `
+    <div style="margin-bottom:28px;">
+      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:10px;">Áreas con daño detectado</div>
+      <div>${partsBadges}</div>
+    </div>` : ''}
 
-          <!-- Cotización detallada -->
-          <div style="background: white; border: 2px solid #FCA5A5; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
-            <h2 style="color: #DC2626; margin: 0 0 20px 0; font-size: 22px; font-weight: 700; display: flex; align-items: center;">
-              📋 <span style="margin-left: 10px;">COTIZACIÓN DETALLADA</span>
-            </h2>
-            
-            <div style="color: #374151; font-size: 15px; line-height: 1.8; white-space: pre-wrap;">
-${quote}
-            </div>
+    <!-- Resumen de daños -->
+    ${q?.resumen_danos ? `
+    <div style="background:#FFF8F8;border-left:4px solid #DC2626;border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:28px;">
+      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Diagnóstico</div>
+      <p style="color:#374151;font-size:14px;line-height:1.75;margin:0;">${q.resumen_danos}</p>
+    </div>` : ''}
 
-            ${priceRange ? `
-            <div style="background: linear-gradient(135deg, #DC2626, #B91C1C); border-radius: 10px; padding: 25px; margin-top: 25px; text-align: center;">
-              <p style="color: rgba(255,255,255,0.9); margin: 0 0 10px 0; font-size: 14px; font-weight: 500; letter-spacing: 0.5px;">INVERSIÓN ESTIMADA</p>
-              <p style="color: white; margin: 0; font-size: 36px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                $${priceRange.min} - $${priceRange.max} USD
-              </p>
-            </div>
-            ` : ''}
-          </div>
+    <!-- Tabla de trabajos -->
+    <div style="margin-bottom:28px;">
+      <div style="color:#374151;font-size:14px;font-weight:700;margin-bottom:12px;">Trabajos requeridos</div>
+      <div style="border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#111827;">
+              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Trabajo</th>
+              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Proceso</th>
+              <th style="padding:12px 16px;text-align:right;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Rango</th>
+            </tr>
+          </thead>
+          <tbody>${trabajosHTML}</tbody>
+        </table>
+      </div>
+    </div>
 
-          ${photosSection}
+    <!-- Desglose subtotales -->
+    ${desgloseHTML ? `
+    <div style="background:#F9FAFB;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
+      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:12px;">Desglose de costos</div>
+      ${desgloseHTML}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;margin-top:4px;border-top:2px solid #E5E7EB;">
+        <span style="color:#111827;font-size:15px;font-weight:700;">Total estimado</span>
+        <span style="color:#DC2626;font-size:20px;font-weight:800;">$${priceRange?.min || q?.total_min || '—'} – $${priceRange?.max || q?.total_max || '—'} USD</span>
+      </div>
+    </div>` : ''}
 
-          <!-- Disclaimers importantes -->
-          <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 10px; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #92400E; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">⚠️ IMPORTANTE</h3>
-            <ul style="color: #78350F; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
-              <li>Esta cotización es <strong>preliminar</strong> basada en análisis fotográfico con IA</li>
-              <li>La <strong>inspección física</strong> puede revelar daños adicionales no visibles en fotos</li>
-              <li>Los precios están sujetos a cambios según disponibilidad de repuestos</li>
-              <li>El tiempo estimado puede variar según carga de trabajo del taller</li>
-            </ul>
-          </div>
+    <!-- Tiempo + Garantía -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;">
+      <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:12px;padding:18px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:6px;">⏱️</div>
+        <div style="color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Tiempo de entrega</div>
+        <div style="color:#15803D;font-size:16px;font-weight:700;">${q?.dias_entrega || damageAnalysis.estimatedRepairDays || '3-5 días hábiles'}</div>
+      </div>
+      <div style="background:#EFF6FF;border:1px solid #93C5FD;border-radius:12px;padding:18px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:6px;">🛡️</div>
+        <div style="color:#1E40AF;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Garantía</div>
+        <div style="color:#1D4ED8;font-size:13px;font-weight:600;line-height:1.4;">${q?.garantia || 'Garantía escrita en pintura y mano de obra'}</div>
+      </div>
+    </div>
 
-          <!-- Siguiente paso -->
-          <div style="background: linear-gradient(135deg, #DC2626, #B91C1C); border-radius: 12px; padding: 35px; text-align: center; margin-bottom: 30px;">
-            <h3 style="color: white; margin: 0 0 15px 0; font-size: 22px; font-weight: 700;">🔧 SIGUIENTE PASO</h3>
-            <p style="color: rgba(255,255,255,0.95); margin: 0 0 25px 0; font-size: 16px; line-height: 1.6;">
-              Para confirmar y agendar la reparación,<br>
-              contáctanos por WhatsApp o teléfono:
-            </p>
-            <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-              <p style="color: white; margin: 0; font-size: 18px; font-weight: 600;">
-                📱 WhatsApp: <a href="https://wa.me/593994837117" style="color: white; text-decoration: none; border-bottom: 2px solid white;">+593 99 483 7117</a>
-              </p>
-            </div>
-            <a href="https://wa.me/593994837117?text=Hola%2C%20quiero%20confirmar%20mi%20cotizaci%C3%B3n%20${quoteCode}" style="display: inline-block; background: white; color: #DC2626; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-              💬 Confirmar Cotización ${quoteCode}
-            </a>
-          </div>
+    <!-- Nota inspección -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;margin-bottom:28px;display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+      <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;">${q?.nota_inspeccion || 'Cotización preliminar basada en análisis fotográfico con IA. La inspección física puede revelar daños estructurales adicionales no visibles en fotos.'}</p>
+    </div>
 
-          <!-- Garantía y experiencia -->
-          <div style="text-align: center; padding: 25px; background: #F9FAFB; border-radius: 10px; margin-bottom: 30px;">
-            <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 18px;">✨ Por qué The PaintBull</h3>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
-              <div>
-                <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
-                <p style="margin: 0; color: #6B7280; font-size: 13px; font-weight: 600;">15 años<br>de experiencia</p>
-              </div>
-              <div>
-                <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
-                <p style="margin: 0; color: #6B7280; font-size: 13px; font-weight: 600;">Garantía<br>certificada</p>
-              </div>
-              <div>
-                <div style="font-size: 32px; margin-bottom: 8px;">⚡</div>
-                <p style="margin: 0; color: #6B7280; font-size: 13px; font-weight: 600;">Trabajo<br>profesional</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ubicación -->
-          <div style="background: white; border: 2px solid #DC2626; border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center;">
-            <h3 style="color: #DC2626; margin: 0 0 15px 0; font-size: 20px; font-weight: 700;">📍 VISÍTANOS</h3>
-            <p style="color: #374151; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
-              <strong>The PaintBull - Taller de Colisiones</strong><br>
-              Calle N44-53 y, Quito 170124<br>
-              Ecuador
-            </p>
-            <div style="margin: 25px 0;">
-              <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
-                🗺️ Cómo llegar →
-              </a>
-            </div>
-            <p style="color: #6B7280; margin: 20px 0 0 0; font-size: 14px;">
-              📅 <strong>Horarios:</strong> Lun-Vie 8:00-18:00 | Sáb 9:00-14:00
-            </p>
-          </div>
-
+    <!-- CTA -->
+    <div style="background:linear-gradient(145deg,#111827,#1F2937);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
+      <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:8px;">¿Listo para dejar tu vehículo como nuevo?</div>
+      <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">Agenda tu cita ahora</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px;">Respuesta en menos de 1 hora · Presupuesto sin compromiso</div>
+      <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#DC2626,#B91C1C);color:white;padding:16px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(220,38,38,0.5);letter-spacing:0.3px;">
+        🔧 Confirmar cotización ${quoteCode} →
+      </a>
+      <div style="margin-top:24px;">
+        <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:14px 20px;display:inline-block;">
+          <div style="color:rgba(255,255,255,0.5);font-size:12px;">📍 Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:4px;">📱 +593 99 483 7117 · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:#EF4444;text-decoration:none;">Ver en mapa →</a></div>
         </div>
       </div>
+    </div>
 
-      <!-- ══ CO-BRANDING COWORKIA ══ -->
-      <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 16px 16px;padding:44px;text-align:center;">
-        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
-          <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
-          <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
-          <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
-        </div>
-        <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${[
-          ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
-          ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance'],
-          ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
-          ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
-          ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
-          ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
-        ].map(([icon, name, desc]) => `
-          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
-            <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-            <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-            <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-          </div>`).join('')}</div>
-        <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
-          <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
-            Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
-            <strong style="color:rgba(255,255,255,0.75);">Tu vehículo en las mejores manos de Ecuador.</strong>
-          </p>
-        </div>
-        <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
-          Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Axel</strong> · The PaintBull<br>
-          Coworkia Intelligence System · ${formatDate}
-        </div>
+    <!-- Por qué PaintBull -->
+    <div style="padding:28px 0;border-top:1px solid #F3F4F6;margin-top:10px;">
+      <div style="text-align:center;color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">Por qué The PaintBull</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;">
+        ${[['🏆','15 años','de experiencia'],['✅','Garantía','escrita siempre'],['⚡','Tecnología','Vision AI']].map(([ic,t,d])=>`
+        <div><div style="font-size:28px;margin-bottom:6px;">${ic}</div><div style="color:#111827;font-size:13px;font-weight:700;">${t}</div><div style="color:#9CA3AF;font-size:12px;">${d}</div></div>`).join('')}
       </div>
+    </div>
+  </div>
 
-    </body>
-    </html>
-  `;
+  <!-- ══ CO-BRANDING COWORKIA ══ -->
+  <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
+      <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
+      <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
+      <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+    </div>
+    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${ecosistemaItems}</div>
+    <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+        Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
+        <strong style="color:rgba(255,255,255,0.75);">Tu vehículo en las mejores manos de Ecuador.</strong>
+      </p>
+    </div>
+    <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
+      Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Axel</strong> · The PaintBull<br>
+      Coworkia Intelligence System · ${formatDate}
+    </div>
+  </div>
+
+</div>
+</body>
 }
 
 /**

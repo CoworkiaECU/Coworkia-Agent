@@ -901,7 +901,6 @@ async function processAxelQuote(userId, photoUrls, profile, latestUserText = '',
         quoteCode,
         photoCount: photoUrls.length,
         correlationId: sessionFingerprint || quoteCode,
-        missingFields,
         emailPending: true
       }
     });

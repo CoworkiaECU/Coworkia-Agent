@@ -148,17 +148,17 @@ function buildEmailHTML({ nombre, area, ofertaTexto }) {
     .join('');
 
   const aliados = [
-    ['💼', 'GR Consulting',  'Finanzas, Legal & Compliance'],
-    ['🎯', 'MarketingLab',   'Marketing Digital & Branding'],
-    ['🏥', 'MedBeneficios',  'Salud Empresarial & Beneficios'],
-    ['🛡️', 'SegPopular',    'Seguros & Protección Empresarial'],
-    ['🚗', 'The PaintBull',  'Colisiones & Pintura Vehicular'],
-    ['🏡', 'PropElite',      'Bienes Raíces Premium Ecuador'],
+    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
+    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
+    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
   ].map(([icon, name, desc]) => `
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
       <div style="font-size:20px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:13px;font-weight:600;margin-bottom:2px;">${name}</div>
-      <div style="color:rgba(255,255,255,0.38);font-size:11px;">${desc}</div>
+      <div style="color:white;font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+      <div style="color:rgba(255,255,255,0.38);font-size:10px;">${desc}</div>
     </div>`).join('');
 
   return `<!DOCTYPE html>
@@ -275,10 +275,10 @@ function buildEmailHTML({ nombre, area, ofertaTexto }) {
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:32px;margin-bottom:28px;">
       <div style="color:rgba(255,255,255,0.3);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Propuesta presentada a través de</div>
       <div style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.3px;margin-bottom:4px;">Coworkia Business Center</div>
-      <div style="color:#4A9EFF;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Soluciones Empresariales · Ecuador</div>
+      <div style="color:#4A9EFF;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
     </div>
 
-    <div style="color:rgba(255,255,255,0.3);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Empresas especializadas que pueden servirle</div>
+    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:30px;">${aliados}</div>
 
     <div style="background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.15);border-radius:10px;padding:16px;margin-bottom:24px;">

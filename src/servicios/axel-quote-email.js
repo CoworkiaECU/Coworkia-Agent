@@ -237,21 +237,42 @@ ${quote}
             </p>
           </div>
 
-          <!-- Footer -->
-          <div style="text-align: center; padding: 25px 0; border-top: 2px solid #E5E7EB;">
-            <p style="color: #9CA3AF; font-size: 13px; margin: 0 0 8px 0;">
-              Esta cotización fue generada por:
-            </p>
-            <p style="color: #6B7280; font-size: 15px; margin: 0; font-weight: 600;">
-              <strong style="color: #DC2626;">Axel</strong> - Experto en colisiones de The PaintBull
-            </p>
-            <p style="color: #D1D5DB; font-size: 12px; margin: 10px 0 0 0;">
-              Sistema de análisis inteligente con Vision AI | ${formatDate}
-            </p>
-          </div>
-
         </div>
       </div>
+
+      <!-- ══ CO-BRANDING COWORKIA ══ -->
+      <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 16px 16px;padding:44px;text-align:center;">
+        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
+          <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
+          <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
+          <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+        </div>
+        <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${[
+          ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
+          ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance'],
+          ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
+          ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
+          ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
+          ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
+        ].map(([icon, name, desc]) => `
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
+            <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
+            <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+            <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
+          </div>`).join('')}</div>
+        <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
+          <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+            Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
+            <strong style="color:rgba(255,255,255,0.75);">Tu vehículo en las mejores manos de Ecuador.</strong>
+          </p>
+        </div>
+        <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
+          Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Axel</strong> · The PaintBull<br>
+          Coworkia Intelligence System · ${formatDate}
+        </div>
+      </div>
+
     </body>
     </html>
   `;

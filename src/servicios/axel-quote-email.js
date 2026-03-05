@@ -17,23 +17,22 @@ async function fetchAndCompressPhoto(url) {
     try {
       const sharpModule = await import('sharp');
       const sharp = sharpModule.default || sharpModule;
-      const resized = await sharp(buffer)
+      // Full size para adjunto descargable
+      const full = await sharp(buffer)
         .rotate()
         .resize({ width: 960, withoutEnlargement: true })
         .jpeg({ quality: 60, progressive: true })
         .toBuffer();
-      return {
-        base64: `data:image/jpeg;base64,${resized.toString('base64')}`,
-        buffer: resized,
-        contentType: 'image/jpeg'
-      };
+      // Thumbnail 200×150 para grid inline en el HTML
+      const thumb = await sharp(buffer)
+        .rotate()
+        .resize({ width: 200, height: 150, fit: 'cover' })
+        .jpeg({ quality: 65 })
+        .toBuffer();
+      return { buffer: full, thumbBuffer: thumb, contentType: 'image/jpeg' };
     } catch (err) {
-      console.warn('[QUOTE-EMAIL] ⚠️ No se pudo comprimir con sharp, usando base64 original:', err.message);
-      return {
-        base64: `data:image/jpeg;base64,${buffer.toString('base64')}`,
-        buffer,
-        contentType: 'image/jpeg'
-      };
+      console.warn('[QUOTE-EMAIL] ⚠️ No se pudo comprimir con sharp, usando original:', err.message);
+      return { buffer, thumbBuffer: buffer, contentType: 'image/jpeg' };
     }
   } catch (err) {
     console.error('[QUOTE-EMAIL] ❌ Error descargando/comprimiendo foto:', err.message);
@@ -95,11 +94,13 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     trabajosHTML = `<tr><td colspan="3" style="padding:20px;font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">${rawText}</td></tr>`;
   }
 
-  // Foto counter badge (fotos van solo como adjuntos, no inline)
-  const photoCountBadge = photoAssets.length > 0
-    ? `<div style="display:inline-flex;align-items:center;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 16px;margin-top:12px;">
-        <span style="font-size:18px;">📎</span>
-        <span style="color:#DC2626;font-size:13px;font-weight:600;">${photoAssets.length} foto${photoAssets.length > 1 ? 's' : ''} del siniestro adjunta${photoAssets.length > 1 ? 's' : ''} a este correo</span>
+  // Grid de thumbnails inline con CID
+  const photoGrid = photoAssets.length > 0
+    ? `<div style="margin-top:16px;">
+        <div style="color:#6B7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📸 Fotos del siniestro</div>
+        <div style="display:grid;grid-template-columns:repeat(${Math.min(photoAssets.length, 4)},1fr);gap:6px;">
+          ${photoAssets.map((_, i) => `<img src="cid:foto-${i+1}@paintbull" alt="Foto ${i+1}" width="100%" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid #E5E7EB;display:block;" />`).join('')}
+        </div>
       </div>`
     : '';
 
@@ -162,7 +163,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
     <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
     <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
-    ${photoCountBadge}
+    ${photoGrid}
   </div>` : ''}
 
   <!-- ══ CUERPO ══ -->
@@ -330,11 +331,12 @@ export async function sendQuoteEmail({
 
     const subject = `🚗 Cotización ${quoteCode} - ${vehicleData.marca} ${vehicleData.modelo} ${vehicleData.año}`;
 
-    // Adjuntar fotos comprimidas como respaldo para el jefe de taller
+    // Adjuntar fotos: inline con CID para thumbnails del HTML, no sueltas al final
     const attachments = validPhotoAssets.map((asset, idx) => ({
       filename: `foto-${idx + 1}.jpg`,
-      content: asset.buffer,
-      contentType: asset.contentType || 'image/jpeg'
+      content: asset.thumbBuffer || asset.buffer,
+      contentType: asset.contentType || 'image/jpeg',
+      cid: `foto-${idx + 1}@paintbull`
     }));
 
     const result = await sendEmail({

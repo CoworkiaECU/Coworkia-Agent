@@ -53,6 +53,7 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
+import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
 
 const router = Router();
 
@@ -1348,6 +1349,29 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           : `❌ Error al generar propuesta Enzo: ${result.error}`;
         await enviarWhatsApp(userId, reply);
         return;
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Paula — brochure de lujo con propiedades El Morenal
+    // Boss especifica propiedad (#1/#3/#6/#7) o envía overview de las 4 casas
+    // Solo activo cuando: userId === ADMIN_PHONE + agente PAULA + email presente
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && userId === ADMIN_PHONE && processedText && profile.activeAgent === 'PAULA') {
+      if (isPaulaBossQuoteCommand(processedText)) {
+        const quoteData = parsePaulaQuoteData(processedText);
+        if (quoteData?.email) {
+          const propLabel = quoteData.esOverview ? 'El Morenal (las 4 casas)' : quoteData.propiedad?.nombre;
+          console.log('[BOSS-CMD] 👔 Brochure PAULA solicitado:', propLabel, '→', quoteData.nombre);
+          await enviarWhatsApp(userId, `🏡 *Paula preparando brochure de lujo...*\n📐 ${propLabel}\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}`);
+          const result = await sendPaulaCotizacion(processedText);
+          const reply = result.success
+            ? `✅ *Brochure enviado por Paula*\n🏡 ${result.propiedad}\n👤 ${result.nombre}\n📧 ${result.email}\n💰 ${result.precio} USD`
+            : `❌ Error enviando brochure Paula: ${result.error}`;
+          await enviarWhatsApp(userId, reply);
+          return;
+        }
       }
     }
     // ══════════════════════════════════════════════════════════════════════

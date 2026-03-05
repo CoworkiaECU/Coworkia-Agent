@@ -21,36 +21,48 @@ export async function analyzeCollisionPhotos(photoUrls) {
 
     console.log(`[AXEL-VISION] 👁️ Analizando ${photoUrls.length} foto(s) simultáneamente...`);
 
-    // Prompt especializado para análisis de daños vehiculares
-    const visionPrompt = `Eres un experto en reparación de colisiones vehiculares con 15 años de experiencia.
+    // Prompt especializado para análisis de daños vehiculares - panel por panel
+    const visionPrompt = `Eres un perito técnico de colisiones vehiculares con 15 años de experiencia en talleres de carrocería en Ecuador.
 
-TAREA: Analiza TODAS las fotos proporcionadas (${photoUrls.length} foto(s)) de un vehículo dañado y proporciona un diagnóstico profesional CONSOLIDADO.
+TAREA CRÍTICA: Analiza TODAS las ${photoUrls.length} foto(s) adjuntas de un vehículo dañado. Cada foto puede mostrar un ángulo diferente del mismo vehículo. Debes identificar CADA daño visible, pieza por pieza.
 
-IMPORTANTE: 
-- Analiza TODAS las imágenes en conjunto
-- Identifica daños en diferentes ángulos/áreas del vehículo
-- Consolida tu análisis en una evaluación completa
+INSTRUCCIONES:
+- Examina cada foto al detalle: rayones, abolladuras, piezas rotas o deformadas, daños en pintura, vidrios, faros, paragolpes, etc.
+- No generalices — describe cada panel dañado por separado con su tipo de daño exacto.
+- Si el mismo panel aparece en varias fotos, consolida la descripción pero no lo repitas.
+- Identifica si la pieza necesita reparación (enderezado + pintura) o reemplazo total.
 
-ESTRUCTURA DE RESPUESTA (formato JSON):
+RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin explicaciones):
 {
   "severity": "LEVE|MODERADO|SEVERO",
-  "damageDetails": "Descripción detallada de TODOS los daños visibles en todas las fotos",
-  "affectedParts": ["Lista", "de", "todas", "las", "partes", "afectadas"],
+  "damages_by_panel": [
+    {
+      "panel": "nombre exacto de la pieza (ej: guardafango delantero derecho)",
+      "damage_type": "descripción técnica del daño (ej: abolladura profunda + arañazo hasta metal)",
+      "action": "reparar|reemplazar",
+      "severity_panel": "LEVE|MODERADO|SEVERO"
+    }
+  ],
+  "damageDetails": "Descripción técnica consolidada de todos los daños en 2-3 frases",
+  "affectedParts": ["lista", "de", "todas", "las", "piezas", "afectadas"],
   "hiddenDamageRisk": "BAJO|MEDIO|ALTO",
-  "estimatedRepairDays": "X-X días",
-  "urgentIssues": ["Problemas", "que", "requieren", "atención", "inmediata"]
+  "estimatedRepairDays": "X-X días hábiles",
+  "urgentIssues": ["problemas que requieren atención inmediata, ej: vidrio roto"]
 }
 
-CRITERIOS DE SEVERIDAD:
-- LEVE: Rayones superficiales, abolladuras pequeñas sin afectar estructura
-- MODERADO: Daños en paneles, posible afectación de estructura leve, pintura comprometida
-- SEVERO: Daño estructural visible, múltiples paneles afectados, partes mecánicas expuestas
+CRITERIOS DE SEVERIDAD GLOBAL:
+- LEVE: Rayones superficiales, abolladuras pequeñas sin afectar estructura, 1-2 paneles
+- MODERADO: Daños en 2-4 paneles, pintura comprometida, sin daño estructural grave
+- SEVERO: Daño estructural visible, 5+ paneles, partes mecánicas expuestas o faros rotos
 
-Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
+Analiza TODAS las fotos y responde SOLO con el JSON:`;
 
-    // Analizar solo la primera foto (limitación actual documentada)
-    const primaryPhoto = photoUrls[0];
-    const analysisResult = await analyzeImage(primaryPhoto, visionPrompt);
+    // Pasar TODAS las fotos al modelo de visión (analyzeImage ya soporta arrays)
+    const analysisResult = await analyzeImage(photoUrls, visionPrompt, {
+      max_tokens: 1500,
+      model: 'gpt-4o',
+      detail: 'high'
+    });
 
     if (!analysisResult.success) {
       console.error('[AXEL-VISION] ❌ Error en Vision API:', analysisResult.error);
@@ -96,6 +108,7 @@ Analiza TODAS las fotos y responde SOLO con el JSON solicitado:`;
       success: true,
       severity: analysisData.severity,
       damageDetails: analysisData.damageDetails,
+      damages_by_panel: analysisData.damages_by_panel || [],
       affectedParts: analysisData.affectedParts || [],
       hiddenDamageRisk: analysisData.hiddenDamageRisk || 'MEDIO',
       estimatedRepairDays: analysisData.estimatedRepairDays || '2-5 días',

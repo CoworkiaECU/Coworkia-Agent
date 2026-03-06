@@ -55,8 +55,21 @@ app.set('trust proxy', 1);
 // Seguridad básica
 app.use(helmet({
   crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+    },
+  },
 }));
 app.use(cors());
+
+// Sitio web estático (OneMind landing page)
+app.use(express.static('public'));
 
 // 👁️ Observabilidad (tracking de requests)
 app.use(requestTrackingMiddleware);

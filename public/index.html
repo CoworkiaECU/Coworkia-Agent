@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneMind · MarketingLab Ecuador</title>
+  <meta name="description" content="OneMind es el primer ecosistema de inteligencia artificial de Ecuador. Ocho agentes virtuales especializados disponibles 24/7 por WhatsApp.">
+  <meta name="theme-color" content="#040813">
+  <meta property="og:title" content="OneMind · MarketingLab Ecuador">
+  <meta property="og:description" content="Ocho agentes de IA especializados, un solo número de WhatsApp. Disponibles 24/7.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ░░ NAVEGACIÓN ░░ -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" class="nav-logo-img"
+             onerror="this.src='/assets/logos/marketinglab.png'">
+        <div class="nav-brand-wrap">
+          <span class="nav-brand-name">OneMind</span>
+          <span class="nav-brand-sub">by MarketingLab</span>
+        </div>
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="#agentes" class="nav-link">Agentes</a>
+        <a href="#como-funciona" class="nav-link">Cómo funciona</a>
+        <a href="#tecnologia" class="nav-link">Tecnología</a>
+        <a
+          href="https://wa.me/593994837117?text=Hola%20OneMind%2C%20vengo%20desde%20el%20sitio%20web"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary btn-sm"
+        >
+          <svg class="btn-wa-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.207 1.592 6.054L0 24l6.054-1.584C7.866 23.463 9.918 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.908 0-3.763-.502-5.394-1.453l-.386-.228-3.594.941.957-3.498-.25-.4A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+          </svg>
+          Hablar con Aurora
+        </a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ░░ HERO ░░ -->
+  <section class="hero">
+    <div class="hero-bg-grid" aria-hidden="true"></div>
+    <div class="hero-bg-glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="hero-inner" data-reveal>
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          <span class="mono">SISTEMA ACTIVO · 24 / 7 / 365</span>
+        </div>
+        <h1 class="hero-title">
+          Una sola mente.<br>
+          <span class="hero-title-accent">Ocho especialistas.</span><br>
+          Resultados reales.
+        </h1>
+        <p class="hero-desc">
+          <strong>OneMind</strong> es el primer ecosistema de inteligencia artificial de Ecuador.
+          Ocho agentes virtuales especializados conversan con tus clientes en WhatsApp, 
+          los 365 días del año, sin turnos ni tiempos de espera.
+        </p>
+        <div class="hero-actions">
+          <a
+            href="https://wa.me/593994837117?text=Hola%20OneMind%2C%20vengo%20desde%20el%20sitio%20web"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-primary btn-lg"
+          >
+            <svg class="btn-wa-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.207 1.592 6.054L0 24l6.054-1.584C7.866 23.463 9.918 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.908 0-3.763-.502-5.394-1.453l-.386-.228-3.594.941.957-3.498-.25-.4A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+            Hablar con Aurora
+          </a>
+          <a href="#agentes" class="btn btn-ghost btn-lg">
+            Explorar agentes
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-num">8</span>
+            <span class="hero-stat-label mono">Agentes IA</span>
+          </div>
+          <div class="hero-stat-div" aria-hidden="true"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">24/7</span>
+            <span class="hero-stat-label mono">Disponibilidad</span>
+          </div>
+          <div class="hero-stat-div" aria-hidden="true"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">GPT-4o</span>
+            <span class="hero-stat-label mono">Motor IA</span>
+          </div>
+          <div class="hero-stat-div" aria-hidden="true"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">6</span>
+            <span class="hero-stat-label mono">Idiomas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ AURORA FEATURE ░░ -->
+  <section class="aurora-section">
+    <div class="container">
+      <div class="aurora-card" data-reveal>
+        <div class="aurora-card-glow" aria-hidden="true"></div>
+        <div class="aurora-header">
+          <div class="aurora-avatar" aria-hidden="true">
+            <div class="aurora-avatar-ring"></div>
+            <svg class="aurora-avatar-svg" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <circle cx="24" cy="24" r="12" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="24" cy="24" r="4" fill="currentColor"/>
+              <circle cx="24" cy="8" r="2" fill="currentColor" opacity=".6"/>
+              <circle cx="24" cy="40" r="2" fill="currentColor" opacity=".6"/>
+              <circle cx="8" cy="24" r="2" fill="currentColor" opacity=".6"/>
+              <circle cx="40" cy="24" r="2" fill="currentColor" opacity=".6"/>
+            </svg>
+          </div>
+          <div class="aurora-meta">
+            <span class="mono aurora-label">MENTE ORQUESTADORA · ONEMIND</span>
+            <h2 class="aurora-name">Aurora</h2>
+            <p class="aurora-subtitle">La inteligencia central que lo coordina todo.</p>
+          </div>
+        </div>
+        <div class="aurora-body">
+          <p class="aurora-desc">
+            Aurora es el núcleo de OneMind. Como una torre de control de tráfico aéreo,
+            coordina a todos los agentes del ecosistema simultáneamente, identifica tus
+            necesidades, detecta tu idioma automáticamente y te conecta con el especialista
+            correcto —sin filas, sin esperas, sin límites horarios.
+          </p>
+          <ul class="aurora-features" aria-label="Capacidades de Aurora">
+            <li class="aurora-feature">
+              <span class="aurora-feature-dot" aria-hidden="true"></span>
+              Detección automática de idioma (ES · EN · FR · IT · PT · QU)
+            </li>
+            <li class="aurora-feature">
+              <span class="aurora-feature-dot" aria-hidden="true"></span>
+              Análisis de imágenes, documentos PDF y comprobantes de pago
+            </li>
+            <li class="aurora-feature">
+              <span class="aurora-feature-dot" aria-hidden="true"></span>
+              Transcripción de mensajes de voz en tiempo real
+            </li>
+            <li class="aurora-feature">
+              <span class="aurora-feature-dot" aria-hidden="true"></span>
+              Gestión de reservas, Google Calendar y pagos Payphone integrados
+            </li>
+            <li class="aurora-feature">
+              <span class="aurora-feature-dot" aria-hidden="true"></span>
+              Derivación inteligente: contexto preservado al cambiar de agente
+            </li>
+          </ul>
+          <a
+            href="https://wa.me/593994837117?text=Hola%20OneMind%2C%20vengo%20desde%20el%20sitio%20web"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-aurora btn-lg"
+          >
+            Iniciar conversación con Aurora →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ AGENTES ░░ -->
+  <section id="agentes" class="agents-section">
+    <div class="container">
+      <header class="section-header" data-reveal>
+        <span class="section-label mono">LOS AGENTES</span>
+        <h2 class="section-title">Ocho especialistas. Un número.</h2>
+        <p class="section-desc">
+          Cada agente domina su área de expertise. Escribe <code>@nombre</code> en cualquier
+          momento para cambiar de especialista sin perder el hilo de la conversación.
+        </p>
+      </header>
+
+      <div class="agents-grid">
+
+        <!-- Aurora -->
+        <article class="agent-card" data-agent="aurora" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+                <circle cx="16" cy="16" r="7" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="16" cy="16" r="2.5" fill="currentColor"/>
+                <circle cx="16" cy="4"  r="1.5" fill="currentColor" opacity=".5"/>
+                <circle cx="16" cy="28" r="1.5" fill="currentColor" opacity=".5"/>
+                <circle cx="4"  cy="16" r="1.5" fill="currentColor" opacity=".5"/>
+                <circle cx="28" cy="16" r="1.5" fill="currentColor" opacity=".5"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">Coworkia</span>
+          </div>
+          <h3 class="agent-name">Aurora</h3>
+          <p class="agent-role mono">Orquestadora · Recepción</p>
+          <p class="agent-desc">
+            Recibe, coordina y conecta. Gestiona reservas de espacios de trabajo,
+            procesa pagos y guía a cada usuario al especialista correcto del ecosistema.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=Hola%20OneMind%2C%20vengo%20desde%20el%20sitio%20web"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Aurora en WhatsApp"
+          >
+            Conversar con Aurora →
+          </a>
+        </article>
+
+        <!-- Enzo -->
+        <article class="agent-card" data-agent="enzo" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <polygon points="16,3 29,10 29,22 16,29 3,22 3,10" stroke="currentColor" stroke-width="1.5"/>
+                <polygon points="16,10 22,13.5 22,20.5 16,24 10,20.5 10,13.5" fill="currentColor" opacity=".2" stroke="currentColor" stroke-width="1"/>
+                <circle cx="16" cy="16" r="2" fill="currentColor"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">MarketingLab</span>
+          </div>
+          <h3 class="agent-name">Enzo</h3>
+          <p class="agent-role mono">Marketing Digital · IA</p>
+          <p class="agent-desc">
+            Experto en estrategia digital, campañas de Meta y Google, y automatización
+            con IA. Ofrece demo gratuita del sistema OneMind para cualquier empresa.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40enzo%20Hola%2C%20quiero%20saber%20sobre%20marketing%20digital%20con%20IA"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Enzo en WhatsApp"
+          >
+            Conversar con Enzo →
+          </a>
+        </article>
+
+        <!-- Aluna -->
+        <article class="agent-card" data-agent="aluna" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M16 3L20 12H29L22 18L25 27L16 21L7 27L10 18L3 12H12L16 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M16 9L18 14H23L19 17L21 22L16 19L11 22L13 17L9 14H14L16 9Z" fill="currentColor" opacity=".3"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">Coworkia</span>
+          </div>
+          <h3 class="agent-name">Aluna</h3>
+          <p class="agent-role mono">Membresías · Ventas</p>
+          <p class="agent-desc">
+            Especialista en planes de coworking. Analiza contratos e invoices con IA
+            y encuentra el plan que mejor se adapta a tu ritmo de trabajo.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40aluna%20Hola%2C%20quiero%20conocer%20los%20planes%20de%20membres%C3%ADa"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Aluna en WhatsApp"
+          >
+            Conversar con Aluna →
+          </a>
+        </article>
+
+        <!-- Adriana -->
+        <article class="agent-card" data-agent="adriana" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M16 4L28 10V18C28 23 22.5 27.5 16 29C9.5 27.5 4 23 4 18V10L16 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M11 16L14 19L21 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">Segpopular</span>
+          </div>
+          <h3 class="agent-name">Adriana</h3>
+          <p class="agent-role mono">Seguros · Broker</p>
+          <p class="agent-desc">
+            Broker certificada con 17 años de experiencia. Compara entre 33 aseguradoras
+            y encuentra la mejor cobertura para tu vehículo o empresa.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40adriana%20Hola%2C%20quiero%20cotizar%20un%20seguro"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Adriana en WhatsApp"
+          >
+            Conversar con Adriana →
+          </a>
+        </article>
+
+        <!-- Axel -->
+        <article class="agent-card" data-agent="axel" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="16" cy="16" r="6" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="16" y1="4" x2="16" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="16" y1="22" x2="16" y2="28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="4" y1="16" x2="10" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="22" y1="16" x2="28" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="16" cy="16" r="2" fill="currentColor"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">The PaintBull</span>
+          </div>
+          <h3 class="agent-name">Axel</h3>
+          <p class="agent-role mono">Enderezada &amp; Pintura</p>
+          <p class="agent-desc">
+            Envía fotos del daño y recibe una cotización inmediata. 15 años en reparación
+            automotriz. Análisis visual con IA: detecta área, severidad y precio estimado.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40axel%20Hola%2C%20necesito%20una%20cotizaci%C3%B3n%20de%20reparaci%C3%B3n"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Axel en WhatsApp"
+          >
+            Conversar con Axel →
+          </a>
+        </article>
+
+        <!-- Gabi -->
+        <article class="agent-card" data-agent="gabi" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <rect x="5" y="3" width="22" height="26" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="9" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="9" y1="15" x2="23" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="9" y1="20" x2="17" y2="20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">GR Consulting</span>
+          </div>
+          <h3 class="agent-name">Gabi</h3>
+          <p class="agent-role mono">Finanzas · Legal</p>
+          <p class="agent-desc">
+            Experta en contabilidad, declaraciones SRI, nómina, IESS y derecho corporativo.
+            Constitución de empresas y cumplimiento UAFE en Ecuador.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40gabi%20Hola%2C%20necesito%20asesor%C3%ADa%20financiera%20y%20legal"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Gabi en WhatsApp"
+          >
+            Conversar con Gabi →
+          </a>
+        </article>
+
+        <!-- Ángela -->
+        <article class="agent-card" data-agent="angela" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M16 5C11.03 5 7 9.03 7 14C7 18.97 11.03 23 16 23C20.97 23 25 18.97 25 14C25 9.03 20.97 5 16 5Z" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="16" y1="10" x2="16" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="14" x2="20" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 23L7 28H25L22 23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">MedBeneficios</span>
+          </div>
+          <h3 class="agent-name">Ángela</h3>
+          <p class="agent-role mono">Asistencia Médica</p>
+          <p class="agent-desc">
+            Asistente médica virtual 24/7. Explica síntomas, interpreta resultados de
+            laboratorio y orienta hacia el especialista adecuado. Disponible en 6 idiomas.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40angela%20Hola%2C%20me%20gustar%C3%ADa%20saber%20sobre%20MedBeneficios"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Ángela en WhatsApp"
+          >
+            Conversar con Ángela →
+          </a>
+        </article>
+
+        <!-- Paula -->
+        <article class="agent-card" data-agent="paula" data-reveal>
+          <div class="agent-glow" aria-hidden="true"></div>
+          <div class="agent-top">
+            <div class="agent-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M4 28V16L16 6L28 16V28H20V21H12V28H4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <rect x="13" y="21" width="6" height="7" stroke="currentColor" stroke-width="1"/>
+              </svg>
+            </div>
+            <span class="agent-company mono">PropElite</span>
+          </div>
+          <h3 class="agent-name">Paula</h3>
+          <p class="agent-role mono">Bienes Raíces</p>
+          <p class="agent-desc">
+            Asesora inmobiliaria premium para Ecuador y República Dominicana. Propiedades
+            de lujo con G.M.A. Arquitectos. Transparencia total: muestra pros y contras.
+          </p>
+          <a
+            href="https://wa.me/593994837117?text=%40paula%20Hola%2C%20busco%20una%20propiedad"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="agent-cta"
+            aria-label="Conversar con Paula en WhatsApp"
+          >
+            Conversar con Paula →
+          </a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ CÓMO FUNCIONA ░░ -->
+  <section id="como-funciona" class="how-section">
+    <div class="container">
+      <header class="section-header" data-reveal>
+        <span class="section-label mono">EL PROCESO</span>
+        <h2 class="section-title">Así de simple.</h2>
+      </header>
+      <div class="steps-grid">
+        <div class="step" data-reveal>
+          <div class="step-num mono">01</div>
+          <div class="step-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 12h20M10 18h14M10 24h10M6 6h28a2 2 0 012 2v20a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Abre WhatsApp</h3>
+          <p class="step-desc">
+            Contacta el número de OneMind desde tu WhatsApp habitual. No hay apps que descargar
+            ni cuentas que crear.
+          </p>
+        </div>
+        <div class="step-arrow" aria-hidden="true">
+          <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 12h30M26 5l9 7-9 7"/>
+          </svg>
+        </div>
+        <div class="step" data-reveal>
+          <div class="step-num mono">02</div>
+          <div class="step-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="20" cy="20" r="14"/>
+              <circle cx="20" cy="20" r="7"/>
+              <circle cx="20" cy="20" r="2" fill="currentColor" stroke="none"/>
+              <line x1="20" y1="6" x2="20" y2="13"/>
+              <line x1="20" y1="27" x2="20" y2="34"/>
+              <line x1="6" y1="20" x2="13" y2="20"/>
+              <line x1="27" y1="20" x2="34" y2="20"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Aurora te recibe</h3>
+          <p class="step-desc">
+            La mente orquestadora detecta tu idioma, entiende tu necesidad y te da
+            la bienvenida personalizada al ecosistema.
+          </p>
+        </div>
+        <div class="step-arrow" aria-hidden="true">
+          <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 12h30M26 5l9 7-9 7"/>
+          </svg>
+        </div>
+        <div class="step" data-reveal>
+          <div class="step-num mono">03</div>
+          <div class="step-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 6v12l8 4M6 20a14 14 0 1028 0 14 14 0 00-28 0z"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Conecta con el experto</h3>
+          <p class="step-desc">
+            Escribe <code>@nombre</code> para saltar al agente que necesitas. Tu contexto
+            se preserva. Sin repetir información.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ TECNOLOGÍA ░░ -->
+  <section id="tecnologia" class="tech-section">
+    <div class="container">
+      <div class="tech-card" data-reveal>
+        <div class="tech-card-glow" aria-hidden="true"></div>
+        <div class="tech-card-grid" aria-hidden="true"></div>
+        <div class="tech-card-content">
+          <span class="section-label mono">TECNOLOGÍA</span>
+          <h2 class="tech-title">Construido con lo mejor.</h2>
+          <p class="tech-desc">
+            OneMind corre sobre GPT-4o de OpenAI con capacidades de visión artificial,
+            transcripción de audio vía Whisper, integración nativa con WhatsApp Business API,
+            Google Calendar, pagos Payphone y base de datos PostgreSQL en la nube.
+          </p>
+          <div class="tech-pills" role="list" aria-label="Tecnologías">
+            <span class="tech-pill" role="listitem">GPT-4o</span>
+            <span class="tech-pill" role="listitem">Whisper ASR</span>
+            <span class="tech-pill" role="listitem">Vision AI</span>
+            <span class="tech-pill" role="listitem">WhatsApp API</span>
+            <span class="tech-pill" role="listitem">Google Calendar</span>
+            <span class="tech-pill" role="listitem">PostgreSQL</span>
+            <span class="tech-pill" role="listitem">Node.js</span>
+            <span class="tech-pill" role="listitem">Heroku Cloud</span>
+          </div>
+          <a
+            href="https://wa.me/593994837117?text=%40enzo%20Hola%2C%20quiero%20implementar%20OneMind%20en%20mi%20empresa"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-primary btn-lg"
+          >
+            Quiero OneMind para mi empresa →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" class="footer-logo"
+               onerror="this.src='/assets/logos/marketinglab.png'">
+          <p class="footer-tagline">Una creación de MarketingLab Ecuador.</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="#agentes" class="footer-link">Agentes</a>
+          <a href="#como-funciona" class="footer-link">Cómo funciona</a>
+          <a href="#tecnologia" class="footer-link">Tecnología</a>
+          <a
+            href="https://wa.me/593994837117"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer-link"
+          >
+            WhatsApp
+          </a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p class="mono footer-copy">© 2026 MARKETINGLAB · ONEMIND · TODOS LOS DERECHOS RESERVADOS</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

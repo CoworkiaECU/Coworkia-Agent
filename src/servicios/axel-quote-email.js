@@ -132,20 +132,12 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Cotización The PaintBull — ${vehicleTitle}</title>
-  <style>
-@media (prefers-color-scheme: dark) {
-  body.email-body { background-color:#111827 !important; }
-  .email-wrap { background-color:#111827 !important; }
-  .section-white { background:#1E293B !important; }
-  .footer-section { background:#1E293B !important; border-top-color:#374151 !important; }
-}
-  </style>
 </head>
-<body class="email-body" style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
-<div class="email-wrap" style="max-width:660px;margin:30px auto;">
+<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<div style="max-width:660px;margin:30px auto;">
 
   <!-- ══ HEADER ══ -->
   <div style="background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
@@ -176,14 +168,14 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 
   <!-- ══ PRECIO TOTAL — VISIBLE DE INMEDIATO ══ -->
   ${priceRange ? `
-  <div class="section-white" style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
-    <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Invesión estimada para su reparación</div>
+  <div style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
+    <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
     <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
     <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
   </div>` : ''}
 
   <!-- ══ CUERPO ══ -->
-  <div class="section-white" style="background:white;padding:36px 40px 10px;">
+  <div style="background:white;padding:36px 40px 10px;">
 
     <!-- Vehículo + Severidad -->
     <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">

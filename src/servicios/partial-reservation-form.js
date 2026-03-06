@@ -679,7 +679,7 @@ export function extractDataFromMessage(message, currentForm) {
   const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/);
   
   // 🗓️ Detectar "lunes 19 enero 2026" o "lunes 19 enero" o "lunes 19"
-  const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?\b/);
+  const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?(?:\b|(?=[^\d]))/i);
   
   if (fullDateMatch) {
     const [, dayName, dayNum, monthName, yearStr] = fullDateMatch;
@@ -717,13 +717,27 @@ export function extractDataFromMessage(message, currentForm) {
       const keyword = relativeMatch[1];
       if (keyword === 'hoy') {
         updates.date = todayStr;
-      } else {
+      } else if (keyword === 'mañana' || keyword === 'manana') {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
         const tomorrowParts = formatter.formatToParts(tomorrow);
-        const tomorrowStr = `${tomorrowParts.find(p => p.type === 'year').value}-${tomorrowParts.find(p => p.type === 'month').value}-${tomorrowParts.find(p => p.type === 'day').value}`;
-        updates.date = tomorrowStr;
+        updates.date = `${tomorrowParts.find(p => p.type === 'year').value}-${tomorrowParts.find(p => p.type === 'month').value}-${tomorrowParts.find(p => p.type === 'day').value}`;
+      } else {
+        // Nombre de día de semana: calcular el próximo día correspondiente
+        const dayNameMap = {
+          'lunes': 1, 'martes': 2, 'miercoles': 3, 'miércoles': 3,
+          'jueves': 4, 'viernes': 5, 'sabado': 6, 'sábado': 6, 'domingo': 0
+        };
+        const targetDayNum = dayNameMap[keyword];
+        if (targetDayNum !== undefined) {
+          const currentDayNum = today.getDay();
+          let daysAhead = targetDayNum - currentDayNum;
+          if (daysAhead <= 0) daysAhead += 7;
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() + daysAhead);
+          const targetParts = formatter.formatToParts(targetDate);
+          updates.date = `${targetParts.find(p => p.type === 'year').value}-${targetParts.find(p => p.type === 'month').value}-${targetParts.find(p => p.type === 'day').value}`;
+        }
       }
       console.log('[FORM] 📅 Detectado fecha relativa:', updates.date);
     } else if (namedDateMatch) {

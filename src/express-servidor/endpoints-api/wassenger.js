@@ -2098,7 +2098,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           return;
         }
 
-        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente - continuando con respuesta del agente`);
+        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente - mensaje de bienvenida ya enviado`);
+        return; // ✅ El executeHandoff ya envió el mensaje del nuevo agente, no generar respuesta adicional
       } else {
         console.error(`[WASSENGER-V2] ❌ Handoff falló:`, handoffResult.error);
         await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote. Escribe "ayuda" y lo reintentamos.');

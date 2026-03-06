@@ -156,13 +156,13 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     <div style="color:white;font-size:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">The PaintBull</div>
     <div style="color:rgba(255,255,255,0.75);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">Colisiones & Pintura Vehicular · Quito</div>
 
-    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;text-align:left;min-width:280px;">
-      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Cotización preparada para</div>
-      <div style="color:#111827;font-size:22px;font-weight:700;margin-bottom:4px;">${customerName}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-        <span style="color:#6B7280;font-size:13px;">${formatDate}</span>
-        <span style="background:#DC2626;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:1px;">${quoteCode}</span>
+    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 28px;display:inline-block;text-align:left;min-width:300px;">
+      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Cotización preparada para</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px;">
+        <div style="color:#111827;font-size:22px;font-weight:700;line-height:1.2;">${customerName}</div>
+        <span style="background:#DC2626;color:white;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;letter-spacing:1px;white-space:nowrap;flex-shrink:0;margin-top:4px;">${quoteCode}</span>
       </div>
+      <div style="color:#6B7280;font-size:13px;">${formatDate}</div>
     </div>
   </div>
 

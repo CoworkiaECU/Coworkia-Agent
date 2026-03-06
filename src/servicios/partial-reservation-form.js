@@ -318,7 +318,7 @@ export class PartialReservationForm {
         if (!this.freeTrialUsed && isFreeTrialWindowEligible(this.spaceType, this.time)) {
           return '✅ ¡Tu primera visita es GRATIS! 🎁 No necesitas pagar nada.';
         }
-        return `¿Cómo prefieres pagar?\n\n💵 Efectivo\n💳 Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "efectivo", "tarjeta" o "transferencia"`;
+        return `¿Cómo prefieres pagar?\n\n� Tarjeta crédito/débito\n🏦 Transferencia bancaria\n\nEscribe "tarjeta" o "transferencia"`;  
       
       default:
         return `¿Podrías darme más detalles sobre tu reserva${userName}?`;

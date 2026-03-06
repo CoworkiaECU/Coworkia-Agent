@@ -21,7 +21,8 @@ function generateConfirmationEmailHTML(reservationData) {
     wasFree,
     totalPrice,
     reservation,
-    paymentReceipt = null
+    paymentReceipt = null,
+    wifiCode = null
   } = reservationData;
 
   const formatDate = new Date(date).toLocaleDateString('es-EC', {
@@ -169,6 +170,12 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           ${paymentReceiptSection}
+          ${wifiCode ? `
+          <div style="background: linear-gradient(135deg, #4ECDC4, #26A69A); border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center;">
+            <h3 style="color: white; margin: 0 0 15px 0; font-size: 18px;">&#128273; Tu C&oacute;digo WiFi</h3>
+            <div style="background: white; border-radius: 8px; padding: 15px 25px; display: inline-block; font-family: monospace; font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #333;">${wifiCode}</div>
+            <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 14px;">V&aacute;lido por ${durationHours}h desde que te conectes &middot; Solo para hoy</p>
+          </div>` : ''}
           ${priceSection}
 
           <!-- Ubicación -->

@@ -890,6 +890,39 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_active_topics_last_interaction ON active_topics(last_interaction DESC);
       `);
 
+      // ===================================================================
+      // TABLA: Códigos WiFi (integración portal cautivo Mac Mini)
+      // Aurora genera un código por cada reserva pagada/gratuita
+      // El Mac Mini sincroniza estos códigos cada 5 minutos via API
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS wifi_codes (
+          id TEXT PRIMARY KEY,
+          code TEXT UNIQUE NOT NULL,
+          reservation_id TEXT,
+          user_phone TEXT NOT NULL,
+          duration_hours INTEGER NOT NULL DEFAULT 2,
+          valid_for_date DATE NOT NULL,
+          status TEXT NOT NULL DEFAULT 'available'
+            CHECK (status IN ('available', 'synced', 'used', 'expired', 'cancelled')),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          synced_at TIMESTAMP,
+          used_at TIMESTAMP,
+          expires_at TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE,
+          FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE SET NULL
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_reservation ON wifi_codes(reservation_id);
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_user ON wifi_codes(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_status ON wifi_codes(status);
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_date ON wifi_codes(valid_for_date);
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_available ON wifi_codes(status, valid_for_date)
+          WHERE status IN ('available', 'synced');
+      `);
+
       await client.query('COMMIT');
       console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {

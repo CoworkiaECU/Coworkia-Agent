@@ -18,6 +18,7 @@ import {
 import { markJustConfirmed } from './reservation-state.js';
 import reservationRepository from '../database/reservationRepository.js';
 import { sendReservationNotifications } from './notification-helper.js';
+import { generateWifiCode, getWifiCodeForReservation } from './wifi-codes-service.js';
 
 class ConfirmationFlowError extends Error {
   constructor(payload) {
@@ -249,6 +250,119 @@ Responde *SI* para continuar con el pago o *NO* para cancelar 👍`;
 }
 
 /**
+ * 💳 Confirma una reserva cuyo pago ya fue verificado por Aurora.
+ * Se invoca cuando el usuario responde SI al prompt de confirmación de comprobante.
+ */
+async function processPaymentVerificationConfirmation(userProfile, pendingReservation) {
+  const userName = userProfile.name ? `, ${userProfile.name}` : '';
+  const { reservationId, paymentReceipt } = pendingReservation;
+
+  // 1. Confirmar la reserva (el pago ya quedó registrado en DB por processPaymentReceipt)
+  const reservationRecord = await reservationRepository.updateStatus(reservationId, 'confirmed');
+  if (!reservationRecord) {
+    return {
+      success: false,
+      message: '❌ No se encontró la reserva. Por favor contacta al administrador.',
+      needsAction: false
+    };
+  }
+
+  const confirmedDate = reservationRecord.date;
+  const confirmedStart = reservationRecord.start_time;
+  const confirmedEnd = reservationRecord.end_time;
+  const durationHours = reservationRecord.duration_hours || 2;
+  const formattedDate = formatUserDate(confirmedDate);
+
+  // 2. Limpiar confirmación pendiente y registrar como recién confirmado
+  await clearPendingConfirmation(userProfile.userId);
+  await markJustConfirmed(userProfile.userId, reservationId);
+
+  // 3. Generar código WiFi
+  let wifiLine = '';
+  let wifiCode = null;
+  try {
+    const wifiResult = await generateWifiCode({
+      reservationId,
+      userPhone: userProfile.userId,
+      durationHours,
+      validForDate: confirmedDate
+    });
+    if (wifiResult.success) {
+      wifiCode = wifiResult.code;
+      wifiLine = `\n\n🔑 *Código WiFi:* \`${wifiResult.code}\`\n⏱️ Válido por ${durationHours}h desde que te conectes`;
+      console.log('[Confirmation] 🔑 Código WiFi generado para reserva pagada:', wifiResult.code);
+    }
+  } catch (wifiErr) {
+    console.error('[Confirmation] ⚠️ No se pudo generar código WiFi (no bloquea):', wifiErr.message);
+  }
+
+  // 4. Enviar notificaciones (email + calendar) en background
+  if (userProfile.email) {
+    enqueueBackgroundTask(
+      'notifications',
+      'paid-confirmation-notifications',
+      () => sendReservationNotifications({
+        email: userProfile.email,
+        userName: userProfile.name || 'Cliente',
+        date: confirmedDate,
+        startTime: confirmedStart,
+        endTime: confirmedEnd,
+        serviceType: reservationRecord.service_type || 'hotDesk',
+        guestCount: reservationRecord.guest_count || 0,
+        wasFree: false,
+        durationHours,
+        totalPrice: reservationRecord.total_price || 0,
+        reservation: reservationRecord,
+        paymentReceipt,
+        wifiCode
+      }),
+      { circuitId: 'notifications-job' }
+    ).catch(err => console.error('[Confirmation] ❌ Error en notificaciones pago confirmado:', err.message));
+  }
+
+  enqueueBackgroundTask(
+    'calendar-events',
+    'paid-confirmation-calendar',
+    () => createCalendarEvent({
+      userName: userProfile.name || 'Cliente',
+      email: userProfile.email || 'noemail@coworkia.com',
+      date: confirmedDate,
+      startTime: confirmedStart,
+      endTime: confirmedEnd,
+      serviceType: reservationRecord.service_type || 'hotDesk',
+      duration: `${durationHours} horas`,
+      price: reservationRecord.total_price || 0,
+      guestCount: reservationRecord.guest_count || 0
+    }),
+    { circuitId: 'calendar-events-job' }
+  ).catch(err => console.error('[Confirmation] ❌ Error creando evento calendar (pago):', err.message));
+
+  const emailLine = userProfile.email
+    ? '📧 Te enviamos la confirmación por email.'
+    : 'ℹ️ No tengo tu email registrado para enviarte la confirmación.';
+
+  return {
+    success: true,
+    message: `✅ *¡Pago confirmado${userName}!* 🎉
+
+Tu reserva está activa:
+
+📅 *${formattedDate}*
+⏰ *${confirmedStart} - ${confirmedEnd}*
+💰 *Pago:* ✅ Verificado${wifiLine}
+
+    ${emailLine}
+
+📍 *Ubicación:* Whymper 403, Edificio Finistere
+🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+
+¡Te esperamos! 🚀`,
+    needsAction: false,
+    reservation: reservationRecord
+  };
+}
+
+/**
  * 🎯 Procesa confirmación positiva
  */
 export async function processPositiveConfirmation(userProfile, pendingReservation) {
@@ -276,6 +390,11 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     if (!pendingReservation.userId && userProfile.userId) {
       pendingReservation.userId = userProfile.userId;
       console.log('[Confirmation] ✅ userId agregado desde userProfile:', pendingReservation.userId);
+    }
+
+    // 💳 PAGO VERIFICADO: el usuario confirmó un comprobante que Aurora ya procesó
+    if (pendingReservation.paymentVerified === true && pendingReservation.reservationId) {
+      return await processPaymentVerificationConfirmation(userProfile, pendingReservation);
     }
     
     // Agregar userName si existe
@@ -528,6 +647,23 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
       }
 
+      // 🔑 Generar código WiFi para reserva gratuita
+      let freeWifiLine = '';
+      try {
+        const wifiResult = await generateWifiCode({
+          reservationId: reservationRecord.id,
+          userPhone: userProfile.userId,
+          durationHours: pendingReservation.durationHours || 2,
+          validForDate: confirmedDate
+        });
+        if (wifiResult.success) {
+          freeWifiLine = `\n\n🔑 *Código WiFi:* \`${wifiResult.code}\`\n⏱️ Válido por ${wifiResult.durationHours}h desde que te conectes`;
+          console.log('[Confirmation] 🔑 Código WiFi generado para reserva gratuita:', wifiResult.code);
+        }
+      } catch (wifiErr) {
+        console.error('[Confirmation] ⚠️ No se pudo generar código WiFi (no bloquea):', wifiErr.message);
+      }
+
       return {
         success: true,
         message: `✅ *¡Reserva confirmada${userName}!*
@@ -536,7 +672,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-💰 *Precio:* ¡GRATIS! (primera visita)
+💰 *Precio:* ¡GRATIS! (primera visita)${freeWifiLine}
 
     ${confirmationDeliveryLine}
 
@@ -595,6 +731,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 💰 *Pago pendiente:* $${pendingReservation.totalPrice} (efectivo en Coworkia)
 
 ✅ Pagarás directamente al llegar
+ℹ️ _El código WiFi lo recibirás al completar tu pago en recepción._
 
     ${confirmationDeliveryLine}
 

@@ -142,7 +142,9 @@ export async function sendReservationNotifications(notificationData) {
     wasFree = false,
     durationHours = 2,
     totalPrice = 0,
-    reservation
+    reservation,
+    paymentReceipt = null,
+    wifiCode = null
   } = notificationData;
   
   console.log('[Notification-Inline] 🚀 INICIANDO notificaciones inline (email + calendar)...');
@@ -169,7 +171,9 @@ export async function sendReservationNotifications(notificationData) {
       wasFree,
       durationHours,
       totalPrice,
-      reservation
+      reservation,
+      paymentReceipt,
+      wifiCode
     }),
     createConfirmationCalendarEvent({
       email,

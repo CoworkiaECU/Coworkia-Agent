@@ -8,6 +8,7 @@ import {
 } from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps } from './follow-up-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
+import { expireCodesForDate } from './wifi-codes-service.js';
 
 const jobs = [];
 const isProd = process.env.NODE_ENV === 'production';
@@ -122,6 +123,30 @@ export function initScheduler() {
   
   jobs.push(dailyCleanupJob);
   console.log('[CRON] 📅 Limpieza diaria completa: 00:00 (medianoche Ecuador)');
+  
+  // ✅ Expiración de códigos WiFi del día anterior (00:05 Ecuador)
+  const wifiCodeExpiryJob = new CronJob(
+    '5 0 * * *', // 00:05 diario (5 minutos después de la medianoche)
+    async () => {
+      try {
+        // Calcular fecha de ayer en Ecuador (UTC-5)
+        const nowEcuador = new Date(new Date().getTime() - 5 * 60 * 60 * 1000);
+        nowEcuador.setDate(nowEcuador.getDate() - 1);
+        const yesterday = nowEcuador.toISOString().split('T')[0];
+        console.log(`[CRON] 🔒 Expirando códigos WiFi del día: ${yesterday}...`);
+        const expired = await expireCodesForDate(yesterday);
+        console.log(`[CRON] ✅ Códigos WiFi expirados: ${expired}`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error expirando códigos WiFi:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+  
+  jobs.push(wifiCodeExpiryJob);
+  console.log('[CRON] 📅 Expiración de códigos WiFi: 00:05 diario');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

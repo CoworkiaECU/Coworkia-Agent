@@ -13,29 +13,22 @@ export async function generateQuoteCode() {
   try {
     const year = new Date().getFullYear();
     
-    // Obtener el último código del año actual
+    // Obtener el último código del año actual desde collision_quotes
     const lastCode = await databaseService.get(`
-      SELECT metadata 
-      FROM agent_conversations 
-      WHERE agent = 'AXEL' 
-        AND metadata::text LIKE '%"quoteCode":"AXEL-${year}-%'
-      ORDER BY timestamp DESC 
+      SELECT quote_code
+      FROM collision_quotes
+      WHERE quote_code LIKE 'AXEL-${year}-%'
+      ORDER BY quote_code DESC
       LIMIT 1
     `);
     
     let sequence = 1;
     
-    if (lastCode?.metadata) {
-      const meta = typeof lastCode.metadata === 'string' 
-        ? JSON.parse(lastCode.metadata) 
-        : lastCode.metadata;
-      
-      if (meta.quoteCode) {
-        // Extraer número de secuencia: AXEL-2026-0001 → 0001
-        const match = meta.quoteCode.match(/AXEL-\d{4}-(\d{4})/);
-        if (match) {
-          sequence = parseInt(match[1]) + 1;
-        }
+    if (lastCode?.quote_code) {
+      // Extraer número de secuencia: AXEL-2026-0001 → 0001
+      const match = lastCode.quote_code.match(/AXEL-\d{4}-(\d{4})/);
+      if (match) {
+        sequence = parseInt(match[1]) + 1;
       }
     }
     

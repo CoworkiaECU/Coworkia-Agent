@@ -691,6 +691,7 @@ function detectFormContinuation(text) {
 const axelQuoteLocks = new Set();
 const axelMissingPromptAt = new Map();
 const axelEmailConsent = new Map();
+const axelFirstAckTimers = new Map(); // userId → timerId — para evitar doble mensaje al recibir batch de fotos
 const AXEL_MISSING_PROMPT_COOLDOWN_MS = 45000;
 
 async function upsertCollisionQuote({
@@ -1736,10 +1737,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             await saveProfile(userId, profile);
           }
           
-          // Mensaje de bienvenida en primera foto
+          // ─── Primera foto: programar ack con retraso de 2s ───────────────
+          // Si llegan más fotos y se alcanza el máximo antes de los 2s,
+          // el timer se cancela y solo se envía el mensaje de máximo (1 mensaje).
           if (photoStatus.currentCount === 1 && !photoStatus.firstAckSent) {
-            await enviarWhatsApp(userId, `📸 Foto recibida. Envía hasta ${photoStatus.maxPhotos} y escribe *listo* cuando termines.`);
             markFirstAckSent(userId);
+
+            const firstAckTimer = setTimeout(async () => {
+              axelFirstAckTimers.delete(userId);
+              // Solo enviar si el máximo aún NO fue alcanzado
+              const currentSession = await getSession(userId).catch(() => null);
+              if (!currentSession?.maxPhotosAckSent) {
+                await enviarWhatsApp(userId,
+                  `📸 Foto recibida (1/${photoStatus.maxPhotos}).\n\n🚗 Mientras envías las demás, ¿qué vehículo es? Escríbeme *marca, modelo y año*.\nEj: _Toyota Corolla 2021_\n\nCuando las tengas todas escribe *listo* para cotizar.`);
+              }
+            }, 2000);
+            axelFirstAckTimers.set(userId, firstAckTimer);
 
             await saveInteraction({
               userId,
@@ -1754,9 +1767,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               }
             });
             
-            // Timeout reminder
+            // Timeout reminder (20s sin actividad)
             startTimeout(userId, async () => {
-              await enviarWhatsApp(userId, `⏳ Pasaron 20s sin nuevas fotos. Cuando tengas todas listas escribe "listo" para procesar.`);
+              await enviarWhatsApp(userId,
+                `⏳ Pasaron 20s sin nuevas fotos.\n\n🚗 ¿Qué vehículo es? Escribe *marca, modelo y año* y luego *listo* para cotizar.`);
               await saveInteraction({
                 userId,
                 agent: 'AXEL',
@@ -1769,9 +1783,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             });
           }
           
-          // Mensaje cuando alcanza el máximo (solo una vez, evita duplicados)
+          // ─── Máximo de fotos: cancelar primer ack pendiente y enviar único mensaje ─
           if (photoStatus.currentCount >= photoStatus.maxPhotos && !photoStatus.maxPhotosAckSent) {
-            await enviarWhatsApp(userId, `✅ Ya tengo las ${photoStatus.maxPhotos} fotos. Escribe *listo* para analizar y cotizar.`);
+            // Cancelar el ack de primera foto si aún está pendiente
+            const pendingTimer = axelFirstAckTimers.get(userId);
+            if (pendingTimer) {
+              clearTimeout(pendingTimer);
+              axelFirstAckTimers.delete(userId);
+            }
+            await enviarWhatsApp(userId,
+              `✅ Ya tengo las ${photoStatus.maxPhotos} fotos.\n\n🚗 ¿Qué vehículo es? Escribe *marca, modelo y año*.\nEj: _Toyota RAV4 2023_\n\nLuego escribe *listo* para analizar y cotizar.`);
             markMaxPhotosAckSent(userId);
           }
         });

@@ -1366,9 +1366,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ══════════════════════════════════════════════════════════════════════
     // 👔 BOSS COMMANDS: Aluna — cotización de membresía para cliente presencial
     // El jefe dice "cotizar plan10 para Juan | juan@email.com" (opcionalmente | celular)
-    // Solo activo cuando: userId === ADMIN_PHONE + agente ALUNA
+    // Activo en cualquier agente (el patrón "cotizar planX para..." es exclusivo de ALUNA)
     // ══════════════════════════════════════════════════════════════════════
-    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'ALUNA') {
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText) {
       // Patrón: "cotizar plan10 para Juan Pérez | juan@email.com" o "... | 0991234567"
       const alunaAdminMatch = processedText.match(
         /cotizar\s+(plan\s*10|plan\s*20|oficina\s*virtual|sala(?:\s*de?\s*reuniones?)?)\s+para\s+(.+?)\s*\|\s*([^\s|@]+@[^\s|@]+)(?:\s*\|\s*(\+?[\d\s\-]{7,15}))?/i
@@ -1587,9 +1587,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     
     // 💼 ALUNA - Formulario de membresías
     if (profile.activeAgent === 'ALUNA') {
-      // Detectar si el usuario muestra interés en una membresía
-      const membershipInterest = /\b(quiero|me interesa|necesito|busco|solicito)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText);
-      
+      // Detectar si el usuario muestra interés en una membresía (detección amplia)
+      const membershipInterest =
+        // Verbo de acción + plan/membresía (patrón original ampliado)
+        /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz[a-z]*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText) ||
+        // Mención directa de plan específico (plan 10, plan 20, plan mensual)
+        /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText) ||
+        // Mención directa de tipo de membresía
+        /\b(oficina\s*virtual|sala\s*(?:de\s*)?reuniones?|hot\s*desk)\b/i.test(processedText) ||
+        // Petición de cotización o proforma (sin importar qué sigue)
+        /\b(cot[ií]zame|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
+
       if (membershipInterest || hasActiveForm) {
         console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
         try {

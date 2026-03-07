@@ -57,7 +57,8 @@ export async function executeHandoff(
   userLanguage = 'es',
   saveProfile, // Mantenido por compatibilidad pero NO usado
   sendMessage,
-  saveConversation
+  saveConversation,
+  userContext = null
 ) {
   const startTime = Date.now();
   
@@ -110,13 +111,20 @@ export async function executeHandoff(
     const agentHistory = profile.agent_history || {};
     const hasSpokenBefore = agentHistory[toAgent] && agentHistory[toAgent].length > 0;
     
-    const handoffMessages = getHandoffMessages(fromAgent, toAgent, userName, userLanguage, hasSpokenBefore);
+    const handoffMessages = getHandoffMessages(fromAgent, toAgent, userName, userLanguage, hasSpokenBefore, userContext);
     
     if (!handoffMessages || !handoffMessages.entrada) {
       throw new Error(`No se encontró mensaje de entrada para ${toAgent}`);
     }
     
-    // 8️⃣ Enviar mensaje (solo nuevo agente, SILENCIOSO)
+    // 8️⃣a Aurora dice adiós ANTES del delay (calidez humana)
+    if (handoffMessages.despedida) {
+      console.log(`[HANDOFF-MANAGER] 👋 Aurora se despide`);
+      await sendMessage(userId, handoffMessages.despedida);
+      await saveConversation(userId, { role: 'assistant', content: handoffMessages.despedida, agent: fromAgent });
+    }
+
+    // 8️⃣b Nuevo agente entra
     console.log(`[HANDOFF-MANAGER] 👋 ${toAgent} toma el relevo`);
     await sendMessage(userId, handoffMessages.entrada);
     

@@ -861,6 +861,27 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_membership_leads_status ON membership_leads(status);
         CREATE INDEX IF NOT EXISTS idx_membership_leads_created ON membership_leads(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_membership_leads_tour ON membership_leads(tour_scheduled);
+      `); // end large index block
+
+      // Migration: add proforma columns to membership_leads (safe, idempotent)
+      await client.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'membership_leads' AND column_name = 'membership_code'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN membership_code TEXT;
+          END IF;
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'membership_leads' AND column_name = 'quote_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN quote_sent_at TIMESTAMP;
+          END IF;
+        END $$;
+      `);
+
+      await client.query(` -- resume index block placeholder
         
         -- Índices para tablas de pagos
         CREATE INDEX IF NOT EXISTS idx_membership_payments_lead ON membership_payments(membership_lead_id);

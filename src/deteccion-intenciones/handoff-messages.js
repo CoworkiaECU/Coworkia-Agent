@@ -84,7 +84,7 @@ const ENTRY_TEMPLATES = {
   
   // Handoff desde otro agente (transición activa)
   HANDOFF: {
-    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nTe ayudo con {context}. ¿Qué necesitas ahora?\n\nCuando termines, escribe @aurora para volver con Aurora. 😊',
+    es: '¡Hola {userName}! {emoji} Soy {toAgent}.\n\n{contextLine}Te ayudo con {context}. ¿Qué necesitas?\n\nCuando termines, escribe @aurora ✨',
     en: 'Hi {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\nI\'m available right where you left off when you call me with @{toAgentHandle}.\n\nHow can I help you today with {context}?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\nJe suis disponible là où vous vous êtes arrêté quand vous m\'appelez avec @{toAgentHandle}.\n\nComment puis-je vous aider aujourd\'hui avec {context}?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\nSono disponibile da dove sei rimasto quando mi chiami con @{toAgentHandle}.\n\nCome posso aiutarti oggi con {context}?',
@@ -94,15 +94,36 @@ const ENTRY_TEMPLATES = {
 };
 
 /**
+ * Genera el mensaje de despedida de Aurora cuando pasa a un especialista
+ */
+export function getAuroraExitMessage(toAgent, userName, userLanguage = 'es', userContext = null) {
+  const info = AGENT_INFO[toAgent] || {};
+  const name = info.name || toAgent;
+  const emoji = info.emoji || '✨';
+  const contextRef = userContext
+    ? `sobre *"${userContext.substring(0, 60)}"*`
+    : `con ${info.context || 'tu consulta'}`;
+
+  const templates = {
+    es: `¡Paso! ${emoji} Te conecto con *${name}*, nuestra especialista ${contextRef}.\n\nEstoy aquí cuando escribas @aurora + tu consulta ✨`,
+    en: `Connecting you now! ${emoji} *${name}* will help you ${contextRef}.\n\nI'm here when you write @aurora + your question ✨`,
+    fr: `Je vous passe maintenant! ${emoji} *${name}* vous aide ${contextRef}.\n\nJe suis là quand vous écrivez @aurora + votre question ✨`,
+    pt: `Passando agora! ${emoji} *${name}* vai te ajudar ${contextRef}.\n\nEstou aqui quando escrever @aurora + sua consulta ✨`
+  };
+  return templates[userLanguage] || templates.es;
+}
+
+/**
  * Genera mensaje de entrada del nuevo agente
  * @param {string} toAgent - Agente que toma el control
  * @param {string} fromAgent - Agente anterior (null si es primera vez)
  * @param {string} userName - Nombre del usuario
  * @param {string} userLanguage - Idioma ('es', 'en', 'fr', 'it', 'pt', 'qu')
  * @param {boolean} isReturning - Si el usuario ya habló con este agente antes
+ * @param {string|null} userContext - Último mensaje del usuario (para personalizar)
  * @returns {string} Mensaje de entrada
  */
-export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLanguage = 'es', isReturning = false) {
+export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLanguage = 'es', isReturning = false, userContext = null) {
   const info = AGENT_INFO[toAgent] || AGENT_INFO.AURORA;
   const lang = userLanguage || 'es';
   
@@ -120,6 +141,10 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
   
   // Variables para reemplazar
   const fromInfo = fromAgent ? AGENT_INFO[fromAgent] : null;
+  // Línea de contexto: si hay mensaje del usuario, personalizamos el saludo
+  const contextLine = (fromAgent && fromAgent !== toAgent && userContext)
+    ? (lang === 'es' ? `Vi que preguntas por *"${userContext.substring(0, 60)}"* — ` : `I see you asked about *"${userContext.substring(0, 60)}"* — `)
+    : '';
   const replacements = {
     '{userName}': userName,
     '{emoji}': info.emoji,
@@ -127,7 +152,8 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
     '{toAgentHandle}': toAgent?.toLowerCase() || '',
     '{context}': info.context,
     '{fromAgentName}': fromInfo?.name || fromAgent,
-    '{fromAgentHandle}': fromAgent?.toLowerCase() || ''
+    '{fromAgentHandle}': fromAgent?.toLowerCase() || '',
+    '{contextLine}': contextLine
   };
   
   // Aplicar reemplazos
@@ -167,18 +193,24 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es')
  * @param {boolean} isReturning - Si usuario ya estuvo con toAgent antes
  * @returns {{ despedida: null, entrada: string }} Mensajes de handoff
  */
-export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userLanguage = 'es', isReturning = false) {
+export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userLanguage = 'es', isReturning = false, userContext = null) {
   let entryMessage;
+  let exitMessage = null;
   
-  // Caso especial: Aurora regreso desde otro agente
+  // Caso especial: Aurora regresa desde especialista
   if (toAgent === 'AURORA' && fromAgent !== 'AURORA') {
     entryMessage = getAuroraReturnMessage(fromAgent, userName, userLanguage);
   } else {
-    entryMessage = getEntryMessage(toAgent, fromAgent, userName, userLanguage, isReturning);
+    entryMessage = getEntryMessage(toAgent, fromAgent, userName, userLanguage, isReturning, userContext);
+  }
+
+  // Aurora dice adiós cuando pasa a un especialista (mensajes humanos, no silent)
+  if (fromAgent === 'AURORA' && toAgent !== 'AURORA') {
+    exitMessage = getAuroraExitMessage(toAgent, userName, userLanguage, userContext);
   }
   
   return {
-    despedida: null, // V2: Silent handoff
+    despedida: exitMessage,
     entrada: entryMessage
   };
 }

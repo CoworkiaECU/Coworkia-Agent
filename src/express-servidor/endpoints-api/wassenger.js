@@ -2129,7 +2129,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         userLanguage,
         saveProfile,
         enviarWhatsApp,
-        saveConversationMessage
+        saveConversationMessage,
+        processedText || text // contexto del mensaje que disparó el handoff
       );
       
       if (handoffResult.success) {

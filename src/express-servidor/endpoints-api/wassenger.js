@@ -32,6 +32,7 @@ import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation }
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms } from '../../servicios/agent-form-manager.js';
 import { normalizeAgentName } from '../../utils/agent-normalizer.js';
+import { trackAlunaProspect } from '../../database/alunaRepository.js';
 
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
@@ -1600,6 +1601,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
       if (membershipInterest || hasActiveForm) {
         console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
+
+        // 📌 Registrar prospecto Aluna para follow-up automático (24h / 3 días)
+        // No bloqueante: fallo silencioso para no interrumpir el flujo
+        trackAlunaProspect(userId, userName || null, null).catch(() => {});
         try {
           formResult = await processMembershipForm(userId, processedText, profile);
           formResult.userMessage = text;

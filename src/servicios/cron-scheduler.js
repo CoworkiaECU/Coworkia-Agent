@@ -6,7 +6,7 @@ import {
   cleanupOldInteractions,
   cleanupExpiredPartialForms 
 } from '../../scripts/database/cleanup-expired-data.js';
-import { processFollowUps } from './follow-up-service.js';
+import { processFollowUps, processAlunaLeadFollowUps } from './follow-up-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 import { expireCodesForDate } from './wifi-codes-service.js';
 
@@ -87,7 +87,15 @@ export function initScheduler() {
         const result = await processFollowUps();
         console.log(`[CRON] ✅ Follow-up completado: ${result.sent} enviados, ${result.skipped} saltados`);
       } catch (error) {
-        console.error('[CRON] ❌ Error en follow-up:', error);
+        console.error('[CRON] ❌ Error en follow-up genérico:', error);
+      }
+
+      try {
+        console.log('[CRON] 🌙 Verificando prospectos Aluna (24h / 3d)...');
+        const alunaResult = await processAlunaLeadFollowUps();
+        console.log(`[CRON] ✅ Aluna follow-up: ${alunaResult.sent24h} (24h), ${alunaResult.sent3d} (3d), ${alunaResult.skipped} saltados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en Aluna follow-up:', error);
       }
     },
     null,

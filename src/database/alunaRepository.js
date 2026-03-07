@@ -260,6 +260,109 @@ export async function updateMembershipLeadStatus(membershipCode, status, notes =
   console.log(`[ALUNA-REPO] ✅ Lead actualizado: ${membershipCode} → ${status}`);
 }
 
+// ============================================================================
+// ALUNA PROSPECT FOLLOW-UPS - Seguimiento de usuarios con interés en membresías
+// ============================================================================
+
+/**
+ * 📌 Registrar (o actualizar nombre/tipo) a un prospecto de Aluna.
+ * Idempotente: si el usuario ya existe, solo actualiza nombre y tipo si cambian.
+ */
+export async function trackAlunaProspect(userPhone, userName = null, membershipType = null) {
+  await databaseService.ensureInitialized();
+  try {
+    await databaseService.run(
+      `INSERT INTO aluna_prospect_followups (user_phone, user_name, membership_type, interest_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_phone) DO UPDATE
+         SET user_name      = COALESCE($2, aluna_prospect_followups.user_name),
+             membership_type = COALESCE($3, aluna_prospect_followups.membership_type),
+             updated_at     = CURRENT_TIMESTAMP
+         WHERE aluna_prospect_followups.converted_at IS NULL`,
+      [userPhone, userName, membershipType]
+    );
+    console.log(`[ALUNA-REPO] 📌 Prospecto Aluna registrado/actualizado: ${userPhone}`);
+  } catch (err) {
+    // No crítico: no interrumpir el flujo principal si esto falla
+    console.warn('[ALUNA-REPO] ⚠️ trackAlunaProspect no crítico:', err.message);
+  }
+}
+
+/**
+ * 🔍 Prospectos que necesitan follow-up de 24 horas
+ * (han pasado ≥24h desde interest_at, sin followup_24h aún, sin conversión)
+ */
+export async function findProspectsFor24hFollowUp() {
+  await databaseService.ensureInitialized();
+  return databaseService.all(
+    `SELECT user_phone, user_name, membership_type, interest_at
+       FROM aluna_prospect_followups
+      WHERE followup_24h_sent_at IS NULL
+        AND converted_at IS NULL
+        AND interest_at <= NOW() - INTERVAL '24 hours'
+      ORDER BY interest_at ASC
+      LIMIT 50`,
+    []
+  );
+}
+
+/**
+ * 🔍 Prospectos que necesitan follow-up de 3 días
+ * (han pasado ≥72h desde followup_24h_sent_at, sin followup_3d aún, sin conversión)
+ */
+export async function findProspectsFor3dFollowUp() {
+  await databaseService.ensureInitialized();
+  return databaseService.all(
+    `SELECT user_phone, user_name, membership_type, interest_at, followup_24h_sent_at
+       FROM aluna_prospect_followups
+      WHERE followup_24h_sent_at IS NOT NULL
+        AND followup_3d_sent_at IS NULL
+        AND converted_at IS NULL
+        AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'
+      ORDER BY followup_24h_sent_at ASC
+      LIMIT 50`,
+    []
+  );
+}
+
+/** Marca el follow-up de 24h como enviado */
+export async function markProspect24hSent(userPhone) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE aluna_prospect_followups
+        SET followup_24h_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE user_phone = $1`,
+    [userPhone]
+  );
+}
+
+/** Marca el follow-up de 3 días como enviado */
+export async function markProspect3dSent(userPhone) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE aluna_prospect_followups
+        SET followup_3d_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE user_phone = $1`,
+    [userPhone]
+  );
+}
+
+/** Marca al prospecto como convertido (pagó/activó membresía) */
+export async function markAlunaProspectConverted(userPhone) {
+  await databaseService.ensureInitialized();
+  try {
+    await databaseService.run(
+      `UPDATE aluna_prospect_followups
+          SET converted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE user_phone = $1 AND converted_at IS NULL`,
+      [userPhone]
+    );
+    console.log(`[ALUNA-REPO] ✅ Prospecto marcado como convertido: ${userPhone}`);
+  } catch (err) {
+    console.warn('[ALUNA-REPO] ⚠️ markAlunaProspectConverted no crítico:', err.message);
+  }
+}
+
 /**
  * 📊 Obtener estadísticas de leads
  */

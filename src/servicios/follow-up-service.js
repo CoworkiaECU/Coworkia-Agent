@@ -1,7 +1,14 @@
 // src/servicios/follow-up-service.js
 // 🔔 Sistema de seguimiento automático - UNA vez, 2 horas post-transacción
+// + Follow-up específico de Aluna: 24h y 3 días post-consulta de membresías
 
 import databaseService from '../database/database.js';
+import {
+  findProspectsFor24hFollowUp,
+  findProspectsFor3dFollowUp,
+  markProspect24hSent,
+  markProspect3dSent
+} from '../database/alunaRepository.js';
 
 const TWO_HOURS_MS = 120 * 60 * 1000; // 2 horas en milisegundos
 
@@ -207,6 +214,168 @@ export async function sendFollowUpMessage(phoneNumber, message, agent = 'AURORA'
     console.error(`[FOLLOW-UP] ❌ Error enviando mensaje a ${phoneNumber}:`, error);
     return false;
   }
+}
+
+/**
+ * ⏰ Verifica si estamos en horario de Aluna para enviar follow-ups (8am - 7pm Ecuador)
+ */
+export function isWithinAlunaFollowUpHours() {
+  const now = new Date();
+  const ecuadorTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
+  const hour = ecuadorTime.getHours();
+  const isAllowed = hour >= 8 && hour < 19; // 8:00 AM – 7:00 PM
+  console.log(`[ALUNA-FOLLOWUP] ⏰ Hora Ecuador: ${ecuadorTime.toLocaleTimeString('es-EC')} - Aluna permitido: ${isAllowed}`);
+  return isAllowed;
+}
+
+/**
+ * 💌 Genera mensaje de follow-up 24h para Aluna
+ */
+function buildAluna24hMessage(prospect) {
+  const name = (prospect.user_name || '').split(' ')[0] || 'Hola';
+  const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'nuestros planes de membresía';
+  return `Hola ${name} 🌙
+
+Ayer conversamos sobre ${plan} y quería saber si tuviste la oportunidad de revisar la info 😊
+
+¿Tienes alguna duda o necesitas más detalles?
+
+Y si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina. Solo di que eres invitada/o de Aluna en recepción 🏢✨
+
+Sin compromiso, solo para que lo vivas. ¿Cuándo te quedaría bien?`;
+}
+
+/**
+ * 💌 Genera mensaje de follow-up 3 días para Aluna
+ */
+function buildAluna3dMessage(prospect) {
+  const name = (prospect.user_name || '').split(' ')[0] || 'Hola';
+  const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'una membresía';
+  return `Hola ${name} 👋
+
+¿Cómo estás? Hace unos días charlamos sobre ${plan} y quería hacer un último intento antes de cerrar tu expediente 😊
+
+*Mi propuesta concreta:* ven a Coworkia un día completo, completamente gratis.
+
+📍 *Tu día de prueba:*
+• Sin costo, sin restricciones de horario
+• De *8am a 7pm* — usas todo el espacio
+• Hot desk, WiFi ultra rápido, café, locker, sala de reuniones
+• Solo di en recepción que eres invitada/o de Aluna 🏢
+
+Es mi invitación personal para que lo vivas y decidas con info de primera mano.
+
+¿Qué día de esta semana te queda bien? 🗓️
+
+_(Si ya tomaste otra decisión o las circunstancias cambiaron, no hay problema — aquí estaré cuando lo necesites 😊)_`;
+}
+
+/**
+ * 📤 Envía mensaje Aluna y registra en interactions
+ */
+async function sendAlunaFollowUpMessage(prospect, message, followUpType) {
+  try {
+    const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+    const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
+
+    if (!WASSENGER_TOKEN || !WASSENGER_DEVICE_ID) {
+      console.error('[ALUNA-FOLLOWUP] ❌ Credenciales Wassenger no configuradas');
+      return false;
+    }
+
+    const response = await fetch('https://api.wassenger.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+      body: JSON.stringify({
+        phone: prospect.user_phone,
+        message,
+        device: WASSENGER_DEVICE_ID
+      })
+    });
+
+    if (!response.ok) throw new Error(`Wassenger error: ${response.status}`);
+
+    console.log(`[ALUNA-FOLLOWUP] ✅ ${followUpType} enviado a ${prospect.user_phone}`);
+
+    await databaseService.run(
+      `INSERT INTO interactions (
+        user_phone, agent, agent_name, intent_reason, input, output, meta
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        prospect.user_phone,
+        'aluna',
+        'Aluna - Closer Membresías',
+        `aluna_followup_${followUpType}`,
+        '',
+        message,
+        JSON.stringify({ automatic: true, followUp: true, type: followUpType, timestamp: new Date().toISOString() })
+      ]
+    );
+    return true;
+  } catch (err) {
+    console.error(`[ALUNA-FOLLOWUP] ❌ Error enviando a ${prospect.user_phone}:`, err.message);
+    return false;
+  }
+}
+
+/**
+ * 🌙 Proceso principal de follow-up Aluna (24h + 3 días)
+ * Corre cada 30 min desde el cron. Respeta horario 8am-7pm Ecuador.
+ */
+export async function processAlunaLeadFollowUps() {
+  console.log('[ALUNA-FOLLOWUP] 🚀 Iniciando verificación de prospectos Aluna...');
+
+  if (!isWithinAlunaFollowUpHours()) {
+    console.log('[ALUNA-FOLLOWUP] ⏸️ Fuera de horario (8am-7pm). Saltando ejecución.');
+    return { sent24h: 0, sent3d: 0, skipped: 0 };
+  }
+
+  let sent24h = 0, sent3d = 0, skipped = 0;
+
+  // ── RONDA 1: Follow-up de 24 horas ──────────────────────────────────────
+  const prospects24h = await findProspectsFor24hFollowUp();
+  console.log(`[ALUNA-FOLLOWUP] 🔍 Prospectos para 24h: ${prospects24h.length}`);
+
+  for (const prospect of prospects24h) {
+    try {
+      const message = buildAluna24hMessage(prospect);
+      const ok = await sendAlunaFollowUpMessage(prospect, message, '24h');
+      if (ok) {
+        await markProspect24hSent(prospect.user_phone);
+        sent24h++;
+        await new Promise(r => setTimeout(r, 2000)); // pausa entre mensajes
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[ALUNA-FOLLOWUP] ❌ Error 24h ${prospect.user_phone}:`, err.message);
+      skipped++;
+    }
+  }
+
+  // ── RONDA 2: Follow-up de 3 días ─────────────────────────────────────────
+  const prospects3d = await findProspectsFor3dFollowUp();
+  console.log(`[ALUNA-FOLLOWUP] 🔍 Prospectos para 3d: ${prospects3d.length}`);
+
+  for (const prospect of prospects3d) {
+    try {
+      const message = buildAluna3dMessage(prospect);
+      const ok = await sendAlunaFollowUpMessage(prospect, message, '3d');
+      if (ok) {
+        await markProspect3dSent(prospect.user_phone);
+        sent3d++;
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[ALUNA-FOLLOWUP] ❌ Error 3d ${prospect.user_phone}:`, err.message);
+      skipped++;
+    }
+  }
+
+  console.log(`[ALUNA-FOLLOWUP] 📊 Resumen: ${sent24h} enviados (24h), ${sent3d} enviados (3d), ${skipped} saltados`);
+  return { sent24h, sent3d, skipped };
 }
 
 /**

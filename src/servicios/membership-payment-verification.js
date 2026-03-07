@@ -17,6 +17,7 @@
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import db from '../database/postgres-adapter.js';
 import { sendPaymentReceipt, prepareReceiptData } from './payment-receipt-email.js';
+import { markAlunaProspectConverted } from '../database/alunaRepository.js';
 // import { createMembershipTourEvent } from './google-calendar.js'; // TODO: Implementar
 
 // Constantes de validación
@@ -490,7 +491,10 @@ async function approveLead(lead, payment, compositePayment = null) {
     console.log('[PAYMENT-VERIFICATION] 📅 TODO: Programar tour del espacio');
     
     console.log('[PAYMENT-VERIFICATION] ✅ Lead aprobado:', lead.id);
-    
+
+    // 🌙 Marcar prospecto como convertido en el sistema de follow-up de Aluna
+    markAlunaProspectConverted(lead.user_phone).catch(() => {});
+
     return { 
       success: true, 
       receiptNumber: receiptData.receiptNumber,

@@ -944,6 +944,35 @@ class PostgresAdapter {
           WHERE status IN ('available', 'synced');
       `);
 
+      // ===================================================================
+      // TABLA: Seguimiento de prospectos Aluna (sistema de follow-up 24h/3d)
+      // Registra TODOS los usuarios que consultaron sobre membresías,
+      // independientemente de si completaron el formulario.
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS aluna_prospect_followups (
+          user_phone TEXT PRIMARY KEY,
+          user_name TEXT,
+          membership_type TEXT,
+          interest_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          followup_24h_sent_at TIMESTAMP,
+          followup_3d_sent_at TIMESTAMP,
+          converted_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_aluna_prospects_followup_24h
+          ON aluna_prospect_followups(interest_at)
+          WHERE followup_24h_sent_at IS NULL AND converted_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_aluna_prospects_followup_3d
+          ON aluna_prospect_followups(followup_24h_sent_at)
+          WHERE followup_3d_sent_at IS NULL AND converted_at IS NULL;
+      `);
+
       await client.query('COMMIT');
       console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {

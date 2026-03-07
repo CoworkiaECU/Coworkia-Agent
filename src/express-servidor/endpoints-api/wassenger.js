@@ -85,57 +85,43 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   ⏱️ DEBOUNCE: Agrupar webhooks rápidos del mismo usuario
-   Previene race conditions cuando usuarios envían múltiples
-   mensajes/fotos en < 500ms. Agrupa todo en un solo
-   procesamiento para evitar saturar el pool de PostgreSQL.
-   
-   OPTIMIZACIÓN: Solo aplica delay si hay mensajes múltiples
-   en ráfaga. Mensajes individuales se procesan inmediatamente.
+   ⏱️ DEBOUNCE: Agrupar webhooks del mismo usuario en ráfaga
+   Previene race conditions y mejora UX cuando el usuario envía
+   su pensamiento en varios mensajes cortos seguidos (patrón
+   común en WhatsApp). Siempre espera la ventana completa antes
+   de procesar, extendiendo el timer con cada mensaje nuevo.
 ───────────────────────────────────────────────────────────── */
 const pendingWebhooks = new Map(); // userId → { timer, handlers: [], count }
-const DEBOUNCE_WINDOW_MS = 500; // 500ms - solo para ráfagas
+const DEBOUNCE_WINDOW_MS = 1500; // 1.5s: acumula ráfagas de mensajes separados
 
 /**
- * Agrupa webhooks del mismo usuario que lleguen en ráfaga rápida.
- * Si es el primer mensaje, ejecuta INMEDIATAMENTE.
- * Si llegan más mensajes en < 500ms, agrupa y espera.
- * 🔥 FIX: Guarda TODOS los handlers en array para procesarlos secuencialmente
+ * Agrupa webhooks del mismo usuario que lleguen en ráfaga.
+ * Todos los mensajes esperan la ventana completa antes de procesarse.
+ * Cada mensaje adicional reinicia el timer (ventana deslizante).
+ * Los mensajes acumulados se procesan secuencialmente al final.
  */
 function debounceUserWebhook(userId, handler) {
-  // Si ya hay un timer activo (ráfaga detectada)
   if (pendingWebhooks.has(userId)) {
     const existing = pendingWebhooks.get(userId);
     clearTimeout(existing.timer);
-    existing.handlers.push(handler); // 🔥 Agregar handler al array
+    existing.handlers.push(handler);
     existing.count++;
     console.log(`[DEBOUNCE] 📦 Mensaje ${existing.count} de ${userId}, reagrupando`);
-    
-    // Crear nuevo timer para la ráfaga
-    existing.timer = setTimeout(async () => {
-      const allHandlers = existing.handlers;
-      pendingWebhooks.delete(userId);
-      console.log(`[DEBOUNCE] ✅ Procesando ${allHandlers.length} mensajes de ${userId}`);
-      
-      // 🔥 Ejecutar TODOS los handlers secuencialmente
-      for (const h of allHandlers) {
-        await h();
-      }
-    }, DEBOUNCE_WINDOW_MS);
   } else {
-    // Primer mensaje - ejecutar INMEDIATAMENTE
-    console.log(`[DEBOUNCE] ⚡ Mensaje único de ${userId} - procesando inmediatamente`);
-    
-    // Marcar usuario como "en proceso" para detectar ráfagas
-    const timer = setTimeout(() => {
-      pendingWebhooks.delete(userId);
-    }, DEBOUNCE_WINDOW_MS);
-    
-    pendingWebhooks.set(userId, { timer, handlers: [handler], count: 1 }); // 🔥 Array de handlers
-    
-    // Ejecutar inmediatamente
-    handler();
+    pendingWebhooks.set(userId, { timer: null, handlers: [handler], count: 1 });
+    console.log(`[DEBOUNCE] ⏱️ Iniciando ventana ${DEBOUNCE_WINDOW_MS}ms para ${userId}`);
   }
+
+  // Siempre (re)programar el timer — ventana se extiende con cada mensaje nuevo
+  const state = pendingWebhooks.get(userId);
+  state.timer = setTimeout(async () => {
+    const allHandlers = state.handlers;
+    pendingWebhooks.delete(userId);
+    console.log(`[DEBOUNCE] ✅ Procesando ${allHandlers.length} mensaje(s) de ${userId}`);
+    for (const h of allHandlers) {
+      await h();
+    }
+  }, DEBOUNCE_WINDOW_MS);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1392,7 +1378,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const _hasSI  = _dSCIS(processedText);
       const _hasAF  = !!currentAgentForm;
       const _hasFCont = detectFormContinuation(processedText);
-      const _shouldForm = !_hasVAP && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
+      // 🔥 FIX: No interceptar mensajes con keywords de Aluna si no hay form Aurora activo.
+      // Evita que isReservationIntent (que matchea 'tienen', 'ofrecen', etc.) tape el handoff a Aluna.
+      const _alunaKeywords = ['membresía','membresias','membresías','membresia','plan mensual','planes mensuales','planes','plan 10','plan 20','plan10','plan20'];
+      const _isAlunaIntent = !_hasAF && _alunaKeywords.some(k => (processedText || '').toLowerCase().includes(k));
+      const _shouldForm = !_hasVAP && !_isAlunaIntent && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
 
       // ① Interceptar SI/NO pendiente ANTES de ir al LLM
       const _auroraEarlyPending = await getPendingConfirmation(userId).catch(() => null);

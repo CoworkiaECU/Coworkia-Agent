@@ -84,7 +84,7 @@ const ENTRY_TEMPLATES = {
   
   // Handoff desde otro agente (transición activa)
   HANDOFF: {
-    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nTe ayudo con {context}. ¿Qué necesitas ahora?',
+    es: '¡Hola {userName}! {emoji} Soy {toAgent}, tomo el relevo desde aquí.\n\nTe ayudo con {context}. ¿Qué necesitas ahora?\n\nCuando termines, escribe @aurora para volver con Aurora. 😊',
     en: 'Hi {userName}! {emoji} I\'m {toAgent}, taking over from here.\n\nI\'m available right where you left off when you call me with @{toAgentHandle}.\n\nHow can I help you today with {context}?',
     fr: 'Bonjour {userName}! {emoji} Je suis {toAgent}, je prends le relais maintenant.\n\nJe suis disponible là où vous vous êtes arrêté quand vous m\'appelez avec @{toAgentHandle}.\n\nComment puis-je vous aider aujourd\'hui avec {context}?',
     it: 'Ciao {userName}! {emoji} Sono {toAgent}, prendo il controllo da qui.\n\nSono disponibile da dove sei rimasto quando mi chiami con @{toAgentHandle}.\n\nCome posso aiutarti oggi con {context}?',
@@ -156,15 +156,7 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es')
   return templates[userLanguage] || templates.es;
 }
 
-/**
- * DEPRECADO: Mensaje de despedida
- * En sistema V2 (silent handoff), el agente saliente NO habla
- * Solo se conserva para compatibilidad temporal
- */
-export function getExitMessage(fromAgent, toAgent, userName, userLanguage = 'es') {
-  console.warn('[HANDOFF-MESSAGES] ⚠️ getExitMessage() está deprecado en V2 (silent handoff)');
-  return null; // Silent handoff: el agente saliente no habla
-}
+// getExitMessage() eliminada — V2 usa silent handoff, el agente saliente no habla
 
 /**
  * API unificada para handoffs

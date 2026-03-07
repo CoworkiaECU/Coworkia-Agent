@@ -175,35 +175,4 @@ export async function executeHandoff(
   }
 }
 
-/**
- * Verifica si un handoff está en progreso para un usuario
- * (DEPRECADO v735: AgentStateManager.isUpdateInProgress() es el correcto)
- * 
- * @param {string} userId - ID del usuario
- * @returns {boolean}
- * @deprecated Usar AgentStateManager.isUpdateInProgress()
- */
-export function isHandoffInProgress(userId) {
-  // Siempre devolver false - esta función ya no usa locks propios
-  console.warn('[HANDOFF-MANAGER] ⚠️ isHandoffInProgress() deprecada - usar AgentStateManager.isUpdateInProgress()');
-  return false;
-}
-
-/**
- * Obtiene estadísticas de handoffs (para monitoreo)
- * @returns {Object} - { activeHandoffs, totalLocks }
- * @deprecated v735: Locks movidos a AgentStateManager
- */
-export function getHandoffStats() {
-  console.warn('[HANDOFF-MANAGER] ⚠️ getHandoffStats() deprecada - locks en AgentStateManager');
-  return {
-    activeHandoffs: 0,
-    userIds: []
-  };
-}
-
-export default {
-  executeHandoff,
-  isHandoffInProgress,
-  getHandoffStats
-};
+export default { executeHandoff };

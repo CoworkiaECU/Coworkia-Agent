@@ -255,10 +255,11 @@ export const FORM_SCHEMAS = {
   },
 
   ALUNA: {
-    required: ['membershipType', 'fullName', 'email', 'phone'],
-    optional: ['startDate', 'specialRequirements', 'companyName'],
+    required: ['membershipType', 'fullName', 'email'],
+    optional: ['phone', 'startDate', 'specialRequirements', 'companyName'],
     defaults: {
       // ✅ FIX: NO defaults para startDate - Usuario debe especificar o se asume "cuanto antes"
+      // proformaSent: se usa internamente para evitar reenvíos; no tiene pregunta en el schema
     },
     labels: {
       membershipType: '🎫 Tipo de membresía',
@@ -272,8 +273,8 @@ export const FORM_SCHEMAS = {
     questions: {
       membershipType: '¿Qué plan te interesa? (Plan 10 [$140], Plan 20 [$250], Oficina Virtual [$365/año], Sala Reuniones [$39])',
       fullName: '¡Genial! 🎉 Para preparar tu membresía, ¿cuál es tu nombre completo? 👤',
-      email: 'Perfecto. ¿A qué email te envío los detalles? 📧',
-      phone: 'Y para coordinar, ¿cuál es tu mejor número de contacto? 📱'
+      email: 'Perfecto. ¿A qué email te envío la proforma con todos los detalles? 📧',
+      phone: 'Y si quieres que te contactemos también por llamada, ¿cuál es tu número? 📱 (opcional)'
     }
   },
 

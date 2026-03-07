@@ -1363,6 +1363,42 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
     // ══════════════════════════════════════════════════════════════════════
 
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Aluna — cotización de membresía para cliente presencial
+    // El jefe dice "cotizar plan10 para Juan | juan@email.com" (opcionalmente | celular)
+    // Solo activo cuando: userId === ADMIN_PHONE + agente ALUNA
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'ALUNA') {
+      // Patrón: "cotizar plan10 para Juan Pérez | juan@email.com" o "... | 0991234567"
+      const alunaAdminMatch = processedText.match(
+        /cotizar\s+(plan\s*10|plan\s*20|oficina\s*virtual|sala(?:\s*de?\s*reuniones?)?)\s+para\s+(.+?)\s*\|\s*([^\s|@]+@[^\s|@]+)(?:\s*\|\s*(\+?[\d\s\-]{7,15}))?/i
+      );
+      if (alunaAdminMatch) {
+        const [, rawPlan, clientName, clientEmail, clientPhone] = alunaAdminMatch;
+        const trimmedName = clientName.trim();
+        const trimmedEmail = clientEmail.trim();
+        const trimmedPhone = clientPhone?.trim() || null;
+
+        console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
+        await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}`);
+
+        const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
+        const planKey = normalizePlanKey(rawPlan);
+        const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, fromAdmin: true });
+
+        if (proResult.success) {
+          await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
+        }
+
+        const reply = proResult.success
+          ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${proResult.proformaCode}`
+          : `❌ Error enviando proforma: ${proResult.error}`;
+        await enviarWhatsApp(userId, reply);
+        return;
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
     // 📋 Inicializar variables de formulario para todo el scope
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
@@ -1559,6 +1595,30 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         try {
           formResult = await processMembershipForm(userId, processedText, profile);
           formResult.userMessage = text;
+
+          // 💜 PROFORMA: Enviar email automáticamente en cuanto tengamos plan + nombre + email
+          if (formResult.form?.data) {
+            const fd = formResult.form.data;
+            if (fd.membershipType && fd.fullName && fd.email && !fd.proformaSent) {
+              try {
+                const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
+                const planKey = normalizePlanKey(fd.membershipType);
+                const proResult = await sendAlunaProforma({ clientName: fd.fullName, clientEmail: fd.email, planKey, fromAdmin: false });
+                if (proResult.success) {
+                  fd.proformaSent = true;
+                  formResult.form.data.proformaSent = true;
+                  await saveAgentForm(userId, 'ALUNA', formResult.form.toJSON(), 120);
+                  await saveAlunaLeadFromProforma({ userId, clientName: fd.fullName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
+                  console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${fd.email} (${proResult.planName})`);
+                  // Notificar brevemente al usuario (sin interrumpir el flujo del formulario)
+                  await enviarWhatsApp(userId, `📧 ¡Listo! Te acabo de enviar la proforma de *${proResult.planName}* a ${fd.email} 💜\n\nRevisa tu bandeja de entrada (y spam por si las dudas 😊)`);
+                  await saveConversationMessage(userId, { role: 'assistant', content: `Proforma de ${proResult.planName} enviada a ${fd.email}`, agent: 'ALUNA' });
+                }
+              } catch (proErr) {
+                console.error('[ALUNA-PROFORMA] ⚠️ Error enviando proforma (no crítico):', proErr.message);
+              }
+            }
+          }
           
           // 🎯 Usar función compartida para manejar resultado
           const handled = await handleFormResult(formResult, userId, 'ALUNA', profile);

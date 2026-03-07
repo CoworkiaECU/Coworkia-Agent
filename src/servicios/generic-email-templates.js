@@ -1146,6 +1146,233 @@ export function generateGabiEmailHTML(leadData) {
   `;
 }
 
-/** * � ALUNA - Coworkia Membresías
- * Colores: Verde agua (#4ECDC4, #44A08D)
+/**
+ * 💜 ALUNA PROFORMA — Email de propuesta de membresía específica
+ * Solo muestra el plan elegido. Colores: Violeta profundo (#5B21B6 → #7C3AED)
  */
+export function generateAlunaProformaHTML(data) {
+  const {
+    clientName,
+    planName,
+    planPrice,
+    planDays,
+    planHours,
+    planBenefits = [],
+    planIdeal = '',
+    proformaCode = '',
+    coworkiaWhatsApp = '593994837117'
+  } = data;
+
+  const benefitsList = planBenefits.map(b => `
+    <div style="display: flex; align-items: flex-start; margin: 10px 0;">
+      <span style="color: #7C3AED; font-size: 18px; margin-right: 10px; flex-shrink: 0;">✦</span>
+      <span style="color: #374151; font-size: 15px; line-height: 1.5;">${b}</span>
+    </div>`).join('');
+
+  const waText = encodeURIComponent(`Hola Aluna, recibí la proforma de ${planName} y me interesa. ¿Cómo procedo?`);
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu propuesta de membresía — Coworkia</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #F5F3FF; margin: 0; padding: 20px 0;">
+
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 24px rgba(91,33,182,0.12);">
+
+    <div style="background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 60%, #8B5CF6 100%); text-align: center; padding: 48px 24px 40px;">
+      <div style="color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;">COWORKIA · BUSINESS CENTER</div>
+      <div style="color: white; font-size: 40px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 6px;">Aluna</div>
+      <div style="color: rgba(255,255,255,0.85); font-size: 15px; letter-spacing: 1px; margin-bottom: 28px;">Especialista en Membresías</div>
+      <div style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 20px 28px; display: inline-block;">
+        <div style="color: white; font-size: 20px; font-weight: 700; margin-bottom: 4px;">📋 Tu Proforma Personalizada</div>
+        <div style="color: rgba(255,255,255,0.8); font-size: 14px;">preparada especialmente para ti</div>
+      </div>
+    </div>
+
+    <div style="padding: 36px 32px;">
+
+      <div style="margin-bottom: 28px;">
+        <h2 style="color: #1F2937; font-size: 22px; margin: 0 0 8px 0; font-weight: 700;">Hola, ${clientName} 👋</h2>
+        <p style="color: #6B7280; font-size: 15px; margin: 0; line-height: 1.6;">Aquí tienes los detalles del plan que más se ajusta a lo que buscas.</p>
+      </div>
+
+      <div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 2px solid #DDD6FE; border-radius: 16px; padding: 28px; margin-bottom: 28px;">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <div style="background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 10px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; margin-right: 14px; flex-shrink: 0;">
+            <span style="color: white; font-size: 22px;">🎫</span>
+          </div>
+          <div>
+            <div style="color: #5B21B6; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px;">MEMBRESÍA COWORKIA</div>
+            <div style="color: #1F2937; font-size: 24px; font-weight: 800;">${planName}</div>
+          </div>
+        </div>
+
+        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #DDD6FE; margin-bottom: 18px; text-align: center;">
+          <div style="color: #6B7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">INVERSIÓN</div>
+          <div style="color: #5B21B6; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${planPrice}</div>
+        </div>
+
+        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #EDE9FE; margin-bottom: 10px;">
+          <span style="color: #7C3AED; font-size: 16px; margin-right: 8px;">📅</span>
+          <span style="color: #374151; font-size: 15px; font-weight: 600;">${planDays}</span>
+        </div>
+
+        ${planHours ? `
+        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #EDE9FE; margin-bottom: 10px;">
+          <span style="color: #7C3AED; font-size: 16px; margin-right: 8px;">⏱️</span>
+          <span style="color: #374151; font-size: 15px; font-weight: 600;">${planHours}</span>
+        </div>` : ''}
+
+        ${planIdeal ? `
+        <div style="background: linear-gradient(135deg, rgba(91,33,182,0.06), rgba(124,58,237,0.06)); border-radius: 10px; padding: 14px 18px; border: 1px solid #DDD6FE;">
+          <span style="color: #7C3AED; font-size: 15px; margin-right: 8px;">🎯</span>
+          <span style="color: #5B21B6; font-size: 14px; font-weight: 600;">Ideal para: </span>
+          <span style="color: #374151; font-size: 14px;">${planIdeal}</span>
+        </div>` : ''}
+      </div>
+
+      ${planBenefits.length > 0 ? `
+      <div style="margin-bottom: 28px;">
+        <h3 style="color: #1F2937; font-size: 17px; font-weight: 700; margin: 0 0 16px 0;">✨ Todo lo que incluye tu membresía</h3>
+        <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid #EDE9FE;">
+          ${benefitsList}
+        </div>
+      </div>` : ''}
+
+      <div style="background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 14px; padding: 24px; margin-bottom: 28px; text-align: center;">
+        <div style="color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">SOLO EN COWORKIA</div>
+        <div style="color: white; font-size: 22px; font-weight: 800; margin-bottom: 10px;">🤖 Secretaria Virtual con IA</div>
+        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; line-height: 1.6;">Disponible en contratos de 9+ meses. Tu asistente IA disponible 24/7 para agenda, reservas y recordatorios.</p>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 28px;">
+        <p style="color: #6B7280; font-size: 14px; margin: 0 0 16px 0;">¿Todo claro? Escríbeme para confirmar tu membresía 👇</p>
+        <a href="https://wa.me/${coworkiaWhatsApp}?text=${waText}"
+           style="background: linear-gradient(135deg, #5B21B6, #7C3AED); color: white; padding: 16px 36px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 6px 20px rgba(91,33,182,0.35); font-size: 15px;">
+          💬 Confirmar con Aluna
+        </a>
+        <p style="color: #9CA3AF; font-size: 12px; margin: 14px 0 0 0;">También puedes responder directamente a este correo</p>
+      </div>
+
+      <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #E5E7EB;">
+        <h4 style="color: #374151; font-size: 15px; font-weight: 700; margin: 0 0 10px 0;">📍 Dónde estamos</h4>
+        <p style="color: #6B7280; font-size: 14px; margin: 0; line-height: 1.7;">
+          Coworkia Business Center<br>
+          Whymper 403, Edificio Finistere — Planta Baja<br>
+          Quito, Ecuador
+        </p>
+        <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" style="color: #7C3AED; font-size: 13px; text-decoration: none; font-weight: 600; margin-top: 8px; display: inline-block;">Ver en Google Maps →</a>
+      </div>
+
+      ${proformaCode ? `
+      <div style="background: #F5F3FF; border-radius: 10px; padding: 14px 18px; border: 1px solid #DDD6FE; margin-bottom: 8px;">
+        <p style="color: #6B7280; font-size: 12px; margin: 0;"><strong>Código:</strong> <span style="font-family: monospace; color: #5B21B6;">${proformaCode}</span></p>
+      </div>` : ''}
+
+    </div>
+
+    <div style="background: linear-gradient(135deg, #1E1B4B, #312E81); text-align: center; padding: 28px;">
+      <div style="color: #A78BFA; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;">Coworkia</div>
+      <div style="color: rgba(167,139,250,0.7); font-size: 12px; letter-spacing: 2px; margin-bottom: 16px; text-transform: uppercase;">work · connect · grow</div>
+      <div style="color: rgba(167,139,250,0.6); font-size: 12px; line-height: 1.6;">
+        © 2025 Coworkia Ecuador — Espacios que inspiran<br>
+        Whymper 403, Edificio Finistere, Quito
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * 🔀 Dispatcher universal de emails por agente
+ * Centraliza la generación de emails para todos los agentes.
+ * @param {string} agentName - Nombre del agente (ALUNA, GABI, AXEL, ENZO, PAULA, ADRIANA)
+ * @param {string} type - Tipo de email: 'admin' | 'client' | 'proforma'
+ * @param {Object} data - Datos del email
+ * @returns {{ subject: string, html: string }}
+ */
+export function generateEmailForAgent(agentName, type, data) {
+  const clientName = data.clientName || data.userName || 'Cliente';
+
+  switch (agentName) {
+    case 'ALUNA': {
+      if (type === 'proforma') {
+        return {
+          subject: `Tu propuesta de ${data.planName} — Coworkia`,
+          html: generateAlunaProformaHTML(data)
+        };
+      }
+      if (type === 'admin') {
+        const adminHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family: sans-serif; background:#f9fafb; padding: 24px;">
+<div style="max-width:560px; margin:0 auto; background:white; border-radius:12px; padding:28px; border:1px solid #EDE9FE;">
+<h2 style="color:#5B21B6; margin-top:0;">🎫 Nuevo Lead de Membresía</h2>
+<table style="width:100%; font-size:14px; border-collapse:collapse;">
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600; width:160px;">Nombre</td><td style="padding:8px 0; color:#1F2937;">${clientName}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Membresía</td><td style="padding:8px 0; color:#1F2937;">${data.membershipType || '—'}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Precio</td><td style="padding:8px 0; color:#5B21B6; font-weight:700;">${data.price || '—'}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Email</td><td style="padding:8px 0; color:#1F2937;">${data.email || '—'}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Teléfono</td><td style="padding:8px 0; color:#1F2937;">${data.phone || '—'}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Inicio</td><td style="padding:8px 0; color:#1F2937;">${data.startDate || 'Flexible'}</td></tr>
+<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Notas</td><td style="padding:8px 0; color:#1F2937;">${data.specialRequirements || 'Ninguna'}</td></tr>
+${data.leadId ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">Ref. Lead</td><td style="padding:8px 0; color:#1F2937; font-family:monospace;">${data.leadId}</td></tr>` : ''}
+${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:600;">WhatsApp</td><td style="padding:8px 0;"><a href="${data.whatsappLink}" style="color:#7C3AED;">${data.whatsappLink}</a></td></tr>` : ''}
+</table>
+</div></body></html>`;
+        return {
+          subject: `🎫 Nuevo lead membresía: ${clientName} — ${data.membershipType || 'Plan'}`,
+          html: adminHtml
+        };
+      }
+      // type === 'client'
+      return {
+        subject: `✅ Solicitud de membresía confirmada — Coworkia`,
+        html: generateAlunaEmailHTML({ ...data, userName: clientName })
+      };
+    }
+
+    case 'GABI':
+      return {
+        subject: type === 'admin'
+          ? `⚖️ Nueva consultoría: ${clientName}`
+          : `✅ Consultoría confirmada — GR Consulting`,
+        html: generateGabiEmailHTML({ ...data, userName: clientName })
+      };
+
+    case 'AXEL':
+      return {
+        subject: `🚗 Cotización de colisión — ${clientName}`,
+        html: generateAxelEmailHTML({ ...data, userName: clientName })
+      };
+
+    case 'ENZO':
+      return {
+        subject: type === 'admin'
+          ? `📊 Nueva propuesta marketing: ${clientName}`
+          : `✅ Propuesta de marketing — MarketingLab`,
+        html: generateEnzoEmailHTML({ ...data, userName: clientName })
+      };
+
+    case 'PAULA':
+      return {
+        subject: type === 'admin'
+          ? `🏡 Nuevo lead inmobiliario: ${clientName}`
+          : `✅ Búsqueda confirmada — El Morenal`,
+        html: generatePaulaEmailHTML({ ...data, userName: clientName })
+      };
+
+    case 'ADRIANA':
+      return {
+        subject: `🛡️ Solicitud de seguro — ${clientName}`,
+        html: generateAdrianaEmailHTML({ ...data, userName: clientName })
+      };
+
+    default:
+      throw new Error(`[generateEmailForAgent] Agente desconocido: ${agentName}`);
+  }
+}

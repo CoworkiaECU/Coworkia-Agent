@@ -10,7 +10,7 @@
 
 import { sendEmail } from './email.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
-import alunaRepository from '../database/alunaRepository.js';
+import { saveMembershipLead } from '../database/alunaRepository.js';
 
 // ──────────────────────────────────────────────
 // 📋 Datos de los planes (fuente de verdad)
@@ -183,7 +183,7 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
       monthlyFee: plan?.price || null,
     };
 
-    const saved = await alunaRepository.saveMembershipLead(leadData);
+    const saved = await saveMembershipLead(leadData);
     console.log(`[ALUNA-PROFORMA] 💾 Lead guardado: ${saved?.id || code}`);
     return { success: true, leadId: saved?.id || code };
   } catch (error) {

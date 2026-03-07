@@ -1163,9 +1163,14 @@ export function generateAlunaProformaHTML(data) {
     coworkiaWhatsApp = '593994837117'
   } = data;
 
+  // Paleta institucional Coworkia — verde oscuro
+  // Primary: #0F766E (teal-700)  Accent: #0D9488 (teal-600)  Light: #14B8A6
+  // BG light: #F0FDFA  BG mid: #CCFBF1  Border: #99F6E4
+  // Footer: #134E4A → #0F3D3E  Footer text: #5EEAD4
+
   const benefitsList = planBenefits.map(b => `
     <div style="display: flex; align-items: flex-start; margin: 10px 0;">
-      <span style="color: #7C3AED; font-size: 18px; margin-right: 10px; flex-shrink: 0;">✦</span>
+      <span style="color: #0D9488; font-size: 18px; margin-right: 10px; flex-shrink: 0;">✦</span>
       <span style="color: #374151; font-size: 15px; line-height: 1.5;">${b}</span>
     </div>`).join('');
 
@@ -1178,85 +1183,94 @@ export function generateAlunaProformaHTML(data) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tu propuesta de membresía — Coworkia</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #F5F3FF; margin: 0; padding: 20px 0;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #F0FDFA; margin: 0; padding: 20px 0;">
 
-  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 24px rgba(91,33,182,0.12);">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 24px rgba(15,118,110,0.14);">
 
-    <div style="background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 60%, #8B5CF6 100%); text-align: center; padding: 48px 24px 40px;">
-      <div style="color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;">COWORKIA · BUSINESS CENTER</div>
+    <!-- HEADER — Coworkia institucional verde oscuro -->
+    <div style="background: linear-gradient(135deg, #0F766E 0%, #0D9488 60%, #14B8A6 100%); text-align: center; padding: 48px 24px 40px;">
+      <div style="color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;">COWORKIA · BUSINESS CENTER</div>
       <div style="color: white; font-size: 40px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 6px;">Aluna</div>
-      <div style="color: rgba(255,255,255,0.85); font-size: 15px; letter-spacing: 1px; margin-bottom: 28px;">Especialista en Membresías</div>
-      <div style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 20px 28px; display: inline-block;">
+      <div style="color: rgba(255,255,255,0.88); font-size: 15px; letter-spacing: 1px; margin-bottom: 28px;">Especialista en Membresías</div>
+      <div style="background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.28); border-radius: 14px; padding: 20px 28px; display: inline-block;">
         <div style="color: white; font-size: 20px; font-weight: 700; margin-bottom: 4px;">📋 Tu Proforma Personalizada</div>
-        <div style="color: rgba(255,255,255,0.8); font-size: 14px;">preparada especialmente para ti</div>
+        <div style="color: rgba(255,255,255,0.82); font-size: 14px;">preparada especialmente para ti</div>
       </div>
     </div>
 
     <div style="padding: 36px 32px;">
 
+      <!-- Saludo -->
       <div style="margin-bottom: 28px;">
         <h2 style="color: #1F2937; font-size: 22px; margin: 0 0 8px 0; font-weight: 700;">Hola, ${clientName} 👋</h2>
         <p style="color: #6B7280; font-size: 15px; margin: 0; line-height: 1.6;">Aquí tienes los detalles del plan que más se ajusta a lo que buscas.</p>
       </div>
 
-      <div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 2px solid #DDD6FE; border-radius: 16px; padding: 28px; margin-bottom: 28px;">
+      <!-- Card del plan -->
+      <div style="background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%); border: 2px solid #99F6E4; border-radius: 16px; padding: 28px; margin-bottom: 28px;">
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
-          <div style="background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 10px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; margin-right: 14px; flex-shrink: 0;">
+          <div style="background: linear-gradient(135deg, #0F766E, #0D9488); border-radius: 10px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; margin-right: 14px; flex-shrink: 0;">
             <span style="color: white; font-size: 22px;">🎫</span>
           </div>
           <div>
-            <div style="color: #5B21B6; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px;">MEMBRESÍA COWORKIA</div>
+            <div style="color: #0F766E; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px;">MEMBRESÍA COWORKIA</div>
             <div style="color: #1F2937; font-size: 24px; font-weight: 800;">${planName}</div>
           </div>
         </div>
 
-        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #DDD6FE; margin-bottom: 18px; text-align: center;">
+        <!-- Precio -->
+        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #99F6E4; margin-bottom: 18px; text-align: center;">
           <div style="color: #6B7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">INVERSIÓN</div>
-          <div style="color: #5B21B6; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${planPrice}</div>
+          <div style="color: #0F766E; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${planPrice}</div>
         </div>
 
-        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #EDE9FE; margin-bottom: 10px;">
-          <span style="color: #7C3AED; font-size: 16px; margin-right: 8px;">📅</span>
+        <!-- Días -->
+        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #CCFBF1; margin-bottom: 10px;">
+          <span style="color: #0D9488; font-size: 16px; margin-right: 8px;">📅</span>
           <span style="color: #374151; font-size: 15px; font-weight: 600;">${planDays}</span>
         </div>
 
         ${planHours ? `
-        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #EDE9FE; margin-bottom: 10px;">
-          <span style="color: #7C3AED; font-size: 16px; margin-right: 8px;">⏱️</span>
+        <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid #CCFBF1; margin-bottom: 10px;">
+          <span style="color: #0D9488; font-size: 16px; margin-right: 8px;">⏱️</span>
           <span style="color: #374151; font-size: 15px; font-weight: 600;">${planHours}</span>
         </div>` : ''}
 
         ${planIdeal ? `
-        <div style="background: linear-gradient(135deg, rgba(91,33,182,0.06), rgba(124,58,237,0.06)); border-radius: 10px; padding: 14px 18px; border: 1px solid #DDD6FE;">
-          <span style="color: #7C3AED; font-size: 15px; margin-right: 8px;">🎯</span>
-          <span style="color: #5B21B6; font-size: 14px; font-weight: 600;">Ideal para: </span>
+        <div style="background: linear-gradient(135deg, rgba(15,118,110,0.06), rgba(13,148,136,0.06)); border-radius: 10px; padding: 14px 18px; border: 1px solid #99F6E4;">
+          <span style="color: #0D9488; font-size: 15px; margin-right: 8px;">🎯</span>
+          <span style="color: #0F766E; font-size: 14px; font-weight: 600;">Ideal para: </span>
           <span style="color: #374151; font-size: 14px;">${planIdeal}</span>
         </div>` : ''}
       </div>
 
+      <!-- Beneficios -->
       ${planBenefits.length > 0 ? `
       <div style="margin-bottom: 28px;">
         <h3 style="color: #1F2937; font-size: 17px; font-weight: 700; margin: 0 0 16px 0;">✨ Todo lo que incluye tu membresía</h3>
-        <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid #EDE9FE;">
+        <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid #CCFBF1;">
           ${benefitsList}
         </div>
       </div>` : ''}
 
-      <div style="background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 14px; padding: 24px; margin-bottom: 28px; text-align: center;">
+      <!-- IA Diferenciador -->
+      <div style="background: linear-gradient(135deg, #0F766E, #0D9488); border-radius: 14px; padding: 24px; margin-bottom: 28px; text-align: center;">
         <div style="color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">SOLO EN COWORKIA</div>
         <div style="color: white; font-size: 22px; font-weight: 800; margin-bottom: 10px;">🤖 Secretaria Virtual con IA</div>
-        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; line-height: 1.6;">Disponible en contratos de 9+ meses. Tu asistente IA disponible 24/7 para agenda, reservas y recordatorios.</p>
+        <p style="color: rgba(255,255,255,0.92); font-size: 14px; margin: 0; line-height: 1.6;">Disponible en contratos de 9+ meses. Tu asistente IA disponible 24/7 para agenda, reservas y recordatorios.</p>
       </div>
 
+      <!-- CTA WhatsApp -->
       <div style="text-align: center; margin-bottom: 28px;">
         <p style="color: #6B7280; font-size: 14px; margin: 0 0 16px 0;">¿Todo claro? Escríbeme para confirmar tu membresía 👇</p>
         <a href="https://wa.me/${coworkiaWhatsApp}?text=${waText}"
-           style="background: linear-gradient(135deg, #5B21B6, #7C3AED); color: white; padding: 16px 36px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 6px 20px rgba(91,33,182,0.35); font-size: 15px;">
+           style="background: linear-gradient(135deg, #0F766E, #0D9488); color: white; padding: 16px 36px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 6px 20px rgba(15,118,110,0.38); font-size: 15px;">
           💬 Confirmar con Aluna
         </a>
         <p style="color: #9CA3AF; font-size: 12px; margin: 14px 0 0 0;">También puedes responder directamente a este correo</p>
       </div>
 
+      <!-- Ubicación -->
       <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #E5E7EB;">
         <h4 style="color: #374151; font-size: 15px; font-weight: 700; margin: 0 0 10px 0;">📍 Dónde estamos</h4>
         <p style="color: #6B7280; font-size: 14px; margin: 0; line-height: 1.7;">
@@ -1264,21 +1278,23 @@ export function generateAlunaProformaHTML(data) {
           Whymper 403, Edificio Finistere — Planta Baja<br>
           Quito, Ecuador
         </p>
-        <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" style="color: #7C3AED; font-size: 13px; text-decoration: none; font-weight: 600; margin-top: 8px; display: inline-block;">Ver en Google Maps →</a>
+        <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" style="color: #0D9488; font-size: 13px; text-decoration: none; font-weight: 600; margin-top: 8px; display: inline-block;">Ver en Google Maps →</a>
       </div>
 
+      <!-- Código -->
       ${proformaCode ? `
-      <div style="background: #F5F3FF; border-radius: 10px; padding: 14px 18px; border: 1px solid #DDD6FE; margin-bottom: 8px;">
-        <p style="color: #6B7280; font-size: 12px; margin: 0;"><strong>Código:</strong> <span style="font-family: monospace; color: #5B21B6;">${proformaCode}</span></p>
+      <div style="background: #F0FDFA; border-radius: 10px; padding: 14px 18px; border: 1px solid #99F6E4; margin-bottom: 8px;">
+        <p style="color: #6B7280; font-size: 12px; margin: 0;"><strong>Código:</strong> <span style="font-family: monospace; color: #0F766E;">${proformaCode}</span></p>
       </div>` : ''}
 
     </div>
 
-    <div style="background: linear-gradient(135deg, #1E1B4B, #312E81); text-align: center; padding: 28px;">
-      <div style="color: #A78BFA; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;">Coworkia</div>
-      <div style="color: rgba(167,139,250,0.7); font-size: 12px; letter-spacing: 2px; margin-bottom: 16px; text-transform: uppercase;">work · connect · grow</div>
-      <div style="color: rgba(167,139,250,0.6); font-size: 12px; line-height: 1.6;">
-        © 2025 Coworkia Ecuador — Espacios que inspiran<br>
+    <!-- FOOTER institucional -->
+    <div style="background: linear-gradient(135deg, #134E4A, #0F3D3E); text-align: center; padding: 28px;">
+      <div style="color: #5EEAD4; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;">Coworkia</div>
+      <div style="color: rgba(94,234,212,0.7); font-size: 12px; letter-spacing: 2px; margin-bottom: 16px; text-transform: uppercase;">work · connect · grow</div>
+      <div style="color: rgba(94,234,212,0.6); font-size: 12px; line-height: 1.6;">
+        © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         Whymper 403, Edificio Finistere, Quito
       </div>
     </div>

@@ -1253,6 +1253,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
     }
 
+    // 🎯 Siempre detectar si el usuario se presenta explícitamente (cualquier mensaje)
+    // Ej: "soy Diego", "me llamo Diego Villota" → sobrescribe alias de WA como "dievil"
+    if (text) {
+      const strictPattern = /(?:soy|me llamo|mi nombre es)\s+([A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/i;
+      const nameMatch = strictPattern.exec(text);
+      if (nameMatch && nameMatch[1].length > 1) {
+        detectedName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
+      }
+    }
+
     const profile = {
       ...current,
       userId,
@@ -2115,7 +2125,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = originalFromAgent; // ← Usar original, NO el actualizado
       const userLanguage = profile.preferredLanguage || 'es';
-      const userName = profile.whatsappDisplayName || profile.name || 'amigo';
+      const userName = profile.name || profile.whatsappDisplayName || 'amigo';
 
       console.log(`[WASSENGER-V2] 🔀 Handoff detectado: ${fromAgent} → ${targetAgent}`);
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');

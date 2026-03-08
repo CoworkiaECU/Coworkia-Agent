@@ -262,9 +262,9 @@ export async function saveProfile(userId, partialProfile = {}) {
   }
   
   try {
-    // 🔥 SINCRONIZACIÓN NOMBRE: whatsapp_display_name es la fuente de verdad
-    const displayName = partialProfile.whatsappDisplayName || partialProfile.name;
-    const syncedName = displayName || null;
+    // 🔥 NOMBRE: Priorizar nombre real (limpio/formulario/mensaje) sobre alias crudo de WA
+    const displayName = partialProfile.whatsappDisplayName || null;
+    const syncedName = partialProfile.name || displayName || null;
     
     // 🌍 VALIDACIÓN IDIOMA: Solo ES/EN/QU permitidos
     let validatedLanguage = partialProfile.preferredLanguage;

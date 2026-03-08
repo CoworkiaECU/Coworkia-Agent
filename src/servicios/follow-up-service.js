@@ -3,11 +3,16 @@
 // + Follow-up específico de Aluna: 24h y 3 días post-consulta de membresías
 
 import databaseService from '../database/database.js';
+import reservationRepository from '../database/reservationRepository.js';
 import {
   findProspectsFor24hFollowUp,
   findProspectsFor3dFollowUp,
   markProspect24hSent,
-  markProspect3dSent
+  markProspect3dSent,
+  findMembersForRenewalReminder1,
+  findMembersForRenewalReminder2,
+  markRenewalReminder1Sent,
+  markRenewalReminder2Sent
 } from '../database/alunaRepository.js';
 
 const TWO_HOURS_MS = 120 * 60 * 1000; // 2 horas en milisegundos
@@ -435,4 +440,228 @@ export async function processFollowUps() {
     sent,
     skipped
   };
+}
+
+/**
+ * 💌 Genera mensaje de recordatorio de renovación día 25 (5 días antes)
+ */
+function buildRenewalReminder1Message(member) {
+  const name = (member.client_name || '').split(' ')[0] || 'Hola';
+  const plan = member.membership_type ? `*${member.membership_type}*` : 'tu membresía';
+  return `Hola ${name} 🌙 Tu ${plan} vence en 5 días. Cuando quieras renovar, me avisas y te ayudo con todo 😊`;
+}
+
+/**
+ * 💌 Genera mensaje de recordatorio de vencimiento día 30
+ */
+function buildRenewalReminder2Message(member) {
+  const name = (member.client_name || '').split(' ')[0] || 'Hola';
+  const plan = member.membership_type ? `*${member.membership_type}*` : 'tu membresía';
+  return `Hola ${name} 🌟 Hoy se cumple el mes de tu ${plan}. ¿Todo listo para renovar? Cuando digas, estoy aquí ✨`;
+}
+
+/**
+ * 📤 Envía recordatorio de renovación y registra en interactions
+ */
+async function sendRenewalReminderMessage(member, message, reminderType) {
+  try {
+    const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+    const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
+
+    if (!WASSENGER_TOKEN || !WASSENGER_DEVICE_ID) {
+      console.error('[ALUNA-RENEWAL] ❌ Credenciales Wassenger no configuradas');
+      return false;
+    }
+
+    const response = await fetch('https://api.wassenger.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+      body: JSON.stringify({
+        phone: member.user_phone,
+        message,
+        device: WASSENGER_DEVICE_ID
+      })
+    });
+
+    if (!response.ok) throw new Error(`Wassenger error: ${response.status}`);
+
+    console.log(`[ALUNA-RENEWAL] ✅ ${reminderType} enviado a ${member.user_phone}`);
+
+    await databaseService.run(
+      `INSERT INTO interactions (
+        user_phone, agent, agent_name, intent_reason, input, output, meta
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        member.user_phone,
+        'aluna',
+        'Aluna - Closer Membresías',
+        `renewal_reminder_${reminderType}`,
+        '',
+        message,
+        JSON.stringify({ automatic: true, followUp: true, type: `renewal_${reminderType}`, timestamp: new Date().toISOString() })
+      ]
+    );
+    return true;
+  } catch (err) {
+    console.error(`[ALUNA-RENEWAL] ❌ Error enviando a ${member.user_phone}:`, err.message);
+    return false;
+  }
+}
+
+/**
+ * 🌙 Proceso de recordatorios de renovación de membresías (día 25 y día 30)
+ * Corre diariamente a las 9:00am Ecuador.
+ */
+export async function processMembershipRenewalReminders() {
+  console.log('[ALUNA-RENEWAL] 🚀 Iniciando recordatorios de renovación de membresías...');
+
+  let sent1 = 0, sent2 = 0, skipped = 0;
+
+  // ── RONDA 1: Recordatorio 5 días antes (día 25) ─────────────────────────
+  const members1 = await findMembersForRenewalReminder1();
+  console.log(`[ALUNA-RENEWAL] 🔍 Miembros para recordatorio 1 (día 25): ${members1.length}`);
+
+  for (const member of members1) {
+    try {
+      const message = buildRenewalReminder1Message(member);
+      const ok = await sendRenewalReminderMessage(member, message, '1');
+      if (ok) {
+        await markRenewalReminder1Sent(member.id);
+        sent1++;
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[ALUNA-RENEWAL] ❌ Error reminder1 ${member.user_phone}:`, err.message);
+      skipped++;
+    }
+  }
+
+  // ── RONDA 2: Recordatorio de vencimiento (día 30) ────────────────────────
+  const members2 = await findMembersForRenewalReminder2();
+  console.log(`[ALUNA-RENEWAL] 🔍 Miembros para recordatorio 2 (día 30): ${members2.length}`);
+
+  for (const member of members2) {
+    try {
+      const message = buildRenewalReminder2Message(member);
+      const ok = await sendRenewalReminderMessage(member, message, '2');
+      if (ok) {
+        await markRenewalReminder2Sent(member.id);
+        sent2++;
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[ALUNA-RENEWAL] ❌ Error reminder2 ${member.user_phone}:`, err.message);
+      skipped++;
+    }
+  }
+
+  console.log(`[ALUNA-RENEWAL] 📊 Resumen: ${sent1} enviados (día 25), ${sent2} enviados (día 30), ${skipped} saltados`);
+  return { sent1, sent2, skipped };
+}
+
+/**
+ * 💬 Genera mensaje de sugerencia de re-reserva para AURORA
+ */
+function buildRebookReminderMessage(reservation) {
+  const name = (reservation.user_name || '').split(' ')[0] || 'Hola';
+  const serviceLabel = reservation.service_type === 'meetingRoom' ? '*Sala de Reuniones*' : '*Hot Desk*';
+
+  // Día de semana de la reserva original en español
+  const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const reservationDate = new Date(reservation.date + 'T12:00:00'); // mediodía para evitar desfases de zona
+  const dayName = days[reservationDate.getDay()];
+
+  return `Hola ${name} 👋 La semana pasada reservaste el ${serviceLabel} el ${dayName}. ¿Lo agendamos para esta semana también? Solo dime y lo dejamos listo 😊`;
+}
+
+/**
+ * 📤 Envía recordatorio de re-reserva y registra en interactions
+ */
+async function sendRebookReminderMessage(reservation, message) {
+  try {
+    const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+    const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
+
+    if (!WASSENGER_TOKEN || !WASSENGER_DEVICE_ID) {
+      console.error('[AURORA-REBOOK] ❌ Credenciales Wassenger no configuradas');
+      return false;
+    }
+
+    const response = await fetch('https://api.wassenger.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+      body: JSON.stringify({
+        phone: reservation.user_phone,
+        message,
+        device: WASSENGER_DEVICE_ID
+      })
+    });
+
+    if (!response.ok) throw new Error(`Wassenger error: ${response.status}`);
+
+    console.log(`[AURORA-REBOOK] ✅ Recordatorio enviado a ${reservation.user_phone}`);
+
+    await databaseService.run(
+      `INSERT INTO interactions (
+        user_phone, agent, agent_name, intent_reason, input, output, meta
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        reservation.user_phone,
+        'aurora',
+        'Aurora - Coworkia',
+        'rebook_weekly_reminder',
+        '',
+        message,
+        JSON.stringify({
+          automatic: true,
+          followUp: true,
+          type: 'rebook_weekly_reminder',
+          reservationId: reservation.id,
+          timestamp: new Date().toISOString()
+        })
+      ]
+    );
+    return true;
+  } catch (err) {
+    console.error(`[AURORA-REBOOK] ❌ Error enviando a ${reservation.user_phone}:`, err.message);
+    return false;
+  }
+}
+
+/**
+ * 🏢 Proceso de recordatorios de re-reserva semanal (AURORA)
+ * Corre diariamente a las 5:00pm Ecuador.
+ * Busca reservas de hace 7 días y sugiere repetir en la misma semana.
+ */
+export async function processAuroraRebookReminders() {
+  console.log('[AURORA-REBOOK] 🚀 Iniciando recordatorios de re-reserva semanal...');
+
+  let sent = 0, skipped = 0;
+
+  const reservations = await reservationRepository.findReservationsForRebookReminder();
+  console.log(`[AURORA-REBOOK] 🔍 Reservas candidatas: ${reservations.length}`);
+
+  for (const reservation of reservations) {
+    try {
+      const message = buildRebookReminderMessage(reservation);
+      const ok = await sendRebookReminderMessage(reservation, message);
+      if (ok) {
+        await reservationRepository.markRebookReminderSent(reservation.id);
+        sent++;
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[AURORA-REBOOK] ❌ Error ${reservation.user_phone}:`, err.message);
+      skipped++;
+    }
+  }
+
+  console.log(`[AURORA-REBOOK] 📊 Resumen: ${sent} enviados, ${skipped} saltados`);
+  return { sent, skipped };
 }

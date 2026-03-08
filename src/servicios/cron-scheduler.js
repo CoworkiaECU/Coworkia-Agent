@@ -6,7 +6,7 @@ import {
   cleanupOldInteractions,
   cleanupExpiredPartialForms 
 } from '../../scripts/database/cleanup-expired-data.js';
-import { processFollowUps, processAlunaLeadFollowUps } from './follow-up-service.js';
+import { processFollowUps, processAlunaLeadFollowUps, processMembershipRenewalReminders, processAuroraRebookReminders } from './follow-up-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 import { expireCodesForDate } from './wifi-codes-service.js';
 
@@ -155,6 +155,49 @@ export function initScheduler() {
   
   jobs.push(wifiCodeExpiryJob);
   console.log('[CRON] 📅 Expiración de códigos WiFi: 00:05 diario');
+
+  // ✅ Recordatorios de renovación de membresías Aluna
+  // Diario a las 9:00 AM Ecuador. ALUNA avisa 5 días antes (día 25) y el día de vencimiento (día 30)
+  const membershipRenewalJob = new CronJob(
+    '0 9 * * *', // 9:00 AM diario
+    async () => {
+      try {
+        console.log('[CRON] 🌙 Verificando recordatorios de renovación de membresías...');
+        const result = await processMembershipRenewalReminders();
+        console.log(`[CRON] ✅ Renovaciones: ${result.sent1} (día 25), ${result.sent2} (día 30), ${result.skipped} saltados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en recordatorios de renovación:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  jobs.push(membershipRenewalJob);
+  console.log('[CRON] 📅 Recordatorios renovación membresías: 9:00 AM diario');
+
+  // ✅ Recordatorios de re-reserva semanal (AURORA)
+  // Diario a las 5:00 PM Ecuador. AURORA sugiere reservar el mismo servicio del día siguiente
+  // (el usuario usó el espacio hace 7 días = mismo día de semana de mañana)
+  const rebookReminderJob = new CronJob(
+    '0 17 * * *', // 5:00 PM diario
+    async () => {
+      try {
+        console.log('[CRON] 🏢 Verificando recordatorios de re-reserva semanal (AURORA)...');
+        const result = await processAuroraRebookReminders();
+        console.log(`[CRON] ✅ Re-reservas: ${result.sent} enviados, ${result.skipped} saltados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en recordatorios de re-reserva:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  jobs.push(rebookReminderJob);
+  console.log('[CRON] 📅 Recordatorios re-reserva semanal: 5:00 PM diario');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

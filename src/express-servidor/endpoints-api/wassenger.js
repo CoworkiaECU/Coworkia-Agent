@@ -1624,6 +1624,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[ALUNA-FORM] 🛡️ Afirmación simple sin datos de membresía — limpiando formulario, redirigiendo a LLM');
         await clearAgentForm(userId, 'ALUNA');
         // Fall through to LLM
+      } else if (hasActiveForm && ['hot desk', 'day pass', 'reserva', 'reservar', 'sala', 'reunión', 'reunion', 'pagar', 'pago', 'transferencia', 'día gratis', 'dia gratis'].some(k => (processedText || '').toLowerCase().includes(k))) {
+        // Usuario con form de membresía activo menciona keywords de Aurora → limpiar y dejar que el orquestador maneje ALUNA→AURORA
+        console.log('[ALUNA-FORM] 🔄 Aurora keywords detectadas con form activo — limpiando, redirigiendo a AURORA');
+        await clearAgentForm(userId, 'ALUNA');
+        // Fall through to orchestrator (detectar-intencion detectará aluna_aurora_keyword_handoff)
       } else if (membershipInterest || hasActiveForm) {
         console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
 

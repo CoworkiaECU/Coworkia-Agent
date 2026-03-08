@@ -100,7 +100,9 @@ export function getAuroraExitMessage(toAgent, userName, userLanguage = 'es', use
   const info = AGENT_INFO[toAgent] || {};
   const name = info.name || toAgent;
   const emoji = info.emoji || '✨';
-  const contextRef = userContext
+  // Ignorar @menciones puras como contexto — no aportan información real
+  const isRealContext = userContext && !/^@\w+\s*$/.test(userContext.trim());
+  const contextRef = isRealContext
     ? `sobre *"${userContext.substring(0, 60)}"*`
     : `con ${info.context || 'tu consulta'}`;
 
@@ -141,8 +143,10 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
   
   // Variables para reemplazar
   const fromInfo = fromAgent ? AGENT_INFO[fromAgent] : null;
-  // Línea de contexto: si hay mensaje del usuario, personalizamos el saludo
-  const contextLine = (fromAgent && fromAgent !== toAgent && userContext)
+  // Línea de contexto: si hay mensaje del usuario con contenido real, personalizamos el saludo
+  // Si userContext es solo una @mención pura (sin texto adicional), se ignora para evitar saludos ridículos
+  const isRealContext = userContext && !/^@\w+\s*$/.test(userContext.trim());
+  const contextLine = (fromAgent && fromAgent !== toAgent && isRealContext)
     ? (lang === 'es' ? `Vi que preguntas por *"${userContext.substring(0, 60)}"* — ` : `I see you asked about *"${userContext.substring(0, 60)}"* — `)
     : '';
   const replacements = {

@@ -100,11 +100,7 @@ export async function executeHandoff(
       // No fallar handoff por error en form
     }
     
-    // 3️⃣ Delay para transición suave (7 segundos)
-    console.log(`[HANDOFF-MANAGER] ⏱️ Esperando 7s para transición suave...`);
-    await new Promise(resolve => setTimeout(resolve, 7000));
-    
-    // 7️⃣ Generar mensaje de entrada del nuevo agente (V2: Centralized)
+    // 7️⃣ Generar mensajes de handoff ANTES del delay
     const { getHandoffMessages } = await import('../deteccion-intenciones/handoff-messages.js');
     
     // Verificar si usuario ya habló con este agente antes (isReturning)
@@ -123,6 +119,10 @@ export async function executeHandoff(
       await sendMessage(userId, handoffMessages.despedida);
       await saveConversation(userId, { role: 'assistant', content: handoffMessages.despedida, agent: fromAgent });
     }
+
+    // 3️⃣ Delay para transición suave (7 segundos) — el usuario ya vio el adiós, ahora espera la entrada
+    console.log(`[HANDOFF-MANAGER] ⏱️ Esperando 7s para transición suave...`);
+    await new Promise(resolve => setTimeout(resolve, 7000));
 
     // 8️⃣b Nuevo agente entra
     console.log(`[HANDOFF-MANAGER] 👋 ${toAgent} toma el relevo`);

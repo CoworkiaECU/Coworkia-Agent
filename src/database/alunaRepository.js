@@ -363,6 +363,96 @@ export async function markAlunaProspectConverted(userPhone) {
   }
 }
 
+// ============================================================================
+// ALUNA RENEWAL REMINDERS — Recordatorios de renovación de membresías activas
+// ============================================================================
+
+/**
+ * 🔍 Miembros con pago verificado hace ≥25 días sin recordatorio 1 en este ciclo
+ * (5 días antes del vencimiento)
+ */
+export async function findMembersForRenewalReminder1() {
+  await databaseService.ensureInitialized();
+  return databaseService.all(
+    `SELECT
+       ml.id,
+       ml.user_phone,
+       ml.membership_type,
+       ml.client_name,
+       mp.transaction_date AS last_payment_date
+     FROM membership_leads ml
+     JOIN (
+       SELECT DISTINCT ON (membership_lead_id)
+         membership_lead_id, transaction_date
+       FROM membership_payments
+       WHERE status = 'verified'
+       ORDER BY membership_lead_id, transaction_date DESC
+     ) mp ON mp.membership_lead_id = ml.id
+     WHERE ml.status = 'accepted'
+       AND mp.transaction_date <= CURRENT_DATE - INTERVAL '25 days'
+       AND (ml.renewal_reminder_1_sent_at IS NULL
+            OR ml.renewal_reminder_1_sent_at < mp.transaction_date::timestamp)
+     ORDER BY mp.transaction_date ASC
+     LIMIT 50`,
+    []
+  );
+}
+
+/**
+ * 🔍 Miembros con pago verificado hace ≥30 días sin recordatorio 2 en este ciclo
+ * (día de vencimiento)
+ */
+export async function findMembersForRenewalReminder2() {
+  await databaseService.ensureInitialized();
+  return databaseService.all(
+    `SELECT
+       ml.id,
+       ml.user_phone,
+       ml.membership_type,
+       ml.client_name,
+       mp.transaction_date AS last_payment_date
+     FROM membership_leads ml
+     JOIN (
+       SELECT DISTINCT ON (membership_lead_id)
+         membership_lead_id, transaction_date
+       FROM membership_payments
+       WHERE status = 'verified'
+       ORDER BY membership_lead_id, transaction_date DESC
+     ) mp ON mp.membership_lead_id = ml.id
+     WHERE ml.status = 'accepted'
+       AND mp.transaction_date <= CURRENT_DATE - INTERVAL '30 days'
+       AND (ml.renewal_reminder_2_sent_at IS NULL
+            OR ml.renewal_reminder_2_sent_at < mp.transaction_date::timestamp)
+     ORDER BY mp.transaction_date ASC
+     LIMIT 50`,
+    []
+  );
+}
+
+/** Marca el recordatorio 1 de renovación como enviado para este ciclo */
+export async function markRenewalReminder1Sent(membershipLeadId) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE membership_leads
+        SET renewal_reminder_1_sent_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1`,
+    [membershipLeadId]
+  );
+}
+
+/** Marca el recordatorio 2 de renovación como enviado para este ciclo */
+export async function markRenewalReminder2Sent(membershipLeadId) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE membership_leads
+        SET renewal_reminder_2_sent_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1`,
+    [membershipLeadId]
+  );
+}
+
 /**
  * 📊 Obtener estadísticas de leads
  */

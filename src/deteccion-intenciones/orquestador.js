@@ -311,16 +311,28 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
   
   // 3. Detectar handoff y capturar contexto
   const isHandoff = targetAgent !== activeAgent;
-  const handoffContext = isHandoff ? {
+  let handoffContext = isHandoff ? {
     fromAgent: activeAgent,
     toAgent: targetAgent,
     reason: intent.reason,
     userMessage: mensaje,
     timestamp: new Date().toISOString()
   } : null;
-  
+
   if (isHandoff) {
+    // Guardar en perfil para que persista en mensajes siguientes
+    perfil.lastHandoffContext = handoffContext;
     loggers.orquestador.handoff(activeAgent, targetAgent, userId, intent.reason);
+  } else if (!handoffContext && perfil.lastHandoffContext) {
+    // No hay handoff nuevo: recuperar el contexto del handoff anterior
+    // Solo si el agente activo sigue siendo el mismo al que se hizo el handoff
+    const saved = perfil.lastHandoffContext;
+    if (saved.toAgent === targetAgent) {
+      handoffContext = { ...saved, recovered: true };
+    } else {
+      // El agente cambió a uno diferente — contexto anterior ya no aplica
+      perfil.lastHandoffContext = null;
+    }
   }
 
   // 4. Construir contexto reducido (Aurora filtra según agente)
@@ -530,8 +542,9 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   }
 
   // 🔒 AISLAMIENTO: Solo agentes de coworking reciben contexto de reservas
-  const isCoworkingAgent = ['AURORA', 'ALUNA', 'GABI'].includes(targetAgent);
-  const isExternalAgent = ['ENZO', 'ANGELA', 'AXEL', 'PAULA'].includes(targetAgent);
+  // GABI es agente externo (GR Consulting) — no debe recibir formularios ni datos de reservas
+  const isCoworkingAgent = ['AURORA', 'ALUNA'].includes(targetAgent);
+  const isExternalAgent = ['GABI', 'ENZO', 'ANGELA', 'AXEL', 'PAULA'].includes(targetAgent);
   
   // 🛡️ PROTECCIÓN: NO agregar contexto de reservas si es venta de agentes virtuales
   const skipReservationContext = isVirtualAgentSales;
@@ -693,36 +706,51 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
     const queryAfterMention = (handoffContext.userMessage || '').replace(/^@\w+\s*/i, '').trim();
     const hasDirectQuery = queryAfterMention.length > 3;
 
-    lineas.push('\n🤝 CONTEXTO DE TRANSFERENCIA:');
-    lineas.push(`De: ${handoffContext.fromAgent}`);
-    lineas.push(`Motivo: ${handoffContext.reason}`);
-    lineas.push(`Mensaje que disparó handoff: "${handoffContext.userMessage}"`);
-    
-    if (hasDirectQuery) {
-      lineas.push(`Consulta directa del usuario: "${queryAfterMention}"`);
-      lineas.push('\n⚠️ CRÍTICO: El usuario ya hizo su pregunta. Responde DIRECTAMENTE a esa consulta.');
-      lineas.push('Puedes hacer una introducción breve de UNA línea (ej: "¡Hola, soy Aluna!") y luego responder la consulta en el mismo mensaje. NO hagas más preguntas antes de responder.');
+    if (handoffContext.recovered) {
+      // Contexto recuperado de mensajes anteriores — inyectar como memoria de sesión, no como transferencia
+      lineas.push('\n🧠 MEMORIA DE SESIÓN:');
+      if (hasDirectQuery) {
+        lineas.push(`El usuario inició esta conversación pidiendo: "${queryAfterMention}"`);
+        lineas.push('Mantén ese hilo. Responde con continuidad, como si recordaras toda la conversación.');
+      } else {
+        lineas.push(`El usuario llegó desde ${handoffContext.fromAgent}. Continúa la conversación con naturalidad.`);
+      }
     } else {
-      lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
-    }
-    
-    // 🔒 NOTA: No pasamos datos de reserva a agentes externos
-    // Aurora mantiene el formulario pendiente para retomar después
-    if (!isCoworkingAgent && handoffContext.fromAgent === 'AURORA') {
-      lineas.push('\n📝 NOTA: Aurora mantendrá cualquier reserva pendiente para cuando el usuario regrese.');
+      // Handoff fresco — contexto completo de transferencia
+      lineas.push('\n🤝 CONTEXTO DE TRANSFERENCIA:');
+      lineas.push(`De: ${handoffContext.fromAgent}`);
+      lineas.push(`Motivo: ${handoffContext.reason}`);
+      lineas.push(`Mensaje que disparó handoff: "${handoffContext.userMessage}"`);
+
+      if (hasDirectQuery) {
+        lineas.push(`Consulta directa del usuario: "${queryAfterMention}"`);
+        lineas.push('\n⚠️ CRÍTICO: El usuario ya hizo su pregunta. Responde DIRECTAMENTE a esa consulta.');
+        lineas.push('Puedes hacer una introducción breve de UNA línea (ej: "¡Hola, soy Aluna!") y luego responder la consulta en el mismo mensaje. NO hagas más preguntas antes de responder.');
+      } else {
+        lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
+      }
+
+      // 🔒 NOTA: No pasamos datos de reserva a agentes externos
+      // Aurora mantiene el formulario pendiente para retomar después
+      if (!isCoworkingAgent && handoffContext.fromAgent === 'AURORA') {
+        lineas.push('\n📝 NOTA: Aurora mantendrá cualquier reserva pendiente para cuando el usuario regrese.');
+      }
     }
   }
 
   // 💬 MEMORIA CONVERSACIONAL: Últimos 7-8 intercambios (hasta 15 mensajes)
   // Ampliado para mejor contexto en ecosistema multi-agente con handoffs
   if (historial.length > 0) {
-    const historyLimit = isExternalAgent ? 3 : 15;
+    const historyLimit = 15;
     const recentHistory = historial.slice(-historyLimit);
     const filteredHistory = isExternalAgent
       ? recentHistory.filter((m) => {
           const content = (m.content || '').toLowerCase();
+          // Solo eliminar menciones puras (@nombre sin contenido adicional)
+          // Preservar mensajes con texto real tras la mención (son el trigger del handoff)
+          const isPureMention = /^@\w+\s*$/.test((m.content || '').trim());
           return !(
-            content.includes('@') ||
+            isPureMention ||
             /paymentmethod|pago|payphone|transferencia|precio|total/i.test(content) ||
             /fecha/.test(content) ||
             /reserva/.test(content)

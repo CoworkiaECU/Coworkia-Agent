@@ -422,6 +422,62 @@ class ReservationRepository {
       isFull: occupiedCount >= 4
     };
   }
+
+  /**
+   * 🔁 Reservas candidatas para recordatorio de re-reserva (AURORA)
+   * Retorna reservas confirmadas y pagadas de hace exactamente 7 días
+   * que aún no tienen recordatorio enviado y cuyo usuario no tiene
+   * reserva confirmada esta semana.
+   */
+  async findReservationsForRebookReminder() {
+    databaseService.ensureInitialized();
+
+    // Calcular la fecha de hace 7 días en Ecuador (UTC-5)
+    const nowEcuador = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
+    const sevenDaysAgo = new Date(nowEcuador);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const targetDate = sevenDaysAgo.toISOString().split('T')[0];
+
+    // Lunes de la semana actual (para detectar reservas existentes esta semana)
+    const startOfWeek = new Date(nowEcuador);
+    const day = startOfWeek.getDay(); // 0=dom
+    startOfWeek.setDate(startOfWeek.getDate() - day);
+    const weekStart = startOfWeek.toISOString().split('T')[0];
+
+    const query = `
+      SELECT r.id, r.user_phone, r.service_type, r.date, r.start_time, r.end_time,
+             u.name AS user_name
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone_number
+      WHERE r.date = $1
+        AND r.status = 'confirmed'
+        AND r.payment_status = 'paid'
+        AND r.service_type IN ('hotDesk', 'meetingRoom')
+        AND r.rebook_reminder_sent_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM reservations r2
+          WHERE r2.user_phone = r.user_phone
+            AND r2.status = 'confirmed'
+            AND r2.date >= $2
+        )
+      ORDER BY r.date ASC
+      LIMIT 50
+    `;
+
+    const reservations = await databaseService.all(query, [targetDate, weekStart]);
+    return reservations.map(r => ({ ...r, was_free: false }));
+  }
+
+  /**
+   * ✅ Marca una reserva como recordatorio de re-reserva enviado
+   */
+  async markRebookReminderSent(reservationId) {
+    databaseService.ensureInitialized();
+    await databaseService.run(
+      `UPDATE reservations SET rebook_reminder_sent_at = $1 WHERE id = $2`,
+      [new Date().toISOString(), reservationId]
+    );
+  }
 }
 
 export default new ReservationRepository();

@@ -365,6 +365,25 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     }
   }
   
+  // 5.0c) Si ALUNA está activa: detectar keywords Aurora → retorno automático
+  //       Permite la ida y vuelta natural AURORA ↔ ALUNA sin @mención
+  if (currentAgent === 'ALUNA') {
+    if (AURORA_KEYWORDS.some(k => text.includes(k))) {
+      console.log('[DETECT-INTENT] 💡 Aluna detectó tema Aurora - cambiar a AURORA');
+      return {
+        agent: 'AURORA',
+        reason: 'aluna_aurora_keyword_handoff',
+        flags: {
+          agentHandoff: true,
+          suggestedAgent: 'AURORA',
+          fromAgent: currentAgent,
+          targetAgent: 'AURORA',
+          isKeywordMatch: true
+        }
+      };
+    }
+  }
+
   // 5.1) Si agente especializado está activo → MANTENER (sticky)
   if (SPECIALIZED_AGENTS.includes(currentAgent)) {
     console.log(`[DETECT-INTENT] 🔒 Sticky agent activo: ${currentAgent} - MANTENER hasta @mención`);

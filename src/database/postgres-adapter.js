@@ -881,6 +881,36 @@ class PostgresAdapter {
         END $$;
       `);
 
+      // Migration: add renewal reminder columns to membership_leads (safe, idempotent)
+      await client.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'membership_leads' AND column_name = 'renewal_reminder_1_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN renewal_reminder_1_sent_at TIMESTAMP;
+          END IF;
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'membership_leads' AND column_name = 'renewal_reminder_2_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN renewal_reminder_2_sent_at TIMESTAMP;
+          END IF;
+        END $$;
+      `);
+
+      // Migration: add rebook reminder column to reservations (safe, idempotent)
+      await client.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'reservations' AND column_name = 'rebook_reminder_sent_at'
+          ) THEN
+            ALTER TABLE reservations ADD COLUMN rebook_reminder_sent_at TIMESTAMP;
+          END IF;
+        END $$;
+      `);
+
       await client.query(` -- resume index block placeholder
         
         -- Índices para tablas de pagos

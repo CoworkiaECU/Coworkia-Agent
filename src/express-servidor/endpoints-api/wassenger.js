@@ -2127,6 +2127,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userLanguage = profile.preferredLanguage || 'es';
       const userName = profile.name || profile.whatsappDisplayName || 'amigo';
 
+      // 🎯 V833: Para regreso a Aurora, usar el último mensaje con contenido real
+      // (no "@aurora" en sí, sino qué estaba diciendo el usuario antes)
+      let handoffUserContext = processedText || text || '';
+      if (targetAgent === 'AURORA' && /^@aurora\s*$/i.test(handoffUserContext.trim())) {
+        const lastMeaningfulMsg = conversationHistory
+          .filter(m => m.role === 'user' && !/^@\w+\s*$/i.test((m.content || '').trim()))
+          .slice(-1)[0];
+        if (lastMeaningfulMsg?.content) handoffUserContext = lastMeaningfulMsg.content;
+      }
+
       console.log(`[WASSENGER-V2] 🔀 Handoff detectado: ${fromAgent} → ${targetAgent}`);
       loggers.webhook.handoff(fromAgent, targetAgent, userId, resultado.metadata.intent?.reason || 'unknown');
       
@@ -2196,7 +2206,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           saveProfile,
           enviarWhatsApp,
           saveConversationMessage,
-          processedText || text
+          handoffUserContext
         );
 
         if (handoffResult.success) {

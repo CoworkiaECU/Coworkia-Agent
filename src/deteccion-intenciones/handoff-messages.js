@@ -169,16 +169,32 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
  * Aurora: Mensajes especiales cuando regresa desde otro agente
  * Aurora es el hub central, tiene contexto de todos los especialistas
  */
-export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es') {
+export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es', userContext = null) {
   const fromInfo = AGENT_INFO[fromAgent];
+  const fromName = fromInfo?.name || fromAgent;
+  const fromHandle = fromAgent.toLowerCase();
+
+  // Extraer consulta real (strip @aurora si viene en el texto)
+  const cleanContext = userContext
+    ? userContext.replace(/^@aurora\s*/i, '').trim()
+    : '';
+  const hasContext = cleanContext.length > 3;
+
+  // Línea de contexto sobre qué estabas discutiendo con el especialista
+  const topicLine = hasContext
+    ? { es: `Vi que con ${fromName} estabas en: *"${cleanContext.substring(0, 80)}"*`, en: `I see you were discussing with ${fromName}: *"${cleanContext.substring(0, 80)}"*` }
+    : { es: `Venías hablando con ${fromName} sobre ${fromInfo?.context || 'una consulta'}.`, en: `You were with ${fromName} about ${fromInfo?.context || 'a query'}.` };
+
+  const topic = topicLine[userLanguage] || topicLine.es;
+
   const templates = {
-    es: `¡Hola de nuevo ${userName}! ✨ Soy Aurora, tomo el relevo desde aquí.\n\n${fromInfo?.name || fromAgent} está disponible con @${fromAgent.toLowerCase()} si lo necesitas, recordará tu última conversación.\n\n¿En qué te puedo asistir ahora?`,
-    en: `Hello again ${userName}! ✨ I'm Aurora, taking over from here.\n\n${fromInfo?.name || fromAgent} is available with @${fromAgent.toLowerCase()} if you need them, they'll remember your last conversation.\n\nHow can I assist you now?`,
-    fr: `Rebonjour ${userName}! ✨ Je suis Aurora, je prends le relais maintenant.\n\n${fromInfo?.name || fromAgent} est disponible avec @${fromAgent.toLowerCase()} si vous en avez besoin, il se souviendra de votre dernière conversation.\n\nComment puis-je vous aider maintenant?`,
-    it: `Ciao di nuovo ${userName}! ✨ Sono Aurora, prendo il controllo da qui.\n\n${fromInfo?.name || fromAgent} è disponibile con @${fromAgent.toLowerCase()} se ne hai bisogno, ricorderà la tua ultima conversazione.\n\nCome posso aiutarti ora?`,
-    pt: `Olá novamente ${userName}! ✨ Sou Aurora, assumo daqui.\n\n${fromInfo?.name || fromAgent} está disponível com @${fromAgent.toLowerCase()} se precisar, lembrará da sua última conversa.\n\nComo posso ajudá-lo agora?`
+    es: `¡Bienvenido de vuelta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Soy Aurora.\n\n${topic}\n\n¿Continuamos con eso o te ayudo con algo más?`,
+    en: `Welcome back${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ I'm Aurora.\n\n${topic}\n\nShall we continue with that, or can I help you with something else?`,
+    fr: `Bon retour${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Je suis Aurora.\n\n${topic}\n\nContinuons avec ça, ou puis-je vous aider avec autre chose?`,
+    it: `Bentornato${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sono Aurora.\n\n${topic}\n\nContinuiamo con quello, o posso aiutarti con qualcos'altro?`,
+    pt: `Bem-vindo de volta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sou Aurora.\n\n${topic}\n\nContinuamos com isso, ou posso te ajudar com mais alguma coisa?`
   };
-  
+
   return templates[userLanguage] || templates.es;
 }
 
@@ -199,7 +215,7 @@ export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userL
   
   // Caso especial: Aurora regresa desde especialista
   if (toAgent === 'AURORA' && fromAgent !== 'AURORA') {
-    entryMessage = getAuroraReturnMessage(fromAgent, userName, userLanguage);
+    entryMessage = getAuroraReturnMessage(fromAgent, userName, userLanguage, userContext);
   } else {
     entryMessage = getEntryMessage(toAgent, fromAgent, userName, userLanguage, isReturning, userContext);
   }

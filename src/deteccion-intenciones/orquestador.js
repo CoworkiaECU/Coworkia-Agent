@@ -533,38 +533,76 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   const isCoworkingAgent = ['AURORA', 'ALUNA', 'GABI'].includes(targetAgent);
   const isExternalAgent = ['ENZO', 'ANGELA', 'AXEL', 'PAULA'].includes(targetAgent);
   
-  // � PROTECCIÓN: NO agregar contexto de reservas si es venta de agentes virtuales
+  // 🛡️ PROTECCIÓN: NO agregar contexto de reservas si es venta de agentes virtuales
   const skipReservationContext = isVirtualAgentSales;
-  
-  // �🔄 RETORNO A AURORA: Si viene de otro agente y tiene reserva pendiente, marcar para retomar
+
+  // 📅 FASE 4: Sesión nueva tras ausencia — contexto de última sesión para Aurora
+  // Se activa cuando: agente es AURORA, no hay handoff activo, y han pasado más de 4h
+  if (targetAgent === 'AURORA' && !handoffContext && !skipReservationContext && historial.length > 0) {
+    const lastMsg = perfil.lastMessageAt ? new Date(perfil.lastMessageAt) : null;
+    const gapHours = lastMsg ? (Date.now() - lastMsg.getTime()) / 3600000 : 0;
+    const isReturningSession = gapHours > 4 && (perfil.conversationCount || 0) > 2;
+
+    if (isReturningSession) {
+      // Extraer último tema relevante: último mensaje de usuario que no sea @mention ni saludo
+      const lastMeaningful = historial
+        .filter(m => m.role === 'user')
+        .map(m => (m.content || '').trim())
+        .filter(c => c.length > 8 && !/^@\w+\s*$/i.test(c) && !/^(hola|hi|hello|buenas|hey)\s*[.!]?$/i.test(c))
+        .slice(-1)[0];
+
+      // Último agente especialista con el que habló (si no fue Aurora)
+      const lastSpecialist = historial
+        .filter(m => m.role === 'assistant' && m.agent && m.agent !== 'AURORA')
+        .slice(-1)[0]?.agent;
+
+      if (lastMeaningful || lastSpecialist) {
+        const horasRedondeadas = Math.round(gapHours);
+        const tiempoStr = horasRedondeadas < 24
+          ? `${horasRedondeadas}h`
+          : `${Math.round(horasRedondeadas / 24)} día${Math.round(horasRedondeadas / 24) > 1 ? 's' : ''}`;
+
+        lineas.push(`\n🕐 USUARIO REGRESA (ausente ${tiempoStr}):`);
+        if (lastMeaningful) lineas.push(`Último tema: "${lastMeaningful.substring(0, 100)}"`);
+        if (lastSpecialist) lineas.push(`Último agente especialista: ${lastSpecialist}`);
+        lineas.push('⚠️ ACCIÓN: Salúdalo mencionando el contexto anterior de forma natural. No uses frases genéricas.');
+      }
+    }
+  }
+
+  // 🔄 FASE 6: RETORNO A AURORA — reserva pendiente desde antes del handoff
   const isReturningToAurora = targetAgent === 'AURORA' && 
                               handoffContext && 
-                              handoffContext.fromAgent !== 'AURORA' &&
-                              handoffContext.fromAgent !== 'ALUNA';
+                              handoffContext.fromAgent !== 'AURORA';
   
-  if (isReturningToAurora && formData?.form && !formData.form.isComplete() && !skipReservationContext) {
-    lineas.push('\n🔄 USUARIO REGRESA CON RESERVA PENDIENTE:');
-    
-    const form = formData.form;
-    const captured = [];
-    
-    if (form.spaceType) captured.push(form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones');
-    if (form.date) captured.push(`fecha: ${form.date}`);
-    if (form.time) captured.push(`hora: ${form.time}`);
-    if (form.email) captured.push(`email: ${form.email}`);
-    
-    if (captured.length > 0) {
-      lineas.push(`📋 Datos ya capturados: ${captured.join(', ')}`);
+  if (isReturningToAurora && !skipReservationContext) {
+    // Caso A: formulario activo en memoria
+    const pendingForm = formData?.form && !formData.form.isComplete() ? formData.form : null;
+    // Caso B: formulario guardado (savedPartial) aunque no esté activo
+    const savedForm = !pendingForm && formData?.savedPartial?.formData ? formData.savedPartial.formData : null;
+    const anyForm = pendingForm || savedForm;
+
+    if (anyForm) {
+      const data = pendingForm ? pendingForm : anyForm;
+      const captured = [];
+      if (data.spaceType) captured.push(data.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala Reuniones');
+      if (data.date) captured.push(`fecha: ${data.date}`);
+      if (data.time) captured.push(`hora: ${data.time}`);
+      if (data.email) captured.push(`email: ${data.email}`);
+      if (data.durationHours && data.durationHours > 2) captured.push(`duración: ${data.durationHours}h`);
+
+      lineas.push('\n🔄 RESERVA PENDIENTE (antes del handoff):');
+      if (captured.length > 0) lineas.push(`✅ Datos guardados: ${captured.join(', ')}`);
+
+      const missing = pendingForm?.getMissingFields
+        ? pendingForm.getMissingFields()
+        : [];
+      if (missing.length > 0) lineas.push(`❌ Falta: ${missing.join(', ')}`);
+
+      lineas.push('⚠️ ACCIÓN OBLIGATORIA: Saluda al usuario y RETOMA ACTIVAMENTE la reserva —');
+      lineas.push('dile que tienes sus datos guardados y pregunta directamente por lo que falta.');
+      lineas.push('Ejemplo: "Oye, tengo guardada tu reserva para [fecha/espacio]. ¿Terminamos con el [campo faltante]?"');
     }
-    
-    const missing = form.getMissingFields();
-    if (missing.length > 0) {
-      lineas.push(`❌ Falta: ${missing.join(', ')}`);
-    }
-    
-    lineas.push('\n⚠️ ACCIÓN: Ya se le mostró un resumen de su reserva pendiente.');
-    lineas.push('Si el usuario quiere continuar, procede con las preguntas faltantes.');
-    lineas.push('Si quiere cambiar algo, actualiza los datos según indique.');
   }
   
   if (isCoworkingAgent && formData?.summary && !skipReservationContext) {

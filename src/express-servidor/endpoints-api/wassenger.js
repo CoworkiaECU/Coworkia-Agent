@@ -2127,10 +2127,10 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const userLanguage = profile.preferredLanguage || 'es';
       const userName = profile.name || profile.whatsappDisplayName || 'amigo';
 
-      // 🎯 V833: Para regreso a Aurora, usar el último mensaje con contenido real
-      // (no "@aurora" en sí, sino qué estaba diciendo el usuario antes)
+      // 🎯 V833/V834 FASE 5: Para cualquier @mention puro (sin query), usar
+      // el último mensaje con contenido real como contexto del handoff
       let handoffUserContext = processedText || text || '';
-      if (targetAgent === 'AURORA' && /^@aurora\s*$/i.test(handoffUserContext.trim())) {
+      if (/^@\w+\s*$/i.test(handoffUserContext.trim())) {
         const lastMeaningfulMsg = conversationHistory
           .filter(m => m.role === 'user' && !/^@\w+\s*$/i.test((m.content || '').trim()))
           .slice(-1)[0];

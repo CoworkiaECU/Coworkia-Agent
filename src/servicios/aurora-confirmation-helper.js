@@ -101,33 +101,28 @@ export function extractReservationData(message, userProfile) {
         console.log('[DEBUG] 🕐 startTime normalizado:', startTime);
       }
       
-      // 🎯 NUEVA LÓGICA: Solo mirar durationMatch, IGNORAR segundo horario
-      if (durationMatch) {
+      // 🎯 Prioridad: 1) rango start-end en mensaje, 2) durationMatch explícita, 3) default 2h
+      if (timeMatch && timeMatch.length >= 2) {
+        // Hay dos tiempos en el mensaje (ej: "09:00 - 17:00" o "9am hasta las 5pm")
+        const endNormalized = normalizeTimeFormat(timeMatch[1]);
+        const startH = parseInt(startTime.split(':')[0]);
+        const startM = parseInt(startTime.split(':')[1] || '0');
+        const endH = parseInt(endNormalized.split(':')[0]);
+        const endM = parseInt(endNormalized.split(':')[1] || '0');
+        const diffMins = (endH * 60 + endM) - (startH * 60 + startM);
+        if (diffMins > 0 && diffMins <= 13 * 60) {
+          durationHours = Math.round(diffMins / 60 * 10) / 10;
+          console.log(`[AURORA-EXTRACT] 🎯 Rango detectado: ${startTime} → ${endNormalized} = ${durationHours}h`);
+        } else if (durationMatch) {
+          durationHours = Math.min(parseInt(durationMatch[1]), 13);
+        }
+      } else if (durationMatch) {
         const requestedDuration = parseInt(durationMatch[1]);
-        if (process.env.DEBUG === 'true') {
-          console.log('[DEBUG] ⏱️ Duración solicitada explícitamente:', requestedDuration, 'horas');
-        }
-        
-        // SOLO permitir más de 2h si el usuario lo dice EXPLÍCITAMENTE
-        if (requestedDuration > 2 && requestedDuration <= 8) {
-          durationHours = requestedDuration;
-          if (process.env.DEBUG === 'true') {
-            console.log('[DEBUG] ✅ Aceptando duración explícita:', durationHours, 'horas');
-          }
-        } else if (requestedDuration > 8) {
-          durationHours = 2;
-          if (process.env.DEBUG === 'true') {
-            console.log('[DEBUG] ⚠️ Duración muy larga (>8h) - LIMITANDO A 2 HORAS');
-          }
-        } else {
-          durationHours = requestedDuration;
-        }
+        durationHours = Math.min(requestedDuration, 13);
+        console.log('[DEBUG] ⏱️ Duración explícita:', durationHours, 'horas');
       } else {
-        // Sin duración explícita = 2 horas por defecto
+        // Sin duración ni rango = 2 horas por defecto
         durationHours = 2;
-        if (process.env.DEBUG === 'true') {
-          console.log('[DEBUG] 📋 Sin duración especificada - Usando 2 HORAS por defecto');
-        }
       }
       
       // 🎯 CALCULAR endTime desde startTime + duración validada

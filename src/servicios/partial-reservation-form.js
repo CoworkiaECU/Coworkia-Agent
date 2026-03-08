@@ -308,7 +308,7 @@ export class PartialReservationForm {
         return `¿Para qué día${userName}? Puedes decir "hoy", "mañana" o una fecha específica 📅`;
       
       case 'time':
-        return `¿A qué hora te gustaría venir? (horario: 7am - 8pm) ⏰`;
+        return `¿A qué hora te gustaría venir? (horario: 7am - 8pm)\nPuedes indicar también hasta cuándo: por ejemplo "9am hasta las 5pm" ⏰`;
       
       case 'email':
         return `¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación 📧`;
@@ -781,53 +781,64 @@ export function extractDataFromMessage(message, currentForm) {
     console.log('[FORM-DATE] ❌ No se detectó fecha en el mensaje');
   }
 
-  // ⏰ Detectar hora (SIEMPRE intentar, incluso si ya hay un time - permite cambiar hora)
-  const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
-  let detectedTime = null;
-
+  // ⏰ Detectar hora — primero buscar rango (start-end), luego hora simple
   console.log('[FORM-TIME] 🕐 Buscando hora en mensaje:', message);
   console.log('[FORM-TIME] 📋 Hora actual en formulario:', currentForm.time);
 
-  for (const match of message.matchAll(timeRegex)) {
-    const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
-    const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
-    const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
-    const isTimeContext = Boolean(prefix);
+  // 🎯 Detectar rango horario: "9am hasta las 5pm", "9am a las 17:00", "09:00 - 17:00"
+  const rangePattern = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:hasta\s+(?:la[s]?\s+)?|a\s+la[s]?\s+|[-–]\s*)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
+  const rangeMatch = message.match(rangePattern);
 
-    console.log('[FORM-TIME] 📊 Match encontrado:', {
-      fullMatch,
-      hourStr,
-      minuteStr,
-      meridiemRaw,
-      meridiem,
-      hasExplicitMinutes,
-      isTimeContext
-    });
+  let detectedTime = null;
+  let detectedDurationHours = null;
 
-    if (!isTimeContext && !meridiem && !hasExplicitMinutes) {
-      console.log('[FORM-TIME] ⏭️ Saltando match (no es hora válida)');
-      continue; // Evitar confundir números de personas con horas
+  if (rangeMatch) {
+    let startH = parseInt(rangeMatch[1], 10);
+    const startM = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : 0;
+    const startMer = rangeMatch[3]?.toLowerCase();
+    let endH = parseInt(rangeMatch[4], 10);
+    const endM = rangeMatch[5] ? parseInt(rangeMatch[5], 10) : 0;
+    const endMer = rangeMatch[6]?.toLowerCase();
+
+    if (startMer === 'pm' && startH < 12) startH += 12;
+    if (startMer === 'am' && startH === 12) startH = 0;
+    if (endMer === 'pm' && endH < 12) endH += 12;
+    if (endMer === 'am' && endH === 12) endH = 0;
+    // Sin meridiem en end pero start usa meridiem: inferir pm si end < start
+    if (!endMer && startMer && endH !== 0 && endH < startH) endH += 12;
+
+    const totalMins = (endH * 60 + endM) - (startH * 60 + startM);
+    if (totalMins > 0 && totalMins <= 13 * 60) { // máximo 13h (7am-8pm)
+      detectedTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+      detectedDurationHours = Math.round(totalMins / 60 * 10) / 10;
+      console.log(`[FORM-TIME] 🎯 Rango detectado: ${detectedTime} → ${endH}:${endM.toString().padStart(2,'0')} (${detectedDurationHours}h)`);
     }
+  }
 
-    let hour = parseInt(hourStr, 10);
-    if (Number.isNaN(hour)) continue;
-    const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
-
-    console.log('[FORM-TIME] 🔄 Antes de conversión: hour=%d, minute=%d, meridiem=%s', hour, minute, meridiem);
-
-    if (meridiem === 'pm' && hour < 12) hour += 12;
-    if (meridiem === 'am' && hour === 12) hour = 0;
-
-    console.log('[FORM-TIME] ✅ Después de conversión: hour=%d', hour);
-
+  // Si no hubo rango, detectar hora simple
+  if (!detectedTime) {
+    const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+    for (const match of message.matchAll(timeRegex)) {
+      const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
+      const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
+      const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
+      const isTimeContext = Boolean(prefix);
+      if (!isTimeContext && !meridiem && !hasExplicitMinutes) continue;
+      let hour = parseInt(hourStr, 10);
+      if (Number.isNaN(hour)) continue;
+      const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
+      if (meridiem === 'pm' && hour < 12) hour += 12;
+      if (meridiem === 'am' && hour === 12) hour = 0;
       detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      console.log('[FORM-TIME] ✨ Tiempo detectado:', detectedTime);
+      console.log('[FORM-TIME] ✨ Hora simple detectada:', detectedTime);
       break;
     }
+  }
 
   if (detectedTime) {
     updates.time = detectedTime;
-    console.log('[FORM] ⏰ Detectado hora:', updates.time);
+    if (detectedDurationHours) updates.durationHours = detectedDurationHours;
+    console.log('[FORM] ⏰ Hora detectada:', updates.time, detectedDurationHours ? `(${detectedDurationHours}h)` : '');
     console.log('[FORM] 🔄 Sobrescribiendo hora anterior:', currentForm.time, '→', detectedTime);
   } else {
     console.log('[FORM-TIME] ❌ No se detectó hora en el mensaje');

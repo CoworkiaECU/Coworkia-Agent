@@ -55,6 +55,7 @@ import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
+import { saveBossQuote } from '../../database/bossQuotesRepository.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
@@ -1301,6 +1302,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.log('[BOSS-CMD] 👔 Cotización GABI solicitada por jefe:', quoteData);
           await enviarWhatsApp(userId, `⚙️ Preparando propuesta para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n💼 ${quoteData.area}`);
           const result = await sendGabiConsultoriaEmail(quoteData);
+          await saveBossQuote({
+            agent: 'GABI',
+            clientName:  quoteData.nombre,
+            clientEmail: quoteData.email,
+            clientPhone: quoteData.telefono || null,
+            serviceInfo: result.areaLabel || quoteData.area,
+            emailSent:   result.success,
+          });
           const reply = result.success
             ? `✅ *Propuesta enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n💼 ${result.areaLabel}\n\nCopia a secretaría ✓`
             : `❌ Error enviando propuesta: ${result.error}`;
@@ -1322,6 +1331,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.log('[BOSS-CMD] 👔 Cotización AXEL demo solicitada por jefe:', quoteData);
           await enviarWhatsApp(userId, `⚙️ Buscando caso real en memoria para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n🚗 Tomando fotos y análisis de siniestro guardado`);
           const result = await sendAxelDemoCotizacion(quoteData);
+          await saveBossQuote({
+            agent:       'AXEL',
+            clientName:  quoteData.nombre,
+            clientEmail: quoteData.email,
+            clientPhone: quoteData.telefono || null,
+            serviceInfo: result.vehicleData ? `${result.vehicleData.marca} ${result.vehicleData.modelo} ${result.vehicleData.año}`.trim() : null,
+            amountMin:   result.priceRange?.min  ?? null,
+            amountMax:   result.priceRange?.max  ?? null,
+            quoteCode:   result.quoteCode || null,
+            emailSent:   result.success,
+          });
           const reply = result.success
             ? `✅ *Cotización enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n🚗 ${result.vehicleData?.marca} ${result.vehicleData?.modelo} ${result.vehicleData?.año}\n📸 ${result.hasRealPhotos ? 'Con fotos reales del siniestro' : 'Demo estático (sin fotos aún)'}\n🔑 ${result.quoteCode}`
             : `❌ Error enviando cotización: ${result.error}`;
@@ -1342,6 +1362,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[BOSS-CMD] 👔 Cotización ENZO solicitada por jefe — procesando con OpenAI...');
         await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡`);
         const result = await sendEnzoCotizacion(processedText);
+        await saveBossQuote({
+          agent:       'ENZO',
+          clientName:  result.contacto || null,
+          clientEmail: result.email    || null,
+          companyName: result.empresa  || null,
+          serviceInfo: result.nivel    || null,
+          amountMin:   result.precio   ?? null,
+          amountMax:   result.precio   ?? null,
+          emailSent:   result.success,
+        });
         const reply = result.success
           ? `✅ *Propuesta enviada por Enzo*\n🏢 ${result.empresa}\n👤 ${result.contacto}\n📧 ${result.email}\n🤖 Nivel: ${result.nivel}\n💰 $${result.precio?.toLocaleString()} USD`
           : `❌ Error al generar propuesta Enzo: ${result.error}`;
@@ -1364,6 +1394,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.log('[BOSS-CMD] 👔 Brochure PAULA solicitado:', propLabel, '→', quoteData.nombre);
           await enviarWhatsApp(userId, `🏡 *Paula preparando brochure de lujo...*\n📐 ${propLabel}\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}`);
           const result = await sendPaulaCotizacion(processedText);
+          await saveBossQuote({
+            agent:       'PAULA',
+            clientName:  result.nombre    || quoteData.nombre,
+            clientEmail: result.email     || quoteData.email,
+            clientPhone: quoteData.telefono || null,
+            serviceInfo: result.propiedad  || null,
+            amountMin:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
+            amountMax:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
+            emailSent:   result.success,
+          });
           const reply = result.success
             ? `✅ *Brochure enviado por Paula*\n🏡 ${result.propiedad}\n👤 ${result.nombre}\n📧 ${result.email}\n💰 ${result.precio} USD`
             : `❌ Error enviando brochure Paula: ${result.error}`;
@@ -1400,6 +1440,15 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         if (proResult.success) {
           await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
         }
+        await saveBossQuote({
+          agent:       'ALUNA',
+          clientName:  trimmedName,
+          clientEmail: trimmedEmail,
+          clientPhone: trimmedPhone || null,
+          serviceInfo: proResult.planName || rawPlan,
+          quoteCode:   proResult.proformaCode || null,
+          emailSent:   proResult.success,
+        });
 
         const reply = proResult.success
           ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${proResult.proformaCode}`

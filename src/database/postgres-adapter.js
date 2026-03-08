@@ -1003,6 +1003,34 @@ class PostgresAdapter {
           WHERE followup_3d_sent_at IS NULL AND converted_at IS NULL;
       `);
 
+      // ===================================================================
+      // TABLA: Cotizaciones del Big Boss (boss_quotes)
+      // Registra cada cotización enviada por orden directa del jefe desde WA.
+      // Cubre GABI, ENZO, PAULA, AXEL y ALUNA boss commands.
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS boss_quotes (
+          id           SERIAL PRIMARY KEY,
+          agent        VARCHAR(20) NOT NULL,
+          client_name  VARCHAR(200),
+          client_email VARCHAR(200),
+          client_phone VARCHAR(50),
+          company_name VARCHAR(200),
+          service_info VARCHAR(300),
+          amount_min   DECIMAL(12,2),
+          amount_max   DECIMAL(12,2),
+          quote_code   VARCHAR(100),
+          email_sent   BOOLEAN DEFAULT TRUE,
+          quoted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_boss_quotes_agent     ON boss_quotes(agent);
+        CREATE INDEX IF NOT EXISTS idx_boss_quotes_email     ON boss_quotes(client_email);
+        CREATE INDEX IF NOT EXISTS idx_boss_quotes_quoted_at ON boss_quotes(quoted_at DESC);
+      `);
+
       await client.query('COMMIT');
       console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {

@@ -17,6 +17,7 @@
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail } from './email.js';
 import { conocimientoEnzo } from '../deteccion-intenciones/enzo-knowledge.js';
+import { LOGOS_BASE64 } from './email-assets.js';
 
 const ML_ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
@@ -171,11 +172,13 @@ function buildEnzoEmailHTML(d) {
     <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(0,194,160,0.06);pointer-events:none;"></div>
     <div style="position:absolute;bottom:-40px;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(0,194,160,0.04);pointer-events:none;"></div>
 
-    <!-- Logo IA -->
-    <div style="margin:0 auto 22px;width:80px;height:80px;background:linear-gradient(145deg,#00C2A0,#00E5C0);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 6px 28px rgba(0,194,160,0.5);">🤖</div>
-
-    <div style="color:white;font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">MarketingLab</div>
-    <div style="color:#00C2A0;font-size:11px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;margin-bottom:30px;">IA · MARKETING · AUTOMATIZACIÓN</div>
+    <!-- Logo MarketingLab real -->
+    <div style="margin-bottom:20px;">
+      <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}"
+           alt="MarketingLab"
+           style="max-width:260px;height:auto;display:block;margin:0 auto;" />
+    </div>
+    <div style="color:rgba(255,255,255,0.85);font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;margin-bottom:30px;">Estrategias que funcionan</div>
 
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,194,160,0.3);border-radius:16px;padding:22px 30px;display:inline-block;">
       <div style="color:#00E5C0;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Propuesta Personalizada</div>

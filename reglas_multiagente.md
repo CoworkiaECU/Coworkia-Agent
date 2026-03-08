@@ -1,16 +1,16 @@
 # Reglas Multiagente — Coworkia Aurora
-> Estándar de cirugía para intervenciones críticas en el ecosistema multi-agente.
-> Cada vez que la cosa se pone importante, empezamos aquí.
+> Referencia rápida del ecosistema. Se lee antes de cualquier intervención.  
+> Última actualización: **08 Mar 2026**
 
 ---
 
 ## 0. Filosofía de trabajo
 
-- **Lupa antes que escalpelo.** Leer y entender el código antes de tocar una sola línea.
-- **Un problema a la vez.** Cada fix se presenta, se aprueba, y solo entonces se ejecuta.
-- **Explicar sin tecnicismos.** El plan se describe en lenguaje humano. El código llega después del "verde nena".
-- **No dañes lo que funciona.** Si algo ya opera bien, no lo refactorices "de paso".
-- **La señal de gas es "verde nena".** Sin esa frase, el agente solo analiza, propone y espera.
+- **Lupa antes que escalpelo.** Leer antes de tocar.
+- **Un fix a la vez.** Presentar plan → esperar "verde nena" → ejecutar → verificar errores.
+- **Sin tecnicismos en el plan.** Lenguaje humano. Código solo tras aprobación.
+- **No toques lo que funciona.** Nada de refactorizar "de paso".
+- **"verde nena" = gas.** Sin esa frase, solo analizar y proponer.
 
 ---
 
@@ -57,146 +57,64 @@ isExternalAgent  = ['GABI', 'ENZO', 'PAULA', 'AXEL', 'ANGELA', 'ADRIANA']
 ## 4. Flujo de handoff estándar
 
 1. Usuario escribe `@agente` (con o sin pregunta).
-2. `detectar-intencion.js` detecta la mención y activa el flag `agentHandoff`.
-3. `wassenger.js` evalúa si hay consulta tras la mención.
-   - **Con consulta** (ej: `@enzo quiero marketing`): handoff silencioso → respuesta directa del LLM con contexto.
-   - **Sin consulta** (ej: `@enzo` solo): `executeHandoff()` envía saludo de bienvenida personalizado y espera.
-4. Se actualiza `activeAgent` en el perfil del usuario.
+2. `detectar-intencion.js` detecta la mención → flag `agentHandoff`.
+3. `wassenger.js` evalúa:
+   - **Con consulta** (`@enzo quiero marketing`): handoff silencioso → LLM responde directo.
+   - **Solo mención** (`@enzo`): `executeHandoff()` envía saludo personalizado → espera.
+4. `activeAgent` se actualiza en el perfil.
+
+**Timing correcto del handoff** (corregido 08 Mar 2026):
+```
+Aurora dice adiós → esperar 7s → nuevo agente entra
+```
+*(Antes el adiós llegaba después del delay — bug corregido en `handoff-manager.js`)*
 
 ---
 
-## 5. Reglas de filtrado de historial
+## 5. Historial y filtros de mensajes
 
-El historial se filtra antes de enviarse al agente. Las reglas actuales:
-
-- **Agentes externos:** máximo 8 mensajes, se eliminan mensajes con datos de pago/reservas/fechas.
-- **@menciones puras** (ej: `@aurora`): se eliminan del historial (son ruido de navegación).
-- **@menciones con contenido** (ej: `@enzo quiero marketing`): NO se eliminan (son el trigger más importante de la sesión).
-- **El mensaje que activó el handoff** NUNCA debe ser filtrado.
+- **Todos los agentes:** máximo 15 mensajes (unificado).
+- **@menciones puras** (`@aurora` sin texto): se eliminan del historial — son ruido de navegación.
+- **@menciones con contenido** (`@enzo quiero marketing`): **NO se eliminan** — son el trigger más importante.
+- **ALUNA activa + keywords Aurora** (`hot desk`, `reserva`, `sala`...): se limpia el form de membresía y cae al orquestador para el handoff natural ALUNA→AURORA.
 
 ---
 
-## 6. HandoffContext — la memoria del porqué
+## 6. handoffContext — la memoria del porqué
 
-El `handoffContext` explica por qué el agente fue activado: quién mandó, qué dijo el usuario, cuándo. Esta información:
-
-- Se crea SOLO cuando hay un cambio de agente en el mensaje actual.
-- Se debe persistir en el perfil como `lastHandoffContext` para que el agente la reciba en TODOS sus mensajes, no solo el primero.
-- Se borra cuando el usuario cambia de agente de nuevo.
-
----
-
-## 7. Pendientes conocidos (estado al 08 Mar 2026)
-
-### 🔧 Fixes estructurales del multiagente
-
-| # | Problema                                     | Archivos afectados                            | Estado       |
-|---|----------------------------------------------|-----------------------------------------------|--------------|
-| 1 | GABI en grupo coworking (recibe ruido)       | `orquestador.js`                              | ✅ Resuelto  |
-| 2 | handoffContext se pierde tras 1er mensaje    | `orquestador.js`                              | ✅ Resuelto  |
-| 3 | Filtro `@` borra el mensaje de activación   | `orquestador.js`                              | ✅ Resuelto  |
-| 4 | PAULA sin keywords automáticas              | `detectar-intencion.js`                       | 📋 Pendiente |
-| 5 | Saludo genérico cuando no hay contexto real | `handoff-messages.js`                         | ✅ Resuelto  |
-| 6 | Historial asimétrico (externo 3 vs 15)      | `orquestador.js`                              | ✅ Resuelto  |
+- Se crea solo cuando hay cambio de agente.
+- Se persiste en `perfil.lastHandoffContext` para que el agente lo reciba en TODOS sus mensajes siguientes (no solo el primero).
+- Se inyecta como `🧠 MEMORIA DE SESIÓN` (no "TRANSFERENCIA" — suena a robot barato).
+- Se borra cuando el usuario cambia a otro agente.
 
 ---
 
-#### Fix 2 — handoffContext se pierde tras el 1er mensaje
+## 7. Log de trabajo (sesiones anteriores)
 
-**Problema:** `handoffContext` se construye solo cuando hay un cambio de agente en el mensaje actual. En los mensajes siguientes (mismo agente activo) no se regenera, entonces el LLM ya no sabe por qué fue activado.
+### 08 Mar 2026
 
-**Solución:** Guardar el contexto como `lastHandoffContext` en el perfil del usuario (tabla `users` o en memoria de sesión ya existente) cuando el agente cambia. En los mensajes siguientes, si no hay un handoff nuevo, inyectar `lastHandoffContext` como sustituto. Limpiar cuando el usuario haga `@otro-agente`.
+| Item | Descripción | Archivos | Estado |
+|------|-------------|----------|--------|
+| A1 | ALUNA: recordatorio renovación membresía (día 25 + día 30) | `alunaRepository.js`, `follow-up-service.js`, `cron-scheduler.js`, `postgres-adapter.js` | ✅ |
+| A2 | AURORA: sugerencia re-reserva (día anterior, cron 5pm) | `reservationRepository.js`, `follow-up-service.js`, `cron-scheduler.js`, `postgres-adapter.js` | ✅ |
+| F2 | `handoffContext` se pierde tras 1er mensaje | `orquestador.js` | ✅ |
+| F3 | Filtro `@` borraba el mensaje de activación | `orquestador.js` | ✅ |
+| F5 | Saludo genérico con `@mención` pura como contexto | `handoff-messages.js` | ✅ |
+| F6 | Historial externo 3 mensajes → 15 unificado | `orquestador.js` | ✅ |
+| B1 | Aurora despedida llegaba DESPUÉS del delay de 7s | `handoff-manager.js` | ✅ |
+| B2 | Form de ALUNA bloqueaba switch automático a AURORA | `wassenger.js` | ✅ |
+| KW | ALUNA→AURORA automático por keywords (bidireccional) | `detectar-intencion.js` | ✅ |
+| EZ | ENZO system prompt: metodología de brief creativo, 9 ejes, máx 7 preguntas | `enzo.js` | ✅ |
+| ML | ENZO emails: logo PNG real de MarketingLab en cotizaciones del jefe | `enzo-cotizacion-email.js` | ✅ |
 
-**Archivos a tocar:**
-- `src/deteccion-intenciones/orquestador.js` — donde se construye `handoffContext`, agregar save + retrieve de `lastHandoffContext`
+### Antes del 08 Mar 2026
 
-**Criterio de éxito:** Si el usuario dice `@enzo quiero marketing` y luego escribe `cuánto cuesta`, ENZO en el 2do mensaje sigue sabiendo que el usuario quiere marketing.
+| Item | Descripción | Estado |
+|------|-------------|--------|
+| F1 | GABI estaba en grupo coworking (recibía ruido de reservas) | ✅ |
+| F4 | PAULA sin keywords automáticas — descartado (se mantiene `@mención`) | ❌ Descartado |
 
----
 
-#### Fix 3 — Filtro `@` elimina el mensaje que activó el handoff
-
-**Problema:** El filtro de historial en `orquestador.js` (~línea 721-730) elimina cualquier mensaje que contenga `@`. Esto incluye el propio mensaje de activación del handoff (ej: `@enzo quiero marketing`), que es el más importante.
-
-**Solución:** Cambiar la condición del filtro para que solo elimine mensajes que sean una `@mención pura` — es decir, cuyo contenido sea solo `@nombre` sin nada más después. Los mensajes con contenido real tras el `@` deben sobrevivir.
-
-**Archivos a tocar:**
-- `src/deteccion-intenciones/orquestador.js` — condición del filtro de historial
-
-**Criterio de éxito:** `@enzo` sin nada más → se filtra. `@enzo quiero rediseñar mi marca` → NO se filtra, llega al LLM.
-
----
-
-#### Fix 4 — PAULA sin keywords automáticas
-
-**Problema:** `ALUNA` tiene keywords definidas en `agent-keywords.js` que disparan un handoff automático cuando el usuario menciona bienes raíces en AURORA. PAULA también es del sector inmobiliario pero no tiene ese mecanismo.
-
-**Solución:** En `detectar-intencion.js`, en la misma sección donde se revisan keywords de ALUNA para auto-routing, agregar revisión de `PAULA_PROPERTY_KEYWORDS`. Si el usuario activo está en AURORA y escribe sobre propiedades/arriendos, enrutar automáticamente a PAULA.
-
-**Archivos a tocar:**
-- `src/deteccion-intenciones/detectar-intencion.js` — agregar bloque de auto-routing PAULA, igual al de ALUNA
-
-**Criterio de éxito:** Usuario dice "quiero arrendar una oficina en Quito" estando en AURORA → se va automáticamente a PAULA.
-
----
-
-#### Fix 5 — Saludo genérico cuando el contexto real es una @mención pura
-
-**Problema:** Cuando el usuario escribe solo `@enzo` (sin consulta), el `handoffUserContext` que le llega al mensaje de bienvenida es literalmente el texto `"@enzo"`. Ese texto aparece en el saludo como si fuera el tema de la consulta, generando un mensaje ridículo.
-
-**Solución:** Antes de construir el mensaje de bienvenida, verificar si `handoffUserContext` es solo una `@mención` sin contenido real. Si es así, usar un contexto vacío o genérico ("para continuar con tu consulta") en lugar de la mención literal.
-
-**Archivos a tocar:**
-- `src/servicios/handoff-manager.js` o `src/deteccion-intenciones/handoff-messages.js` — donde se construye el mensaje de bienvenida con el contexto
-
-**Criterio de éxito:** `@enzo` → saludo normal sin mencionar `@enzo` como el "tema". `@enzo quiero marketing` → saludo que menciona "marketing" correctamente.
-
----
-
-#### Fix 6 — Historial externo: cambiar 3 → 8 mensajes
-
-**Problema:** Los agentes externos (`isExternalAgent`) reciben solo 3 mensajes de historial. Es demasiado poco — el agente pierde el hilo de conversación rápidamente.
-
-**Solución:** Cambiar el límite de `3` a `8` en una sola línea.
-
-**Archivo a tocar:**
-- `src/deteccion-intenciones/orquestador.js` — `const historyLimit = 15` (unificado, todos los agentes igual)
-
-**Criterio de éxito:** Un agente externo como GABI puede leer los últimos 8 intercambios y mantener contexto real de la conversación.
-
----
-
-### 🤖 Automatizaciones nuevas
-
-| # | Descripción                                        | Archivos afectados                                               | Estado       |
-|---|-----------------------------------------------------|------------------------------------------------------------------|--------------|
-| A1| ALUNA: recordatorio renovación membresía 30 días   | `postgres-adapter.js`, `alunaRepository.js`, `follow-up-service.js`, `cron-scheduler.js` | ✅ Resuelto  |
-| A2| AURORA: sugerencia re-reserva (día anterior, 5pm)  | `postgres-adapter.js`, `reservationRepository.js`, `follow-up-service.js`, `cron-scheduler.js` | ✅ Resuelto  |
-
----
-
-#### A1 — ALUNA: recordatorio de renovación de membresías
-
-**Lógica de negocio:**
-- Ciclo = 30 días desde el último pago registrado en `membership_payments` (campo `transaction_date`)
-- **Recordatorio 1:** día 25 del ciclo (quedan 5 días). Tono suave, amigable, sin datos bancarios.
-- **Recordatorio 2:** día 30 del ciclo (día de vencimiento). Urgencia amable, tampoco da datos bancarios a menos que el usuario los pida explícitamente en chat.
-- Si ya se envió el recordatorio de ese ciclo específico → no se vuelve a enviar.
-- Solo aplica a membresías con `status = 'accepted'` (miembros activos).
-
-**Mensajes de referencia:**
-
-*Recordatorio 1 (5 días antes):*
-> "Hola [Nombre] 🌙 Tu *[Plan]* vence en 5 días. Cuando quieras renovar, me avisas y te ayudo con todo 😊"
-
-*Recordatorio 2 (vencimiento):*
-> "Hola [Nombre] 🌟 Hoy se cumple el mes de tu *[Plan]*. ¿Todo listo para renovar? Cuando digas, estoy aquí ✨"
-
-**Cambios de base de datos:**
-- Agregar 2 columnas nuevas a `membership_leads` (migraciones idempotentes en `postgres-adapter.js`):
-  - `renewal_reminder_1_sent_at TIMESTAMP` — día del envío del 1er recordatorio del ciclo activo
-  - `renewal_reminder_2_sent_at TIMESTAMP` — día del envío del 2do recordatorio del ciclo activo
-- Ambas columnas se resetean a NULL cuando se aprueba un nuevo pago (inicio de ciclo nuevo)
 
 **Nuevas funciones a agregar:**
 - `alunaRepository.js` → `findMembersForRenewalReminder1()`, `findMembersForRenewalReminder2()`, `markRenewalReminder1Sent(phone)`, `markRenewalReminder2Sent(phone)`

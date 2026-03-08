@@ -1599,7 +1599,22 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         // Petición de cotización o proforma (sin importar qué sigue)
         /\b(cot[ií]zame|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
 
-      if (membershipInterest || hasActiveForm) {
+      // 🛡️ GUARDS: Excluir del formulario mensajes de queja o afirmaciones vacías
+      const isAlunaComplaint = /\b(no me llega|no lleg[oó]|no funciona|no lo recib[ií]|no recib[ií]|no envió|no envio|nunca lleg[oó]|no llegó|no me llegó|no arrib[oó])\b/i.test(processedText);
+      const isEmptyAffirmation = /^(si|sí|sip|ok|okay|dale|claro|bueno|bien|perfecto|entendido|gracias|de acuerdo)[,!.]*\s*(por favor)?[,!.]*$/i.test(processedText.trim());
+      const formHasNoData = !currentAgentForm?.data?.membershipType && !currentAgentForm?.data?.email;
+
+      if (isAlunaComplaint && hasActiveForm) {
+        // Queja de entrega → limpiar form y dejar que el LLM maneje la situación
+        console.log('[ALUNA-FORM] 🛡️ Queja de entrega detectada — limpiando formulario, redirigiendo a LLM');
+        await clearAgentForm(userId, 'ALUNA');
+        // Fall through to LLM (no activar form)
+      } else if (isEmptyAffirmation && hasActiveForm && formHasNoData) {
+        // "Si por favor" sin datos → afirmación conversacional, no de formulario
+        console.log('[ALUNA-FORM] 🛡️ Afirmación simple sin datos de membresía — limpiando formulario, redirigiendo a LLM');
+        await clearAgentForm(userId, 'ALUNA');
+        // Fall through to LLM
+      } else if (membershipInterest || hasActiveForm) {
         console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
 
         // 📌 Registrar prospecto Aluna para follow-up automático (24h / 3 días)
@@ -1609,19 +1624,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           formResult = await processMembershipForm(userId, processedText, profile);
           formResult.userMessage = text;
 
-          // 💜 PROFORMA: Enviar email automáticamente en cuanto tengamos plan + nombre + email
+          // 💜 PROFORMA: Enviar email automáticamente en cuanto tengamos plan + email
+          // Fix: usa userName como fallback para fullName si el form no lo tiene
           if (formResult.form?.data) {
             const fd = formResult.form.data;
-            if (fd.membershipType && fd.fullName && fd.email && !fd.proformaSent) {
+            const proformaName = fd.fullName || userName || 'Cliente';
+            if (fd.membershipType && fd.email && !fd.proformaSent) {
               try {
                 const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
                 const planKey = normalizePlanKey(fd.membershipType);
-                const proResult = await sendAlunaProforma({ clientName: fd.fullName, clientEmail: fd.email, planKey, fromAdmin: false });
+                const proResult = await sendAlunaProforma({ clientName: proformaName, clientEmail: fd.email, planKey, fromAdmin: false });
                 if (proResult.success) {
                   fd.proformaSent = true;
                   formResult.form.data.proformaSent = true;
                   await saveAgentForm(userId, 'ALUNA', formResult.form.toJSON(), 120);
-                  await saveAlunaLeadFromProforma({ userId, clientName: fd.fullName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
+                  await saveAlunaLeadFromProforma({ userId, clientName: proformaName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
                   console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${fd.email} (${proResult.planName})`);
                   // Notificar brevemente al usuario (sin interrumpir el flujo del formulario)
                   await enviarWhatsApp(userId, `📧 ¡Listo! Te acabo de enviar la proforma de *${proResult.planName}* a ${fd.email} 💜\n\nRevisa tu bandeja de entrada (y spam por si las dudas 😊)`);
@@ -2273,6 +2290,35 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         } catch (error) {
           console.error('[ALUNA-LEAD] ❌ Error creando lead:', error);
           // No bloquear - continuar sin lead
+        }
+      }
+    }
+
+    // 💜 ALUNA: Si el LLM menciona un email en su respuesta (ej: "te reenvío a X@Y.com")
+    // y tenemos un plan en el form → enviar proforma automáticamente, sin depender de fullName en form
+    if (resultado.agenteKey === 'ALUNA') {
+      const emailInReply = finalReply.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/i);
+      if (emailInReply) {
+        const detectedEmail = emailInReply[1];
+        try {
+          const alunaFormRaw = await getAgentForm(userId, 'ALUNA').catch(() => null);
+          const planInForm = alunaFormRaw?.data?.membershipType;
+          const alreadySent = alunaFormRaw?.data?.proformaSent;
+          if (planInForm && !alreadySent) {
+            const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
+            const planKey = normalizePlanKey(planInForm);
+            const clientName = alunaFormRaw?.data?.fullName || userName || 'Cliente';
+            const proResult = await sendAlunaProforma({ clientName, clientEmail: detectedEmail, planKey, fromAdmin: false });
+            if (proResult.success) {
+              // Marcar como enviada para no duplicar
+              const updatedForm = { ...(alunaFormRaw || {}), data: { ...(alunaFormRaw?.data || {}), proformaSent: true, email: detectedEmail } };
+              await saveAgentForm(userId, 'ALUNA', updatedForm, 120);
+              await saveAlunaLeadFromProforma({ userId, clientName, clientEmail: detectedEmail, planKey, phone: alunaFormRaw?.data?.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
+              console.log(`[ALUNA-PROFORMA] 💜 Auto-proforma desde respuesta LLM → ${detectedEmail} (${proResult.planName})`);
+            }
+          }
+        } catch (autoProErr) {
+          console.error('[ALUNA-PROFORMA] ⚠️ Error en auto-proforma desde LLM:', autoProErr.message);
         }
       }
     }

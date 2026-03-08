@@ -2151,27 +2151,21 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         });
       }
 
-      // ✅ Ejecutar handoff usando NUEVO SISTEMA V2
-      const handoffResult = await executeHandoff(
-        userId,
-        profile,
-        fromAgent,
-        targetAgent,
-        userName,
-        userLanguage,
-        saveProfile,
-        enviarWhatsApp,
-        saveConversationMessage,
-        processedText || text // contexto del mensaje que disparó el handoff
-      );
-      
-      if (handoffResult.success) {
-        // 🏎️ Commit del estado de agente SOLO después de transición exitosa
+      // 🎯 V831: Detectar si hay consulta real tras el @mention
+      // Ej: "@aluna quiero el plan 10" → queryAfterMention = "quiero el plan 10"
+      // Ej: "@aluna" o "@aluna hola" → sin consulta → saludo estándar
+      const queryAfterMention = (processedText || text || '').replace(/^@\w+\s*/i, '').trim();
+      const hasQueryWithHandoff = queryAfterMention.length > 3;
+
+      if (hasQueryWithHandoff) {
+        // ✅ Handoff silencioso: cambiar agente sin enviar saludo genérico
+        // El agente responde DIRECTO a la consulta con contexto de handoff
+        console.log(`[WASSENGER-V831] 🎯 Handoff con consulta: ${fromAgent}→${targetAgent} | "${queryAfterMention.substring(0, 60)}"`);
         const updateResult = await updateAgentState(
           userId,
           targetAgent,
           {
-            reason: 'handoff',
+            reason: 'handoff_with_query',
             fromAgent,
             metadata: resultado.metadata,
             intentReason: resultado.razonSeleccion
@@ -2182,19 +2176,59 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
         if (updateResult.success) {
           profile.activeAgent = targetAgent;
-          console.log(`[WASSENGER-V735] ✅ Commit handoff: ${updateResult.fromAgent} → ${updateResult.toAgent}`);
+          console.log(`[WASSENGER-V831] ✅ Agente cambiado silenciosamente: ${fromAgent} → ${targetAgent}`);
         } else {
-          console.error('[WASSENGER-V735] ❌ Handoff UX completado pero commit de agente falló:', updateResult.error);
-          await enviarWhatsApp(userId, 'Hice el relevo, pero tuve un problema guardando el estado. Escribe de nuevo @' + targetAgent.toLowerCase() + ' por favor.');
+          console.error('[WASSENGER-V831] ❌ Commit de agente falló:', updateResult.error);
+          await enviarWhatsApp(userId, 'Hice el relevo, pero tuve un problema. Escribe de nuevo @' + targetAgent.toLowerCase() + ' por favor.');
           return;
         }
+        // ⬇️ Fall through al bloque de LLM — orquestador ya construyó el prompt del agente destino
 
-        console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente - mensaje de bienvenida ya enviado`);
-        return; // ✅ El executeHandoff ya envió el mensaje del nuevo agente, no generar respuesta adicional
       } else {
-        console.error(`[WASSENGER-V2] ❌ Handoff falló:`, handoffResult.error);
-        await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote. Escribe "ayuda" y lo reintentamos.');
-        return;
+        // ✅ Solo @mention sin consulta: ejecutar handoff estándar con saludo de bienvenida
+        const handoffResult = await executeHandoff(
+          userId,
+          profile,
+          fromAgent,
+          targetAgent,
+          userName,
+          userLanguage,
+          saveProfile,
+          enviarWhatsApp,
+          saveConversationMessage,
+          processedText || text
+        );
+
+        if (handoffResult.success) {
+          const updateResult = await updateAgentState(
+            userId,
+            targetAgent,
+            {
+              reason: 'handoff',
+              fromAgent,
+              metadata: resultado.metadata,
+              intentReason: resultado.razonSeleccion
+            },
+            saveProfile,
+            profile
+          );
+
+          if (updateResult.success) {
+            profile.activeAgent = targetAgent;
+            console.log(`[WASSENGER-V735] ✅ Commit handoff: ${updateResult.fromAgent} → ${updateResult.toAgent}`);
+          } else {
+            console.error('[WASSENGER-V735] ❌ Handoff UX completado pero commit de agente falló:', updateResult.error);
+            await enviarWhatsApp(userId, 'Hice el relevo, pero tuve un problema guardando el estado. Escribe de nuevo @' + targetAgent.toLowerCase() + ' por favor.');
+            return;
+          }
+
+          console.log(`[WASSENGER-V2] ✅ Handoff completado exitosamente - mensaje de bienvenida ya enviado`);
+          return; // ✅ executeHandoff ya envió el mensaje del nuevo agente
+        } else {
+          console.error(`[WASSENGER-V2] ❌ Handoff falló:`, handoffResult.error);
+          await enviarWhatsApp(userId, 'Disculpa, hubo un problema conectándote. Escribe "ayuda" y lo reintentamos.');
+          return;
+        }
       }
     }
 

@@ -651,18 +651,28 @@ function construirContexto(perfil = {}, historial = [], formData = {}, handoffCo
   
   // 🤝 CONTEXTO DE HANDOFF: Info crucial para continuidad conversacional
   if (handoffContext) {
+    // Extraer consulta real tras el @mention (ej: "@aluna quiero plan 10" → "quiero plan 10")
+    const queryAfterMention = (handoffContext.userMessage || '').replace(/^@\w+\s*/i, '').trim();
+    const hasDirectQuery = queryAfterMention.length > 3;
+
     lineas.push('\n🤝 CONTEXTO DE TRANSFERENCIA:');
     lineas.push(`De: ${handoffContext.fromAgent}`);
     lineas.push(`Motivo: ${handoffContext.reason}`);
     lineas.push(`Mensaje que disparó handoff: "${handoffContext.userMessage}"`);
+    
+    if (hasDirectQuery) {
+      lineas.push(`Consulta directa del usuario: "${queryAfterMention}"`);
+      lineas.push('\n⚠️ CRÍTICO: El usuario ya hizo su pregunta. Responde DIRECTAMENTE a esa consulta.');
+      lineas.push('Puedes hacer una introducción breve de UNA línea (ej: "¡Hola, soy Aluna!") y luego responder la consulta en el mismo mensaje. NO hagas más preguntas antes de responder.');
+    } else {
+      lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
+    }
     
     // 🔒 NOTA: No pasamos datos de reserva a agentes externos
     // Aurora mantiene el formulario pendiente para retomar después
     if (!isCoworkingAgent && handoffContext.fromAgent === 'AURORA') {
       lineas.push('\n📝 NOTA: Aurora mantendrá cualquier reserva pendiente para cuando el usuario regrese.');
     }
-    
-    lineas.push('\n⚠️ IMPORTANTE: El usuario ya mencionó su necesidad. NO preguntes nuevamente lo que ya dijo.');
   }
 
   // 💬 MEMORIA CONVERSACIONAL: Últimos 7-8 intercambios (hasta 15 mensajes)

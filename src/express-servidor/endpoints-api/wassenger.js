@@ -1699,8 +1699,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz[a-z]*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText) ||
         // Mención directa de plan específico (plan 10, plan 20, plan mensual)
         /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText) ||
-        // Mención directa de tipo de membresía
-        /\b(oficina\s*virtual|sala\s*(?:de\s*)?reuniones?|hot\s*desk)\b/i.test(processedText) ||
+        // Mención directa de tipo de membresía (solo "oficina virtual" → sala y hot desk son productos de Aurora)
+        /\b(oficina\s*virtual)\b/i.test(processedText) ||
         // Petición de cotización o proforma (sin importar qué sigue)
         /\b(cot[ií]zame|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
 
@@ -2168,6 +2168,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       return;
     }
 
+    // 🎯 Post-VirtualAgentPromo: si Aurora ya presentó OneMind y usuario muestra interés → handoff directo a ENZO
+    if (
+      profile.lastVirtualAgentPromoAt &&
+      (Date.now() - new Date(profile.lastVirtualAgentPromoAt).getTime() < 30 * 60 * 1000) &&
+      /^(s[ií]|claro|dale|ok|quiero|me interesa|interesa|me gustar[ií]a|cu[aá]nto|c[oó]mo|arrancamos|empecemos|quiero saber m[aá]s|m[aá]s info|si por favor|genial|suena bien|me convence|perfecto|hagámoslo|hag[aá]moslo)[,!.\s]*$/i.test((processedText || '').trim())
+    ) {
+      console.log('[CAMPAIGN-2] 🚀 Post-promo interest detectado → handoff automático a ENZO');
+      await updateProfile(userId, { lastVirtualAgentPromoAt: null }, { reason: 'post_promo_enzo_handoff' });
+      auroraInput = `@enzo ${auroraInput}`;
+    }
+
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     
@@ -2610,6 +2621,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           keywords: completionKeywords.filter(k => replyLower.includes(k))
         });
       }
+    }
+
+    // 🎯 Guardar flag de campaña #2 (OneMind pitch) para detectar follow-up de interés
+    if (resultado.metadata?.intent?.flags?.virtualAgentSalesPromo) {
+      await updateProfile(userId, { lastVirtualAgentPromoAt: new Date().toISOString() }, { reason: 'virtual_agent_promo_shown' });
+      console.log('[CAMPAIGN-2] 🎯 Flag lastVirtualAgentPromoAt guardado — próximo "me interesa" → ENZO');
     }
 
     // Marcar primera visita después de responder

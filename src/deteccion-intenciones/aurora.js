@@ -446,7 +446,9 @@ ${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosIn
 ${this.serviciosInfo.salaReuniones}
 
 ¿Te gustaría reservar un espacio? Si es así:
-¿Qué día y hora prefieres? 📅"
+¿Qué día y hora prefieres? 📅
+
+💡 _¿Prefieres un plan mensual? Escribe *@aluna*_"
 
 🎯 CAMPAÑA #2: "qué puede hacer un agente virtual"
 

@@ -371,7 +371,9 @@
   </button>
 
   <script>
+    console.log('[ALUNA-DASH] 🚀 Script iniciado');
     const API_BASE = window.location.origin;
+    console.log('[ALUNA-DASH] API_BASE:', API_BASE);
 
     // Estado de la aplicación
     let allProformas = [];
@@ -548,23 +550,38 @@
     }
 
     // Event listeners
-    document.getElementById('filter-status').addEventListener('change', (e) => {
-      currentFilters.status = e.target.value;
-    });
+    try {
+      console.log('[ALUNA-DASH] Configurando event listeners...');
+      
+      document.getElementById('filter-status').addEventListener('change', (e) => {
+        currentFilters.status = e.target.value;
+      });
 
-    document.getElementById('search').addEventListener('input', (e) => {
-      currentFilters.search = e.target.value;
-    });
+      document.getElementById('search').addEventListener('input', (e) => {
+        currentFilters.search = e.target.value;
+      });
 
-    document.getElementById('search').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadProformas();
-    });
+      document.getElementById('search').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loadProformas();
+      });
 
-    // Cargar al inicio
-    loadProformas();
+      console.log('[ALUNA-DASH] Event listeners configurados');
+      
+      // Cargar al inicio
+      console.log('[ALUNA-DASH] Iniciando carga de proformas...');
+      loadProformas().catch(err => {
+        console.error('[ALUNA-DASH] Error fatal en carga inicial:', err);
+        alert('Error cargando dashboard: ' + err.message + '\nRevisa el Console (Cmd+Option+J) para más detalles');
+      });
 
-    // Auto-refresh cada 30 segundos
-    setInterval(loadStats, 30000);
+      // Auto-refresh cada 30 segundos
+      setInterval(loadStats, 30000);
+      
+      console.log('[ALUNA-DASH] ✅ Inicialización completa');
+    } catch (error) {
+      console.error('[ALUNA-DASH] ❌ Error en inicialización:', error);
+      alert('Error inicializando dashboard: ' + error.message);
+    }
   </script>
 </body>
 </html>

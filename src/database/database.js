@@ -350,7 +350,8 @@ export { DatabaseService };
 // Helper exports para queries directas
 export const query = async (sql, params) => {
   await databaseService.ensureInitialized();
-  return databaseService.db.query(sql, params);
+  const rows = await databaseService.db.all(sql, params);
+  return { rows };
 };
 
 export const getClient = async () => {

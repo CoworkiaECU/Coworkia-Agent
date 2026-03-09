@@ -11,7 +11,7 @@
  * Nunca expone datos del cliente original — solo usa sus fotos y análisis como demo.
  */
 
-import { query } from '../database/database.js';
+import databaseService from '../database/database.js';
 import { sendQuoteEmail } from './axel-quote-email.js';
 import { generateQuoteCode } from './axel-quote-code.js';
 
@@ -93,7 +93,10 @@ export function parseAxelDemoQuoteData(mensaje) {
     .replace(/cotiz[ao]ci[oó]n\s*:?\s*(a\s*:?)?/gi, '')
     .replace(/coti\s*:?\s*(a\s*:?)?/gi, '')
     .replace(email, '')
-    .replace(phoneMatch ? phoneMatch[0] : /(?!x)x/, '')
+    .replace(phoneMatch ? phoneMatch[0] : '', '')
+    // también eliminar secuencias de dígitos sueltas que parecen teléfonos (7+ dígitos)
+    .replace(/\b\d{7,}\b/g, '')
+    .replace(/\btelefono\b|\btelémono\b|\btel\b|\bcel\b|\bmóvil\b|\bmovil\b/gi, '')
     .replace(/[,|;:]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim() || 'Cliente';
@@ -111,7 +114,8 @@ export function parseAxelDemoQuoteData(mensaje) {
 async function fetchBestDemoCase() {
   // 1. Intentar axel_quotes (tabla principal, tiene quote_details completo)
   try {
-    const res = await query(`
+    await databaseService.initialize();
+    const res = await databaseService.all(`
       SELECT
         vehicle_brand, vehicle_model, vehicle_year,
         damage_analysis, quote_details,
@@ -125,8 +129,10 @@ async function fetchBestDemoCase() {
       LIMIT 1
     `);
 
-    if (res.rows.length > 0) {
-      const r = res.rows[0];
+    // databaseService.all() devuelve array directamente
+    const rows = Array.isArray(res) ? res : (res?.rows || []);
+    if (rows.length > 0) {
+      const r = rows[0];
       const photoUrls = Array.isArray(r.photo_urls) ? r.photo_urls
         : (typeof r.photo_urls === 'string' ? JSON.parse(r.photo_urls) : []);
 
@@ -155,7 +161,8 @@ async function fetchBestDemoCase() {
 
   // 2. Intentar collision_quotes (tabla secundaria, upsert del mismo flujo)
   try {
-    const res = await query(`
+    await databaseService.initialize();
+    const res2 = await databaseService.all(`
       SELECT
         vehicle_brand, vehicle_model, vehicle_year,
         damage_analysis, quote_details,
@@ -168,8 +175,9 @@ async function fetchBestDemoCase() {
       LIMIT 1
     `);
 
-    if (res.rows.length > 0) {
-      const r = res.rows[0];
+    const rows2 = Array.isArray(res2) ? res2 : (res2?.rows || []);
+    if (rows2.length > 0) {
+      const r = rows2[0];
       const photoUrls = Array.isArray(r.photo_urls) ? r.photo_urls
         : (typeof r.photo_urls === 'string' ? JSON.parse(r.photo_urls) : []);
 
@@ -192,8 +200,8 @@ async function fetchBestDemoCase() {
         };
       }
     }
-  } catch (err) {
-    console.warn('[AXEL-DEMO] collision_quotes no disponible:', err.message);
+  } catch (err2) {
+    console.warn('[AXEL-DEMO] collision_quotes no disponible:', err2.message);
   }
 
   // 3. Fallback estático — funciona siempre, sin fotos

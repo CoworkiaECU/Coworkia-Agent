@@ -1293,7 +1293,28 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     });
 
     // ══════════════════════════════════════════════════════════════════════
-    // 👔 BOSS COMMANDS: Gabi — cotización por orden directa del jefe
+    // � PRE-HANDOFF: Si el mensaje empieza con @agente, actualizar activeAgent
+    // ANTES de entrar a los boss commands — así "@gabi cotización..." dispara
+    // el boss de GABI aunque el agente activo fuera AXEL o cualquier otro.
+    // ══════════════════════════════════════════════════════════════════════
+    const agentMentionMap = {
+      '@gabi': 'GABI', '@axel': 'AXEL', '@enzo': 'ENZO',
+      '@paula': 'PAULA', '@adriana': 'ADRIANA', '@aluna': 'ALUNA',
+      '@aurora': 'AURORA', '@angela': 'ANGELA',
+    };
+    if (processedText) {
+      const firstToken = processedText.trim().split(/\s/)[0].toLowerCase();
+      const mentionedAgent = agentMentionMap[firstToken];
+      if (mentionedAgent && mentionedAgent !== profile.activeAgent) {
+        console.log(`[BOSS-CMD] 🔀 Pre-handoff: ${profile.activeAgent} → ${mentionedAgent} (mención en mensaje)`);
+        profile.activeAgent = mentionedAgent;
+        await updateProfile(userId, { activeAgent: mentionedAgent }, { reason: 'pre_handoff_boss' });
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════════════════════
+    // �👔 BOSS COMMANDS: Gabi — cotización por orden directa del jefe
     // Solo activo cuando: userId === ADMIN_PHONE + agente GABI + email presente
     // ══════════════════════════════════════════════════════════════════════
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'GABI') {

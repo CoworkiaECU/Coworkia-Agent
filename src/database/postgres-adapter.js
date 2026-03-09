@@ -448,6 +448,16 @@ class PostgresAdapter {
       `);
 
       await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS damage_analysis JSONB;
+      `);
+
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS quote_details TEXT;
+      `);
+
+      await client.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS ux_collision_quotes_quote_code
         ON collision_quotes(quote_code)
         WHERE quote_code IS NOT NULL;

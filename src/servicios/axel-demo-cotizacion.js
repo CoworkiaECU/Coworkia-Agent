@@ -183,7 +183,7 @@ async function fetchBestDemoCase() {
     const res2 = await databaseService.all(`
       SELECT
         vehicle_brand, vehicle_model, vehicle_year,
-        damage_analysis, quote_details,
+        quote_details,
         price_min, price_max, photo_urls
       FROM collision_quotes
       WHERE photo_urls IS NOT NULL

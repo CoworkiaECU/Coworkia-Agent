@@ -190,11 +190,14 @@
       letter-spacing: 0.5px;
     }
 
-    .status-quoted { background: #dbeafe; color: #1e40af; }
     .status-pending { background: #fef3c7; color: #92400e; }
+    .status-pending_payment { background: #fed7aa; color: #9a3412; }
+    .status-tour_scheduled { background: #e0e7ff; color: #3730a3; }
+    .status-negotiating { background: #dbeafe; color: #1e40af; }
+    .status-accepted { background: #bbf7d0; color: #15803d; }
     .status-active { background: #d1fae5; color: #065f46; }
     .status-cancelled { background: #fee2e2; color: #991b1b; }
-    .status-negotiating { background: #e0e7ff; color: #3730a3; }
+    .status-expired { background: #f3f4f6; color: #6b7280; }
 
     .loading {
       text-align: center;
@@ -313,11 +316,14 @@
         <label>Estado</label>
         <select id="filter-status">
           <option value="">Todos los estados</option>
-          <option value="quoted">Quoted (enviada)</option>
-          <option value="pending">Pending</option>
-          <option value="negotiating">Negotiating</option>
-          <option value="active">Active</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="pending">Pendiente</option>
+          <option value="pending_payment">Pago Pendiente</option>
+          <option value="tour_scheduled">Tour Agendado</option>
+          <option value="negotiating">Negociando</option>
+          <option value="accepted">Aceptada</option>
+          <option value="active">Activa</option>
+          <option value="cancelled">Cancelada</option>
+          <option value="expired">Expirada</option>
         </select>
       </div>
       <div class="filter-group">
@@ -401,17 +407,18 @@
     // Formateo de estado
     function getStatusBadge(status) {
       const statusMap = {
-        'quoted': 'Enviada',
         'pending': 'Pendiente',
+        'pending_payment': 'Pago Pendiente',
+        'tour_scheduled': 'Tour Agendado',
+        'negotiating': 'Negociando',
+        'accepted': 'Aceptada',
         'active': 'Activa',
         'cancelled': 'Cancelada',
-        'negotiating': 'Negociando',
-        'pending_payment': 'Pago Pendiente',
-        'tour_scheduled': 'Tour Agendado'
+        'expired': 'Expirada'
       };
       
       const label = statusMap[status] || status;
-      const className = `status-${status.split('_')[0]}`;
+      const className = `status-${status}`;
       
       return `<span class="status-badge ${className}">${label}</span>`;
     }

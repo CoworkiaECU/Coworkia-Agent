@@ -56,6 +56,7 @@ import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion 
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
+import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
@@ -1466,7 +1467,39 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     }
     // ══════════════════════════════════════════════════════════════════════
 
-    // 📋 Inicializar variables de formulario para todo el scope
+    // � BOSS COMMANDS: Adriana — cotización de seguro vehicular para cliente presencial
+    // El jefe dicta: "cotización seguro Toyota RAV4 2023 $45000 para Ana Martínez ana@email.com 0987..."
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'ADRIANA') {
+      if (isAdrianaBossQuoteCommand(processedText)) {
+        console.log('[BOSS-CMD] 🛡️ Cotización ADRIANA solicitada por admin');
+        const quoteCode = await generateBossQuoteCode('ADRIANA');
+        await enviarWhatsApp(userId, `⚙️ *Adriana preparando cotización de seguro...*\n🔑 ${quoteCode}`);
+
+        const result = await sendAdrianaCotizacion(processedText, { quoteCode });
+
+        await saveBossQuote({
+          agent:       'ADRIANA',
+          clientName:  result.nombre  || null,
+          clientEmail: result.email   || null,
+          clientPhone: result.telefono || null,
+          serviceInfo: result.vehiculo || null,
+          amountMin:   result.primaAnual || null,
+          amountMax:   result.primaAnual || null,
+          quoteCode,
+          emailSent:   result.success,
+        });
+
+        const reply = result.success
+          ? `✅ *Cotización enviada por Adriana*\n🚗 ${result.vehiculo}\n👤 ${result.nombre}\n📧 ${result.email}${result.telefono ? `\n📱 ${result.telefono}` : ''}\n💰 $${result.primaAnual}/año\n🔑 ${result.quoteCode}`
+          : `❌ Error enviando cotización: ${result.error}`;
+        await enviarWhatsApp(userId, reply);
+        return;
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // �📋 Inicializar variables de formulario para todo el scope
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
 

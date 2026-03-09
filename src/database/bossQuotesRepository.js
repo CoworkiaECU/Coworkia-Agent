@@ -57,7 +57,7 @@ export async function saveBossQuote({
 }
 
 // ─── PREFIJOS POR AGENTE ─────────────────────────────────────────────────────
-const AGENT_PREFIX = { GABI: 'GRC', ENZO: 'ML', PAULA: 'PRE', AXEL: 'AXEL', ALUNA: 'PRO' };
+const AGENT_PREFIX = { GABI: 'GRC', ENZO: 'ML', PAULA: 'PRE', AXEL: 'AXEL', ALUNA: 'PRO', ADRIANA: 'SEG' };
 
 /**
  * 🔢 Genera código secuencial de documento por agente y año.

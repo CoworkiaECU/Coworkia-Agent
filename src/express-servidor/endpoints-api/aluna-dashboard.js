@@ -163,13 +163,13 @@ router.get('/stats', async (req, res) => {
     // Proformas de últimos 7 días
     const recent = await databaseService.get(
       `SELECT COUNT(*) as count FROM membership_leads 
-       WHERE created_at >= datetime('now', '-7 days')`
+       WHERE created_at >= NOW() - INTERVAL '7 days'`
     );
     
     // Proformas del mes actual
     const thisMonth = await databaseService.get(
       `SELECT COUNT(*) as count FROM membership_leads 
-       WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+       WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(NOW(), 'YYYY-MM')`
     );
     
     return res.json({

@@ -3,44 +3,13 @@
  * Genera cotizaciones inteligentes usando OpenAI basadas en:
  * - Análisis Vision AI de los daños
  * - Datos del vehículo (marca, modelo, año)
- * - Tarifario de The PaintBull
+ * - Precios del mercado de Quito, Ecuador (OpenAI)
+ *
+ * TODO: cuando The PaintBull entregue su tarifario oficial, reemplazar
+ *       el bloque de precios del prompt por ese tarifario real.
  */
 
 import { complete, analyzeImage } from '../servicios-ia/openai.js';
-
-/**
- * 💵 Tarifario base The PaintBull (valores referenciales en USD)
- */
-const TARIFARIO = {
-  // Mano de obra por hora
-  manoDeObra: {
-    enderezada: 25, // USD/hora
-    pintura: 30,    // USD/hora
-    pulido: 20      // USD/hora
-  },
-  
-  // Materiales comunes
-  materiales: {
-    pintura: {
-      pequeño: [80, 150],   // Panel pequeño (guardafango, puerta)
-      mediano: [150, 300],  // Panel mediano (capó, tapa baúl)
-      grande: [300, 500]    // Panel grande (lateral completo)
-    },
-    masilla: [15, 40],
-    imprimante: [20, 50],
-    lija: [10, 25],
-    cinta: [5, 15]
-  },
-  
-  // Repuestos comunes (promedio)
-  repuestos: {
-    faro: [80, 250],
-    parrilla: [50, 200],
-    parachoques: [150, 400],
-    retrovisor: [30, 120],
-    moldura: [20, 80]
-  }
-};
 
 /**
  * 🤖 Genera cotización usando OpenAI con contexto completo
@@ -73,27 +42,13 @@ URGENCIAS: ${JSON.stringify(damageAnalysis.urgentIssues || [])}
 
 ${photoUrls.length > 0 ? `Se adjuntan ${photoUrls.length} foto(s) del vehículo — ÚSALAS para validar y mejorar el diagnóstico previo. Si ves daños adicionales no listados arriba, inclúyelos.` : ''}
 
-TARIFARIO THE PAINTBULL (mercado Quito, USD):
-Mano de obra:
-- Enderezado básico (abolladura pequeña): $40-$80
-- Enderezado complejo (panel deformado): $80-$180
-- Pintura panel pequeño (guardafango, puerta): $120-$200
-- Pintura panel mediano (capó, tapa baúl): $180-$350
-- Pintura panel grande (lateral completo): $300-$500
-- Pulido y abrillantado por panel: $30-$60
+PRECIOS DE REFERENCIA:
+Usa tus conocimientos actualizados del mercado de talleres de colisión y pintura en QUITO, ECUADOR (año 2026).
+Considera talleres de mediana-alta categoría con buena reputación en la ciudad (ni el más barato del barrio ni concesionario oficial).
+Ten en cuenta que los repuestos en Ecuador pueden tener sobreprecio de importación del 20-40% respecto a Colombia o Perú.
+Ajusta los rangos según el año y marca del vehículo: repuestos de autos japoneses (Toyota, Hyundai, Kia) son más accesibles que europeos o americanos.
 
-Materiales por panel:
-- Masilla, imprimante, lija, cinta: $25-$60
-- Pintura (incluida en trabajo de pintura)
-
-Repuestos (precio instalado):
-- Faro delantero/trasero: $90-$280
-- Parachoques delantero: $180-$450
-- Parachoques trasero: $150-$380
-- Retrovisor completo: $40-$130
-- Moldura/trim: $25-$90
-- Parrilla delantera: $60-$220
-- Vidrio lateral: $80-$200
+// NOTA TÉCNICA: cuando The PaintBull entregue su tarifario oficial, reemplazar este bloque por los valores reales.
 
 TAREA: Basándote en las fotos (si están adjuntas) y el análisis por pieza, genera una cotización realista pieza por pieza en JSON:
 {

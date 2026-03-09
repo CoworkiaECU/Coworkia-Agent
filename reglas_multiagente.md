@@ -1,6 +1,6 @@
 # Reglas Multiagente — Coworkia Aurora
 > Referencia rápida del ecosistema. Se lee antes de cualquier intervención.  
-> Última actualización: **08 Mar 2026**
+> Última actualización: **08 Mar 2026 — v842**
 
 ---
 
@@ -91,64 +91,122 @@ Aurora dice adiós → esperar 7s → nuevo agente entra
 
 ## 7. Log de trabajo (sesiones anteriores)
 
-### 08 Mar 2026
+### 08 Mar 2026 — v840 / v841 / v842 (Boss Commands + DB fixes)
 
 | Item | Descripción | Archivos | Estado |
 |------|-------------|----------|--------|
-| A1 | ALUNA: recordatorio renovación membresía (día 25 + día 30) | `alunaRepository.js`, `follow-up-service.js`, `cron-scheduler.js`, `postgres-adapter.js` | ✅ |
-| A2 | AURORA: sugerencia re-reserva (día anterior, cron 5pm) | `reservationRepository.js`, `follow-up-service.js`, `cron-scheduler.js`, `postgres-adapter.js` | ✅ |
-| F2 | `handoffContext` se pierde tras 1er mensaje | `orquestador.js` | ✅ |
-| F3 | Filtro `@` borraba el mensaje de activación | `orquestador.js` | ✅ |
-| F5 | Saludo genérico con `@mención` pura como contexto | `handoff-messages.js` | ✅ |
-| F6 | Historial externo 3 mensajes → 15 unificado | `orquestador.js` | ✅ |
-| B1 | Aurora despedida llegaba DESPUÉS del delay de 7s | `handoff-manager.js` | ✅ |
-| B2 | Form de ALUNA bloqueaba switch automático a AURORA | `wassenger.js` | ✅ |
-| KW | ALUNA→AURORA automático por keywords (bidireccional) | `detectar-intencion.js` | ✅ |
-| EZ | ENZO system prompt: metodología de brief creativo, 9 ejes, máx 7 preguntas | `enzo.js` | ✅ |
-| ML | ENZO emails: logo PNG real de MarketingLab en cotizaciones del jefe | `enzo-cotizacion-email.js` | ✅ |
+| DB1 | `query()` en `database.js` llamaba a `databaseService.db.query()` inexistente → bokeaba saves de `axel_quotes`, upserts de `collision_quotes` y `fetchBestDemoCase()` | `database.js` | ✅ v840 |
+| DB2 | `collision_quotes` en live DB no tenía columna `damage_analysis` → error "column does not exist" en SELECT | `axel-demo-cotizacion.js`, `postgres-adapter.js` | ✅ v842 |
+| NLP1 | Boss commands requerían sintaxis rígida → reemplazados por parsers async con OpenAI `gpt-4o` para los 6 agentes | `gabi-cotizacion-email.js`, `paula-cotizacion-email.js`, `axel-demo-cotizacion.js`, `wassenger.js` | ✅ v841 |
+| NLP2 | `isXxxBossQuoteCommand()` amplió triggers a: `manda`, `envía`, `propuesta`, `proforma`, `para <Nombre>`, `coti` | todos los archivos de boss commands | ✅ v841 |
+| NLP3 | Parser AXEL y PAULA no eran async → `wassenger.js` no los awaiteaba | `wassenger.js` | ✅ v841 |
+| NLP4 | Parser de nombre devolvía `"Fer Gavilánez telefono"` (regex de teléfono no matcheaba `09…`) | `parseAxelDemoQuoteData()` → resuelto al pasar a OpenAI | ✅ v841 |
+| MIG1 | Migración `ALTER TABLE collision_quotes ADD COLUMN IF NOT EXISTS damage_analysis JSONB` + `quote_details TEXT` | `postgres-adapter.js` | ✅ v842 |
 
-### Antes del 08 Mar 2026
+### 08 Mar 2026 — v839 (Campañas)
+
+| Item | Descripción | Archivos | Estado |
+|------|-------------|----------|--------|
+| C1 | `sala de reuniones` trigger activaba campaña ALUNA membresías (falso positivo) | `wassenger.js` | ✅ |
+| C2 | Campaña #1 no incluía hint `@aluna` para que el usuario supiera cómo navegar | `wassenger.js` | ✅ |
+| C3 | `me interesa` → handoff a ENZO no funcionaba en ventana de 30 min | `wassenger.js` | ✅ |
+
+### 08 Mar 2026 — v838 y anteriores
 
 | Item | Descripción | Estado |
 |------|-------------|--------|
+| A1 | ALUNA: recordatorio renovación membresía (día 25 + día 30) | ✅ |
+| A2 | AURORA: sugerencia re-reserva (día anterior, cron 5pm) | ✅ |
+| F2 | `handoffContext` se pierde tras 1er mensaje | ✅ |
+| F3 | Filtro `@` borraba el mensaje de activación | ✅ |
+| F5 | Saludo genérico con `@mención` pura como contexto | ✅ |
+| F6 | Historial externo 3 mensajes → 15 unificado | ✅ |
+| B1 | Aurora despedida llegaba DESPUÉS del delay de 7s | ✅ |
+| B2 | Form de ALUNA bloqueaba switch automático a AURORA | ✅ |
+| KW | ALUNA→AURORA automático por keywords (bidireccional) | ✅ |
+| EZ | ENZO system prompt: metodología de brief creativo, 9 ejes, máx 7 preguntas | ✅ |
+| ML | ENZO emails: logo PNG real de MarketingLab en cotizaciones del jefe | ✅ |
 | F1 | GABI estaba en grupo coworking (recibía ruido de reservas) | ✅ |
 | F4 | PAULA sin keywords automáticas — descartado (se mantiene `@mención`) | ❌ Descartado |
 
+---
 
+## 8. Sistema de Boss Commands (Cotizaciones del jefe)
 
-**Nuevas funciones a agregar:**
-- `alunaRepository.js` → `findMembersForRenewalReminder1()`, `findMembersForRenewalReminder2()`, `markRenewalReminder1Sent(phone)`, `markRenewalReminder2Sent(phone)`
-- `follow-up-service.js` → `processMembershipRenewalReminders()` — consulta ambas rondas, envía, registra en `interactions`
+Todos los agentes externos (GABI, ENZO, PAULA, AXEL, ALUNA, ADRIANA) tienen un comando especial para que el jefe genere y envíe cotizaciones/proformas por email directamente desde WhatsApp.
 
-**Cron:** Diario a las 9:00am Ecuador (horario de oficina, tranquilo).
+### 8.1 Cómo se activa
+
+El sistema detecta el boss command si el mensaje del jefe contiene **email presente** + al menos una de estas palabras/frases:
+```
+cotización | coti | manda | envía | propuesta | proforma | para <Nombre>
+```
+
+No hay orden rígido. La frase puede ser natural, por ejemplo:
+```
+"gabi prepara una cotizacion para Fer Gavilanez, necesita asesoría SCVS.
+Su mail es Mafer@gmail.com, cel 0998379860, empresa Wellness-Series"
+```
+
+### 8.2 Parser NLP con OpenAI
+
+Todos los parsers son **async** y usan `gpt-4o` (`temperature: 0.1`, `max_tokens: 80-200`) para extraer:
+- `nombre`, `email`, `telefono` (campos de contacto)
+- Campo específico por agente: `area`/`descripcionServicio` (GABI), `propiedad` (PAULA), plan (ALUNA), etc.
+
+Si OpenAI falla, cada parser tiene un fallback de regex básico.
+
+**IMPORTANTE:** En `wassenger.js` todos los parsers se llaman con `await` — si se agrega un nuevo parser async, asegurarse de awaitearlo.
+
+### 8.3 Archivos de boss commands por agente
+
+| Agente   | Archivo                              | Parser                      |
+|----------|--------------------------------------|-----------------------------|
+| GABI     | `gabi-cotizacion-email.js`           | `parseGabiQuoteData()` async OpenAI |
+| ENZO     | `enzo-cotizacion-email.js`           | regex                        |
+| PAULA    | `paula-cotizacion-email.js`          | `parsePaulaQuoteData()` async OpenAI (contacto) + regex keyword (propiedad) |
+| AXEL     | `axel-demo-cotizacion.js`            | `parseAxelDemoQuoteData()` async OpenAI |
+| ADRIANA  | `adriana-cotizacion-email.js`        | regex                        |
+| ALUNA    | inline en `wassenger.js`             | inline OpenAI: extrae `{ nombre, email, telefono, plan }` |
+
+### 8.4 Demo de AXEL (cotización de colisiones)
+
+- `fetchBestDemoCase()` busca el mejor caso real en `axel_quotes` / `collision_quotes`.
+- Si las tablas están vacías → cae a demo estático (Toyota Hilux 4x4 2022, $800-$1500, **sin fotos**).
+- **Para tener fotos en la demo:** tiene que existir al menos un usuario real que haya completado el flujo Axel (enviar fotos del vehículo por WhatsApp). Las fotos se guardan en `axel_quotes` desde v840.
+- El SELECT de `collision_quotes` **no incluye** `damage_analysis` (columna que faltaba en la tabla live — se agrega por migración en `postgres-adapter.js`).
 
 ---
 
-#### A2 — AURORA: sugerencia de re-reserva Hot Desk / Sala
+## 9. Capa de base de datos — patrones críticos
 
-**Lógica de negocio:**
-- Buscar reservas `status = 'confirmed'` y `payment_status = 'paid'` que se realizaron exactamente hace 7 días (mismo día de semana).
-- Enviar el aviso el día anterior a ese aniversario semanal, a las **5pm Ecuador** — para que el usuario pueda responder con tiempo y no se lo pierdas si la sesión es a primera hora del día siguiente.
-- Ejemplo: reserva el miércoles → aviso el martes a las 5pm.
-- Si el usuario ya tiene una reserva confirmada esa misma semana → no se envía.
-- Si ya se envió el recordatorio para esa reserva específica → no se vuelve a enviar (control por `rebook_reminder_sent_at`).
+### 9.1 `database.js` — el helper `query()`
 
-**Mensaje de referencia:**
-> "Hola [Nombre] 👋 La semana pasada reservaste el *[Hot Desk / Sala]* el [día]. ¿Lo agendamos para esta semana también? Solo dime y lo dejamos listo 😊"
+El helper `query()` exportado de `src/database/database.js` usa `db.all()` y retorna `{ rows }` para ser compatible con la interfaz pg-style:
 
-**Cambios de base de datos:**
-- Agregar 1 columna nueva a `reservations` (migración idempotente en `postgres-adapter.js`):
-  - `rebook_reminder_sent_at TIMESTAMP`
+```js
+export const query = async (sql, params) => {
+  await databaseService.ensureInitialized();
+  const rows = await databaseService.db.all(sql, params);
+  return { rows };
+};
+```
 
-**Nuevas funciones a agregar:**
-- `reservationRepository.js` → `findReservationsForRebookReminder()` — retorna reservas de hace 7 días sin recordatorio enviado aún y sin reserva activa esa semana
-- `follow-up-service.js` → `processAuroraRebookReminders()` — consulta, envía, registra en `interactions`, marca `rebook_reminder_sent_at`
+**El `postgresAdapter` solo tiene `run`, `get`, `all` — NO tiene `.query()` nativo.** Nunca llamar `databaseService.db.query()` directamente.
 
-**Cron:** Diario a las **17:00 Ecuador** (5pm), separado del cron de ALUNA.
+### 9.2 Migraciones de columnas (`postgres-adapter.js`)
+
+Si una tabla live fue creada antes de que se añadiera una columna al schema, usar siempre:
+```sql
+ALTER TABLE nombre_tabla ADD COLUMN IF NOT EXISTS columna TIPO;
+```
+Esto va en el bloque de migraciones de `postgres-adapter.js` (cerca del `CREATE TABLE` de la tabla).
+
+**Caso de referencia:** `collision_quotes` en live DB no tenía `damage_analysis JSONB` ni `quote_details TEXT` — se agregaron con `ADD COLUMN IF NOT EXISTS` en v842.
 
 ---
 
-## 8. Protocolo de intervención quirúrgica
+## 10. Protocolo de intervención quirúrgica
 
 Antes de tocar cualquier archivo crítico:
 
@@ -161,7 +219,7 @@ Antes de tocar cualquier archivo crítico:
 
 ---
 
-## 9. Archivos críticos — tocar con máxima precaución
+## 11. Archivos críticos — tocar con máxima precaución
 
 | Archivo                                          | Rol en el sistema                                      |
 |--------------------------------------------------|--------------------------------------------------------|
@@ -174,4 +232,4 @@ Antes de tocar cualquier archivo crítico:
 
 ---
 
-*Última actualización: 08 Mar 2026 — Especificaciones detalladas de los 6 fixes + automatizaciones A1 y A2.*
+*Última actualización: 08 Mar 2026 — v842 (Boss Commands NLP + DB query fix + collision_quotes schema migration).*

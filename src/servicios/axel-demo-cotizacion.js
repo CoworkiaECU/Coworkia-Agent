@@ -16,52 +16,148 @@ import { complete } from '../servicios-ia/openai.js';
 import { sendQuoteEmail } from './axel-quote-email.js';
 import { generateQuoteCode } from './axel-quote-code.js';
 
-// ─── FALLBACK: caso de demostración estático ─────────────────────────────────
-// Se usa cuando no hay casos reales en la BD (ambiente nuevo / sin historial)
+// ─── CASOS DE DEMOSTRACIÓN ────────────────────────────────────────────────────
+// Fotos reales alojadas en /public/images/axel-demo/ → servidas por express.static
+// Se rota aleatoriamente cuando no hay casos reales en BD.
 
-const DEMO_FALLBACK = {
-  vehicleData: {
-    marca: 'Toyota',
-    modelo: 'Hilux 4x4',
-    año: '2022',
-  },
-  damageAnalysis: {
-    success: true,
-    severity: 'MODERADO',
-    affectedParts: ['Parachoques delantero', 'Capó', 'Guardafango derecho', 'Faro derecho'],
-    hiddenDamageRisk: 'MEDIO',
-    estimatedRepairDays: '4-6 días',
-    analysis: {
-      summary: 'Impacto frontal moderado con deformación en capó, daño estructural leve en parachoques y faro derecho fracturado. Guardafango con abolladuras y rayones profundos.',
+const BASE_URL = 'https://coworkia-agent-e97d15dac56f.herokuapp.com';
+
+const DEMO_CASES = [
+  // ── 1. Toyota RAV4 2010 ──────────────────────────────────────────────────
+  {
+    vehicleData: { marca: 'Toyota', modelo: 'RAV4', año: '2010' },
+    damageAnalysis: {
+      success: true,
+      severity: 'MODERADO',
+      affectedParts: ['Parachoques delantero', 'Guardafango izquierdo', 'Faro izquierdo', 'Capó'],
+      hiddenDamageRisk: 'MEDIO',
+      estimatedRepairDays: '5-7 días',
+      analysis: {
+        summary: 'Impacto lateral-frontal izquierdo con deformación en guardafango, parachoques desplazado y faro izquierdo fracturado. Capó con abolladuras y rayones que requieren masillado.',
+      },
     },
-  },
-  quoteDetails: `🔍 *RESUMEN DE DAÑOS*
-Impacto frontal moderado: capó con deformación central, parachoques delantero desplazado, guardafango derecho con abolladuras profundas y faro derecho fracturado.
+    quoteDetails: `🔍 *RESUMEN DE DAÑOS*
+Impacto lateral-frontal izquierdo: guardafango con abolladuras profundas, parachoques delantero desplazado, faro izquierdo fracturado y capó con rayones extensos.
 
 🔧 *TRABAJOS REQUERIDOS*
-• Enderezada y masillado de capó (8-10 h) → $200-$250
+• Enderezada y masillado de guardafango izquierdo (6-8 h) → $150-$200
 • Reemplazo parachoques delantero (plástico + pintado) → $180-$280
-• Enderezada guardafango derecho (4-6 h) → $100-$150
-• Reemplazo faro delantero derecho (original) → $150-$250
-• Preparación, imprimante y pintura 3 paneles → $300-$450
+• Reemplazo faro delantero izquierdo (original) → $120-$200
+• Masillado y pintura de capó → $180-$250
+• Preparación, imprimante y pintura 3 paneles → $280-$400
 • Pulido y encerado de acabado → $60-$80
 
 💰 *DESGLOSE*
-Mano de obra:  $300 - $430
-Materiales:    $180 - $280
-Repuestos:     $150 - $250
+Mano de obra:  $280 - $400
+Materiales:    $160 - $250
+Repuestos:     $120 - $200
 ━━━━━━━━━━━━━━━━━━━━━━━━
-*TOTAL ESTIMADO: $800 - $1,500 USD*
+*TOTAL ESTIMADO: $700 - $1,200 USD*
 
-⏱️ *TIEMPO ESTIMADO:* 4-6 días hábiles
+⏱️ *TIEMPO ESTIMADO:* 5-7 días hábiles
 
 ⚠️ *NOTAS IMPORTANTES*
 • Cotización preliminar basada en análisis fotográfico
 • Inspección física puede revelar daños adicionales no visibles
 • Precios sujetos a disponibilidad de repuestos en Ecuador`,
-  priceRange: { min: 800, max: 1500 },
-  photoUrls: [],
-};
+    priceRange: { min: 700, max: 1200 },
+    photoUrls: [
+      `${BASE_URL}/images/axel-demo/toyota-rav4-2010/foto1.JPG`,
+      `${BASE_URL}/images/axel-demo/toyota-rav4-2010/foto2.JPG`,
+      `${BASE_URL}/images/axel-demo/toyota-rav4-2010/foto3.JPG`,
+      `${BASE_URL}/images/axel-demo/toyota-rav4-2010/foto4.JPG`,
+    ],
+  },
+
+  // ── 2. Hyundai Sonata 2016 ───────────────────────────────────────────────
+  {
+    vehicleData: { marca: 'Hyundai', modelo: 'Sonata', año: '2016' },
+    damageAnalysis: {
+      success: true,
+      severity: 'MODERADO-ALTO',
+      affectedParts: ['Puerta delantera derecha', 'Puerta trasera derecha', 'Guardafango trasero derecho', 'Espejo derecho'],
+      hiddenDamageRisk: 'ALTO',
+      estimatedRepairDays: '6-8 días',
+      analysis: {
+        summary: 'Colisión lateral derecha con deformación en ambas puertas y guardafango trasero. Espejo fracturado. Alto riesgo de daño estructural en umbral de puertas.',
+      },
+    },
+    quoteDetails: `🔍 *RESUMEN DE DAÑOS*
+Colisión lateral derecha: puerta delantera y trasera con abolladuras severas, guardafango trasero deformado, espejo derecho fracturado. Se recomienda inspección de umbral y estructura lateral.
+
+🔧 *TRABAJOS REQUERIDOS*
+• Enderezada puerta delantera derecha (8-10 h) → $200-$280
+• Enderezada puerta trasera derecha (8-10 h) → $200-$280
+• Enderezada guardafango trasero derecho (5-7 h) → $130-$180
+• Reemplazo espejo derecho completo → $90-$150
+• Inspección y refuerzo de umbral lateral → $100-$180
+• Pintura 3 paneles (puertas + guardafango) → $350-$500
+• Pulido y encerado → $60-$80
+
+💰 *DESGLOSE*
+Mano de obra:  $380 - $520
+Materiales:    $200 - $320
+Repuestos:     $90 - $150
+━━━━━━━━━━━━━━━━━━━━━━━━
+*TOTAL ESTIMADO: $900 - $1,600 USD*
+
+⏱️ *TIEMPO ESTIMADO:* 6-8 días hábiles
+
+⚠️ *NOTAS IMPORTANTES*
+• Cotización preliminar basada en análisis fotográfico
+• Inspección física puede revelar daños adicionales no visibles
+• Precios sujetos a disponibilidad de repuestos en Ecuador`,
+    priceRange: { min: 900, max: 1600 },
+    photoUrls: [
+      `${BASE_URL}/images/axel-demo/hyundai-sonata-2016/foto1.JPG`,
+      `${BASE_URL}/images/axel-demo/hyundai-sonata-2016/foto2.JPG`,
+      `${BASE_URL}/images/axel-demo/hyundai-sonata-2016/foto3.JPG`,
+      `${BASE_URL}/images/axel-demo/hyundai-sonata-2016/foto4.JPG`,
+    ],
+  },
+
+  // ── 3. Kia Picanto 2019 ──────────────────────────────────────────────────
+  {
+    vehicleData: { marca: 'Kia', modelo: 'Picanto', año: '2019' },
+    damageAnalysis: {
+      success: true,
+      severity: 'LEVE-MODERADO',
+      affectedParts: ['Parachoques trasero', 'Tapa del maletero', 'Luz trasera derecha'],
+      hiddenDamageRisk: 'BAJO',
+      estimatedRepairDays: '3-4 días',
+      analysis: {
+        summary: 'Impacto trasero leve con deformación en parachoques y abolladuras menores en tapa de maletero. Luz trasera derecha con fisura. Sin indicios de daño estructural.',
+      },
+    },
+    quoteDetails: `🔍 *RESUMEN DE DAÑOS*
+Impacto trasero leve: parachoques con deformación y rayones, tapa de maletero con abolladuras menores, luz trasera derecha con fisura superficial.
+
+🔧 *TRABAJOS REQUERIDOS*
+• Reparación y masillado parachoques trasero → $100-$150
+• Enderezada y masillado tapa de maletero (3-4 h) → $100-$140
+• Reemplazo luz trasera derecha → $60-$100
+• Pintura parachoques + maletero (2 paneles) → $180-$260
+• Pulido y encerado → $40-$60
+
+💰 *DESGLOSE*
+Mano de obra:  $160 - $220
+Materiales:    $100 - $160
+Repuestos:     $60 - $100
+━━━━━━━━━━━━━━━━━━━━━━━━
+*TOTAL ESTIMADO: $400 - $700 USD*
+
+⏱️ *TIEMPO ESTIMADO:* 3-4 días hábiles
+
+⚠️ *NOTAS IMPORTANTES*
+• Cotización preliminar basada en análisis fotográfico
+• Inspección física puede revelar daños adicionales no visibles
+• Precios sujetos a disponibilidad de repuestos en Ecuador`,
+    priceRange: { min: 400, max: 700 },
+    photoUrls: [
+      `${BASE_URL}/images/axel-demo/kia-picanto-2019/foto1.JPG`,
+    ],
+  },
+];
 
 // ─── DETECCIÓN ────────────────────────────────────────────────────────────────
 
@@ -222,9 +318,10 @@ async function fetchBestDemoCase() {
     console.warn('[AXEL-DEMO] collision_quotes no disponible:', err2.message);
   }
 
-  // 3. Fallback estático — funciona siempre, sin fotos
-  console.log('[AXEL-DEMO] ℹ️ Sin casos reales en BD — usando demo estático sin fotos');
-  return DEMO_FALLBACK;
+  // 3. Fallback a casos demo con fotos reales (rotación aleatoria)
+  const randomCase = DEMO_CASES[Math.floor(Math.random() * DEMO_CASES.length)];
+  console.log(`[AXEL-DEMO] ℹ️ Sin casos en BD — usando demo: ${randomCase.vehicleData.marca} ${randomCase.vehicleData.modelo} ${randomCase.vehicleData.año}`);
+  return randomCase;
 }
 
 // ─── FUNCIÓN PRINCIPAL ────────────────────────────────────────────────────────

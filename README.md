@@ -2,8 +2,8 @@
 
 Sistema de agente conversacional multi-personalidad para Coworkia Business Center. Integración WhatsApp (Wassenger) + OpenAI GPT-4o-mini + PostgreSQL en Heroku.
 
-**Versión Actual**: v427 (Enero 2026)  
-**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado | Observabilidad completa | Caché de perfiles
+**Versión Actual**: v842 (Marzo 2026)  
+**Status**: ✅ Producción | 0 vulnerabilities | PostgreSQL optimizado | Observabilidad completa | Boss Commands NLP
 
 [![Heroku](https://img.shields.io/badge/deployed-heroku-430098)](https://coworkia-agent-e97d15dac56f.herokuapp.com/)
 [![Security](https://img.shields.io/badge/vulnerabilities-0-success)](package.json)
@@ -14,20 +14,27 @@ Sistema de agente conversacional multi-personalidad para Coworkia Business Cente
 
 ## 🌟 Características Principales
 
-### 💬 Sistema Multi-Agente (7 Especialistas)
+### 💬 Sistema Multi-Agente (8 Especialistas)
 - **Aurora** - Recepcionista Coworkia (secretaria central)
+- **Aluna** - Membresías Coworkia
 - **Axel** - The PaintBull (enderezada y pintura automotriz)
 - **Enzo** - MarketingLab (marketing digital e IA)
+- **Gabi** - GR Consulting (Finanzas, RRHH y Legal)
+- **Paula** - PropElite (Bienes raíces Ecuador y Rep. Dominicana)
 - **Adriana** - SegPopular (seguros)
-- **Aluna** - Membresías Coworkia
 - **Ángela** - MedBeneficios (salud y bienestar)
-- **Gabi** - Finanzas, RRHH y Legal (NEW)
 
 ### 🎯 Handoffs Inteligentes
 - Mención explícita: `@axel`, `@enzo`, `@adriana`, etc.
 - Detección contextual automática
 - Memoria conversacional preservada
 - Transiciones fluidas entre agentes
+
+### 📋 Boss Commands (Cotizaciones del Jefe)
+- Lenguaje natural: `"gabi prepara cotización para Juan juan@mail.com cel 099..."`
+- Sin orden rígido — OpenAI GPT-4o extrae los datos automáticamente
+- 6 agentes con boss command: GABI, ENZO, PAULA, AXEL, ALUNA, ADRIANA
+- AXEL incluye fotos reales de casos anteriores de colisiones
 
 ### 🗄️ Base de Datos PostgreSQL
 - 7 tablas optimizadas (users, reservations, interactions, etc.)
@@ -164,8 +171,8 @@ Especialista en salud y bienestar corporativo.
 
 ---
 
-### 💼 Gabi - Finanzas, RRHH y Legal (NEW)
-Experta administrativa para empresas del Business Center.
+### 💼 Gabi - GR Consulting
+Experta en finanzas, RRHH, legal y compliance para empresas del Business Center.
 
 **Activación:** `@gabi` o "finanzas", "nómina", "legal"
 
@@ -173,22 +180,27 @@ Experta administrativa para empresas del Business Center.
 - 💰 Gestión financiera/contable
 - 👥 RRHH y nómina
 - ⚖️ Asesoría legal
-- 📋 Compliance
+- 📋 Compliance SCVS, SRI, IESS
 - 🏢 Admin empresas aliadas
-
-**Empresas que atiende:**
-- MarketingLab (@enzo)
-- SegPopular (@adriana)
-- The PaintBull (@axel)
-- MedBeneficios (@angela)
-- Coworkia (@aurora)
 
 **Ejemplo:**
 ```
-Usuario: "@gabi cómo calculo la nómina"
-Gabi: "Para la gestión de nómina incluye:
-💰 Cálculo nómina, décimos 13º/14º..."
+Usuario: "gabi cotización para Fer Gavilanez, empresa Wellness-Series,
+         SCVS, Mafer@gmail.com, cel 0998379860"
+Gabi: [envía cotización por email con logo GR Consulting]
 ```
+
+---
+
+### 🏠 Paula - PropElite
+Especialista en bienes raíces Ecuador y Rep. Dominicana.
+
+**Activación:** `@paula` o "propiedad", "apartamento", "casa"
+
+**Funciones:**
+- 🏘️ Venta y arriendo de propiedades
+- 📋 Cotizaciones y brochures por email
+- 🌎 Cobertura Ecuador + Rep. Dominicana
 
 ---
 
@@ -401,6 +413,28 @@ Ver [scripts/README.md](scripts/README.md) para lista completa.
 ---
 
 ## 📈 Historial de Versiones
+
+### v842 (Marzo 2026) - Schema migration collision_quotes 🔧
+- ✅ `ALTER TABLE collision_quotes ADD COLUMN IF NOT EXISTS damage_analysis JSONB`
+- ✅ `ALTER TABLE collision_quotes ADD COLUMN IF NOT EXISTS quote_details TEXT`
+- ✅ `fetchBestDemoCase()`: removida columna `damage_analysis` del SELECT (no existía en live DB)
+
+### v841 (Marzo 2026) - Boss Commands NLP natural language 🤖
+- ✅ Parsers async con `gpt-4o` para GABI, PAULA, AXEL (temperature: 0.1)
+- ✅ ALUNA boss command: inline OpenAI en `wassenger.js` (reemplaza pipe-syntax regex)
+- ✅ `isXxxBossQuoteCommand()` ampliado: acepta `manda`, `envía`, `propuesta`, `proforma`, `para <Nombre>`, `coti`
+- ✅ `wassenger.js`: `await` en parsers AXEL y PAULA
+- ✅ Frases naturales sin orden rígido en todos los 6 agentes
+
+### v840 (Marzo 2026) - Fix DB query + name parser 🔧
+- ✅ `database.js` `query()`: corregido para usar `db.all()` con retorno `{ rows }` (postgresAdapter no tiene `.query()` nativo)
+- ✅ `axel-demo-cotizacion.js` `fetchBestDemoCase()`: usa `databaseService.all()` directamente
+- ✅ Parser nombre: strips de secuencias numéricas y literal "telefono" en nombre resultante
+
+### v839 (Marzo 2026) - Fixes campaña WhatsApp 📣
+- ✅ `sala de reuniones` ya no activa campaña de membresías ALUNA (falso positivo)
+- ✅ Campaña #1 ahora incluye hint `@aluna` para navegación
+- ✅ `me interesa` → handoff a ENZO funciona correctamente en ventana de 30 min (`lastVirtualAgentPromoAt`)
 
 ### v427 (Enero 2026) - Caché de Perfiles P1 ⚡
 - ✅ **P1**: Caché en memoria para perfiles (30s TTL)

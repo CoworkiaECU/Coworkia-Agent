@@ -44,6 +44,32 @@ const PRICING = {
 };
 
 /**
+ * 🔤 Formatea el tipo de servicio para mostrar en subject
+ * @param {string} serviceType - "hotDesk" o "meetingRoom"
+ * @returns {string} - "Hot Desk" o "Sala Reuniones"
+ */
+function formatServiceType(serviceType) {
+  const types = {
+    hotDesk: 'Hot Desk',
+    meetingRoom: 'Sala Reuniones',
+    salaReuniones: 'Sala Reuniones'
+  };
+  return types[serviceType] || serviceType;
+}
+
+/**
+ * 🕐 Convierte hora 24h a 12h con am/pm
+ * @param {string} time24 - "16:15" o "09:30"
+ * @returns {string} - "4:15pm" o "9:30am"
+ */
+function formatTime12h(time24) {
+  const [hours, minutes] = time24.split(':').map(Number);
+  const period = hours >= 12 ? 'pm' : 'am';
+  const hours12 = hours % 12 || 12; // 0 -> 12, 13 -> 1, etc.
+  return `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
+}
+
+/**
  * 🎨 Genera HTML template para email de confirmación (estilo actualizado)
  */
 function generateConfirmationEmailHTML(reservationData) {
@@ -440,6 +466,10 @@ export async function sendReservationConfirmation(reservationData) {
 
   const emailHTML = generateConfirmationEmailHTML(reservationData);
   
+  // Formatear subject para que sea conciso y legible
+  const serviceName = formatServiceType(serviceType);
+  const timeFormatted = formatTime12h(startTime);
+  
   const mailOptions = {
     from: {
       name: AGENT_FROM_NAMES.aurora || AGENT_FROM_NAMES._default,
@@ -447,7 +477,7 @@ export async function sendReservationConfirmation(reservationData) {
     },
     to: [email],
     cc: 'coworkia.ec@gmail.com', // Copia al administrador
-    subject: `✅ Reserva Confirmada - ${serviceType} ${date} ${startTime} - Coworkia`,
+    subject: `✅ Reserva Confirmada - ${serviceName} Coworkia desde ${timeFormatted}`,
     html: emailHTML,
     text: `
 Hola ${userName},
@@ -537,13 +567,16 @@ export async function sendReservationReminder(reservationData) {
     serviceType
   } = reservationData;
 
+  const serviceName = formatServiceType(serviceType);
+  const timeFormatted = formatTime12h(startTime);
+
   const mailOptions = {
     from: {
       name: 'Coworkia',
       address: DEFAULT_FROM_EMAIL
     },
     to: email,
-    subject: `🔔 Recordatorio - Tu reserva es mañana - ${serviceType}`,
+    subject: `🔔 Recordatorio - Tu ${serviceName} mañana a las ${timeFormatted}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #4a90e2;">🔔 Recordatorio de Reserva</h2>

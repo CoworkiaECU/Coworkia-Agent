@@ -55,3 +55,35 @@ export async function saveBossQuote({
     console.error('[BOSS-QUOTES] ⚠️ Error guardando quote (no bloquea envío):', err.message);
   }
 }
+
+// ─── PREFIJOS POR AGENTE ─────────────────────────────────────────────────────
+const AGENT_PREFIX = { GABI: 'GRC', ENZO: 'ML', PAULA: 'PRE', AXEL: 'AXEL', ALUNA: 'PRO' };
+
+/**
+ * 🔢 Genera código secuencial de documento por agente y año.
+ * Consulta boss_quotes para encontrar el último número usado y avanza uno.
+ * Formatos: GRC-2026-0001 · ML-2026-0001 · PRE-2026-0001 · PRO-2026-0001
+ *
+ * @param {string} agent - GABI | ENZO | PAULA | AXEL | ALUNA
+ * @returns {Promise<string>}
+ */
+export async function generateBossQuoteCode(agent) {
+  const prefix = AGENT_PREFIX[agent] || agent;
+  const year   = new Date().getFullYear();
+  try {
+    await databaseService.ensureInitialized();
+    const last = await databaseService.get(
+      `SELECT quote_code FROM boss_quotes WHERE agent = $1 AND quote_code LIKE $2 ORDER BY id DESC LIMIT 1`,
+      [agent, `${prefix}-${year}-%`]
+    );
+    let seq = 1;
+    if (last?.quote_code) {
+      const m = last.quote_code.match(/-(\d+)$/);
+      if (m) seq = parseInt(m[1]) + 1;
+    }
+    return `${prefix}-${year}-${String(seq).padStart(4, '0')}`;
+  } catch (err) {
+    console.error('[BOSS-QUOTES] ⚠️ Error generando código secuencial:', err.message);
+    return `${prefix}-${Date.now().toString(36).toUpperCase()}`;
+  }
+}

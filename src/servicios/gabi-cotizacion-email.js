@@ -107,14 +107,17 @@ export function parseGabiQuoteData(mensaje) {
 
 // ─── OPENAI: TEXTO PERSONALIZADO ─────────────────────────────────────────────
 
-async function generarOfertaTexto({ nombre, serviceConfig }) {
+async function generarOfertaTexto({ nombre, serviceConfig, mensajeJefe = '' }) {
+  const contexto = mensajeJefe
+    ? `\n\nContexto del asesor sobre este cliente: "${mensajeJefe.substring(0, 400)}"`
+    : '';
   try {
     const resp = await complete(
-      `Redacta UN párrafo breve (3-4 líneas) de introducción personalizada para ${nombre} que: saluda por nombre, menciona cómo GR Consulting puede apoyarle en ${serviceConfig.label} en Ecuador, e invita a aprovechar 30 minutos gratuitos sin compromiso. Tono profesional y directo. Solo el párrafo, sin firma ni encabezado.`,
+      `Redacta UN párrafo persuasivo (3-4 líneas) de introducción personalizada para ${nombre} que: saluda por nombre, conecta directamente con su situación o necesidad específica si se indica, menciona cómo GR Consulting puede apoyarle en ${serviceConfig.label} en Ecuador, e invita a aprovechar 30 minutos gratuitos sin compromiso. Tono profesional y cálido. Solo el párrafo, sin firma ni encabezado.${contexto}`,
       {
         system: 'Experta en redacción de propuestas comerciales en español ecuatoriano. Respuestas breves, elegantes y personalizadas.',
         temperature: 0.7,
-        max_tokens: 130,
+        max_tokens: 160,
       }
     );
     return resp || fallbackText(nombre, serviceConfig.label);
@@ -129,7 +132,7 @@ function fallbackText(nombre, label) {
 
 // ─── CONSTRUCCIÓN HTML ───────────────────────────────────────────────────────
 
-function buildEmailHTML({ nombre, area, ofertaTexto }) {
+function buildEmailHTML({ nombre, area, ofertaTexto, quoteCode = '' }) {
   const cfg = SERVICE_CONFIG[area] || SERVICE_CONFIG.finanzas;
   const formatDate = new Date().toLocaleDateString('es-EC', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -188,6 +191,7 @@ function buildEmailHTML({ nombre, area, ofertaTexto }) {
       <div style="color:#C9A84C;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Propuesta Personalizada</div>
       <div style="color:white;font-size:22px;font-weight:700;">${nombre}</div>
       <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:4px;">${formatDate}</div>
+      ${quoteCode ? `<div style="color:#E8C76A;font-size:11px;font-family:monospace;letter-spacing:0.5px;margin-top:6px;background:rgba(201,168,76,0.12);border-radius:6px;padding:3px 10px;display:inline-block;">${quoteCode}</div>` : ''}
     </div>
   </div>
 
@@ -307,21 +311,22 @@ function buildEmailHTML({ nombre, area, ofertaTexto }) {
  * 🚀 Genera y envía la propuesta/cotización GR Consulting
  * @param {{ nombre: string, area: string, email: string, telefono: string }} datos
  */
-export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono }) {
+export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, mensajeJefe = '', quoteCode = '' }) {
   const cfg = SERVICE_CONFIG[area] || SERVICE_CONFIG.finanzas;
   console.log(`[GABI-COTI] 📧 Preparando propuesta para ${nombre} (${cfg.label}) → ${email}`);
 
-  const ofertaTexto = await generarOfertaTexto({ nombre, serviceConfig: cfg });
-  const html        = buildEmailHTML({ nombre, area, ofertaTexto });
-  const subject     = `📋 Propuesta GR Consulting — ${cfg.label} | ${nombre}`;
+  const ofertaTexto = await generarOfertaTexto({ nombre, serviceConfig: cfg, mensajeJefe });
+  const html        = buildEmailHTML({ nombre, area, ofertaTexto, quoteCode });
+  const codeLabel   = quoteCode ? `${quoteCode} — ` : '';
+  const subject     = `📋 ${codeLabel}${cfg.label} · ${nombre} | GR Consulting`;
 
   const result = await sendEmail({ to: email, cc: GR_ADMIN_CC, subject, html });
 
   if (result.success) {
-    console.log(`[GABI-COTI] ✅ Propuesta enviada a ${email}`);
+    console.log(`[GABI-COTI] ✅ Propuesta enviada a ${email} (${quoteCode || 'sin código'})`);
   } else {
     console.error(`[GABI-COTI] ❌ Error enviando propuesta:`, result.error);
   }
 
-  return { ...result, nombre, areaLabel: cfg.label, email };
+  return { ...result, nombre, areaLabel: cfg.label, email, quoteCode };
 }

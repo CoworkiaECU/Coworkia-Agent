@@ -184,6 +184,7 @@ function buildEnzoEmailHTML(d) {
       <div style="color:#00E5C0;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Propuesta Personalizada</div>
       <div style="color:white;font-size:24px;font-weight:700;margin-bottom:3px;">${d.empresa}</div>
       <div style="color:rgba(255,255,255,0.45);font-size:12px;">${formatDate}</div>
+      ${d.quoteCode ? `<div style="color:#00E5C0;font-size:11px;font-family:monospace;letter-spacing:0.5px;margin-top:6px;background:rgba(0,194,160,0.1);border-radius:6px;padding:3px 10px;display:inline-block;">${d.quoteCode}</div>` : ''}
     </div>
   </div>
 
@@ -336,10 +337,10 @@ function buildEnzoEmailHTML(d) {
  * 🚀 Procesa el dictado del jefe y envía propuesta HTML al cliente
  * @param {string} mensajeCompleto - Todo el texto que escribió el jefe en WA
  */
-export async function sendEnzoCotizacion(mensajeCompleto) {
+export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {}) {
   console.log('[ENZO-COTI] 🧠 Procesando solicitud con OpenAI...');
 
-  // 1. OpenAI estructura y genera la propuesta
+  // 1. OpenAI estructura y genera la propuesta (el mensaje completo del jefe es el contexto)
   const datos = await procesarConOpenAI(mensajeCompleto);
 
   if (!datos || !datos.email) {
@@ -349,9 +350,14 @@ export async function sendEnzoCotizacion(mensajeCompleto) {
 
   console.log(`[ENZO-COTI] 📧 Enviando propuesta → ${datos.empresa} (${datos.email})`);
 
-  // 2. Construir HTML
-  const html    = buildEnzoEmailHTML(datos);
-  const subject = `🚀 Propuesta IA — ${datos.empresa} | MarketingLab Ecuador`;
+  // 2. Construir HTML con el código de documento
+  const html = buildEnzoEmailHTML({ ...datos, quoteCode });
+
+  const NIVEL_LABEL = {
+    basico: 'Agente IA Esencial', intermedio: 'Agente IA Profesional', avanzado: 'Agente IA Premium',
+  };
+  const codeLabel = quoteCode ? `${quoteCode} — ` : '';
+  const subject   = `🚀 ${codeLabel}${NIVEL_LABEL[datos.nivel_agente] || 'Propuesta IA'} · ${datos.empresa} | MarketingLab`;
 
   // 3. Enviar
   const result = await sendEmail({
@@ -368,5 +374,6 @@ export async function sendEnzoCotizacion(mensajeCompleto) {
     email:    datos.email,
     nivel:    datos.nivel_agente,
     precio:   datos.aplica_descuento ? datos.precio_con_descuento : datos.precio_desarrollo,
+    quoteCode,
   };
 }

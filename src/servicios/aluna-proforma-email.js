@@ -137,9 +137,13 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
       coworkiaWhatsApp: '593994837117',
     });
 
+    const contextualSubject = code
+      ? `💜 ${code} — ${plan.name} para ${clientName} | Coworkia`
+      : emailContent.subject;
+
     await sendEmail({
       to: clientEmail,
-      subject: emailContent.subject,
+      subject: contextualSubject,
       html: emailContent.html,
     });
 

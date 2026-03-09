@@ -136,18 +136,22 @@ export function parsePaulaQuoteData(mensaje) {
 
 // ─── OPENAI: INTRO PERSONALIZADA ─────────────────────────────────────────────
 
-async function generarIntro({ nombre, propiedad, esOverview }) {
+async function generarIntro({ nombre, propiedad, esOverview, mensajeJefe = '' }) {
   const propDesc = esOverview
     ? 'el proyecto Casas Jardín El Morenal (4 casas de lujo disponibles, constructor G.M.A. Arquitectos, Ecuador)'
     : `${propiedad.nombre} del proyecto El Morenal — ${propiedad.descripcion}`;
 
-  const prompt = `Escribe un párrafo de bienvenida de 3-4 líneas (máximo 80 palabras) para un brochure de bienes raíces de lujo dirigido a ${nombre}. 
+  const contexto = mensajeJefe
+    ? `\n\nContexto del asesor sobre este cliente: "${mensajeJefe.substring(0, 350)}"`
+    : '';
+
+  const prompt = `Escribe un párrafo de bienvenida de 3-4 líneas (máximo 90 palabras) para un brochure de bienes raíces de lujo dirigido a ${nombre}. 
 La propiedad/proyecto: ${propDesc}.
 Empresa: PropElite Bienes Raíces.
-Tono: exclusivo, cálido, aspiracional. Conecta con el sueño de tener una casa propia de lujo en Ecuador. Sin emojis, prosa elegante.`;
+Tono: exclusivo, cálido, aspiracional. Conecta con la situación y motivación específica del cliente si se indica. Sin emojis, prosa elegante.${contexto}`;
 
   try {
-    return await complete(prompt, { system: 'Eres una redactora de lujo para bienes raíces premium.', temperature: 0.6, max_tokens: 120 });
+    return await complete(prompt, { system: 'Eres una redactora de lujo para bienes raíces premium.', temperature: 0.6, max_tokens: 140 });
   } catch {
     return `Estimado/a ${nombre}, es un placer presentarle esta exclusiva oportunidad en PropElite Bienes Raíces. El proyecto Casas Jardín - El Morenal representa lo mejor de la arquitectura residencial en Ecuador: diseño, espacio y vida de calidad en un entorno privado y seguro.`;
   }
@@ -227,7 +231,7 @@ function propCardHTML(p, single = false) {
 
 // ─── HTML PRINCIPAL ───────────────────────────────────────────────────────────
 
-function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto }) {
+function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteCode = '' }) {
   const fechaFmt  = new Date().toLocaleDateString('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const waVisita  = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(`Hola Paula! Soy ${nombre}. Me gustaría agendar una visita a ${esOverview ? 'Las Casas Jardín El Morenal' : propiedad.nombre}.`)}`;
 
@@ -276,6 +280,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto }) {
       <div style="color:#D4AF37;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Propuesta exclusiva para</div>
       <div style="color:white;font-size:24px;font-weight:700;margin-bottom:3px;">${nombre}</div>
       <div style="color:rgba(255,255,255,0.45);font-size:12px;">${fechaFmt}</div>
+      ${quoteCode ? `<div style="color:#F0CB55;font-size:11px;font-family:monospace;letter-spacing:0.5px;margin-top:6px;background:rgba(212,175,55,0.12);border-radius:6px;padding:3px 10px;display:inline-block;">${quoteCode}</div>` : ''}
     </div>
   </div>
 
@@ -367,7 +372,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto }) {
  * 🏡 Procesa el comando del jefe y envía brochure de lujo al cliente
  * @param {string} mensajeCompleto — texto crudo del jefe en WA
  */
-export async function sendPaulaCotizacion(mensajeCompleto) {
+export async function sendPaulaCotizacion(mensajeCompleto, { quoteCode = '' } = {}) {
   const datos = parsePaulaQuoteData(mensajeCompleto);
 
   if (!datos.email) {
@@ -376,14 +381,14 @@ export async function sendPaulaCotizacion(mensajeCompleto) {
 
   console.log(`[PAULA-COTI] 🏡 ${datos.esOverview ? 'Overview El Morenal' : datos.propiedad.nombre} → ${datos.nombre} (${datos.email})`);
 
-  // Intro personalizada con OpenAI
-  const introTexto = await generarIntro(datos);
+  // Intro personalizada con OpenAI — enriquecida con el contexto del jefe
+  const introTexto = await generarIntro({ ...datos, mensajeJefe: mensajeCompleto });
 
-  // Construir HTML
-  const html    = buildPaulaEmailHTML({ ...datos, introTexto });
-  const subject = datos.esOverview
-    ? `🏡 Casas Jardín El Morenal — Exclusiva oportunidad para ${datos.nombre} | PropElite`
-    : `🏡 ${datos.propiedad.nombre} — Propuesta exclusiva para ${datos.nombre} | PropElite`;
+  // Construir HTML con código de documento
+  const html      = buildPaulaEmailHTML({ ...datos, introTexto, quoteCode });
+  const propLabel = datos.esOverview ? 'Casas Jardín El Morenal' : datos.propiedad.nombre;
+  const codeLabel = quoteCode ? `${quoteCode} — ` : '';
+  const subject   = `🏡 ${codeLabel}${propLabel} · ${datos.nombre} | PropElite`;
 
   const result = await sendEmail({ to: datos.email, cc: PE_ADMIN_CC, subject, html });
 
@@ -393,5 +398,6 @@ export async function sendPaulaCotizacion(mensajeCompleto) {
     email:     datos.email,
     propiedad: datos.esOverview ? 'El Morenal (4 casas)' : datos.propiedad.nombre,
     precio:    datos.esOverview ? `$${PROPIEDADES[1].precio.toLocaleString()} — $${PROPIEDADES[2].precio.toLocaleString()}` : `$${datos.propiedad.precio.toLocaleString()}`,
+    quoteCode,
   };
 }

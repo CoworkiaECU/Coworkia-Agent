@@ -55,7 +55,7 @@ import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
-import { saveBossQuote } from '../../database/bossQuotesRepository.js';
+import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
@@ -1300,14 +1300,16 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         const quoteData = parseGabiQuoteData(processedText);
         if (quoteData?.email) {
           console.log('[BOSS-CMD] 👔 Cotización GABI solicitada por jefe:', quoteData);
-          await enviarWhatsApp(userId, `⚙️ Preparando propuesta para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n💼 ${quoteData.area}`);
-          const result = await sendGabiConsultoriaEmail(quoteData);
+          const quoteCode = await generateBossQuoteCode('GABI');
+          await enviarWhatsApp(userId, `⚙️ Preparando propuesta para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n💼 ${quoteData.area}\n🔑 ${quoteCode}`);
+          const result = await sendGabiConsultoriaEmail({ ...quoteData, mensajeJefe: processedText, quoteCode });
           await saveBossQuote({
             agent: 'GABI',
             clientName:  quoteData.nombre,
             clientEmail: quoteData.email,
             clientPhone: quoteData.telefono || null,
             serviceInfo: result.areaLabel || quoteData.area,
+            quoteCode,
             emailSent:   result.success,
           });
           const reply = result.success
@@ -1360,8 +1362,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'ENZO') {
       if (isEnzoBossQuoteCommand(processedText)) {
         console.log('[BOSS-CMD] 👔 Cotización ENZO solicitada por jefe — procesando con OpenAI...');
-        await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡`);
-        const result = await sendEnzoCotizacion(processedText);
+        const quoteCode = await generateBossQuoteCode('ENZO');
+        await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡\n🔑 ${quoteCode}`);
+        const result = await sendEnzoCotizacion(processedText, { quoteCode });
         await saveBossQuote({
           agent:       'ENZO',
           clientName:  result.contacto || null,
@@ -1370,6 +1373,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           serviceInfo: result.nivel    || null,
           amountMin:   result.precio   ?? null,
           amountMax:   result.precio   ?? null,
+          quoteCode,
           emailSent:   result.success,
         });
         const reply = result.success
@@ -1392,8 +1396,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         if (quoteData?.email) {
           const propLabel = quoteData.esOverview ? 'El Morenal (las 4 casas)' : quoteData.propiedad?.nombre;
           console.log('[BOSS-CMD] 👔 Brochure PAULA solicitado:', propLabel, '→', quoteData.nombre);
-          await enviarWhatsApp(userId, `🏡 *Paula preparando brochure de lujo...*\n📐 ${propLabel}\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}`);
-          const result = await sendPaulaCotizacion(processedText);
+          const quoteCode = await generateBossQuoteCode('PAULA');
+          await enviarWhatsApp(userId, `🏡 *Paula preparando brochure de lujo...*\n📐 ${propLabel}\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n🔑 ${quoteCode}`);
+          const result = await sendPaulaCotizacion(processedText, { quoteCode });
           await saveBossQuote({
             agent:       'PAULA',
             clientName:  result.nombre    || quoteData.nombre,
@@ -1402,6 +1407,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             serviceInfo: result.propiedad  || null,
             amountMin:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
             amountMax:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
+            quoteCode,
             emailSent:   result.success,
           });
           const reply = result.success
@@ -1431,11 +1437,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         const trimmedPhone = clientPhone?.trim() || null;
 
         console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
-        await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}`);
+        const quoteCode = await generateBossQuoteCode('ALUNA');
+        await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${quoteCode}`);
 
         const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
         const planKey = normalizePlanKey(rawPlan);
-        const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, fromAdmin: true });
+        const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, fromAdmin: true });
 
         if (proResult.success) {
           await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
@@ -1446,7 +1453,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           clientEmail: trimmedEmail,
           clientPhone: trimmedPhone || null,
           serviceInfo: proResult.planName || rawPlan,
-          quoteCode:   proResult.proformaCode || null,
+          quoteCode:   quoteCode,
           emailSent:   proResult.success,
         });
 

@@ -10,7 +10,7 @@
 
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
-import { saveMembershipLead } from '../database/alunaRepository.js';
+import { saveMembershipLead, trackAlunaProspect } from '../database/alunaRepository.js';
 
 // ──────────────────────────────────────────────
 // 📋 Datos de los planes (fuente de verdad)
@@ -194,6 +194,12 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
 
     const saved = await saveMembershipLead(leadData);
     console.log(`[ALUNA-PROFORMA] 💾 Lead guardado: ${saved?.id || code}`);
+    
+    // ✅ Activar seguimiento automático (24h + 3 días)
+    const userPhone = fromAdmin ? (phone || userId) : userId;
+    await trackAlunaProspect(userPhone, clientName, plan?.name || planKey);
+    console.log(`[ALUNA-PROFORMA] 📌 Seguimiento automático activado para ${userPhone}`);
+    
     return { success: true, leadId: saved?.id || code };
   } catch (error) {
     console.error('[ALUNA-PROFORMA] ❌ Error guardando lead:', error.message);

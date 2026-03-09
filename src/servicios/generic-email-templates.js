@@ -162,9 +162,9 @@ export function generateAdrianaEmailHTML(leadData) {
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
             <p style="color: #374151; font-size: 14px; margin: 5px 0 15px 0; font-weight: 600;">
-              💬 ¿Tienes dudas?
+              💬 ¿Listo para activar tu seguro?
             </p>
-            <a href="https://wa.me/593994837117?text=Hola%20Adriana,%20tengo%20dudas%20sobre%20mi%20solicitud%20${leadId}" 
+            <a href="https://wa.me/593994837117?text=%40adriana%2C%20recib%C3%AD%20tu%20cotizaci%C3%B3n%20${leadId}%20y%20me%20interesa%20%C2%BFActivamos%20el%20seguro%3F" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               📱 Contactar a Adriana por WhatsApp
             </a>
@@ -357,13 +357,13 @@ export function generateAxelEmailHTML(leadData) {
             </p>
             <p style="color: rgba(255,255,255,0.95); font-size: 15px; margin: 0 0 20px 0;">Para confirmar y agendar la reparación,<br>contáctanos por WhatsApp o teléfono:</p>
             
-            <a href="https://wa.me/593994837117?text=Confirmar%20Cotización%20${quoteCode}" 
+            <a href="https://wa.me/593994837117?text=%40axel%2C%20recib%C3%AD%20tu%20cotizaci%C3%B3n%20${quoteCode}%20y%20me%20interesa%20%C2%BFLa%20confirmamos%3F" 
                style="display: inline-block; background: rgba(220,38,38,0.2); color: white; padding: 15px 35px; text-decoration: none; border-radius: 8px; font-weight: 700; margin-bottom: 15px; font-size: 16px; border: 2px solid rgba(255,255,255,0.4);">
               📱 WhatsApp: +593 99 483 7117
             </a>
             
             <div style="background: rgba(255,255,255,0.95); border-radius: 8px; padding: 15px; max-width: 400px; margin: 15px auto 0 auto;">
-              <p style="margin: 0; color: #DC2626; font-size: 15px; font-weight: 600;">💬 Confirmar Cotización ${quoteCode}</p>
+              <p style="margin: 0; color: #DC2626; font-size: 15px; font-weight: 600;">💬 @axel, confirmemos tu reparación</p>
             </div>
           </div>
 
@@ -562,9 +562,9 @@ export function generateEnzoEmailHTML(leadData) {
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              💬 ¿Quieres agendar reunión?
+              💬 ¿Listo para impulsar tu marca?
             </p>
-            <a href="https://wa.me/593994837117?text=Hola%20Enzo,%20quiero%20agendar%20reunión%20${leadId}" 
+            <a href="https://wa.me/593994837117?text=%40enzo%2C%20recib%C3%AD%20tu%20propuesta%20${leadId}%20y%20me%20interesa%20%C2%BFAgendamos%20reuni%C3%B3n%3F" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               📱 Contactar a Enzo por WhatsApp
             </a>
@@ -893,9 +893,9 @@ export function generateAlunaEmailHTML(leadData) {
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              💬 ¿Quieres agendar tu tour?
+              💬 ¿Listo para conocer tu nueva oficina?
             </p>
-            <a href="https://wa.me/593994837117?text=Hola,%20quiero%20agendar%20tour%20${leadId}" 
+            <a href="https://wa.me/593994837117?text=%40paula%2C%20recib%C3%AD%20info%20del%20tour%20${leadId}%20y%20me%20interesa%20%C2%BFLo%20agendamos%3F" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               📱 Agendar por WhatsApp
             </a>
@@ -1176,7 +1176,7 @@ export function generateAlunaProformaHTML(data) {
       <span style="color: #374151; font-size: 15px; line-height: 1.5;">${b}</span>
     </div>`).join('');
 
-  const waText = encodeURIComponent(`Hola Aluna, recibí la proforma de ${planName} y me interesa. ¿Cómo procedo?`);
+  const waText = encodeURIComponent(`@aluna, recibí tu proforma del ${planName} y me interesa ¿Activamos?`);
 
   const ecosistemaItems = ecosistemaTable({
     aliados: ['aluna', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],

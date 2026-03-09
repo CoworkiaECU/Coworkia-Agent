@@ -1298,11 +1298,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ══════════════════════════════════════════════════════════════════════
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'GABI') {
       if (isBossQuoteCommand(processedText)) {
-        const quoteData = parseGabiQuoteData(processedText);
+        const quoteData = await parseGabiQuoteData(processedText);
         if (quoteData?.email) {
           console.log('[BOSS-CMD] 👔 Cotización GABI solicitada por jefe:', quoteData);
           const quoteCode = await generateBossQuoteCode('GABI');
           await enviarWhatsApp(userId, `⚙️ Preparando propuesta para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n💼 ${quoteData.area}\n🔑 ${quoteCode}`);
+          await new Promise(r => setTimeout(r, 600));
           const result = await sendGabiConsultoriaEmail({ ...quoteData, mensajeJefe: processedText, quoteCode });
           await saveBossQuote({
             agent: 'GABI',
@@ -1333,6 +1334,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         if (quoteData?.email) {
           console.log('[BOSS-CMD] 👔 Cotización AXEL demo solicitada por jefe:', quoteData);
           await enviarWhatsApp(userId, `⚙️ Buscando caso real en memoria para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n🚗 Tomando fotos y análisis de siniestro guardado`);
+          await new Promise(r => setTimeout(r, 600));
           const result = await sendAxelDemoCotizacion(quoteData);
           await saveBossQuote({
             agent:       'AXEL',
@@ -1365,6 +1367,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[BOSS-CMD] 👔 Cotización ENZO solicitada por jefe — procesando con OpenAI...');
         const quoteCode = await generateBossQuoteCode('ENZO');
         await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡\n🔑 ${quoteCode}`);
+        await new Promise(r => setTimeout(r, 600));
         const result = await sendEnzoCotizacion(processedText, { quoteCode });
         await saveBossQuote({
           agent:       'ENZO',
@@ -1399,6 +1402,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           console.log('[BOSS-CMD] 👔 Brochure PAULA solicitado:', propLabel, '→', quoteData.nombre);
           const quoteCode = await generateBossQuoteCode('PAULA');
           await enviarWhatsApp(userId, `🏡 *Paula preparando brochure de lujo...*\n📐 ${propLabel}\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n🔑 ${quoteCode}`);
+          await new Promise(r => setTimeout(r, 600));
           const result = await sendPaulaCotizacion(processedText, { quoteCode });
           await saveBossQuote({
             agent:       'PAULA',
@@ -1440,6 +1444,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
         const quoteCode = await generateBossQuoteCode('ALUNA');
         await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${quoteCode}`);
+        await new Promise(r => setTimeout(r, 600));
 
         const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
         const planKey = normalizePlanKey(rawPlan);
@@ -1475,6 +1480,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         console.log('[BOSS-CMD] 🛡️ Cotización ADRIANA solicitada por admin');
         const quoteCode = await generateBossQuoteCode('ADRIANA');
         await enviarWhatsApp(userId, `⚙️ *Adriana preparando cotización de seguro...*\n🔑 ${quoteCode}`);
+        await new Promise(r => setTimeout(r, 600));
 
         const result = await sendAdrianaCotizacion(processedText, { quoteCode });
 

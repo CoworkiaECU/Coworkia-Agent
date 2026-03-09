@@ -78,31 +78,53 @@ function detectArea(texto) {
 }
 
 /**
- * Parsea los datos del comando natural del jefe.
- * Ejemplo: "cotización Juan Pérez finanzas juan@empresa.com 0987654321"
+ * Parsea los datos del comando natural del jefe usando OpenAI.
+ * Extrae nombre limpio, empresa, email, teléfono y área de servicio.
  */
-export function parseGabiQuoteData(mensaje) {
+export async function parseGabiQuoteData(mensaje) {
   const emailMatch = mensaje.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
   if (!emailMatch) return null;
-  const email = emailMatch[0];
 
-  const phoneMatch = mensaje.match(/(?<![0-9])(?:\+?593[0-9]{9}|0[0-9]{9})(?![0-9])/);
-  const telefono   = phoneMatch ? phoneMatch[0] : '';
-
-  const area = detectArea(mensaje);
-
-  // Nombre: retirar todos los marcadores conocidos del texto
-  const nombre = mensaje
-    .replace(/cotiz[ao]ci[oó]n\s*:?\s*(a\s*:?)?/gi, '')
-    .replace(/coti\s*:?\s*(a\s*:?)?/gi, '')
-    .replace(email, '')
-    .replace(phoneMatch ? phoneMatch[0] : /(?!x)x/, '')
-    .replace(/uafe|compliance|finanzas?|contabilidad|recursos\s*humanos|rrhh|n[oó]mina|legal|societario/gi, '')
-    .replace(/[,|;:]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim() || 'Cliente';
-
-  return { nombre, area, email, telefono };
+  try {
+    const raw = await complete(mensaje, {
+      system: `Eres asistente de GR Consulting. El CEO te envía un mensaje de WhatsApp con datos de un cliente para cotizar. Extrae ÚNICAMENTE este JSON (sin markdown):
+{
+  "nombre": "nombre completo del cliente (solo nombre, sin descripción del servicio ni empresa)",
+  "empresa": "nombre de la empresa si se menciona, sino null",
+  "email": "email@ejemplo.com",
+  "telefono": "número de teléfono o null",
+  "area": "finanzas|recursosHumanos|uafe|legal",
+  "descripcionServicio": "descripción breve del servicio solicitado en máx 6 palabras"
+}
+REGLAS:
+- nombre: solo el nombre de la persona (ej: "Fer Gavilánez"), nunca la descripción del servicio
+- area: analiza el contexto → "uafe"=compliance/antilavado/LOPDLAFT, "recursosHumanos"=nómina/RRHH, "legal"=contratos/societario, "finanzas"=resto
+- descripcionServicio: resumen del pedido (ej: "protección de datos LOPDLAFT")`,
+      temperature: 0.1,
+      max_tokens: 200,
+      model: 'gpt-4o',
+    });
+    const data = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+    return {
+      nombre:              data.nombre || 'Cliente',
+      empresa:             data.empresa || null,
+      email:               data.email || emailMatch[0],
+      telefono:            data.telefono || '',
+      area:                data.area || detectArea(mensaje),
+      descripcionServicio: data.descripcionServicio || null,
+    };
+  } catch {
+    // Fallback regex si OpenAI falla
+    const phoneMatch = mensaje.match(/(?:\+?593[0-9]{9}|0[0-9]{9})/);
+    return {
+      nombre:   'Cliente',
+      empresa:  null,
+      email:    emailMatch[0],
+      telefono: phoneMatch ? phoneMatch[0] : '',
+      area:     detectArea(mensaje),
+      descripcionServicio: null,
+    };
+  }
 }
 
 // ─── OPENAI: TEXTO PERSONALIZADO ─────────────────────────────────────────────
@@ -309,16 +331,18 @@ function buildEmailHTML({ nombre, area, ofertaTexto, quoteCode = '' }) {
 
 /**
  * 🚀 Genera y envía la propuesta/cotización GR Consulting
- * @param {{ nombre: string, area: string, email: string, telefono: string }} datos
+ * @param {{ nombre: string, area: string, email: string, telefono: string, descripcionServicio?: string }} datos
  */
-export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, mensajeJefe = '', quoteCode = '' }) {
+export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, descripcionServicio = null, mensajeJefe = '', quoteCode = '' }) {
   const cfg = SERVICE_CONFIG[area] || SERVICE_CONFIG.finanzas;
   console.log(`[GABI-COTI] 📧 Preparando propuesta para ${nombre} (${cfg.label}) → ${email}`);
 
   const ofertaTexto = await generarOfertaTexto({ nombre, serviceConfig: cfg, mensajeJefe });
   const html        = buildEmailHTML({ nombre, area, ofertaTexto, quoteCode });
   const codeLabel   = quoteCode ? `${quoteCode} — ` : '';
-  const subject     = `📋 ${codeLabel}${cfg.label} · ${nombre} | GR Consulting`;
+  // Subject limpio: usa descripcionServicio si OpenAI lo extrajo, sino el área genérica
+  const serviceLabel = descripcionServicio || cfg.label;
+  const subject     = `📋 ${codeLabel}${serviceLabel} · ${nombre} | GR Consulting`;
 
   const result = await sendEmail({ to: email, cc: GR_ADMIN_CC, subject, html });
 

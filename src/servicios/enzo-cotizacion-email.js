@@ -357,7 +357,7 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
     basico: 'Agente IA Esencial', intermedio: 'Agente IA Profesional', avanzado: 'Agente IA Premium',
   };
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
-  const subject   = `🚀 ${codeLabel}${NIVEL_LABEL[datos.nivel_agente] || 'Propuesta IA'} · ${datos.empresa} | MarketingLab`;
+  const subject   = `Cotización 🚀 ${codeLabel}${NIVEL_LABEL[datos.nivel_agente] || 'Propuesta IA'} · ${datos.empresa} | Enzo - MarketingLab`;
 
   // 3. Enviar
   const result = await sendEmail({

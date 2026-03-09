@@ -341,7 +341,7 @@ export async function sendQuoteEmail({
 
     const vTitle = [vehicleData.marca, vehicleData.modelo]
       .filter(v => v && v !== 'Pendiente').join(' ') || 'Análisis de siniestro';
-    const subject = `🚗 Cotización ${quoteCode} - ${vTitle}`;
+    const subject = `Cotización 🚗 ${quoteCode} — ${vTitle} · ${customerName} | Axel - The PaintBull`;
 
     // Adjuntar fotos: inline con CID para thumbnails del HTML, no sueltas al final
     const attachments = validPhotoAssets.map((asset, idx) => ({

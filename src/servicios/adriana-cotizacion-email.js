@@ -279,7 +279,7 @@ export async function sendAdrianaCotizacion(mensajeCompleto, { quoteCode = '' } 
   const premium  = calculatePremium(datos.commercialValue || 40000);
   const html     = buildAdrianaEmailHTML({ ...datos, quoteCode });
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
-  const subject  = `🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | SegPopular`;
+  const subject  = `Cotización 🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | Adriana - SegPopular`;
 
   const result = await sendEmail({ to: datos.email, cc: SEG_ADMIN_CC, subject, html });
 

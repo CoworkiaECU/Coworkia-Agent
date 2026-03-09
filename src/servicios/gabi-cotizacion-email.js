@@ -342,7 +342,7 @@ export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, 
   const codeLabel   = quoteCode ? `${quoteCode} — ` : '';
   // Subject limpio: usa descripcionServicio si OpenAI lo extrajo, sino el área genérica
   const serviceLabel = descripcionServicio || cfg.label;
-  const subject     = `📋 ${codeLabel}${serviceLabel} · ${nombre} | GR Consulting`;
+  const subject     = `Cotización 📋 ${codeLabel}${serviceLabel} · ${nombre} | Gabi - GR Consulting`;
 
   const result = await sendEmail({ to: email, cc: GR_ADMIN_CC, subject, html });
 

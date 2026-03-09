@@ -138,7 +138,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
     });
 
     const contextualSubject = code
-      ? `💜 ${code} — ${plan.name} para ${clientName} | Coworkia`
+      ? `Cotización 💜 ${code} — ${plan.name} · ${clientName} | Aluna - Coworkia`
       : emailContent.subject;
 
     await sendEmail({

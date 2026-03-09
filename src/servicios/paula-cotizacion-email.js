@@ -388,7 +388,7 @@ export async function sendPaulaCotizacion(mensajeCompleto, { quoteCode = '' } = 
   const html      = buildPaulaEmailHTML({ ...datos, introTexto, quoteCode });
   const propLabel = datos.esOverview ? 'Casas Jardín El Morenal' : datos.propiedad.nombre;
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
-  const subject   = `🏡 ${codeLabel}${propLabel} · ${datos.nombre} | PropElite`;
+  const subject   = `Cotización 🏡 ${codeLabel}${propLabel} · ${datos.nombre} | Paula - PropElite`;
 
   const result = await sendEmail({ to: datos.email, cc: PE_ADMIN_CC, subject, html });
 

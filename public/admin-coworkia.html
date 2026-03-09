@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Coworkia Business Center</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      color: #1f2937;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      color: #1e3a8a;
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 18px;
+    }
+
+    .dashboards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .dashboard-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      border: 2px solid transparent;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      border-color: #1e3a8a;
+    }
+
+    .dashboard-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .aluna-icon { background: linear-gradient(135deg, #047857, #065F46); }
+    .gabi-icon { background: linear-gradient(135deg, #dc2626, #991b1b); }
+    .aurora-icon { background: linear-gradient(135deg, #2563eb, #1e40af); }
+    .system-icon { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+
+    .dashboard-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1f2937;
+    }
+
+    .dashboard-description {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .dashboard-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-purple { background: #e0e7ff; color: #4c1d95; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+
+    .quick-stats {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .quick-stats h2 {
+      color: #1f2937;
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    @media (max-width: 768px) {
+      .dashboards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎯 Coworkia Admin Panel</h1>
+      <p class="subtitle">Panel de administración y dashboards de agentes</p>
+    </header>
+
+    <div class="dashboards-grid">
+      <a href="/aluna-proformas.html" class="dashboard-card">
+        <div class="dashboard-icon aluna-icon">💼</div>
+        <h3 class="dashboard-title">Proformas Aluna</h3>
+        <p class="dashboard-description">
+          Historial completo de proformas de membresías enviadas por Aluna. 
+          Visualiza estados, estadísticas y revenue potencial.
+        </p>
+        <span class="dashboard-badge badge-green">Ventas</span>
+      </a>
+
+      <a href="/api/gabi/dashboard" class="dashboard-card">
+        <div class="dashboard-icon gabi-icon">📊</div>
+        <h3 class="dashboard-title">Métricas Gabi</h3>
+        <p class="dashboard-description">
+          Dashboard financiero completo con métricas de consultoría. 
+          Incluye top users, reuniones ofrecidas y análisis temporal.
+        </p>
+        <span class="dashboard-badge badge-red">Finanzas</span>
+      </a>
+
+      <a href="/api/health" class="dashboard-card" target="_blank">
+        <div class="dashboard-icon system-icon">🔧</div>
+        <h3 class="dashboard-title">System Health</h3>
+        <p class="dashboard-description">
+          Estado del sistema: base de datos, circuit breakers, 
+          memoria operativa y servicios externos.
+        </p>
+        <span class="dashboard-badge badge-purple">Sistema</span>
+      </a>
+
+      <div class="dashboard-card" style="opacity: 0.6; cursor: not-allowed;">
+        <div class="dashboard-icon aurora-icon">📅</div>
+        <h3 class="dashboard-title">Reservas Aurora</h3>
+        <p class="dashboard-description">
+          Dashboard de reservas y confirmaciones (próximamente).
+        </p>
+        <span class="dashboard-badge badge-blue">Próximo</span>
+      </div>
+    </div>
+
+    <div class="quick-stats">
+      <h2>⚡ Quick Access</h2>
+      <div class="stat-row">
+        <span class="stat-label">API Aluna Proformas</span>
+        <a href="/api/aluna/proformas" target="_blank" class="stat-value" style="color: #047857; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">API Aluna Stats</span>
+        <a href="/api/aluna/stats" target="_blank" class="stat-value" style="color: #047857; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">API Gabi Metrics</span>
+        <a href="/api/gabi/metrics/month" target="_blank" class="stat-value" style="color: #dc2626; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Health Check</span>
+        <a href="/health" target="_blank" class="stat-value" style="color: #7c3aed; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

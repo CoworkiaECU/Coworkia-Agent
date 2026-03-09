@@ -45,6 +45,7 @@ import chatRouter from './endpoints-api/chat.js';
 import agentRouter from './endpoints-api/agent.js';
 import wassengerRouter from './endpoints-api/wassenger.js';
 import gabiDashboardRouter from './endpoints-api/gabi-dashboard.js';
+import alunaDashboardRouter from './endpoints-api/aluna-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
 
 const app = express();
@@ -196,6 +197,7 @@ app.use('/', chatRouter);
 app.use('/', agentRouter);
 app.use('/', wassengerRouter);
 app.use('/api/gabi', gabiDashboardRouter);
+app.use('/api/aluna', alunaDashboardRouter);
 app.use('/', wifiCodesRouter);
 
 // 404 final

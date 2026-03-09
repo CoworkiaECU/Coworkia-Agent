@@ -432,8 +432,11 @@
     // Cargar estadísticas
     async function loadStats() {
       try {
+        console.log('[ALUNA-DASH] Cargando stats desde:', `${API_BASE}/api/aluna/stats`);
         const response = await fetch(`${API_BASE}/api/aluna/stats`);
+        console.log('[ALUNA-DASH] Response status:', response.status);
         const result = await response.json();
+        console.log('[ALUNA-DASH] Stats result:', result);
         
         if (result.ok) {
           const { data } = result;
@@ -441,9 +444,11 @@
           document.getElementById('stat-month').textContent = data.recent?.thisMonth || 0;
           document.getElementById('stat-week').textContent = data.recent?.last7Days || 0;
           document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.potential || 0);
+        } else {
+          console.error('[ALUNA-DASH] Stats failed:', result.error);
         }
       } catch (error) {
-        console.error('Error cargando stats:', error);
+        console.error('[ALUNA-DASH] Error cargando stats:', error);
       }
     }
 
@@ -467,14 +472,22 @@
         if (currentFilters.status) params.append('status', currentFilters.status);
         params.append('limit', '1000'); // Cargar todas
         
-        const response = await fetch(`${API_BASE}/api/aluna/proformas?${params}`);
+        const url = `${API_BASE}/api/aluna/proformas?${params}`;
+        console.log('[ALUNA-DASH] Cargando proformas desde:', url);
+        
+        const response = await fetch(url);
+        console.log('[ALUNA-DASH] Response status:', response.status);
+        
         const result = await response.json();
+        console.log('[ALUNA-DASH] Result:', result);
+        console.log('[ALUNA-DASH] Data length:', result.data?.length);
         
         if (!result.ok) {
           throw new Error(result.error || 'Error cargando proformas');
         }
         
         allProformas = result.data || [];
+        console.log('[ALUNA-DASH] Proformas cargadas:', allProformas.length);
         
         // Aplicar filtro de búsqueda local
         let filtered = allProformas;
@@ -488,12 +501,16 @@
           );
         }
         
+        console.log('[ALUNA-DASH] Proformas filtradas:', filtered.length);
+        
         // Renderizar tabla
         loadingEl.style.display = 'none';
         
         if (filtered.length === 0) {
+          console.log('[ALUNA-DASH] No hay proformas para mostrar');
           emptyEl.style.display = 'block';
         } else {
+          console.log('[ALUNA-DASH] Renderizando tabla...');
           tbody.innerHTML = filtered.map(p => `
             <tr>
               <td><strong>${p.membership_code || '-'}</strong></td>
@@ -507,13 +524,15 @@
           `).join('');
           
           tableEl.style.display = 'table';
+          console.log('[ALUNA-DASH] Tabla renderizada');
         }
         
         // Actualizar stats
         await loadStats();
         
       } catch (error) {
-        console.error('Error:', error);
+        console.error('[ALUNA-DASH] Error completo:', error);
+        console.error('[ALUNA-DASH] Error stack:', error.stack);
         loadingEl.style.display = 'none';
         errorEl.textContent = `Error: ${error.message}`;
         errorEl.style.display = 'block';

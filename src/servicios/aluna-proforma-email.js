@@ -11,6 +11,7 @@
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { saveMembershipLead, trackAlunaProspect } from '../database/alunaRepository.js';
+import { validateEmail, formatEmailError } from '../utils/email-validator.js';
 
 // ──────────────────────────────────────────────
 // 📋 Datos de los planes (fuente de verdad)
@@ -118,6 +119,19 @@ function generateProformaCode() {
  */
 export async function sendAlunaProforma({ clientName, clientEmail, planKey, proformaCode, nota = null, fromAdmin = false }) {
   try {
+    // ✅ Validar email antes de continuar
+    const emailValidation = validateEmail(clientEmail);
+    if (!emailValidation.valid) {
+      const errorMsg = formatEmailError(emailValidation);
+      console.error(`[ALUNA-PROFORMA] ❌ Email inválido: ${clientEmail}`);
+      throw new Error(errorMsg || 'Email inválido');
+    }
+    
+    // ⚠️ Warning si hay sugerencia (email técnicamente válido pero sospechoso)
+    if (emailValidation.warning) {
+      console.warn(`[ALUNA-PROFORMA] ⚠️ Email sospechoso: ${clientEmail} - ${emailValidation.warning}`);
+    }
+    
     const plan = PLAN_DATA[normalizePlanKey(planKey)];
     if (!plan) {
       throw new Error(`Plan desconocido: ${planKey}`);

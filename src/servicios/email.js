@@ -4,6 +4,7 @@
 import { EMAIL_USER, getTransporter } from './mailer.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { createCalendarEvent } from './google-calendar.js';
+import { validateEmail, formatEmailError } from '../utils/email-validator.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -462,6 +463,23 @@ export async function sendReservationConfirmation(reservationData) {
       success: false,
       error: 'Email del usuario no proporcionado'
     };
+  }
+  
+  // ✅ Validar email antes de enviar
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
+    const errorMsg = formatEmailError(emailValidation);
+    console.error(`[EMAIL] ❌ Email inválido detectado: ${email}`);
+    console.error(`[EMAIL] ${errorMsg}`);
+    return {
+      success: false,
+      error: `Email inválido: ${emailValidation.error}`
+    };
+  }
+  
+  // ⚠️ Warning si hay sugerencia
+  if (emailValidation.warning) {
+    console.warn(`[EMAIL] ⚠️ Email sospechoso: ${email} - ${emailValidation.warning}`);
   }
 
   const emailHTML = generateConfirmationEmailHTML(reservationData);

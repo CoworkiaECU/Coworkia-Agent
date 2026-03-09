@@ -95,30 +95,43 @@ const UBICACION    = 'https://maps.app.goo.gl/tamnA6UwAeJgxAVaA';
 
 export function isPaulaBossQuoteCommand(mensaje) {
   if (!mensaje) return false;
-  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b/i.test(mensaje);
   const hasEmail   = /[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/.test(mensaje);
-  return hasKeyword && hasEmail;
+  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b|manda|env[ií]a|brochure|propuesta|proforma|para\s+\w/i.test(mensaje);
+  return hasEmail && hasKeyword;
 }
 
 // ─── PARSEO ───────────────────────────────────────────────────────────────────
 
-export function parsePaulaQuoteData(mensaje) {
-  // Email
+export async function parsePaulaQuoteData(mensaje) {
   const emailMatch = mensaje.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
   const email      = emailMatch ? emailMatch[0] : null;
 
-  // Teléfono
-  const telMatch = mensaje.match(/(?:\+?593|0)[0-9 ]{8,11}/);
-  const telefono = telMatch ? telMatch[0].replace(/\s+/g, '') : '';
-
-  // Nombre — después de "para" o al inicio antes del email
+  // Nombre y teléfono via OpenAI — acepta lenguaje natural
   let nombre = 'Cliente';
-  const paraMatch = mensaje.match(/para\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
-  if (paraMatch) {
-    nombre = paraMatch[1].trim();
+  let telefono = '';
+  try {
+    const raw = await complete(mensaje, {
+      system: `Una asesora de bienes raíces recibe un mensaje del jefe para enviarle un brochure a un cliente. Extrae ÚNICAMENTE este JSON (sin markdown):
+{
+  "nombre": "nombre completo del cliente",
+  "telefono": "número de teléfono o null"
+}
+REGLAS: nombre solo nombre de persona, sin palabras como teléfono/cel/correo.`,
+      temperature: 0.1,
+      max_tokens: 80,
+      model: 'gpt-4o',
+    });
+    const data = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+    nombre   = data.nombre   || 'Cliente';
+    telefono = data.telefono || '';
+  } catch {
+    const telMatch = mensaje.match(/(?<!\d)(?:\+?593|0)[0-9 ]{8,11}(?!\d)/);
+    telefono = telMatch ? telMatch[0].replace(/\s+/g, '') : '';
+    const paraMatch = mensaje.match(/para\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
+    nombre   = paraMatch ? paraMatch[1].trim() : 'Cliente';
   }
 
-  // Detectar propiedad específica
+  // Detectar propiedad específica (sigue siendo por keywords)
   const msgLower = mensaje.toLowerCase().replace(/[-_]/g, ' ');
   let propiedad  = null;
 
@@ -128,7 +141,6 @@ export function parsePaulaQuoteData(mensaje) {
       break;
     }
   }
-  // Si no hay propiedad específica → enviar overview de El Morenal (todas)
   const esOverview = !propiedad;
 
   return { nombre, email, telefono, propiedad, esOverview };

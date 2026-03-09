@@ -30,7 +30,7 @@ const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', ''
  */
 export function isEnzoBossQuoteCommand(mensaje) {
   if (!mensaje) return false;
-  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b/i.test(mensaje);
+  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b|manda|env[ií]a|brochure|propuesta|proforma|para\s+\w/i.test(mensaje);
   const hasEmail   = /[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/.test(mensaje);
   return hasKeyword && hasEmail;
 }

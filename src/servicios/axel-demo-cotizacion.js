@@ -12,6 +12,7 @@
  */
 
 import databaseService from '../database/database.js';
+import { complete } from '../servicios-ia/openai.js';
 import { sendQuoteEmail } from './axel-quote-email.js';
 import { generateQuoteCode } from './axel-quote-code.js';
 
@@ -66,42 +67,59 @@ Repuestos:     $150 - $250
 
 /**
  * Detecta si el mensaje del jefe es un comando de cotización para Axel.
- * Requiere keyword "cotización/coti" + email presente en el mensaje.
+ * Acepta lenguaje natural: "cotización", "coti", "manda", "envía", "demo", etc.
  */
 export function isAxelBossQuoteCommand(mensaje) {
   if (!mensaje) return false;
-  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b/i.test(mensaje);
   const hasEmail   = /[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/.test(mensaje);
-  return hasKeyword && hasEmail;
+  const hasKeyword = /cotiz[ao]ci[oó]n|coti\b|manda|env[ií]a|demo|brochure|propuesta|proforma|para\s+\w/i.test(mensaje);
+  return hasEmail && hasKeyword;
 }
 
 // ─── PARSING ─────────────────────────────────────────────────────────────────
 
 /**
- * Parsea los datos del interesado desde el comando natural del jefe.
- * Ejemplo: "cotización Carlos Mendoza carlos@empresa.com 0987654321"
+ * Parsea los datos del interesado desde el comando natural del jefe usando OpenAI.
+ * Acepta cualquier construcción natural sin orden fijo.
  */
-export function parseAxelDemoQuoteData(mensaje) {
+export async function parseAxelDemoQuoteData(mensaje) {
   const emailMatch = mensaje.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
   if (!emailMatch) return null;
-  const email = emailMatch[0];
 
-  const phoneMatch = mensaje.match(/(?<![0-9])(?:\+?593[0-9]{9}|0[0-9]{9})(?![0-9])/);
-  const telefono   = phoneMatch ? phoneMatch[0] : '';
-
-  const nombre = mensaje
-    .replace(/cotiz[ao]ci[oó]n\s*:?\s*(a\s*:?)?/gi, '')
-    .replace(/coti\s*:?\s*(a\s*:?)?/gi, '')
-    .replace(email, '')
-    .replace(phoneMatch ? phoneMatch[0] : '', '')
-    // también eliminar secuencias de dígitos sueltas que parecen teléfonos (7+ dígitos)
-    .replace(/\b\d{7,}\b/g, '')
-    .replace(/\btelefono\b|\btelémono\b|\btel\b|\bcel\b|\bmóvil\b|\bmovil\b/gi, '')
-    .replace(/[,|;:]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim() || 'Cliente';
-
-  return { nombre, email, telefono };
+  try {
+    const raw = await complete(mensaje, {
+      system: `El jefe de The PaintBull te envía un mensaje de WhatsApp para mandar una cotización demo a un cliente. Extrae ÚNICAMENTE este JSON (sin markdown):
+{
+  "nombre": "nombre completo del cliente (solo nombre, sin palabras como teléfono/cel/email)",
+  "email": "email@ejemplo.com",
+  "telefono": "número de teléfono o null"
+}
+REGLAS:
+- nombre: solo el nombre de la persona, nunca descripciones adicionales
+- Si no hay nombre explícito, usa "Cliente"
+- telefono: cualquier número de 7+ dígitos que parezca teléfono`,
+      temperature: 0.1,
+      max_tokens: 120,
+      model: 'gpt-4o',
+    });
+    const data = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+    return {
+      nombre:   data.nombre   || 'Cliente',
+      email:    data.email    || emailMatch[0],
+      telefono: data.telefono || '',
+    };
+  } catch {
+    // Fallback regex si OpenAI falla
+    const phoneMatch = mensaje.match(/(?<!\d)(?:\+?593[0-9]{9}|0[0-9]{9})(?!\d)/);
+    const nombre = mensaje
+      .replace(/cotiz[ao]ci[oó]n|coti\b|manda|env[ií]a|demo|para\b/gi, '')
+      .replace(emailMatch[0], '')
+      .replace(phoneMatch ? phoneMatch[0] : '', '')
+      .replace(/\b\d{7,}\b/g, '')
+      .replace(/\btelefono\b|\btel\b|\bcel\b|\bmovil\b/gi, '')
+      .replace(/[,|;:]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Cliente';
+    return { nombre, email: emailMatch[0], telefono: phoneMatch?.[0] || '' };
+  }
 }
 
 // ─── RECUPERAR CASO DEMO DE LA MEMORIA ───────────────────────────────────────

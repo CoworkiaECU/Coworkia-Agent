@@ -1330,7 +1330,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ══════════════════════════════════════════════════════════════════════
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'AXEL') {
       if (isAxelBossQuoteCommand(processedText)) {
-        const quoteData = parseAxelDemoQuoteData(processedText);
+        const quoteData = await parseAxelDemoQuoteData(processedText);
         if (quoteData?.email) {
           console.log('[BOSS-CMD] 👔 Cotización AXEL demo solicitada por jefe:', quoteData);
           await enviarWhatsApp(userId, `⚙️ Buscando caso real en memoria para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n🚗 Tomando fotos y análisis de siniestro guardado`);
@@ -1396,7 +1396,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ══════════════════════════════════════════════════════════════════════
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'PAULA') {
       if (isPaulaBossQuoteCommand(processedText)) {
-        const quoteData = parsePaulaQuoteData(processedText);
+        const quoteData = await parsePaulaQuoteData(processedText);
         if (quoteData?.email) {
           const propLabel = quoteData.esOverview ? 'El Morenal (las 4 casas)' : quoteData.propiedad?.nombre;
           console.log('[BOSS-CMD] 👔 Brochure PAULA solicitado:', propLabel, '→', quoteData.nombre);
@@ -1426,48 +1426,65 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     // ══════════════════════════════════════════════════════════════════════
 
     // ══════════════════════════════════════════════════════════════════════
-    // 👔 BOSS COMMANDS: Aluna — cotización de membresía para cliente presencial
-    // El jefe dice "cotizar plan10 para Juan | juan@email.com" (opcionalmente | celular)
-    // Activo en cualquier agente (el patrón "cotizar planX para..." es exclusivo de ALUNA)
+    // 👔 BOSS COMMANDS: Aluna — proforma de membresía para cliente presencial
+    // Detección flexible: email + palabra de plan/membresía en cualquier orden
     // ══════════════════════════════════════════════════════════════════════
     if (ADMIN_PHONE && isAdminPhone(userId) && processedText) {
-      // Patrón: "cotizar plan10 para Juan Pérez | juan@email.com" o "... | 0991234567"
-      const alunaAdminMatch = processedText.match(
-        /cotizar\s+(plan\s*10|plan\s*20|oficina\s*virtual|sala(?:\s*de?\s*reuniones?)?)\s+para\s+(.+?)\s*\|\s*([^\s|@]+@[^\s|@]+)(?:\s*\|\s*(\+?[\d\s\-]{7,15}))?/i
-      );
-      if (alunaAdminMatch) {
-        const [, rawPlan, clientName, clientEmail, clientPhone] = alunaAdminMatch;
-        const trimmedName = clientName.trim();
-        const trimmedEmail = clientEmail.trim();
-        const trimmedPhone = clientPhone?.trim() || null;
+      const hasEmail       = /[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/.test(processedText);
+      const hasAlunaTrigger = /plan\s*(?:10|20|diez|veinte|mensual)|oficina\s*virtual|membres[ií]a|cowork(?:ing)?|proforma|cotizar|coti\b|manda|env[ií]a/i.test(processedText);
 
-        console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
-        const quoteCode = await generateBossQuoteCode('ALUNA');
-        await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${quoteCode}`);
-        await new Promise(r => setTimeout(r, 600));
-
-        const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
-        const planKey = normalizePlanKey(rawPlan);
-        const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, fromAdmin: true });
-
-        if (proResult.success) {
-          await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
+      if (hasEmail && hasAlunaTrigger) {
+        const emailMatch = processedText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
+        let trimmedName = 'Cliente', trimmedEmail = emailMatch?.[0] || '', trimmedPhone = null, rawPlan = null;
+        try {
+          const { complete: _c } = await import('../../servicios-ia/openai.js');
+          const raw = await _c(processedText, {
+            system: `La directora de Coworkia quiere enviar una proforma de membresía a un cliente. Extrae ÚNICAMENTE este JSON (sin markdown):
+{"nombre":"nombre del cliente","email":"email","telefono":"tel o null","plan":"plan10|plan20|oficina-virtual|sala-reuniones o null"}
+REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan explícito usa null.`,
+            temperature: 0.1, max_tokens: 120, model: 'gpt-4o'
+          });
+          const d = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+          trimmedName  = d.nombre || 'Cliente';
+          trimmedEmail = d.email  || trimmedEmail;
+          trimmedPhone = d.telefono || null;
+          rawPlan      = d.plan || null;
+        } catch {
+          const paraM = processedText.match(/para\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
+          trimmedName = paraM ? paraM[1].trim() : 'Cliente';
+          const planM = processedText.match(/plan\s*(10|20)/i);
+          rawPlan = planM ? `plan${planM[1]}` : null;
         }
-        await saveBossQuote({
-          agent:       'ALUNA',
-          clientName:  trimmedName,
-          clientEmail: trimmedEmail,
-          clientPhone: trimmedPhone || null,
-          serviceInfo: proResult.planName || rawPlan,
-          quoteCode:   quoteCode,
-          emailSent:   proResult.success,
-        });
 
-        const reply = proResult.success
-          ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${proResult.proformaCode}`
-          : `❌ Error enviando proforma: ${proResult.error}`;
-        await enviarWhatsApp(userId, reply);
-        return;
+        if (trimmedEmail && rawPlan) {
+          console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
+          const quoteCode = await generateBossQuoteCode('ALUNA');
+          await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${quoteCode}`);
+          await new Promise(r => setTimeout(r, 600));
+
+          const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
+          const planKey = normalizePlanKey(rawPlan);
+          const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, fromAdmin: true });
+
+          if (proResult.success) {
+            await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
+          }
+          await saveBossQuote({
+            agent:       'ALUNA',
+            clientName:  trimmedName,
+            clientEmail: trimmedEmail,
+            clientPhone: trimmedPhone || null,
+            serviceInfo: proResult.planName || rawPlan,
+            quoteCode,
+            emailSent:   proResult.success,
+          });
+
+          const reply = proResult.success
+            ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${proResult.proformaCode}`
+            : `❌ Error enviando proforma: ${proResult.error}`;
+          await enviarWhatsApp(userId, reply);
+          return;
+        }
       }
     }
     // ══════════════════════════════════════════════════════════════════════

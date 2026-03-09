@@ -5,6 +5,7 @@
  */
 
 import { LOGOS_BASE64, DARK_MODE_CSS } from './email-assets.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
 
 /**
@@ -1160,6 +1161,7 @@ export function generateAlunaProformaHTML(data) {
     planBenefits = [],
     planIdeal = '',
     proformaCode = '',
+    nota = null,
     coworkiaWhatsApp = '593994837117'
   } = data;
 
@@ -1176,22 +1178,10 @@ export function generateAlunaProformaHTML(data) {
 
   const waText = encodeURIComponent(`Hola Aluna, recibí la proforma de ${planName} y me interesa. ¿Cómo procedo?`);
 
-  const ecosistemaItems = [
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['gabi', 'enzo', 'angela', 'adriana', 'axel', 'paula', 'aurora'],
+    theme: 'dark',
+  });
 
   return `<!DOCTYPE html>
 <html>
@@ -1304,12 +1294,23 @@ export function generateAlunaProformaHTML(data) {
         <p style="color: #6B7280; font-size: 12px; margin: 0;"><strong>Código:</strong> <span style="font-family: monospace; color: #0F766E;">${proformaCode}</span></p>
       </div>` : ''}
 
+      ${nota ? `
+      <div style="background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 12px; padding: 18px 20px; margin-bottom: 8px;">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <span style="font-size: 20px; flex-shrink: 0;">📝</span>
+          <div>
+            <div style="color: #92400E; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Nota del equipo Coworkia</div>
+            <div style="color: #78350F; font-size: 14px; line-height: 1.6;">${nota}</div>
+          </div>
+        </div>
+      </div>` : ''}
+
     </div>
 
     <!-- ECOSISTEMA DE AGENTES -->
     <div style="background:linear-gradient(180deg,#0C2520 0%,#0A1E1B 100%);padding:36px 32px;text-align:center;">
       <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;">${ecosistemaItems}</div>
+      <div style="margin-bottom:22px;">${ecosistemaItems}</div>
       <div style="background:rgba(94,234,212,0.06);border:1px solid rgba(94,234,212,0.12);border-radius:10px;padding:14px;">
         <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
           Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>

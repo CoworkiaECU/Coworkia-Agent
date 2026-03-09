@@ -2,10 +2,46 @@
 // Envía emails profesionales con detalles de reserva
 
 import { EMAIL_USER, getTransporter } from './mailer.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 import { createCalendarEvent } from './google-calendar.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const DEFAULT_FROM_EMAIL = EMAIL_USER || 'secretaria.coworkia@gmail.com';
 
+// Nombres de remitente personalizados por agente
+const AGENT_FROM_NAMES = {
+  aurora: 'Aurora • Reservas Coworkia Business Center',
+  aluna: 'Aluna • Membresías Coworkia Business Center',
+  enzo: 'Enzo • Estrategia Digital MarketingLab',
+  axel: 'Axel • Reparación Automotriz PaintBull',
+  gabi: 'Gabi • Asesoría Legal y Contable',
+  adriana: 'Adriana • Directora SegPopular',
+  paula: 'Paula • Real Estate Expert',
+  _default: 'Coworkia Secretaría'
+};
+
+// 💰 PRECIOS REALES COWORKIA (Enero 2026)
+const PRICING = {
+  hotDesk: {
+    base: 10.00,
+    conTarjeta: 12.08, // +20.8% fee procesamiento Payphone
+    descripcion: 'Hot Desk — 2 horas',
+    incluye: 'WiFi + café ☕'
+  },
+  salaReuniones: {
+    base: 29.00,
+    conTarjeta: 35.03, // +20.8% fee procesamiento Payphone  
+    descripcion: 'Sala Reuniones — 2 horas',
+    incluye: 'Pizarra + TV + WiFi + café ☕'
+  },
+  primeraVisita: {
+    base: 0.00,
+    descripcion: 'Primera Visita GRATIS (8am-12pm)',
+    incluye: 'Hot Desk + WiFi + café ☕'
+  }
+};
 
 /**
  * 🎨 Genera HTML template para email de confirmación (estilo actualizado)
@@ -105,22 +141,10 @@ function generateConfirmationEmailHTML(reservationData) {
     </div>
   `);
 
-  const ecosistemaItems = [
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['💜', 'Aluna — Coworkia',      'Membresías & Espacios',            'https://wa.me/593994837117?text=%40aluna'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['aluna', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
+    theme: 'dark',
+  });
 
   return `
     <!DOCTYPE html>
@@ -137,13 +161,11 @@ function generateConfirmationEmailHTML(reservationData) {
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
         <!-- Header limpio con colores corporativos Coworkia -->
-        <div style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); text-align: center; padding: 40px 20px;">
-          <!-- Solo texto, sin logos -->
-          <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px;">
-            Coworkia
-          </div>
-          <div style="color: rgba(255,255,255,0.95); font-size: 20px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
-            Business Center
+        <div style="background: linear-gradient(135deg, #5DE5DB 0%, #3B9177 100%); text-align: center; padding: 40px 20px 35px;">
+          <!-- Logo texto simple -->
+          <div style="color: white; font-size: 70px; font-weight: 700; margin-bottom: 8px; line-height: 0.9;">Coworkia</div>
+          <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 30px;">
+            BUSINESS CENTER
           </div>
           <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ ¡Reserva Confirmada!</h1>
@@ -161,6 +183,15 @@ function generateConfirmationEmailHTML(reservationData) {
           <!-- Detalles de la reserva -->
           <div style="background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(78,205,196,0.1);">
             <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">📋 DETALLES DE TU RESERVA</h3>
+            
+            ${reservation?.id ? `
+            <div style="background: white; border-radius: 8px; padding: 15px; margin: 0 0 15px 0; border: 1px solid rgba(78,205,196,0.3);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #6B7280; font-size: 13px; font-weight: 500;">Código de Reserva:</span>
+                <span style="color: #374151; font-weight: 700; font-size: 16px; font-family: 'Courier New', monospace; letter-spacing: 0.5px;">${reservation.id}</span>
+              </div>
+            </div>
+            ` : ''}
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
@@ -188,28 +219,56 @@ function generateConfirmationEmailHTML(reservationData) {
 
           ${paymentReceiptSection}
           ${wifiCode ? `
-          <div style="background: linear-gradient(135deg, #4ECDC4, #26A69A); border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center;">
-            <h3 style="color: white; margin: 0 0 15px 0; font-size: 18px;">&#128273; Tu C&oacute;digo WiFi</h3>
-            <div style="background: white; border-radius: 8px; padding: 15px 25px; display: inline-block; font-family: monospace; font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #333;">${wifiCode}</div>
-            <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 14px;">V&aacute;lido por ${durationHours}h desde que te conectes &middot; Solo para hoy</p>
+          <div style="background: linear-gradient(135deg, rgba(78,205,196,0.08), rgba(68,160,141,0.08)); border: 2px solid #4ECDC4; border-radius: 12px; padding: 28px; margin: 25px 0;">
+            <h3 style="color: #374151; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">📶 Acceso WiFi Incluido</h3>
+            <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid rgba(78,205,196,0.2);">
+              <p style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 18px 0;">
+                <strong style="color: #4ECDC4;">Paso 1:</strong> Selecciona la red WiFi <strong>📡 Coworkia WiFi</strong>
+              </p>
+              <p style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 18px 0;">
+                <strong style="color: #4ECDC4;">Paso 2:</strong> Digita la contraseña de acceso <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 15px; color: #1f2937;">12345678</code>
+              </p>
+              <p style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 18px 0;">
+                <strong style="color: #4ECDC4;">Paso 3:</strong> Cuando se te solicite, escribe tu código personal:
+              </p>
+              <div style="text-align: center; margin: 20px 0;">
+                <div style="display: inline-block; background: linear-gradient(135deg, #4ECDC4, #44A08D); padding: 16px 28px; border-radius: 10px; box-shadow: 0 4px 16px rgba(78,205,196,0.35);">
+                  <div style="color: white; font-family: 'Courier New', Consolas, monospace; font-size: 26px; font-weight: bold; letter-spacing: 3px;">${wifiCode}</div>
+                </div>
+              </div>
+              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 16px; border-radius: 6px; margin-top: 20px;">
+                <p style="color: #92400e; font-size: 13px; line-height: 1.6; margin: 0;">
+                  ⏰ <strong>Válido:</strong> ${formatDate} de ${startTime} a ${endTime}<br>
+                  💡 <strong>Importante:</strong> Tu código funciona solo durante el horario de tu reserva.
+                </p>
+              </div>
+            </div>
           </div>` : ''}
           ${priceSection}
 
-          <!-- Ubicación -->
+          <!-- Ubicación (2 columnas) -->
           <div style="background: linear-gradient(135deg, rgba(55,65,81,0.05), rgba(55,65,81,0.1)); border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(78,205,196,0.2);">
-            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">📍 UBICACIÓN</h3>
-            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0;">
-              <p style="margin: 5px 0; color: #4ECDC4; font-weight: 700; font-size: 18px;">Coworkia</p>
-              <p style="margin: 5px 0; color: #374151; font-weight: 500;">Edificio Finistere - Planta Baja</p>
-              <p style="margin: 5px 0; color: #374151;">Whymper 403, Quito</p>
-            </div>
-            
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" 
-                 style="background: linear-gradient(135deg, #4ECDC4, #44A08D); color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(78,205,196,0.3); transition: all 0.3s ease;">
-                📍 Ver en Google Maps
-              </a>
-            </div>
+            <h3 style="color: #374151; margin-top: 0; margin-bottom: 18px; font-size: 18px; font-weight: 600;">📍 UBICACIÓN</h3>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="48%" valign="top" style="padding-right:8px;">
+                  <div style="background: white; border-radius: 8px; padding: 18px; height: 120px;">
+                    <p style="margin: 0 0 10px 0; color: #4ECDC4; font-weight: 700; font-size: 17px;">Coworkia</p>
+                    <p style="margin: 5px 0; color: #374151; font-weight: 500; font-size: 14px;">Edificio Finistere - Planta Baja</p>
+                    <p style="margin: 5px 0; color: #6B7280; font-size: 13px;">Whymper 403, Quito</p>
+                  </div>
+                </td>
+                <td width="4%"></td>
+                <td width="48%" valign="top" style="padding-left:8px;">
+                  <div style="background: white; border-radius: 8px; padding: 18px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" 
+                       style="background: linear-gradient(135deg, #4ECDC4, #44A08D); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(78,205,196,0.35); font-size: 14px;">
+                      📍 Ver en Google Maps
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <!-- Advertencia importante -->
@@ -251,7 +310,7 @@ function generateConfirmationEmailHTML(reservationData) {
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
               💬 ¿Tienes dudas sobre tu reserva?
             </p>
-            <a href="https://wa.me/593994837117?text=Recib%C3%AD%20tu%20correo%20y%20tengo%20dudas" 
+            <a href="https://wa.me/593994837117?text=%40aurora%2C%20recib%C3%AD%20tu%20correo%20y%20tengo%20dudas%20sobre%20mi%20reserva%20en%20Coworkia" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               📱 Habla con Aurora por WhatsApp
             </a>
@@ -261,22 +320,29 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-radius: 12px;">
-            <p style="color: #4ECDC4; font-size: 18px; font-weight: 700; margin: 0;">¡Nos vemos pronto! 🚀</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Aurora ✨ - Tu asistente de Coworkia</p>
+          <div style="background: linear-gradient(135deg, #5DE5DB 0%, #3B9177 100%); text-align: center; padding: 30px 20px; border-radius: 12px;">
+            <div style="color: white; font-size: 70px; font-weight: 700; margin-bottom: 8px; line-height: 0.9;">Coworkia</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 18px;">
+              BUSINESS CENTER
+            </div>
+            <p style="color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 600; margin: 0;">¡Nos vemos pronto! 🚀</p>
+            <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 4px 0 0 0;">Aurora ✨ - Tu asistente de Coworkia</p>
           </div>
 
         </div>
       </div>
 
       <!-- ECOSISTEMA DE AGENTES -->
-      <div style="background:linear-gradient(180deg,#1F2937 0%,#111827 100%);padding:36px 24px;text-align:center;">
-        <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;">${ecosistemaItems}</div>
+      <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 36px;text-align:center;border-top:3px solid #4ECDC4;">
+        <div style="max-width:480px;margin:0 auto 28px;">
+          <h2 style="color:#4ECDC4;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
+        </div>
+        <div style="margin-bottom:22px;">${ecosistemaItems}</div>
         <div style="background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.12);border-radius:10px;padding:14px;">
-          <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+          <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.8;margin:0;">
             Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
-            <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+            <strong style="color:rgba(255,255,255,0.8);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
           </p>
         </div>
       </div>
@@ -284,7 +350,7 @@ function generateConfirmationEmailHTML(reservationData) {
       <!-- Footer externo limpio -->
       <div style="text-align: center; padding: 30px 20px; background: #374151; color: #9CA3AF;">
         <!-- Solo texto elegante, sin logos -->
-        <div style="color: #4ECDC4; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px;">
+        <div style="color: #4ECDC4; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px;">
           Coworkia
         </div>
         <div style="color: #9CA3AF; font-size: 14px; font-weight: 400; letter-spacing: 1px; margin-bottom: 20px;">
@@ -376,7 +442,7 @@ export async function sendReservationConfirmation(reservationData) {
   
   const mailOptions = {
     from: {
-      name: 'Coworkia Secretaría',
+      name: AGENT_FROM_NAMES.aurora || AGENT_FROM_NAMES._default,
       address: DEFAULT_FROM_EMAIL
     },
     to: [email],
@@ -634,22 +700,10 @@ function generatePaymentConfirmationHTML(data) {
                      serviceType === 'meetingRoom' ? 'Sala de Reuniones' : 
                      serviceType === 'privateOffice' ? 'Oficina Privada' : 'Espacio';
 
-  const ecosistemaItems = [
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['💜', 'Aluna — Coworkia',      'Membresías & Espacios',            'https://wa.me/593994837117?text=%40aluna'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['aluna', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
+    theme: 'dark',
+  });
 
   return `
     <!DOCTYPE html>
@@ -784,13 +838,13 @@ function generatePaymentConfirmationHTML(data) {
             </div>
 
             <!-- ECOSISTEMA DE AGENTES -->
-            <div style="background:linear-gradient(180deg,#111827 0%,#0D1117 100%);padding:36px 24px;text-align:center;">
-                <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;">${ecosistemaItems}</div>
+            <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:36px 24px;text-align:center;">
+                <div style="color:rgba(255,255,255,0.35);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
+                <div style="margin-bottom:22px;">${ecosistemaItems}</div>
                 <div style="background:rgba(79,209,199,0.06);border:1px solid rgba(79,209,199,0.12);border-radius:10px;padding:14px;">
-                    <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+                    <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.8;margin:0;">
                         Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
-                        <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+                        <strong style="color:rgba(255,255,255,0.8);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
                     </p>
                 </div>
             </div>
@@ -889,6 +943,9 @@ Reserva confirmada en Coworkia
     return null;
   }
 }
+
+// Export constantes para otros módulos
+export { AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL };
 
 export default {
   sendReservationConfirmation,

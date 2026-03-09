@@ -8,7 +8,7 @@
  * La proforma muestra ÚNICAMENTE el plan elegido (no todos los planes).
  */
 
-import { sendEmail } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { saveMembershipLead } from '../database/alunaRepository.js';
 
@@ -116,7 +116,7 @@ function generateProformaCode() {
  * @param {boolean} [opts.fromAdmin] - true si la envía el administrador
  * @returns {Promise<{success: boolean, proformaCode: string, error?: string}>}
  */
-export async function sendAlunaProforma({ clientName, clientEmail, planKey, proformaCode, fromAdmin = false }) {
+export async function sendAlunaProforma({ clientName, clientEmail, planKey, proformaCode, nota = null, fromAdmin = false }) {
   try {
     const plan = PLAN_DATA[normalizePlanKey(planKey)];
     if (!plan) {
@@ -134,6 +134,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
       planBenefits: plan.benefits,
       planIdeal: plan.ideal,
       proformaCode: code,
+      nota: nota || null,
       coworkiaWhatsApp: '593994837117',
     });
 
@@ -143,8 +144,10 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
 
     await sendEmail({
       to: clientEmail,
+      cc: 'coworkia.ec@gmail.com',
       subject: contextualSubject,
       html: emailContent.html,
+      from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL }
     });
 
     console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${clientEmail} (${plan.name}) — ${code}${fromAdmin ? ' [admin]' : ''}`);
@@ -168,7 +171,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
  * @param {boolean} [opts.fromAdmin] - true si fue enviado por admin
  * @returns {Promise<{success: boolean, leadId?: string}>}
  */
-export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmail, planKey, phone, proformaCode, fromAdmin = false }) {
+export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmail, planKey, phone, proformaCode, nota = null, fromAdmin = false }) {
   try {
     const plan = PLAN_DATA[normalizePlanKey(planKey)];
     const code = proformaCode || generateProformaCode();
@@ -183,7 +186,9 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
       email: clientEmail,
       phone: phone || null,
       companyName: null,
-      specialRequirements: fromAdmin ? 'Enviado por administrador' : null,
+      specialRequirements: nota
+        ? `${fromAdmin ? 'Admin: ' : ''}${nota}`
+        : (fromAdmin ? 'Enviado por administrador' : null),
       monthlyFee: plan?.price || null,
     };
 

@@ -5,7 +5,8 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
-import { sendEmail } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 
 const GR_ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
@@ -172,21 +173,10 @@ function buildEmailHTML({ nombre, area, ofertaTexto, quoteCode = '' }) {
     .map(c => `<span style="background:white;border:1px solid #E5E7EB;color:#374151;font-size:11px;padding:5px 12px;border-radius:20px;font-weight:500;">${c}</span>`)
     .join('');
 
-  const aliados = [
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:20px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.38);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const aliados = ecosistemaTable({
+    aliados: ['enzo', 'angela', 'adriana', 'axel', 'paula', 'aurora'],
+    theme: 'dark',
+  });
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -309,7 +299,7 @@ function buildEmailHTML({ nombre, area, ofertaTexto, quoteCode = '' }) {
     </div>
 
     <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:30px;">${aliados}</div>
+    <div style="margin-bottom:30px;">${aliados}</div>
 
     <div style="background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.15);border-radius:10px;padding:16px;margin-bottom:24px;">
       <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.75;margin:0;">
@@ -346,7 +336,13 @@ export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, 
   const serviceLabel = descripcionServicio || cfg.label;
   const subject     = `Cotización 📋 ${codeLabel}${serviceLabel} · ${nombre} | Gabi - GR Consulting`;
 
-  const result = await sendEmail({ to: email, cc: GR_ADMIN_CC, subject, html });
+  const result = await sendEmail({ 
+    to: email, 
+    cc: GR_ADMIN_CC, 
+    subject, 
+    html,
+    from: { name: AGENT_FROM_NAMES.gabi, address: DEFAULT_FROM_EMAIL }
+  });
 
   if (result.success) {
     console.log(`[GABI-COTI] ✅ Propuesta enviada a ${email} (${quoteCode || 'sin código'})`);

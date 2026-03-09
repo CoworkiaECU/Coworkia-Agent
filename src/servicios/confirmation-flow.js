@@ -602,6 +602,25 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         ? '📧 Te enviaré la confirmación por email en unos segundos.'
         : 'ℹ️ No tengo tu email registrado todavía para enviarte la confirmación.';
 
+      // 🔑 BUG FIX: Generar código WiFi ANTES de enviar notificaciones
+      let wifiCode = null;
+      let freeWifiLine = '';
+      try {
+        const wifiResult = await generateWifiCode({
+          reservationId: reservationRecord.id,
+          userPhone: userProfile.userId,
+          durationHours: pendingReservation.durationHours || 2,
+          validForDate: confirmedDate
+        });
+        if (wifiResult.success) {
+          wifiCode = wifiResult.code;
+          freeWifiLine = `\n\n🔑 *Código WiFi:* \`${wifiResult.code}\`\n⏱️ Válido por ${wifiResult.durationHours}h desde que te conectes`;
+          console.log('[Confirmation] 🔑 Código WiFi generado para reserva gratuita:', wifiResult.code);
+        }
+      } catch (wifiErr) {
+        console.error('[Confirmation] ⚠️ No se pudo generar código WiFi (no bloquea):', wifiErr.message);
+      }
+
       if (userProfile.email) {
         console.log('[Confirmation] 📧 Enviando notificaciones INLINE (email + calendar)...');
         
@@ -618,7 +637,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
             wasFree: true,
             durationHours: pendingReservation.durationHours || 2,
             totalPrice: 0,
-            reservation: reservationRecord
+            reservation: reservationRecord,
+            wifiCode // ✅ Ahora se pasa el código WiFi
           });
           
           // Log detallado de resultados
@@ -647,22 +667,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         console.warn('[Confirmation] ⚠️ Email no enviado: usuario sin email configurado');
       }
 
-      // 🔑 Generar código WiFi para reserva gratuita
-      let freeWifiLine = '';
-      try {
-        const wifiResult = await generateWifiCode({
-          reservationId: reservationRecord.id,
-          userPhone: userProfile.userId,
-          durationHours: pendingReservation.durationHours || 2,
-          validForDate: confirmedDate
-        });
-        if (wifiResult.success) {
-          freeWifiLine = `\n\n🔑 *Código WiFi:* \`${wifiResult.code}\`\n⏱️ Válido por ${wifiResult.durationHours}h desde que te conectes`;
-          console.log('[Confirmation] 🔑 Código WiFi generado para reserva gratuita:', wifiResult.code);
-        }
-      } catch (wifiErr) {
-        console.error('[Confirmation] ⚠️ No se pudo generar código WiFi (no bloquea):', wifiErr.message);
-      }
+      // ✅ El código WiFi ya se generó antes del email (líneas arriba)
+      // No es necesario generarlo de nuevo
 
       return {
         success: true,

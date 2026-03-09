@@ -3,7 +3,8 @@
  * Genera y envía emails HTML con cotizaciones de The PaintBull
  */
 
-import { sendEmail } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 
 const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || 'villotaj71@gmail.com';
 const ADMIN_CC = 'mktlab.ec@gmail.com';
@@ -113,21 +114,10 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   const vehicleTitle = [vMarca, vModelo].filter(Boolean).join(' ') || 'Por inspeccionar';
   const vehicleYearLine = vAño ? `Año ${vAño}` : 'Inspección presencial';
 
-  const ecosistemaItems = [
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:#111827;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:#6B7280;font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['enzo', 'gabi', 'angela', 'adriana', 'paula', 'aurora'],
+    theme: 'light',
+  });
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -293,7 +283,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
     </div>
     <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${ecosistemaItems}</div>
+    <div style="margin-bottom:28px;">${ecosistemaItems}</div>
     <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin-bottom:22px;">
       <p style="color:#7F1D1D;font-size:12px;line-height:1.8;margin:0;">
         Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
@@ -358,7 +348,8 @@ export async function sendQuoteEmail({
       cc: [WORKSHOP_CC, ADMIN_CC].join(','),
       subject: subject,
       html: htmlContent,
-      attachments
+      attachments,
+      from: { name: AGENT_FROM_NAMES.axel, address: DEFAULT_FROM_EMAIL }
     });
 
     if (result.success) {

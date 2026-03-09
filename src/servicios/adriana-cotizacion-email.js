@@ -11,7 +11,8 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
-import { sendEmail } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 import { LOGOS_BASE64 } from './email-assets.js';
 
 const SEG_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
@@ -98,21 +99,10 @@ function buildAdrianaEmailHTML(d) {
     `Hola Adriana! Soy ${d.nombre}. Recibí la cotización de seguro para mi ${vehicleLabel} (${d.quoteCode}). Me interesa proceder.`
   )}`;
 
-  const ecosistemaItems = [
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['enzo', 'gabi', 'angela', 'axel', 'paula', 'aurora'],
+    theme: 'dark',
+  });
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -247,7 +237,7 @@ function buildAdrianaEmailHTML(d) {
       <div style="color:#FFD700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
     </div>
     <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:26px;">${ecosistemaItems}</div>
+    <div style="margin-bottom:26px;">${ecosistemaItems}</div>
     <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
       Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Adriana</strong> · SegPopular<br>
       Coworkia Intelligence System · ${fechaFmt}
@@ -283,7 +273,13 @@ export async function sendAdrianaCotizacion(mensajeCompleto, { quoteCode = '' } 
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
   const subject  = `Cotización 🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | Adriana - SegPopular`;
 
-  const result = await sendEmail({ to: datos.email, cc: SEG_ADMIN_CC, subject, html });
+  const result = await sendEmail({ 
+    to: datos.email, 
+    cc: SEG_ADMIN_CC, 
+    subject, 
+    html,
+    from: { name: AGENT_FROM_NAMES.adriana, address: DEFAULT_FROM_EMAIL }
+  });
 
   return {
     ...result,

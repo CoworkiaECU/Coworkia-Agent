@@ -10,7 +10,8 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
-import { sendEmail } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 
 const PE_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA    = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
@@ -254,21 +255,10 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
   const titulo   = esOverview ? 'Casas Jardín — El Morenal' : propiedad.nombre;
   const subtitulo = esOverview ? '4 casas de lujo disponibles · G.M.A. Arquitectos · Ecuador' : `El Morenal · G.M.A. Arquitectos · Ecuador 🇪🇨`;
 
-  const ecosistemaItems = [
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
-  ].map(([icon, name, desc, link]) => `
-    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
-    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
-      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
-      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>
-    </a>`).join('');
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['enzo', 'gabi', 'angela', 'adriana', 'axel', 'aurora'],
+    theme: 'dark',
+  });
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -360,7 +350,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
     </div>
 
     <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:28px;">${ecosistemaItems}</div>
+    <div style="margin-bottom:28px;">${ecosistemaItems}</div>
 
     <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
       <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
@@ -404,7 +394,13 @@ export async function sendPaulaCotizacion(mensajeCompleto, { quoteCode = '' } = 
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
   const subject   = `Cotización 🏡 ${codeLabel}${propLabel} · ${datos.nombre} | Paula - PropElite`;
 
-  const result = await sendEmail({ to: datos.email, cc: PE_ADMIN_CC, subject, html });
+  const result = await sendEmail({ 
+    to: datos.email, 
+    cc: PE_ADMIN_CC, 
+    subject, 
+    html,
+    from: { name: AGENT_FROM_NAMES.paula, address: DEFAULT_FROM_EMAIL }
+  });
 
   return {
     ...result,

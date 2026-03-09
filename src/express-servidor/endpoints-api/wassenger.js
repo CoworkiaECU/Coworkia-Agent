@@ -1456,20 +1456,24 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
       if (hasEmail && hasAlunaTrigger) {
         const emailMatch = processedText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/);
-        let trimmedName = 'Cliente', trimmedEmail = emailMatch?.[0] || '', trimmedPhone = null, rawPlan = null;
+        let trimmedName = 'Cliente', trimmedEmail = emailMatch?.[0] || '', trimmedPhone = null, rawPlan = null, trimmedNota = null;
+        // Extracción rápida de nota como fallback (por si falla OpenAI)
+        const notaFallbackM = processedText.match(/\bN(?:ota)?:\s*(.+)/i);
+        if (notaFallbackM) trimmedNota = notaFallbackM[1].trim();
         try {
           const { complete: _c } = await import('../../servicios-ia/openai.js');
           const raw = await _c(processedText, {
             system: `La directora de Coworkia quiere enviar una proforma de membresía a un cliente. Extrae ÚNICAMENTE este JSON (sin markdown):
-{"nombre":"nombre del cliente","email":"email","telefono":"tel o null","plan":"plan10|plan20|oficina-virtual|sala-reuniones o null"}
-REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan explícito usa null.`,
-            temperature: 0.1, max_tokens: 120, model: 'gpt-4o'
+{"nombre":"nombre del cliente","email":"email","telefono":"tel o null","plan":"plan10|plan20|oficina-virtual|sala-reuniones o null","nota":"texto de la nota del admin o null"}
+REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan explícito usa null. nota=texto que viene después de 'Nota:' o 'nota:' o 'N:'; si no hay nota usa null.`,
+            temperature: 0.1, max_tokens: 200, model: 'gpt-4o'
           });
           const d = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
           trimmedName  = d.nombre || 'Cliente';
           trimmedEmail = d.email  || trimmedEmail;
           trimmedPhone = d.telefono || null;
           rawPlan      = d.plan || null;
+          trimmedNota  = d.nota || null;
         } catch {
           const paraM = processedText.match(/para\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
           trimmedName = paraM ? paraM[1].trim() : 'Cliente';
@@ -1478,17 +1482,17 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         }
 
         if (trimmedEmail && rawPlan) {
-          console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail });
+          console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail, nota: trimmedNota });
           const quoteCode = await generateBossQuoteCode('ALUNA');
-          await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${quoteCode}`);
+          await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}${trimmedNota ? `\n📝 ${trimmedNota}` : ''}\n🔑 ${quoteCode}`);
           await new Promise(r => setTimeout(r, 600));
 
           const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
           const planKey = normalizePlanKey(rawPlan);
-          const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, fromAdmin: true });
+          const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, nota: trimmedNota, fromAdmin: true });
 
           if (proResult.success) {
-            await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, fromAdmin: true });
+            await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, nota: trimmedNota, fromAdmin: true });
           }
           await saveBossQuote({
             agent:       'ALUNA',
@@ -1501,7 +1505,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           });
 
           const reply = proResult.success
-            ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}\n🔑 ${proResult.proformaCode}`
+            ? `✅ *Proforma enviada por Aluna*\n🎫 ${proResult.planName}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}${trimmedNota ? `\n📝 ${trimmedNota}` : ''}\n🔑 ${proResult.proformaCode}`
             : `❌ Error enviando proforma: ${proResult.error}`;
           await enviarWhatsApp(userId, reply);
           return;

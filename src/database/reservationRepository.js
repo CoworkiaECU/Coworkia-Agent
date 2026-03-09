@@ -4,6 +4,45 @@
 
 import databaseService from './database.js';
 
+/**
+ * 🔢 Genera código secuencial de reserva por sucursal y año
+ * Consulta reservations para encontrar el último número usado y avanza uno.
+ * Formato: RES-WHY-2026-0001 · RES-WHY-2026-0002 · RES-WHY-2026-0003
+ * 
+ * Similar al sistema de cotizaciones de agentes BOSS (AXEL, ENZO, etc.)
+ * 
+ * @param {string} branch - Código de sucursal (WHY = Whymper, futuros: IÑA, etc.)
+ * @returns {Promise<string>}
+ */
+async function generateReservationCode(branch = 'WHY') {
+  const prefix = 'RES';
+  const year = new Date().getFullYear();
+  
+  try {
+    await databaseService.ensureInitialized();
+    
+    // Buscar el último código de esta sucursal en este año
+    const pattern = `${prefix}-${branch}-${year}-%`;
+    const last = await databaseService.get(
+      `SELECT id FROM reservations WHERE id LIKE ? ORDER BY created_at DESC LIMIT 1`,
+      [pattern]
+    );
+    
+    let seq = 1;
+    if (last?.id) {
+      // Extraer el número secuencial del formato RES-WHY-2026-0001
+      const match = last.id.match(/-(\d+)$/);
+      if (match) seq = parseInt(match[1]) + 1;
+    }
+    
+    return `${prefix}-${branch}-${year}-${String(seq).padStart(4, '0')}`;
+  } catch (err) {
+    console.error('[RESERVATION] ⚠️ Error generando código secuencial:', err.message);
+    // Fallback a timestamp si falla la query
+    return `${prefix}-${branch}-${Date.now().toString(36).toUpperCase()}`;
+  }
+}
+
 class ReservationRepository {
   /**
    * 🔍 Busca una reserva por ID
@@ -44,7 +83,7 @@ class ReservationRepository {
     databaseService.ensureInitialized();
     
     const {
-      id = `res_${Date.now()}_${reservationData.user_phone}`,
+      id, // Si no se pasa, se genera automáticamente
       user_phone,
       service_type,
       date,
@@ -62,6 +101,9 @@ class ReservationRepository {
       calendar_event_id = null // Nuevo: ID de evento en Google Calendar
     } = reservationData;
 
+    // Generar código secuencial si no se provee ID
+    const reservationId = id || await generateReservationCode();
+
     const query = `
       INSERT INTO reservations (
         id, user_phone, service_type, date, start_time, end_time,
@@ -72,14 +114,14 @@ class ReservationRepository {
     `;
 
     const params = [
-      id, user_phone, service_type, date, start_time, end_time,
+      reservationId, user_phone, service_type, date, start_time, end_time,
       duration_hours, guest_count, total_price, was_free ? 1 : 0,
       status, payment_status, payment_data ? JSON.stringify(payment_data) : null,
       hot_desk_number, payment_method, calendar_event_id
     ];
 
     await databaseService.run(query, params);
-    return await this.findById(id);
+    return await this.findById(reservationId);
   }
 
   /**

@@ -332,7 +332,8 @@ async function processPaymentVerificationConfirmation(userProfile, pendingReserv
       serviceType: reservationRecord.service_type || 'hotDesk',
       duration: `${durationHours} horas`,
       price: reservationRecord.total_price || 0,
-      guestCount: reservationRecord.guest_count || 0
+      guestCount: reservationRecord.guest_count || 0,
+      paymentMethod: reservationRecord.payment_method || null
     }),
     { circuitId: 'calendar-events-job' }
   ).catch(err => console.error('[Confirmation] ❌ Error creando evento calendar (pago):', err.message));
@@ -570,7 +571,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
           serviceType: pendingReservation.serviceType,
           duration: `${pendingReservation.durationHours} horas`,
           price: pendingReservation.totalPrice,
-          guestCount: pendingReservation.guestCount || 0
+          guestCount: pendingReservation.guestCount || 0,
+          paymentMethod: pendingReservation.paymentMethod || reservationRecord.payment_method || null
         }),
         { circuitId: 'calendar-events-job' }
       )

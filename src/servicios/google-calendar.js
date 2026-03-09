@@ -164,19 +164,30 @@ export async function createCalendarEvent(reservationData) {
     
     const eventTitle = `${serviceName}${hotDeskSuffix} ${userName}${guestSuffix}`;
     
-    // 💳 Formato de método de pago
+    // 💳 Formato de método de pago y estado de la reserva
     const paymentMethod = reservationData.paymentMethod;
-    const paymentDisplay = paymentMethod
-      ? {
-          'tarjeta': 'Tarjeta Online',
-          'transferencia': 'Transferencia Online',
-          'efectivo': 'Efectivo Presencial'
-        }[paymentMethod] || 'Pendiente'
-      : 'Pendiente';
+    const wasFree = !price || price === 0;
+    
+    // 🎯 LÓGICA MEJORADA: Determinar el estado real de la reserva
+    let reservationType;
+    
+    if (wasFree) {
+      // Es gratis (primera visita)
+      reservationType = '🎁 GRATIS (Primera visita)';
+    } else if (paymentMethod) {
+      // Tiene método de pago confirmado
+      const paymentDisplay = {
+        'tarjeta': 'Tarjeta Online',
+        'transferencia': 'Transferencia Online', 
+        'efectivo': 'Efectivo Presencial'
+      }[paymentMethod] || paymentMethod;
+      reservationType = `✅ CONFIRMADA - ${paymentDisplay}`;
+    } else {
+      // No tiene método de pago aún (pendiente)
+      reservationType = '⏳ PENDIENTE DE PAGO';
+    }
     
     // Definir el evento (Google generará ID automáticamente)
-    const wasFree = !price || price === 0;
-    const reservationType = wasFree ? '🎁 GRATIS (Primera visita)' : `💳 PAGADA - ${paymentDisplay}`;
     
     // Usar descripción personalizada si existe, sino generar la default
     const eventDescription = customDescription || `

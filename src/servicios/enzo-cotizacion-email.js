@@ -139,18 +139,20 @@ function buildEnzoEmailHTML(d) {
     </div>`).join('');
 
   const ecosistemaItems = [
-    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
-  ].map(([icon, name, desc]) => `
+    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
+    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
+    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
+  ].map(([icon, name, desc, link]) => `
+    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:13px;text-align:left;">
       <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
       <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
       <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
-    </div>`).join('');
+    </div>
+    </a>`).join('');
 
   const precioOriginal  = d.precio_desarrollo;
   const precioFinal     = d.aplica_descuento ? d.precio_con_descuento : d.precio_desarrollo;

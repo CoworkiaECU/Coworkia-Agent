@@ -173,18 +173,20 @@ function buildEmailHTML({ nombre, area, ofertaTexto, quoteCode = '' }) {
     .join('');
 
   const aliados = [
-    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital'],
-    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial'],
-    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares'],
-    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura'],
-    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium'],
-    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas'],
-  ].map(([icon, name, desc]) => `
+    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
+    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
+    ['🏢', 'Aurora — Coworkia',     'Gestión de Espacios & Reservas',   'https://wa.me/593994837117?text=%40aurora'],
+  ].map(([icon, name, desc, link]) => `
+    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
       <div style="font-size:20px;margin-bottom:5px;">${icon}</div>
       <div style="color:white;font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
       <div style="color:rgba(255,255,255,0.38);font-size:10px;">${desc}</div>
-    </div>`).join('');
+    </div>
+    </a>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="es">

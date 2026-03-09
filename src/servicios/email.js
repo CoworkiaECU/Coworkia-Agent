@@ -105,6 +105,23 @@ function generateConfirmationEmailHTML(reservationData) {
     </div>
   `);
 
+  const ecosistemaItems = [
+    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
+    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
+    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
+    ['💜', 'Aluna — Coworkia',      'Membresías & Espacios',            'https://wa.me/593994837117?text=%40aluna'],
+  ].map(([icon, name, desc, link]) => `
+    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
+      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
+      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
+    </div>
+    </a>`).join('');
+
   return `
     <!DOCTYPE html>
     <html>
@@ -249,6 +266,18 @@ function generateConfirmationEmailHTML(reservationData) {
             <p style="color: #374151; font-size: 14px; margin: 8px 0;">Aurora ✨ - Tu asistente de Coworkia</p>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ECOSISTEMA DE AGENTES -->
+      <div style="background:linear-gradient(180deg,#1F2937 0%,#111827 100%);padding:36px 24px;text-align:center;">
+        <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;">${ecosistemaItems}</div>
+        <div style="background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.12);border-radius:10px;padding:14px;">
+          <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+            Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+            <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+          </p>
         </div>
       </div>
 
@@ -605,6 +634,23 @@ function generatePaymentConfirmationHTML(data) {
                      serviceType === 'meetingRoom' ? 'Sala de Reuniones' : 
                      serviceType === 'privateOffice' ? 'Oficina Privada' : 'Espacio';
 
+  const ecosistemaItems = [
+    ['⚖️', 'Gabi — GR Consulting',   'Finanzas, Legal & Compliance',   'https://wa.me/593994837117?text=%40gabi'],
+    ['🤖', 'Enzo — MarketingLab',    'IA & Marketing Digital',         'https://wa.me/593994837117?text=%40enzo'],
+    ['🏥', 'Angela — MedBeneficios', 'Salud Empresarial',               'https://wa.me/593994837117?text=%40angela'],
+    ['🛡️', 'Adriana — SegPopular',  'Seguros Vehiculares',             'https://wa.me/593994837117?text=%40adriana'],
+    ['🚗', 'Axel — The PaintBull',  'Colisiones & Pintura',             'https://wa.me/593994837117?text=%40axel'],
+    ['🏡', 'Paula — PropElite',     'Bienes Raíces Premium',            'https://wa.me/593994837117?text=%40paula'],
+    ['💜', 'Aluna — Coworkia',      'Membresías & Espacios',            'https://wa.me/593994837117?text=%40aluna'],
+  ].map(([icon, name, desc, link]) => `
+    <a href="${link}" target="_blank" style="text-decoration:none;display:block;cursor:pointer;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px;text-align:left;">
+      <div style="font-size:19px;margin-bottom:5px;">${icon}</div>
+      <div style="color:white;font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;">${name}</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:10px;">${desc}</div>
+    </div>
+    </a>`).join('');
+
   return `
     <!DOCTYPE html>
     <html lang="es">
@@ -735,6 +781,18 @@ function generatePaymentConfirmationHTML(data) {
                     </p>
                 </div>
 
+            </div>
+
+            <!-- ECOSISTEMA DE AGENTES -->
+            <div style="background:linear-gradient(180deg,#111827 0%,#0D1117 100%);padding:36px 24px;text-align:center;">
+                <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;">${ecosistemaItems}</div>
+                <div style="background:rgba(79,209,199,0.06);border:1px solid rgba(79,209,199,0.12);border-radius:10px;padding:14px;">
+                    <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+                        Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+                        <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+                    </p>
+                </div>
             </div>
 
             <!-- Footer con branding corporativo -->

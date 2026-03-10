@@ -284,7 +284,10 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
   // 3.1) Saludo casual detectado - mantener agente actual pero marcar flag
-  if (isCasualGreeting) {
+  // EXCEPCIÓN: Si el saludo incluye keywords de Aluna ("hola, info de membresías?"),
+  // NO tratar como casual greeting — dejar caer al bloque de keywords de Aluna.
+  const hasAlunaKeywordInGreeting = ALUNA_KEYWORDS.some(k => text.includes(k));
+  if (isCasualGreeting && !hasAlunaKeywordInGreeting) {
     return {
       agent: currentAgent, // Mantener agente actual
       reason: 'casual greeting - no services offered',

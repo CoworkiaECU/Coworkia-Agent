@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Consultas - Gabi | GR Consulting</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #1f2937;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-bottom: 24px;
+    }
+    
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #1E40AF;
+      color: #1E40AF;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .nav-btn:hover {
+      background: #1E40AF;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    }
+    
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    header h1 {
+      font-size: 32px;
+      color: #1E40AF;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1E40AF;
+    }
+    
+    .stat-value.ratio {
+      font-size: 28px;
+      color: #3B82F6;
+    }
+    
+    .stat-sublabel {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    
+    .section-title {
+      background: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title h2 {
+      font-size: 20px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .top-users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .user-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .user-phone {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .user-count {
+      background: #DBEAFE;
+      color: #1E40AF;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    
+    .user-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    
+    .topic-tag {
+      background: #F3F4F6;
+      color: #374151;
+      padding: 3px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .user-date {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+    
+    .loading, .error, .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+    
+    .loading {
+      color: #1E40AF;
+      font-size: 16px;
+    }
+    
+    .error {
+      color: #dc2626;
+      background: #fee2e2;
+    }
+    
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .top-users-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="nav-arrows">
+        <a href="/admin-coworkia.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Admin Panel
+        </a>
+        <a href="/aluna-proformas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Proformas Aluna
+        </a>
+        <a href="/aurora-reservas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Reservas Aurora
+        </a>
+      </div>
+      <h1>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Dashboard de Consultas - Gabi
+      </h1>
+      <p class="subtitle">Métricas de consultoría legal, contable y financiera - GR Consulting</p>
+    </header>
+
+    <div class="stats-grid" id="stats">
+      <div class="stat-card">
+        <div class="stat-label">Consultas Este Mes</div>
+        <div class="stat-value" id="stat-month-consultas">-</div>
+        <div class="stat-sublabel">Últimos 30 días</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Consultas Esta Semana</div>
+        <div class="stat-value" id="stat-week-consultas">-</div>
+        <div class="stat-sublabel">Últimos 7 días</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Usuarios Únicos</div>
+        <div class="stat-value" id="stat-users">-</div>
+        <div class="stat-sublabel">Clientes activos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Promedio Consultas</div>
+        <div class="stat-value ratio" id="stat-avg">-</div>
+        <div class="stat-sublabel">Por usuario</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <path d="M20 8v6m3-3h-6"/>
+        </svg>
+        Top 5 Usuarios Más Activos
+      </h2>
+    </div>
+
+    <div id="loading" class="loading">
+      <p>Cargando métricas de Gabi...</p>
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <div id="top-users" class="top-users-grid" style="display: none;"></div>
+
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <h3>Sin datos disponibles</h3>
+      <p>No hay consultas registradas aún.</p>
+    </div>
+  </div>
+
+  <script src="/js/gabi-dashboard.js"></script>
+</body>
+</html>

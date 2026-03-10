@@ -61,10 +61,11 @@ function formatPlan(plan) {
 // Formateo de origen (Big Boss vs Aluna)
 function getOriginBadge(specialRequirements) {
   // Detectar si fue enviado por admin/Big Boss
-  const fromBoss = specialRequirements && (
-    specialRequirements.includes('Enviado por administrador') ||
-    specialRequirements.includes('Admin:')
-  );
+  // Normalizar a lowercase para comparación robusta
+  const req = (specialRequirements || '').toLowerCase();
+  const fromBoss = req.includes('enviado por administrador') || 
+                   req.includes('admin:') || 
+                   req.includes('big boss');
   
   if (fromBoss) {
     return '<span class="origin-badge origin-boss">👔 Big Boss</span>';

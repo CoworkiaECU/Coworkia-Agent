@@ -9,7 +9,7 @@
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
       min-height: 100vh;
       padding: 20px;
       color: #1f2937;
@@ -30,7 +30,7 @@
     
     header h1 {
       font-size: 32px;
-      color: #047857;
+      color: #4ECDC4;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -67,7 +67,7 @@
     .stat-value {
       font-size: 36px;
       font-weight: 700;
-      color: #047857;
+      color: #4ECDC4;
     }
     
     .stat-value.money {
@@ -116,7 +116,7 @@
     
     button {
       padding: 10px 20px;
-      background: #047857;
+      background: #4ECDC4;
       color: white;
       border: none;
       border-radius: 8px;
@@ -127,7 +127,7 @@
     }
     
     button:hover {
-      background: #065f46;
+      background: #44A08D;
     }
     
     .table-container {
@@ -176,7 +176,7 @@
       text-transform: capitalize;
     }
     
-    .status-confirmed { background: #d1fae5; color: #065f46; }
+    .status-confirmed { background: #d1fae5; color: #0f766e; }
     .status-pending { background: #fef3c7; color: #92400e; }
     .status-pending_payment { background: #dbeafe; color: #1e40af; }
     .status-cancelled { background: #fee2e2; color: #991b1b; }
@@ -205,7 +205,7 @@
     }
     
     .loading {
-      color: #047857;
+      color: #4ECDC4;
       font-size: 16px;
     }
     
@@ -241,11 +241,11 @@
       width: 56px;
       height: 56px;
       border-radius: 50%;
-      background: #047857;
+      background: #4ECDC4;
       color: white;
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.4);
+      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -254,7 +254,7 @@
     
     .refresh-btn:hover {
       transform: scale(1.1);
-      background: #065f46;
+      background: #44A08D;
     }
     
     .free-badge {
@@ -265,6 +265,39 @@
       font-size: 11px;
       font-weight: 600;
       margin-left: 6px;
+    }
+    
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #4ECDC4;
+      color: #4ECDC4;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .nav-btn:hover {
+      background: #4ECDC4;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+    }
+    
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
     }
     
     @media (max-width: 768px) {
@@ -289,6 +322,20 @@
 <body>
   <div class="container">
     <header>
+      <div class="nav-arrows">
+        <a href="/admin-coworkia.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Admin Panel
+        </a>
+        <a href="/aluna-proformas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Proformas Aluna
+        </a>
+      </div>
       <h1>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>

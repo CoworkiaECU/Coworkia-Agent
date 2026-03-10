@@ -266,6 +266,39 @@
       color: #047857;
       font-weight: 600;
     }
+    
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #8b5cf6;
+      color: #8b5cf6;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .nav-btn:hover {
+      background: #8b5cf6;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+    
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
+    }
 
     @media (max-width: 768px) {
       .stats-grid {
@@ -290,6 +323,20 @@
 <body>
   <div class="container">
     <header>
+      <div class="nav-arrows">
+        <a href="/admin-coworkia.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Admin Panel
+        </a>
+        <a href="/aurora-reservas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Reservas Aurora
+        </a>
+      </div>
       <h1>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

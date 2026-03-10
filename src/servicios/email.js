@@ -245,7 +245,6 @@ function generateConfirmationEmailHTML(reservationData) {
           </div>
 
           ${paymentReceiptSection}
-          ${wifiCode ? `
           <div style="background: linear-gradient(135deg, rgba(78,205,196,0.08), rgba(68,160,141,0.08)); border: 2px solid #4ECDC4; border-radius: 12px; padding: 28px; margin: 25px 0;">
             <h3 style="color: #374151; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">📶 Acceso WiFi Incluido</h3>
             <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid rgba(78,205,196,0.2);">
@@ -258,6 +257,7 @@ function generateConfirmationEmailHTML(reservationData) {
               <p style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 18px 0;">
                 <strong style="color: #4ECDC4;">Paso 3:</strong> Cuando se te solicite, escribe tu código personal:
               </p>
+              ${wifiCode ? `
               <div style="text-align: center; margin: 20px 0;">
                 <div style="display: inline-block; background: linear-gradient(135deg, #4ECDC4, #44A08D); padding: 16px 28px; border-radius: 10px; box-shadow: 0 4px 16px rgba(78,205,196,0.35);">
                   <div style="color: white; font-family: 'Courier New', Consolas, monospace; font-size: 26px; font-weight: bold; letter-spacing: 3px;">${wifiCode}</div>
@@ -268,9 +268,15 @@ function generateConfirmationEmailHTML(reservationData) {
                   ⏰ <strong>Válido:</strong> ${formatDate} de ${startTime} a ${endTime}<br>
                   💡 <strong>Importante:</strong> Tu código funciona solo durante el horario de tu reserva.
                 </p>
-              </div>
+              </div>` : `
+              <div style="text-align: center; margin: 20px 0;">
+                <div style="background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 10px; padding: 20px 28px;">
+                  <p style="color: #6b7280; font-size: 14px; font-weight: 600; margin: 0 0 6px 0;">🔒 Código aún no disponible</p>
+                  <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.6;">Tu código WiFi personal se activa al completar<br>el <strong style="color: #374151;">pago en efectivo</strong> directamente en Coworkia.</p>
+                </div>
+              </div>`}
             </div>
-          </div>` : ''}
+          </div>
           ${priceSection}
 
           <!-- Ubicación (2 columnas) -->

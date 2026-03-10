@@ -47,6 +47,7 @@ import wassengerRouter from './endpoints-api/wassenger.js';
 import gabiDashboardRouter from './endpoints-api/gabi-dashboard.js';
 import alunaDashboardRouter from './endpoints-api/aluna-dashboard.js';
 import auroraDashboardRouter from './endpoints-api/aurora-dashboard.js';
+import enzoDashboardRouter from './endpoints-api/enzo-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
 
 const app = express();
@@ -200,6 +201,7 @@ app.use('/', wassengerRouter);
 app.use('/api/gabi', gabiDashboardRouter);
 app.use('/api/aluna', alunaDashboardRouter);
 app.use('/api/aurora', auroraDashboardRouter);
+app.use('/api/enzo', enzoDashboardRouter);
 app.use('/', wifiCodesRouter);
 
 // 404 final

@@ -13,18 +13,22 @@ const __dirname = dirname(__filename);
 // Leer y convertir logos a base64
 const segpopularPath = join(__dirname, '../../public/assets/logos/segpopular.png');
 const marketinglabPath = join(__dirname, '../../public/assets/logos/marketinglab.png');
+const marketinglabWhitePath = join(__dirname, '../../public/assets/logos/marketinglab-white.png');
 
 const segpopularBase64 = readFileSync(segpopularPath).toString('base64');
 const marketinglabBase64 = readFileSync(marketinglabPath).toString('base64');
+const marketinglabWhiteBase64 = readFileSync(marketinglabWhitePath).toString('base64');
 
 console.log('✅ Logos convertidos a base64:');
 console.log(`  - SegPopular: ${(segpopularBase64.length / 1024).toFixed(2)} KB`);
 console.log(`  - MarketingLab: ${(marketinglabBase64.length / 1024).toFixed(2)} KB`);
+console.log(`  - MarketingLab (white): ${(marketinglabWhiteBase64.length / 1024).toFixed(2)} KB`);
 
 // Exportar para usar en templates
 export const LOGOS_BASE64 = {
   segpopular: segpopularBase64,
-  marketinglab: marketinglabBase64
+  marketinglab: marketinglabBase64,
+  marketinglabWhite: marketinglabWhiteBase64
 };
 
 // CSS para Dark Mode

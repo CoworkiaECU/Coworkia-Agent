@@ -5,8 +5,8 @@
  * el template y hacer ajustes necesarios
  */
 
-import { generateGabiEmailHTML } from './src/servicios/generic-email-templates.js';
-import { sendEmail } from './src/servicios/email.js';
+import { generateGabiEmailHTML } from '../../src/servicios/generic-email-templates.js';
+import { sendEmail } from '../../src/servicios/email.js';
 
 async function sendGabiTestEmail() {
   console.log('📧 Enviando email de prueba de GABI...\n');
@@ -41,8 +41,9 @@ async function sendGabiTestEmail() {
     // Preparar email
     const emailOptions = {
       to: 'yo@diegovillota.com',
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@coworkia.ec',
-      subject: '⚖️ Consultoría Confirmada - GR Consulting',
+      from: `"Gabi · GR Consulting" <${process.env.EMAIL_USER || 'secretaria.coworkia@gmail.com'}>`,
+      subject: `Cotización 💼 ${testData.consultationCode} — ${testData.consultationType} · ${testData.company} | Gabi - GR Consulting`,
+
       html: emailHTML
     };
 

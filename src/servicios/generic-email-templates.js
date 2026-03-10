@@ -420,7 +420,7 @@ export function generateAxelEmailHTML(leadData) {
 
 /**
  * 🎯 ENZO - MarketingLab
- * Colores: Verde Lime (#84CC16, #65A30D) + Gris (#6B7280, #4B5563)
+ * Paleta: Teal (#2DD4BF, #0D9488) + Fondo navy (#0A0F1E) — logo mantiene su color único
  */
 export function generateEnzoEmailHTML(leadData) {
   const {
@@ -441,143 +441,224 @@ export function generateEnzoEmailHTML(leadData) {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Proyecto de Marketing - MarketingLab</title>
-      ${DARK_MODE_CSS}
+      <title>Cotización MarketingLab — ${leadId}</title>
+      <meta name="color-scheme" content="light only">
+      <meta name="supported-color-schemes" content="light">
     </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
-      
-      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        
-        <!-- Header MarketingLab - Gris sobrio con acentos verdes -->
-        <div style="background: linear-gradient(135deg, #374151 0%, #1F2937 100%); text-align: center; padding: 40px 20px;">
-          <!-- Logo MarketingLab PNG embebido base64 -->
-          <div style="margin-bottom: 25px;">
-            <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}" 
-                 alt="MarketingLab" 
-                 style="max-width: 260px; height: auto; display: block; margin: 0 auto;" />
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #0D9488; margin: 0; padding: 0;">
+
+      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 0; overflow: hidden;">
+
+        <!-- ═══ HEADER DARK NAVY ═══ -->
+        <div style="background: #0A0F1E; text-align: center; padding: 44px 20px 38px;">
+          <div style="margin-bottom: 10px;">
+            <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}"
+                 alt="MarketingLab"
+                 style="max-width: 320px; height: auto; display: block; margin: 0 auto;" />
           </div>
-          <div style="color: rgba(255,255,255,0.85); font-size: 15px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
-            Estrategias que funcionan
-          </div>
-          <div class="card-white shadow" style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-left: 4px solid #84CC16;">
-            <h1 class="text-dark" style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ Proyecto Registrado</h1>
-            <p class="text-gray" style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">Enzo revisará tu caso</p>
+          <div style="color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px;">ESTRATEGIAS QUE FUNCIONAN</div>
+          <!-- Tarjeta oscura métricas style -->
+          <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.3); border-radius: 14px; padding: 24px; max-width: 340px; margin: 0 auto;">
+            <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; text-align: center; margin-bottom: 16px;">· PROYECTO PARA ·</div>
+            <div style="color: white; font-size: 22px; font-weight: 800; text-align: center; line-height: 1.2; margin-bottom: 16px;">${userName}</div>
+            <div style="border-top: 1px solid rgba(45,212,191,0.2); margin-bottom: 16px;"></div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 50%; padding: 0 4px 0 0;">
+                  <div style="background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">PROYECTO</div>
+                    <div style="color: white; font-size: 13px; font-weight: 700; line-height: 1.3;">${projectType}</div>
+                  </div>
+                </td>
+                <td style="width: 50%; padding: 0 0 0 4px;">
+                  <div style="background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">REFERENCIA</div>
+                    <div style="color: white; font-size: 13px; font-weight: 700; line-height: 1.3;">${leadId}</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            ${companyName ? `<div style="text-align: center; margin-top: 12px; color: rgba(255,255,255,0.5); font-size: 12px;">${companyName}</div>` : ''}
+            <div style="text-align: center; border-top: 1px solid rgba(45,212,191,0.2); margin-top: 16px; padding-top: 12px;">
+              <span style="color: #2DD4BF; font-size: 12px; font-weight: 600;">Enzo · MarketingLab</span>
+            </div>
           </div>
         </div>
 
-        <div class="content-section" style="padding: 30px;">
-          
-          <!-- Saludo personalizado -->
-          <div style="text-align: center; margin-bottom: 25px;">
-            <h2 class="text-dark" style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
-            <p class="text-gray" style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Tu proyecto de <strong class="brand-green" style="color: #84CC16;">${projectType}</strong> está en buenas manos
-            </p>
+        <!-- ═══ CUERPO ═══ -->
+        <div style="padding: 32px 28px;">
+
+          <!-- Intro -->
+          <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+            Recibimos tu proyecto de <strong style="color: #2DD4BF;">${projectType}</strong>${companyName ? ` para <strong style="color: #374151;">${companyName}</strong>` : ''}.<br>
+            <span style="color: #6B7280;">Aquí está nuestra propuesta personalizada.</span>
+          </p>
+
+          <!-- Resumen del proyecto -->
+          <div style="background: #F8FFFE; border-left: 4px solid #2DD4BF; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 0 0 24px;">
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;">📋 Resumen del proyecto</div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px; width: 40%;">Tipo</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${projectType}</td></tr>
+              ${companyName ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Empresa</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${companyName}</td></tr>` : ''}
+              ${budget ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Presupuesto</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${budget}</td></tr>` : ''}
+              ${urgency ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Urgencia</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${urgency}</td></tr>` : ''}
+              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Referencia</td><td style="padding: 6px 0; color: #2DD4BF; font-size: 13px; font-weight: 700;">${leadId}</td></tr>
+            </table>
           </div>
 
-          <!-- Detalles del proyecto -->
-          <div style="background: linear-gradient(135deg, rgba(249,250,251,0.5), rgba(243,244,246,0.5)); border-left: 4px solid #84CC16; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <h3 class="text-dark" style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🎯 TU PROYECTO</h3>
-            
-            <div style="margin: 20px 0;">
-              <div class="card-white-border" style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span class="brand-green" style="color: #84CC16; font-size: 20px; margin-right: 12px;">🎯</span>
-                  <span class="text-dark" style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${projectType}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">🏢</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${companyName}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">💰</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Presupuesto: ${budget}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">⏰</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Urgencia: ${urgency}</span>
-                </div>
-              </div>
-
-              ${description ? `
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: flex-start;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📝</span>
-                  <span style="color: #374151; font-weight: 500; font-size: 15px;">${description}</span>
-                </div>
-              </div>
-              ` : ''}
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📧</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(132,204,22,0.25);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #84CC16; font-size: 20px; margin-right: 12px;">📱</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
-                </div>
-              </div>
-            </div>
+          <!-- Servicios -->
+          <div style="margin: 0 0 24px;">
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">⚡ Lo que activamos en tu proyecto</div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 50%; padding: 0 8px 8px 0; vertical-align: top;">
+                  <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
+                    <div style="font-size: 22px; margin-bottom: 6px;">🤖</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">IA con OpenAI</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Chatbots, automatizaciones y contenido generado con IA</div>
+                  </div>
+                </td>
+                <td style="width: 50%; padding: 0 0 8px 0; vertical-align: top;">
+                  <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
+                    <div style="font-size: 22px; margin-bottom: 6px;">🎯</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Campañas Meta &amp; Google</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Ads optimizados para máximo ROAS y conversiones</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 50%; padding: 0 8px 0 0; vertical-align: top;">
+                  <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
+                    <div style="font-size: 22px; margin-bottom: 6px;">📱</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Contenido &amp; Social</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Producción de contenido para IG, FB y TikTok</div>
+                  </div>
+                </td>
+                <td style="width: 50%; padding: 0; vertical-align: top;">
+                  <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
+                    <div style="font-size: 22px; margin-bottom: 6px;">📊</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Analytics &amp; Reportes</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Dashboard semanal con KPIs y proyecciones</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
 
-          <!-- Próximos pasos -->
-          <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Proceso:</h3>
-            <div style="color: #374151; font-size: 15px; line-height: 1.8;">
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">1.</strong> Enzo analizará tu proyecto y objetivos
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">2.</strong> Agendaremos una reunión para conocer más detalles
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">3.</strong> Desarrollaremos una propuesta personalizada
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">4.</strong> ¡Ejecutaremos estrategias que funcionen!
-              </p>
-            </div>
+          <!-- Tabla de precios -->
+          <div style="margin: 0 0 24px;">
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">💰 Inversión mensual detallada</div>
+            <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden;">
+              <tr style="background: #0A0F1E;">
+                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Servicio</td>
+                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: right;">Precio / mes</td>
+              </tr>
+              <tr style="background: #F9FAFB;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #ECFDF5;">🎯 Gestión Meta Ads + Google Ads</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #ECFDF5;">$900</td></tr>
+              <tr style="background: white;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #ECFDF5;">📱 Producción de contenido (IG / FB / TikTok)</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #ECFDF5;">$600</td></tr>
+              <tr style="background: #F9FAFB;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #ECFDF5;">🤖 IA + Automatizaciones con OpenAI</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #ECFDF5;">$350</td></tr>
+              <tr style="background: white;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #E5E7EB;">📊 Dashboard + Reportes semanales</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #E5E7EB;">$150</td></tr>
+              <tr style="background: #F9FAFB;"><td style="padding: 11px 14px; color: #6B7280; font-size: 13px; border-bottom: 1px solid #E5E7EB;">Total sin descuento</td><td style="padding: 11px 14px; color: #9CA3AF; font-size: 13px; text-align: right; text-decoration: line-through; border-bottom: 1px solid #E5E7EB;">$2,000</td></tr>
+              <tr style="background: #FFF7ED;"><td style="padding: 11px 14px; color: #D97706; font-size: 13px; font-weight: 600; border-bottom: 1px solid #FDE68A;">🎉 Descuento lanzamiento (primeros 3 meses)</td><td style="padding: 11px 14px; color: #D97706; font-size: 13px; font-weight: 700; text-align: right; border-bottom: 1px solid #FDE68A;">- $500</td></tr>
+              <tr style="background: #0A0F1E;">
+                <td style="padding: 14px; color: white; font-size: 15px; font-weight: 800;">Total mes 1</td>
+                <td style="padding: 14px; color: #2DD4BF; font-size: 20px; font-weight: 900; text-align: right;">$1,500 / mes</td>
+              </tr>
+            </table>
+            <p style="color: #9CA3AF; font-size: 11px; margin: 8px 0 0; text-align: center;">Precio promocional aplicado automáticamente · Desde el mes 4 retorna a $2,000/mes</p>
           </div>
 
-          <!-- Referencia -->
-          <div style="background: rgba(132,204,22,0.08); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid rgba(132,204,22,0.2);">
-            <p style="color: #4B5563; font-size: 13px; margin: 0; font-weight: 600;">
-              <strong>Referencia:</strong> ${leadId}
-            </p>
-          </div>
-
-          <!-- Contacto -->
-          <div style="text-align: center; margin: 25px 0;">
-            <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              💬 Lleva tu marca al siguiente nivel
-            </p>
-            <a href="https://wa.me/593994837117?text=%40enzo%2C%20esto%20va%20a%20transformar%20mi%20negocio%20%C2%BFCu%C3%A1ndo%20empezamos%3F" 
-               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              � Quiero Transformar Mi Negocio
+          <!-- CTA consultoría -->
+          <div style="background: linear-gradient(135deg, #1F2937 0%, #0A0F1E 100%); border-radius: 14px; padding: 28px 24px; margin: 0 0 24px; text-align: center;">
+            <div style="color: #2DD4BF; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">🎁 INCLUIDO SIN COSTO</div>
+            <div style="color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px;">Consultoría estratégica inicial</div>
+            <div style="color: rgba(255,255,255,0.65); font-size: 13px; line-height: 1.7; margin-bottom: 22px;">30 minutos con Enzo para analizar tu proyecto, definir objetivos y presentarte un plan de acción con IA.</div>
+            <a href="https://wa.me/593994837117?text=%40enzo%2C%20mejoremos%20el%20precio%20de%20tu%20oferta%20y%20cerremos%20este%20negocio%20en%20una%20reuni%C3%B3n%20en%20tu%20oficina"
+               style="display: inline-block; background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); color: #042f2e; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 15px; box-shadow: 0 6px 20px rgba(45,212,191,0.40); letter-spacing: 0.3px;">
+              🤝 ¿Negociamos el precio?
             </a>
+            <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 12px 0 0; letter-spacing: 0.3px;">Abre WhatsApp directo con Enzo · Responde en minutos</p>
           </div>
 
-          <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(132,204,22,0.15), rgba(101,163,13,0.15)); border-radius: 12px; border: 2px solid #84CC16;">
-            <p style="color: #65A30D; font-size: 18px; font-weight: 700; margin: 0;">¡Hagamos crecer tu marca! 🎯</p>
-            <p style="color: #4B5563; font-size: 14px; margin: 8px 0; font-weight: 600;">Enzo - MarketingLab</p>
+          <!-- Cronograma de implementación -->
+          <div style="margin: 0 0 24px;">
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">📅 Cronograma de implementación</div>
+            <p style="color: #6B7280; font-size: 13px; margin: 0 0 16px; line-height: 1.6;">Así se verá <strong style="color: #374151;">${companyName || userName}</strong> en 30 días activa en redes, con campañas corriendo y datos reales:</p>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 25%; padding: 0 4px 0 0; vertical-align: top; height: 175px;">
+                  <div style="background: #0A0F1E; border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 1</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">🚀</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Setup</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Auditoría, pixel tracking, cuentas publicitarias configuradas</div>
+                  </div>
+                </td>
+                <td style="width: 25%; padding: 0 4px; vertical-align: top; height: 175px;">
+                  <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 2</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">📢</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Lanzamiento</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Primeras campañas live, calendario editorial publicado</div>
+                  </div>
+                </td>
+                <td style="width: 25%; padding: 0 4px; vertical-align: top; height: 175px;">
+                  <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 3</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">📈</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Optimización</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">A/B testing, audiencias refinadas, primeros leads entrando</div>
+                  </div>
+                </td>
+                <td style="width: 25%; padding: 0 0 0 4px; vertical-align: top; height: 175px;">
+                  <div style="background: linear-gradient(135deg, #042f2e 0%, #0A0F1E 100%); border: 1px solid rgba(45,212,191,0.4); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 4</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">🏆</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Resultados</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Reporte de KPIs: CAC, ROAS, engagement y proyección mes 2</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- CTA WhatsApp -->
+          <div style="text-align: center; margin: 0 0 8px;">
+            <p style="color: #6B7280; font-size: 14px; margin: 0 0 14px; font-weight: 500;">💬 ¿Tienes preguntas sobre tu proyecto?</p>
+            <a href="https://wa.me/593994837117?text=%40enzo%20recib%C3%AD%20tu%20cotizaci%C3%B3n%20por%20correo%20(${encodeURIComponent(leadId)})%20y%20tengo%20algunas%20dudas"
+               style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; padding: 13px 32px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 5px 18px rgba(37,211,102,0.35); font-size: 14px;">
+              📱 Habla con Enzo por WhatsApp
+            </a>
+            <p style="color: #9CA3AF; font-size: 11px; margin: 10px 0 0;">Respuesta instantánea · Lunes a sábado</p>
           </div>
 
         </div>
       </div>
+
+      <!-- ═══ ECOSISTEMA DE AGENTES ═══ -->
+      <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #0D9488;">
+        <div style="max-width:480px;margin:0 auto 28px;">
+          <h2 style="color:#2DD4BF;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
+        </div>
+        <div style="margin-bottom:22px;">${ecosistemaTable({aliados:['aurora','adriana','angela','axel','aluna','gabi','paula','custom'],theme:'dark'})}</div>
+        <div style="background:rgba(13,148,136,0.06);border:1px solid rgba(13,148,136,0.12);border-radius:10px;padding:14px;margin-bottom:36px;">
+          <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.8;margin:0;">
+            Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+            <strong style="color:rgba(255,255,255,0.8);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+          </p>
+        </div>
+        <!-- Brand footer -->
+        <div style="border-top: 1px solid rgba(255,255,255,0.07); padding: 28px 20px 32px; text-align: center;">
+          <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}" alt="MarketingLab" style="max-width: 180px; height: auto; display: block; margin: 0 auto 12px;" />
+          <div style="color: rgba(255,255,255,0.35); font-size: 12px; letter-spacing: 1px; margin-bottom: 16px;">estrategia · digital · resultados</div>
+          <div style="color: rgba(255,255,255,0.25); font-size: 11px; line-height: 1.8;">
+            © 2026 Coworkia Ecuador — Espacios que inspiran<br>
+            Whymper 403, Edificio Finistere - Planta Baja, Quito<br>
+            <span style="font-size:10px;">coworkia.ec@gmail.com · +593 99 483 7117</span>
+          </div>
+        </div>
+      </div>
+
     </body>
     </html>
   `;
@@ -928,85 +1009,196 @@ export function generateGabiEmailHTML(leadData) {
     description,
     urgency,
     consultationCode,
-    meetingDate,
-    meetingTime,
-    recipientType // 'admin' o 'client'
+    recipientType = 'client',
+    aiAnalysis = null, // OpenAI-generated persuasion text (pass from confirmation flow)
   } = leadData;
 
-  // Mapeo de urgencias a colores
-  const urgencyColors = {
-    'Urgente': { bg: '#FEE2E2', text: '#DC2626', icon: '🚨' },
-    'Normal': { bg: '#FEF3C7', text: '#F59E0B', icon: '📅' },
-    'Planificación': { bg: '#DBEAFE', text: '#2563EB', icon: '📋' }
+  const gabiWaNumber = '593994837117';
+
+  const urgencyMap = {
+    'Urgente':       { text: '#DC2626', icon: '🚨' },
+    'Normal':        { text: '#D97706', icon: '📅' },
+    'Planificación': { text: '#2563EB', icon: '📋' },
   };
+  const urgencyStyle = urgencyMap[urgency] || urgencyMap['Normal'];
 
-  const urgencyStyle = urgencyColors[urgency] || urgencyColors['Normal'];
+  // WA links
+  const adminWaLink  = `https://wa.me/${(phone||'').replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${userName}, soy del equipo de GR Consulting. Tu consulta ${consultationCode} ha sido recibida. ¿Cuándo podemos coordinar la sesión inicial gratuita?`)}`;
+  // CTA 1: triggers $100 / 90-min advisory payment flow in backend
+  const clientWaCTA1 = `https://wa.me/${gabiWaNumber}?text=${encodeURIComponent('@gabi ya tengo claro el camino, quiero seguir con la asesoría')}`;
+  // CTA 2: questions about the offer
+  const clientWaCTA2 = `https://wa.me/${gabiWaNumber}?text=${encodeURIComponent(`@gabi recibí su correo y tengo algunas preguntas - (${consultationCode})`)}`;
 
-  // Contenido específico para Admin vs Client
-  const headerTitle = recipientType === 'admin' 
-    ? '🔔 Nueva Solicitud de Consultoría' 
-    : '✅ Consultoría Confirmada';
+  // Opening: AI-personalized if provided, else persuasive default
+  const openingText = aiAnalysis
+    ? aiAnalysis
+    : `Hemos revisado tu solicitud de asesoría en <strong style="color:#1B3358;">${consultationType}</strong>${company ? ` para <strong>${company}</strong>` : ''}. Gabi ya tiene el camino trazado para tu caso. La primera sesión de diagnóstico (30 min) es completamente gratuita y sin compromiso — ahí mapeamos tu situación, identificamos riesgos y definimos el alcance exacto. Si decides avanzar, la <strong style="color:#1B3358;">asesoría profunda de 90 minutos por $100</strong> es donde construimos juntos el plan de acción completo con informe profesional listo para ejecutar.`;
 
-  const greeting = recipientType === 'admin'
-    ? `<p style="color: #6B7280; font-size: 16px; margin: 0 0 25px 0;">Se ha recibido una nueva solicitud de consultoría que requiere atención:</p>`
-    : `<p style="color: #6B7280; font-size: 16px; margin: 0 0 25px 0;">Gracias por confiar en GR Consulting. Hemos recibido tu solicitud de consultoría y estamos listos para ayudarte.</p>`;
+  // 6-area services grid
+  const services = [
+    { icon: '🏛️', title: 'Cumplimiento UAFE',         desc: 'Oficial de Cumplimiento certificado (LOPDLAFT), reportes ROS/RUI, matrices AML/CFT y políticas KYC.' },
+    { icon: '💰', title: 'Finanzas & Tributación SRI', desc: 'Declaraciones IVA y Renta, conciliaciones bancarias, estados financieros y optimización fiscal.' },
+    { icon: '👥', title: 'RRHH & Nómina',              desc: 'Décimos, IESS, afiliaciones, contratos laborales, reglamentos internos y liquidaciones de ley.' },
+    { icon: '⚖️', title: 'Legal Empresarial',           desc: 'Constitución de compañías, contratos societarios, trámites Registro Mercantil, SRI e IESS.' },
+    { icon: '🔍', title: 'Due Diligence & KYC',         desc: 'Auditorías internas, políticas antilavado, debida diligencia mejorada y gestión de riesgos.' },
+    { icon: '🛡️', title: 'Ley de Datos / LOPDLAFT',     desc: 'Políticas privacidad, registro SENADI, derechos ARCO y cumplimiento normativo digital.' },
+  ];
 
-  const whatsappSection = recipientType === 'admin' ? `
-    <div style="text-align: center; margin: 25px 0;">
-      <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-        💬 Contactar al cliente por WhatsApp
-      </p>
-      <a href="https://wa.me/${phone}?text=Hola%20${encodeURIComponent(userName)},%20soy%20de%20GR%20Consulting.%20Tu%20consulta%20${consultationCode}%20ha%20sido%20recibida." 
-         style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-        📱 Abrir WhatsApp
+  const servicesHTML = [0, 2, 4].map(i => `
+    <tr>
+      <td style="width:50%;padding:0 6px 10px 0;vertical-align:top;">
+        <div style="background:#FFF9E6;border:1px solid rgba(255,224,51,0.45);border-radius:10px;padding:16px;">
+          <div style="font-size:22px;margin-bottom:8px;">${services[i].icon}</div>
+          <div style="font-size:13px;font-weight:700;color:#1B3358;margin-bottom:5px;">${services[i].title}</div>
+          <div style="color:#6B7280;font-size:12px;line-height:1.5;">${services[i].desc}</div>
+        </div>
+      </td>
+      <td style="width:50%;padding:0 0 10px 0;vertical-align:top;">
+        <div style="background:#FFF9E6;border:1px solid rgba(255,224,51,0.45);border-radius:10px;padding:16px;">
+          <div style="font-size:22px;margin-bottom:8px;">${services[i+1].icon}</div>
+          <div style="font-size:13px;font-weight:700;color:#1B3358;margin-bottom:5px;">${services[i+1].title}</div>
+          <div style="color:#6B7280;font-size:12px;line-height:1.5;">${services[i+1].desc}</div>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  const clientBodyContent = `
+    <!-- Opening paragraph: AI or default persuasive -->
+    <div style="background:#FFFBEB;border-left:4px solid #FFE033;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 24px;">
+      <p style="color:#374151;font-size:15px;line-height:1.8;margin:0;">${openingText}</p>
+    </div>
+
+    <!-- Summary card -->
+    <div style="background:#F9FAFB;border-left:4px solid #C9A82A;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">📋 Tu solicitud en resumen</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;width:40%;">Tipo de consultoría</td><td style="padding:6px 0;color:#1B3358;font-size:13px;font-weight:700;">${consultationType}</td></tr>
+        ${company ? `<tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Empresa</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${company}</td></tr>` : ''}
+        ${ruc ? `<tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">RUC</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${ruc}</td></tr>` : ''}
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Urgencia</td><td style="padding:6px 0;color:${urgencyStyle.text};font-size:13px;font-weight:700;">${urgencyStyle.icon} ${urgency||'Normal'}</td></tr>
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Código</td><td style="padding:6px 0;color:#1B3358;font-size:13px;font-weight:700;">${consultationCode}</td></tr>
+      </table>
+    </div>
+
+    <!-- Services: 6-area grid -->
+    <div style="margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">⚖️ TODO LO QUE GABI MANEJA EN TU EMPRESA</div>
+      <p style="color:#6B7280;font-size:13px;margin:0 0 14px;line-height:1.6;">Cada empresa en Ecuador carga con obligaciones legales, fiscales y laborales. Gabi las convierte en <strong style="color:#1B3358;">ventajas competitivas</strong>.</p>
+      <table style="width:100%;border-collapse:collapse;">${servicesHTML}</table>
+    </div>
+
+    <!-- OFFER: clear 2-tier pitch -->
+    <div style="background:linear-gradient(145deg,#1B3358 0%,#0D2137 100%);border-radius:16px;padding:32px 24px;margin:0 0 24px;text-align:center;">
+      <div style="background:rgba(255,224,51,0.1);border:1px solid rgba(255,224,51,0.3);border-radius:20px;padding:5px 18px;display:inline-block;margin-bottom:20px;">
+        <span style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">🎁 TU RUTA HACIA LA SOLUCIÓN</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <tr>
+          <td style="width:50%;padding:0 6px 0 0;vertical-align:top;">
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px;text-align:center;">
+              <div style="color:rgba(255,255,255,0.45);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">DIAGNÓSTICO INICIAL</div>
+              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">$0</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">30 minutos · Gratis</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;line-height:1.5;">Mapeamos tu situación e identificamos riesgos y el camino a seguir</div>
+            </div>
+          </td>
+          <td style="width:50%;padding:0 0 0 6px;vertical-align:top;">
+            <div style="background:rgba(255,224,51,0.07);border:2px solid rgba(255,224,51,0.5);border-radius:12px;padding:18px;text-align:center;">
+              <div style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">ASESORÍA PROFUNDA</div>
+              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">$100</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">90 minutos · Plan de acción</div>
+              <div style="color:rgba(255,255,255,0.6);font-size:11px;line-height:1.5;">Plan completo + informe profesional entregable listo para ejecutar</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <div style="color:rgba(255,255,255,0.65);font-size:14px;line-height:1.8;margin-bottom:26px;max-width:380px;margin-left:auto;margin-right:auto;">
+        Empieza gratis, sin compromiso. Cuando decidas avanzar, <strong style="color:#FFE033;">$100 te da 90 minutos de asesoría profunda</strong> más el informe profesional que define tu plan de acción.
+      </div>
+      <a href="${clientWaCTA1}"
+         style="display:inline-block;background:linear-gradient(135deg,#FFE033 0%,#E8B800 100%);color:#0D2137;padding:16px 36px;text-decoration:none;border-radius:50px;font-weight:900;font-size:15px;box-shadow:0 6px 22px rgba(255,224,51,0.5);letter-spacing:0.3px;">
+        ✨ Quiero seguir con la asesoría
+      </a>
+      <p style="color:rgba(255,255,255,0.35);font-size:11px;margin:12px 0 0;letter-spacing:0.3px;">Abre WhatsApp con Gabi · Activa el pago seguro por $100</p>
+    </div>
+
+    <!-- Process: 3 steps -->
+    <div style="margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">🗺️ LO QUE OCURRE DESPUÉS</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="width:33.3%;padding:0 5px 0 0;vertical-align:top;">
+            <div style="background:#0A0F1E;border-radius:10px;padding:16px 12px;text-align:center;">
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Hoy</div>
+              <div style="font-size:24px;margin-bottom:8px;">📞</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Diagnóstico</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">30 min gratuitos</div>
+            </div>
+          </td>
+          <td style="width:33.3%;padding:0 5px;vertical-align:top;">
+            <div style="background:#0D1520;border:1px solid rgba(255,224,51,0.2);border-radius:10px;padding:16px 12px;text-align:center;">
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Paso 2</div>
+              <div style="font-size:24px;margin-bottom:8px;">💳</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Pago $100</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">PayPal · seguro</div>
+            </div>
+          </td>
+          <td style="width:33.3%;padding:0 0 0 5px;vertical-align:top;">
+            <div style="background:linear-gradient(135deg,#2a1a00 0%,#0A0F1E 100%);border:1px solid rgba(255,224,51,0.4);border-radius:10px;padding:16px 12px;text-align:center;">
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Resultado</div>
+              <div style="font-size:24px;margin-bottom:8px;">📋</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Plan de Acción</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">90 min + informe</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- CTA 2: WhatsApp questions -->
+    <div style="text-align:center;margin:0 0 8px;">
+      <p style="color:#6B7280;font-size:14px;margin:0 0 14px;font-weight:500;">💬 ¿Tienes preguntas sobre la propuesta?</p>
+      <a href="${clientWaCTA2}"
+         style="background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
+        📱 Habla con Gabi por WhatsApp
+      </a>
+      <p style="color:#9CA3AF;font-size:11px;margin:10px 0 0;">Respuesta instantánea 24/7</p>
+    </div>
+  `;
+
+  const adminBodyContent = `
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
+      Nueva solicitud de consultoría de <strong style="color:#1B3358;">${userName}</strong> en <strong style="color:#1B3358;">${consultationType}</strong>.
+    </p>
+    <div style="background:#F9FAFB;border-left:4px solid #C9A82A;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">👤 Datos del cliente</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;width:35%;">Nombre</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${userName}</td></tr>
+        ${company ? `<tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Empresa</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${company}</td></tr>` : ''}
+        ${ruc ? `<tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">RUC</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${ruc}</td></tr>` : ''}
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Email</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${email}</td></tr>
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Teléfono</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${phone}</td></tr>
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Urgencia</td><td style="padding:6px 0;color:${urgencyStyle.text};font-size:13px;font-weight:700;">${urgencyStyle.icon} ${urgency||'Normal'}</td></tr>
+        <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Código</td><td style="padding:6px 0;color:#1B3358;font-size:13px;font-weight:700;">${consultationCode}</td></tr>
+      </table>
+    </div>
+    <div style="background:white;border:1px solid rgba(27,51,88,0.15);border-radius:12px;padding:20px 24px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">📝 Descripción del caso</div>
+      <p style="color:#374151;margin:0;line-height:1.7;font-size:14px;">${description}</p>
+    </div>
+    <div style="text-align:center;margin:0 0 8px;">
+      <p style="color:#6B7280;font-size:14px;margin:0 0 14px;">💬 Contactar al cliente</p>
+      <a href="${adminWaLink}"
+         style="background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
+        📱 Abrir WhatsApp con ${userName}
       </a>
     </div>
-  ` : '';
+  `;
 
-  const meetingSection = recipientType === 'client' && meetingDate ? `
-    <div style="background: rgba(30,58,138,0.05); border-radius: 12px; padding: 25px; margin: 25px 0; border-left: 4px solid #1E3A8A;">
-      <h3 style="color: #1E3A8A; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📆 Tu Reunión Está Agendada</h3>
-      <p style="color: #374151; margin: 8px 0;">
-        <strong>Fecha:</strong> ${meetingDate}
-      </p>
-      <p style="color: #374151; margin: 8px 0;">
-        <strong>Hora:</strong> ${meetingTime}
-      </p>
-      <p style="color: #374151; margin: 8px 0;">
-        <strong>Duración:</strong> 30 minutos
-      </p>
-      <p style="color: #6B7280; font-size: 14px; margin: 15px 0 0 0;">
-        💡 Recibirás un enlace de Google Meet antes de la reunión
-      </p>
-    </div>
-
-    <div style="background: rgba(16,185,129,0.05); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid rgba(16,185,129,0.2);">
-      <p style="color: #059669; font-size: 15px; margin: 0; font-weight: 600;">
-        🎁 Esta primera consultoría es GRATUITA (30 min)
-      </p>
-      <p style="color: #6B7280; font-size: 13px; margin: 8px 0 0 0;">
-        Si requieres servicios especializados adicionales, recibirás una cotización personalizada después de nuestra reunión.
-      </p>
-    </div>
-  ` : '';
-
-  const nextStepsSection = recipientType === 'client' ? `
-    <div style="background: #F9FAFB; border-radius: 12px; padding: 25px; margin: 25px 0;">
-      <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">📝 Próximos Pasos:</h3>
-      <p style="margin: 10px 0;">
-        <strong style="color: #1E3A8A;">1.</strong> Confirmaremos tu reunión vía WhatsApp
-      </p>
-      <p style="margin: 10px 0;">
-        <strong style="color: #1E3A8A;">2.</strong> Te enviaremos el enlace de Google Meet
-      </p>
-      <p style="margin: 10px 0;">
-        <strong style="color: #1E3A8A;">3.</strong> Analizaremos tu caso en detalle
-      </p>
-      <p style="margin: 10px 0;">
-        <strong style="color: #1E3A8A;">4.</strong> Te entregaremos una cotización personalizada (si aplica)
-      </p>
-    </div>
-  ` : '';
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['aurora', 'adriana', 'angela', 'axel', 'aluna', 'enzo', 'paula', 'custom'],
+    theme: 'dark',
+  });
 
   return `
     <!DOCTYPE html>
@@ -1014,138 +1206,83 @@ export function generateGabiEmailHTML(leadData) {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${recipientType === 'admin' ? 'Nueva Consultoría' : 'Consultoría Confirmada'} - GR Consulting</title>
-      ${DARK_MODE_CSS}
+      <meta name="color-scheme" content="light only">
+      <meta name="supported-color-schemes" content="light">
+      <title>${recipientType === 'admin' ? 'Nueva Consultoría' : `Cotización ${consultationCode}`} — GR Consulting</title>
     </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
-      
-      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        
-        <!-- Header GR Consulting - Texto Imponente -->
-        <div style="background: linear-gradient(135deg, #1E3A8A, #3B82F6); text-align: center; padding: 50px 20px;">
-          <h1 style="color: white; font-size: 42px; margin: 0 0 15px 0; font-weight: 900; text-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: 1px; font-family: 'Georgia', serif;">
-            GR CONSULTING
-          </h1>
-          <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0; font-weight: 600; letter-spacing: 0.5px;">
-            Asesoría Financiera, Legal y Cumplimiento UAFE
-          </p>
+    <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;background-color:#0D2137;margin:0;padding:0;">
+
+      <div style="max-width:600px;margin:0 auto;background:white;border-radius:0;overflow:hidden;">
+
+        <!-- ═══ HEADER: dark navy + fluorescent gold ═══ -->
+        <div style="background:linear-gradient(145deg,#1B3358 0%,#0D2137 55%,#14293F 100%);text-align:center;padding:48px 20px 40px;position:relative;overflow:hidden;">
+
+          <div style="color:white;font-size:32px;font-weight:900;letter-spacing:-0.5px;margin-bottom:5px;font-family:Georgia,serif;">GR Consulting</div>
+          <div style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:28px;">FINANZAS · LEGAL · RRHH · COMPLIANCE</div>
+
+          <!-- Metrics card -->
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,224,51,0.35);border-radius:14px;padding:20px 26px;max-width:340px;margin:0 auto;">
+            <div style="color:#FFE033;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;text-align:center;margin-bottom:12px;">· PROPUESTA PERSONALIZADA ·</div>
+            <div style="color:white;font-size:22px;font-weight:800;text-align:center;line-height:1.2;margin-bottom:14px;">${userName}</div>
+            <div style="border-top:1px solid rgba(255,224,51,0.2);margin-bottom:14px;"></div>
+            <table style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td style="width:50%;padding:0 4px 0 0;">
+                  <div style="background:rgba(255,224,51,0.06);border:1px solid rgba(255,224,51,0.2);border-radius:10px;padding:12px;text-align:center;">
+                    <div style="color:#FFE033;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">TIPO</div>
+                    <div style="color:white;font-size:12px;font-weight:700;line-height:1.3;">${consultationType}</div>
+                  </div>
+                </td>
+                <td style="width:50%;padding:0 0 0 4px;">
+                  <div style="background:rgba(255,224,51,0.06);border:1px solid rgba(255,224,51,0.2);border-radius:10px;padding:12px;text-align:center;">
+                    <div style="color:#FFE033;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">REFERENCIA</div>
+                    <div style="color:white;font-size:12px;font-weight:700;line-height:1.3;">${consultationCode}</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            ${company ? `<div style="text-align:center;margin-top:12px;color:rgba(255,255,255,0.5);font-size:12px;">${company}</div>` : ''}
+            <div style="text-align:center;border-top:1px solid rgba(255,224,51,0.2);margin-top:14px;padding-top:12px;">
+              <span style="color:#FFE033;font-size:12px;font-weight:600;">Gabi · GR Consulting</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Contenido -->
-        <div style="padding: 35px 25px;">
-          
-          <!-- Título y Saludo -->
-          <h2 style="color: #1F2937; font-size: 22px; margin: 0 0 15px 0; font-weight: 700;">
-            ${headerTitle}
-          </h2>
-          ${greeting}
-
-          <!-- Código de Consultoría -->
-          <div style="background: linear-gradient(135deg, rgba(30,58,138,0.1), rgba(59,130,246,0.1)); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; border: 2px solid rgba(30,58,138,0.2);">
-            <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Código de Consultoría</p>
-            <p style="color: #1E3A8A; font-size: 24px; margin: 8px 0 0 0; font-weight: 700; letter-spacing: 2px;">${consultationCode}</p>
-          </div>
-
-          <!-- Datos del Cliente -->
-          <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(30,58,138,0.2);">
-            <h3 style="color: #374151; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">👤 Información del Cliente</h3>
-            
-            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-              <div style="display: flex; align-items: center;">
-                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">👤</span>
-                <span style="color: #374151; font-weight: 600; font-size: 16px;">${userName}</span>
-              </div>
-            </div>
-
-            ${company ? `
-            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-              <div style="display: flex; align-items: center;">
-                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🏢</span>
-                <span style="color: #374151; font-weight: 600; font-size: 16px;">${company}</span>
-              </div>
-            </div>
-            ` : ''}
-
-            ${ruc ? `
-            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-              <div style="display: flex; align-items: center;">
-                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🆔</span>
-                <span style="color: #374151; font-weight: 600; font-size: 16px;">RUC: ${ruc}</span>
-              </div>
-            </div>
-            ` : ''}
-
-            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-              <div style="display: flex; align-items: center;">
-                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📧</span>
-                <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
-              </div>
-            </div>
-
-            <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-              <div style="display: flex; align-items: center;">
-                <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📱</span>
-                <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Detalles de la Consultoría -->
-          <div style="background: #F9FAFB; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">📋 Detalles de la Consultoría</h3>
-            
-            <div style="margin: 15px 0;">
-              <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; font-weight: 600;">Tipo de Consultoría</p>
-              <p style="color: #1E3A8A; font-size: 18px; margin: 5px 0; font-weight: 700;">${consultationType}</p>
-            </div>
-
-            <div style="margin: 15px 0;">
-              <p style="color: #6B7280; font-size: 13px; margin: 0; text-transform: uppercase; font-weight: 600;">Nivel de Urgencia</p>
-              <div style="background: ${urgencyStyle.bg}; border-radius: 8px; padding: 10px; margin: 8px 0; display: inline-block;">
-                <span style="color: ${urgencyStyle.text}; font-weight: 700; font-size: 16px;">
-                  ${urgencyStyle.icon} ${urgency}
-                </span>
-              </div>
-            </div>
-
-            <div style="margin: 15px 0;">
-              <p style="color: #6B7280; font-size: 13px; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Descripción</p>
-              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(30,58,138,0.2);">
-                <p style="color: #374151; margin: 0; line-height: 1.6; font-size: 15px;">${description}</p>
-              </div>
-            </div>
-
-          </div>
-
-          ${meetingSection}
-
-          ${whatsappSection}
-
-          ${nextStepsSection}
-
-          <!-- Referencia -->
-          <div style="background: rgba(30,58,138,0.05); border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <p style="color: #6B7280; font-size: 13px; margin: 0;">
-              <strong>Referencia:</strong> ${consultationCode}
-            </p>
-          </div>
-
-          <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(30,58,138,0.1), rgba(59,130,246,0.1)); border-radius: 12px;">
-            <p style="color: #1E3A8A; font-size: 18px; font-weight: 700; margin: 0;">Confianza y Profesionalismo ⚖️</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Equipo GR Consulting</p>
-            <p style="color: #6B7280; font-size: 13px; margin: 12px 0 0 0;">
-              📧 consultas@grconsulting.ec | 📱 WhatsApp: +593 99 999 9999
-            </p>
-          </div>
-
+        <!-- ═══ BODY ═══ -->
+        <div style="padding:32px 28px;">
+          ${recipientType === 'admin' ? adminBodyContent : clientBodyContent}
         </div>
       </div>
+
+      <!-- ═══ ECOSISTEMA ═══ -->
+      <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #FFE033;">
+        <div style="max-width:480px;margin:0 auto 28px;">
+          <h2 style="color:#FFE033;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
+        </div>
+        <div style="margin-bottom:22px;">${ecosistemaItems}</div>
+        <div style="background:rgba(255,224,51,0.04);border:1px solid rgba(255,224,51,0.1);border-radius:10px;padding:14px;margin-bottom:36px;">
+          <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.8;margin:0;">
+            Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+            <strong style="color:rgba(255,255,255,0.8);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
+          </p>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.07);padding:28px 20px 32px;text-align:center;">
+          <h2 style="color:white;font-size:24px;font-weight:900;margin:0 0 6px;letter-spacing:1px;font-family:Georgia,serif;">GR CONSULTING</h2>
+          <div style="color:rgba(255,255,255,0.35);font-size:12px;letter-spacing:1px;margin-bottom:16px;">financiero · legal · cumplimiento</div>
+          <div style="color:rgba(255,255,255,0.25);font-size:11px;line-height:1.8;">
+            © 2026 Coworkia Ecuador — Espacios que inspiran<br>
+            Whymper 403, Edificio Finistere - Planta Baja, Quito<br>
+            <span style="font-size:10px;">coworkia.ec@gmail.com · +593 99 483 7117</span>
+          </div>
+        </div>
+      </div>
+
     </body>
     </html>
   `;
 }
+
 
 /**
  * � ALUNA PROFORMA — Email de propuesta de membresía específica
@@ -1402,8 +1539,8 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
     case 'GABI':
       return {
         subject: type === 'admin'
-          ? `⚖️ Nueva consultoría: ${clientName}`
-          : `✅ Consultoría confirmada — GR Consulting`,
+          ? `💼 Nueva consultoría: ${clientName} · ${data.consultationType}`
+          : `Cotización 💼 ${data.consultationCode} — ${data.consultationType} · ${data.company || clientName} | Gabi - GR Consulting`,
         html: generateGabiEmailHTML({ ...data, userName: clientName })
       };
 
@@ -1417,7 +1554,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
       return {
         subject: type === 'admin'
           ? `📊 Nueva propuesta marketing: ${clientName}`
-          : `✅ Propuesta de marketing — MarketingLab`,
+          : `Cotización 🚀 ${data.leadId} — ${data.projectType} · ${data.companyName || clientName} | Enzo - MarketingLab`,
         html: generateEnzoEmailHTML({ ...data, userName: clientName })
       };
 

@@ -1,6 +1,6 @@
 # Reglas Multiagente — Coworkia Aurora
 > Referencia rápida del ecosistema. Se lee antes de cualquier intervención.  
-> Última actualización: **08 Mar 2026 — v842**
+> Última actualización: **10 Mar 2026 — v843**
 
 ---
 
@@ -11,6 +11,20 @@
 - **Sin tecnicismos en el plan.** Lenguaje humano. Código solo tras aprobación.
 - **No toques lo que funciona.** Nada de refactorizar "de paso".
 - **"verde nena" = gas.** Sin esa frase, solo analizar y proponer.
+- **No auditar sin que lo pida.** Auditorías y revisiones completas solo cuando el usuario las solicite explícitamente.
+
+---
+
+## 0.1 Reglas de emails y templates
+
+- **Test tras cada cambio.** Cualquier edición a un template de email → ejecutar el script de prueba al finalizar:  
+  ```bash
+  node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
+  ```
+- **Destinatario fijo de prueba:** `yo@diegovillota.com`
+- **Datos reales siempre.** Nunca usar textos placeholder ("Plan Piloto Test", "Usuario de Prueba", etc.) — el test debe verse idéntico a lo que recibirá un cliente real. Usar `Diego Villota` como nombre por defecto en tests.
+- **Confirmar al usuario** el código de proforma generado para que pueda verificar en su bandeja.
+- **La nota de prueba va vacía** (`nota: null`) — el template debe verse limpio y real.
 
 ---
 

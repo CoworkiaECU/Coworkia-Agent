@@ -12,6 +12,7 @@ import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { saveMembershipLead, trackAlunaProspect } from '../database/alunaRepository.js';
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
+import databaseService from '../database/database.js';
 
 // ──────────────────────────────────────────────
 // 📋 Datos de los planes (fuente de verdad)
@@ -98,12 +99,36 @@ export function normalizePlanKey(rawPlan) {
 }
 
 /**
- * 🔢 Genera código de proforma secuencial
+ * 🔢 Genera código de proforma secuencial con formato MEM-PlanXX-XXXX
+ * Consulta la base de datos para obtener el último número y lo incrementa.
  */
-function generateProformaCode() {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
-  return `PRO-${ts}-${rand}`;
+async function generateProformaCode(planKey = 'plan10') {
+  const planMap = {
+    'plan10': 'Plan10',
+    'plan20': 'Plan20',
+    'oficinavirtual': 'OficinaVirtual',
+    'salareuniones': 'SalaReuniones'
+  };
+  const planLabel = planMap[planKey] || 'Plan10';
+  const prefix = `MEM-${planLabel}-`;
+
+  try {
+    await databaseService.ensureInitialized();
+    const last = await databaseService.get(
+      `SELECT membership_code FROM membership_leads WHERE membership_code LIKE $1 ORDER BY created_at DESC LIMIT 1`,
+      [`${prefix}%`]
+    );
+    if (last?.membership_code) {
+      const lastNum = parseInt(last.membership_code.replace(prefix, ''), 10);
+      if (!isNaN(lastNum)) {
+        return `${prefix}${String(lastNum + 1).padStart(4, '0')}`;
+      }
+    }
+  } catch (_) {
+    // Si falla la DB, usamos timestamp como fallback seguro
+  }
+
+  return `${prefix}0001`;
 }
 
 /**
@@ -137,7 +162,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
       throw new Error(`Plan desconocido: ${planKey}`);
     }
 
-    const code = proformaCode || generateProformaCode();
+    const code = proformaCode || await generateProformaCode(plan.key);
 
     const emailContent = generateEmailForAgent('ALUNA', 'proforma', {
       clientName,
@@ -152,9 +177,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
       coworkiaWhatsApp: '593994837117',
     });
 
-    const contextualSubject = code
-      ? `Cotización 💜 ${code} — ${plan.name} · ${clientName} | Aluna - Coworkia`
-      : emailContent.subject;
+    const contextualSubject = `Membresía Coworkia ${code} - Aluna`;
 
     await sendEmail({
       to: clientEmail,
@@ -188,7 +211,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
 export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmail, planKey, phone, proformaCode, nota = null, fromAdmin = false }) {
   try {
     const plan = PLAN_DATA[normalizePlanKey(planKey)];
-    const code = proformaCode || generateProformaCode();
+    const code = proformaCode || await generateProformaCode(normalizePlanKey(planKey));
 
     const leadData = {
       id: `PRF-${Date.now()}_${(userId || '').replace(/\D/g, '').slice(-8)}`,

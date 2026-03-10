@@ -43,26 +43,31 @@ export function isEnzoBossQuoteCommand(mensaje) {
  * y generar la propuesta personalizada completa.
  */
 async function procesarConOpenAI(mensajeJefe) {
-  const preciosBase = conocimientoEnzo?.agentesIA?.precios?.ecuador || {};
-  const descuento   = conocimientoEnzo?.agentesIA?.descuentoIntroduccion || 0.25;
-
   const systemPrompt = `Eres Enzo, Director de MarketingLab Ecuador. Experto en IA aplicada a negocios, marketing digital y automatización.
 
 Recibes un mensaje del CEO quien está presencialmente con un cliente potencial y te dicta todos los datos.
 Tu tarea: procesar ese mensaje y devolver un JSON con la propuesta lista.
 
-PRECIOS MarketingLab Ecuador (USD):
-- Agente IA básico (FAQ, derivación): $${preciosBase.desarrollo?.basico || 3500}
-- Agente IA intermedio (formularios + IA): $${preciosBase.desarrollo?.intermedio || 6500}  
-- Agente IA avanzado (Vision AI + integraciones): $${preciosBase.desarrollo?.avanzado || 12000}
-- Mantenimiento mensual: $${preciosBase.mantenimiento?.mensual || 250}/mes (1er mes GRATIS)
-- Descuento introducción disponible: ${Math.round(descuento * 100)}%
+GUÍA DE PRECIOS ECUADOR (mercado realista para startups/PYMES):
+- Agentes IA simples: $800-$1,500 USD (FAQ, derivación básica)
+- Agentes IA intermedios: $1,800-$3,200 USD (formularios, CRM, integraciones)
+- Agentes IA avanzados: $3,500-$5,500 USD (Vision AI, análisis documentos, WhatsApp)
+- Mantenimiento mensual: $120-$280/mes según complejidad (1er mes GRATIS)
+- Descuento por temporada: 15-25% disponible para cierre rápido
 
 REGLAS para elegir nivel:
-- "básico/preguntas frecuentes/FAQ/simple" → básico
-- "ventas/CRM/formularios/membresías/agendamiento" → intermedio  
-- "fotos/imágenes/vision/colisiones/documentos/pagos con foto" → avanzado
-- Si no especifica → intermedio (más vendible)
+- "básico/preguntas frecuentes/FAQ/simple/chatbot" → rango bajo-medio
+- "ventas/CRM/formularios/membresías/agendamiento/reservas" → rango medio
+- "fotos/imágenes/vision/colisiones/documentos/pagos/análisis visual" → rango medio-alto
+- Si no especifica → rango medio (más vendible)
+
+DEBES decidir el precio específico basándote en:
+1. Complejidad técnica de lo que necesitan
+2. Tamaño/presupuesto aparente de la empresa
+3. Urgencia del proyecto
+4. Valor que generará para su negocio
+
+Sé realista para el mercado ecuatoriano. No sobrevaloramos.
 
 RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
 {
@@ -73,10 +78,12 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   "sector": "sector del negocio detectado",
   "necesidad_raw": "frase exacta de lo que necesitan",
   "nivel_agente": "basico|intermedio|avanzado",
-  "precio_desarrollo": 6500,
-  "precio_con_descuento": 4875,
+  "precio_desarrollo": 2800,
+  "precio_con_descuento": 2380,
   "aplica_descuento": true,
-  "mantenimiento_mensual": 250,
+  "porcentaje_descuento": 15,
+  "razon_descuento": "Descuento por temporada",
+  "mantenimiento_mensual": 180,
   "dolor_principal": "problema clave que resuelve este agente para su negocio",
   "roi_estimado": "texto corto de ROI realista para su negocio en Ecuador",
   "casos_uso": ["caso 1 específico para su sector", "caso 2", "caso 3"],
@@ -114,10 +121,10 @@ function buildEnzoEmailHTML(d) {
   )}`;
 
   const nivelLabel = {
-    basico:    { txt: 'Agente IA Esencial',    sub: 'FAQ, derivación, conversación natural' },
-    intermedio:{ txt: 'Agente IA Profesional', sub: 'Formularios, CRM, automatización completa' },
-    avanzado:  { txt: 'Agente IA Premium',     sub: 'Vision AI, integraciones, analytics avanzado' },
-  }[d.nivel_agente] || { txt: 'Agente IA Profesional', sub: 'Formularios, CRM, automatización completa' };
+    basico:    { txt: 'Agente IA Esencial',    sub: 'Responde preguntas frecuentes y deriva casos complejos' },
+    intermedio:{ txt: 'Agente IA Profesional', sub: 'Captura leads, califica clientes y automatiza ventas' },
+    avanzado:  { txt: 'Agente IA Premium',     sub: 'Analiza fotos/documentos e integra con sistemas externos' },
+  }[d.nivel_agente] || { txt: 'Agente IA Profesional', sub: 'Captura leads, califica clientes y automatiza ventas' };
 
   const incluyeItems = [
     'Análisis y diseño de personalidad del agente',
@@ -160,15 +167,11 @@ function buildEnzoEmailHTML(d) {
 
   <!-- ══ HEADER MARKETINGLAB ══ -->
   <div style="background:linear-gradient(145deg,#0D1B2A 0%,#142235 50%,#0A1520 100%);border-radius:20px 20px 0 0;padding:50px 42px 44px;text-align:center;position:relative;overflow:hidden;">
-    <!-- Círculos decorativos -->
-    <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(0,194,160,0.06);pointer-events:none;"></div>
-    <div style="position:absolute;bottom:-40px;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(0,194,160,0.04);pointer-events:none;"></div>
-
     <!-- Logo MarketingLab real -->
     <div style="margin-bottom:20px;">
       <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}"
            alt="MarketingLab"
-           style="max-width:260px;height:auto;display:block;margin:0 auto;" />
+           style="max-width:312px;height:auto;display:block;margin:0 auto;" />
     </div>
     <div style="color:rgba(255,255,255,0.85);font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;margin-bottom:30px;">Estrategias que funcionan</div>
 
@@ -206,11 +209,10 @@ function buildEnzoEmailHTML(d) {
         <div style="background:linear-gradient(135deg,#00C2A0,#00A08A);width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🤖</div>
         <div>
           <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Solución diseñada para ${d.empresa}</div>
-          <div style="color:#0D1B2A;font-size:19px;font-weight:700;">${nivelLabel.txt}</div>
-          <div style="color:#6B7280;font-size:13px;">${nivelLabel.sub}</div>
+          <div style="color:#0D1B2A;font-size:22px;font-weight:800;margin-top:4px;">${nivelLabel.txt}</div>
         </div>
       </div>
-      <p style="color:#374151;font-size:14px;line-height:1.8;margin:0 0 20px 0;">${d.propuesta_tecnica}</p>
+      <p style="color:#374151;font-size:15px;line-height:1.75;margin:0 0 24px 0;">${d.propuesta_tecnica}</p>
       <ul style="list-style:none;margin:0;padding:4px 0;">${incluyeItems}</ul>
     </div>
 
@@ -249,7 +251,7 @@ function buildEnzoEmailHTML(d) {
           ${d.aplica_descuento ? `
           <div style="color:#9CA3AF;font-size:13px;text-decoration:line-through;margin-bottom:4px;">Precio regular: $${precioOriginal.toLocaleString()} USD</div>
           <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:4px 14px;display:inline-block;margin-bottom:8px;">
-            <span style="color:#065F46;font-size:12px;font-weight:700;">🎁 Descuento introducción 25% = -$${ahorro.toLocaleString()}</span>
+            <span style="color:#065F46;font-size:12px;font-weight:700;">🎁 ${d.razon_descuento || 'Descuento por temporada'} ${d.porcentaje_descuento || 20}% = -$${ahorro.toLocaleString()}</span>
           </div>
           ` : ''}
           <div>
@@ -305,16 +307,22 @@ function buildEnzoEmailHTML(d) {
     <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
     <div style="margin-bottom:28px;">${ecosistemaItems}</div>
 
-    <div style="background:rgba(0,194,160,0.06);border:1px solid rgba(0,194,160,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
+    <div style="background:rgba(0,194,160,0.06);border:1px solid rgba(0,194,160,0.12);border-radius:10px;padding:14px;">
       <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
         Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
-        <strong style="color:rgba(255,255,255,0.75);">La IA no es el futuro de su empresa — ya es el presente.</strong>
+        <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar por WhatsApp.</strong>
       </p>
     </div>
+  </div>
 
-    <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
-      Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Enzo</strong> · Asistente IA de MarketingLab<br>
-      Coworkia Intelligence System · ${formatDate}
+  <!-- FOOTER COWORKIA (mismo que Aluna/Aurora) -->
+  <div style="background:linear-gradient(135deg,#00C2A0,#00A08A);text-align:center;padding:28px;border-radius:0 0 20px 20px;">
+    <div style="color:#E0F7F4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
+    <div style="color:rgba(224,247,244,0.7);font-size:10px;letter-spacing:2px;margin-bottom:2px;text-transform:uppercase;">work · connect · grow</div>
+    <div style="color:rgba(224,247,244,0.6);font-size:12px;line-height:1.6;margin-top:12px;">
+      © 2026 Coworkia Ecuador — Espacios que inspiran<br>
+      Whymper 403, Edificio Finistere, Quito<br>
+      <span style="font-size:11px;margin-top:6px;display:block;">secretaria.coworkia@gmail.com · +593 98 777 0788</span>
     </div>
   </div>
 

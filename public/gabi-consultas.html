@@ -6,6 +6,234 @@
   <title>Dashboard Consultas - Gabi | GR Consulting</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1B3358 0%, #0D2137 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #1f2937;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      background: white;
+      padding: 24px 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+    .nav-arrows { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: white;
+      border: 2px solid #1B3358; color: #1B3358;
+      text-decoration: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; transition: all 0.2s;
+    }
+    .nav-btn:hover { background: #1B3358; color: white; transform: translateY(-2px); }
+    .nav-btn svg { width: 16px; height: 16px; }
+    header h1 { font-size: 28px; color: #1B3358; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .subtitle { color: #6b7280; font-size: 14px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white; padding: 22px 24px;
+      border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      border-top: 4px solid #FFE033;
+    }
+    .stat-label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 34px; font-weight: 800; color: #1B3358; }
+    .stat-sublabel { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+
+    /* Filters */
+    .filters-panel {
+      background: white; padding: 20px 24px; border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 20px;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+    .filter-group label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select, .filter-group input {
+      padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px;
+      font-size: 14px; color: #1f2937; background: white; outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: #1B3358; }
+    .filter-group input { min-width: 220px; }
+    .btn-refresh {
+      padding: 10px 20px; background: #1B3358; color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s; margin-left: auto;
+    }
+    .btn-refresh:hover { background: #0D2137; }
+
+    /* Table */
+    .table-wrapper {
+      background: white; border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      overflow: hidden; margin-bottom: 24px;
+    }
+    .table-header {
+      padding: 16px 24px; border-bottom: 1px solid #f3f4f6;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .table-header h2 { font-size: 16px; font-weight: 700; color: #1f2937; }
+    .table-count { font-size: 12px; color: #6b7280; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f9fafb; }
+    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    td { padding: 14px 16px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
+    tbody tr:hover { background: #fafafa; }
+    .code { font-family: monospace; font-size: 13px; color: #1B3358; font-weight: 700; }
+    .client-name { font-weight: 600; color: #1f2937; }
+    .client-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+    /* Badges */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .badge-pending       { background: #FEF3C7; color: #92400E; }
+    .badge-meeting_scheduled { background: #DBEAFE; color: #1E40AF; }
+    .badge-quote_sent    { background: #E0E7FF; color: #3730A3; }
+    .badge-negotiating   { background: #FEE2E2; color: #991B1B; }
+    .badge-service_in_progress { background: #D1FAE5; color: #065F46; }
+    .badge-completed     { background: #D1FAE5; color: #065F46; }
+    .badge-cancelled     { background: #F3F4F6; color: #6B7280; }
+    .badge-urgente       { background: #FEE2E2; color: #DC2626; }
+    .badge-normal-u      { background: #FEF3C7; color: #D97706; }
+    .badge-planificacion { background: #DBEAFE; color: #1E40AF; }
+
+    .amount { font-weight: 700; color: #065F46; font-size: 14px; }
+    .date-cell { font-size: 12px; color: #6b7280; }
+
+    .loading, .error, .empty {
+      text-align: center; padding: 48px 20px;
+      font-size: 15px;
+    }
+    .loading { color: #1B3358; }
+    .error { color: #dc2626; }
+    .empty { color: #9ca3af; }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .filters-panel { flex-direction: column; }
+      table { font-size: 13px; }
+      th, td { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="nav-arrows">
+        <a href="/admin-coworkia.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Admin Panel
+        </a>
+        <a href="/aluna-proformas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Proformas Aluna
+        </a>
+        <a href="/enzo-proyectos.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Proyectos Enzo
+        </a>
+        <a href="/aurora-reservas.html" class="nav-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Reservas Aurora
+        </a>
+      </div>
+      <h1>⚖️ Dashboard de Consultas · Gabi</h1>
+      <p class="subtitle">GR Consulting — Legal · Contabilidad · RRHH · Compliance</p>
+    </header>
+
+    <!-- KPIs -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Consultas</div>
+        <div class="stat-value" id="stat-total">-</div>
+        <div class="stat-sublabel">Historial completo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Este Mes</div>
+        <div class="stat-value" id="stat-month">-</div>
+        <div class="stat-sublabel">Mes actual</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Esta Semana</div>
+        <div class="stat-value" id="stat-week">-</div>
+        <div class="stat-sublabel">Últimos 7 días</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenue Cotizado</div>
+        <div class="stat-value" id="stat-revenue" style="font-size:26px;">-</div>
+        <div class="stat-sublabel">Asesorías enviadas + activas</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-panel">
+      <div class="filter-group">
+        <label>Estado</label>
+        <select id="filter-status">
+          <option value="">Todos</option>
+          <option value="pending">⏳ Pendiente</option>
+          <option value="meeting_scheduled">📅 Reunión</option>
+          <option value="quote_sent">📧 Cotización</option>
+          <option value="negotiating">💬 Negociando</option>
+          <option value="service_in_progress">🔧 En Proceso</option>
+          <option value="completed">✅ Completado</option>
+          <option value="cancelled">❌ Cancelado</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Tipo</label>
+        <select id="filter-type">
+          <option value="">Todos</option>
+          <option value="Contabilidad">Contabilidad</option>
+          <option value="Legal">Legal</option>
+          <option value="RRHH">RRHH</option>
+          <option value="Fiscal">Fiscal</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Urgencia</label>
+        <select id="filter-urgency">
+          <option value="">Todas</option>
+          <option value="Urgente">🚨 Urgente</option>
+          <option value="Normal">📅 Normal</option>
+          <option value="Planificación">📋 Planificación</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Buscar</label>
+        <input type="text" id="search" placeholder="Nombre, empresa, código...">
+      </div>
+      <button class="btn-refresh" onclick="loadLeads()">↺ Actualizar</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <div class="table-header">
+        <h2>⚖️ Consultas de Clientes</h2>
+        <span class="table-count" id="table-count"></span>
+      </div>
+      <div id="leads-container">
+        <div class="loading">Cargando consultas...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/gabi-dashboard.js"></script>
+</body>
+</html>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;

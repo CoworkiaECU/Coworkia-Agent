@@ -1,130 +1,151 @@
-console.log('[GABI-DASH] 🚀 Script iniciado');
 const API_BASE = window.location.origin;
-console.log('[GABI-DASH] API_BASE:', API_BASE);
 
-// Formateo de fecha
+// ═══ STATE ═══════════════════════════════════════════════════════════════════
+let currentFilters = { status: '', type: '', urgency: '', search: '' };
+
+// ═══ HELPERS ═════════════════════════════════════════════════════════════════
 function formatDate(dateString) {
   if (!dateString) return '-';
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '-';
-    
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
+    const diffDays = Math.floor((Date.now() - date) / 86400000);
     if (diffDays === 0) return 'Hoy';
     if (diffDays === 1) return 'Ayer';
     if (diffDays < 7) return `Hace ${diffDays} días`;
-    
-    return date.toLocaleDateString('es-EC', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
-    });
-  } catch (e) {
-    return '-';
-  }
+    return date.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { return '-'; }
 }
 
-// Formatear teléfono
-function formatPhone(phone) {
-  if (!phone) return '-';
-  // +593987654321 -> 098 765 4321
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('593')) {
-    const local = cleaned.substring(3);
-    return `0${local.substring(0, 2)} ${local.substring(2, 5)} ${local.substring(5)}`;
-  }
-  return phone;
+function formatMoney(val) {
+  if (!val || val === 0) return '-';
+  return `$${parseFloat(val).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-// Cargar dashboard completo
-async function loadDashboard() {
-  const loadingEl = document.getElementById('loading');
-  const errorEl = document.getElementById('error');
-  const topUsersEl = document.getElementById('top-users');
-  const emptyEl = document.getElementById('empty-state');
-  
-  // Mostrar loading
-  loadingEl.style.display = 'block';
-  errorEl.style.display = 'none';
-  topUsersEl.style.display = 'none';
-  emptyEl.style.display = 'none';
-  
+function statusBadge(status) {
+  const map = {
+    pending:              ['badge-pending',       '⏳ Pendiente'],
+    meeting_scheduled:   ['badge-meeting_scheduled', '📅 Reunión'],
+    quote_sent:          ['badge-quote_sent',     '📧 Cotizada'],
+    negotiating:         ['badge-negotiating',    '💬 Negociando'],
+    service_in_progress: ['badge-service_in_progress', '🔧 En Proceso'],
+    completed:           ['badge-completed',      '✅ Completado'],
+    cancelled:           ['badge-cancelled',      '❌ Cancelado'],
+  };
+  const [cls, label] = map[status] || ['badge-pending', status || '-'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function urgencyBadge(urgency) {
+  const map = {
+    'Urgente':       ['badge-urgente',       '🚨 Urgente'],
+    'Normal':        ['badge-normal-u',      '📅 Normal'],
+    'Planificación': ['badge-planificacion', '📋 Plan.'],
+  };
+  const [cls, label] = map[urgency] || ['badge-normal-u', urgency || 'Normal'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ═══ STATS ═══════════════════════════════════════════════════════════════════
+async function loadStats() {
   try {
-    const url = `${API_BASE}/api/gabi/dashboard`;
-    console.log('[GABI-DASH] Cargando dashboard desde:', url);
-    
-    const response = await fetch(url);
-    console.log('[GABI-DASH] Response status:', response.status);
-    
-    const result = await response.json();
-    console.log('[GABI-DASH] Result:', result);
-    
-    if (!result.ok) {
-      throw new Error(result.error || 'Error cargando dashboard');
-    }
-    
-    const { month, week, topUsers } = result.data;
-    
-    // Actualizar stats del mes
-    document.getElementById('stat-month-consultas').textContent = month?.totalConsultas || 0;
-    document.getElementById('stat-week-consultas').textContent = week?.totalConsultas || 0;
-    document.getElementById('stat-users').textContent = month?.usuariosUnicos || 0;
-    
-    const avg = month?.promedioInteraccionesPorUsuario || 0;
-    document.getElementById('stat-avg').textContent = avg.toFixed(1);
-    
-    // Ocultar loading
-    loadingEl.style.display = 'none';
-    
-    // Renderizar top users
-    if (topUsers && topUsers.length > 0) {
-      topUsersEl.innerHTML = topUsers.map((user, index) => `
-        <div class="user-card">
-          <div class="user-header">
-            <div class="user-phone">${formatPhone(user.userId)}</div>
-            <div class="user-count">${user.interactionCount} consultas</div>
-          </div>
-          ${user.topics && user.topics.length > 0 ? `
-            <div class="user-topics">
-              ${user.topics.slice(0, 3).map(topic => `
-                <span class="topic-tag">${topic}</span>
-              `).join('')}
-              ${user.topics.length > 3 ? `<span class="topic-tag">+${user.topics.length - 3}</span>` : ''}
-            </div>
-          ` : ''}
-          <div class="user-date">Última consulta: ${formatDate(user.lastInteraction)}</div>
-        </div>
-      `).join('');
-      
-      topUsersEl.style.display = 'grid';
-    } else {
-      emptyEl.style.display = 'block';
-    }
-    
-  } catch (error) {
-    console.error('[GABI-DASH] Error completo:', error);
-    console.error('[GABI-DASH] Error stack:', error.stack);
-    loadingEl.style.display = 'none';
-    errorEl.textContent = `Error: ${error.message}`;
-    errorEl.style.display = 'block';
+    const res = await fetch(`${API_BASE}/api/gabi/leads-stats`);
+    const result = await res.json();
+    if (!result.ok) return;
+    const d = result.data;
+    document.getElementById('stat-total').textContent   = d.total || 0;
+    document.getElementById('stat-month').textContent   = d.thisMonth || 0;
+    document.getElementById('stat-week').textContent    = d.thisWeek || 0;
+    document.getElementById('stat-revenue').textContent = formatMoney(d.revenue?.total || 0);
+  } catch (err) {
+    console.error('[GABI-DASH] Error stats:', err);
   }
 }
 
-// Cargar al inicio
-try {
-  console.log('[GABI-DASH] Iniciando carga de dashboard...');
-  loadDashboard().catch(err => {
-    console.error('[GABI-DASH] Error fatal en carga inicial:', err);
-    alert('Error cargando dashboard: ' + err.message + '\nRevisa el Console (Cmd+Option+J) para más detalles');
+// ═══ LEADS TABLE ═════════════════════════════════════════════════════════════
+async function loadLeads() {
+  const container = document.getElementById('leads-container');
+  container.innerHTML = '<div class="loading">Cargando consultas...</div>';
+
+  const params = new URLSearchParams({ limit: 500 });
+  if (currentFilters.status)  params.set('status', currentFilters.status);
+  if (currentFilters.type)    params.set('consultationType', currentFilters.type);
+  if (currentFilters.urgency) params.set('urgency', currentFilters.urgency);
+  if (currentFilters.search)  params.set('search', currentFilters.search);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/gabi/leads?${params}`);
+    const result = await res.json();
+    if (!result.ok) throw new Error(result.error || 'Error desconocido');
+
+    const leads = result.data || [];
+    document.getElementById('table-count').textContent = `${leads.length} registro${leads.length !== 1 ? 's' : ''}`;
+
+    if (leads.length === 0) {
+      container.innerHTML = '<div class="empty">No hay consultas que coincidan con los filtros.</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Urgencia</th>
+            <th>Estado</th>
+            <th>Cotización</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${leads.map(l => `
+            <tr>
+              <td><span class="code">${l.consultation_code || '-'}</span></td>
+              <td>
+                <div class="client-name">${l.client_name || '-'}</div>
+                ${l.company ? `<div class="client-sub">🏢 ${l.company}</div>` : ''}
+                ${l.email   ? `<div class="client-sub">✉️ ${l.email}</div>` : ''}
+              </td>
+              <td>${l.consultation_type || '-'}</td>
+              <td>${urgencyBadge(l.urgency)}</td>
+              <td>${statusBadge(l.status)}</td>
+              <td><span class="amount">${formatMoney(l.quote_amount)}</span></td>
+              <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+
+  } catch (err) {
+    console.error('[GABI-DASH] Error leads:', err);
+    container.innerHTML = `<div class="error">❌ Error al cargar consultas: ${err.message}</div>`;
+  }
+}
+
+// ═══ INIT ═════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadStats();
+  loadLeads();
+
+  document.getElementById('filter-status').addEventListener('change', e => {
+    currentFilters.status = e.target.value; loadLeads();
+  });
+  document.getElementById('filter-type').addEventListener('change', e => {
+    currentFilters.type = e.target.value; loadLeads();
+  });
+  document.getElementById('filter-urgency').addEventListener('change', e => {
+    currentFilters.urgency = e.target.value; loadLeads();
   });
 
-  // Auto-refresh cada 60 segundos
-  setInterval(loadDashboard, 60000);
-  
-  console.log('[GABI-DASH] ✅ Inicialización completa');
-} catch (error) {
-  console.error('[GABI-DASH] ❌ Error en inicialización:', error);
-  alert('Error inicializando dashboard: ' + error.message);
-}
+  let searchTimeout;
+  document.getElementById('search').addEventListener('input', e => {
+    currentFilters.search = e.target.value;
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(loadLeads, 400);
+  });
+
+  // Auto-refresh cada 60s
+  setInterval(() => { loadStats(); loadLeads(); }, 60000);
+});

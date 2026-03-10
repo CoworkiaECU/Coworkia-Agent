@@ -206,42 +206,54 @@ router.get('/stats', async (req, res) => {
 router.get('/dashboard', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
-    
-    // Obtener estadísticas
-    const statsResponse = await router.handle({ 
-      query: {}, 
-      params: {}, 
-      path: '/stats' 
-    }, {
-      json: (data) => data,
-      status: () => ({ json: (data) => data })
-    });
-    
-    // Últimas 20 proformas
-    const recentProformas = await databaseService.all(
-      `SELECT 
-        id,
-        membership_code,
-        client_name,
-        email,
-        membership_type,
-        monthly_fee,
-        status,
-        created_at
-      FROM membership_leads
-      ORDER BY created_at DESC
-      LIMIT 20`
-    );
-    
+
+    // ── Stats (inline, same logic as /stats) ───────────────────────────────
+    const [totalResult, byStatus, byType, revenueResult, recent, thisMonth, recentProformas] =
+      await Promise.all([
+        databaseService.get(`SELECT COUNT(*) as total FROM membership_leads`),
+        databaseService.all(
+          `SELECT status, COUNT(*) as count FROM membership_leads GROUP BY status ORDER BY count DESC`
+        ),
+        databaseService.all(
+          `SELECT membership_type, COUNT(*) as count FROM membership_leads GROUP BY membership_type ORDER BY count DESC`
+        ),
+        databaseService.get(
+          `SELECT SUM(monthly_fee) as total_potential, AVG(monthly_fee) as avg_fee
+           FROM membership_leads WHERE status IN ('quoted', 'pending', 'active')`
+        ),
+        databaseService.get(
+          `SELECT COUNT(*) as count FROM membership_leads WHERE created_at >= NOW() - INTERVAL '7 days'`
+        ),
+        databaseService.get(
+          `SELECT COUNT(*) as count FROM membership_leads WHERE TO_CHAR(created_at,'YYYY-MM') = TO_CHAR(NOW(),'YYYY-MM')`
+        ),
+        databaseService.all(
+          `SELECT id, membership_code, client_name, email, membership_type, monthly_fee, status, created_at
+           FROM membership_leads ORDER BY created_at DESC LIMIT 20`
+        ),
+      ]);
+
     return res.json({
       ok: true,
       data: {
-        stats: statsResponse?.data || {},
+        stats: {
+          total: totalResult?.total || 0,
+          byStatus: byStatus || [],
+          byType: byType || [],
+          revenue: {
+            potential: parseFloat(revenueResult?.total_potential || 0),
+            avgFee: parseFloat(revenueResult?.avg_fee || 0),
+          },
+          recent: {
+            last7Days: recent?.count || 0,
+            thisMonth: thisMonth?.count || 0,
+          },
+        },
         recentProformas: recentProformas || [],
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     });
-    
+
   } catch (error) {
     console.error('[ALUNA-API] Error en dashboard:', error);
     return res.status(500).json({

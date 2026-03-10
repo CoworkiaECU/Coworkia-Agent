@@ -9,6 +9,7 @@
 
 import express from 'express';
 import gabiSystem from '../../servicios/gabi-financial-system.js';
+import databaseService from '../../database/database.js';
 
 const router = express.Router();
 
@@ -196,6 +197,104 @@ router.get('/dashboard', async (req, res) => {
       ok: false,
       error: error.message
     });
+  }
+});
+
+// ============================================================================
+// LEADS DE CONSULTORÍA (legal_leads)
+// ============================================================================
+
+/**
+ * GET /api/gabi/leads
+ * Lista completa de leads de consultoría con filtros opcionales
+ *
+ * Query params: status, consultationType, urgency, search, limit, offset
+ */
+router.get('/leads', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const { status, consultationType, urgency, search, limit = 200, offset = 0 } = req.query;
+
+    let query = `SELECT id, consultation_code, client_name, email, phone, company,
+                        consultation_type, urgency, status, quote_amount, description,
+                        meeting_scheduled, created_at, updated_at
+                 FROM legal_leads WHERE 1=1`;
+    const params = [];
+    let i = 1;
+
+    if (status) { query += ` AND status = $${i++}`; params.push(status); }
+    if (consultationType) { query += ` AND consultation_type = $${i++}`; params.push(consultationType); }
+    if (urgency) { query += ` AND urgency = $${i++}`; params.push(urgency); }
+    if (search) {
+      query += ` AND (client_name ILIKE $${i} OR email ILIKE $${i} OR company ILIKE $${i} OR consultation_code ILIKE $${i})`;
+      params.push(`%${search}%`); i++;
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`;
+    params.push(parseInt(limit), parseInt(offset));
+
+    const [leads, countRow] = await Promise.all([
+      databaseService.all(query, params),
+      databaseService.get(
+        `SELECT COUNT(*) as total FROM legal_leads WHERE 1=1` +
+        (status ? ` AND status = '${status.replace(/'/g,"''")}'` : '') +
+        (consultationType ? ` AND consultation_type = '${consultationType.replace(/'/g,"''")}'` : '') +
+        (urgency ? ` AND urgency = '${urgency.replace(/'/g,"''")}'` : ''),
+        []
+      ),
+    ]);
+
+    return res.json({ ok: true, data: leads || [], total: countRow?.total || 0 });
+
+  } catch (error) {
+    console.error('[GABI-API] Error en leads:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/gabi/leads-stats
+ * Estadísticas de consultoría desde legal_leads
+ */
+router.get('/leads-stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const [total, byStatus, byType, revenueRow, thisMonth, thisWeek] = await Promise.all([
+      databaseService.get(`SELECT COUNT(*) as total FROM legal_leads`),
+      databaseService.all(`SELECT status, COUNT(*) as count FROM legal_leads GROUP BY status ORDER BY count DESC`),
+      databaseService.all(`SELECT consultation_type, COUNT(*) as count FROM legal_leads GROUP BY consultation_type ORDER BY count DESC`),
+      databaseService.get(
+        `SELECT SUM(quote_amount) as total_revenue, AVG(quote_amount) as avg_fee
+         FROM legal_leads WHERE status IN ('quote_sent','service_in_progress','completed') AND quote_amount IS NOT NULL`
+      ),
+      databaseService.get(
+        `SELECT COUNT(*) as count FROM legal_leads WHERE TO_CHAR(created_at,'YYYY-MM') = TO_CHAR(NOW(),'YYYY-MM')`
+      ),
+      databaseService.get(
+        `SELECT COUNT(*) as count FROM legal_leads WHERE created_at >= NOW() - INTERVAL '7 days'`
+      ),
+    ]);
+
+    return res.json({
+      ok: true,
+      data: {
+        total: total?.total || 0,
+        thisMonth: thisMonth?.count || 0,
+        thisWeek: thisWeek?.count || 0,
+        byStatus: byStatus || [],
+        byType: byType || [],
+        revenue: {
+          total: parseFloat(revenueRow?.total_revenue || 0),
+          avg: parseFloat(revenueRow?.avg_fee || 0),
+        },
+      },
+    });
+
+  } catch (error) {
+    console.error('[GABI-API] Error en leads-stats:', error);
+    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 

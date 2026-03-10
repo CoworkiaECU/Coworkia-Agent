@@ -89,27 +89,33 @@ function getStatusBadge(status) {
  */
 async function loadDashboard() {
   try {
-    const response = await fetch(`${API_BASE}/api/enzo/dashboard`);
-    const result = await response.json();
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Error desconocido');
+    // Stats desde /dashboard (métricas de mes/semana) + todos los proyectos desde /projects
+    const [dashResponse, projectsResponse] = await Promise.all([
+      fetch(`${API_BASE}/api/enzo/dashboard`),
+      fetch(`${API_BASE}/api/enzo/projects`)
+    ]);
+
+    const dashResult = await dashResponse.json();
+    const projectsResult = await projectsResponse.json();
+
+    if (!dashResult.success) {
+      throw new Error(dashResult.error || 'Error desconocido');
     }
-    
-    const { month, topProjects } = result.data;
-    
+
+    const { month } = dashResult.data;
+
     // Actualizar stats
     document.getElementById('stat-month-projects').textContent = month.totalProjects || 0;
     document.getElementById('stat-proposals').textContent = month.proposals || 0;
     document.getElementById('stat-accepted').textContent = month.accepted || 0;
     document.getElementById('stat-revenue').textContent = formatPrice(month.revenue);
-    
-    // Guardar proyectos
-    allProjects = topProjects || [];
-    
+
+    // Guardar TODOS los proyectos (sin límite de 10)
+    allProjects = (projectsResult.success ? projectsResult.data : dashResult.data.topProjects) || [];
+
     // Renderizar proyectos iniciales
     renderProjects(allProjects);
-    
+
   } catch (error) {
     console.error('[ENZO-DASH] Error:', error);
     document.getElementById('projects-list').innerHTML = `

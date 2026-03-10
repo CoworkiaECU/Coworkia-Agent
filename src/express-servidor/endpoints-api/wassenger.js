@@ -58,6 +58,7 @@ import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } fro
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
+import enzoRepository from '../../database/enzoRepository.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
 const router = Router();
@@ -1390,6 +1391,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         await enviarWhatsApp(userId, `🧠 *Enzo procesando propuesta con IA...*\nAnalizando datos del cliente y elaborando oferta personalizada. Esto toma ~20 segundos ⚡\n🔑 ${quoteCode}`);
         await new Promise(r => setTimeout(r, 600));
         const result = await sendEnzoCotizacion(processedText, { quoteCode });
+        
+        // Guardar en boss_quotes (histórico)
         await saveBossQuote({
           agent:       'ENZO',
           clientName:  result.contacto || null,
@@ -1401,6 +1404,28 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           quoteCode,
           emailSent:   result.success,
         });
+        
+        // 🆕 Guardar en marketing_leads (para dashboard)
+        if (result.success) {
+          try {
+            await enzoRepository.saveMarketingLead({
+              projectCode: quoteCode,
+              userId: result.email, // usamos email como userId
+              projectType: result.nivel || 'Automatización IA',
+              company: result.empresa || null,
+              clientName: result.contacto || 'Cliente',
+              email: result.email,
+              phone: null,
+              budgetRange: result.precio ? `$${result.precio}` : 'Por definir',
+              urgency: 'Normal',
+              description: `Cotización generada por Big Boss - ${result.nivel || 'Agente IA'}`
+            });
+            console.log(`[BOSS-CMD] ✅ Proyecto guardado en marketing_leads: ${quoteCode}`);
+          } catch (err) {
+            console.error('[BOSS-CMD] ⚠️ Error guardando en marketing_leads:', err);
+          }
+        }
+        
         const reply = result.success
           ? `✅ *Propuesta enviada por Enzo*\n🏢 ${result.empresa}\n👤 ${result.contacto}\n📧 ${result.email}\n🤖 Nivel: ${result.nivel}\n💰 $${result.precio?.toLocaleString()} USD`
           : `❌ Error al generar propuesta Enzo: ${result.error}`;

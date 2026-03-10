@@ -44,6 +44,7 @@ router.get('/proformas', async (req, res) => {
         company_name,
         monthly_fee,
         status,
+        special_requirements,
         quote_sent_at,
         created_at,
         updated_at

@@ -58,6 +58,21 @@ function formatPlan(plan) {
   return plan.replace('plan_', 'Plan ').replace('_', ' ');
 }
 
+// Formateo de origen (Big Boss vs Aluna)
+function getOriginBadge(specialRequirements) {
+  // Detectar si fue enviado por admin/Big Boss
+  const fromBoss = specialRequirements && (
+    specialRequirements.includes('Enviado por administrador') ||
+    specialRequirements.includes('Admin:')
+  );
+  
+  if (fromBoss) {
+    return '<span class="origin-badge origin-boss">👔 Big Boss</span>';
+  } else {
+    return '<span class="origin-badge origin-aluna">💜 Aluna</span>';
+  }
+}
+
 // Cargar estadísticas
 async function loadStats() {
   try {
@@ -148,6 +163,7 @@ async function loadProformas() {
           <td>${formatPlan(p.membership_type)}</td>
           <td class="money">${formatPrice(p.monthly_fee)}</td>
           <td>${getStatusBadge(p.status)}</td>
+          <td>${getOriginBadge(p.special_requirements)}</td>
           <td>${formatDate(p.quote_sent_at || p.created_at)}</td>
         </tr>
       `).join('');

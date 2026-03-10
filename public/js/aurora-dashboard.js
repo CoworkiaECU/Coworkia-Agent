@@ -14,36 +14,66 @@ let currentFilters = {
 // Formateo de fecha
 function formatDate(dateString) {
   if (!dateString) return '-';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) return 'Hoy';
-  if (diffDays === 1) return 'Ayer';
-  if (diffDays < 7) return `Hace ${diffDays} días`;
-  
-  return date.toLocaleDateString('es-EC', { 
-    day: '2-digit', 
-    month: 'short', 
-    year: 'numeric' 
-  });
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    
+    return date.toLocaleDateString('es-EC', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  } catch (e) {
+    return '-';
+  }
 }
 
 // Formateo de fecha simple (YYYY-MM-DD)
 function formatSimpleDate(dateString) {
   if (!dateString) return '-';
-  const date = new Date(dateString + 'T00:00:00');
-  return date.toLocaleDateString('es-EC', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  try {
+    // Si ya tiene hora, usar directamente; si no, agregar medianoche
+    const dateStr = dateString.includes('T') ? dateString : dateString + 'T12:00:00';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateString; // fallback al string original
+    
+    return date.toLocaleDateString('es-EC', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return dateString;
+  }
 }
 
 // Formateo de precio
-function formatPrice(price) {
-  if (!price || price == 0) return 'Gratis';
+function formatPrice(price, allowFree = true) {
+  if (!price || price == 0) return allowFree ? 'Gratis' : '$0.00';
   return `$${parseFloat(price).toFixed(2)}`;
+}
+
+// Formateo de estado de pago
+function getPaymentBadge(paymentStatus) {
+  const paymentMap = {
+    'paid': '✅ Pagado',
+    'paid efectivo': '💵 Efectivo',
+    'paid transferencia': '🏦 Transferencia',
+    'paid tarjeta': '💳 Tarjeta',
+    'pending': '⏳ Pendiente',
+    'waived': '🎁 Cortesía',
+    'free': '🎁 Gratis',
+    'N/A': '-'
+  };
+  
+  return paymentMap[paymentStatus] || paymentStatus || '-';
 }
 
 // Formateo de estado
@@ -90,7 +120,7 @@ async function loadStats() {
       document.getElementById('stat-total').textContent = data.total || 0;
       document.getElementById('stat-month').textContent = data.recent?.thisMonth || 0;
       document.getElementById('stat-upcoming').textContent = data.recent?.upcoming || 0;
-      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.total || 0);
+      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.total || 0, false);
     } else {
       console.error('[AURORA-DASH] Stats failed:', result.error);
     }
@@ -177,10 +207,7 @@ async function loadReservations() {
             ${r.was_free ? '<span class="free-badge">GRATIS</span>' : ''}
           </td>
           <td>${getStatusBadge(r.status)}</td>
-          <td>
-            <small>${r.payment_status || 'N/A'}</small>
-            ${r.payment_method ? `<br><small style="color: #6b7280;">${r.payment_method}</small>` : ''}
-          </td>
+          <td>${getPaymentBadge(r.payment_status)}</td>
           <td>${formatDate(r.created_at)}</td>
         </tr>
       `).join('');
@@ -217,22 +244,31 @@ try {
   
   document.getElementById('filter-status').addEventListener('change', (e) => {
     currentFilters.status = e.target.value;
+    loadReservations();
   });
 
   document.getElementById('filter-service').addEventListener('change', (e) => {
     currentFilters.serviceType = e.target.value;
+    loadReservations();
   });
 
   document.getElementById('filter-date').addEventListener('change', (e) => {
     currentFilters.date = e.target.value;
+    loadReservations();
   });
 
   document.getElementById('search').addEventListener('input', (e) => {
     currentFilters.search = e.target.value;
+    // Debounce: recargar después de 500ms de inactividad
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(() => loadReservations(), 500);
   });
 
   document.getElementById('search').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') loadReservations();
+    if (e.key === 'Enter') {
+      clearTimeout(window.searchTimeout);
+      loadReservations();
+    }
   });
 
   console.log('[AURORA-DASH] Event listeners configurados');

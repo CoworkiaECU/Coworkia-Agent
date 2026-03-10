@@ -12,24 +12,30 @@ let currentFilters = {
 // Formateo de fecha
 function formatDate(dateString) {
   if (!dateString) return '-';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) return 'Hoy';
-  if (diffDays === 1) return 'Ayer';
-  if (diffDays < 7) return `Hace ${diffDays} días`;
-  
-  return date.toLocaleDateString('es-EC', { 
-    day: '2-digit', 
-    month: 'short', 
-    year: 'numeric' 
-  });
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    
+    return date.toLocaleDateString('es-EC', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  } catch (e) {
+    return '-';
+  }
 }
 
 // Formateo de precio
-function formatPrice(price) {
-  if (!price) return '-';
+function formatPrice(price, allowDash = true) {
+  if (!price || price == 0) return allowDash ? '-' : '$0.00';
   return `$${parseFloat(price).toFixed(2)}`;
 }
 
@@ -88,7 +94,7 @@ async function loadStats() {
       document.getElementById('stat-total').textContent = data.total || 0;
       document.getElementById('stat-month').textContent = data.recent?.thisMonth || 0;
       document.getElementById('stat-week').textContent = data.recent?.last7Days || 0;
-      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.potential || 0);
+      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.potential || 0, false);
     } else {
       console.error('[ALUNA-DASH] Stats failed:', result.error);
     }
@@ -199,14 +205,21 @@ try {
   
   document.getElementById('filter-status').addEventListener('change', (e) => {
     currentFilters.status = e.target.value;
+    loadProformas();
   });
 
   document.getElementById('search').addEventListener('input', (e) => {
     currentFilters.search = e.target.value;
+    // Debounce: recargar después de 500ms de inactividad
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(() => loadProformas(), 500);
   });
 
   document.getElementById('search').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') loadProformas();
+    if (e.key === 'Enter') {
+      clearTimeout(window.searchTimeout);
+      loadProformas();
+    }
   });
 
   console.log('[ALUNA-DASH] Event listeners configurados');

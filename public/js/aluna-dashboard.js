@@ -6,6 +6,7 @@ console.log('[ALUNA-DASH] API_BASE:', API_BASE);
 let allProformas = [];
 let currentFilters = {
   status: '',
+  origin: '',
   search: ''
 };
 
@@ -64,19 +65,20 @@ function formatPlan(plan) {
   return plan.replace('plan_', 'Plan ').replace('_', ' ');
 }
 
+// Detectar si una proforma fue enviada por Big Boss (admin)
+function isBigBoss(specialRequirements) {
+  const req = (specialRequirements || '').toLowerCase();
+  return req.includes('enviado por administrador') ||
+         req.includes('admin:') ||
+         req.includes('big boss');
+}
+
 // Formateo de origen (Big Boss vs Aluna)
 function getOriginBadge(specialRequirements) {
-  // Detectar si fue enviado por admin/Big Boss
-  // Normalizar a lowercase para comparación robusta
-  const req = (specialRequirements || '').toLowerCase();
-  const fromBoss = req.includes('enviado por administrador') || 
-                   req.includes('admin:') || 
-                   req.includes('big boss');
-  
-  if (fromBoss) {
-    return '<span class="origin-badge origin-boss">👔 Big Boss</span>';
+  if (isBigBoss(specialRequirements)) {
+    return '<span class="origin-badge origin-boss">Big Boss</span>';
   } else {
-    return '<span class="origin-badge origin-aluna">💜 Aluna</span>';
+    return '<span class="origin-badge origin-aluna">Aluna</span>';
   }
 }
 
@@ -140,11 +142,15 @@ async function loadProformas() {
     allProformas = result.data || [];
     console.log('[ALUNA-DASH] Proformas cargadas:', allProformas.length);
     
-    // Aplicar filtro de búsqueda local
+    // Aplicar filtros locales (origen + búsqueda)
     let filtered = allProformas;
+    if (currentFilters.origin) {
+      const wantBoss = currentFilters.origin === 'bigboss';
+      filtered = filtered.filter(p => isBigBoss(p.special_requirements) === wantBoss);
+    }
     if (currentFilters.search) {
       const search = currentFilters.search.toLowerCase();
-      filtered = allProformas.filter(p => 
+      filtered = filtered.filter(p => 
         (p.client_name || '').toLowerCase().includes(search) ||
         (p.email || '').toLowerCase().includes(search) ||
         (p.membership_code || '').toLowerCase().includes(search) ||
@@ -194,8 +200,9 @@ async function loadProformas() {
 // Resetear filtros
 function resetFilters() {
   document.getElementById('filter-status').value = '';
+  document.getElementById('filter-origin').value = '';
   document.getElementById('search').value = '';
-  currentFilters = { status: '', search: '' };
+  currentFilters = { status: '', origin: '', search: '' };
   loadProformas();
 }
 
@@ -205,6 +212,11 @@ try {
   
   document.getElementById('filter-status').addEventListener('change', (e) => {
     currentFilters.status = e.target.value;
+    loadProformas();
+  });
+
+  document.getElementById('filter-origin').addEventListener('change', (e) => {
+    currentFilters.origin = e.target.value;
     loadProformas();
   });
 

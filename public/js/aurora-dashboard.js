@@ -238,6 +238,75 @@ function resetFilters() {
   loadReservations();
 }
 
+// ─── Prospectos abandonados ────────────────────────────────────────────────
+function getEngagementBadge(level) {
+  if (level === 'hot')  return '<span style="background:#fff7ed;color:#ea580c;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">🔥 Hot</span>';
+  if (level === 'warm') return '<span style="background:#fffbeb;color:#d97706;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">🌡 Warm</span>';
+  return '<span style="background:#eff6ff;color:#2563eb;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">❄️ Cold</span>';
+}
+
+async function loadAbandoned() {
+  const tbody    = document.getElementById('abandoned-body');
+  const tableEl  = document.getElementById('abandoned-table');
+  const emptyEl  = document.getElementById('abandoned-empty');
+  const loadingEl = document.getElementById('abandoned-loading');
+  if (!tbody) return;
+
+  loadingEl.style.display = 'block';
+  tableEl.style.display   = 'none';
+  emptyEl.style.display   = 'none';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/aurora/prospects/abandoned`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+    // KPIs
+    document.getElementById('kpi-prospects-total').textContent = data.stats.total;
+    document.getElementById('kpi-prospects-hot').textContent   = data.stats.hot;
+    document.getElementById('kpi-prospects-warm').textContent  = data.stats.warm;
+    document.getElementById('kpi-prospects-cold').textContent  = data.stats.cold;
+
+    loadingEl.style.display = 'none';
+
+    if (!data.data.length) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    tbody.innerHTML = data.data.map(p => {
+      const phone      = p.user_phone || '';
+      const name       = p.user_name  || 'Sin nombre';
+      const days       = Math.round(parseFloat(p.days_since_last) || 0);
+      const staleness  = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
+      const firstDate  = p.first_interaction ? new Date(p.first_interaction).toLocaleDateString('es-EC', { day:'2-digit', month:'short' }) : '-';
+      const waLink     = `https://wa.me/${phone.replace(/\D/g,'')}`;
+      return `
+        <tr style="border-bottom:1px solid #f3f4f6; transition:background 0.15s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+          <td style="padding:12px 16px;">${getEngagementBadge(p.engagement)}</td>
+          <td style="padding:12px 16px;">
+            <strong style="color:#1f2937;">${name}</strong><br>
+            <small style="color:#6b7280;">${phone}</small>
+          </td>
+          <td style="padding:12px 16px; text-align:center;">
+            <span style="background:#f3f4f6; color:#374151; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${p.interaction_count}</span>
+          </td>
+          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${staleness}</td>
+          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${firstDate}</td>
+          <td style="padding:12px 16px;">
+            <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">💬 WhatsApp</a>
+          </td>
+        </tr>`;
+    }).join('');
+
+    tableEl.style.display = 'table';
+  } catch (err) {
+    loadingEl.style.display = 'none';
+    console.error('[AURORA-DASH] Error cargando prospectos:', err);
+  }
+}
+
+
 // Event listeners
 try {
   console.log('[AURORA-DASH] Configurando event listeners...');
@@ -282,7 +351,11 @@ try {
 
   // Auto-refresh cada 30 segundos
   setInterval(loadStats, 30000);
-  
+
+  // Cargar prospectos abandonados al inicio + refresco cada 60s
+  loadAbandoned();
+  setInterval(loadAbandoned, 60000);
+
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {
   console.error('[AURORA-DASH] ❌ Error en inicialización:', error);

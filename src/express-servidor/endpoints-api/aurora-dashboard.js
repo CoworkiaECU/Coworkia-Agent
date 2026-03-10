@@ -217,6 +217,53 @@ router.get('/stats', async (req, res) => {
 });
 
 /**
+ * GET /api/aurora/prospects/abandoned
+ * Usuarios que interactuaron con Aurora pero nunca concretaron una reserva.
+ * Ordenados por cantidad de mensajes (más interacción = mayor prioridad de seguimiento).
+ */
+router.get('/prospects/abandoned', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const prospects = await databaseService.all(`
+      SELECT
+        i.user_phone,
+        u.name              AS user_name,
+        COUNT(i.id)         AS interaction_count,
+        MAX(i.timestamp)    AS last_interaction,
+        MIN(i.timestamp)    AS first_interaction,
+        EXTRACT(DAY FROM NOW() - MAX(i.timestamp)) AS days_since_last,
+        CASE
+          WHEN COUNT(i.id) >= 5 THEN 'hot'
+          WHEN COUNT(i.id) >= 3 THEN 'warm'
+          ELSE 'cold'
+        END                 AS engagement
+      FROM interactions i
+      LEFT JOIN users u ON u.phone_number = i.user_phone
+      WHERE i.agent = 'AURORA'
+        AND i.user_phone NOT IN (
+          SELECT DISTINCT user_phone FROM reservations
+          WHERE status IN ('confirmed', 'completed', 'active')
+        )
+      GROUP BY i.user_phone, u.name
+      HAVING COUNT(i.id) >= 1
+      ORDER BY interaction_count DESC, last_interaction DESC
+      LIMIT 100
+    `);
+
+    const total   = prospects.length;
+    const hot     = prospects.filter(p => p.engagement === 'hot').length;
+    const warm    = prospects.filter(p => p.engagement === 'warm').length;
+    const cold    = prospects.filter(p => p.engagement === 'cold').length;
+
+    return res.json({ ok: true, data: prospects, stats: { total, hot, warm, cold } });
+  } catch (error) {
+    console.error('[AURORA-API] Error en abandoned prospects:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/aurora/reservations/:reservationId
  * Obtiene detalle de una reserva específica
  */

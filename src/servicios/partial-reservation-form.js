@@ -634,7 +634,7 @@ export function extractDataFromMessage(message, currentForm) {
   // ✅ CAMBIO: Permitir sobrescribir si usuario menciona explícitamente un espacio
   // Esto permite cambiar de hotDesk → meetingRoom o viceversa
   const mentionsSala = /sala|meeting\s*room|reuni[oó]n/i.test(message);
-  const mentionsHotDesk = /hot\s*desk|escritorio|puesto/i.test(message);
+  const mentionsHotDesk = /hot\s*desk|escritorio|puesto|individual/i.test(message);
   
   if (mentionsSala) {
     updates.spaceType = 'meetingRoom';

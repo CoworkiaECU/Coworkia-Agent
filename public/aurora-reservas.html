@@ -445,6 +445,63 @@
         <p>No se encontraron reservas con los filtros seleccionados.</p>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PROSPECTOS ABANDONADOS                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div style="background:white; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); padding:24px; margin-top:28px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="font-size:20px; color:#1f2937; margin-bottom:4px;">🎯 Prospectos sin convertir</h2>
+          <p style="font-size:13px; color:#6b7280;">Usuarios que interactuaron con Aurora pero nunca completaron una reserva. Ordenados por nivel de interés.</p>
+        </div>
+        <button onclick="loadAbandoned()" style="font-size:13px; padding:8px 16px; background:#4ECDC4;">↺ Actualizar</button>
+      </div>
+
+      <!-- KPIs prospectos -->
+      <div id="abandoned-kpis" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:20px;">
+        <div style="background:#f0fdf4; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Total</div>
+          <div id="kpi-prospects-total" style="font-size:28px; font-weight:700; color:#4ECDC4;">–</div>
+        </div>
+        <div style="background:#fff7ed; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">🔥 Hot (5+ msgs)</div>
+          <div id="kpi-prospects-hot" style="font-size:28px; font-weight:700; color:#ea580c;">–</div>
+        </div>
+        <div style="background:#fffbeb; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">🌡 Warm (3-4 msgs)</div>
+          <div id="kpi-prospects-warm" style="font-size:28px; font-weight:700; color:#d97706;">–</div>
+        </div>
+        <div style="background:#eff6ff; border-radius:10px; padding:16px; text-align:center;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">❄️ Cold (1-2 msgs)</div>
+          <div id="kpi-prospects-cold" style="font-size:28px; font-weight:700; color:#2563eb;">–</div>
+        </div>
+      </div>
+
+      <!-- Tabla prospectos -->
+      <div style="overflow-x:auto;">
+        <table id="abandoned-table" style="width:100%; border-collapse:collapse; display:none;">
+          <thead>
+            <tr style="background:#f9fafb; border-bottom:2px solid #e5e7eb;">
+              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Calor</th>
+              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Usuario</th>
+              <th style="padding:12px 16px; text-align:center; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Mensajes</th>
+              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Último contacto</th>
+              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Primer contacto</th>
+              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="abandoned-body"></tbody>
+        </table>
+        <div id="abandoned-empty" style="text-align:center; padding:40px; color:#9ca3af; display:none;">
+          <p style="font-size:32px; margin-bottom:8px;">✅</p>
+          <p>¡Sin prospectos perdidos! Todos convirtieron o no hubo interacciones.</p>
+        </div>
+        <div id="abandoned-loading" style="text-align:center; padding:40px; color:#6b7280;">
+          <p>Cargando prospectos...</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <button class="refresh-btn" onclick="loadReservations()" title="Actualizar">

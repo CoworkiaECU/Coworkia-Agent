@@ -1041,6 +1041,22 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_boss_quotes_quoted_at ON boss_quotes(quoted_at DESC);
       `);
 
+      // Migration: fix membership_leads status CHECK constraint to include 'quoted' (safe, idempotent)
+      await client.query(`
+        DO $$ BEGIN
+          BEGIN
+            ALTER TABLE membership_leads DROP CONSTRAINT IF EXISTS membership_leads_status_check;
+          EXCEPTION WHEN OTHERS THEN NULL;
+          END;
+          BEGIN
+            ALTER TABLE membership_leads ADD CONSTRAINT membership_leads_status_check
+              CHECK (status IN ('pending', 'pending_payment', 'tour_scheduled', 'negotiating',
+                                'accepted', 'active', 'cancelled', 'expired', 'quoted'));
+          EXCEPTION WHEN OTHERS THEN NULL;
+          END;
+        END $$;
+      `);
+
       await client.query('COMMIT');
       console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {

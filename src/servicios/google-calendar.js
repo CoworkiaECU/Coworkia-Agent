@@ -94,7 +94,9 @@ export async function createCalendarEvent(reservationData) {
       isTest = false,
       colorId = '10',              // Color personalizable
       customDescription = null,     // Descripción personalizada
-      location: customLocation = null  // Ubicación personalizada
+      location: customLocation = null,  // Ubicación personalizada
+      wifiCode = null,             // Código WiFi generado para la sesión
+      reservationId = null         // Número de reserva (RES-WHY-XXXX)
     } = reservationData;
 
     // 🚨 VALIDACIÓN: Verificar datos requeridos
@@ -188,31 +190,18 @@ export async function createCalendarEvent(reservationData) {
     }
     
     // Definir el evento (Google generará ID automáticamente)
-    
-    // Usar descripción personalizada si existe, sino generar la default
-    const eventDescription = customDescription || `
-🎯 Reserva confirmada en Coworkia
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${reservationType}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-👤 Cliente: ${userName}
-📧 Email: ${email}
-🏢 Espacio: ${serviceName}${hotDeskSuffix}
-👥 Personas: ${1 + guestCount} (cliente + ${guestCount} acompañantes)
-⏱️ Duración: ${duration || '2 horas'}
-💰 Monto: ${wasFree ? 'Sin costo' : `$${price} USD`}
-
-📅 Fecha: ${date}
-🕐 Horario: ${startTime} - ${endTime}
-
-📍 Ubicación: Whymper 403, Edificio Finistere, Quito
-🗺️ Google Maps: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
-📞 Contacto: +593 99 483 7117
-
-¡Te esperamos! 🚀
-    `.trim();
+    // Descripción compacta: estado · cliente · espacio · código reserva · WiFi
+    const guestLine   = guestCount > 0 ? `\n👥 ${1 + guestCount} personas` : '';
+    const reserveLine = reservationId ? `\n🔢 ${reservationId}` : '';
+    const wifiLine    = wifiCode ? `\n🔑 WiFi: ${wifiCode}  (${duration || '2h'})` : '';
+    const eventDescription = customDescription || [
+      reservationType,
+      '',
+      `👤 ${userName}  ·  ✉️ ${email}`,
+      `🏢 ${serviceName}${hotDeskSuffix}  ·  ⏱️ ${duration || '2 horas'}  ·  💰 ${wasFree ? 'Sin costo' : `$${price} USD`}`,
+      `🗓️ ${dateStr}  ·  🕐 ${startTime} - ${endTime}${guestLine}${reserveLine}${wifiLine}`,
+    ].join('\n');
     
     const event = {
       summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"

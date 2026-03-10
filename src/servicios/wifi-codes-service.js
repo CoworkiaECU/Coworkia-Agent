@@ -117,7 +117,10 @@ export async function getPendingCodes(sinceMinutes = 60) {
       `SELECT id, code, reservation_id, user_phone, duration_hours, valid_for_date, created_at
        FROM wifi_codes
        WHERE status = 'available'
-         AND created_at >= (CURRENT_TIMESTAMP - INTERVAL '${parseInt(sinceMinutes)} minutes')
+         AND (
+           created_at >= (CURRENT_TIMESTAMP - INTERVAL '${parseInt(sinceMinutes)} minutes')
+           OR valid_for_date = CURRENT_DATE
+         )
        ORDER BY created_at ASC`,
       []
     );

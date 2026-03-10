@@ -263,4 +263,62 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/aluna/pipeline
+ * Pipeline de seguimiento de prospectos (24h, 3d, convertidos)
+ */
+router.get('/pipeline', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const [total, pending24h, pending3d, converted, recent] = await Promise.all([
+      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NULL`),
+      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups
+        WHERE followup_24h_sent_at IS NULL AND converted_at IS NULL
+          AND interest_at <= NOW() - INTERVAL '24 hours'`),
+      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups
+        WHERE followup_24h_sent_at IS NOT NULL AND followup_3d_sent_at IS NULL AND converted_at IS NULL
+          AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'`),
+      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NOT NULL`),
+      databaseService.all(`
+        SELECT user_phone, user_name, membership_type, interest_at,
+               followup_24h_sent_at, followup_3d_sent_at, converted_at
+        FROM aluna_prospect_followups
+        ORDER BY interest_at DESC LIMIT 50
+      `)
+    ]);
+
+    // Classify each prospect by temperature
+    const classified = (recent || []).map(p => {
+      let temperature = 'cold';
+      if (p.converted_at) {
+        temperature = 'hot';
+      } else if (p.followup_3d_sent_at && !p.converted_at) {
+        temperature = 'cold';
+      } else if (p.followup_24h_sent_at && !p.followup_3d_sent_at) {
+        temperature = 'warm';
+      } else if (!p.followup_24h_sent_at) {
+        const hoursSince = (Date.now() - new Date(p.interest_at).getTime()) / (1000 * 3600);
+        temperature = hoursSince < 24 ? 'hot' : 'warm';
+      }
+      return { ...p, temperature };
+    });
+
+    return res.json({
+      ok: true,
+      data: {
+        activeProspects: parseInt(total?.total || 0),
+        readyFor24h: parseInt(pending24h?.total || 0),
+        readyFor3d: parseInt(pending3d?.total || 0),
+        converted: parseInt(converted?.total || 0),
+        prospects: classified
+      }
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-API] Error en pipeline:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

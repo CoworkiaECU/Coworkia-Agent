@@ -88,11 +88,11 @@ export function generateFollowUpMessage(user) {
   
   // Mensajes específicos por agente
   const messages = {
-    AURORA: `Hola ${name} 👋
+    AURORA: `Hola ${name},
 
-Han pasado 2 horas desde que iniciaste tu reserva. El tiempo de espera se terminó.
+Vi que iniciaste una reserva pero no la completamos. El tiempo de sesión ya cerró.
 
-Cuando estés listo para una nueva reserva, solo escríbeme y con gusto te ayudo. 😊
+Cuando quieras hacer una nueva reserva, escríbeme y te ayudo de inmediato.
 
 ¡Hasta pronto!`,
 
@@ -104,11 +104,11 @@ Con todo gusto puedes retomar el servicio cuando lo necesites, solo envíame un 
 
 ¡Estoy aquí para ayudarte! 🔧`,
 
-    ALUNA: `Hola ${name} ⚖️
+    ALUNA: `Hola ${name},
 
-Han pasado 2 horas desde tu consulta legal.
+Vi que estuviste revisando nuestros planes de membresía pero no llegamos a completar el proceso.
 
-Cuando necesites asesoría nuevamente, estaré encantada de ayudarte.
+Cuando quieras retomar, con gusto te ayudo a encontrar el plan que mejor se ajuste a ti.
 
 ¡Que tengas un excelente día!`,
 

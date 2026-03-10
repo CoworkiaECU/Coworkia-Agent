@@ -211,6 +211,27 @@
     .origin-boss { background: #1f2937; color: #f9fafb; }
     .origin-aluna { background: #d1fae5; color: #065f46; }
 
+    .temp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .temp-hot  { background: #fef3c7; color: #92400e; }
+    .temp-warm { background: #fff7ed; color: #c2410c; }
+    .temp-cold { background: #eff6ff; color: #1e40af; }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f2937;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
     .loading {
       text-align: center;
       padding: 40px;
@@ -384,6 +405,30 @@
       </div>
     </div>
 
+    <!-- Pipeline de seguimiento -->
+    <div class="stats-grid" style="margin-bottom: 20px;">
+      <div class="stat-card" style="border-left-color: #dc2626;">
+        <div class="stat-label">🔥 Prospectos Activos</div>
+        <div class="stat-value" id="pipe-active" style="color: #dc2626;">-</div>
+        <div class="stat-sublabel">En seguimiento</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #f97316;">
+        <div class="stat-label">🔥 Listos Follow-up 24h</div>
+        <div class="stat-value" id="pipe-24h" style="color: #f97316;">-</div>
+        <div class="stat-sublabel">Pendientes de re-contacto</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #6b7280;">
+        <div class="stat-label">❄️ Esperando 3 días</div>
+        <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
+        <div class="stat-sublabel">Sin respuesta aún</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #047857;">
+        <div class="stat-label">✅ Convertidos</div>
+        <div class="stat-value" id="pipe-converted" style="color: #047857;">-</div>
+        <div class="stat-sublabel">Cerrado con éxito</div>
+      </div>
+    </div>
+
     <div class="filters">
       <div class="filter-group">
         <label>Estado</label>
@@ -443,6 +488,27 @@
         <h3>No hay proformas</h3>
         <p>No se encontraron proformas con los filtros seleccionados.</p>
       </div>
+    </div>
+
+    <!-- Tabla de prospectos en seguimiento -->
+    <div class="table-container" id="pipeline-container" style="margin-top: 24px;">
+      <div class="section-title">Pipeline de Prospectos</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Teléfono</th>
+            <th>Nombre</th>
+            <th>Plan de interés</th>
+            <th>Temperatura</th>
+            <th>Contacto inicial</th>
+            <th>Follow-up 24h</th>
+            <th>Follow-up 3d</th>
+          </tr>
+        </thead>
+        <tbody id="pipeline-body">
+          <tr><td colspan="7" class="loading">Cargando pipeline...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

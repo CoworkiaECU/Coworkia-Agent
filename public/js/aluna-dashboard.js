@@ -82,6 +82,52 @@ function getOriginBadge(specialRequirements) {
   }
 }
 
+// Formateo de temperatura del prospecto
+function getTempBadge(temperature) {
+  const map = {
+    hot:  { label: '🔥 Caliente', cls: 'temp-hot' },
+    warm: { label: '🟡 Tibio',    cls: 'temp-warm' },
+    cold: { label: '❄️ Frío',    cls: 'temp-cold' }
+  };
+  const t = map[temperature] || map.cold;
+  return `<span class="temp-badge ${t.cls}">${t.label}</span>`;
+}
+
+// Cargar pipeline de prospectos
+async function loadPipeline() {
+  try {
+    const response = await fetch(`${API_BASE}/api/aluna/pipeline`);
+    const result = await response.json();
+    if (!result.ok) return;
+
+    const { data } = result;
+    document.getElementById('pipe-active').textContent    = data.activeProspects;
+    document.getElementById('pipe-24h').textContent       = data.readyFor24h;
+    document.getElementById('pipe-3d').textContent        = data.readyFor3d;
+    document.getElementById('pipe-converted').textContent = data.converted;
+
+    const tbody = document.getElementById('pipeline-body');
+    if (!data.prospects || data.prospects.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#6b7280;">Sin prospectos aún. Los leads de la pauta aparecen aquí.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.prospects.map(p => `
+      <tr>
+        <td>${p.user_phone}</td>
+        <td>${p.user_name || '-'}</td>
+        <td>${p.membership_type || '-'}</td>
+        <td>${getTempBadge(p.temperature)}</td>
+        <td>${formatDate(p.interest_at)}</td>
+        <td>${p.followup_24h_sent_at ? formatDate(p.followup_24h_sent_at) : '<span style="color:#9ca3af">Pendiente</span>'}</td>
+        <td>${p.followup_3d_sent_at  ? formatDate(p.followup_3d_sent_at)  : '<span style="color:#9ca3af">Pendiente</span>'}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('[ALUNA-DASH] Error cargando pipeline:', err);
+  }
+}
+
 // Cargar estadísticas
 async function loadStats() {
   try {
@@ -238,13 +284,14 @@ try {
   
   // Cargar al inicio
   console.log('[ALUNA-DASH] Iniciando carga de proformas...');
+  loadPipeline();
   loadProformas().catch(err => {
     console.error('[ALUNA-DASH] Error fatal en carga inicial:', err);
     alert('Error cargando dashboard: ' + err.message + '\nRevisa el Console (Cmd+Option+J) para más detalles');
   });
 
   // Auto-refresh cada 30 segundos
-  setInterval(loadStats, 30000);
+  setInterval(() => { loadStats(); loadPipeline(); }, 30000);
   
   console.log('[ALUNA-DASH] ✅ Inicialización completa');
 } catch (error) {

@@ -1818,7 +1818,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
                   await saveAlunaLeadFromProforma({ userId, clientName: proformaName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
                   console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${fd.email} (${proResult.planName})`);
                   // Notificar brevemente al usuario (sin interrumpir el flujo del formulario)
-                  await enviarWhatsApp(userId, `📧 ¡Listo! Te acabo de enviar la proforma de *${proResult.planName}* a ${fd.email} 💜\n\nRevisa tu bandeja de entrada (y spam por si las dudas 😊)`);
+                  await enviarWhatsApp(userId, `📧 Te envié la proforma de *${proResult.planName}* a ${fd.email}.\n\nRevisa tu bandeja de entrada (y la carpeta de spam, por las dudas).`);
                   await saveConversationMessage(userId, { role: 'assistant', content: `Proforma de ${proResult.planName} enviada a ${fd.email}`, agent: 'ALUNA' });
                 }
               } catch (proErr) {

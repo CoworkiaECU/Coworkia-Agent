@@ -350,7 +350,8 @@ Tu reserva está activa:
 
 📅 *${formattedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-💰 *Pago:* ✅ Verificado${wifiLine}
+� *Reserva:* ${reservationRecord.id}
+�💰 *Pago:* ✅ Verificado${wifiLine}
 
     ${emailLine}
 
@@ -680,7 +681,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-💰 *Precio:* ¡GRATIS! (primera visita)${freeWifiLine}
+� *Reserva:* ${reservationRecord.id}
+�💰 *Precio:* ¡GRATIS! (primera visita)${freeWifiLine}
 
     ${confirmationDeliveryLine}
 
@@ -735,6 +737,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
+🔢 *Reserva:* ${reservationRecord.id}
 🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
 💰 *Pago pendiente:* $${pendingReservation.totalPrice} (efectivo en Coworkia)
 

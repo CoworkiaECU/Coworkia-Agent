@@ -191,7 +191,7 @@ async function loadReservations() {
       console.log('[AURORA-DASH] Renderizando tabla...');
       tbody.innerHTML = filtered.map(r => `
         <tr>
-          <td><strong>${r.id.substring(0, 12)}...</strong></td>
+          <td><strong>${r.id}</strong></td>
           <td>
             ${r.user_name || 'Sin nombre'}<br>
             <small style="color: #6b7280;">${r.user_phone}</small>

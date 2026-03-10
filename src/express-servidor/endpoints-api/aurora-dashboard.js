@@ -1,0 +1,258 @@
+/**
+ * 📊 API Endpoints - Aurora Reservations Dashboard
+ * 
+ * Endpoints para visualizar historial de reservas gestionadas por Aurora
+ * 
+ * @author Aurora Core
+ * @date 2026-03-09
+ */
+
+import express from 'express';
+import databaseService from '../../database/database.js';
+
+const router = express.Router();
+
+// ============================================================================
+// RESERVAS
+// ============================================================================
+
+/**
+ * GET /api/aurora/reservations
+ * Obtiene lista completa de reservas
+ * 
+ * Query params:
+ * - status: Filtrar por estado (confirmed, pending, cancelled, etc.)
+ * - serviceType: Filtrar por tipo (hotDesk, meetingRoom)
+ * - date: Filtrar por fecha específica
+ * - limit: Número de resultados (default: 100)
+ * - offset: Para paginación (default: 0)
+ */
+router.get('/reservations', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    
+    const { status, serviceType, date, limit = 100, offset = 0 } = req.query;
+    
+    let query = `
+      SELECT 
+        r.id,
+        r.user_phone,
+        u.name as user_name,
+        r.service_type,
+        r.date,
+        r.start_time,
+        r.end_time,
+        r.duration_hours,
+        r.guest_count,
+        r.total_price,
+        r.was_free,
+        r.status,
+        r.payment_status,
+        r.payment_method,
+        r.hot_desk_number,
+        r.created_at,
+        r.confirmed_at
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone_number
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramIndex = 1;
+    
+    if (status) {
+      query += ` AND r.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    
+    if (serviceType) {
+      query += ` AND r.service_type = $${paramIndex}`;
+      params.push(serviceType);
+      paramIndex++;
+    }
+    
+    if (date) {
+      query += ` AND r.date = $${paramIndex}`;
+      params.push(date);
+      paramIndex++;
+    }
+    
+    query += ` ORDER BY r.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit), parseInt(offset));
+    
+    const reservations = await databaseService.all(query, params);
+    
+    // Total count para paginación
+    let countQuery = 'SELECT COUNT(*) as total FROM reservations WHERE 1=1';
+    const countParams = [];
+    let countParamIndex = 1;
+    
+    if (status) {
+      countQuery += ` AND status = $${countParamIndex}`;
+      countParams.push(status);
+      countParamIndex++;
+    }
+    
+    if (serviceType) {
+      countQuery += ` AND service_type = $${countParamIndex}`;
+      countParams.push(serviceType);
+      countParamIndex++;
+    }
+    
+    if (date) {
+      countQuery += ` AND date = $${countParamIndex}`;
+      countParams.push(date);
+    }
+    
+    const countResult = await databaseService.get(countQuery, countParams);
+    
+    return res.json({
+      ok: true,
+      data: reservations,
+      total: countResult?.total || 0,
+      showing: reservations.length,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+  } catch (error) {
+    console.error('[AURORA-API] Error en reservations:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/aurora/stats
+ * Obtiene estadísticas generales de reservas
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    
+    // Total reservas
+    const totalResult = await databaseService.get(
+      `SELECT COUNT(*) as total FROM reservations`
+    );
+    
+    // Por estado
+    const byStatus = await databaseService.all(
+      `SELECT status, COUNT(*) as count 
+       FROM reservations 
+       GROUP BY status 
+       ORDER BY count DESC`
+    );
+    
+    // Por tipo de servicio
+    const byType = await databaseService.all(
+      `SELECT service_type, COUNT(*) as count 
+       FROM reservations 
+       GROUP BY service_type 
+       ORDER BY count DESC`
+    );
+    
+    // Revenue
+    const revenueResult = await databaseService.get(
+      `SELECT 
+        SUM(total_price) as total,
+        AVG(total_price) as average,
+        SUM(CASE WHEN was_free = true THEN 1 ELSE 0 END) as free_count,
+        SUM(CASE WHEN was_free = false THEN 1 ELSE 0 END) as paid_count
+       FROM reservations 
+       WHERE status IN ('confirmed', 'completed')`
+    );
+    
+    // Reservas recientes (últimos 7 días)
+    const recentResult = await databaseService.get(
+      `SELECT COUNT(*) as count 
+       FROM reservations 
+       WHERE created_at >= NOW() - INTERVAL '7 days'`
+    );
+    
+    // Reservas este mes
+    const thisMonthResult = await databaseService.get(
+      `SELECT COUNT(*) as count 
+       FROM reservations 
+       WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(NOW(), 'YYYY-MM')`
+    );
+    
+    // Próximas reservas confirmadas
+    const upcomingResult = await databaseService.get(
+      `SELECT COUNT(*) as count 
+       FROM reservations 
+       WHERE status = 'confirmed' 
+       AND date >= CURRENT_DATE`
+    );
+    
+    return res.json({
+      ok: true,
+      data: {
+        total: totalResult?.total || '0',
+        byStatus: byStatus || [],
+        byType: byType || [],
+        revenue: {
+          total: parseFloat(revenueResult?.total || 0),
+          average: parseFloat(revenueResult?.average || 0),
+          freeCount: parseInt(revenueResult?.free_count || 0),
+          paidCount: parseInt(revenueResult?.paid_count || 0)
+        },
+        recent: {
+          last7Days: recentResult?.count || '0',
+          thisMonth: thisMonthResult?.count || '0',
+          upcoming: upcomingResult?.count || '0'
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('[AURORA-API] Error en stats:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/aurora/reservations/:reservationId
+ * Obtiene detalle de una reserva específica
+ */
+router.get('/reservations/:reservationId', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    
+    const { reservationId } = req.params;
+    
+    const reservation = await databaseService.get(
+      `SELECT r.*, u.name as user_name, u.email as user_email
+       FROM reservations r
+       LEFT JOIN users u ON r.user_phone = u.phone_number
+       WHERE r.id = $1`,
+      [reservationId]
+    );
+    
+    if (!reservation) {
+      return res.status(404).json({
+        ok: false,
+        error: 'Reserva no encontrada'
+      });
+    }
+    
+    return res.json({
+      ok: true,
+      data: reservation
+    });
+    
+  } catch (error) {
+    console.error('[AURORA-API] Error en reservation detail:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+export default router;

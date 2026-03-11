@@ -68,9 +68,15 @@ export class PartialReservationForm {
     this.time = existingData.time || null;                // '10:00'
     this.email = existingData.email || null;              // 'yo@diegovillota.com'
     this.numPeople = existingData.numPeople || 1;         // default 1 (solo el usuario)
-    this.durationHours = existingData.durationHours || 2; // default 2h
-    this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo' (bypass temporal)
+    this.durationHours = existingData.durationHours || 2; // default 2h (mínimo según política)
+    this.paymentMethod = existingData.paymentMethod || null; // 'transferencia' | 'tarjeta' | 'efectivo'
     this.freeTrialUsed = existingData.freeTrialUsed ?? freeTrialUsed ?? null; // ← null = resolver desde BD/historial
+    // 🆕 Segundo espacio (reserva doble Hot Desk + Sala)
+    this.secondSpaceType = existingData.secondSpaceType || null;
+    this.secondTime = existingData.secondTime || null;
+    this.secondDurationHours = existingData.secondDurationHours || 2;
+    this.discountPercent = existingData.discountPercent || 0; // 0-10 (% de descuento por reserva doble)
+    this.durationWasUpgraded = existingData.durationWasUpgraded || false; // true cuando se sub ió silencioso de 1h → 2h
     this.updatedAt = new Date();
   }
 
@@ -400,6 +406,68 @@ export class PartialReservationForm {
     
     // ✅ CASO 1: Formulario COMPLETO - Confirmación final
     if (missing.length === 0) {
+
+      // ✅ CASO 1A: RESERVA DOBLE (hotDesk + meetingRoom)
+      if (this.secondSpaceType) {
+        const formattedDate = this.formatDate(this.date);
+
+        // Precios base para cada espacio
+        const HOTDESK_BASE = 8.70;    // $10 con IVA
+        const SALA_BASE    = 25.22;   // $29 con IVA
+
+        const hotdeskTotal  = HOTDESK_BASE * (this.durationHours / 2);
+        const salaTotal     = SALA_BASE    * (this.secondDurationHours / 2);
+        const subtotal      = hotdeskTotal + salaTotal;
+        const discountAmt   = subtotal * ((this.discountPercent || 0) / 100);
+        const subtotalDesc  = subtotal - discountAmt;
+        const iva           = subtotalDesc * 0.15;
+        const cardFeeApply  = this.paymentMethod === 'tarjeta';
+        const cardFee       = cardFeeApply ? subtotalDesc * 0.05 : 0;
+        const total         = subtotalDesc + iva + cardFee;
+
+        // Calcular hora fin de cada espacio
+        const calcEndTime = (startTime, durationH) => {
+          if (!startTime) return '';
+          const [h, m] = startTime.split(':').map(Number);
+          const endMin = h * 60 + (m || 0) + durationH * 60;
+          const eh = Math.floor(endMin / 60) % 24;
+          const em = endMin % 60;
+          return `${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+        };
+
+        const endTime1 = calcEndTime(this.time, this.durationHours);
+        const endTime2 = calcEndTime(this.secondTime || this.time, this.secondDurationHours);
+
+        const metodoPagoDisplay = { tarjeta: 'Tarjeta 💳', transferencia: 'Transferencia 🏦', efectivo: 'Efectivo 💵' };
+        const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
+
+        let msg = `📋 *CONFIRMA TU RESERVA — 2 ESPACIOS* 🏢🏢\n\n`;
+        msg += `1️⃣ *Hot Desk (Espacio Individual)*\n`;
+        msg += `📅 ${formattedDate}\n`;
+        msg += `⏰ ${this.time} – ${endTime1} (${this.durationHours}h)\n`;
+        msg += `💵 Base: $${hotdeskTotal.toFixed(2)}\n\n`;
+        msg += `2️⃣ *Sala de Reuniones*\n`;
+        msg += `📅 ${formattedDate}\n`;
+        msg += `⏰ ${this.secondTime || this.time} – ${endTime2} (${this.secondDurationHours}h)\n`;
+        msg += `💵 Base: $${salaTotal.toFixed(2)}\n\n`;
+        msg += `───────────────────\n`;
+        if (this.discountPercent > 0) {
+          msg += `🎁 *Descuento ${this.discountPercent}% reserva doble:* -$${discountAmt.toFixed(2)}\n`;
+        }
+        msg += `📊 IVA (15%): $${iva.toFixed(2)}\n`;
+        if (cardFee > 0) msg += `💳 Comisión tarjeta (5%): $${cardFee.toFixed(2)}\n`;
+        msg += `📧 Email: ${this.email}\n`;
+        msg += `💳 Pago: ${metodoPago}\n`;
+        msg += `💰 *TOTAL: $${total.toFixed(2)} USD*\n\n`;
+        msg += `¿*Confirmas ambas reservas?*\n\n`;
+        msg += `Responde *SI* para confirmar o *NO* para cancelar 👍`;
+        msg += `\n\n[CONFIRMAR]`;
+
+        console.log('[FORM] ✅ Confirmación DOBLE generada - hotDesk + meetingRoom');
+        return msg;
+      }
+
+      // ✅ CASO 1B: RESERVA SIMPLE (espacio único)
       const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
 
       // ✅ Formatear fecha para mostrar día de semana + mes en español
@@ -528,6 +596,11 @@ export class PartialReservationForm {
       totalPrice: pricing.total,  // ← Calcular total con impuestos
       freeTrialUsed: this.freeTrialUsed,  // ← Valor original (no se consume fuera de ventana)
       freeTrialWindowEligible: isHotDeskFreeTrial,
+      secondSpaceType: this.secondSpaceType,
+      secondTime: this.secondTime,
+      secondDurationHours: this.secondDurationHours,
+      discountPercent: this.discountPercent,
+      durationWasUpgraded: this.durationWasUpgraded,
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -543,7 +616,11 @@ export class PartialReservationForm {
       email: data.email,
       numPeople: data.numPeople,
       durationHours: data.durationHours,
-      paymentMethod: data.paymentMethod
+      paymentMethod: data.paymentMethod,
+      secondSpaceType: data.secondSpaceType,
+      secondTime: data.secondTime,
+      secondDurationHours: data.secondDurationHours,
+      discountPercent: data.discountPercent,
     }, data.freeTrialUsed !== undefined ? data.freeTrialUsed : freeTrialUsed);  // ← Preferir valor almacenado
   }
 }
@@ -635,12 +712,21 @@ export function extractDataFromMessage(message, currentForm) {
   // Esto permite cambiar de hotDesk → meetingRoom o viceversa
   const mentionsSala = /sala|meeting\s*room|reuni[oó]n/i.test(message);
   const mentionsHotDesk = /hot\s*desk|escritorio|puesto|individual/i.test(message);
+  const mentionsBothSpaces = mentionsSala && mentionsHotDesk;
   
-  if (mentionsSala) {
+  if (mentionsBothSpaces) {
+    // 🆕 RESERVA DOBLE: usuario pide Hot Desk + Sala en un solo mensaje
+    updates.spaceType = 'hotDesk';
+    updates.secondSpaceType = 'meetingRoom';
+    updates.discountPercent = 10; // 10% descuento por reserva doble
+    console.log('[FORM] 🏢🏢 RESERVA DOBLE detectada → hotDesk + meetingRoom (10% off)');
+  } else if (mentionsSala) {
     updates.spaceType = 'meetingRoom';
+    updates.secondSpaceType = null; // limpiar si había
     console.log('[FORM] 🏢 Usuario menciona sala/reunión → meetingRoom');
   } else if (mentionsHotDesk) {
     updates.spaceType = 'hotDesk';
+    updates.secondSpaceType = null; // limpiar si había
     console.log('[FORM] 🏢 Usuario menciona hot desk → hotDesk');
   } else if (!currentForm.spaceType) {
     // Si no menciona ninguno y no hay spaceType, no hacer nada (Aurora preguntará)
@@ -786,8 +872,10 @@ export function extractDataFromMessage(message, currentForm) {
   console.log('[FORM-TIME] 📋 Hora actual en formulario:', currentForm.time);
 
   // 🎯 Detectar rango horario: "9am hasta las 5pm", "9am a las 17:00", "09:00 - 17:00"
-  const rangePattern = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:hasta\s+(?:la[s]?\s+)?|a\s+la[s]?\s+|[-–]\s*)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
-  const rangeMatch = message.match(rangePattern);
+  const rangePattern = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:hasta\s+(?:la[s]?\s+)?|a\s+la[s]?\s+|[-–]\s*)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  const allRangeMatches = [...message.matchAll(rangePattern)];
+  const rangeMatch = allRangeMatches[0] || null; // primer rango = primer espacio
+  const rangeMatch2 = allRangeMatches[1] || null; // segundo rango = segundo espacio
 
   let detectedTime = null;
   let detectedDurationHours = null;
@@ -811,7 +899,36 @@ export function extractDataFromMessage(message, currentForm) {
     if (totalMins > 0 && totalMins <= 13 * 60) { // máximo 13h (7am-8pm)
       detectedTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
       detectedDurationHours = Math.round(totalMins / 60 * 10) / 10;
-      console.log(`[FORM-TIME] 🎯 Rango detectado: ${detectedTime} → ${endH}:${endM.toString().padStart(2,'0')} (${detectedDurationHours}h)`);
+      // 🚨 POLÍTICA MÍNIMO 2h: auto-upgrade silencioso si usuario pide < 2h
+      if (detectedDurationHours < 2) {
+        console.log(`[FORM-TIME] ⬆️ Duración ${detectedDurationHours}h < 2h mínimo → auto-upgrade a 2h (política Coworkia)`);
+        updates.durationWasUpgraded = true;
+        detectedDurationHours = 2;
+      }
+      console.log(`[FORM-TIME] 🎯 Rango detectado: ${detectedTime} → (${detectedDurationHours}h)`);
+    }
+  }
+
+  // 🆕 Segundo rango horario (para reserva doble)
+  if (rangeMatch2 && (updates.secondSpaceType || currentForm.secondSpaceType)) {
+    let s2H = parseInt(rangeMatch2[1], 10);
+    const s2M = rangeMatch2[2] ? parseInt(rangeMatch2[2], 10) : 0;
+    const s2Mer = rangeMatch2[3]?.toLowerCase();
+    let e2H = parseInt(rangeMatch2[4], 10);
+    const e2M = rangeMatch2[5] ? parseInt(rangeMatch2[5], 10) : 0;
+    const e2Mer = rangeMatch2[6]?.toLowerCase();
+    if (s2Mer === 'pm' && s2H < 12) s2H += 12;
+    if (s2Mer === 'am' && s2H === 12) s2H = 0;
+    if (e2Mer === 'pm' && e2H < 12) e2H += 12;
+    if (e2Mer === 'am' && e2H === 12) e2H = 0;
+    if (!e2Mer && s2Mer && e2H !== 0 && e2H < s2H) e2H += 12;
+    const totalMins2 = (e2H * 60 + e2M) - (s2H * 60 + s2M);
+    if (totalMins2 > 0 && totalMins2 <= 13 * 60) {
+      updates.secondTime = `${s2H.toString().padStart(2, '0')}:${s2M.toString().padStart(2, '0')}`;
+      let dur2 = Math.round(totalMins2 / 60 * 10) / 10;
+      if (dur2 < 2) { dur2 = 2; updates.durationWasUpgraded = true; }
+      updates.secondDurationHours = dur2;
+      console.log(`[FORM-TIME] 🆕 Segundo rango: ${updates.secondTime} (${dur2}h)`);
     }
   }
 

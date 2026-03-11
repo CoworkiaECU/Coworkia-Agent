@@ -519,6 +519,74 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       console.log('[Confirmation] ✅ Reserva gratis confirmada automáticamente');
     }
 
+    // 🏢🏢 PASO 2.5: Si es reserva doble, crear segunda reserva (meetingRoom)
+    let secondReservationRecord = null;
+    if (pendingReservation.secondSpaceType) {
+      console.log('[Confirmation] 🏢🏢 RESERVA DOBLE: Creando segunda reserva...', {
+        secondSpaceType: pendingReservation.secondSpaceType,
+        secondTime: pendingReservation.secondTime,
+        secondDurationHours: pendingReservation.secondDurationHours
+      });
+
+      const secondStartTime = pendingReservation.secondTime || pendingReservation.startTime;
+      const secondDurationH = pendingReservation.secondDurationHours || 2;
+      const [sh, sm] = secondStartTime.split(':').map(Number);
+      const secEndMin = sh * 60 + (sm || 0) + secondDurationH * 60;
+      const secEh = Math.floor(secEndMin / 60) % 24;
+      const secEm = secEndMin % 60;
+      const secondEndTime = `${secEh.toString().padStart(2, '0')}:${secEm.toString().padStart(2, '0')}`;
+
+      const SALA_BASE_PER_2H = 25.22;
+      const discountFactor = 1 - (pendingReservation.discountPercent || 0) / 100;
+      const secondBase = SALA_BASE_PER_2H * (secondDurationH / 2) * discountFactor;
+      const secondIva   = secondBase * 0.15;
+      const secondCardFee = pendingReservation.paymentMethod === 'tarjeta' ? secondBase * 0.05 : 0;
+      const secondTotal = Math.round((secondBase + secondIva + secondCardFee) * 100) / 100;
+
+      const secondReservationData = {
+        userId: pendingReservation.userId,
+        userName: pendingReservation.userName,
+        date: pendingReservation.date,
+        startTime: secondStartTime,
+        endTime: secondEndTime,
+        serviceType: pendingReservation.secondSpaceType,
+        durationHours: secondDurationH,
+        email: pendingReservation.email,
+        guestCount: pendingReservation.guestCount || 0,
+        totalPrice: secondTotal,
+        wasFree: false,
+        paymentMethod: pendingReservation.paymentMethod
+      };
+
+      const secondResult = await createReservation(secondReservationData);
+
+      if (secondResult.success) {
+        secondReservationRecord = secondResult.reservation;
+        secondReservationRecord = await reservationRepository.updateStatus(secondReservationRecord.id, 'pending_payment');
+        console.log('[Confirmation] ✅ Segunda reserva creada con ID:', secondReservationRecord?.id);
+
+        enqueueBackgroundTask(
+          'calendar-events',
+          `create-reservation-2-${secondReservationRecord.id}`,
+          () => createCalendarEvent({
+            userName: pendingReservation.userName,
+            email: userProfile.email || 'noemail@coworkia.com',
+            date: pendingReservation.date,
+            startTime: secondStartTime,
+            endTime: secondEndTime,
+            serviceType: pendingReservation.secondSpaceType,
+            duration: `${secondDurationH} horas`,
+            price: secondTotal,
+            guestCount: 0,
+            paymentMethod: pendingReservation.paymentMethod
+          }),
+          { circuitId: 'calendar-events-job' }
+        ).catch(e => console.error('[Confirmation] ⚠️ Error calendario segunda reserva:', e));
+      } else {
+        console.error('[Confirmation] ⚠️ No se pudo crear segunda reserva (primera sí creada):', secondResult.error);
+      }
+    }
+
     console.log('[Confirmation] 📍 PASO 2.3: Limpiando confirmación pendiente...');
     await clearPendingConfirmation(userProfile.userId);
     
@@ -1060,8 +1128,30 @@ export async function processConfirmationResponse(message, userProfile) {
     if (isNegativeResponse(message)) {
       // Limpiar confirmación pendiente sin importar el tipo
       await clearPendingConfirmation(userProfile.userId);
+      
+      const isReservation = pendingConfirmation.serviceType || pendingConfirmation.secondSpaceType;
+      const hasDualSpace  = Boolean(pendingConfirmation.secondSpaceType);
+      
+      if (isReservation) {
+        return {
+          success: false,
+          cancelledReservation: true,
+          message: `Entendido, cancelo la solicitud 👍\n\n` +
+            `📋 *Política de espacios Coworkia:*\n` +
+            `• Mínimo *2 horas* por reserva\n` +
+            `• El precio es el mismo para 1h o 2h\n` +
+            `• Hot Desk: $10/2h · Sala de Reuniones: $29/2h\n\n` +
+            (hasDualSpace
+              ? `🎁 *Oferta especial:* Reserva Hot Desk + Sala hoy y te doy el *10% de descuento* en el total!\n\n`
+              : '') +
+            `¿Qué necesitas? Dime y estoy pendiente 😊`,
+          needsAction: false
+        };
+      }
+
       return {
         success: false,
+        cancelledReservation: true,
         message: 'Entendido, cancelé la solicitud. Si cambias de opinión, solo escríbeme nuevamente! 😊',
         needsAction: false
       };

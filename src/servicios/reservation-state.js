@@ -135,6 +135,12 @@ export async function getPendingConfirmation(userPhone) {
         wasFree: wasFree,  // ← Propagar correctamente
         paymentMethod: wasFree ? null : form.paymentMethod,  // ← Si es gratis, no hay método de pago
         
+        // Datos de reserva doble (dual-space)
+        secondSpaceType: form.secondSpaceType || null,
+        secondTime: form.secondTime || null,
+        secondDurationHours: form.secondDurationHours || 2,
+        discountPercent: form.discountPercent || 0,
+        
         // Adjuntar formData original para referencia
         _formData: form,
         _type: 'partial_form'

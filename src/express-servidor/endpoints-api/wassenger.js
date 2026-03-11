@@ -30,7 +30,7 @@ import { processMessageWithForm } from '../../servicios/partial-reservation-form
 import { buildReplyContext, getReplyContextMetadata } from '../../servicios/reply-context-handler.js';
 import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation } from '../../utils/language-detector.js';
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
-import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms } from '../../servicios/agent-form-manager.js';
+import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms, cancelAgentForm } from '../../servicios/agent-form-manager.js';
 import { normalizeAgentName } from '../../utils/agent-normalizer.js';
 import { trackAlunaProspect } from '../../database/alunaRepository.js';
 
@@ -1619,6 +1619,9 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
             await saveProfile(userId, profile);
             console.log('[T14] ✅ Transacción Aurora completada:', { userId });
           }
+          if (_confResult.cancelledReservation) {
+            await cancelAgentForm(userId, 'AURORA', 'user_cancelled').catch(e => console.error('[WASSENGER] ⚠️ cancelAgentForm:', e));
+          }
           await enviarWhatsApp(userId, _confResult.message);
           await saveConversationMessage(userId, { role: 'assistant', content: _confResult.message, agent: 'AURORA' });
           await saveInteraction({
@@ -1884,6 +1887,9 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
             profile.followUpSentAt = null;
             await saveProfile(userId, profile);
           }
+          if (confirmationResult.cancelledReservation) {
+            await cancelAgentForm(userId, 'AURORA', 'user_cancelled').catch(e => console.error('[WASSENGER] ⚠️ cancelAgentForm:', e));
+          }
 
           const interactionAgent = earlyPending.agentName || profile.activeAgent || 'AURORA';
           await enviarWhatsApp(userId, confirmationResult.message);
@@ -1950,6 +1956,9 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           profile.followUpSentAt = null;
           await saveProfile(userId, profile);
           console.log('[T14] ✅ Transacción completada (confirmación exitosa):', { userId });
+        }
+        if (confirmationResult.cancelledReservation) {
+          await cancelAgentForm(userId, 'AURORA', 'user_cancelled').catch(e => console.error('[WASSENGER] ⚠️ cancelAgentForm:', e));
         }
 
         const interactionAgent = pendingConfirmation.agentName || profile.activeAgent || 'AURORA';

@@ -21,15 +21,37 @@ export function generateAdrianaEmailHTML(leadData) {
     phone,
     vehicleBrand,
     vehicleModel,
+    vehicleYear,
+    commercialValue,
+    quotedPremium,
     leadId
   } = leadData;
+
+  const monthlyPremium = quotedPremium ? Math.round(quotedPremium / 10) : null;
+  const waLink = `https://wa.me/593994837117?text=%40adriana%2C+quiero+activar+mi+seguro`;
+
+  const premiumSection = quotedPremium ? `
+    <div style="background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin:25px 0;">
+      <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Tu prima anual confirmada</div>
+      <div style="color:white;font-size:46px;font-weight:900;line-height:1;margin-bottom:6px;">$${quotedPremium.toLocaleString()}</div>
+      <div style="color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:20px;">USD incluye IVA · Seguro ${insuranceType || 'Vehículo Liviano'}</div>
+      <div style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:14px;display:inline-block;margin-bottom:22px;">
+        <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">O en cómodas cuotas</div>
+        <div style="color:white;font-size:22px;font-weight:800;">$${monthlyPremium}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 10</span></div>
+      </div>
+      <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
+        🛡️ Confirmar y activar seguro →
+      </a>
+    </div>
+  ` : '';
 
   const specificDetails = vehicleBrand ? `
     <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
       <div style="display: flex; align-items: center;">
         <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🚗</span>
-        <span style="color: #374151; font-weight: 600; font-size: 16px;">Vehículo: ${vehicleBrand} ${vehicleModel || ''}</span>
+        <span style="color: #374151; font-weight: 600; font-size: 16px;">Vehículo: ${vehicleBrand} ${vehicleModel || ''}${vehicleYear ? ` ${vehicleYear}` : ''}</span>
       </div>
+      ${commercialValue ? `<div style="margin-top:8px;color:#6B7280;font-size:13px;padding-left:32px;">Valor comercial declarado: <strong style="color:#1E3A8A;">$${Number(commercialValue).toLocaleString()} USD</strong></div>` : ''}
     </div>
   ` : '';
 
@@ -107,18 +129,20 @@ export function generateAdrianaEmailHTML(leadData) {
             </div>
           </div>
 
+          ${premiumSection}
+
           <!-- Próximos pasos -->
           <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 25px; margin: 25px 0;">
             <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Próximos Pasos:</h3>
             <div style="color: #374151; font-size: 15px; line-height: 1.8;">
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">1.</strong> Adriana revisará tu solicitud en las próximas 24 horas
+                <strong style="color: #10B981;">1.</strong> Adriana agendará tu inspección vehicular
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">2.</strong> Te contactará para conocer más detalles
+                <strong style="color: #10B981;">2.</strong> Te contactará para coordinar fecha y lugar
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">3.</strong> Recibirás tu cotización personalizada
+                <strong style="color: #10B981;">3.</strong> Tu póliza se activa tras la inspección
               </p>
             </div>
           </div>

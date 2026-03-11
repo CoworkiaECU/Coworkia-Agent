@@ -114,7 +114,7 @@ export async function confirmLegalConsultation(userId, userProfile) {
       whatsappLink: `https://wa.me/${userId.replace('+', '')}`
     });
 
-    await sendEmail(adminEmail, emailToAdmin.subject, emailToAdmin.html);
+    await sendEmail({ to: adminEmail, subject: emailToAdmin.subject, html: emailToAdmin.html });
     console.log('[LEGAL-CONFIRM] 📧 Email enviado a admin');
 
     // ==========================================
@@ -168,7 +168,7 @@ export async function confirmLegalConsultation(userId, userProfile) {
           calendarLink: calendarEventLink || null
         });
 
-        await sendEmail(formData.email, emailToClient.subject, emailToClient.html);
+        await sendEmail({ to: formData.email, subject: emailToClient.subject, html: emailToClient.html });
         console.log('[LEGAL-CONFIRM] 📧 Email enviado a cliente');
         emailSent = true;
       } catch (emailError) {

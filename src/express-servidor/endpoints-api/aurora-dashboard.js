@@ -330,8 +330,8 @@ router.get('/conversations', async (req, res) => {
       return res.json({ ok: true, data: messages });
     }
 
-    // Resumen por usuario con datos de conversión
-    const summaries = await databaseService.all(
+    // Resumen por usuario con datos de conversión (multi-agente)
+    const rows = await databaseService.all(
       `SELECT
          i.user_phone,
          u.name                               AS user_name,
@@ -341,17 +341,40 @@ router.get('/conversations', async (req, res) => {
          array_agg(DISTINCT i.agent_name) FILTER (WHERE i.agent_name IS NOT NULL) AS agents,
          array_agg(DISTINCT i.intent_reason)  FILTER (WHERE i.intent_reason IS NOT NULL AND i.intent_reason <> 'conversation') AS topics,
          MAX(CASE WHEN i.output IS NOT NULL AND i.output <> '' THEN i.output END) AS last_agent_reply,
-         ml.status                            AS crm_status,
-         ml.membership_type                   AS membership_type,
-         ml.membership_code                   AS proforma_code
+         COALESCE(
+           (SELECT json_build_object('status', status, 'code', membership_code, 'agent', 'ALUNA', 'type', membership_type)
+              FROM membership_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
+           (SELECT json_build_object('status', status, 'code', consultation_code, 'agent', 'GABI', 'type', consultation_type)
+              FROM legal_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
+           (SELECT json_build_object('status', status, 'code', project_code, 'agent', 'ENZO', 'type', project_type)
+              FROM marketing_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
+           (SELECT json_build_object('status', status, 'code', quote_code, 'agent', 'PAULA', 'type', property_type)
+              FROM real_estate_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
+           (SELECT json_build_object('status', status, 'code', quote_code, 'agent', 'AXEL', 'type', damage_type)
+              FROM collision_quotes WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
+           (SELECT json_build_object('status', status, 'code', quote_code, 'agent', 'ADRIANA', 'type', insurance_type)
+              FROM insurance_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1)
+         ) AS crm_data
        FROM interactions i
        LEFT JOIN users u ON u.phone_number = i.user_phone
-       LEFT JOIN membership_leads ml ON ml.user_phone = i.user_phone
-       GROUP BY i.user_phone, u.name, ml.status, ml.membership_type, ml.membership_code
+       GROUP BY i.user_phone, u.name
        ORDER BY last_message DESC
        LIMIT $1`,
       [parseInt(limit)]
     );
+
+    const summaries = rows.map(r => {
+      const crm = r.crm_data || null;
+      return {
+        ...r,
+        crm_status:      crm?.status      || null,
+        crm_agent:       crm?.agent       || null,
+        crm_type:        crm?.type        || null,
+        proforma_code:   crm?.code        || null,
+        membership_type: crm?.agent === 'ALUNA' ? crm?.type : null,
+        crm_data:        undefined,
+      };
+    });
 
     return res.json({ ok: true, data: summaries, total: summaries.length });
   } catch (error) {

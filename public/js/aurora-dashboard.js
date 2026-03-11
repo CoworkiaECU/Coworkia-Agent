@@ -308,6 +308,66 @@ async function loadAbandoned() {
 }
 
 
+// ─── Mapa de topics: intent_reason → etiqueta visible (null = ocultar) ────────
+const TOPIC_LABELS = {
+  'trigger @Aluna':               '💼 Interés membresía',
+  'trigger @Aurora':              '📅 Interés reserva',
+  'trigger @Axel':                '🔧 Interés taller/colisión',
+  'trigger @Paula':               '🏠 Interés inmobiliaria',
+  'trigger @Gabi':                '⚖️ Asesoría legal',
+  'trigger @Enzo':                '🎯 Interés marketing',
+  'trigger @Adriana':             '🛡️ Interés seguros',
+  'email_sent':                   '📧 Email enviado',
+  'proforma_sent':                '📋 Proforma enviada',
+  'payment_verification':         '💳 Verifició pago',
+  'payment_verified':             '✅ Pago verificado',
+  'axel_quote_generated':         '🔧 Cotización generada',
+  'photo_received':               '📷 Envió fotos',
+  'reservation_completed':        '✅ Reserva completada',
+  'membership_interest':          '💼 Interés membresía',
+  'virtual_agent_sales_promo':    '🎯 Promoción servicios',
+  'greeting_service_interest':    '👋 Saludo + interés',
+};
+
+function formatTopics(rawTopics) {
+  const seen = new Set();
+  const result = [];
+  for (const t of rawTopics) {
+    // Chequeo directo
+    let label = TOPIC_LABELS[t];
+    // Chequeo parcial para topics que contienen palabras clave
+    if (label === undefined) {
+      if (/trigger\s+@(\w+)/i.test(t)) {
+        const ag = t.match(/trigger\s+@(\w+)/i)?.[1] || '';
+        label = `📬 Trigger ${ag}`;
+      } else if (/email_sent|proforma_sent/i.test(t)) {
+        label = '📧 Email enviado';
+      } else if (/payment|pago/i.test(t)) {
+        label = '💳 Pago';
+      } else if (/photo|foto/i.test(t)) {
+        label = '📷 Fotos';
+      } else if (/reservation|reserva/i.test(t)) {
+        label = '📅 Reserva';
+      } else {
+        // Ocultar ruido interno
+        label = null;
+      }
+    }
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      result.push(label);
+    }
+  }
+  return result;
+}
+
+function maskPhone(phone) {
+  if (!phone) return '—';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return '•••••';
+  return '••• ••• ' + digits.slice(-4);
+}
+
 // ─── Conversaciones ───────────────────────────────────────────────────────────
 async function loadConversations() {
   const loadingEl = document.getElementById('conv-loading');
@@ -338,23 +398,32 @@ async function loadConversations() {
       const last    = c.last_message ? new Date(c.last_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
       const first   = c.first_message ? new Date(c.first_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
       const agents  = (c.agents || []).filter(Boolean).join(', ') || '-';
-      // Topics / interests
-      const topics  = (c.topics || []).filter(Boolean);
-      const topicsHtml = topics.length
-        ? topics.map(t => `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${t}</span>`).join('')
+      // Topics: filtrar / traducir
+      const labeledTopics = formatTopics((c.topics || []).filter(Boolean));
+      const topicsHtml = labeledTopics.length
+        ? labeledTopics.map(t => `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${t}</span>`).join('')
         : '<span style="color:#9ca3af;font-size:12px;">—</span>';
-      // CRM status badge
-      const crmStatus = c.crm_status;
-      const crmBadge  = crmStatus
-        ? `<span style="background:${crmStatus==='converted'?'#d1fae5':crmStatus==='pending'?'#fef3c7':'#f3f4f6'};color:${crmStatus==='converted'?'#065f46':crmStatus==='pending'?'#92400e':'#374151'};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">${crmStatus==='pending'?'📋 Proforma enviada':crmStatus==='converted'?'✅ Convertido':'⬜ '+crmStatus}</span>`
+      // CRM status badge (multi-agente)
+      const crmStatus    = c.crm_status;
+      const crmAgent     = c.crm_agent;
+      const agentEmojis  = {ALUNA:'💼',GABI:'⚖️',ENZO:'🎯',PAULA:'🏠',AXEL:'🔧',ADRIANA:'🛡️'};
+      const agentColors  = {ALUNA:'#d1fae5',GABI:'#fef3c7',ENZO:'#fef2f2',PAULA:'#fdf4ff',AXEL:'#dbeafe',ADRIANA:'#d1fae5'};
+      const agentText    = {ALUNA:'#065f46',GABI:'#92400e',ENZO:'#991b1b',PAULA:'#6b21a8',AXEL:'#1e40af',ADRIANA:'#065f46'};
+      const bg   = (crmStatus && crmAgent) ? (agentColors[crmAgent] || '#f3f4f6') : '#f3f4f6';
+      const tc   = (crmStatus && crmAgent) ? (agentText[crmAgent]   || '#374151') : '#374151';
+      const em   = crmAgent ? (agentEmojis[crmAgent] || '📋') : '⬜';
+      const crmBadge = crmStatus
+        ? `<span style="background:${bg};color:${tc};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">${em} ${crmAgent} · ${crmStatus}</span>`
         : '<span style="color:#9ca3af;font-size:12px;">Sin CRM</span>';
       const proforma  = c.proforma_code ? `<small style="color:#6b7280; font-size:11px;display:block;">${c.proforma_code}</small>` : '';
-      const waLink    = `https://wa.me/${phone.replace(/\D/g,'')}`;
+      // Alias de cliente (últimos 4 del teléfono, privacidad)
+      const alias = 'CLI-' + (phone.replace(/\D/g,'').slice(-4) || '????');
+      const waLink = `https://wa.me/${phone.replace(/\D/g,'')}`;
       return `
         <tr style="border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
           <td style="padding:12px 16px;">
             <strong style="color:#1f2937;">${name}</strong><br>
-            <small style="color:#6b7280;">${phone}</small>
+            <small style="color:#9ca3af;font-size:11px;">${alias}</small>
           </td>
           <td style="padding:12px 16px; text-align:center;">
             <span style="background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${c.message_count}</span>
@@ -365,7 +434,7 @@ async function loadConversations() {
           <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
           <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button onclick="openThread('${phone}', '${name.replace(/'/g,'\\\'')}')" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px;">💬 Ver hilo</button>
+            <button onclick="openThread('${phone.replace(/'/g,"\\'")}', '${name.replace(/'/g,"\\'")}', '${alias}')" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px;">💬 Ver hilo</button>
             <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">WhatsApp</a>
           </td>
         </tr>`;
@@ -378,12 +447,12 @@ async function loadConversations() {
   }
 }
 
-async function openThread(phone, name) {
+async function openThread(phone, name, alias) {
   const threadEl    = document.getElementById('conv-thread');
   const threadTitle = document.getElementById('conv-thread-title');
   const threadBody  = document.getElementById('conv-thread-body');
 
-  threadTitle.textContent = `Conversación con ${name} (${phone})`;
+  threadTitle.textContent = `Conversación con ${name} (${alias || maskPhone(phone)})`;
   threadBody.innerHTML    = '<p style="color:#6b7280; text-align:center; padding:20px;">Cargando mensajes...</p>';
   threadEl.style.display  = 'block';
   threadEl.scrollIntoView({ behavior: 'smooth', block: 'start' });

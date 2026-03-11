@@ -6,7 +6,7 @@
 
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
-import { ecosistemaTable } from './email-ecosystem.js';
+import { generateGabiEmailHTML } from './generic-email-templates.js';
 
 const GR_ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
@@ -330,16 +330,28 @@ export async function sendGabiConsultoriaEmail({ nombre, area, email, telefono, 
   console.log(`[GABI-COTI] 📧 Preparando propuesta para ${nombre} (${cfg.label}) → ${email}`);
 
   const ofertaTexto = await generarOfertaTexto({ nombre, serviceConfig: cfg, mensajeJefe });
-  const html        = buildEmailHTML({ nombre, area, ofertaTexto, quoteCode });
+  // Usar template aprobado de generic-email-templates.js (mismo que el flujo normal de Gabi)
+  const html = generateGabiEmailHTML({
+    userName:        nombre,
+    consultationType: cfg.label,
+    company:         null,
+    ruc:             null,
+    email,
+    phone:           telefono || null,
+    description:     descripcionServicio || `Propuesta ${cfg.label} generada por Big Boss`,
+    urgency:         'Normal',
+    consultationCode: quoteCode,
+    recipientType:   'client',
+    aiAnalysis:      ofertaTexto,
+  });
   const codeLabel   = quoteCode ? `${quoteCode} — ` : '';
-  // Subject limpio: usa descripcionServicio si OpenAI lo extrajo, sino el área genérica
   const serviceLabel = descripcionServicio || cfg.label;
-  const subject     = `Cotización 📋 ${codeLabel}${serviceLabel} · ${nombre} | Gabi - GR Consulting`;
+  const subject     = `Cotización 💼 ${codeLabel}${serviceLabel} · ${nombre} | Gabi - GR Consulting`;
 
-  const result = await sendEmail({ 
-    to: email, 
-    cc: GR_ADMIN_CC, 
-    subject, 
+  const result = await sendEmail({
+    to: email,
+    cc: GR_ADMIN_CC,
+    subject,
     html,
     from: { name: AGENT_FROM_NAMES.gabi, address: DEFAULT_FROM_EMAIL }
   });

@@ -216,7 +216,7 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
     const leadData = {
       id: `PRF-${Date.now()}_${(userId || '').replace(/\D/g, '').slice(-8)}`,
       membershipCode: code,
-      userId: fromAdmin ? (phone || userId) : userId,
+      userId: userId, // SIEMPRE el WA phone (user en tabla users). phone del cliente va en campo 'phone'
       membershipType: plan?.name || planKey,
       startDate: null,
       clientName,

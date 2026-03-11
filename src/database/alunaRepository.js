@@ -204,7 +204,7 @@ export async function saveMembershipLead(leadData) {
       id, membershipCode, userId, membershipType,
       startDate, clientName, email, phone,
       companyName, specialRequirements, monthlyFee,
-      'quoted'
+      'pending'
     ]
   );
 

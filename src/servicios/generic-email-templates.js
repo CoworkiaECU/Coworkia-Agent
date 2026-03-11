@@ -1332,9 +1332,8 @@ export function generateAlunaProformaHTML(data) {
   // Static glow: rgba(4,120,87,0.35)
 
   const benefitsList = planBenefits.map(b => `
-    <div style="display: flex; align-items: flex-start; margin: 10px 0;">
-      <span style="color: #059669; font-size: 18px; margin-right: 10px; flex-shrink: 0;">✦</span>
-      <span style="color: #374151; font-size: 15px; line-height: 1.5;">${b}</span>
+    <div style="margin:10px 0;line-height:1.5;">
+      <span style="color:#059669;font-size:18px;margin-right:8px;vertical-align:top;">✦</span><span style="color:#374151;font-size:15px;line-height:1.5;">${b}</span>
     </div>`).join('');
 
   const waText = encodeURIComponent(`@aluna, el ${planName} es justo lo que necesito ¿Cuándo empiezo?`);
@@ -1348,19 +1347,19 @@ export function generateAlunaProformaHTML(data) {
 
   const upsellSection = isHotDeskPlan ? `
   <!-- POTENCIA TU MEMBRESÍA -->
-  <div style="border:1px solid #D1FAE5;border-radius:16px;padding:28px;margin:28px 0;">
+  <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:16px;padding:28px;margin:28px 0;">
     <div style="text-align:center;margin-bottom:20px;">
       <div style="background:#065F46;color:white;display:inline-block;padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">🏢 POTENCIA TU MEMBRESÍA</div>
       <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">🏢 Oficina Virtual + Presencia Legal</div>
       <div style="color:#047857;font-size:14px;font-weight:600;">Muchas empresas lo necesitan sin saberlo</div>
     </div>
-    <div style="background:#F9FAFB;border-radius:12px;padding:18px 22px;margin-bottom:20px;">
+    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin-bottom:20px;">
       ${[
-        'Dirección comercial oficial para tu empresa (Whymper 403, Quito)',
-        'Cumplimiento legal Ecuador: SRI, IESS, permisos municipales',
-        'Recepción de correspondencia y notificaciones oficiales',
-        'Sala de Reuniones incluida (1 vez al mes, 2 horas)',
-      ].map(item => `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;flex-shrink:0;">✓</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
+        '<strong>Dirección comercial oficial</strong> para tu empresa (Whymper 403, Quito)',
+        '<strong>Cumplimiento legal Ecuador:</strong> SRI, IESS, permisos municipales',
+        '<strong>Recepción de correspondencia</strong> y notificaciones oficiales',
+        '<strong>Sala de Reuniones incluida</strong> (1 vez al mes, 2 horas)',
+      ].map(item => `<div style="padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;margin-right:10px;vertical-align:top;">✓</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
     </div>
     <div style="background:#FFFBEB;border:2px dashed #F59E0B;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
       <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">⚡ OFERTA ESPECIAL COMBO</div>
@@ -1375,7 +1374,7 @@ export function generateAlunaProformaHTML(data) {
   </div>` : '';
 
   const ecosistemaItems = ecosistemaTable({
-    aliados: ['aluna', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
+    aliados: ['aurora', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
     theme: 'dark',
   });
 
@@ -1404,16 +1403,14 @@ export function generateAlunaProformaHTML(data) {
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
         <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">· MEMBRESÍA PREPARADA PARA ·</div>
         <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${clientName}</div>
-        <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;">
-          <span style="font-size:18px;">🎫</span>
-          <span style="color:#111827;font-size:16px;font-weight:700;">${planName}</span>
-          ${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;">${proformaCode}</span>` : ''}
+        <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;text-align:center;">
+          <span style="font-size:18px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:16px;font-weight:700;vertical-align:middle;">${planName}</strong>&nbsp;&nbsp;${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;vertical-align:middle;">${proformaCode}</span>` : ''}
         </div>
         <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
       </div>
     </div>
 
-    <div style="padding: 30px;">
+    <div style="padding: 30px 30px 0;">
 
       <!-- Saludo -->
       <div style="text-align: center; margin-bottom: 25px;">
@@ -1425,15 +1422,19 @@ export function generateAlunaProformaHTML(data) {
 
       <!-- Card del Plan -->
       <div style="background: linear-gradient(135deg, rgba(4,120,87,0.08), rgba(6,95,70,0.12)); border-left: 4px solid #047857; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(4,120,87,0.15);">
-        <div style="display: flex; align-items: center; margin-bottom: 18px;">
-          <div style="background: linear-gradient(135deg, #047857, #065F46); border-radius: 10px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; margin-right: 14px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(4,120,87,0.3);">
-            <span style="font-size: 24px;">🎫</span>
-          </div>
-          <div>
-            <div style="color: #047857; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">MEMBRESÍA COWORKIA</div>
-            <div style="color: #1f2937; font-size: 24px; font-weight: 800; line-height: 1;">${planName}</div>
-          </div>
-        </div>
+        <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;width:100%;">
+          <tr>
+            <td style="width:62px;vertical-align:middle;padding-right:14px;">
+              <div style="background:linear-gradient(135deg,#047857,#065F46);border-radius:10px;width:48px;height:48px;text-align:center;line-height:48px;box-shadow:0 4px 12px rgba(4,120,87,0.3);">
+                <span style="font-size:24px;">🎫</span>
+              </div>
+            </td>
+            <td style="vertical-align:middle;">
+              <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">MEMBRESÍA COWORKIA</div>
+              <div style="color:#1f2937;font-size:24px;font-weight:800;line-height:1;">${planName}</div>
+            </td>
+          </tr>
+        </table>
 
         <!-- Precio destacado -->
         <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(4,120,87,0.2); margin-bottom: 15px; text-align: center; box-shadow: 0 2px 6px rgba(4,120,87,0.08);">
@@ -1484,7 +1485,7 @@ export function generateAlunaProformaHTML(data) {
         </p>
         <a href="https://wa.me/${coworkiaWhatsApp}?text=${waText}"
            style="background: linear-gradient(135deg, #047857, #065F46); color: white; padding: 14px 32px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(4,120,87,0.35); font-size: 15px;">
-          � Quiero Empezar Ahora
+          &#10003; Quiero Empezar Ahora
         </a>
         <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">También puedes responder este correo</p>
       </div>
@@ -1492,61 +1493,57 @@ export function generateAlunaProformaHTML(data) {
       ${upsellSection}
 
       <!-- Ubicación -->
-      <div style="background: linear-gradient(135deg, rgba(4,120,87,0.08), rgba(6,95,70,0.12)); border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(4,120,87,0.2);">
-        <h3 style="color: #047857; margin-top: 0; font-size: 18px; font-weight: 600;">📍 NUESTRA UBICACIÓN</h3>
-        <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0;">
-          <p style="margin: 5px 0; color: #047857; font-weight: 700; font-size: 18px;">Coworkia Business Center</p>
-          <p style="margin: 5px 0; color: #374151; font-weight: 500;">Whymper 403, Edificio Finistere</p>
-          <p style="margin: 5px 0; color: #374151;">Planta Baja — Quito, Ecuador</p>
-        </div>
-        <div style="text-align: center; margin: 20px 0;">
-          <a href="https://maps.app.goo.gl/Nqy6YeGuxo3czEt66" 
-             style="background: #047857; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(4,120,87,0.3);">
-            📍 Ver en Google Maps
-          </a>
-        </div>
+      <div style="background:#ECFDF5;border-radius:12px;padding:16px;margin:25px 0;">
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+          <tr>
+            <td style="width:50%;vertical-align:middle;padding-right:8px;">
+              <div style="background:white;border-radius:10px;padding:16px 18px;">
+                <div style="color:#047857;font-size:15px;font-weight:700;margin-bottom:6px;">Coworkia</div>
+                <div style="color:#6B7280;font-size:13px;line-height:1.7;">Edificio Finistere — Planta Baja<br>Whymper 403, Quito</div>
+              </div>
+            </td>
+            <td style="width:50%;vertical-align:middle;padding-left:8px;text-align:center;">
+              <div style="background:white;border-radius:10px;padding:16px 18px;text-align:center;">
+                <a href="https://maps.app.goo.gl/Nqy6YeGuxo3czEt66" style="background:#047857;color:white;padding:12px 18px;text-decoration:none;border-radius:8px;font-weight:600;display:inline-block;font-size:13px;box-shadow:0 4px 10px rgba(4,120,87,0.3);">📍 Ver en Google Maps</a>
+              </div>
+            </td>
+          </tr>
+        </table>
       </div>
-
-      <!-- Código proforma -->
-      ${proformaCode ? `
-      <div style="background: rgba(4,120,87,0.08); border-radius: 12px; padding: 20px; margin: 25px 0; border: 1px solid rgba(4,120,87,0.2);">
-        <p style="color: #047857; font-size: 13px; margin: 0; font-weight: 600;">
-          <strong>Código de Proforma:</strong> <span style="font-family: monospace; font-size: 14px;">${proformaCode}</span>
-        </p>
-      </div>` : ''}
 
       ${nota ? `
       <div style="background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 12px; padding: 18px 20px; margin: 20px 0;">
-        <div style="display: flex; align-items: flex-start; gap: 10px;">
-          <span style="font-size: 20px; flex-shrink: 0;">📝</span>
-          <div>
-            <div style="color: #92400E; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Nota del equipo</div>
-            <div style="color: #78350F; font-size: 14px; line-height: 1.6;">${nota}</div>
-          </div>
-        </div>
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+          <tr>
+            <td style="width:30px;vertical-align:top;padding-right:10px;padding-top:2px;"><span style="font-size:20px;">📝</span></td>
+            <td style="vertical-align:top;">
+              <div style="color:#92400E;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Nota del equipo</div>
+              <div style="color:#78350F;font-size:14px;line-height:1.6;">${nota}</div>
+            </td>
+          </tr>
+        </table>
       </div>` : ''}
 
     </div>
 
-    <!-- ECOSISTEMA 8 AGENTES -->
-    <div style="background: linear-gradient(180deg, #0C2520 0%, #0A1E1B 100%); padding: 36px 32px; text-align: center;">
-      <div style="color: rgba(255,255,255,0.25); font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px;">Conecta con otros agentes del ecosistema</div>
-      <div style="margin-bottom: 22px;">${ecosistemaItems}</div>
-      <div style="background: rgba(94,234,212,0.06); border: 1px solid rgba(94,234,212,0.12); border-radius: 10px; padding: 14px;">
-        <p style="color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.8; margin: 0;">
-          Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
-          <strong style="color: rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar por WhatsApp.</strong>
-        </p>
+    <!-- ECOSISTEMA 8 AGENTES + FOOTER -->
+    <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
+      <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">Tu próximo equipo no se contrata. Se activa.</div>
+      <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales 24/7 — sin turnos, sin tiempos de espera, sin límites.</div>
+      <div style="margin-bottom:22px;">${ecosistemaItems}</div>
+      <!-- texto conector -->
+      <div style="margin-bottom:28px;padding:0 8px;">
+        <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
       </div>
-    </div>
-
-    <!-- FOOTER -->
-    <div style="background: linear-gradient(135deg, #047857, #065F46); text-align: center; padding: 28px;">
-      <div style="color: #D1FAE5; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;">Coworkia</div>
-      <div style="color: rgba(209,250,229,0.7); font-size: 10px; letter-spacing: 2px; margin-bottom: 2px; text-transform: uppercase;">work · connect · grow</div>
-      <div style="color: rgba(209,250,229,0.6); font-size: 12px; line-height: 1.6; margin-top: 12px;">
-        © 2026 Coworkia Ecuador — Espacios que inspiran<br>
-        Whymper 403, Edificio Finistere, Quito
+      <!-- footer dentro del dark section -->
+      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
+        <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
+        <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">work · connect · grow</div>
+        <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
+          © 2026 Coworkia Ecuador — Espacios que inspiran<br>
+          Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
+          coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+        </div>
       </div>
     </div>
 

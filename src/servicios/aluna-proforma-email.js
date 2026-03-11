@@ -226,7 +226,7 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
       specialRequirements: nota
         ? `${fromAdmin ? 'Admin: ' : ''}${nota}`
         : (fromAdmin ? 'Enviado por administrador' : null),
-      monthlyFee: plan?.price || null,
+      monthlyFee: plan?.price ? parseFloat(plan.price.match(/[\d.]+/)?.[0]) || null : null,
     };
 
     const saved = await saveMembershipLead(leadData);

@@ -188,7 +188,8 @@ export async function confirmCollisionQuote(userId, userProfile) {
         console.log(`[COLLISION-CONFIRM] 📧 Enviando email a ${formData.email}...`);
         
         // Generar HTML del email con template de PaintBull
-        const emailHTML = generateEmailForAgent('AXEL', {
+        const { html: emailHTML } = generateEmailForAgent('AXEL', 'client', {
+          clientName: formData.fullName,
           quoteId,
           quoteCode,
           damageType: formData.damageType || 'General',

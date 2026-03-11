@@ -99,7 +99,8 @@ export async function confirmMarketingProject(userId, userProfile) {
         console.log(`[MARKETING-CONFIRM] 📧 Enviando email a ${formData.email}...`);
         
         // Generar HTML del email con template de MarketingLab
-        const emailHTML = generateEmailForAgent('ENZO', {
+        const { html: emailHTML } = generateEmailForAgent('ENZO', 'client', {
+          clientName: formData.fullName,
           projectId,
           projectCode,
           projectType: formData.projectType || 'Consultoría',

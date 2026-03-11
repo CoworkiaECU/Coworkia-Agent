@@ -138,7 +138,8 @@ export async function processInsuranceConfirmation(userId, message, userProfile)
         console.log(`[INSURANCE-CONFIRM] 📧 Enviando email a ${formData.email}...`);
         
         // Generar HTML del email con template de SegPopular
-        const emailHTML = generateEmailForAgent('ADRIANA', {
+        const { html: emailHTML } = generateEmailForAgent('ADRIANA', 'client', {
+          clientName: formData.fullName,
           leadId,
           insuranceType: formData.insuranceType || 'Seguro para Vehículos livianos',
           fullName: formData.fullName,

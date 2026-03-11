@@ -171,20 +171,18 @@ async function confirmPropertyLead(userId, userProfile) {
     // 3️⃣ GENERAR Y ENVIAR EMAIL
     // ==========================================
 
-    const emailContent = generateEmailForAgent('PAULA', emailData);
+    const emailContent = generateEmailForAgent('PAULA', 'client', { clientName: emailData.fullName, ...emailData });
     
-    if (emailContent.success) {
-      const emailResult = await sendEmail(
-        emailData.email !== 'No proporcionado' ? emailData.email : process.env.SMTP_USER,
-        emailContent.subject,
-        emailContent.html
-      );
+    const emailResult = await sendEmail(
+      emailData.email !== 'No proporcionado' ? emailData.email : process.env.SMTP_USER,
+      emailContent.subject,
+      emailContent.html
+    );
 
-      if (emailResult.success) {
-        console.log('[REAL-ESTATE-CONFIRM] ✅ Email enviado correctamente');
-      } else {
-        console.warn('[REAL-ESTATE-CONFIRM] ⚠️ Email no enviado:', emailResult.error);
-      }
+    if (emailResult.success) {
+      console.log('[REAL-ESTATE-CONFIRM] ✅ Email enviado correctamente');
+    } else {
+      console.warn('[REAL-ESTATE-CONFIRM] ⚠️ Email no enviado:', emailResult.error);
     }
 
     // ==========================================

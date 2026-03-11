@@ -59,6 +59,10 @@ import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesR
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import enzoRepository from '../../database/enzoRepository.js';
+import { saveLegalLead } from '../../database/gabiRepository.js';
+import { saveRealEstateLead } from '../../database/paulaRepository.js';
+import { saveCollisionQuote } from '../../database/axelRepository.js';
+import { saveInsuranceLead } from '../../database/adrianaRepository.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
 const router = Router();
@@ -1336,6 +1340,24 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             quoteCode,
             emailSent:   result.success,
           });
+          // 🆕 Guardar en legal_leads (para dashboard Gabi)
+          if (result.success) {
+            try {
+              await saveLegalLead({
+                consultationCode: quoteCode,
+                userId:           quoteData.telefono || userId,
+                consultationType: result.areaLabel || quoteData.area,
+                company:          quoteData.empresa || null,
+                ruc:              null,
+                clientName:       quoteData.nombre,
+                email:            quoteData.email,
+                phone:            quoteData.telefono || null,
+                description:      quoteData.descripcionServicio || `Cotización generada por Big Boss — ${result.areaLabel || quoteData.area}`,
+                urgency:          'Normal',
+              });
+              console.log(`[BOSS-CMD] ✅ Lead GABI guardado en legal_leads: ${quoteCode}`);
+            } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando legal_lead:', err.message); }
+          }
           const reply = result.success
             ? `✅ *Propuesta enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n💼 ${result.areaLabel}\n\nCopia a secretaría ✓`
             : `❌ Error enviando propuesta: ${result.error}`;
@@ -1369,6 +1391,32 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             quoteCode:   result.quoteCode || null,
             emailSent:   result.success,
           });
+          // 🆕 Guardar en collision_quotes (para dashboard Axel)
+          if (result.success) {
+            try {
+              const { v4: uuidv4Axel } = await import('uuid');
+              await saveCollisionQuote({
+                id:               uuidv4Axel(),
+                quoteCode:        result.quoteCode || quoteCode,
+                userId:           quoteData.telefono || userId,
+                damageType:       'Colisión',
+                clientName:       quoteData.nombre,
+                vehicleBrand:     result.vehicleData?.marca || null,
+                vehicleModel:     result.vehicleData?.modelo || null,
+                vehicleYear:      result.vehicleData?.año || null,
+                email:            quoteData.email,
+                phone:            quoteData.telefono || null,
+                damageDescription: `Cotización generada por Big Boss`,
+                photoUrls:        [],
+                damageAnalysis:   {},
+                quoteDetails:     null,
+                priceMin:         result.priceRange?.min ?? null,
+                priceMax:         result.priceRange?.max ?? null,
+                sessionFingerprint: `boss-${Date.now()}`,
+              });
+              console.log(`[BOSS-CMD] ✅ Lead AXEL guardado en collision_quotes: ${result.quoteCode || quoteCode}`);
+            } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando collision_quote:', err.message); }
+          }
           const reply = result.success
             ? `✅ *Cotización enviada*\n👤 ${quoteData.nombre}\n📧 ${quoteData.email}\n🚗 ${result.vehicleData?.marca} ${result.vehicleData?.modelo} ${result.vehicleData?.año}\n📸 ${result.hasRealPhotos ? 'Con fotos reales del siniestro' : 'Demo estático (sin fotos aún)'}\n🔑 ${result.quoteCode}`
             : `❌ Error enviando cotización: ${result.error}`;
@@ -1461,6 +1509,25 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             quoteCode,
             emailSent:   result.success,
           });
+          // 🆕 Guardar en real_estate_leads (para dashboard Paula)
+          if (result.success) {
+            try {
+              const { v4: uuidv4 } = await import('uuid');
+              await saveRealEstateLead({
+                id:            uuidv4(),
+                userId:        quoteData.telefono || userId,
+                operationType: 'Compra',
+                propertyType:  result.propiedad || 'Propiedad',
+                preferredZone: 'El Morenal',
+                budgetRange:   quoteData.propiedad?.precio ? `$${quoteData.propiedad.precio}` : 'Por definir',
+                clientName:    result.nombre || quoteData.nombre,
+                email:         result.email  || quoteData.email,
+                phone:         quoteData.telefono || null,
+                requirements:  { quoteCode, brochureEnviado: true, fuente: 'boss_command' },
+              });
+              console.log(`[BOSS-CMD] ✅ Lead PAULA guardado en real_estate_leads: ${quoteCode}`);
+            } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando real_estate_lead:', err.message); }
+          }
           const reply = result.success
             ? `✅ *Brochure enviado por Paula*\n🏡 ${result.propiedad}\n👤 ${result.nombre}\n📧 ${result.email}\n💰 ${result.precio} USD`
             : `❌ Error enviando brochure Paula: ${result.error}`;
@@ -1561,6 +1628,34 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           quoteCode,
           emailSent:   result.success,
         });
+        // 🆕 Guardar en insurance_leads (para dashboard Adriana)
+        if (result.success) {
+          try {
+            await saveInsuranceLead({
+              quoteCode:     quoteCode,
+              userId:        result.telefono || userId,
+              insuranceType: 'Vehicular',
+              city:          null,
+              commercialValue: null,
+              plate:         null,
+              vehicleBrand:  null,
+              vehicleModel:  result.vehiculo || null,
+              vehicleYear:   null,
+              motor:         null,
+              chasis:        null,
+              originCountry: null,
+              licenseType:   null,
+              licenseExpiry: null,
+              clientName:    result.nombre   || null,
+              cedula:        null,
+              email:         result.email    || null,
+              phone:         result.telefono || null,
+              quotedPremium: result.primaAnual || null,
+              premiumBreakdown: { fuente: 'boss_command' },
+            });
+            console.log(`[BOSS-CMD] ✅ Lead ADRIANA guardado en insurance_leads: ${quoteCode}`);
+          } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando insurance_lead:', err.message); }
+        }
 
         const reply = result.success
           ? `✅ *Cotización enviada por Adriana*\n🚗 ${result.vehiculo}\n👤 ${result.nombre}\n📧 ${result.email}${result.telefono ? `\n📱 ${result.telefono}` : ''}\n💰 $${result.primaAnual}/año\n🔑 ${result.quoteCode}`

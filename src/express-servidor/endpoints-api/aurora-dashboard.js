@@ -311,12 +311,18 @@ router.get('/conversations', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
 
-    const { phone, limit = 100 } = req.query;
+    const { phone, limit = 200 } = req.query;
 
+    // Hilo completo de un usuario específico
     if (phone) {
       const messages = await databaseService.all(
-        `SELECT role, content, agent, timestamp
-         FROM conversation_history
+        `SELECT
+           CASE WHEN input IS NOT NULL AND input <> '' THEN 'user' ELSE 'assistant' END AS role,
+           CASE WHEN input IS NOT NULL AND input <> '' THEN input ELSE output END AS content,
+           agent_name AS agent,
+           intent_reason,
+           timestamp
+         FROM interactions
          WHERE user_phone = $1
          ORDER BY timestamp ASC`,
         [phone]
@@ -324,20 +330,24 @@ router.get('/conversations', async (req, res) => {
       return res.json({ ok: true, data: messages });
     }
 
+    // Resumen por usuario con datos de conversión
     const summaries = await databaseService.all(
       `SELECT
-         ch.user_phone,
-         u.name            AS user_name,
-         COUNT(ch.id)      AS message_count,
-         MAX(ch.timestamp) AS last_message,
-         MIN(ch.timestamp) AS first_message,
-         array_agg(DISTINCT ch.agent) FILTER (WHERE ch.agent IS NOT NULL) AS agents,
-         (SELECT content FROM conversation_history c2
-          WHERE c2.user_phone = ch.user_phone
-          ORDER BY timestamp DESC LIMIT 1) AS last_content
-       FROM conversation_history ch
-       LEFT JOIN users u ON u.phone_number = ch.user_phone
-       GROUP BY ch.user_phone, u.name
+         i.user_phone,
+         u.name                               AS user_name,
+         COUNT(i.id)                          AS message_count,
+         MAX(i.timestamp)                     AS last_message,
+         MIN(i.timestamp)                     AS first_message,
+         array_agg(DISTINCT i.agent_name) FILTER (WHERE i.agent_name IS NOT NULL) AS agents,
+         array_agg(DISTINCT i.intent_reason)  FILTER (WHERE i.intent_reason IS NOT NULL AND i.intent_reason <> 'conversation') AS topics,
+         MAX(CASE WHEN i.output IS NOT NULL AND i.output <> '' THEN i.output END) AS last_agent_reply,
+         ml.status                            AS crm_status,
+         ml.membership_type                   AS membership_type,
+         ml.membership_code                   AS proforma_code
+       FROM interactions i
+       LEFT JOIN users u ON u.phone_number = i.user_phone
+       LEFT JOIN membership_leads ml ON ml.user_phone = i.user_phone
+       GROUP BY i.user_phone, u.name, ml.status, ml.membership_type, ml.membership_code
        ORDER BY last_message DESC
        LIMIT $1`,
       [parseInt(limit)]

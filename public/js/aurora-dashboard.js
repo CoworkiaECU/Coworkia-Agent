@@ -338,8 +338,18 @@ async function loadConversations() {
       const last    = c.last_message ? new Date(c.last_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
       const first   = c.first_message ? new Date(c.first_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
       const agents  = (c.agents || []).filter(Boolean).join(', ') || '-';
-      const preview = (c.last_content || '').substring(0, 60) + ((c.last_content || '').length > 60 ? '…' : '');
-      const waLink  = `https://wa.me/${phone.replace(/\D/g,'')}`;
+      // Topics / interests
+      const topics  = (c.topics || []).filter(Boolean);
+      const topicsHtml = topics.length
+        ? topics.map(t => `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${t}</span>`).join('')
+        : '<span style="color:#9ca3af;font-size:12px;">—</span>';
+      // CRM status badge
+      const crmStatus = c.crm_status;
+      const crmBadge  = crmStatus
+        ? `<span style="background:${crmStatus==='converted'?'#d1fae5':crmStatus==='pending'?'#fef3c7':'#f3f4f6'};color:${crmStatus==='converted'?'#065f46':crmStatus==='pending'?'#92400e':'#374151'};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">${crmStatus==='pending'?'📋 Proforma enviada':crmStatus==='converted'?'✅ Convertido':'⬜ '+crmStatus}</span>`
+        : '<span style="color:#9ca3af;font-size:12px;">Sin CRM</span>';
+      const proforma  = c.proforma_code ? `<small style="color:#6b7280; font-size:11px;display:block;">${c.proforma_code}</small>` : '';
+      const waLink    = `https://wa.me/${phone.replace(/\D/g,'')}`;
       return `
         <tr style="border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
           <td style="padding:12px 16px;">
@@ -352,7 +362,8 @@ async function loadConversations() {
           <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${last}</td>
           <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${first}</td>
           <td style="padding:12px 16px; font-size:12px; color:#374151;">${agents}</td>
-          <td style="padding:12px 16px; font-size:12px; color:#6b7280; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}</td>
+          <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
+          <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
             <button onclick="openThread('${phone}', '${name.replace(/'/g,'\\\'')}')" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px;">💬 Ver hilo</button>
             <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">WhatsApp</a>
@@ -390,15 +401,18 @@ async function openThread(phone, name) {
     threadBody.innerHTML = data.data.map(m => {
       const isUser = m.role === 'user';
       const time   = m.timestamp ? new Date(m.timestamp).toLocaleString('es-EC', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
-      const agent  = m.agent ? `<small style="color:${isUser ? '#6b7280' : '#4ECDC4'}; font-size:11px;">${m.agent}</small>` : '';
+      const agentLabel = m.agent || m.intent_reason || null;
+      const agentBubble = agentLabel ? `<small style="color:${isUser ? '#6b7280' : '#4ECDC4'}; font-size:11px;">${agentLabel}</small>` : '';
+      const content = m.content || '';
+      if (!content.trim()) return '';
       return `
         <div style="display:flex; flex-direction:column; align-items:${isUser ? 'flex-start' : 'flex-end'};">
-          <div style="max-width:75%; background:${isUser ? '#f3f4f6' : '#e0fdf4'}; color:${isUser ? '#1f2937' : '#065f46'}; border-radius:${isUser ? '4px 16px 16px 4px' : '16px 4px 4px 16px'}; padding:10px 14px; font-size:14px; line-height:1.5;">
-            ${m.content}
+          <div style="max-width:75%; background:${isUser ? '#f3f4f6' : '#e0fdf4'}; color:${isUser ? '#1f2937' : '#065f46'}; border-radius:${isUser ? '4px 16px 16px 4px' : '16px 4px 4px 16px'}; padding:10px 14px; font-size:14px; line-height:1.5; white-space:pre-wrap;">
+            ${content.substring(0, 800)}${content.length > 800 ? '…' : ''}
           </div>
-          <div style="display:flex; gap:6px; margin-top:3px; align-items:center;">${agent}<small style="color:#9ca3af; font-size:11px;">${time}</small></div>
+          <div style="display:flex; gap:6px; margin-top:3px; align-items:center;">${agentBubble}<small style="color:#9ca3af; font-size:11px;">${time}</small></div>
         </div>`;
-    }).join('');
+    }).filter(Boolean).join('');
 
     // Scroll to bottom of thread
     threadBody.scrollTop = threadBody.scrollHeight;

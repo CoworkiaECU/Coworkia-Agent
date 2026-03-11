@@ -20,7 +20,7 @@
  * PLANES DISPONIBLES: plan10, plan20, oficinavirtual, salareuniones
  */
 
-import { sendAlunaProforma, PLAN_DATA } from '../src/servicios/aluna-proforma-email.js';
+import { sendAlunaProforma, saveAlunaLeadFromProforma, PLAN_DATA } from '../src/servicios/aluna-proforma-email.js';
 
 // ═══════════════════════════════════════════════
 // 📋 Configuración del test
@@ -107,6 +107,19 @@ try {
     nota: null,
     fromAdmin: true
   });
+
+  if (result.success) {
+    await saveAlunaLeadFromProforma({
+      userId: 'TEST-ADMIN',
+      clientName: 'Diego Villota',
+      clientEmail: testEmail,
+      planKey: testPlan,
+      phone: null,
+      proformaCode: result.proformaCode,
+      nota: 'Enviado desde script de test',
+      fromAdmin: true
+    });
+  }
 
   if (result.success) {
     console.log('╔═══════════════════════════════════════════════╗');

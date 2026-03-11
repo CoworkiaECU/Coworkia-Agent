@@ -302,4 +302,52 @@ router.get('/reservations/:reservationId', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/aurora/conversations
+ * Retorna resumen de conversaciones agrupadas por usuario.
+ * Con ?phone=XXXXXX retorna el hilo completo de mensajes de ese usuario.
+ */
+router.get('/conversations', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const { phone, limit = 100 } = req.query;
+
+    if (phone) {
+      const messages = await databaseService.all(
+        `SELECT role, content, agent, timestamp
+         FROM conversation_history
+         WHERE user_phone = $1
+         ORDER BY timestamp ASC`,
+        [phone]
+      );
+      return res.json({ ok: true, data: messages });
+    }
+
+    const summaries = await databaseService.all(
+      `SELECT
+         ch.user_phone,
+         u.name            AS user_name,
+         COUNT(ch.id)      AS message_count,
+         MAX(ch.timestamp) AS last_message,
+         MIN(ch.timestamp) AS first_message,
+         array_agg(DISTINCT ch.agent) FILTER (WHERE ch.agent IS NOT NULL) AS agents,
+         (SELECT content FROM conversation_history c2
+          WHERE c2.user_phone = ch.user_phone
+          ORDER BY timestamp DESC LIMIT 1) AS last_content
+       FROM conversation_history ch
+       LEFT JOIN users u ON u.phone_number = ch.user_phone
+       GROUP BY ch.user_phone, u.name
+       ORDER BY last_message DESC
+       LIMIT $1`,
+      [parseInt(limit)]
+    );
+
+    return res.json({ ok: true, data: summaries, total: summaries.length });
+  } catch (error) {
+    console.error('[AURORA-API] Error en conversations:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

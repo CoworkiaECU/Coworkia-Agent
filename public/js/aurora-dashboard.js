@@ -308,6 +308,116 @@ async function loadAbandoned() {
 }
 
 
+// ─── Conversaciones ───────────────────────────────────────────────────────────
+async function loadConversations() {
+  const loadingEl = document.getElementById('conv-loading');
+  const emptyEl   = document.getElementById('conv-empty');
+  const listEl    = document.getElementById('conv-list');
+  const tbody     = document.getElementById('conv-body');
+  if (!loadingEl) return;
+
+  loadingEl.style.display = 'block';
+  emptyEl.style.display   = 'none';
+  listEl.style.display    = 'none';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/aurora/conversations`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+    loadingEl.style.display = 'none';
+
+    if (!data.data || data.data.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    tbody.innerHTML = data.data.map(c => {
+      const name    = c.user_name || 'Sin nombre';
+      const phone   = c.user_phone || '';
+      const last    = c.last_message ? new Date(c.last_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
+      const first   = c.first_message ? new Date(c.first_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
+      const agents  = (c.agents || []).filter(Boolean).join(', ') || '-';
+      const preview = (c.last_content || '').substring(0, 60) + ((c.last_content || '').length > 60 ? '…' : '');
+      const waLink  = `https://wa.me/${phone.replace(/\D/g,'')}`;
+      return `
+        <tr style="border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+          <td style="padding:12px 16px;">
+            <strong style="color:#1f2937;">${name}</strong><br>
+            <small style="color:#6b7280;">${phone}</small>
+          </td>
+          <td style="padding:12px 16px; text-align:center;">
+            <span style="background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${c.message_count}</span>
+          </td>
+          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${last}</td>
+          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${first}</td>
+          <td style="padding:12px 16px; font-size:12px; color:#374151;">${agents}</td>
+          <td style="padding:12px 16px; font-size:12px; color:#6b7280; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}</td>
+          <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="openThread('${phone}', '${name.replace(/'/g,'\\\'')}')" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px;">💬 Ver hilo</button>
+            <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">WhatsApp</a>
+          </td>
+        </tr>`;
+    }).join('');
+
+    listEl.style.display = 'block';
+  } catch (err) {
+    loadingEl.style.display = 'none';
+    console.error('[AURORA-DASH] Error cargando conversaciones:', err);
+  }
+}
+
+async function openThread(phone, name) {
+  const threadEl    = document.getElementById('conv-thread');
+  const threadTitle = document.getElementById('conv-thread-title');
+  const threadBody  = document.getElementById('conv-thread-body');
+
+  threadTitle.textContent = `Conversación con ${name} (${phone})`;
+  threadBody.innerHTML    = '<p style="color:#6b7280; text-align:center; padding:20px;">Cargando mensajes...</p>';
+  threadEl.style.display  = 'block';
+  threadEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/aurora/conversations?phone=${encodeURIComponent(phone)}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+
+    if (!data.data.length) {
+      threadBody.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Sin mensajes registrados.</p>';
+      return;
+    }
+
+    threadBody.innerHTML = data.data.map(m => {
+      const isUser = m.role === 'user';
+      const time   = m.timestamp ? new Date(m.timestamp).toLocaleString('es-EC', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+      const agent  = m.agent ? `<small style="color:${isUser ? '#6b7280' : '#4ECDC4'}; font-size:11px;">${m.agent}</small>` : '';
+      return `
+        <div style="display:flex; flex-direction:column; align-items:${isUser ? 'flex-start' : 'flex-end'};">
+          <div style="max-width:75%; background:${isUser ? '#f3f4f6' : '#e0fdf4'}; color:${isUser ? '#1f2937' : '#065f46'}; border-radius:${isUser ? '4px 16px 16px 4px' : '16px 4px 4px 16px'}; padding:10px 14px; font-size:14px; line-height:1.5;">
+            ${m.content}
+          </div>
+          <div style="display:flex; gap:6px; margin-top:3px; align-items:center;">${agent}<small style="color:#9ca3af; font-size:11px;">${time}</small></div>
+        </div>`;
+    }).join('');
+
+    // Scroll to bottom of thread
+    threadBody.scrollTop = threadBody.scrollHeight;
+  } catch (err) {
+    threadBody.innerHTML = `<p style="color:#dc2626; text-align:center; padding:20px;">Error: ${err.message}</p>`;
+  }
+}
+
+function closeThread() {
+  document.getElementById('conv-thread').style.display = 'none';
+}
+
+// Refresca todo el dashboard de una vez
+function refreshAll() {
+  loadReservations();
+  loadAbandoned();
+  loadConversations();
+}
+
 // Event listeners
 try {
   console.log('[AURORA-DASH] Configurando event listeners...');
@@ -356,6 +466,9 @@ try {
   // Cargar prospectos abandonados al inicio + refresco cada 60s
   loadAbandoned();
   setInterval(loadAbandoned, 60000);
+
+  // Cargar conversaciones al inicio
+  loadConversations();
 
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {

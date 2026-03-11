@@ -114,6 +114,13 @@
     .badge-blue { background: #dbeafe; color: #1e40af; }
     .badge-purple { background: #e0e7ff; color: #4c1d95; }
     .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-navy { background: #dbeafe; color: #1e3a8a; }
+    .badge-indigo { background: #e0e7ff; color: #3730a3; }
+
+    .paula-icon { background: linear-gradient(135deg, #D97706, #B45309); }
+    .axel-icon { background: linear-gradient(135deg, #1E3A8A, #1E40AF); }
+    .adriana-icon { background: linear-gradient(135deg, #1E40AF, #3730a3); }
 
     .quick-stats {
       background: white;
@@ -194,8 +201,38 @@
         <span class="dashboard-badge" style="background: rgba(0, 194, 160, 0.2); color: #00E5C0; border: 1px solid rgba(0, 194, 160, 0.4);">Marketing · IA</span>
       </a>
 
+      <a href="/paula-inmobiliaria.html" class="dashboard-card">
+        <div class="dashboard-icon paula-icon">🏠</div>
+        <h3 class="dashboard-title">Inmobiliaria Paula</h3>
+        <p class="dashboard-description">
+          Leads de compra y arriendo de propiedades.
+          Visualiza estados, zonas, presupuestos y pipeline de cierre.
+        </p>
+        <span class="dashboard-badge badge-amber">Inmobiliaria</span>
+      </a>
+
+      <a href="/axel-cotizaciones.html" class="dashboard-card">
+        <div class="dashboard-icon axel-icon">🔧</div>
+        <h3 class="dashboard-title">Cotizaciones Axel</h3>
+        <p class="dashboard-description">
+          Cotizaciones de reparación de colisiones vehiculares.
+          Seguimiento de presupuestos, estados y revenue potencial.
+        </p>
+        <span class="dashboard-badge badge-navy">Taller · Vehículos</span>
+      </a>
+
+      <a href="/adriana-seguros.html" class="dashboard-card">
+        <div class="dashboard-icon adriana-icon">🛡️</div>
+        <h3 class="dashboard-title">Seguros Adriana</h3>
+        <p class="dashboard-description">
+          Leads de seguros vehiculares, de vida e incendio.
+          Primas cotizadas, tipos de cobertura y pipeline de ventas.
+        </p>
+        <span class="dashboard-badge badge-indigo">Seguros</span>
+      </a>
+
       <a href="/api/health" class="dashboard-card" target="_blank">
-        <div class="dashboard-icon system-icon">🔧</div>
+        <div class="dashboard-icon system-icon">⚙️</div>
         <h3 class="dashboard-title">System Health</h3>
         <p class="dashboard-description">
           Estado del sistema: base de datos, circuit breakers, 
@@ -238,6 +275,24 @@
       <div class="stat-row">
         <span class="stat-label">API Enzo Dashboard</span>
         <a href="/api/enzo/dashboard" target="_blank" class="stat-value" style="color: #00C2A0; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">API Paula Leads</span>
+        <a href="/api/paula/leads-stats" target="_blank" class="stat-value" style="color: #D97706; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">API Axel Cotizaciones</span>
+        <a href="/api/axel/quotes-stats" target="_blank" class="stat-value" style="color: #1E3A8A; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">API Adriana Seguros</span>
+        <a href="/api/adriana/leads-stats" target="_blank" class="stat-value" style="color: #1E40AF; text-decoration: none;">
           Ver JSON →
         </a>
       </div>

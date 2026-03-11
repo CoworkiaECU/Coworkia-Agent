@@ -68,6 +68,7 @@ function getPaymentBadge(paymentStatus) {
     'paid transferencia': '🏦 Transferencia',
     'paid tarjeta': '💳 Tarjeta',
     'pending': '⏳ Pendiente',
+    'pending_efectivo': '💵 Pago Pendiente',
     'waived': '🎁 Cortesía',
     'free': '🎁 Gratis',
     'N/A': '-'

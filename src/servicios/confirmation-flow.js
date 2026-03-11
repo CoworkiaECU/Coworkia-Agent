@@ -695,16 +695,16 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       };
     }
 
-    // 🔓 BYPASS: Si es efectivo, confirmar directamente sin pagar (temporal)
+    // 🔓 BYPASS: Si es efectivo, confirmar reserva pero dejar pago pendiente
     if (pendingReservation.paymentMethod === 'efectivo') {
-      console.log('[Confirmation] 🔓 BYPASS: Efectivo detectado, confirmando sin pago');
+      console.log('[Confirmation] 🔓 BYPASS: Efectivo detectado, confirmando reserva con pago pendiente');
       
-      // Marcar como pagado directamente
-      await reservationRepository.markAsPaid(reservationRecord.id, {
+      // Confirmar reserva pero NO marcar como pagada (el pago se recibe en persona)
+      await reservationRepository.update(reservationRecord.id, {
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
         payment_method: 'efectivo',
-        payment_reference: 'PAGO_EN_COWORKIA',
-        payment_amount: pendingReservation.totalPrice,
-        payment_date: new Date().toISOString()
+        payment_status: 'pending_efectivo'
       });
       
       // Enviar notificaciones

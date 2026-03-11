@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Consultas - Gabi | GR Consulting</title>
+  <title>Dashboard Seguros - Adriana | Segpopular</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1B3358 0%, #0D2137 100%);
+      background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
       min-height: 100vh;
       padding: 20px;
       color: #1f2937;
@@ -24,15 +24,15 @@
     .nav-arrows { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .nav-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px; background: white;
-      border: 2px solid #1B3358; color: #1B3358;
+      padding: 8px 14px; background: white;
+      border: 2px solid #1E40AF; color: #1E40AF;
       text-decoration: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600; transition: all 0.2s;
+      font-size: 13px; font-weight: 600; transition: all 0.2s;
     }
-    .nav-btn:hover { background: #1B3358; color: white; transform: translateY(-2px); }
-    .nav-btn.current { background: #1B3358; color: white; border-color: #1B3358; }
-    .nav-btn svg { width: 16px; height: 16px; }
-    header h1 { font-size: 28px; color: #1B3358; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .nav-btn:hover { background: #1E40AF; color: white; transform: translateY(-2px); }
+    .nav-btn.current { background: #1E40AF; color: white; border-color: #1E40AF; }
+    .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+    header h1 { font-size: 28px; color: #1E40AF; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
     .subtitle { color: #6b7280; font-size: 14px; }
 
     .stats-grid {
@@ -43,35 +43,32 @@
     .stat-card {
       background: white; padding: 22px 24px;
       border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-top: 4px solid #FFE033;
+      border-top: 4px solid #1E40AF;
     }
     .stat-label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 34px; font-weight: 800; color: #1B3358; }
+    .stat-value { font-size: 34px; font-weight: 800; color: #1E40AF; }
     .stat-sublabel { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 
-    /* Filters */
     .filters-panel {
       background: white; padding: 20px 24px; border-radius: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 20px;
       display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
     }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
     .filter-group label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
     .filter-group select, .filter-group input {
       padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px;
-      font-size: 14px; color: #1f2937; background: white; outline: none;
-      transition: border-color 0.2s;
+      font-size: 14px; color: #1f2937; background: white; outline: none; transition: border-color 0.2s;
     }
-    .filter-group select:focus, .filter-group input:focus { border-color: #1B3358; }
-    .filter-group input { min-width: 220px; }
+    .filter-group select:focus, .filter-group input:focus { border-color: #1E40AF; }
+    .filter-group input { min-width: 200px; }
     .btn-refresh {
-      padding: 10px 20px; background: #1B3358; color: white;
+      padding: 10px 20px; background: #1E40AF; color: white;
       border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
       cursor: pointer; transition: background 0.2s; margin-left: auto;
     }
-    .btn-refresh:hover { background: #0D2137; }
+    .btn-refresh:hover { background: #1E3A8A; }
 
-    /* Table */
     .table-wrapper {
       background: white; border-radius: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.08);
@@ -88,37 +85,24 @@
     th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
     td { padding: 14px 16px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
     tbody tr:hover { background: #fafafa; }
-    .code { font-family: monospace; font-size: 13px; color: #1B3358; font-weight: 700; }
+    .code { font-family: monospace; font-size: 13px; color: #1E40AF; font-weight: 700; }
     .client-name { font-weight: 600; color: #1f2937; }
     .client-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
-
-    /* Badges */
     .badge {
       display: inline-block; padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700; white-space: nowrap;
     }
-    .badge-pending       { background: #FEF3C7; color: #92400E; }
-    .badge-meeting_scheduled { background: #DBEAFE; color: #1E40AF; }
-    .badge-quote_sent    { background: #E0E7FF; color: #3730A3; }
-    .badge-negotiating   { background: #FEE2E2; color: #991B1B; }
-    .badge-service_in_progress { background: #D1FAE5; color: #065F46; }
-    .badge-completed     { background: #D1FAE5; color: #065F46; }
-    .badge-cancelled     { background: #F3F4F6; color: #6B7280; }
-    .badge-urgente       { background: #FEE2E2; color: #DC2626; }
-    .badge-normal-u      { background: #FEF3C7; color: #D97706; }
-    .badge-planificacion { background: #DBEAFE; color: #1E40AF; }
-
-    .amount { font-weight: 700; color: #065F46; font-size: 14px; }
+    .badge-pending  { background: #FEF3C7; color: #92400E; }
+    .badge-quoted   { background: #DBEAFE; color: #1E40AF; }
+    .badge-accepted { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-cancelled { background: #F3F4F6; color: #6B7280; }
+    .amount { font-weight: 700; color: #1E40AF; font-size: 14px; }
     .date-cell { font-size: 12px; color: #6b7280; }
-
-    .loading, .error, .empty {
-      text-align: center; padding: 48px 20px;
-      font-size: 15px;
-    }
-    .loading { color: #1B3358; }
+    .loading, .error, .empty { text-align: center; padding: 48px 20px; font-size: 15px; }
+    .loading { color: #1E40AF; }
     .error { color: #dc2626; }
     .empty { color: #9ca3af; }
-
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .filters-panel { flex-direction: column; }
@@ -137,15 +121,15 @@
         </a>
         <a href="/aluna-proformas.html" class="nav-btn">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Proformas Aluna
+          Aluna
         </a>
         <a href="/enzo-proyectos.html" class="nav-btn">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          Proyectos Enzo
+          Enzo
         </a>
-        <a href="/gabi-consultas.html" class="nav-btn current">
+        <a href="/gabi-consultas.html" class="nav-btn">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-          Consultas Gabi
+          Gabi
         </a>
         <a href="/aurora-reservas.html" class="nav-btn">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -159,19 +143,18 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
           Axel
         </a>
-        <a href="/adriana-seguros.html" class="nav-btn">
+        <a href="/adriana-seguros.html" class="nav-btn current">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           Adriana
         </a>
       </div>
-      <h1>⚖️ Dashboard de Consultas · Gabi</h1>
-      <p class="subtitle">GR Consulting — Legal · Contabilidad · RRHH · Compliance</p>
+      <h1>🛡️ Dashboard Seguros · Adriana</h1>
+      <p class="subtitle">Segpopular S.A. — Seguros Vehiculares, de Vida e Incendio</p>
     </header>
 
-    <!-- KPIs -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Total Consultas</div>
+        <div class="stat-label">Total Leads</div>
         <div class="stat-value" id="stat-total">-</div>
         <div class="stat-sublabel">Historial completo</div>
       </div>
@@ -186,66 +169,51 @@
         <div class="stat-sublabel">Últimos 7 días</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Revenue Cotizado</div>
-        <div class="stat-value" id="stat-revenue" style="font-size:26px;">-</div>
-        <div class="stat-sublabel">Asesorías enviadas + activas</div>
+        <div class="stat-label">Prima Promedio</div>
+        <div class="stat-value" id="stat-avg" style="font-size:22px;color:#1E3A8A;">-</div>
+        <div class="stat-sublabel">Seguros aceptados</div>
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="filters-panel">
       <div class="filter-group">
         <label>Estado</label>
         <select id="filter-status">
           <option value="">Todos</option>
           <option value="pending">⏳ Pendiente</option>
-          <option value="meeting_scheduled">📅 Reunión</option>
-          <option value="quote_sent">📧 Cotización</option>
-          <option value="negotiating">💬 Negociando</option>
-          <option value="service_in_progress">🔧 En Proceso</option>
-          <option value="completed">✅ Completado</option>
-          <option value="cancelled">❌ Cancelado</option>
+          <option value="quoted">📧 Cotizado</option>
+          <option value="accepted">✅ Aceptado</option>
+          <option value="rejected">❌ Rechazado</option>
+          <option value="cancelled">🚫 Cancelado</option>
         </select>
       </div>
       <div class="filter-group">
-        <label>Tipo</label>
+        <label>Tipo de Seguro</label>
         <select id="filter-type">
           <option value="">Todos</option>
-          <option value="Contabilidad">Contabilidad</option>
-          <option value="Legal">Legal</option>
-          <option value="RRHH">RRHH</option>
-          <option value="Fiscal">Fiscal</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Urgencia</label>
-        <select id="filter-urgency">
-          <option value="">Todas</option>
-          <option value="Urgente">🚨 Urgente</option>
-          <option value="Normal">📅 Normal</option>
-          <option value="Planificación">📋 Planificación</option>
+          <option value="Vehicular">🚗 Vehicular</option>
+          <option value="Vida">❤️ Vida</option>
+          <option value="Incendio">🔥 Incendio</option>
         </select>
       </div>
       <div class="filter-group">
         <label>Buscar</label>
-        <input type="text" id="search" placeholder="Nombre, empresa, código...">
+        <input type="text" id="search" placeholder="Nombre, código, vehículo...">
       </div>
       <button class="btn-refresh" onclick="loadLeads()">↺ Actualizar</button>
     </div>
 
-    <!-- Table -->
     <div class="table-wrapper">
       <div class="table-header">
-        <h2>⚖️ Consultas de Clientes</h2>
+        <h2>🛡️ Cotizaciones de Seguros</h2>
         <span class="table-count" id="table-count"></span>
       </div>
       <div id="leads-container">
-        <div class="loading">Cargando consultas...</div>
+        <div class="loading">Cargando leads de Adriana...</div>
       </div>
     </div>
   </div>
 
-  <script src="/js/gabi-dashboard.js"></script>
+  <script src="/js/adriana-dashboard.js"></script>
 </body>
 </html>

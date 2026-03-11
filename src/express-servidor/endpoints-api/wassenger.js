@@ -1593,7 +1593,18 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       const _isAlunaIntent = !_hasAF && _alunaKeywords.some(k => (processedText || '').toLowerCase().includes(k));
       const _shouldForm = !_hasVAP && !_isAlunaIntent && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
 
-      // ① Interceptar SI/NO pendiente ANTES de ir al LLM
+      // ① Interceptar pedidos de supervisores / escalación humana
+      const _supervisorKeywords = ['supervisor', 'gerente', 'jefe', 'encargado', 'responsable', 'hablar con alguien', 'hablar con una persona', 'persona real', 'humano real', 'quiero hablar con', 'comunícame con', 'comunicate con', 'pásame con', 'pasame con', 'llamar a', 'queja', 'reclamo', 'denuncia'];
+      if (_supervisorKeywords.some(kw => processedText.toLowerCase().includes(kw))) {
+        console.log('[AURORA-FLOW] 🚨 Detección de solicitud de supervisión/escalación');
+        const _escalMsg = `Entiendo que quieres hablar directamente con alguien de nuestro equipo. 😊\n\nPuedes contactarnos por:\n📧 *Email:* info@coworkia.com\n📍 *En persona:* Whymper 403, Edificio Finistere\n\nAlguien del equipo te atenderá en seguida. ¿Hay algo más en que pueda ayudarte mientras tanto?`;
+        await enviarWhatsApp(userId, _escalMsg);
+        await saveConversationMessage(userId, { role: 'assistant', content: _escalMsg, agent: 'AURORA' });
+        await saveInteraction({ userId, agent: normalizeAgentName('AURORA'), agentName: 'Aurora Core', intentReason: 'supervisor_escalation', input: processedText, output: _escalMsg, meta: { envelope } });
+        return;
+      }
+
+      // ② Interceptar SI/NO pendiente ANTES de ir al LLM
       const _auroraEarlyPending = await getPendingConfirmation(userId).catch(() => null);
       if (_auroraEarlyPending) {
         const _isPos = isPositiveResponse(processedText);

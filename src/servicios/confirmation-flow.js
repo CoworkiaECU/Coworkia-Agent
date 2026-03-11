@@ -139,6 +139,18 @@ export function isNegativeResponse(message) {
     /^no gracias$/,
     /^no, gracias$/,
     /^gracias pero no$/,
+    // Correcciones — usuario indica que los datos están mal
+    /^no,?\s*est[aá]\s*(mal|incorrecto|equivocado)/,
+    /^no,?\s*eso/,
+    /^no,?\s*los datos/,
+    /^no,?\s*el horario/,
+    /^no,?\s*la hora/,
+    /^no,?\s*la fecha/,
+    /^no,?\s*el espacio/,
+    /est[aá]\s*(mal|incorrecto)/,
+    /datos.*incorrectos/,
+    /horario.*incorrecto/,
+    /^no\s*est[aá]/,
     // Emojis de negación
     /👎/,
     /❌/,

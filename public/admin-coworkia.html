@@ -121,6 +121,39 @@
     .paula-icon { background: linear-gradient(135deg, #D97706, #B45309); }
     .axel-icon { background: linear-gradient(135deg, #1E3A8A, #1E40AF); }
     .adriana-icon { background: linear-gradient(135deg, #1E40AF, #3730a3); }
+    .wifi-icon { background: linear-gradient(135deg, #059669, #10b981); }
+
+    .wifi-stats-mini {
+      display: flex;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .wifi-stat {
+      flex: 1;
+      background: #f0fdf4;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #bbf7d0;
+    }
+    .wifi-stat-num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #047857;
+      display: block;
+    }
+    .wifi-stat-lbl {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .wifi-offline {
+      font-size: 12px;
+      color: #9ca3af;
+      font-style: italic;
+      margin: 8px 0;
+    }
 
     .quick-stats {
       background: white;
@@ -231,6 +264,18 @@
         <span class="dashboard-badge badge-indigo">Seguros</span>
       </a>
 
+      <a href="http://192.168.0.62/admin.html" class="dashboard-card" target="_blank" id="wifi-card">
+        <div class="dashboard-icon wifi-icon">📶</div>
+        <h3 class="dashboard-title">Portal Cautivo WiFi</h3>
+        <div class="wifi-stats-mini">
+          <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-disponibles">—</span><span class="wifi-stat-lbl">Disponibles</span></div>
+          <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-activas">—</span><span class="wifi-stat-lbl">Sesiones activas</span></div>
+          <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-usados">—</span><span class="wifi-stat-lbl">Usados</span></div>
+        </div>
+        <p class="wifi-offline" id="wifi-status-msg">Cargando stats...</p>
+        <span class="dashboard-badge" style="background:#d1fae5;color:#065f46;">WiFi · Red local</span>
+      </a>
+
       <a href="/api/health" class="dashboard-card" target="_blank">
         <div class="dashboard-icon system-icon">⚙️</div>
         <h3 class="dashboard-title">System Health</h3>
@@ -297,6 +342,18 @@
         </a>
       </div>
       <div class="stat-row">
+        <span class="stat-label">WiFi Stats (red local)</span>
+        <a href="http://192.168.0.62/api/codes/stats" target="_blank" class="stat-value" style="color: #059669; text-decoration: none;">
+          Ver JSON →
+        </a>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">WiFi Admin Panel</span>
+        <a href="http://192.168.0.62/admin.html" target="_blank" class="stat-value" style="color: #059669; text-decoration: none;">
+          Abrir →
+        </a>
+      </div>
+      <div class="stat-row">
         <span class="stat-label">Health Check</span>
         <a href="/health" target="_blank" class="stat-value" style="color: #7c3aed; text-decoration: none;">
           Ver JSON →
@@ -304,5 +361,31 @@
       </div>
     </div>
   </div>
+
+  <script>
+    const WIFI_BASE = 'http://192.168.0.62';
+
+    async function loadWifiStats() {
+      try {
+        const res = await fetch(`${WIFI_BASE}/api/codes/stats`, { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        const byStatus = {};
+        (data.stats || []).forEach(s => { byStatus[s.status] = s.count; });
+
+        document.getElementById('wifi-disponibles').textContent = byStatus['disponible'] ?? 0;
+        document.getElementById('wifi-activas').textContent = data.activeSessions ?? 0;
+        document.getElementById('wifi-usados').textContent = byStatus['usado'] ?? 0;
+        document.getElementById('wifi-status-msg').textContent = `Total: ${data.total ?? '—'} códigos • actualizado ahora`;
+        document.getElementById('wifi-status-msg').style.color = '#059669';
+        document.getElementById('wifi-card').style.borderColor = '#10b981';
+      } catch (e) {
+        document.getElementById('wifi-status-msg').textContent = 'No disponible (solo en red local)';
+      }
+    }
+
+    loadWifiStats();
+  </script>
 </body>
 </html>

@@ -1338,6 +1338,41 @@ export function generateAlunaProformaHTML(data) {
     </div>`).join('');
 
   const waText = encodeURIComponent(`@aluna, el ${planName} es justo lo que necesito ¿Cuándo empiezo?`);
+  const waComboText = encodeURIComponent(`@aluna, quiero el combo ${planName} + Oficina Virtual con descuento`);
+
+  // Upsell solo para planes Hot Desk (Plan 10 y Plan 20)
+  const isHotDeskPlan = planName && (planName.includes('Plan 10') || planName.includes('Plan 20'));
+  const comboLabel = planName?.includes('Plan 20') ? 'Plan 20 + Oficina Virtual (1 año)' : 'Plan 10 + Oficina Virtual (1 año)';
+  const comboDiscount = planName?.includes('Plan 20') ? '15%' : '10%';
+  const comboPrice = planName?.includes('Plan 20') ? '$310' : '$328';
+
+  const upsellSection = isHotDeskPlan ? `
+  <!-- POTENCIA TU MEMBRESÍA -->
+  <div style="border:1px solid #D1FAE5;border-radius:16px;padding:28px;margin:28px 0;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="background:#065F46;color:white;display:inline-block;padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">🏢 POTENCIA TU MEMBRESÍA</div>
+      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">🏢 Oficina Virtual + Presencia Legal</div>
+      <div style="color:#047857;font-size:14px;font-weight:600;">Muchas empresas lo necesitan sin saberlo</div>
+    </div>
+    <div style="background:#F9FAFB;border-radius:12px;padding:18px 22px;margin-bottom:20px;">
+      ${[
+        'Dirección comercial oficial para tu empresa (Whymper 403, Quito)',
+        'Cumplimiento legal Ecuador: SRI, IESS, permisos municipales',
+        'Recepción de correspondencia y notificaciones oficiales',
+        'Sala de Reuniones incluida (1 vez al mes, 2 horas)',
+      ].map(item => `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;flex-shrink:0;">✓</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
+    </div>
+    <div style="background:#FFFBEB;border:2px dashed #F59E0B;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
+      <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">⚡ OFERTA ESPECIAL COMBO</div>
+      <div style="color:#111827;font-size:18px;font-weight:800;margin-bottom:6px;">${comboLabel}</div>
+      <div style="color:#DC2626;font-size:32px;font-weight:900;line-height:1;margin-bottom:6px;">${comboDiscount} DESCUENTO</div>
+      <div style="color:#6B7280;font-size:13px;">en Oficina Virtual ($365 → ${comboPrice} USD/año)</div>
+    </div>
+    <div style="text-align:center;">
+      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">🏢 Quiero el Combo con Descuento</a>
+      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Solo válido al contratar por 1 año</div>
+    </div>
+  </div>` : '';
 
   const ecosistemaItems = ecosistemaTable({
     aliados: ['aluna', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
@@ -1365,10 +1400,16 @@ export function generateAlunaProformaHTML(data) {
         BUSINESS CENTER
       </div>
       
-      <!-- Badge confirmación -->
-      <div style="background: rgba(255,255,255,0.13); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 0 16px rgba(4,120,87,0.35); border-radius: 12px; padding: 18px 28px; display: inline-block;">
-        <div style="color: white; font-size: 20px; font-weight: 700; margin-bottom: 3px;">💚 Propuesta de Membresía</div>
-        <div style="color: rgba(255,255,255,0.85); font-size: 13px;">Aluna · Especialista en Membresías</div>
+      <!-- Tarjeta membresía preparada para —— diseño aprobado -->
+      <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">· MEMBRESÍA PREPARADA PARA ·</div>
+        <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${clientName}</div>
+        <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span style="font-size:18px;">🎫</span>
+          <span style="color:#111827;font-size:16px;font-weight:700;">${planName}</span>
+          ${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;">${proformaCode}</span>` : ''}
+        </div>
+        <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
       </div>
     </div>
 
@@ -1447,6 +1488,8 @@ export function generateAlunaProformaHTML(data) {
         </a>
         <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">También puedes responder este correo</p>
       </div>
+
+      ${upsellSection}
 
       <!-- Ubicación -->
       <div style="background: linear-gradient(135deg, rgba(4,120,87,0.08), rgba(6,95,70,0.12)); border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid rgba(4,120,87,0.2);">

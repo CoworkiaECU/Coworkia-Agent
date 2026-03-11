@@ -1506,14 +1506,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           rawPlan = planM ? `plan${planM[1]}` : null;
         }
 
-        if (trimmedEmail && rawPlan) {
-          console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, trimmedName, trimmedEmail, nota: trimmedNota });
-          const quoteCode = await generateBossQuoteCode('ALUNA');
-          await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${rawPlan}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}${trimmedNota ? `\n📝 ${trimmedNota}` : ''}\n🔑 ${quoteCode}`);
-          await new Promise(r => setTimeout(r, 600));
-
+        if (trimmedEmail) {
           const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
-          const planKey = normalizePlanKey(rawPlan);
+          const planKey = normalizePlanKey(rawPlan); // defaultea a plan10 si rawPlan es null
+          console.log('[BOSS-CMD] 👔 Proforma ALUNA solicitada por admin:', { rawPlan, planKey, trimmedName, trimmedEmail, nota: trimmedNota });
+          const quoteCode = await generateBossQuoteCode('ALUNA');
+          await enviarWhatsApp(userId, `💜 *Aluna preparando proforma...*\n🎫 ${planKey}\n👤 ${trimmedName}\n📧 ${trimmedEmail}${trimmedPhone ? `\n📱 ${trimmedPhone}` : ''}${trimmedNota ? `\n📝 ${trimmedNota}` : ''}\n🔑 ${quoteCode}`);
+          await new Promise(r => setTimeout(r, 600));
           const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, nota: trimmedNota, fromAdmin: true });
 
           if (proResult.success) {

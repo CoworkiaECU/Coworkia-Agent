@@ -11,9 +11,10 @@
 
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
-import alunaRepository from '../database/alunaRepository.js';
+import { saveMembershipLead } from '../database/alunaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
-import { sendEmail } from './email.js';
+import { PLAN_DATA, normalizePlanKey } from './aluna-proforma-email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
 
 /**
@@ -143,7 +144,7 @@ export async function confirmMembershipLead(userId, userProfile) {
       monthlyFee: membershipDetails.price
     };
     
-    const { id: leadId } = await alunaRepository.saveMembershipLead(leadData);
+    const { id: leadId } = await saveMembershipLead(leadData);
     console.log(`[MEMBERSHIP-CONFIRM] ✅ Lead guardado: ${leadId}`);
 
     // ==========================================
@@ -201,17 +202,31 @@ export async function confirmMembershipLead(userId, userProfile) {
     // ==========================================
     
     if (formData.email) {
-      const emailToClient = await generateEmailForAgent('ALUNA', 'client', {
+      // ✅ Usar siempre el template aprobado (proforma) — igual que el Boss Command
+      const planKey = normalizePlanKey(formData.membershipType);
+      const plan = PLAN_DATA[planKey] || PLAN_DATA['plan10'];
+
+      const emailToClient = generateEmailForAgent('ALUNA', 'proforma', {
         clientName: formData.fullName,
-        membershipType: membershipDetails.name,
-        price: membershipDetails.price,
-        benefits: membershipDetails.benefits,
-        tourDate: formData.startDate || 'Te contactaremos en 24h',
-        calendarLink: calendarEventLink
+        planName: plan.name,
+        planPrice: plan.price,
+        planDays: plan.days,
+        planHours: plan.hours,
+        planBenefits: plan.benefits,
+        planIdeal: plan.ideal,
+        proformaCode: membershipCode,
+        nota: formData.specialRequirements || null,
+        coworkiaWhatsApp: '593994837117',
       });
 
-      await sendEmail(formData.email, emailToClient.subject, emailToClient.html);
-      console.log('[MEMBERSHIP-CONFIRM] 📧 Email de confirmación enviado al cliente');
+      await sendEmail({
+        to: formData.email,
+        cc: 'coworkia.ec@gmail.com',
+        subject: `Membresía Coworkia ${membershipCode} - Aluna`,
+        html: emailToClient.html,
+        from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL }
+      });
+      console.log('[MEMBERSHIP-CONFIRM] 📧 Email proforma enviado al cliente (template unificado)');
     }
 
     // ==========================================

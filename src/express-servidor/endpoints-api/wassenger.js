@@ -1343,10 +1343,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           // 🆕 Guardar en legal_leads (para dashboard Gabi)
           if (result.success) {
             try {
+              // Mapear areaLabel/area a los valores válidos del CHECK constraint
+              const areaToConsultationType = {
+                'finanzas': 'Contabilidad', 'Finanzas y Contabilidad': 'Contabilidad',
+                'recursosHumanos': 'RRHH',  'Recursos Humanos y Nómina': 'RRHH',
+                'uafe': 'Fiscal',            'Compliance y UAFE': 'Fiscal',
+                'legal': 'Legal',            'Asesoría Legal Empresarial': 'Legal',
+              };
+              const rawArea = quoteData.area || result.areaLabel;
+              const consultationType = areaToConsultationType[rawArea] || 'Otro';
               await saveLegalLead({
                 consultationCode: quoteCode,
                 userId:           userId, // admin phone — FK válido en users
-                consultationType: result.areaLabel || quoteData.area,
+                consultationType,
                 company:          quoteData.empresa || null,
                 ruc:              null,
                 clientName:       quoteData.nombre,
@@ -1355,7 +1364,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 description:      quoteData.descripcionServicio || `Cotización generada por Big Boss — ${result.areaLabel || quoteData.area}`,
                 urgency:          'Normal',
               });
-              console.log(`[BOSS-CMD] ✅ Lead GABI guardado en legal_leads: ${quoteCode}`);
+              console.log(`[BOSS-CMD] ✅ Lead GABI guardado en legal_leads: ${quoteCode} (${consultationType})`);
             } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando legal_lead:', err.message); }
           }
           const reply = result.success

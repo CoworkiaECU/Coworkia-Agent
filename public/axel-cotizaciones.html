@@ -3,241 +3,409 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Cotizaciones - Axel | Axel Reparación</title>
+  <title>Dashboard Colisiones · Axel | PaintBull Ecuador</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #DC2626 0%, #7F1D1D 100%);
+      background: linear-gradient(145deg, #1a0a0a 0%, #7F1D1D 40%, #B91C1C 100%);
       min-height: 100vh;
-      padding: 20px;
+      padding: 24px 20px;
       color: #1f2937;
     }
-    .container { max-width: 1400px; margin: 0 auto; }
+
+    .container { max-width: 1440px; margin: 0 auto; }
+
+    /* ── HEADER ── */
     header {
       background: white;
-      padding: 24px 30px;
+      padding: 22px 28px 20px;
       border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
       margin-bottom: 24px;
     }
+
     .nav-arrows { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .nav-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 14px; background: white;
+      padding: 7px 14px; background: white;
       border: 2px solid #8b5cf6; color: #8b5cf6;
       text-decoration: none; border-radius: 8px;
       font-size: 13px; font-weight: 600; transition: all 0.2s;
     }
     .nav-btn:hover { background: #8b5cf6; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
-    .nav-btn.current { background: #DC2626; color: white; border-color: #DC2626; }
+    .nav-btn.current { background: #B91C1C; color: white; border-color: #B91C1C; }
     .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-    header h1 { font-size: 28px; color: #DC2626; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-    .subtitle { color: #6b7280; font-size: 14px; }
 
-    .stats-grid {
+    .header-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .header-left h1 { font-size: 26px; font-weight: 800; color: #B91C1C; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .header-left .subtitle { color: #6b7280; font-size: 13px; }
+    .header-badge {
+      background: linear-gradient(135deg, #B91C1C, #7F1D1D);
+      color: white; padding: 10px 20px; border-radius: 10px;
+      font-size: 12px; font-weight: 700; text-align: center; line-height: 1.4;
+    }
+    .header-badge span { font-size: 20px; display: block; font-weight: 800; }
+
+    /* ── KPI GRID ── */
+    .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px; margin-bottom: 24px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
     }
-    .stat-card {
-      background: white; padding: 22px 24px;
-      border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-left: 4px solid #DC2626;
+    .kpi-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      border-top: 4px solid #B91C1C;
+      position: relative;
+      overflow: hidden;
     }
-    .stat-label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 34px; font-weight: 800; color: #DC2626; }
-    .stat-sublabel { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    .kpi-card::after {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      width: 60px; height: 60px;
+      background: radial-gradient(circle at top right, rgba(185,28,28,0.07), transparent);
+      border-radius: 0 14px 0 60px;
+    }
+    .kpi-card.orange { border-top-color: #ea580c; }
+    .kpi-card.purple { border-top-color: #7c3aed; }
+    .kpi-card.green  { border-top-color: #059669; }
+    .kpi-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .kpi-value { font-size: 36px; font-weight: 800; color: #B91C1C; line-height: 1; }
+    .kpi-card.orange .kpi-value { color: #ea580c; }
+    .kpi-card.purple .kpi-value { color: #7c3aed; }
+    .kpi-card.green  .kpi-value  { color: #059669; font-size: 26px; }
+    .kpi-sub { font-size: 11px; color: #9ca3af; margin-top: 6px; }
 
-    .filters-panel {
-      background: white; padding: 20px 24px; border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 20px;
-      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    /* ── PIPELINE ── */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
     }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
-    .filter-group label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-    .filter-group select, .filter-group input {
-      padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px;
-      font-size: 14px; color: #1f2937; background: white; outline: none; transition: border-color 0.2s;
+    .pipe-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex; align-items: center; gap: 14px;
+      border-left: 5px solid #e5e7eb;
     }
-    .filter-group select:focus, .filter-group input:focus { border-color: #DC2626; }
-    .filter-group input { min-width: 200px; }
-    .btn-refresh {
-      padding: 10px 20px; background: #DC2626; color: white;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: background 0.2s; margin-left: auto;
-    }
-    .btn-refresh:hover { background: #7F1D1D; }
+    .pipe-card.p-orange { border-left-color: #f97316; }
+    .pipe-card.p-purple { border-left-color: #8b5cf6; }
+    .pipe-card.p-blue   { border-left-color: #3b82f6; }
+    .pipe-card.p-green  { border-left-color: #10b981; }
 
-    .table-wrapper {
-      background: white; border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      overflow: hidden; margin-bottom: 24px;
+    .pipe-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
-    .table-header {
-      padding: 16px 24px; border-bottom: 1px solid #f3f4f6;
+    .pipe-card.p-orange .pipe-icon { background: #FFF7ED; }
+    .pipe-card.p-purple .pipe-icon { background: #F5F3FF; }
+    .pipe-card.p-blue   .pipe-icon { background: #EFF6FF; }
+    .pipe-card.p-green  .pipe-icon { background: #ECFDF5; }
+    .pipe-info { flex: 1; min-width: 0; }
+    .pipe-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pipe-value { font-size: 28px; font-weight: 800; line-height: 1.1; }
+    .pipe-card.p-orange .pipe-value { color: #f97316; }
+    .pipe-card.p-purple .pipe-value { color: #8b5cf6; }
+    .pipe-card.p-blue   .pipe-value { color: #3b82f6; }
+    .pipe-card.p-green  .pipe-value { color: #10b981; }
+    .pipe-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .toolbar-left { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+    .filter-pill {
+      padding: 6px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 20px;
+      background: white;
+      font-size: 12px; font-weight: 600; color: #6b7280;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .filter-pill:hover { border-color: #B91C1C; color: #B91C1C; }
+    .filter-pill.active { background: #B91C1C; border-color: #B91C1C; color: white; }
+    .search-box {
+      padding: 8px 14px;
+      border: 2px solid #e5e7eb; border-radius: 8px;
+      font-size: 13px; color: #1f2937; outline: none;
+      transition: border-color 0.2s; min-width: 220px;
+    }
+    .search-box:focus { border-color: #B91C1C; }
+    .table-count { font-size: 12px; color: #9ca3af; white-space: nowrap; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 15px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+
+    /* ── QUOTE CARDS GRID ── */
+    .quotes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    .quote-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .quote-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+    .quote-card-header {
+      background: linear-gradient(135deg, #1f2937, #374151);
+      padding: 14px 18px;
       display: flex; justify-content: space-between; align-items: center;
     }
-    .table-header h2 { font-size: 16px; font-weight: 700; color: #1f2937; }
-    .table-count { font-size: 12px; color: #6b7280; }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: #f9fafb; }
-    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
-    td { padding: 14px 16px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
-    tbody tr:hover { background: #fafafa; }
-    .code { font-family: monospace; font-size: 13px; color: #DC2626; font-weight: 700; }
-    .client-name { font-weight: 600; color: #1f2937; }
-    .client-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .vehicle-name { color: white; font-size: 15px; font-weight: 700; }
+    .vehicle-year { color: #9ca3af; font-size: 12px; margin-top: 2px; }
+    .quote-code-badge {
+      background: rgba(185,28,28,0.8);
+      color: white; padding: 4px 10px; border-radius: 6px;
+      font-family: monospace; font-size: 11px; font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .quote-card-body { padding: 16px 18px; }
+
+    .quote-client { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .client-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #fca5a5, #B91C1C);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .client-info .client-name { font-weight: 700; color: #1f2937; font-size: 14px; }
+    .client-info .client-contact { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+    .quote-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .detail-item { background: #f9fafb; border-radius: 8px; padding: 8px 10px; }
+    .detail-label { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .detail-value { font-size: 13px; font-weight: 600; color: #1f2937; }
+
+    .price-display {
+      background: linear-gradient(135deg, #FFF1F2, #FFE4E6);
+      border: 2px solid #fca5a5;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .price-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+    .price-range { font-size: 17px; font-weight: 800; color: #B91C1C; }
+
+    .quote-card-footer {
+      padding: 10px 18px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #f3f4f6;
+    }
+    .date-label { font-size: 11px; color: #9ca3af; }
+
+    /* Badge */
     .badge {
-      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700; white-space: nowrap;
     }
     .badge-pending     { background: #FEF3C7; color: #92400E; }
-    .badge-quoted      { background: #FEE2E2; color: #DC2626; }
+    .badge-quoted      { background: #EDE9FE; color: #5B21B6; }
     .badge-accepted    { background: #D1FAE5; color: #065F46; }
-    .badge-in_progress { background: #E0E7FF; color: #3730A3; }
+    .badge-in_progress { background: #DBEAFE; color: #1E40AF; }
     .badge-completed   { background: #D1FAE5; color: #065F46; }
     .badge-cancelled   { background: #F3F4F6; color: #6B7280; }
-    .price-range { font-weight: 700; color: #DC2626; font-size: 14px; }
-    .date-cell { font-size: 12px; color: #6b7280; }
-    .loading, .error, .empty { text-align: center; padding: 48px 20px; font-size: 15px; }
-    .loading { color: #DC2626; }
-    .error { color: #dc2626; }
-    .empty { color: #9ca3af; }
-    .refresh-btn {
-      position: fixed; bottom: 30px; right: 30px;
-      background: white; color: #DC2626; border: 2px solid #DC2626;
-      width: 56px; height: 56px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s;
+    .badge-inspecting  { background: #FEF3C7; color: #92400E; }
+
+    .damage-tag {
+      display: inline-block;
+      padding: 3px 9px; border-radius: 6px;
+      font-size: 10px; font-weight: 700;
+      background: #1f2937; color: white;
     }
-    .refresh-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
-    @media (max-width: 768px) {
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .filters-panel { flex-direction: column; }
-      table { font-size: 13px; }
-      th, td { padding: 10px 12px; }
+
+    /* Loading/Error/Empty */
+    .state-block { text-align: center; padding: 60px 20px; background: white; border-radius: 14px; }
+    .state-block.loading-state { color: #B91C1C; font-size: 15px; }
+    .state-block.error-state   { color: #dc2626; font-size: 14px; }
+    .state-block.empty-state   { color: #9ca3af; font-size: 14px; }
+
+    /* Refresh FAB */
+    .refresh-btn {
+      position: fixed; bottom: 28px; right: 28px;
+      background: white; color: #B91C1C; border: 2px solid #B91C1C;
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(185,28,28,0.3); cursor: pointer; transition: all 0.2s;
+      z-index: 100;
+    }
+    .refresh-btn:hover { transform: scale(1.1) rotate(20deg); box-shadow: 0 6px 20px rgba(185,28,28,0.4); }
+    .refresh-btn svg { width: 22px; height: 22px; }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .pipeline { grid-template-columns: 1fr 1fr; }
+      .quotes-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
+
+    <!-- HEADER -->
     <header>
       <div class="nav-arrows">
         <a href="/admin-coworkia.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-          Admin Panel
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Admin Panel
         </a>
         <a href="/aurora-reservas.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          Aurora
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Aurora
         </a>
         <a href="/aluna-proformas.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Aluna
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Aluna
         </a>
         <a href="/enzo-proyectos.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          Enzo
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Enzo
         </a>
         <a href="/gabi-consultas.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-          Gabi
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>Gabi
         </a>
         <a href="/adriana-seguros.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          Adriana
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Adriana
         </a>
         <a href="/axel-cotizaciones.html" class="nav-btn current">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-          Axel
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>Axel
         </a>
         <a href="/paula-inmobiliaria.html" class="nav-btn">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          Paula
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Paula
         </a>
       </div>
-      <h1>🔧 Cotizaciones · Axel</h1>
-      <p class="subtitle">Axel Reparación — Colisiones y Daños de Vehículos</p>
+      <div class="header-body">
+        <div class="header-left">
+          <h1>🔧 Cotizaciones · Axel</h1>
+          <p class="subtitle">PaintBull Ecuador — Colisiones y Daños de Vehículos · Cotizaciones con Vision AI</p>
+        </div>
+        <div class="header-badge">
+          INGRESOS EN PROCESO
+          <span id="header-revenue">-</span>
+        </div>
+      </div>
     </header>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Cotizaciones</div>
-        <div class="stat-value" id="stat-total">-</div>
-        <div class="stat-sublabel">Historial completo</div>
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Cotizaciones</div>
+        <div class="kpi-value" id="stat-total">-</div>
+        <div class="kpi-sub">Historial completo</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Este Mes</div>
-        <div class="stat-value" id="stat-month">-</div>
-        <div class="stat-sublabel">Mes actual</div>
+      <div class="kpi-card orange">
+        <div class="kpi-label">Este Mes</div>
+        <div class="kpi-value" id="stat-month">-</div>
+        <div class="kpi-sub">Mes actual</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Esta Semana</div>
-        <div class="stat-value" id="stat-week">-</div>
-        <div class="stat-sublabel">Últimos 7 días</div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">Esta Semana</div>
+        <div class="kpi-value" id="stat-week">-</div>
+        <div class="kpi-sub">Últimos 7 días</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Cotización Promedio</div>
-        <div class="stat-value" id="stat-avg" style="font-size:24px;color:#DC2626;">-</div>
-        <div class="stat-sublabel">Trabajos aceptados</div>
-      </div>
-    </div>
-
-    <!-- Pipeline -->
-    <div class="stats-grid" style="margin-bottom: 20px;">
-      <div class="stat-card" style="border-left-color: #f97316;">
-        <div class="stat-label">⏳ Pendientes</div>
-        <div class="stat-value" id="pipe-active" style="color: #f97316;">-</div>
-        <div class="stat-sublabel">Sin respuesta</div>
-      </div>
-      <div class="stat-card" style="border-left-color: #8b5cf6;">
-        <div class="stat-label">📧 Cotizados</div>
-        <div class="stat-value" id="pipe-24h" style="color: #8b5cf6;">-</div>
-        <div class="stat-sublabel">Presupuesto enviado</div>
-      </div>
-      <div class="stat-card" style="border-left-color: #6b7280;">
-        <div class="stat-label">🔧 En Proceso</div>
-        <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
-        <div class="stat-sublabel">Trabajo en curso</div>
-      </div>
-      <div class="stat-card" style="border-left-color: #DC2626;">
-        <div class="stat-label">✅ Completados</div>
-        <div class="stat-value" id="pipe-converted" style="color: #DC2626;">-</div>
-        <div class="stat-sublabel">Entregados</div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Cotización Promedio</div>
+        <div class="kpi-value" id="stat-avg">-</div>
+        <div class="kpi-sub">Trabajos aceptados/completados</div>
       </div>
     </div>
 
-    <div class="filters-panel">
-          <option value="">Todos</option>
-          <option value="pending">⏳ Pendiente</option>
-          <option value="quoted">📧 Cotizado</option>
-          <option value="accepted">✅ Aceptado</option>
-          <option value="in_progress">🔧 En Proceso</option>
-          <option value="completed">✅ Completado</option>
-          <option value="cancelled">❌ Cancelado</option>
-        </select>
+    <!-- PIPELINE -->
+    <div class="pipeline">
+      <div class="pipe-card p-orange">
+        <div class="pipe-icon">⏳</div>
+        <div class="pipe-info">
+          <div class="pipe-label">Pendientes</div>
+          <div class="pipe-value" id="pipe-pending">-</div>
+          <div class="pipe-sub">Esperando respuesta</div>
+        </div>
       </div>
-      <div class="filter-group">
-        <label>Buscar</label>
-        <input type="text" id="search" placeholder="Nombre, código, vehículo...">
+      <div class="pipe-card p-purple">
+        <div class="pipe-icon">📧</div>
+        <div class="pipe-info">
+          <div class="pipe-label">Cotizados</div>
+          <div class="pipe-value" id="pipe-quoted">-</div>
+          <div class="pipe-sub">Presupuesto enviado</div>
+        </div>
+      </div>
+      <div class="pipe-card p-blue">
+        <div class="pipe-icon">🔧</div>
+        <div class="pipe-info">
+          <div class="pipe-label">En Proceso</div>
+          <div class="pipe-value" id="pipe-in_progress">-</div>
+          <div class="pipe-sub">Trabajo en curso</div>
+        </div>
+      </div>
+      <div class="pipe-card p-green">
+        <div class="pipe-icon">✅</div>
+        <div class="pipe-info">
+          <div class="pipe-label">Completados</div>
+          <div class="pipe-value" id="pipe-completed">-</div>
+          <div class="pipe-sub">Entregados</div>
+        </div>
       </div>
     </div>
 
-    <div class="table-wrapper">
-      <div class="table-header">
-        <h2>🚗 Cotizaciones de Colisión</h2>
-        <span class="table-count" id="table-count"></span>
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="filter-pill active" data-status="">Todos</button>
+        <button class="filter-pill" data-status="pending">⏳ Pendiente</button>
+        <button class="filter-pill" data-status="quoted">📧 Cotizado</button>
+        <button class="filter-pill" data-status="accepted">✅ Aceptado</button>
+        <button class="filter-pill" data-status="in_progress">🔧 En Proceso</button>
+        <button class="filter-pill" data-status="completed">✅ Completado</button>
+        <button class="filter-pill" data-status="cancelled">❌ Cancelado</button>
       </div>
-      <div id="quotes-container">
-        <div class="loading">Cargando cotizaciones de Axel...</div>
+      <input class="search-box" id="search" type="text" placeholder="🔍  Buscar cliente, código, vehículo...">
+      <span class="table-count" id="table-count"></span>
+    </div>
+
+    <!-- CARDS SECTION -->
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        Cotizaciones de Colisión
       </div>
     </div>
-  </div>
 
-  <button class="refresh-btn" onclick="loadStats();loadQuotes();" title="Actualizar">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+    <div id="quotes-container">
+      <div class="state-block loading-state">Cargando cotizaciones de Axel...</div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- FAB Refresh -->
+  <button class="refresh-btn" onclick="refresh()" title="Actualizar">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
   </button>
+
   <script src="/js/axel-dashboard.js"></script>
 </body>
 </html>

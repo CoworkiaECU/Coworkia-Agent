@@ -316,5 +316,6 @@ export async function sendAxelDemoCotizacion({ nombre, email, telefono }) {
     quoteCode,
     vehicleData:   demoCase.vehicleData,
     hasRealPhotos: demoCase.photoUrls.length > 0,
+    priceRange,
   };
 }

@@ -1389,6 +1389,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           await enviarWhatsApp(userId, `⚙️ Buscando caso real en memoria para *${quoteData.nombre}*...\n📧 ${quoteData.email}\n🚗 Tomando fotos y análisis de siniestro guardado`);
           await new Promise(r => setTimeout(r, 600));
           const result = await sendAxelDemoCotizacion(quoteData);
+          const axelQuoteCode = result.quoteCode || `AXEL-BOSS-${Date.now()}`;
           await saveBossQuote({
             agent:       'AXEL',
             clientName:  quoteData.nombre,
@@ -1397,7 +1398,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             serviceInfo: result.vehicleData ? `${result.vehicleData.marca} ${result.vehicleData.modelo} ${result.vehicleData.año}`.trim() : null,
             amountMin:   result.priceRange?.min  ?? null,
             amountMax:   result.priceRange?.max  ?? null,
-            quoteCode:   result.quoteCode || null,
+            quoteCode:   axelQuoteCode,
             emailSent:   result.success,
           });
           // 🆕 Guardar en collision_quotes (para dashboard Axel)
@@ -1406,7 +1407,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               const { v4: uuidv4Axel } = await import('uuid');
               await saveCollisionQuote({
                 id:               uuidv4Axel(),
-                quoteCode:        result.quoteCode || quoteCode,
+                quoteCode:        axelQuoteCode,
                 userId:           userId, // admin phone — FK válido en users
                 damageType:       'Colisión',
                 clientName:       quoteData.nombre,
@@ -1423,7 +1424,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 priceMax:         result.priceRange?.max ?? null,
                 sessionFingerprint: `boss-${Date.now()}`,
               });
-              console.log(`[BOSS-CMD] ✅ Lead AXEL guardado en collision_quotes: ${result.quoteCode || quoteCode}`);
+              console.log(`[BOSS-CMD] ✅ Lead AXEL guardado en collision_quotes: ${axelQuoteCode}`);
             } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando collision_quote:', err.message); }
           }
           const reply = result.success

@@ -1,8 +1,15 @@
 const API_BASE = window.location.origin;
 
 // ═══ STATE ═══════════════════════════════════════════════════════════════════
-let currentFilters = { status: '', type: '', urgency: '', search: '' };
+let currentFilters = { status: '', type: '', urgency: '', search: '' };let allLeads = [];
 
+// ═══ PIPELINE ═════════════════════════════════════════════════════════════════════════════
+function updatePipeline() {
+  document.getElementById('pipe-active').textContent    = allLeads.filter(l => l.status === 'pending').length;
+  document.getElementById('pipe-24h').textContent       = allLeads.filter(l => ['meeting_scheduled','quote_sent'].includes(l.status)).length;
+  document.getElementById('pipe-3d').textContent        = allLeads.filter(l => l.status === 'service_in_progress').length;
+  document.getElementById('pipe-converted').textContent = allLeads.filter(l => l.status === 'completed').length;
+}
 // ═══ HELPERS ═════════════════════════════════════════════════════════════════
 function formatDate(dateString) {
   if (!dateString) return '-';
@@ -79,6 +86,8 @@ async function loadLeads() {
     if (!result.ok) throw new Error(result.error || 'Error desconocido');
 
     const leads = result.data || [];
+    allLeads = leads;
+    updatePipeline();
     document.getElementById('table-count').textContent = `${leads.length} registro${leads.length !== 1 ? 's' : ''}`;
 
     if (leads.length === 0) {

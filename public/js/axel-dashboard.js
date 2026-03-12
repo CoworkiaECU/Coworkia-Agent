@@ -1,5 +1,14 @@
 const API_BASE = window.location.origin;
 let currentFilters = { status: '', search: '' };
+let allQuotes = [];
+
+// ══ PIPELINE ══════════════════════════════════════════════════════════════════════
+function updatePipeline() {
+  document.getElementById('pipe-active').textContent    = allQuotes.filter(q => q.status === 'pending').length;
+  document.getElementById('pipe-24h').textContent       = allQuotes.filter(q => q.status === 'quoted').length;
+  document.getElementById('pipe-3d').textContent        = allQuotes.filter(q => q.status === 'in_progress').length;
+  document.getElementById('pipe-converted').textContent = allQuotes.filter(q => q.status === 'completed').length;
+}
 
 function formatDate(ds) {
   if (!ds) return '-';
@@ -61,6 +70,8 @@ async function loadQuotes() {
     if (!result.ok) throw new Error(result.error || 'Error desconocido');
 
     const quotes = result.data || [];
+    allQuotes = quotes;
+    updatePipeline();
     document.getElementById('table-count').textContent = `${quotes.length} registro${quotes.length !== 1 ? 's' : ''}`;
 
     if (quotes.length === 0) {

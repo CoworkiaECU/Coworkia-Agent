@@ -56,13 +56,12 @@ function formatPrice(amount) {
  */
 function getUrgencyBadge(urgency) {
   const urgencyMap = {
-    'Urgente': { class: 'urgency-urgent', text: '🔥 Urgente' },
-    'Medium': { class: 'urgency-medium', text: '⚡ Media' },
-    'Normal': { class: 'urgency-normal', text: '📅 Normal' }
+    'Urgente': { cls: 'badge-urgente',  text: '🔥 Urgente' },
+    'Medium':  { cls: 'badge-medium',   text: '⚡ Media' },
+    'Normal':  { cls: 'badge-normal-u', text: '📅 Normal' }
   };
-  
-  const badge = urgencyMap[urgency] || { class: 'urgency-normal', text: urgency || 'Normal' };
-  return `<div class="urgency-badge ${badge.class}">${badge.text}</div>`;
+  const badge = urgencyMap[urgency] || { cls: 'badge-normal-u', text: urgency || 'Normal' };
+  return `<span class="badge ${badge.cls}">${badge.text}</span>`;
 }
 
 /**
@@ -70,16 +69,25 @@ function getUrgencyBadge(urgency) {
  */
 function getStatusBadge(status) {
   const statusMap = {
-    'pending': { class: 'status-pending', text: '⏳ Pendiente' },
-    'meeting_scheduled': { class: 'status-meeting_scheduled', text: '📅 Reunión' },
-    'proposal_sent': { class: 'status-proposal_sent', text: '📧 Propuesta' },
-    'accepted': { class: 'status-accepted', text: '✅ Aceptado' },
-    'negotiating': { class: 'status-proposal_sent', text: '💬 Negociando' },
-    'cancelled': { class: 'status-cancelled', text: '❌ Cancelado' }
+    'pending':           { cls: 'badge-pending',           text: '⏳ Pendiente' },
+    'meeting_scheduled': { cls: 'badge-meeting_scheduled', text: '📅 Reunión' },
+    'proposal_sent':     { cls: 'badge-proposal_sent',     text: '📧 Propuesta' },
+    'accepted':          { cls: 'badge-accepted',          text: '✅ Aceptado' },
+    'negotiating':       { cls: 'badge-negotiating',       text: '💬 Negociando' },
+    'cancelled':         { cls: 'badge-cancelled',         text: '❌ Cancelado' }
   };
-  
-  const badge = statusMap[status] || { class: 'status-pending', text: status || 'Pendiente' };
-  return `<div class="status-badge ${badge.class}">${badge.text}</div>`;
+  const badge = statusMap[status] || { cls: 'badge-pending', text: status || 'Pendiente' };
+  return `<span class="badge ${badge.cls}">${badge.text}</span>`;
+}
+
+/**
+ * Actualizar pipeline KPIs desde allProjects
+ */
+function updatePipeline(projects) {
+  document.getElementById('pipe-active').textContent    = projects.filter(p => p.status === 'pending').length;
+  document.getElementById('pipe-24h').textContent       = projects.filter(p => p.status === 'meeting_scheduled').length;
+  document.getElementById('pipe-3d').textContent        = projects.filter(p => ['proposal_sent','negotiating'].includes(p.status)).length;
+  document.getElementById('pipe-converted').textContent = projects.filter(p => p.status === 'accepted').length;
 }
 
 // ═══ DATA LOADING ════════════════════════════════════════════════════════════
@@ -113,16 +121,14 @@ async function loadDashboard() {
     // Guardar TODOS los proyectos (sin límite de 10)
     allProjects = (projectsResult.success ? projectsResult.data : dashResult.data.topProjects) || [];
 
-    // Renderizar proyectos iniciales
+    // Renderizar proyectos y pipeline
     renderProjects(allProjects);
+    updatePipeline(allProjects);
 
   } catch (error) {
     console.error('[ENZO-DASH] Error:', error);
     document.getElementById('projects-list').innerHTML = `
-      <div class="error">
-        ❌ Error al cargar proyectos<br>
-        <small>${error.message}</small>
-      </div>
+      <tr><td colspan="7" class="error">❌ Error al cargar proyectos: ${error.message}</td></tr>
     `;
   }
 }
@@ -132,31 +138,27 @@ async function loadDashboard() {
  */
 function renderProjects(projects) {
   const container = document.getElementById('projects-list');
-  
+  document.getElementById('table-count').textContent = `${projects?.length || 0} registro${(projects?.length || 0) !== 1 ? 's' : ''}`;
+
   if (!projects || projects.length === 0) {
-    container.innerHTML = `
-      <div class="empty">
-        No hay proyectos que coincidan con los filtros seleccionados
-      </div>
-    `;
+    container.innerHTML = `<tr><td colspan="7" class="empty">No hay proyectos que coincidan con los filtros.</td></tr>`;
     return;
   }
-  
+
   container.innerHTML = projects.map(project => `
-    <div class="project-row">
-      <div class="project-code">${project.project_code || '-'}</div>
-      
-      <div class="project-info">
-        <div class="project-type">${project.project_type || 'Proyecto'}</div>
-        <div class="project-client">${project.client_name || 'Cliente'}</div>
-        ${project.company ? `<div class="project-company">🏢 ${project.company}</div>` : ''}
-      </div>
-      
-      <div>${getUrgencyBadge(project.urgency)}</div>
-      <div>${getStatusBadge(project.status)}</div>
-      <div class="project-amount">${formatPrice(project.proposal_amount)}</div>
-      <div class="project-date">${formatDate(project.created_at)}</div>
-    </div>
+    <tr>
+      <td><span class="code">${project.project_code || '-'}</span></td>
+      <td>
+        <div class="client-name">${project.client_name || '-'}</div>
+        ${project.company ? `<div class="client-sub">🏢 ${project.company}</div>` : ''}
+        ${project.email   ? `<div class="client-sub">✉️ ${project.email}</div>` : ''}
+      </td>
+      <td>${project.project_type || '-'}</td>
+      <td>${getUrgencyBadge(project.urgency)}</td>
+      <td>${getStatusBadge(project.status)}</td>
+      <td><span class="amount">${formatPrice(project.proposal_amount)}</span></td>
+      <td><span class="date-cell">${formatDate(project.created_at)}</span></td>
+    </tr>
   `).join('');
 }
 

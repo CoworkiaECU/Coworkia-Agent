@@ -25,11 +25,11 @@
     .nav-btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 14px; background: white;
-      border: 2px solid #DC2626; color: #DC2626;
+      border: 2px solid #8b5cf6; color: #8b5cf6;
       text-decoration: none; border-radius: 8px;
       font-size: 13px; font-weight: 600; transition: all 0.2s;
     }
-    .nav-btn:hover { background: #DC2626; color: white; transform: translateY(-2px); }
+    .nav-btn:hover { background: #8b5cf6; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
     .nav-btn.current { background: #DC2626; color: white; border-color: #DC2626; }
     .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
     header h1 { font-size: 28px; color: #DC2626; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
@@ -43,7 +43,7 @@
     .stat-card {
       background: white; padding: 22px 24px;
       border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-top: 4px solid #DC2626;
+      border-left: 4px solid #DC2626;
     }
     .stat-label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
     .stat-value { font-size: 34px; font-weight: 800; color: #DC2626; }
@@ -104,6 +104,14 @@
     .loading { color: #DC2626; }
     .error { color: #dc2626; }
     .empty { color: #9ca3af; }
+    .refresh-btn {
+      position: fixed; bottom: 30px; right: 30px;
+      background: white; color: #DC2626; border: 2px solid #DC2626;
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s;
+    }
+    .refresh-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .filters-panel { flex-direction: column; }
@@ -176,10 +184,31 @@
       </div>
     </div>
 
+    <!-- Pipeline -->
+    <div class="stats-grid" style="margin-bottom: 20px;">
+      <div class="stat-card" style="border-left-color: #f97316;">
+        <div class="stat-label">⏳ Pendientes</div>
+        <div class="stat-value" id="pipe-active" style="color: #f97316;">-</div>
+        <div class="stat-sublabel">Sin respuesta</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #8b5cf6;">
+        <div class="stat-label">📧 Cotizados</div>
+        <div class="stat-value" id="pipe-24h" style="color: #8b5cf6;">-</div>
+        <div class="stat-sublabel">Presupuesto enviado</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #6b7280;">
+        <div class="stat-label">🔧 En Proceso</div>
+        <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
+        <div class="stat-sublabel">Trabajo en curso</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #DC2626;">
+        <div class="stat-label">✅ Completados</div>
+        <div class="stat-value" id="pipe-converted" style="color: #DC2626;">-</div>
+        <div class="stat-sublabel">Entregados</div>
+      </div>
+    </div>
+
     <div class="filters-panel">
-      <div class="filter-group">
-        <label>Estado</label>
-        <select id="filter-status">
           <option value="">Todos</option>
           <option value="pending">⏳ Pendiente</option>
           <option value="quoted">📧 Cotizado</option>
@@ -193,7 +222,6 @@
         <label>Buscar</label>
         <input type="text" id="search" placeholder="Nombre, código, vehículo...">
       </div>
-      <button class="btn-refresh" onclick="loadQuotes()">↺ Actualizar</button>
     </div>
 
     <div class="table-wrapper">
@@ -207,6 +235,9 @@
     </div>
   </div>
 
+  <button class="refresh-btn" onclick="loadStats();loadQuotes();" title="Actualizar">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+  </button>
   <script src="/js/axel-dashboard.js"></script>
 </body>
 </html>

@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proyectos MarketingLab - Enzo Dashboard</title>
-  
+  <title>Dashboard Proyectos - Enzo</title>
   <style>
     * {
       margin: 0;
@@ -13,11 +12,11 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(145deg, #0D1B2A 0%, #0A1520 100%);
-      min-height: 100vh;
-      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #00897B 0%, #004D40 100%);
+      color: #1f2937;
       padding: 20px;
+      min-height: 100vh;
     }
 
     .container {
@@ -40,23 +39,23 @@
     .nav-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      background: rgba(0, 194, 160, 0.12);
-      border: 1px solid rgba(0, 194, 160, 0.3);
-      border-radius: 10px;
-      color: #00E5C0;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #8b5cf6;
+      color: #8b5cf6;
       text-decoration: none;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
     }
 
     .nav-btn:hover {
-      background: rgba(0, 194, 160, 0.2);
-      border-color: #00C2A0;
+      background: #8b5cf6;
+      color: white;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 194, 160, 0.3);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
     }
 
     .nav-btn svg {
@@ -65,27 +64,23 @@
     }
 
     .nav-btn.current {
-      background: #00C2A0;
-      color: #0A0E1A;
-      border-color: #00C2A0;
+      background: #00897B;
+      color: white;
+      border-color: #00897B;
     }
 
     h1 {
+      color: #00897B;
       font-size: 32px;
-      font-weight: 800;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #00E5C0, #00C2A0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 14px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 30px;
+      color: #6b7280;
+      font-size: 16px;
     }
 
     /* ═══ STATS CARDS ═══ */
@@ -97,257 +92,148 @@
     }
 
     .stat-card {
-      background: rgba(0, 194, 160, 0.08);
-      border: 1px solid rgba(0, 194, 160, 0.2);
-      border-radius: 16px;
+      background: white;
+      border-radius: 12px;
       padding: 24px;
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 194, 160, 0.2);
-      border-color: rgba(0, 194, 160, 0.4);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #00897B;
     }
 
     .stat-label {
-      color: #00E5C0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
       text-transform: uppercase;
-      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
     }
 
     .stat-value {
+      color: #00897B;
       font-size: 36px;
-      font-weight: 800;
-      margin-bottom: 6px;
-      color: #fff;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .stat-sublabel {
-      color: rgba(255, 255, 255, 0.5);
+      color: #9ca3af;
       font-size: 12px;
+      margin-top: 4px;
     }
 
     /* ═══ FILTERS ═══ */
     .filters {
-      background: rgba(0, 194, 160, 0.06);
-      border: 1px solid rgba(0, 194, 160, 0.15);
-      border-radius: 14px;
+      background: white;
+      border-radius: 12px;
       padding: 20px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       display: flex;
       gap: 15px;
-      flex-wrap: wrap;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      min-width: 160px;
+      gap: 5px;
     }
 
-    .filter-label {
-      color: #00E5C0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    .filter-group label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
     }
 
-    .filter-group select,
-    .filter-group input {
-      padding: 10px 14px;
-      background: rgba(13, 27, 42, 0.8);
-      border: 1px solid rgba(0, 194, 160, 0.3);
-      border-radius: 8px;
-      color: #fff;
+    select, input {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
       font-size: 14px;
+      background: white;
+      color: #1f2937;
+    }
+
+    select:focus, input:focus {
       outline: none;
-      transition: all 0.2s ease;
+      border-color: #00897B;
+      box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1);
     }
 
-    .filter-group select:focus,
-    .filter-group input:focus {
-      border-color: #00C2A0;
-      box-shadow: 0 0 0 3px rgba(0, 194, 160, 0.1);
+    button {
+      background: #00897B;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    /* ═══ PROJECTS TABLE ═══ */
-    .projects-container {
-      background: rgba(0, 194, 160, 0.05);
-      border: 1px solid rgba(0, 194, 160, 0.15);
-      border-radius: 16px;
+    button:hover { background: #004D40; }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
 
-    .table-header {
-      background: rgba(0, 194, 160, 0.12);
-      padding: 18px 24px;
-      display: grid;
-      grid-template-columns: 100px 1fr 150px 120px 120px 140px;
-      gap: 15px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #00E5C0;
-      border-bottom: 1px solid rgba(0, 194, 160, 0.2);
-    }
-
-    .project-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 150px 120px 120px 140px;
-      gap: 15px;
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(0, 194, 160, 0.1);
-      align-items: center;
-      transition: all 0.2s ease;
-    }
-
-    .project-row:hover {
-      background: rgba(0, 194, 160, 0.08);
-    }
-
-    .project-code {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      font-weight: 700;
-      color: #00E5C0;
-      background: rgba(0, 194, 160, 0.15);
-      padding: 6px 10px;
-      border-radius: 6px;
-      text-align: center;
-    }
-
-    .project-info {
+    .table-top {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid #f3f4f6;
     }
 
-    .project-type {
-      font-weight: 700;
-      font-size: 15px;
-      color: #fff;
+    .section-title { font-size: 16px; font-weight: 700; color: #1f2937; }
+    .table-count   { font-size: 13px; color: #6b7280; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
+    th    { text-align: left; padding: 16px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+    td    { padding: 16px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+    tr:hover { background: #f9fafb; }
+
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-pending           { background: #fef3c7; color: #92400e; }
+    .badge-meeting_scheduled { background: #e0e7ff; color: #3730a3; }
+    .badge-proposal_sent     { background: #dbeafe; color: #1e40af; }
+    .badge-accepted          { background: #bbf7d0; color: #15803d; }
+    .badge-negotiating       { background: #f3e8ff; color: #6d28d9; }
+    .badge-cancelled         { background: #fee2e2; color: #991b1b; }
+    .badge-urgente           { background: #fee2e2; color: #991b1b; }
+    .badge-medium            { background: #fef3c7; color: #92400e; }
+    .badge-normal-u          { background: #f3f4f6; color: #6b7280; }
+
+    .client-name { font-weight: 600; color: #111827; }
+    .client-sub  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+    .code        { font-family: monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .amount      { font-weight: 600; color: #00897B; }
+    .date-cell   { color: #6b7280; font-size: 13px; }
+
+    .loading { text-align: center; padding: 40px; color: #6b7280; font-size: 14px; }
+    .error   { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 8px; margin: 20px; }
+    .empty   { text-align: center; padding: 60px 20px; color: #6b7280; }
+
+    .refresh-btn {
+      position: fixed; bottom: 30px; right: 30px;
+      background: white; color: #00897B; border: 2px solid #00897B;
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s;
     }
-
-    .project-client {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .project-company {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .urgency-badge {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .urgency-urgent { background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.4); }
-    .urgency-medium { background: rgba(251, 191, 36, 0.2); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.4); }
-    .urgency-normal { background: rgba(0, 194, 160, 0.2); color: #00E5C0; border: 1px solid rgba(0, 194, 160, 0.4); }
-
-    .status-badge {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .status-pending { background: rgba(251, 191, 36, 0.2); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.4); }
-    .status-meeting_scheduled { background: rgba(59, 130, 246, 0.2); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.4); }
-    .status-proposal_sent { background: rgba(168, 85, 247, 0.2); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.4); }
-    .status-accepted { background: rgba(34, 197, 94, 0.2); color: #22C55E; border: 1px solid rgba(34, 197, 94, 0.4); }
-    .status-cancelled { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.4); }
-
-    .project-amount {
-      font-weight: 700;
-      font-size: 16px;
-      color: #00E5C0;
-    }
-
-    .project-date {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    /* ═══ LOADING / EMPTY STATES ═══ */
-    .loading,
-    .error,
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .loading::before {
-      content: '⚡';
-      font-size: 48px;
-      display: block;
-      margin-bottom: 16px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.1); }
-    }
-
-    .error {
-      color: #EF4444;
-    }
-
-    .empty::before {
-      content: '📊';
-      font-size: 48px;
-      display: block;
-      margin-bottom: 16px;
-    }
-
-    /* ═══ RESPONSIVE ═══ */
-    @media (max-width: 1024px) {
-      .table-header,
-      .project-row {
-        grid-template-columns: 90px 1fr 110px 100px;
-        font-size: 12px;
-      }
-
-      .project-amount,
-      .project-date {
-        display: none;
-      }
-    }
+    .refresh-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
 
     @media (max-width: 768px) {
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .table-header {
-        display: none;
-      }
-
-      .project-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 16px;
-      }
+      .stats-grid { grid-template-columns: 1fr; }
+      .filters { flex-direction: column; align-items: stretch; }
+      table { font-size: 12px; }
+      th, td { padding: 10px; }
     }
   </style>
 </head>
@@ -389,53 +275,77 @@
         </a>
       </div>
 
-      <h1>🎯 Proyectos MarketingLab</h1>
-      <div class="subtitle">Dashboard Enzo — Marketing Digital IA</div>
+      <h1>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Dashboard de Proyectos - Enzo
+      </h1>
+      <p class="subtitle">MarketingLab — Proyectos de Marketing Digital e IA</p>
     </header>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid" id="stats-grid">
+    <!-- Stats principales -->
+    <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Proyectos Este Mes</div>
+        <div class="stat-label">Proyectos este Mes</div>
         <div class="stat-value" id="stat-month-projects">-</div>
-        <div class="stat-sublabel">Total del mes actual</div>
+        <div class="stat-sublabel">Últimos 30 días</div>
       </div>
-      
       <div class="stat-card">
         <div class="stat-label">Propuestas Enviadas</div>
         <div class="stat-value" id="stat-proposals">-</div>
         <div class="stat-sublabel">Este mes</div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-label">Proyectos Aceptados</div>
+        <div class="stat-label">Aceptados</div>
         <div class="stat-value" id="stat-accepted">-</div>
-        <div class="stat-sublabel">Este mes</div>
+        <div class="stat-sublabel">Proyectos confirmados</div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-label">Revenue Potencial</div>
-        <div class="stat-value" id="stat-revenue">$0</div>
-        <div class="stat-sublabel">Propuestas del mes</div>
+        <div class="stat-label">Ingresos</div>
+        <div class="stat-value" id="stat-revenue">-</div>
+        <div class="stat-sublabel">Este mes</div>
       </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Pipeline de estado -->
+    <div class="stats-grid" style="margin-bottom: 20px;">
+      <div class="stat-card" style="border-left-color: #f97316;">
+        <div class="stat-label">⏳ Pendientes</div>
+        <div class="stat-value" id="pipe-active" style="color: #f97316;">-</div>
+        <div class="stat-sublabel">Esperando acción</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #8b5cf6;">
+        <div class="stat-label">📅 Reuniones</div>
+        <div class="stat-value" id="pipe-24h" style="color: #8b5cf6;">-</div>
+        <div class="stat-sublabel">Cita agendada</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #6b7280;">
+        <div class="stat-label">📧 Propuestas</div>
+        <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
+        <div class="stat-sublabel">Enviadas / Negociando</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #00897B;">
+        <div class="stat-label">✅ Aceptados</div>
+        <div class="stat-value" id="pipe-converted" style="color: #00897B;">-</div>
+        <div class="stat-sublabel">Proyectos ganados</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
     <div class="filters">
       <div class="filter-group">
-        <label class="filter-label">Estado</label>
+        <label>Estado</label>
         <select id="filter-status">
-          <option value="">Todos</option>
+          <option value="">Todos los estados</option>
           <option value="pending">Pendiente</option>
-          <option value="meeting_scheduled">Reunión Agendada</option>
+          <option value="meeting_scheduled">Reunión</option>
           <option value="proposal_sent">Propuesta Enviada</option>
+          <option value="negotiating">Negociando</option>
           <option value="accepted">Aceptado</option>
           <option value="cancelled">Cancelado</option>
         </select>
       </div>
-
       <div class="filter-group">
-        <label class="filter-label">Urgencia</label>
+        <label>Urgencia</label>
         <select id="filter-urgency">
           <option value="">Todas</option>
           <option value="Urgente">🔥 Urgente</option>
@@ -443,11 +353,10 @@
           <option value="Normal">📅 Normal</option>
         </select>
       </div>
-
       <div class="filter-group">
-        <label class="filter-label">Tipo de Proyecto</label>
+        <label>Tipo de Proyecto</label>
         <select id="filter-type">
-          <option value="">Todos</option>
+          <option value="">Todos los tipos</option>
           <option value="Campaña Digital">Campaña Digital</option>
           <option value="Automatización IA">Automatización IA</option>
           <option value="Software a Medida">Software a Medida</option>
@@ -455,29 +364,42 @@
           <option value="Consultoría">Consultoría</option>
         </select>
       </div>
-
       <div class="filter-group">
-        <label class="filter-label">Buscar</label>
-        <input type="text" id="search" placeholder="Empresa, cliente, email...">
+        <label>Buscar</label>
+        <input type="text" id="search" placeholder="Nombre, empresa, código...">
       </div>
     </div>
 
-    <!-- Projects Table -->
-    <div class="projects-container">
-      <div class="table-header">
-        <div>Código</div>
-        <div>Proyecto / Cliente</div>
-        <div>Urgencia</div>
-        <div>Estado</div>
-        <div>Propuesta</div>
-        <div>Fecha</div>
+    <!-- Tabla de proyectos -->
+    <div class="table-container">
+      <div class="table-top">
+        <div class="section-title">Proyectos de Marketing</div>
+        <div class="table-count" id="table-count"></div>
       </div>
-      
-      <div id="projects-list">
-        <div class="loading">Cargando proyectos...</div>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Tipo de Proyecto</th>
+            <th>Urgencia</th>
+            <th>Estado</th>
+            <th>Propuesta</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="projects-list">
+          <tr><td colspan="7" class="loading">Cargando proyectos...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
+
+  <button class="refresh-btn" onclick="loadDashboard()" title="Actualizar">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/>
+    </svg>
+  </button>
 
   <script src="/js/enzo-dashboard.js"></script>
 </body>

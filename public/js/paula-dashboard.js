@@ -1,5 +1,14 @@
 const API_BASE = window.location.origin;
 let currentFilters = { status: '', operationType: '', search: '' };
+let allLeads = [];
+
+// ══ PIPELINE ══════════════════════════════════════════════════════════════════════
+function updatePipeline() {
+  document.getElementById('pipe-active').textContent    = allLeads.filter(l => l.status === 'pending').length;
+  document.getElementById('pipe-24h').textContent       = allLeads.filter(l => l.status === 'viewing_scheduled').length;
+  document.getElementById('pipe-3d').textContent        = allLeads.filter(l => l.status === 'negotiating').length;
+  document.getElementById('pipe-converted').textContent = allLeads.filter(l => l.status === 'closed').length;
+}
 
 function formatDate(ds) {
   if (!ds) return '-';
@@ -64,6 +73,8 @@ async function loadLeads() {
     if (!result.ok) throw new Error(result.error || 'Error desconocido');
 
     const leads = result.data || [];
+    allLeads = leads;
+    updatePipeline();
     document.getElementById('table-count').textContent = `${leads.length} registro${leads.length !== 1 ? 's' : ''}`;
 
     if (leads.length === 0) {

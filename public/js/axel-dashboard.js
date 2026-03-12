@@ -12,11 +12,16 @@ function initials(name) {
 }
 
 // ── PIPELINE ───────────────────────────────────────────────────────────────────
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
 function updatePipeline() {
-  document.getElementById('pipe-pending').textContent     = allQuotes.filter(q => q.status === 'pending').length;
-  document.getElementById('pipe-quoted').textContent      = allQuotes.filter(q => q.status === 'quoted').length;
-  document.getElementById('pipe-in_progress').textContent = allQuotes.filter(q => q.status === 'in_progress').length;
-  document.getElementById('pipe-completed').textContent   = allQuotes.filter(q => q.status === 'completed').length;
+  setEl('pipe-pending',     allQuotes.filter(q => q.status === 'pending').length);
+  setEl('pipe-quoted',      allQuotes.filter(q => q.status === 'quoted').length);
+  setEl('pipe-in_progress', allQuotes.filter(q => q.status === 'in_progress').length);
+  setEl('pipe-completed',   allQuotes.filter(q => q.status === 'completed').length);
 }
 
 // ── FORMAT HELPERS ─────────────────────────────────────────────────────────────
@@ -59,12 +64,11 @@ async function loadStats() {
     const result = await res.json();
     if (!result.ok) return;
     const d = result.data;
-    document.getElementById('stat-total').textContent = d.total     || 0;
-    document.getElementById('stat-month').textContent = d.thisMonth || 0;
-    document.getElementById('stat-week').textContent  = d.thisWeek  || 0;
-    document.getElementById('stat-avg').textContent   = d.avgQuote > 0 ? formatMoney(d.avgQuote) : '-';
-    const revEl = document.getElementById('header-revenue');
-    if (revEl) revEl.textContent = d.totalRevenue > 0 ? formatMoney(d.totalRevenue) : '$0';
+    setEl('stat-total', d.total     || 0);
+    setEl('stat-month', d.thisMonth || 0);
+    setEl('stat-week',  d.thisWeek  || 0);
+    setEl('stat-avg',   d.avgQuote > 0 ? formatMoney(d.avgQuote) : '-');
+    setEl('header-revenue', d.totalRevenue > 0 ? formatMoney(d.totalRevenue) : '$0');
   } catch (err) { console.error('[AXEL-DASH] stats error:', err); }
 }
 
@@ -137,8 +141,7 @@ async function loadQuotes() {
     const quotes = result.data || [];
     allQuotes = quotes;
     updatePipeline();
-    document.getElementById('table-count').textContent =
-      `${quotes.length} cotizaci${quotes.length !== 1 ? 'ones' : 'ón'}`;
+    setEl('table-count', `${quotes.length} cotizaci${quotes.length !== 1 ? 'ones' : 'ón'}`);
 
     if (quotes.length === 0) {
       container.innerHTML = `

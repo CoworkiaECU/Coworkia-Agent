@@ -10,6 +10,7 @@ const router = express.Router();
 
 // ── GET /api/axel/quotes ──────────────────────────────────────────────────────
 router.get('/quotes', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     await databaseService.ensureInitialized();
     const { status, damageType, search, limit = 200, offset = 0 } = req.query;
@@ -42,6 +43,7 @@ router.get('/quotes', async (req, res) => {
 
 // ── GET /api/axel/quotes-stats ────────────────────────────────────────────────
 router.get('/quotes-stats', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     await databaseService.ensureInitialized();
 

@@ -60,7 +60,7 @@ function statusBadge(status) {
 // ── STATS ──────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const res    = await fetch(`${API_BASE}/api/axel/quotes-stats`);
+    const res    = await fetch(`${API_BASE}/api/axel/quotes-stats`, { cache: 'no-store' });
     const result = await res.json();
     if (!result.ok) return;
     const d = result.data;
@@ -134,7 +134,7 @@ async function loadQuotes() {
   if (currentFilters.search) params.set('search', currentFilters.search);
 
   try {
-    const res    = await fetch(`${API_BASE}/api/axel/quotes?${params}`);
+    const res    = await fetch(`${API_BASE}/api/axel/quotes?${params}`, { cache: 'no-store' });
     const result = await res.json();
     if (!result.ok) throw new Error(result.error || 'Error desconocido');
 

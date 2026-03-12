@@ -181,10 +181,10 @@ async function fetchBestDemoCase() {
 
       if (photoUrls.length > 0) {
         console.log('[AXEL-DEMO] ✅ Caso real recuperado de axel_quotes, fotos:', photoUrls.length);
+        const safeBrand = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
+        const safeModel = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
+        const safeYear  = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
         return {
-          const safeBrand = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
-          const safeModel = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
-          const safeYear  = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
           vehicleData: {
             marca: safeBrand,
             modelo: safeModel,
@@ -231,10 +231,10 @@ async function fetchBestDemoCase() {
 
       if (photoUrls.length > 0) {
         console.log('[AXEL-DEMO] ✅ Caso real recuperado de collision_quotes, fotos:', photoUrls.length);
-          const b2 = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
-          const m2 = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
-          const y2 = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
-          return {
+        const b2 = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
+        const m2 = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
+        const y2 = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
+        return {
           vehicleData: {
             marca: b2,
             modelo: m2,

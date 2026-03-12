@@ -458,6 +458,21 @@ class PostgresAdapter {
       `);
 
       await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS price_min DECIMAL(10,2);
+      `);
+
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS price_max DECIMAL(10,2);
+      `);
+
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
+      `);
+
+      await client.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS ux_collision_quotes_quote_code
         ON collision_quotes(quote_code)
         WHERE quote_code IS NOT NULL;

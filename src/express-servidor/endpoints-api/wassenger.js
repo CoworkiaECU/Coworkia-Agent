@@ -1458,7 +1458,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           try {
             await enzoRepository.saveMarketingLead({
               projectCode: quoteCode,
-              userId: result.email, // usamos email como userId
+              userId: userId, // admin phone — tiene FK válido en users
               projectType: result.nivel || 'Automatización IA',
               company: result.empresa || null,
               clientName: result.contacto || 'Cliente',
@@ -1470,7 +1470,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             });
             console.log(`[BOSS-CMD] ✅ Proyecto guardado en marketing_leads: ${quoteCode}`);
           } catch (err) {
-            console.error('[BOSS-CMD] ⚠️ Error guardando en marketing_leads:', err);
+            console.error('[BOSS-CMD] ⚠️ Error guardando en marketing_leads:', err.message);
           }
         }
         

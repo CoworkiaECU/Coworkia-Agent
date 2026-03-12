@@ -1345,7 +1345,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             try {
               await saveLegalLead({
                 consultationCode: quoteCode,
-                userId:           quoteData.telefono || userId,
+                userId:           userId, // admin phone — FK válido en users
                 consultationType: result.areaLabel || quoteData.area,
                 company:          quoteData.empresa || null,
                 ruc:              null,
@@ -1398,7 +1398,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               await saveCollisionQuote({
                 id:               uuidv4Axel(),
                 quoteCode:        result.quoteCode || quoteCode,
-                userId:           quoteData.telefono || userId,
+                userId:           userId, // admin phone — FK válido en users
                 damageType:       'Colisión',
                 clientName:       quoteData.nombre,
                 vehicleBrand:     result.vehicleData?.marca || null,
@@ -1515,7 +1515,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               const { v4: uuidv4 } = await import('uuid');
               await saveRealEstateLead({
                 id:            uuidv4(),
-                userId:        quoteData.telefono || userId,
+                userId:        userId, // admin phone — FK válido en users
                 operationType: 'Compra',
                 propertyType:  result.propiedad || 'Propiedad',
                 preferredZone: 'El Morenal',
@@ -1633,7 +1633,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           try {
             await saveInsuranceLead({
               quoteCode:     quoteCode,
-              userId:        result.telefono || userId,
+              userId:        userId, // admin phone — FK válido en users
               insuranceType: 'Vehicular',
               city:          null,
               commercialValue: null,

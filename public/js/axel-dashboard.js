@@ -2,14 +2,24 @@ const API_BASE = window.location.origin;
 let currentFilters = { status: '', search: '' };
 let allQuotes = [];
 
-// ══ PIPELINE ══════════════════════════════════════════════════════════════════════
-function updatePipeline() {
-  document.getElementById('pipe-active').textContent    = allQuotes.filter(q => q.status === 'pending').length;
-  document.getElementById('pipe-24h').textContent       = allQuotes.filter(q => q.status === 'quoted').length;
-  document.getElementById('pipe-3d').textContent        = allQuotes.filter(q => q.status === 'in_progress').length;
-  document.getElementById('pipe-converted').textContent = allQuotes.filter(q => q.status === 'completed').length;
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  return parts.length >= 2
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
 }
 
+// ── PIPELINE ───────────────────────────────────────────────────────────────────
+function updatePipeline() {
+  document.getElementById('pipe-pending').textContent     = allQuotes.filter(q => q.status === 'pending').length;
+  document.getElementById('pipe-quoted').textContent      = allQuotes.filter(q => q.status === 'quoted').length;
+  document.getElementById('pipe-in_progress').textContent = allQuotes.filter(q => q.status === 'in_progress').length;
+  document.getElementById('pipe-completed').textContent   = allQuotes.filter(q => q.status === 'completed').length;
+}
+
+// ── FORMAT HELPERS ─────────────────────────────────────────────────────────────
 function formatDate(ds) {
   if (!ds) return '-';
   try {
@@ -24,13 +34,14 @@ function formatDate(ds) {
 }
 
 function formatMoney(val) {
-  if (!val && val !== 0) return '-';
+  if (val == null || val === '') return '-';
   return `$${parseFloat(val).toLocaleString('es-EC', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 function statusBadge(status) {
   const map = {
     pending:     ['badge-pending',     '⏳ Pendiente'],
+    inspecting:  ['badge-inspecting',  '🔍 Inspeccionando'],
     quoted:      ['badge-quoted',      '📧 Cotizado'],
     accepted:    ['badge-accepted',    '✅ Aceptado'],
     in_progress: ['badge-in_progress', '🔧 En Proceso'],
@@ -41,7 +52,7 @@ function statusBadge(status) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
-// ── STATS ─────────────────────────────────────────────────────────────────────
+// ── STATS ──────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const res    = await fetch(`${API_BASE}/api/axel/quotes-stats`);
@@ -52,13 +63,67 @@ async function loadStats() {
     document.getElementById('stat-month').textContent = d.thisMonth || 0;
     document.getElementById('stat-week').textContent  = d.thisWeek  || 0;
     document.getElementById('stat-avg').textContent   = d.avgQuote > 0 ? formatMoney(d.avgQuote) : '-';
+    const revEl = document.getElementById('header-revenue');
+    if (revEl) revEl.textContent = d.totalRevenue > 0 ? formatMoney(d.totalRevenue) : '$0';
   } catch (err) { console.error('[AXEL-DASH] stats error:', err); }
 }
 
-// ── QUOTES ────────────────────────────────────────────────────────────────────
+// ── CARD RENDERER ──────────────────────────────────────────────────────────────
+function renderCard(q) {
+  const vehicleLine = [q.vehicle_brand, q.vehicle_model].filter(Boolean).join(' ') || 'Vehículo sin datos';
+  const year        = q.vehicle_year ? `· ${q.vehicle_year}` : '';
+  const priceHtml   = (q.price_min != null && q.price_max != null)
+    ? `${formatMoney(q.price_min)} – ${formatMoney(q.price_max)}`
+    : (q.price_min != null ? `Desde ${formatMoney(q.price_min)}` : 'Sin cotización aún');
+  const contact = q.email || q.phone || q.user_phone || '';
+  const damage  = q.damage_type || 'Daño no especificado';
+
+  return `
+    <div class="quote-card">
+      <div class="quote-card-header">
+        <div>
+          <div class="vehicle-name">🚗 ${vehicleLine}</div>
+          <div class="vehicle-year">${year}</div>
+        </div>
+        <div class="quote-code-badge">${q.quote_code || '-'}</div>
+      </div>
+      <div class="quote-card-body">
+        <div class="quote-client">
+          <div class="client-avatar">${initials(q.client_name)}</div>
+          <div class="client-info">
+            <div class="client-name">${q.client_name || 'Cliente no identificado'}</div>
+            ${contact ? `<div class="client-contact">${contact}</div>` : ''}
+          </div>
+        </div>
+        <div class="quote-details">
+          <div class="detail-item">
+            <div class="detail-label">Tipo de Daño</div>
+            <div class="detail-value"><span class="damage-tag">${damage}</span></div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Estado</div>
+            <div class="detail-value">${statusBadge(q.status)}</div>
+          </div>
+        </div>
+        <div class="price-display">
+          <div>
+            <div class="price-label">Rango de Cotización</div>
+            <div class="price-range">${priceHtml}</div>
+          </div>
+          <span style="font-size:22px;">💰</span>
+        </div>
+      </div>
+      <div class="quote-card-footer">
+        <span class="date-label">📅 ${formatDate(q.created_at)}</span>
+        ${q.photo_urls ? `<span style="font-size:11px;color:#9ca3af;font-weight:600;">📸 Fotos adjuntas</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── QUOTES ─────────────────────────────────────────────────────────────────────
 async function loadQuotes() {
   const container = document.getElementById('quotes-container');
-  container.innerHTML = '<div class="loading">Cargando cotizaciones de Axel...</div>';
+  container.innerHTML = '<div class="state-block loading-state">Cargando cotizaciones...</div>';
 
   const params = new URLSearchParams({ limit: 500 });
   if (currentFilters.status) params.set('status', currentFilters.status);
@@ -72,70 +137,50 @@ async function loadQuotes() {
     const quotes = result.data || [];
     allQuotes = quotes;
     updatePipeline();
-    document.getElementById('table-count').textContent = `${quotes.length} registro${quotes.length !== 1 ? 's' : ''}`;
+    document.getElementById('table-count').textContent =
+      `${quotes.length} cotizaci${quotes.length !== 1 ? 'ones' : 'ón'}`;
 
     if (quotes.length === 0) {
-      container.innerHTML = '<div class="empty">No hay cotizaciones que coincidan con los filtros.</div>';
+      container.innerHTML = `
+        <div class="state-block empty-state">
+          <div style="font-size:48px;margin-bottom:12px;">🚗</div>
+          <div>No hay cotizaciones que coincidan con los filtros.</div>
+        </div>`;
       return;
     }
 
-    container.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Cliente</th>
-            <th>Vehículo</th>
-            <th>Tipo Daño</th>
-            <th>Rango Precio</th>
-            <th>Estado</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${quotes.map(q => `
-            <tr>
-              <td><span class="code">${q.quote_code || '-'}</span></td>
-              <td>
-                <div class="client-name">${q.client_name || '-'}</div>
-                ${q.email ? `<div class="client-sub">✉️ ${q.email}</div>` : ''}
-                ${q.phone ? `<div class="client-sub">📱 ${q.phone}</div>` : ''}
-              </td>
-              <td>
-                <div>${[q.vehicle_brand, q.vehicle_model].filter(Boolean).join(' ') || '-'}</div>
-                ${q.vehicle_year ? `<div class="client-sub">${q.vehicle_year}</div>` : ''}
-              </td>
-              <td>${q.damage_type || '-'}</td>
-              <td>
-                <span class="price-range">
-                  ${q.price_min != null && q.price_max != null
-                    ? `${formatMoney(q.price_min)} – ${formatMoney(q.price_max)}`
-                    : '-'}
-                </span>
-              </td>
-              <td>${statusBadge(q.status)}</td>
-              <td><span class="date-cell">${formatDate(q.created_at)}</span></td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>`;
+    container.innerHTML = `<div class="quotes-grid">${quotes.map(renderCard).join('')}</div>`;
   } catch (err) {
     console.error('[AXEL-DASH] quotes error:', err);
-    container.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+    container.innerHTML = `<div class="state-block error-state">❌ Error al cargar: ${err.message}</div>`;
   }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ── REFRESH ────────────────────────────────────────────────────────────────────
+function refresh() { loadStats(); loadQuotes(); }
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadQuotes();
 
-  document.getElementById('filter-status').addEventListener('change', e => {
-    currentFilters.status = e.target.value; loadQuotes();
+  // Filter pills
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilters.status = btn.dataset.status;
+      loadQuotes();
+    });
   });
+
+  // Search
   let searchTimer;
   document.getElementById('search').addEventListener('input', e => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => { currentFilters.search = e.target.value; loadQuotes(); }, 400);
+    searchTimer = setTimeout(() => {
+      currentFilters.search = e.target.value.trim();
+      loadQuotes();
+    }, 400);
   });
 });

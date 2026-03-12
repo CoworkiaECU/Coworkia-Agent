@@ -1413,7 +1413,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 clientName:       quoteData.nombre,
                 vehicleBrand:     result.vehicleData?.marca || null,
                 vehicleModel:     result.vehicleData?.modelo || null,
-                vehicleYear:      result.vehicleData?.año || null,
+                vehicleYear:      parseInt(result.vehicleData?.año) || null,
                 email:            quoteData.email,
                 phone:            quoteData.telefono || null,
                 damageDescription: `Cotización generada por Big Boss`,

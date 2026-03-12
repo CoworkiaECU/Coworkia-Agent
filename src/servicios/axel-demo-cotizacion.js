@@ -166,6 +166,8 @@ async function fetchBestDemoCase() {
         AND photo_urls::text != '[]'
         AND photo_urls::text != 'null'
         AND quote_details IS NOT NULL
+        AND vehicle_brand IS NOT NULL
+        AND vehicle_brand NOT IN ('Pendiente', 'pendiente', 'S/D', '')
       ORDER BY created_at DESC
       LIMIT 1
     `);
@@ -180,10 +182,13 @@ async function fetchBestDemoCase() {
       if (photoUrls.length > 0) {
         console.log('[AXEL-DEMO] ✅ Caso real recuperado de axel_quotes, fotos:', photoUrls.length);
         return {
+          const safeBrand = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
+          const safeModel = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
+          const safeYear  = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
           vehicleData: {
-            marca: r.vehicle_brand || 'Toyota',
-            modelo: r.vehicle_model || 'Hilux',
-            año: r.vehicle_year   || '2022',
+            marca: safeBrand,
+            modelo: safeModel,
+            año: safeYear,
           },
           damageAnalysis: typeof r.damage_analysis === 'string'
             ? JSON.parse(r.damage_analysis)
@@ -212,6 +217,8 @@ async function fetchBestDemoCase() {
       WHERE photo_urls IS NOT NULL
         AND photo_urls::text != '[]'
         AND photo_urls::text != 'null'
+        AND vehicle_brand IS NOT NULL
+        AND vehicle_brand NOT IN ('Pendiente', 'pendiente', 'S/D', '')
       ORDER BY created_at DESC
       LIMIT 1
     `);
@@ -224,11 +231,14 @@ async function fetchBestDemoCase() {
 
       if (photoUrls.length > 0) {
         console.log('[AXEL-DEMO] ✅ Caso real recuperado de collision_quotes, fotos:', photoUrls.length);
-        return {
+          const b2 = (r.vehicle_brand && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_brand)) ? r.vehicle_brand : 'Toyota';
+          const m2 = (r.vehicle_model && !['Pendiente','pendiente','S/D',''].includes(r.vehicle_model)) ? r.vehicle_model : 'Hilux';
+          const y2 = (r.vehicle_year  && !['Pendiente','pendiente','S/D',''].includes(String(r.vehicle_year))) ? String(r.vehicle_year) : '2022';
+          return {
           vehicleData: {
-            marca: r.vehicle_brand || 'Toyota',
-            modelo: r.vehicle_model || 'Hilux',
-            año: r.vehicle_year   || '2022',
+            marca: b2,
+            modelo: m2,
+            año: y2,
           },
           damageAnalysis: typeof r.damage_analysis === 'string'
             ? JSON.parse(r.damage_analysis)

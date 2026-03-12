@@ -2216,12 +2216,31 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         }
         
         // ────────────────────────────────────────────────────────────────────
-        // PASO 4: Texto normal (actualizar formulario, continuar orquestador)
+        // PASO 4: Texto normal — actualizar formulario silenciosamente
+        // Si hay sesión de fotos activa, responder con contexto directo
+        // (NO caer al orquestador LLM: no tiene contexto de las fotos y
+        //  regenera el mensaje de bienvenida pidiendo fotos de nuevo)
         // ────────────────────────────────────────────────────────────────────
-        // Actualizar formulario silenciosamente con datos del usuario
         await processAxelFormMessage(userId, processedText).catch(() => {});
-        
-        // Continuar con orquestador para respuestas conversacionales
+
+        const activeSession = await getSession(userId).catch(() => null);
+        if (activeSession && activeSession.photoCount > 0) {
+          const photoEmoji = activeSession.photoCount >= 4 ? '✅' : '📸';
+          const ackMsg = `${photoEmoji} Tengo ${activeSession.photoCount} foto(s) listas y anoté tu vehículo.\n\nEscribe *listo* cuando quieras que analice y cotice. 🚗💥`;
+          await enviarWhatsApp(userId, ackMsg);
+          await saveInteraction({
+            userId,
+            agent: 'AXEL',
+            agentName: 'Axel - PaintBull',
+            intentReason: 'vehicle_data_received',
+            input: processedText,
+            output: ackMsg,
+            meta: { photoCount: activeSession.photoCount }
+          });
+          return; // No caer al orquestador
+        }
+
+        // Sin sesión activa → continuar con orquestador para respuestas conversacionales
       }
     }
     

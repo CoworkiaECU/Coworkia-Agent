@@ -355,7 +355,7 @@ router.get('/conversations', async (req, res) => {
               FROM legal_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
            (SELECT json_build_object('status', status, 'code', project_code, 'agent', 'ENZO', 'type', project_type)
               FROM marketing_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
-           (SELECT json_build_object('status', status, 'code', quote_code, 'agent', 'PAULA', 'type', property_type)
+           (SELECT json_build_object('status', status, 'code', id::text, 'agent', 'PAULA', 'type', property_type)
               FROM real_estate_leads WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),
            (SELECT json_build_object('status', status, 'code', quote_code, 'agent', 'AXEL', 'type', damage_type)
               FROM collision_quotes WHERE user_phone = i.user_phone ORDER BY created_at DESC LIMIT 1),

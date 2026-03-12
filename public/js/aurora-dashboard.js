@@ -239,72 +239,178 @@ function resetFilters() {
   loadReservations();
 }
 
-// ─── Prospectos abandonados ────────────────────────────────────────────────
-function getEngagementBadge(level) {
-  if (level === 'hot')  return '<span style="background:#fff7ed;color:#ea580c;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">🔥 Hot</span>';
-  if (level === 'warm') return '<span style="background:#fffbeb;color:#d97706;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">🌡 Warm</span>';
-  return '<span style="background:#eff6ff;color:#2563eb;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">❄️ Cold</span>';
+// ─── Inteligencia de prospectos ───────────────────────────────────────────────
+let _allProspects = [];
+let _activeFilter = 'all';
+
+function getUrgencyLevel(p) {
+  if (p.engagement === 'hot' && (p.days_since_last ?? 0) >= 2) return 'urgent';
+  return p.engagement; // 'hot' | 'warm' | 'cold'
+}
+
+const URGENCY_STYLE = {
+  urgent: { border: '#dc2626', bg: '#fef2f2', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
+  hot:    { border: '#ea580c', bg: '#fff7ed', badge: '<span style="background:#fff7ed;color:#ea580c;border:1px solid #fdba74;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🔥 HOT</span>' },
+  warm:   { border: '#d97706', bg: '#fffbeb', badge: '<span style="background:#fffbeb;color:#d97706;border:1px solid #fcd34d;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🌡 WARM</span>' },
+  cold:   { border: '#4ECDC4', bg: '#f0fdfa', badge: '<span style="background:#f0fdfa;color:#0d9488;border:1px solid #5eead4;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
+};
+
+function getWaTemplate(rawTopics, name) {
+  const topicsStr = rawTopics.join('|').toLowerCase();
+  const label = (name && name !== 'Sin nombre') ? name.split(' ')[0] : null;
+  const greeting = label ? `Hola ${label}! ` : 'Hola! ';
+  if (/trigger @aurora|trigger @aluna|membership_interest/.test(topicsStr)) {
+    return encodeURIComponent(`${greeting}💼 ¿Sigues interesado en Coworkia? Tenemos planes de membresía con semana gratis 🎉`);
+  }
+  if (/trigger @aurora|interés reserva|reserva/.test(topicsStr)) {
+    return encodeURIComponent(`${greeting}👋 Soy Aurora de Coworkia. ¿Sigues buscando un espacio? Tenemos disponibilidad esta semana 🏢`);
+  }
+  return encodeURIComponent(`${greeting}👋 Soy Aurora de Coworkia. ¿En qué puedo ayudarte hoy?`);
+}
+
+function buildProspectCard(p) {
+  const urgency  = getUrgencyLevel(p);
+  const style    = URGENCY_STYLE[urgency] || URGENCY_STYLE.cold;
+  const name     = p.user_name  || 'Sin nombre';
+  const phone    = p.user_phone || '';
+  const days     = p.days_since_last ?? 0;
+  const msgs     = p.interaction_count || 0;
+  const score    = p.priority_score || 0;
+
+  const initials   = name.split(' ').slice(0,2).map(w => w[0] || '?').join('').toUpperCase();
+  const daysColor  = days <= 1 ? '#16a34a' : days <= 3 ? '#d97706' : '#dc2626';
+  const daysLabel  = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
+
+  const rawTopics   = Array.isArray(p.topics) ? p.topics : [];
+  const topicLabels = formatTopics(rawTopics);
+  const topicChips  = topicLabels.length
+    ? topicLabels.map(t => `<span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:99px;font-size:11px;white-space:nowrap;">${t}</span>`).join('')
+    : '<span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:99px;font-size:11px;">Sin categoría</span>';
+
+  const waTpl  = getWaTemplate(rawTopics, name);
+  const waLink = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
+
+  return `
+    <div class="prospect-card" data-urgency="${urgency}" data-engagement="${p.engagement}"
+      style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid #f3f4f6;background:white;display:flex;flex-direction:column;">
+      <div style="display:flex;padding:14px 16px;gap:12px;align-items:flex-start;border-left:4px solid ${style.border};background:${style.bg};">
+        <div style="width:40px;height:40px;border-radius:50%;background:#4ECDC4;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;color:#1f2937;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+          <div style="font-size:12px;color:#6b7280;">${phone}</div>
+        </div>
+        ${style.badge}
+      </div>
+      <div style="display:flex;border-bottom:1px solid #f3f4f6;">
+        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #f3f4f6;">
+          <div style="font-size:24px;font-weight:800;color:#1f2937;">${msgs}</div>
+          <div style="font-size:11px;color:#6b7280;">mensajes</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #f3f4f6;">
+          <div style="font-size:18px;font-weight:700;color:${daysColor};">${daysLabel}</div>
+          <div style="font-size:11px;color:#6b7280;">último</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:12px 8px;">
+          <div style="font-size:18px;font-weight:700;color:#6b7280;">${score}</div>
+          <div style="font-size:11px;color:#6b7280;">prioridad</div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #f3f4f6;min-height:38px;align-items:center;">
+        ${topicChips}
+      </div>
+      <div style="padding:12px 14px;margin-top:auto;">
+        <a href="${waLink}" target="_blank"
+          style="display:block;text-align:center;background:#25d366;color:white;padding:8px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+          💬 WhatsApp →
+        </a>
+      </div>
+    </div>`;
 }
 
 async function loadAbandoned() {
-  const tbody    = document.getElementById('abandoned-body');
-  const tableEl  = document.getElementById('abandoned-table');
-  const emptyEl  = document.getElementById('abandoned-empty');
-  const loadingEl = document.getElementById('abandoned-loading');
-  if (!tbody) return;
+  const gridEl  = document.getElementById('prospects-grid');
+  const emptyEl = document.getElementById('prospects-empty');
+  if (!gridEl) return;
 
-  loadingEl.style.display = 'block';
-  tableEl.style.display   = 'none';
-  emptyEl.style.display   = 'none';
+  gridEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af;">Cargando prospectos...</div>';
+  emptyEl.style.display = 'none';
 
   try {
     const res  = await fetch(`${API_BASE}/api/aurora/prospects/abandoned`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error desconocido');
 
-    // KPIs
-    document.getElementById('kpi-prospects-total').textContent = data.stats.total;
-    document.getElementById('kpi-prospects-hot').textContent   = data.stats.hot;
-    document.getElementById('kpi-prospects-warm').textContent  = data.stats.warm;
-    document.getElementById('kpi-prospects-cold').textContent  = data.stats.cold;
+    document.getElementById('kpi-prospects-urgent').textContent = data.stats.urgent ?? 0;
+    document.getElementById('kpi-prospects-hot').textContent    = data.stats.hot;
+    document.getElementById('kpi-prospects-warm').textContent   = data.stats.warm;
+    document.getElementById('kpi-prospects-total').textContent  = data.stats.total;
 
-    loadingEl.style.display = 'none';
+    _allProspects = data.data;
+    _activeFilter = 'all';
+    document.querySelectorAll('.pill-filter').forEach(b => {
+      const colors = { urgent:'#dc2626', hot:'#ea580c', warm:'#d97706', cold:'#2563eb', all:'white' };
+      b.style.background = b.dataset.filter === 'all' ? '#4ECDC4' : 'white';
+      b.style.color      = b.dataset.filter === 'all' ? 'white' : (colors[b.dataset.filter] || '#374151');
+    });
 
-    if (!data.data.length) {
-      emptyEl.style.display = 'block';
-      return;
-    }
-
-    tbody.innerHTML = data.data.map(p => {
-      const phone      = p.user_phone || '';
-      const name       = p.user_name  || 'Sin nombre';
-      const days       = Math.round(parseFloat(p.days_since_last) || 0);
-      const staleness  = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
-      const firstDate  = p.first_interaction ? new Date(p.first_interaction).toLocaleDateString('es-EC', { day:'2-digit', month:'short' }) : '-';
-      const waLink     = `https://wa.me/${phone.replace(/\D/g,'')}`;
-      return `
-        <tr style="border-bottom:1px solid #f3f4f6; transition:background 0.15s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
-          <td style="padding:12px 16px;">${getEngagementBadge(p.engagement)}</td>
-          <td style="padding:12px 16px;">
-            <strong style="color:#1f2937;">${name}</strong><br>
-            <small style="color:#6b7280;">${phone}</small>
-          </td>
-          <td style="padding:12px 16px; text-align:center;">
-            <span style="background:#f3f4f6; color:#374151; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${p.interaction_count}</span>
-          </td>
-          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${staleness}</td>
-          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${firstDate}</td>
-          <td style="padding:12px 16px;">
-            <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">💬 WhatsApp</a>
-          </td>
-        </tr>`;
-    }).join('');
-
-    tableEl.style.display = 'table';
+    renderProspectGrid(_allProspects);
   } catch (err) {
-    loadingEl.style.display = 'none';
+    gridEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626;">Error cargando prospectos. Revisa la consola.</div>';
     console.error('[AURORA-DASH] Error cargando prospectos:', err);
   }
+}
+
+function renderProspectGrid(prospects) {
+  const gridEl  = document.getElementById('prospects-grid');
+  const emptyEl = document.getElementById('prospects-empty');
+  if (!gridEl) return;
+  if (!prospects.length) {
+    gridEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  gridEl.innerHTML = prospects.map(buildProspectCard).join('');
+}
+
+function filterProspects(filter) {
+  _activeFilter = filter;
+  document.querySelectorAll('.pill-filter').forEach(b => {
+    const active   = b.dataset.filter === filter;
+    const colors   = { urgent:'#dc2626', hot:'#ea580c', warm:'#d97706', cold:'#2563eb', all:'#374151' };
+    b.style.background  = active ? '#4ECDC4' : 'white';
+    b.style.color       = active ? 'white' : (colors[b.dataset.filter] || '#374151');
+    b.style.borderColor = active ? '#4ECDC4' : '';
+  });
+  const filtered = filter === 'all'    ? _allProspects
+    : filter === 'urgent' ? _allProspects.filter(p => getUrgencyLevel(p) === 'urgent')
+    : _allProspects.filter(p => p.engagement === filter);
+  renderProspectGrid(filtered);
+}
+
+function copyCampaignList() {
+  if (!_allProspects.length) { alert('Primero carga los prospectos.'); return; }
+  const date     = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' });
+  const urgentes = _allProspects.filter(p => getUrgencyLevel(p) === 'urgent');
+  const hots     = _allProspects.filter(p => p.engagement === 'hot' && getUrgencyLevel(p) !== 'urgent');
+  const warms    = _allProspects.filter(p => p.engagement === 'warm');
+  const colds    = _allProspects.filter(p => p.engagement === 'cold');
+  const fmt      = p => {
+    const name   = p.user_name  || 'Sin nombre';
+    const phone  = p.user_phone || '';
+    const chips  = formatTopics(Array.isArray(p.topics) ? p.topics : []).slice(0,2).join(', ') || '—';
+    return `• ${name} — ${phone} — ${chips}`;
+  };
+  let text = `📋 Campaña Aurora · ${date}\nTotal: ${_allProspects.length} prospectos\n`;
+  if (urgentes.length) text += `\n🚨 URGENTES — ${urgentes.length}\n` + urgentes.map(fmt).join('\n');
+  if (hots.length)     text += `\n\n🔥 HOT — ${hots.length}\n`        + hots.map(fmt).join('\n');
+  if (warms.length)    text += `\n\n🌡 WARM — ${warms.length}\n`       + warms.map(fmt).join('\n');
+  if (colds.length)    text += `\n\n❄️ COLD — ${colds.length}\n`       + colds.map(fmt).join('\n');
+
+  navigator.clipboard.writeText(text.trim()).then(() => {
+    const btn = document.getElementById('btn-copy-campaign');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✅ ¡Copiado!'; setTimeout(() => { btn.textContent = orig; }, 2200); }
+  }).catch(() => alert('No se pudo copiar al portapapeles.'));
 }
 
 

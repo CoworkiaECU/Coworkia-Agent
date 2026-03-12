@@ -459,56 +459,80 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- PROSPECTOS ABANDONADOS                                              -->
+    <!-- INTELIGENCIA DE PROSPECTOS                                          -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <div style="background:white; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); padding:24px; margin-top:28px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+      <!-- Header -->
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
         <div>
-          <h2 style="font-size:20px; color:#1f2937; margin-bottom:4px;">🎯 Prospectos sin convertir</h2>
-          <p style="font-size:13px; color:#6b7280;">Usuarios que interactuaron con Aurora pero nunca completaron una reserva. Ordenados por nivel de interés.</p>
+          <h2 style="font-size:20px; color:#1f2937; margin-bottom:4px;">🎯 Inteligencia de prospectos</h2>
+          <p style="font-size:13px; color:#6b7280;">Usuarios que interactuaron con Aurora pero no reservaron — ordenados por urgencia de conversión.</p>
         </div>
-        <button onclick="loadAbandoned()" style="font-size:13px; padding:8px 16px; background:#4ECDC4;">↺ Actualizar</button>
-      </div>
-
-      <!-- KPIs prospectos -->
-      <div id="abandoned-kpis" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:20px;">
-        <div style="background:#f0fdf4; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Total</div>
-          <div id="kpi-prospects-total" style="font-size:28px; font-weight:700; color:#4ECDC4;">–</div>
-        </div>
-        <div style="background:#fff7ed; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">🔥 Hot (5+ msgs)</div>
-          <div id="kpi-prospects-hot" style="font-size:28px; font-weight:700; color:#ea580c;">–</div>
-        </div>
-        <div style="background:#fffbeb; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">🌡 Warm (3-4 msgs)</div>
-          <div id="kpi-prospects-warm" style="font-size:28px; font-weight:700; color:#d97706;">–</div>
-        </div>
-        <div style="background:#eff6ff; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">❄️ Cold (1-2 msgs)</div>
-          <div id="kpi-prospects-cold" style="font-size:28px; font-weight:700; color:#2563eb;">–</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button id="btn-copy-campaign" onclick="copyCampaignList()"
+            style="font-size:13px; padding:8px 14px; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; border-radius:8px; cursor:pointer; font-weight:600;">
+            📋 Copiar campaña
+          </button>
+          <button onclick="loadAbandoned()"
+            style="font-size:13px; padding:8px 14px; background:#4ECDC4; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+            ↺ Actualizar
+          </button>
         </div>
       </div>
 
-      <!-- Tabla prospectos -->
-      <div style="overflow-x:auto;">
-        <table id="abandoned-table" style="width:100%; border-collapse:collapse; display:none;">
-          <thead>
-            <tr style="background:#f9fafb; border-bottom:2px solid #e5e7eb;">
-              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Calor</th>
-              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Usuario</th>
-              <th style="padding:12px 16px; text-align:center; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Mensajes</th>
-              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Último contacto</th>
-              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Primer contacto</th>
-              <th style="padding:12px 16px; text-align:left; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="abandoned-body"></tbody>
-        </table>
-        <div id="abandoned-empty" style="text-align:center; padding:40px; color:#9ca3af; display:none;">
-          <p style="font-size:32px; margin-bottom:8px;">✅</p>
-          <p>¡Sin prospectos perdidos! Todos convirtieron o no hubo interacciones.</p>
+      <!-- KPI chips urgencia -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px;">
+        <div style="background:#fef2f2; border-radius:10px; padding:14px; text-align:center; border-left:4px solid #ef4444;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🚨 Urgente</div>
+          <div id="kpi-prospects-urgent" style="font-size:30px; font-weight:700; color:#dc2626;">–</div>
+          <div style="font-size:11px; color:#9ca3af;">hot + 2+ días</div>
         </div>
+        <div style="background:#fff7ed; border-radius:10px; padding:14px; text-align:center; border-left:4px solid #ea580c;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📞 Contactar</div>
+          <div id="kpi-prospects-hot" style="font-size:30px; font-weight:700; color:#ea580c;">–</div>
+          <div style="font-size:11px; color:#9ca3af;">hot total</div>
+        </div>
+        <div style="background:#fffbeb; border-radius:10px; padding:14px; text-align:center; border-left:4px solid #d97706;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">👀 Monitorear</div>
+          <div id="kpi-prospects-warm" style="font-size:30px; font-weight:700; color:#d97706;">–</div>
+          <div style="font-size:11px; color:#9ca3af;">warm</div>
+        </div>
+        <div style="background:#f0f9ff; border-radius:10px; padding:14px; text-align:center; border-left:4px solid #4ECDC4;">
+          <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📊 Total</div>
+          <div id="kpi-prospects-total" style="font-size:30px; font-weight:700; color:#4ECDC4;">–</div>
+          <div style="font-size:11px; color:#9ca3af;">prospectos</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div id="prospect-filters" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+        <button class="pill-filter active" data-filter="all"
+          onclick="filterProspects('all')"
+          style="padding:6px 14px; border-radius:20px; border:1px solid #4ECDC4; background:#4ECDC4; color:white; font-size:13px; cursor:pointer; font-weight:600;">Todos</button>
+        <button class="pill-filter" data-filter="urgent"
+          onclick="filterProspects('urgent')"
+          style="padding:6px 14px; border-radius:20px; border:1px solid #fca5a5; background:white; color:#dc2626; font-size:13px; cursor:pointer;">🚨 Urgentes</button>
+        <button class="pill-filter" data-filter="hot"
+          onclick="filterProspects('hot')"
+          style="padding:6px 14px; border-radius:20px; border:1px solid #fb923c; background:white; color:#ea580c; font-size:13px; cursor:pointer;">🔥 Hot</button>
+        <button class="pill-filter" data-filter="warm"
+          onclick="filterProspects('warm')"
+          style="padding:6px 14px; border-radius:20px; border:1px solid #fcd34d; background:white; color:#d97706; font-size:13px; cursor:pointer;">🌡 Warm</button>
+        <button class="pill-filter" data-filter="cold"
+          onclick="filterProspects('cold')"
+          style="padding:6px 14px; border-radius:20px; border:1px solid #93c5fd; background:white; color:#2563eb; font-size:13px; cursor:pointer;">❄️ Cold</button>
+      </div>
+
+      <!-- Cuadrícula de tarjetas -->
+      <div id="prospects-grid"
+        style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;">
+      </div>
+      <div id="prospects-empty" style="display:none; text-align:center; padding:48px; color:#9ca3af;">
+        <p style="font-size:36px; margin-bottom:8px;">✅</p>
+        <p style="font-size:15px;">¡Sin prospectos pendientes! Todos convirtieron o no hubo interacciones recientes.</p>
+      </div>
+    </div>
+
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- CONVERSACIONES DE USUARIOS                                          -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->

@@ -228,16 +228,21 @@ router.get('/prospects/abandoned', async (req, res) => {
     const prospects = await databaseService.all(`
       SELECT
         i.user_phone,
-        u.name              AS user_name,
-        COUNT(i.id)         AS interaction_count,
-        MAX(i.timestamp)    AS last_interaction,
-        MIN(i.timestamp)    AS first_interaction,
-        EXTRACT(DAY FROM NOW() - MAX(i.timestamp)) AS days_since_last,
+        u.name                                                            AS user_name,
+        COUNT(i.id)::int                                                  AS interaction_count,
+        MAX(i.timestamp)                                                  AS last_interaction,
+        MIN(i.timestamp)                                                  AS first_interaction,
+        EXTRACT(DAY FROM NOW() - MAX(i.timestamp))::int                   AS days_since_last,
         CASE
           WHEN COUNT(i.id) >= 5 THEN 'hot'
           WHEN COUNT(i.id) >= 3 THEN 'warm'
           ELSE 'cold'
-        END                 AS engagement
+        END                                                               AS engagement,
+        array_agg(DISTINCT i.intent_reason)
+          FILTER (WHERE i.intent_reason IS NOT NULL
+            AND i.intent_reason NOT IN ('conversation','greeting',''))    AS topics,
+        (COUNT(i.id)::int * 3)
+          - LEAST(EXTRACT(DAY FROM NOW() - MAX(i.timestamp))::int, 30)   AS priority_score
       FROM interactions i
       LEFT JOIN users u ON u.phone_number = i.user_phone
       WHERE i.agent = 'AURORA'
@@ -247,7 +252,7 @@ router.get('/prospects/abandoned', async (req, res) => {
         )
       GROUP BY i.user_phone, u.name
       HAVING COUNT(i.id) >= 1
-      ORDER BY interaction_count DESC, last_interaction DESC
+      ORDER BY priority_score DESC, interaction_count DESC
       LIMIT 100
     `);
 
@@ -255,8 +260,10 @@ router.get('/prospects/abandoned', async (req, res) => {
     const hot     = prospects.filter(p => p.engagement === 'hot').length;
     const warm    = prospects.filter(p => p.engagement === 'warm').length;
     const cold    = prospects.filter(p => p.engagement === 'cold').length;
+    // Urgente = hot + lleva 2+ días sin contestar
+    const urgent  = prospects.filter(p => p.engagement === 'hot' && p.days_since_last >= 2).length;
 
-    return res.json({ ok: true, data: prospects, stats: { total, hot, warm, cold } });
+    return res.json({ ok: true, data: prospects, stats: { total, hot, warm, cold, urgent } });
   } catch (error) {
     console.error('[AURORA-API] Error en abandoned prospects:', error);
     return res.status(500).json({ ok: false, error: error.message });

@@ -237,6 +237,9 @@ Somos un ecosistema de agentes especializados:
 
 🎮 Pruébalo: Escribe @nombreagente + tu consulta
 
+🌐 Conoce el ecosistema completo:
+https://coworkia-agent-e97d15dac56f.herokuapp.com/
+
 Para activar IA en tu empresa, habla con @enzo 🚀"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
@@ -694,6 +697,9 @@ Conversación natural 24/7, multiidioma, con contexto e inteligencia real.
 ⚖️ @gabi - Legal/Finanzas (GR Consulting)
 
 🔥 *PRUÉBALO AHORA:* Escribe @aluna o @paula + tu consulta
+
+🌐 *CONOCE TODOS LOS AGENTES:*
+https://coworkia-agent-e97d15dac56f.herokuapp.com/
 
 💰 *DESARROLLO PERSONALIZADO:*
 Desde $350/mes - Agente entrenado para TU negocio

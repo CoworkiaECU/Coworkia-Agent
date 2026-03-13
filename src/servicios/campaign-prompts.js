@@ -109,6 +109,9 @@ Conversación natural 24/7, multiidioma, con contexto e inteligencia real.
 
 🔥 *PRUÉBALO AHORA:* Escribe @aluna o @paula + tu consulta
 
+🌐 *CONOCE TODOS LOS AGENTES:*
+https://coworkia-agent-e97d15dac56f.herokuapp.com/
+
 💰 *DESARROLLO PERSONALIZADO:*
 Desde $350/mes - Agente entrenado para TU negocio
 
@@ -136,6 +139,9 @@ Natural 24/7 conversation, multilingual, with context and real intelligence.
 
 🔥 *TRY IT NOW:* Write @aluna or @paula + your question
 
+🌐 *MEET ALL OUR AGENTS:*
+https://coworkia-agent-e97d15dac56f.herokuapp.com/
+
 💰 *CUSTOM DEVELOPMENT:*
 From $350/month - Agent trained for YOUR business
 
@@ -162,6 +168,9 @@ Conversation naturelle 24/7, multilingue, avec contexte et vraie intelligence.
 ⚖️ @gabi - Juridique/Finance (GR Consulting)
 
 🔥 *ESSAYEZ MAINTENANT:* Écrivez @aluna ou @paula + votre question
+
+🌐 *DÉCOUVREZ TOUS NOS AGENTS:*
+https://coworkia-agent-e97d15dac56f.herokuapp.com/
 
 💰 *DÉVELOPPEMENT PERSONNALISÉ:*
 Dès $350/mois - Agent formé pour VOTRE entreprise

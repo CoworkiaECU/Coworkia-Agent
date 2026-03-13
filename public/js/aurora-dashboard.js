@@ -259,7 +259,10 @@ function getWaTemplate(rawTopics, name) {
   const topicsStr = rawTopics.join('|').toLowerCase();
   const label = (name && name !== 'Sin nombre') ? name.split(' ')[0] : null;
   const greeting = label ? `Hola ${label}! ` : 'Hola! ';
-  if (/trigger @aurora|trigger @aluna|membership_interest/.test(topicsStr)) {
+  if (/virtual_agent_sales_promo/.test(topicsStr)) {
+    return encodeURIComponent(`${greeting}🤖 Escríbele esto a Aurora y descubre lo que la IA puede hacer por tu empresa:\n\n_Aurora, quiero saber ¿qué puede hacer un Agente Virtual como tú para mi empresa?_\n\nO conoce nuestro ecosistema de agentes: https://coworkia-agent-e97d15dac56f.herokuapp.com/ ✨`);
+  }
+  if (/trigger @aluna|membership_interest/.test(topicsStr)) {
     return encodeURIComponent(`${greeting}💼 ¿Sigues interesado en Coworkia? Tenemos planes de membresía con semana gratis 🎉`);
   }
   if (/trigger @aurora|interés reserva|reserva/.test(topicsStr)) {

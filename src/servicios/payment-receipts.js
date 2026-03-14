@@ -486,7 +486,9 @@ async function analyzeReceiptImage(messageData, expectedAmount, userId = null) {
                         paymentData.authorizationNumber === TEST_RECEIPT_DIEGO.authorizationCode;
     
     if (isDiegoTest) {
-      console.log('[RECEIPT] 🧪 COMPROBANTE TEST DIEGO detectado - Ignorando fecha');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[RECEIPT] 🧪 COMPROBANTE TEST DIEGO detectado - Ignorando fecha');
+      }
       paymentData.isValid = true;
       paymentData.isTestReceipt = true;
       paymentData.transactionDate = new Date().toISOString().split('T')[0]; // Usar fecha actual

@@ -26,6 +26,8 @@ async function run() {
       "UPDATE reservations SET id = 'AUR-' || substr(id, 9) WHERE id LIKE 'RES-WHY-%'"],
     ["membership_leads MEM-*→ALU",
       "UPDATE membership_leads SET membership_code = 'ALU-' || to_char(current_date, 'YYYY') || '-' || lpad(regexp_replace(membership_code, '^MEM-\\w+-0*', ''), 4, '0') WHERE membership_code LIKE 'MEM-%'"],
+    ["membership_leads MB-*→ALU",
+      "UPDATE membership_leads SET membership_code = REPLACE(membership_code, 'MB-', 'ALU-') WHERE membership_code LIKE 'MB-%'"],
     ["boss_quotes / todos los prefijos",
       `UPDATE boss_quotes SET quote_code = CASE
         WHEN quote_code LIKE 'GRC-%'  THEN REPLACE(quote_code, 'GRC-',  'GAB-')

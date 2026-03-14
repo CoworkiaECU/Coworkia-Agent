@@ -5,6 +5,14 @@
 
 import databaseService from './database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { BaseRepository } from './BaseRepository.js';
+
+const _base = new BaseRepository({
+  table:      'legal_leads',
+  codeColumn: 'consultation_code',
+  userColumn: 'user_phone',
+  logPrefix:  'GABI-REPO',
+});
 
 /**
  * 💾 Guardar lead de consultoría legal/contable
@@ -44,69 +52,17 @@ export async function saveLegalLead(leadData) {
   return { id, consultationCode };
 }
 
-/**
- * 🔍 Obtener lead por código de consulta
- */
-export async function getLegalLead(consultationCode) {
-  await databaseService.ensureInitialized();
-  
-  const result = await databaseService.get(
-    `SELECT * FROM legal_leads WHERE consultation_code = $1`,
-    [consultationCode]
-  );
+/** 🔍 Obtener lead por código */
+export const getLegalLead = (consultationCode) => _base.getByCode(consultationCode);
 
-  return result || null;
-}
+/** 🔍 Obtener leads por usuario */
+export const getLegalLeadsByUser = (userId) => _base.getByUser(userId);
 
-/**
- * 🔍 Obtener leads por usuario
- */
-export async function getLegalLeadsByUser(userId) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM legal_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
-    [userId]
-  );
+/** 🔄 Actualizar estado de lead */
+export const updateLegalLeadStatus = (consultationCode, status, notes) => _base.updateStatus(consultationCode, status, notes);
 
-  return results || [];
-}
-
-/**
- * 🔄 Actualizar estado de lead
- */
-export async function updateLegalLeadStatus(consultationCode, status, notes = null) {
-  await databaseService.ensureInitialized();
-  
-  const params = [status, consultationCode];
-  let query = `UPDATE legal_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
-  
-  if (notes) {
-    query += `, notes = $3`;
-    params.push(notes);
-  }
-  
-  query += ` WHERE consultation_code = $2`;
-  
-  await databaseService.run(query, params);
-  console.log(`[GABI-REPO] ✅ Lead actualizado: ${consultationCode} → ${status}`);
-}
-
-/**
- * 📅 Agendar reunión
- */
-export async function scheduleLegalMeeting(consultationCode, meetingDate) {
-  await databaseService.ensureInitialized();
-  
-  await databaseService.run(
-    `UPDATE legal_leads 
-     SET meeting_scheduled = $1, status = 'meeting_scheduled', updated_at = CURRENT_TIMESTAMP
-     WHERE consultation_code = $2`,
-    [meetingDate, consultationCode]
-  );
-
-  console.log(`[GABI-REPO] 📅 Reunión agendada: ${consultationCode}`);
-}
+/** 📅 Agendar reunión */
+export const scheduleLegalMeeting = (consultationCode, meetingDate) => _base.scheduleMeeting(consultationCode, meetingDate);
 
 /**
  * 💰 Guardar cotización enviada
@@ -146,19 +102,8 @@ export async function getLegalLeadsStats() {
   return stats || {};
 }
 
-/**
- * 📋 Obtener leads por tipo de consulta
- */
-export async function getLegalLeadsByType(consultationType) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM legal_leads WHERE consultation_type = $1 ORDER BY created_at DESC`,
-    [consultationType]
-  );
-
-  return results || [];
-}
+/** 📋 Obtener leads por tipo de consulta */
+export const getLegalLeadsByType = (consultationType) => _base.getByType('consultation_type', consultationType);
 
 export default {
   saveLegalLead,

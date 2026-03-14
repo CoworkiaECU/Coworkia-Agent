@@ -5,6 +5,14 @@
 
 import databaseService from './database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { BaseRepository } from './BaseRepository.js';
+
+const _base = new BaseRepository({
+  table:      'insurance_leads',
+  codeColumn: 'quote_code',
+  userColumn: 'user_phone',
+  logPrefix:  'ADRIANA-REPO',
+});
 
 /**
  * 💾 Guardar lead de seguro completo
@@ -90,39 +98,11 @@ export async function getInsuranceLead(quoteCode) {
   return result || null;
 }
 
-/**
- * 🔍 Obtener leads por usuario
- */
-export async function getInsuranceLeadsByUser(userId) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM insurance_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
-    [userId]
-  );
+/** 🔍 Obtener leads por usuario */
+export const getInsuranceLeadsByUser = (userId) => _base.getByUser(userId);
 
-  return results || [];
-}
-
-/**
- * 🔄 Actualizar estado de lead
- */
-export async function updateInsuranceLeadStatus(quoteCode, status, notes = null) {
-  await databaseService.ensureInitialized();
-  
-  const params = [status, quoteCode];
-  let query = `UPDATE insurance_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
-  
-  if (notes) {
-    query += `, notes = $3`;
-    params.push(notes);
-  }
-  
-  query += ` WHERE quote_code = $2`;
-  
-  await databaseService.run(query, params);
-  console.log(`[ADRIANA-REPO] ✅ Lead actualizado: ${quoteCode} → ${status}`);
-}
+/** 🔄 Actualizar estado de lead */
+export const updateInsuranceLeadStatus = (quoteCode, status, notes) => _base.updateStatus(quoteCode, status, notes);
 
 /**
  * 📊 Obtener estadísticas de leads

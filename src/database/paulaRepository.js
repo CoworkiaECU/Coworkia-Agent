@@ -4,6 +4,14 @@
  */
 
 import databaseService from './database.js';
+import { BaseRepository } from './BaseRepository.js';
+
+const _baseRE = new BaseRepository({
+  table:      'real_estate_leads',
+  codeColumn: 'id',
+  userColumn: 'user_phone',
+  logPrefix:  'PAULA-REPO',
+});
 
 /**
  * 💾 Guardar visita parcial/cancelada
@@ -232,55 +240,15 @@ export async function getRealEstateLead(leadId) {
   return result || null;
 }
 
-/**
- * 🔍 Obtener leads por usuario
- */
-export async function getRealEstateLeadsByUser(userId) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM real_estate_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
-    [userId]
-  );
+/** 🔍 Obtener leads por usuario */
+export const getRealEstateLeadsByUser = (userId) => _baseRE.getByUser(userId);
 
-  return results || [];
-}
+/** 🔄 Actualizar estado de lead */
+export const updateRealEstateLeadStatus = (leadId, status, notes) => _baseRE.updateStatus(leadId, status, notes);
 
-/**
- * 🔄 Actualizar estado de lead
- */
-export async function updateRealEstateLeadStatus(leadId, status, notes = null) {
-  await databaseService.ensureInitialized();
-  
-  const params = [status, leadId];
-  let query = `UPDATE real_estate_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
-  
-  if (notes) {
-    query += `, notes = $3`;
-    params.push(notes);
-  }
-  
-  query += ` WHERE id = $2`;
-  
-  await databaseService.run(query, params);
-  console.log(`[PAULA-REPO] ✅ Lead actualizado: ${leadId} → ${status}`);
-}
-
-/**
- * 📅 Agendar visita
- */
-export async function schedulePropertyViewing(leadId, viewingDate) {
-  await databaseService.ensureInitialized();
-  
-  await databaseService.run(
-    `UPDATE real_estate_leads 
-     SET viewing_scheduled = $1, status = 'viewing_scheduled', updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2`,
-    [viewingDate, leadId]
-  );
-
-  console.log(`[PAULA-REPO] 📅 Visita agendada: ${leadId}`);
-}
+/** 📅 Agendar visita */
+export const schedulePropertyViewing = (leadId, viewingDate) =>
+  _baseRE.scheduleMeeting(leadId, viewingDate, { dateColumn: 'viewing_scheduled', status: 'viewing_scheduled' });
 
 /**
  * 🏠 Agregar propiedad mostrada

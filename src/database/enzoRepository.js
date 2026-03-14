@@ -5,6 +5,14 @@
 
 import databaseService from './database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { BaseRepository } from './BaseRepository.js';
+
+const _base = new BaseRepository({
+  table:      'marketing_leads',
+  codeColumn: 'project_code',
+  userColumn: 'user_phone',
+  logPrefix:  'ENZO-REPO',
+});
 
 /**
  * 💾 Guardar lead de proyecto de marketing
@@ -44,69 +52,17 @@ export async function saveMarketingLead(leadData) {
   return { id, projectCode };
 }
 
-/**
- * 🔍 Obtener lead por código de proyecto
- */
-export async function getMarketingLead(projectCode) {
-  await databaseService.ensureInitialized();
-  
-  const result = await databaseService.get(
-    `SELECT * FROM marketing_leads WHERE project_code = $1`,
-    [projectCode]
-  );
+/** 🔍 Obtener lead por código de proyecto */
+export const getMarketingLead = (projectCode) => _base.getByCode(projectCode);
 
-  return result || null;
-}
+/** 🔍 Obtener leads por usuario */
+export const getMarketingLeadsByUser = (userId) => _base.getByUser(userId);
 
-/**
- * 🔍 Obtener leads por usuario
- */
-export async function getMarketingLeadsByUser(userId) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM marketing_leads WHERE user_phone = $1 ORDER BY created_at DESC`,
-    [userId]
-  );
+/** 🔄 Actualizar estado de lead */
+export const updateMarketingLeadStatus = (projectCode, status, notes) => _base.updateStatus(projectCode, status, notes);
 
-  return results || [];
-}
-
-/**
- * 🔄 Actualizar estado de lead
- */
-export async function updateMarketingLeadStatus(projectCode, status, notes = null) {
-  await databaseService.ensureInitialized();
-  
-  const params = [status, projectCode];
-  let query = `UPDATE marketing_leads SET status = $1, updated_at = CURRENT_TIMESTAMP`;
-  
-  if (notes) {
-    query += `, notes = $3`;
-    params.push(notes);
-  }
-  
-  query += ` WHERE project_code = $2`;
-  
-  await databaseService.run(query, params);
-  console.log(`[ENZO-REPO] ✅ Lead actualizado: ${projectCode} → ${status}`);
-}
-
-/**
- * 📅 Agendar reunión
- */
-export async function scheduleMarketingMeeting(projectCode, meetingDate) {
-  await databaseService.ensureInitialized();
-  
-  await databaseService.run(
-    `UPDATE marketing_leads 
-     SET meeting_scheduled = $1, status = 'meeting_scheduled', updated_at = CURRENT_TIMESTAMP
-     WHERE project_code = $2`,
-    [meetingDate, projectCode]
-  );
-
-  console.log(`[ENZO-REPO] 📅 Reunión agendada: ${projectCode}`);
-}
+/** 📅 Agendar reunión */
+export const scheduleMarketingMeeting = (projectCode, meetingDate) => _base.scheduleMeeting(projectCode, meetingDate);
 
 /**
  * 💰 Guardar propuesta enviada
@@ -146,19 +102,8 @@ export async function getMarketingLeadsStats() {
   return stats || {};
 }
 
-/**
- * 📋 Obtener leads por tipo de proyecto
- */
-export async function getMarketingLeadsByType(projectType) {
-  await databaseService.ensureInitialized();
-  
-  const results = await databaseService.all(
-    `SELECT * FROM marketing_leads WHERE project_type = $1 ORDER BY created_at DESC`,
-    [projectType]
-  );
-
-  return results || [];
-}
+/** 📋 Obtener leads por tipo de proyecto */
+export const getMarketingLeadsByType = (projectType) => _base.getByType('project_type', projectType);
 
 /**
  * 🎯 Obtener leads urgentes

@@ -644,19 +644,24 @@ export async function generateSequentialCode(prefix, tableName, codeColumn, padL
 - **Ahorro:** ~120 líneas
 
 #### 13.9 Plan de eliminación FASE 4 — Date/Time Parsers
-**Estado:** Pendiente diseño
+**Estado:** ✅ COMPLETADO (v929 — 14 Mar 2026)
 
-**Crear `src/utils/date-time-parser.js`:**
-- Mover `parseDate()` y `normalizeTimeFormat()` que hoy están en aurora-confirmation-helper.js Y paula-confirmation-helper.js
-- **Ahorro:** ~150 líneas
+**Creado `src/utils/date-time-parser.js`:**
+- `normalizeTimeFormat(timeStr, defaultTime='09:00')` — versión con default configurable
+- `parseDate(dateStr)` — versión timezone-aware Ecuador (America/Guayaquil) de Aurora
+- Removidas funciones locales de `aurora-confirmation-helper.js` y `paula-confirmation-helper.js`
+- Paula llama `normalizeTimeFormat(str, '10:00')` para mantener su default de visitas
+- **Ahorro real:** 124 líneas eliminadas (net: -247 líneas duplicadas + 123 utilidad)
 
 #### 13.10 Plan de eliminación FASE 5 — Base Repository
-**Estado:** Pendiente diseño (mayor esfuerzo)
+**Estado:** 🔄 En análisis (siguiente)
 
 **Crear `src/database/BaseRepository.js`:**
-- Clase base con CRUD genérico (save, getByCode, getByUser, updateStatus, getStats)
-- 12 repositories heredan de la base
-- **Ahorro estimado:** 800-1,000 líneas
+- Clase base con CRUD genérico: `save(data)`, `getByCode(code)`, `getByUser(userId)`, `updateStatus(code, status, notes)`, `getStats()`
+- Constructor: `{ table, codeColumn, userColumn='user_id' }`
+- **5 repositories candidatos** (patrón idéntico): `adrianaRepository`, `gabiRepository`, `enzoRepository`, `paulaRepository`, `bossQuotesRepository`
+- **NO entran** (lógica única): conversationRepository, reservationRepository, alunaRepository, axelRepository, auroraRepository
+- **Ahorro estimado real:** ~400-500 líneas (los 5 simples × ~80 líneas boilerplate)
 
 #### 13.11 Métricas del proyecto
 **Estado:** Línea base establecida
@@ -695,9 +700,15 @@ export async function generateSequentialCode(prefix, tableName, codeColumn, padL
 6. ✅ **Fase 1.1 PASO C:** Gabi dead code eliminado. Enzo/Adriana/Paula conservados (justified: boss commands con OpenAI)
 7. ✅ **Fase 2:** isPositiveResponse/isNegativeResponse unificados en generic-confirmation-flow.js. confirmation-flow.js re-exporta.
 8. ✅ **Desvío post-pruebas Axel** (ver checkpoint abajo) — 3 bugs corregidos, deploy v923
-9. ⏳ **← RETOMAR AQUÍ → Fase 3:** Generadores de código compartidos (src/utils/code-generator.js)
-10. ⏳ Fase 4: date-time-parser.js compartido (aurora-confirmation-helper.js + paula-confirmation-helper.js)
-11. ⏳ Fase 5: BaseRepository.js (12 repositories heredan)
+9. ✅ **Fase 3:** code-generator.js + 8 archivos refactorizados. Prefijos AXL/ADR/GAB/ENZ/PAU/ALU/AUR — v925
+10. ✅ **Fase 3b hotfix:** AUR- en reservations, ALU- en membership_leads, columna membership_code — v926
+11. ✅ **Aluna DB migration:** PRO-→ALU- en membership_leads (2 rows) — v928
+12. ✅ **Fase 4:** date-time-parser.js (parseDate + normalizeTimeFormat) centralizado. Aurora + Paula refactorizados — v929
+13. ⏳ **← SIGUIENTE → Fase 5:** BaseRepository.js (5 repositories candidatos: adriana, gabi, enzo, paula, bossQuotes)
+14. ⏳ Homologar idiomas (Punto 9)
+15. ⏳ HTML emails multiplataforma (Punto 10)
+16. ⏳ Whisper multiagente (Punto 12)
+17. ⏳ Arreglar 13 tests fallando
 12. ⏳ Homologar idiomas (Punto 9)
 13. ⏳ HTML emails multiplataforma (Punto 10)
 14. ⏳ Whisper multiagente (Punto 12)

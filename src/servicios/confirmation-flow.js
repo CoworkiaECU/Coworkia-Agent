@@ -19,6 +19,8 @@ import { markJustConfirmed } from './reservation-state.js';
 import reservationRepository from '../database/reservationRepository.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { generateWifiCode, getWifiCodeForReservation } from './wifi-codes-service.js';
+import { isPositiveResponse, isNegativeResponse } from './generic-confirmation-flow.js';
+export { isPositiveResponse, isNegativeResponse };
 
 class ConfirmationFlowError extends Error {
   constructor(payload) {
@@ -51,115 +53,6 @@ function formatUserDate(date) {
   
   // ✅ Formato: "Domingo 27 de enero 2026"
   return `${dayName} ${parseInt(day, 10)} de ${monthName} ${year}`;
-}
-
-/**
- * ✅ Detecta respuestas afirmativas del usuario
- */
-export function isPositiveResponse(message) {
-  if (!message || typeof message !== 'string') return false;
-  
-  const text = message.toLowerCase().trim();
-  
-  // Respuestas afirmativas comunes en español
-  const positivePatterns = [
-    /^s[ií]$/,
-    /^s[ií][,.\s]/,  // "Si," o "Si." o "Si " (permite contexto después)
-    /^ok$/,
-    /^okay$/,
-    /^perfecto$/,
-    /^correcto$/,
-    /^confirmo$/,
-    /^confirmado$/,
-    /^acepto$/,
-    /^aceptado$/,
-    /^dale$/,
-    /^listo$/,
-    /^exacto$/,
-    /^claro$/,
-    /^por supuesto$/,
-    /^obvio$/,
-    /^obvio que s[ií]$/,
-    /^s[ií]\s*(por favor|porfavor|please)?$/,
-    /^(s[ií]\s*)?gracias$/,
-    /^vamos$/,
-    /^hagamos$/,
-    /^adelante$/,
-    /^continuar$/,
-    /^continu[aá]mos$/,
-    /^proceder$/,
-    // Emojis de confirmación
-    /👍/,
-    /✅/,
-    /👌/,
-    /💯/,
-    /🚀/
-  ];
-  
-  return positivePatterns.some(pattern => pattern.test(text));
-}
-
-/**
- * ❌ Detecta respuestas negativas del usuario
- */
-export function isNegativeResponse(message) {
-  if (!message || typeof message !== 'string') return false;
-  
-  const text = message.toLowerCase().trim();
-  
-  // Respuestas negativas comunes en español
-  const negativePatterns = [
-    /^no$/,
-    /^nop$/,
-    /^nope$/,
-    /^negative$/,
-    /^negativo$/,
-    /^cancel$/,
-    /^cancelar$/,
-    /^cancelo$/,
-    /^rechazo$/,
-    /^rechazar$/,
-    /^no acepto$/,
-    /^no confirmo$/,
-    /^no quiero$/,
-    /^mejor no$/,
-    /^ahora no$/,
-    /^otro d[ií]a$/,
-    /^lo pienso$/,
-    /^d[eé]jame pensar$/,
-    /^mejor otro momento$/,
-    /^no por ahora$/,
-    /olv[ií]dalo/,
-    /olvidalo/,
-    /ya no quiero/,
-    /no me interesa/,
-    /abandonar/,
-    /eliminar/,
-    /borrar/,
-    /^no gracias$/,
-    /^no, gracias$/,
-    /^gracias pero no$/,
-    // Correcciones — usuario indica que los datos están mal
-    /^no,?\s*est[aá]\s*(mal|incorrecto|equivocado)/,
-    /^no,?\s*eso/,
-    /^no,?\s*los datos/,
-    /^no,?\s*el horario/,
-    /^no,?\s*la hora/,
-    /^no,?\s*la fecha/,
-    /^no,?\s*el espacio/,
-    /est[aá]\s*(mal|incorrecto)/,
-    /datos.*incorrectos/,
-    /horario.*incorrecto/,
-    /^no\s*est[aá]/,
-    // Emojis de negación
-    /👎/,
-    /❌/,
-    /🚫/,
-    /😕/,
-    /😐/
-  ];
-  
-  return negativePatterns.some(pattern => pattern.test(text));
 }
 
 /**

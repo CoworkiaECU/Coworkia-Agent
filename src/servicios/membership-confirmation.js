@@ -104,7 +104,7 @@ export async function confirmMembershipLead(userId, userProfile) {
     // 1️⃣ GUARDAR EN BASE DE DATOS usando alunaRepository
     // ==========================================
     
-    const membershipCode = await generateSequentialCode('ALU', 'membership_leads', 'id', 3);
+    const membershipCode = await generateSequentialCode('ALU', 'membership_leads', 'membership_code', 4);
     const membershipDetails = getMembershipDetails(formData.membershipType);
     
     const leadData = {

@@ -3,45 +3,7 @@
  */
 
 import databaseService from './database.js';
-
-/**
- * 🔢 Genera código secuencial de reserva por sucursal y año
- * Consulta reservations para encontrar el último número usado y avanza uno.
- * Formato: RES-WHY-2026-0001 · RES-WHY-2026-0002 · RES-WHY-2026-0003
- * 
- * Similar al sistema de cotizaciones de agentes BOSS (AXEL, ENZO, etc.)
- * 
- * @param {string} branch - Código de sucursal (WHY = Whymper, futuros: IÑA, etc.)
- * @returns {Promise<string>}
- */
-async function generateReservationCode(branch = 'WHY') {
-  const prefix = 'RES';
-  const year = new Date().getFullYear();
-  
-  try {
-    await databaseService.ensureInitialized();
-    
-    // Buscar el último código de esta sucursal en este año
-    const pattern = `${prefix}-${branch}-${year}-%`;
-    const last = await databaseService.get(
-      `SELECT id FROM reservations WHERE id LIKE ? ORDER BY created_at DESC LIMIT 1`,
-      [pattern]
-    );
-    
-    let seq = 1;
-    if (last?.id) {
-      // Extraer el número secuencial del formato RES-WHY-2026-0001
-      const match = last.id.match(/-(\d+)$/);
-      if (match) seq = parseInt(match[1]) + 1;
-    }
-    
-    return `${prefix}-${branch}-${year}-${String(seq).padStart(4, '0')}`;
-  } catch (err) {
-    console.error('[RESERVATION] ⚠️ Error generando código secuencial:', err.message);
-    // Fallback a timestamp si falla la query
-    return `${prefix}-${branch}-${Date.now().toString(36).toUpperCase()}`;
-  }
-}
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 class ReservationRepository {
   /**
@@ -102,7 +64,7 @@ class ReservationRepository {
     } = reservationData;
 
     // Generar código secuencial si no se provee ID
-    const reservationId = id || await generateReservationCode();
+    const reservationId = id || await generateSequentialCode('AUR', 'reservations', 'id', 4);
 
     const query = `
       INSERT INTO reservations (

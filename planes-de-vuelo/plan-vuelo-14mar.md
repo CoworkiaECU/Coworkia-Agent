@@ -704,15 +704,12 @@ export async function generateSequentialCode(prefix, tableName, codeColumn, padL
 10. ✅ **Fase 3b hotfix:** AUR- en reservations, ALU- en membership_leads, columna membership_code — v926
 11. ✅ **Aluna DB migration:** PRO-→ALU- en membership_leads (2 rows) — v928
 12. ✅ **Fase 4:** date-time-parser.js (parseDate + normalizeTimeFormat) centralizado. Aurora + Paula refactorizados — v929
-13. ⏳ **← SIGUIENTE → Fase 5:** BaseRepository.js (5 repositories candidatos: adriana, gabi, enzo, paula, bossQuotes)
-14. ⏳ Homologar idiomas (Punto 9)
-15. ⏳ HTML emails multiplataforma (Punto 10)
-16. ⏳ Whisper multiagente (Punto 12)
-17. ⏳ Arreglar 13 tests fallando
-12. ⏳ Homologar idiomas (Punto 9)
-13. ⏳ HTML emails multiplataforma (Punto 10)
-14. ⏳ Whisper multiagente (Punto 12)
-15. ⏳ Arreglar 13 tests fallando
+13. ✅ **Fase 5:** BaseRepository.js — adriana, gabi, enzo, paula refactorizados (-236 líneas boilerplate) — v930
+14. ⏳ **← SIGUIENTE → Desvío Axel v2:** CTAs persuasivos + agendamiento en calendario Coworkia + recordatorios automáticos
+15. ⏳ P9: Homologar idiomas
+16. ⏳ HTML emails multiplataforma (Punto 10)
+17. ⏳ Whisper multiagente (Punto 12)
+18. ⏳ Arreglar 13 tests fallando
 
 ---
 
@@ -738,7 +735,53 @@ export async function generateSequentialCode(prefix, tableName, codeColumn, padL
 **Deploy:** GitHub commit `01cabfd` → Heroku v923 ✅ · 445/458 tests pasando
 
 ---
+## 🧭 CHECKPOINT: PRUEBAS AXEL v2 (14 Mar 2026) ✅ COMPLETADO
 
+**Boss command:** Excelente — flujo completo sin errores.
+**Flujo usuario normal:** Excelente — cotización, fotos, email generados correctamente.
+
+**Resultado:** Axel está en producción y funciona bien. Se identificaron 3 mejoras estratégicas:
+
+### Mejora A — CTAs persuasivos en emails/mensajes
+**Contexto:** Los botones y enlaces actuales son informativos, no persuasivos.
+**Objetivo:** Cada CTA debe incitar a agendar/reservar. La acción = acercarse a la venta.
+**Concepto clave:** AUTO limpio y sin abolladuras = autoestima + reflejo de quien lo maneja.
+**Archivos a tocar:** `axel-quote-email.js`, mensajes de WhatsApp en `collision-confirmation.js`
+
+### Mejora B — Axel agenda en Google Calendar (como Aurora)
+**Contexto:** Aurora usa `secretaria.coworkia` + calendario de Coworkia para confirmar reservas. Axel debe poder hacer lo mismo para agendar el ingreso del auto al taller.
+**No crear calendarios nuevos** — reutilizar credenciales y agenda existente de Coworkia.
+**Archivos de referencia:** `aurora-confirmation-helper.js`, `calendario.js`
+
+### Mejora C — Recordatorios automáticos WhatsApp + Email
+**Contexto:** Clientes que recibieron cotización pero no agendaron.
+**Flujo:**
+- 1 día después: recordatorio suave (tono: "tu auto te lo agradece")
+- 1 semana después: segundo acercamiento (tono diferente, NO repetitivo)
+**Canal:** WhatsApp (mensaje) + Email (HTML nuevo, diseño PaintBull)
+**Concepto:** Persuasión emocional — auto sin abolladuras = confianza, presencia, autoestima
+**Archivos nuevos:** scheduler de recordatorios, template HTML recordatorio PaintBull
+
+---
+
+## 🔮 LO QUE VIENE DESPUÉS (P9 — Homologación de idiomas)
+
+Cuando terminemos el desvío de Axel, arrancamos con P9. Aquí el resumen para no perder contexto:
+
+**Problema:** Algunos agentes responden en inglés o mezclan idiomas cuando:
+- El usuario escribe en español pero el system prompt tiene frases en inglés
+- Los mensajes de error/fallback están hardcodeados en inglés
+- Las fechas y formatos (AM/PM) salen en formato anglosán
+
+**Meta:** 100% de respuestas en español latinoamericano (Ecuador), sin mezclas.
+
+**Archivos principales a auditar:**
+- `src/deteccion-intenciones/orquestador.js` — mensajes de error
+- `src/deteccion-intenciones/handoff-messages.js` — mensajes de transición
+- System prompts de cada agente — verificar lenguaje de instrucción
+- Respuestas fallback en `wassenger.js`
+
+---
 ## 🛑 PAUSAS Y RETOMAS
 
 Cuando digas **"pausa"** o **"descansar"**, actualizaré este archivo con:
@@ -748,4 +791,4 @@ Cuando digas **"pausa"** o **"descansar"**, actualizaré este archivo con:
 
 ---
 
-**Última actualización:** 14 Mar 2026 — Noche — Deploy v923. Desvío post-pruebas Axel corregido (3 bugs). **Próximo:** Fase 3 — code-generator.js (8 funciones idénticas de secuenciales).
+**Última actualización:** 14 Mar 2026 — Fase 5 completa (v930). Desvío Axel v2 identificado (CTAs + agendamiento calendario + recordatorios automáticos). **Próximo:** Desvío Axel v2 (Mejoras A+B+C) → luego P9 Homologación idiomas.

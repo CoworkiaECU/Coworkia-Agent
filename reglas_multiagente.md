@@ -1,6 +1,6 @@
 # Reglas Multiagente — Coworkia Aurora
 > Referencia rápida del ecosistema. Se lee antes de cualquier intervención.  
-> Última actualización: **10 Mar 2026 — v843**
+> Última actualización: **14 Mar 2026 — v930**
 
 ---
 
@@ -11,8 +11,9 @@
 - **Sin tecnicismos en el plan.** Lenguaje humano. Código solo tras aprobación.
 - **No toques lo que funciona.** Nada de refactorizar "de paso".
 - **"verde nena" = gas.** Sin esa frase, solo analizar y proponer.
-- **No auditar sin que lo pida.** Auditorías y revisiones completas solo cuando el usuario las solicite explícitamente.
-
+- **No auditar sin que lo pida.** Auditorías y revisiones completas solo cuando el usuario las solicite explícitamente.- **Plan de vuelo siempre al día.** Actualizar `planes-de-vuelo/plan-vuelo-14mar.md` y `reglas_multiagente.md` al cerrar cada fase o desvío.
+- **Resumen del próximo tema al cerrar.** Cuando se complete una tarea grande, agregar un bloque “🔮 LO QUE VIENE DESPUÉS” en el plan para evitar perder contexto en la siguiente sesión.
+- **Desvios documentados.** Cualquier imprevisto que interrumpa el plan → checkpoint en el plan de vuelo con: resultado de pruebas, bugs encontrados, mejoras identificadas.
 ---
 
 ## 0.1 Reglas de emails y templates
@@ -104,6 +105,21 @@ Aurora dice adiós → esperar 7s → nuevo agente entra
 ---
 
 ## 7. Log de trabajo (sesiones anteriores)
+
+### 14 Mar 2026 — v925→v930 (Plan de vuelo — Fases 1–5)
+
+| Item | Descripción | Archivos | Estado |
+|------|-------------|----------|———---|
+| F1.1 | Template Axel premium → genérico. collision-confirmation usa sendQuoteEmail con fotos CID | `axel-quote-email.js`, `collision-confirmation.js` | ✅ v922 |
+| F1.1C | Dead code Gabi eliminado. Enzo/Adriana/Paula conservados (boss commands OpenAI) | varios | ✅ v922 |
+| F2 | isPositiveResponse/isNegativeResponse unificados → generic-confirmation-flow.js | `generic-confirmation-flow.js`, `confirmation-flow.js` | ✅ v922 |
+| DEV1 | Desvio pruebas Axel: 3 bugs (system message, secuencial, footer email) corregidos | `axel-quote-generator.js`, `collision-confirmation.js`, `axel-quote-email.js` | ✅ v923 |
+| F3 | code-generator.js + 8 archivos refactorizados. Prefijos AXL/ADR/GAB/ENZ/PAU/ALU/AUR | `src/utils/code-generator.js` + 8 repos | ✅ v925 |
+| F3b | AUR- en reservations, ALU- en membership_leads, columna membership_code añadida | `reservationRepository.js`, `aluna-proforma-email.js`, `postgres-adapter.js` | ✅ v926 |
+| MIG | PRO-→ALU- en membership_leads (2 rows) | DB Heroku viva | ✅ v928 |
+| F4 | date-time-parser.js: parseDate + normalizeTimeFormat centralizados (timezone Ecuador) | `src/utils/date-time-parser.js`, aurora+paula helpers | ✅ v929 |
+| F5 | BaseRepository.js: adriana, gabi, enzo, paula refactorizados (-236 líneas boilerplate) | `src/database/BaseRepository.js` + 4 repos | ✅ v930 |
+| DEV2 | Desvío Axel v2: CTAs persuasivos, agendamiento calendario Coworkia, recordatorios automáticos | pendiente | ⏳ |
 
 ### 08 Mar 2026 — v840 / v841 / v842 (Boss Commands + DB fixes)
 
@@ -246,4 +262,4 @@ Antes de tocar cualquier archivo crítico:
 
 ---
 
-*Última actualización: 08 Mar 2026 — v842 (Boss Commands NLP + DB query fix + collision_quotes schema migration).*
+*Última actualización: 14 Mar 2026 — v930 (Fases 1-5 completas. Desvío Axel v2 pendiente: CTAs + calendario + recordatorios). Siguiente: P9 Homologación idiomas.*

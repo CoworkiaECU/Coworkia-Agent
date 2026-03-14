@@ -22,30 +22,7 @@ import axelRepository from '../database/axelRepository.js';
 import { sendQuoteEmail } from './axel-quote-email.js';
 import { analyzeCollisionPhotos } from './axel-vision-analysis.js';
 import { generateQuote } from './axel-quote-generator.js';
-
-/**
- * 🔢 Genera código secuencial de cotización
- */
-async function generateQuoteCode() {
-  const year = new Date().getFullYear();
-  const prefix = `PB-${year}-`;
-  
-  const query = `
-    SELECT quote_code FROM collision_quotes 
-    WHERE quote_code LIKE ? 
-    ORDER BY quote_code DESC 
-    LIMIT 1
-  `;
-  
-  const result = await databaseService.get(query, [`${prefix}%`]);
-  
-  if (result && result.quote_code) {
-    const lastNumber = parseInt(result.quote_code.split('-')[2]);
-    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
-  }
-  
-  return `${prefix}001`;
-}
+import { generateQuoteCode } from './axel-quote-code.js';
 
 /**
  * ✅ Procesa confirmación SI de Axel
@@ -144,7 +121,7 @@ export async function confirmCollisionQuote(userId, userProfile) {
     // 3️⃣ GUARDAR EN BASE DE DATOS usando axelRepository
     // ==========================================
     
-    const quoteCode = await generateQuoteCode();
+    const quoteCode = (await generateQuoteCode()).code;
     
     const quoteData = {
       id: `collision_${Date.now()}_${userId.replace(/\+/g, '')}`,

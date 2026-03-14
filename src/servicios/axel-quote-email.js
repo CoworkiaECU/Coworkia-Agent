@@ -116,7 +116,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
 
   const ecosistemaItems = ecosistemaTable({
     aliados: ['enzo', 'gabi', 'angela', 'adriana', 'paula', 'aurora'],
-    theme: 'light',
+    theme: 'dark',
   });
 
   return `<!DOCTYPE html>
@@ -275,24 +275,28 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     </div>
   </div>
 
-  <!-- ══ CO-BRANDING COWORKIA ══ -->
-  <div class="footer-section" style="background:white;border-radius:0 0 20px 20px;padding:44px;text-align:center;border-top:1px solid #F3F4F6;">
-    <div style="border-top:1px solid #F3F4F6;padding-top:32px;margin-bottom:28px;">
-      <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
-      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
-      <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+  <!-- ══ ECOSISTEMA DE AGENTES ══ -->
+  <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #DC2626;">
+    <div style="max-width:480px;margin:0 auto 28px;">
+      <h2 style="color:#FB923C;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
+      <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
     </div>
-    <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="margin-bottom:28px;">${ecosistemaItems}</div>
-    <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin-bottom:22px;">
-      <p style="color:#7F1D1D;font-size:12px;line-height:1.8;margin:0;">
-        Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
-        <strong style="color:#991B1B;">Tu vehículo en las mejores manos de Ecuador.</strong>
+    <div style="margin-bottom:22px;">${ecosistemaItems}</div>
+    <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);border-radius:10px;padding:14px;margin-bottom:36px;">
+      <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.8;margin:0;">
+        Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+        <strong style="color:rgba(255,255,255,0.8);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong>
       </p>
     </div>
-    <div style="color:#9CA3AF;font-size:11px;line-height:1.7;">
-      Cotización generada por <strong style="color:#6B7280;">Axel</strong> · The PaintBull<br>
-      Coworkia Intelligence System · ${formatDate}
+    <!-- Brand footer -->
+    <div style="border-top:1px solid rgba(255,255,255,0.07);padding:28px 20px 32px;text-align:center;">
+      <div style="color:white;font-size:24px;font-weight:900;margin:0 0 4px;letter-spacing:1px;">The PaintBull</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:12px;letter-spacing:1px;margin-bottom:16px;">colisiones · pintura · carrocería</div>
+      <div style="color:rgba(255,255,255,0.25);font-size:11px;line-height:1.8;">
+        © ${new Date().getFullYear()} Coworkia Ecuador — Espacios que inspiran<br>
+        Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00<br>
+        <span style="font-size:10px;">coworkia.ec@gmail.com · +593 99 483 7117</span>
+      </div>
     </div>
   </div>
 

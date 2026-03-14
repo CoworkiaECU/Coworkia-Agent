@@ -96,25 +96,55 @@ REGLAS CRÍTICAS:
       raw = await complete(quotePrompt, {
         temperature: 0.2,
         max_tokens: 1800,
-        model: 'gpt-4o'
+        model: 'gpt-4o',
+        system: 'Eres un especialista en cotizaciones de talleres de carrocería y colisiones de vehículos en Ecuador. Tu única función es generar cotizaciones técnicas en formato JSON. SIEMPRE responde ÚNICAMENTE con el JSON solicitado, sin texto adicional, sin disculpas, sin explicaciones.'
       });
+    }
+
+    // Verificar si la respuesta es un rechazo de OpenAI en vez de JSON válido
+    if (!raw || raw.includes("I'm sorry") || raw.includes("I cannot") || raw.includes("I can't")) {
+      console.warn('[QUOTE-GEN] ⚠️ OpenAI rechazó la solicitud, usando fallback data del análisis de visión');
+      raw = null;
     }
 
     console.log('[QUOTE-GEN] ✅ Cotización generada');
 
     // Parsear JSON estructurado
     let quoteData;
-    try {
-      const jsonText = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      quoteData = JSON.parse(jsonText);
-    } catch (parseErr) {
-      console.warn('[QUOTE-GEN] ⚠️ No se pudo parsear JSON, fallback a texto:', parseErr.message);
-      quoteData = { raw_text: raw };
+    if (!raw) {
+      // Fallback cuando OpenAI rechazó: construir cotización básica desde análisis de visión
+      const panels = damageAnalysis.damages_by_panel || [];
+      const fallbackTrabajos = panels.map(p => ({
+        item: p.panel,
+        detalle: `${p.action === 'reemplazar' ? 'Reemplazo' : 'Enderezado + pintura'} — ${p.damage_type}`,
+        rango_min: p.severity_panel === 'LEVE' ? 80 : p.severity_panel === 'MODERADO' ? 150 : 280,
+        rango_max: p.severity_panel === 'LEVE' ? 140 : p.severity_panel === 'MODERADO' ? 250 : 450
+      }));
+      const totalMin = fallbackTrabajos.reduce((s, t) => s + t.rango_min, 0) || 200;
+      const totalMax = fallbackTrabajos.reduce((s, t) => s + t.rango_max, 0) || 600;
+      quoteData = {
+        resumen_danos: damageAnalysis.damageDetails || 'Análisis de daños completado. Se requiere inspección en taller para cotización definitiva.',
+        trabajos: fallbackTrabajos.length > 0 ? fallbackTrabajos : [{ item: 'Inspección y reparación general', detalle: 'Evaluación presencial requerida', rango_min: totalMin, rango_max: totalMax }],
+        total_min: totalMin,
+        total_max: totalMax,
+        dias_entrega: damageAnalysis.estimatedRepairDays || '3-7 días hábiles',
+        garantia: '1 año en pintura · Garantía de por vida en enderezado estructural',
+        nota_inspeccion: 'La cotización final puede variar tras inspección presencial en taller.'
+      };
+    } else {
+      try {
+        const jsonText = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        quoteData = JSON.parse(jsonText);
+      } catch (parseErr) {
+        console.warn('[QUOTE-GEN] ⚠️ No se pudo parsear JSON, fallback a texto:', parseErr.message);
+        quoteData = { raw_text: raw };
+      }
     }
 
     const priceRange = (quoteData.total_min && quoteData.total_max)
       ? { min: quoteData.total_min, max: quoteData.total_max }
       : (() => {
+          if (!raw) return null;
           const m = raw.match(/\$(\d+)\s*-\s*\$(\d+)/);
           return m ? { min: parseInt(m[1]), max: parseInt(m[2]) } : null;
         })();

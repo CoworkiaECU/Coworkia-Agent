@@ -201,30 +201,32 @@ export async function confirmCollisionQuote(userId, userProfile) {
     // ==========================================
     // 6️⃣ RETORNAR RESULTADO
     // ==========================================
-    
+
+    const vehicleLabel = [formData.vehicleBrand, formData.vehicleModel, formData.vehicleYear].filter(Boolean).join(' ') || 'tu vehículo';
+
     return {
       success: true,
       quoteId,
       quoteCode,
-      message: `✅ Cotización generada exitosamente!
+      message: `✅ ¡Listo ${formData.fullName}! Tu cotización *${quoteCode}* está lista.
 
-📋 Código de cotización: ${quoteCode}
+🚗 *${vehicleLabel}*
+⚠️ Severidad: *${damageAnalysis.severity}*
+⏱️ Tiempo estimado: *${damageAnalysis.estimatedRepairDays}*
+💵 Inversión estimada: *$${priceRange.min.toLocaleString('en-US')} – $${priceRange.max.toLocaleString('en-US')} USD*
+${emailSent ? `\n📧 Te enviamos todos los detalles al correo.\n` : ''}${emailError ? `\n⚠️ Hubo un problema enviando el email: ${emailError}\n` : ''}
+✨ Tu auto refleja quién eres. Sin abolladuras = autoestima, confianza y presencia que se siente.
 
-💰 ESTIMACIÓN DE REPARACIÓN:
-━━━━━━━━━━━━━━━
-🚗 Vehículo: ${formData.vehicleBrand} ${formData.vehicleModel} ${formData.vehicleYear}
-🔨 Daño: ${formData.damageType || 'General'}
-⚠️ Severidad: ${damageAnalysis.severity}
-⏰ Tiempo estimado: ${damageAnalysis.estimatedRepairDays}
+👇 *¿Cuándo lo traemos de vuelta?*
+Escríbeme el día que prefieres y lo agendamos ahora mismo:
+- "quiero el lunes" · "el martes a las 10" · "esta semana"
 
-💵 Rango de precio: $${priceRange.min.toLocaleString('en-US')} - $${priceRange.max.toLocaleString('en-US')} USD
-
-${emailSent ? '📧 Te enviamos los detalles completos a tu email\n\n' : ''}${emailError ? `⚠️ Hubo un problema enviando el email: ${emailError}\n\n` : ''}🔨 PaintBull - 15 años de experiencia en colisiones
-💡 Guarda tu código ${quoteCode} para agendar inspección en taller`,
+📍 PaintBull · Av. Gonzalo Escudero N44-53, Quito
+⏰ Lun–Vie 8am–6pm · Sáb 8am–1pm`,
       data: {
         quoteId,
         quoteCode,
-        vehicleInfo: `${formData.vehicleBrand} ${formData.vehicleModel} ${formData.vehicleYear}`,
+        vehicleInfo: vehicleLabel,
         severity: damageAnalysis.severity,
         priceRange,
         estimatedDays: damageAnalysis.estimatedRepairDays,

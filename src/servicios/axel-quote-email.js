@@ -249,13 +249,14 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;">${q?.nota_inspeccion || 'Cotización preliminar basada en análisis fotográfico con IA. La inspección física puede revelar daños estructurales adicionales no visibles en fotos.'}</p>
     </div>
 
-    <!-- CTA -->
+    <!-- CTA principal -->
     <div style="background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
-      <div style="color:rgba(255,255,255,0.85);font-size:13px;margin-bottom:8px;">¿Listo para dejar tu vehículo como nuevo?</div>
-      <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">Agenda tu cita ahora</div>
-      <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:24px;">Respuesta en menos de 1 hora · Presupuesto sin compromiso</div>
-      <a href="${waLink}" style="display:inline-block;background:white;color:#DC2626;padding:16px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,0.25);letter-spacing:0.3px;">
-        🔧 Confirmar cotización ${quoteCode} →
+      <div style="font-size:40px;margin-bottom:12px;">🚗</div>
+      <div style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Tu auto dice todo de ti.</div>
+      <div style="color:rgba(255,255,255,0.9);font-size:15px;font-weight:600;margin-bottom:6px;">Sin abolladuras = autoestima + imagen que habla por ti.</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:24px;">Tu cita está a un toque — confírmala y nosotros hacemos el resto.</div>
+      <a href="${waLink}" style="display:inline-block;background:white;color:#DC2626;padding:18px 48px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,0.25);letter-spacing:0.3px;">
+        💪 Agendar mi cita — mi auto lo merece 🚗✨
       </a>
       <div style="margin-top:24px;">
         <div style="background:rgba(0,0,0,0.18);border-radius:10px;padding:14px 20px;display:inline-block;">
@@ -366,6 +367,182 @@ export async function sendQuoteEmail({
 
   } catch (error) {
     console.error('[QUOTE-EMAIL] ❌ Error en sendQuoteEmail:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔔 RECORDATORIOS AXEL — 24h y 7 días post-cotización
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Genera HTML del recordatorio 1 (24h): tono suave, emocional, primera llamada
+ */
+export function generateReminder1EmailHTML({ customerName, vehicleData, quoteCode, priceRange }) {
+  const firstName = (customerName || '').split(' ')[0] || 'Hola';
+  const vehicleLabel = [vehicleData?.brand, vehicleData?.model, vehicleData?.year].filter(Boolean).join(' ') || 'tu vehículo';
+  const priceText = (priceRange?.min && priceRange?.max)
+    ? `$${Number(priceRange.min).toLocaleString('en-US')} – $${Number(priceRange.max).toLocaleString('en-US')} USD`
+    : 'la estimación adjunta';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axel - The PaintBull · Tu cotización espera</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+  <div style="max-width:580px;margin:0 auto;padding:20px;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#DC2626,#7F1D1D);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">🚗</div>
+      <div style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;">Tu cotización todavía te espera</div>
+      <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:6px;">${vehicleLabel} · ${quoteCode}</div>
+    </div>
+
+    <!-- Body -->
+    <div style="background:white;padding:28px;border-radius:0 0 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">Hola <strong>${firstName}</strong> 👋</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#444;line-height:1.6;">
+        Ayer preparamos la cotización para ${vehicleLabel} — <strong>${priceText}</strong>.<br>
+        Solo quería asegurarme de que la recibiste bien.
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;color:#444;line-height:1.6;">
+        Tu auto habla por ti ✨ Un vehículo impecable transmite profesionalismo, confianza y autoestima.
+        El proceso es más rápido de lo que imaginas.
+      </p>
+
+      <!-- CTA -->
+      <div style="text-align:center;background:#FEF2F2;border-radius:10px;padding:24px;margin-bottom:24px;">
+        <div style="font-size:24px;margin-bottom:10px;">🔧</div>
+        <div style="font-size:17px;font-weight:700;color:#DC2626;margin-bottom:8px;">¿Le damos una cita a tu ${vehicleLabel}?</div>
+        <div style="font-size:13px;color:#888;margin-bottom:16px;">Escríbeme el día que prefieres · Proceso en 24–72h</div>
+        <a href="https://wa.me/593994837117?text=Hola%20Axel%2C%20quiero%20agendar%20la%20cita%20para%20mi%20cotizaci%C3%B3n%20${encodeURIComponent(quoteCode)}"
+           style="display:inline-block;background:linear-gradient(135deg,#DC2626,#991B1B);color:white;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;">
+          Agendar mi cita ahora 🚗✨
+        </a>
+      </div>
+
+      <!-- Footer info -->
+      <div style="border-top:1px solid #eee;padding-top:16px;font-size:13px;color:#999;text-align:center;">
+        📍 Av. Gonzalo Escudero N44-53, Quito · ☎️ +593 99 483 7117<br>
+        Lun–Vie 8am–6pm · Sáb 8am–1pm
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Genera HTML del recordatorio 2 (7 días): enfoque diferente — sin repetir, ángulo distinto
+ */
+export function generateReminder2EmailHTML({ customerName, vehicleData, quoteCode, priceRange }) {
+  const firstName = (customerName || '').split(' ')[0] || 'Hola';
+  const vehicleLabel = [vehicleData?.brand, vehicleData?.model, vehicleData?.year].filter(Boolean).join(' ') || 'tu vehículo';
+  const priceText = (priceRange?.min && priceRange?.max)
+    ? `$${Number(priceRange.min).toLocaleString('en-US')} – $${Number(priceRange.max).toLocaleString('en-US')} USD`
+    : 'tu estimación';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axel - The PaintBull · Última oportunidad</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+  <div style="max-width:580px;margin:0 auto;padding:20px;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a1a1a,#333);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">💪</div>
+      <div style="color:white;font-size:22px;font-weight:800;">La vida se ve diferente</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:14px;margin-top:6px;">desde un auto impecable</div>
+    </div>
+
+    <!-- Body -->
+    <div style="background:white;padding:28px;border-radius:0 0 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">Hola <strong>${firstName}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#444;line-height:1.6;">
+        Hace una semana elaboramos ${priceText} para ${vehicleLabel}. Este es mi último recordatorio — no me gusta insistir.
+      </p>
+      <p style="margin:0 0 16px;font-size:15px;color:#444;line-height:1.6;">
+        Pero antes de cerrar tu expediente, quiero compartirte algo:
+      </p>
+
+      <!-- Razones en tarjetas -->
+      <div style="display:table;width:100%;margin-bottom:20px;">
+        <div style="background:#F9FAFB;border-left:4px solid #DC2626;padding:12px 16px;margin-bottom:10px;border-radius:0 8px 8px 0;">
+          <strong style="color:#DC2626;">El 73% de nuestros clientes</strong>
+          <span style="font-size:14px;color:#555;"> dice que esperó más tiempo del que debía. Después se arrepienten.</span>
+        </div>
+        <div style="background:#F9FAFB;border-left:4px solid #DC2626;padding:12px 16px;margin-bottom:10px;border-radius:0 8px 8px 0;">
+          <strong style="color:#DC2626;">Proceso rápido</strong>
+          <span style="font-size:14px;color:#555;"> — la mayoría de reparaciones se completan en 1–3 días hábiles.</span>
+        </div>
+        <div style="background:#F9FAFB;border-left:4px solid #DC2626;padding:12px 16px;border-radius:0 8px 8px 0;">
+          <strong style="color:#DC2626;">Precio honesto</strong>
+          <span style="font-size:14px;color:#555;"> — lo que cotizamos es lo que pagas. Sin sorpresas.</span>
+        </div>
+      </div>
+
+      <!-- CTA final -->
+      <div style="text-align:center;background:linear-gradient(135deg,#DC2626,#991B1B);border-radius:10px;padding:24px;margin-bottom:24px;">
+        <div style="color:white;font-size:17px;font-weight:700;margin-bottom:8px;">Cotización ${quoteCode}</div>
+        <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:16px;">${vehicleLabel}</div>
+        <a href="https://wa.me/593994837117?text=Hola%20Axel%2C%20quiero%20retomar%20mi%20cotizaci%C3%B3n%20${encodeURIComponent(quoteCode)}"
+           style="display:inline-block;background:white;color:#DC2626;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:800;font-size:15px;">
+          Retomar mi cita →
+        </a>
+      </div>
+
+      <p style="margin:0 0 16px;font-size:13px;color:#999;text-align:center;">
+        Si ya resolviste esto por otro lado, no hay problema — me alegra que tu auto esté bien 🙌
+      </p>
+
+      <div style="border-top:1px solid #eee;padding-top:16px;font-size:13px;color:#999;text-align:center;">
+        📍 Av. Gonzalo Escudero N44-53, Quito · ☎️ +593 99 483 7117<br>
+        Lun–Vie 8am–6pm · Sáb 8am–1pm
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * 📤 Envía email de recordatorio Axel (tipo 1 = 24h, tipo 2 = 7 días)
+ * @param {{ type: 1|2, customerEmail: string, customerName: string, vehicleData: object, quoteCode: string, priceRange: object }} opts
+ */
+export async function sendAxelReminderEmail({ type, customerEmail, customerName, vehicleData, quoteCode, priceRange }) {
+  try {
+    const html = type === 1
+      ? generateReminder1EmailHTML({ customerName, vehicleData, quoteCode, priceRange })
+      : generateReminder2EmailHTML({ customerName, vehicleData, quoteCode, priceRange });
+
+    const vehicleLabel = [vehicleData?.brand, vehicleData?.model].filter(Boolean).join(' ') || 'tu vehículo';
+    const subjectMap = {
+      1: `🚗 ${customerName?.split(' ')[0] || 'Hola'}, tu cotización ${quoteCode} te espera | Axel - The PaintBull`,
+      2: `💪 Último recordatorio: cotización ${quoteCode} · ${vehicleLabel} | The PaintBull`
+    };
+
+    const result = await sendEmail({
+      to: customerEmail,
+      subject: subjectMap[type],
+      html,
+      from: { name: AGENT_FROM_NAMES.axel, address: DEFAULT_FROM_EMAIL }
+    });
+
+    const tag = type === 1 ? 'REMINDER-1 (24h)' : 'REMINDER-2 (7d)';
+    if (result.success) {
+      console.log(`[QUOTE-EMAIL] ✅ ${tag} enviado a ${customerEmail} · ${quoteCode}`);
+    } else {
+      console.error(`[QUOTE-EMAIL] ❌ ${tag} falló para ${customerEmail}:`, result.error);
+    }
+    return result;
+  } catch (error) {
+    console.error('[QUOTE-EMAIL] ❌ Error en sendAxelReminderEmail:', error);
     return { success: false, error: error.message };
   }
 }

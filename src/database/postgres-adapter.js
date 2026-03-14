@@ -472,6 +472,17 @@ class PostgresAdapter {
         ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
       `);
 
+      // 🔔 Columnas de recordatorios automáticos (Axel follow-up 24h + 7d)
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS reminder_1_sent_at TIMESTAMP;
+      `);
+
+      await client.query(`
+        ALTER TABLE collision_quotes
+        ADD COLUMN IF NOT EXISTS reminder_2_sent_at TIMESTAMP;
+      `);
+
       await client.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS ux_collision_quotes_quote_code
         ON collision_quotes(quote_code)

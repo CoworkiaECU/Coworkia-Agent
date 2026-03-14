@@ -20,6 +20,7 @@ import { generateQuoteCode } from '../../servicios/axel-quote-code.js';
 import { analyzeCollisionPhotos } from '../../servicios/axel-vision-analysis.js';
 import { generateQuote } from '../../servicios/axel-quote-generator.js';
 import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
+import { detectSchedulingIntent, processWorkshopScheduling } from '../../servicios/axel-appointment.js';
 import { query } from '../../database/database.js';
 import { processMembershipForm } from '../../servicios/membership-form.js';
 
@@ -685,6 +686,7 @@ function detectFormContinuation(text) {
 const axelQuoteLocks = new Set();
 const axelMissingPromptAt = new Map();
 const axelEmailConsent = new Map();
+const axelSchedulingPending = new Map(); // userId → { quoteCode, clientName } — agendamiento post-cotización
 const axelFirstAckTimers = new Map(); // userId → timerId — para evitar doble mensaje al recibir batch de fotos
 const AXEL_MISSING_PROMPT_COOLDOWN_MS = 45000;
 
@@ -861,13 +863,16 @@ async function processAxelQuote(userId, photoUrls, profile, latestUserText = '',
       : '💰 Estimación: rango pendiente';
 
     const smsSummary = [
-      `✅ Analicé ${photoUrls.length} foto(s).`,
-      `🔍 Severidad: ${visionAnalysis.severity} | Riesgo ocultos: ${hiddenRisk}`,
+      `✅ ¡Listo! Tu cotización *${quoteCode}* está lista.`,
+      `🚗 Severidad: *${visionAnalysis.severity}* | Riesgo ocultos: ${hiddenRisk}`,
       `🔧 Partes: ${affectedParts}`,
       priceLine,
       `⏱️ Tiempo estimado: ${estimatedDays}`,
-      `📧 ¿Quieres más detalles por mail? Responde SI o NO.`
-    ].filter(Boolean).join('\n');
+      ``,
+      `✨ *Tu auto habla por ti.* Sin abolladuras = autoestima, confianza y presencia.`,
+      ``,
+      `📧 ¿Te envío la cotización detallada al correo? Responde *SI* o *NO*.`
+    ].join('\n');
 
     await enviarWhatsApp(userId, smsSummary);
 
@@ -1809,6 +1814,8 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
               });
             }
             axelEmailConsent.delete(userId);
+            axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
+            await enviarWhatsApp(userId, `🗓️ Perfecto — ahora agendemos tu cita en el taller.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
           } else {
             await enviarWhatsApp(userId, '✉️ No detecté un email válido. Por favor escribe solo tu dirección de correo (ej: tu@mail.com)');
           }
@@ -1844,6 +1851,8 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
                 });
               }
               axelEmailConsent.delete(userId);
+              axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
+              await enviarWhatsApp(userId, `🗓️ Perfecto — ahora agendemos tu cita en el taller.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
             } else {
               // No tenemos email — pedirlo ahora
               consentData.awaitingEmail = true;
@@ -1851,8 +1860,9 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
               await enviarWhatsApp(userId, '✉️ ¿A qué correo te envío la cotización? Escribe tu email.');
             }
           } else {
-            await enviarWhatsApp(userId, '👍 Entendido, no envío email. ¿Necesitas algo más?');
             axelEmailConsent.delete(userId);
+            axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
+            await enviarWhatsApp(userId, `👍 Sin problema.\n\n🗓️ Entonces agendemos tu cita directamente.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
           }
           return;
         } else {
@@ -1860,6 +1870,19 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           return;
         }
       }
+
+    // ── 🗓️ PASO 2: Agendamiento de inspección en taller post-cotización ─────
+    if (axelSchedulingPending.has(userId) && processedText) {
+      const { detected } = detectSchedulingIntent(processedText);
+      if (detected) {
+        const pending = axelSchedulingPending.get(userId);
+        const result = await processWorkshopScheduling(pending.quoteCode, processedText, pending.clientName);
+        await enviarWhatsApp(userId, result.message);
+        axelSchedulingPending.delete(userId);
+        return;
+      }
+      // No date detected → falls through to normal LLM flow for open questions
+    }
 
     // 📋 Formulario inteligente: activar si hay intención, formulario activo, o continuación detectada
     const hasActiveForm = !!currentAgentForm;

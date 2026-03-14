@@ -6,7 +6,7 @@ import {
   cleanupOldInteractions,
   cleanupExpiredPartialForms 
 } from '../../scripts/database/cleanup-expired-data.js';
-import { processFollowUps, processAlunaLeadFollowUps, processMembershipRenewalReminders, processAuroraRebookReminders } from './follow-up-service.js';
+import { processFollowUps, processAlunaLeadFollowUps, processMembershipRenewalReminders, processAuroraRebookReminders, processAxelQuoteReminders } from './follow-up-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 import { expireCodesForDate } from './wifi-codes-service.js';
 
@@ -198,6 +198,27 @@ export function initScheduler() {
 
   jobs.push(rebookReminderJob);
   console.log('[CRON] 📅 Recordatorios re-reserva semanal: 5:00 PM diario');
+
+  // ✅ Recordatorios de cotizaciones pendientes Axel / The PaintBull
+  // Diario a las 10:00 AM Ecuador (lun-vie). Envía email 24h y 7d post-cotización si no hay cita agendada.
+  const axelReminderJob = new CronJob(
+    '0 10 * * 1-5', // 10:00 AM, lun-vie
+    async () => {
+      try {
+        console.log('[CRON] 🚗 Verificando recordatorios de cotizaciones PaintBull (Axel)...');
+        const result = await processAxelQuoteReminders();
+        console.log(`[CRON] ✅ Axel reminders: ${result.sent1} (24h), ${result.sent2} (7d), ${result.skipped} saltados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en recordatorios Axel:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  jobs.push(axelReminderJob);
+  console.log('[CRON] 📅 Recordatorios cotizaciones PaintBull (Axel): 10:00 AM lun-vie');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

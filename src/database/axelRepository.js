@@ -228,3 +228,92 @@ export async function getCollisionQuotesStats() {
 
   return stats || {};
 }
+
+/**
+ * 📅 Agendar inspección en taller
+ */
+export async function scheduleWorkshopInspection(quoteCode, inspectionDate, inspectionTime) {
+  await databaseService.ensureInitialized();
+
+  const dateTimeStr = `${inspectionDate}T${inspectionTime}:00`;
+
+  await databaseService.run(
+    `UPDATE collision_quotes
+     SET inspection_scheduled = $1, status = 'accepted', updated_at = CURRENT_TIMESTAMP
+     WHERE quote_code = $2`,
+    [dateTimeStr, quoteCode]
+  );
+
+  console.log(`[AXEL-REPO] 📅 Inspección agendada: ${quoteCode} → ${dateTimeStr}`);
+}
+
+/**
+ * 🔍 Obtener cotizaciones que necesitan recordatorio 1 (24h post-envío, no agendadas)
+ */
+export async function findQuotesForReminder1() {
+  await databaseService.ensureInitialized();
+
+  const results = await databaseService.all(`
+    SELECT quote_code, user_phone, client_name, email, vehicle_brand, vehicle_model,
+           vehicle_year, price_min, price_max, quote_sent_at
+    FROM collision_quotes
+    WHERE email IS NOT NULL
+      AND inspection_scheduled IS NULL
+      AND reminder_1_sent_at IS NULL
+      AND status NOT IN ('completed', 'cancelled')
+      AND quote_sent_at IS NOT NULL
+      AND quote_sent_at <= NOW() - INTERVAL '24 hours'
+      AND quote_sent_at >= NOW() - INTERVAL '7 days'
+    ORDER BY quote_sent_at ASC
+    LIMIT 20
+  `);
+
+  return results || [];
+}
+
+/**
+ * 🔍 Obtener cotizaciones que necesitan recordatorio 2 (7 días post-envío, no agendadas)
+ */
+export async function findQuotesForReminder2() {
+  await databaseService.ensureInitialized();
+
+  const results = await databaseService.all(`
+    SELECT quote_code, user_phone, client_name, email, vehicle_brand, vehicle_model,
+           vehicle_year, price_min, price_max, quote_sent_at
+    FROM collision_quotes
+    WHERE email IS NOT NULL
+      AND inspection_scheduled IS NULL
+      AND reminder_2_sent_at IS NULL
+      AND reminder_1_sent_at IS NOT NULL
+      AND status NOT IN ('completed', 'cancelled')
+      AND quote_sent_at IS NOT NULL
+      AND quote_sent_at <= NOW() - INTERVAL '7 days'
+      AND quote_sent_at >= NOW() - INTERVAL '30 days'
+    ORDER BY quote_sent_at ASC
+    LIMIT 20
+  `);
+
+  return results || [];
+}
+
+/**
+ * ✅ Marcar recordatorio 1 como enviado
+ */
+export async function markReminder1Sent(quoteCode) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE collision_quotes SET reminder_1_sent_at = CURRENT_TIMESTAMP WHERE quote_code = $1`,
+    [quoteCode]
+  );
+}
+
+/**
+ * ✅ Marcar recordatorio 2 como enviado
+ */
+export async function markReminder2Sent(quoteCode) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE collision_quotes SET reminder_2_sent_at = CURRENT_TIMESTAMP WHERE quote_code = $1`,
+    [quoteCode]
+  );
+}

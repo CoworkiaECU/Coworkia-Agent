@@ -14,6 +14,13 @@ import {
   markRenewalReminder1Sent,
   markRenewalReminder2Sent
 } from '../database/alunaRepository.js';
+import {
+  findQuotesForReminder1,
+  findQuotesForReminder2,
+  markReminder1Sent,
+  markReminder2Sent
+} from '../database/axelRepository.js';
+import { sendAxelReminderEmail } from './axel-quote-email.js';
 
 const TWO_HOURS_MS = 120 * 60 * 1000; // 2 horas en milisegundos
 
@@ -664,4 +671,95 @@ export async function processAuroraRebookReminders() {
 
   console.log(`[AURORA-REBOOK] 📊 Resumen: ${sent} enviados, ${skipped} saltados`);
   return { sent, skipped };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔔 AXEL — Recordatorios automáticos de cotizaciones PaintBull
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * ⏰ Verifica horario permitido para recordatorios Axel (9am-6pm Ecuador, lun-vie)
+ */
+function isWithinAxelReminderHours() {
+  const now = new Date();
+  const ec = new Date(now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
+  const hour = ec.getHours();
+  const day = ec.getDay(); // 0=dom, 6=sáb
+  const isWeekday = day >= 1 && day <= 5;
+  const isAllowed = isWeekday && hour >= 9 && hour < 18;
+  console.log(`[AXEL-REMINDER] ⏰ Hora Ecuador: ${ec.toLocaleTimeString('es-EC')} día ${day} — Permitido: ${isAllowed}`);
+  return isAllowed;
+}
+
+/**
+ * 🚗 Proceso de recordatorios para cotizaciones Axel (24h + 7 días)
+ * Solo envía email — respeta horario 9am-6pm lun-vie Ecuador.
+ * No envía si el cliente ya agendó inspección.
+ */
+export async function processAxelQuoteReminders() {
+  console.log('[AXEL-REMINDER] 🚀 Iniciando recordatorios de cotizaciones PaintBull...');
+
+  if (!isWithinAxelReminderHours()) {
+    console.log('[AXEL-REMINDER] ⏸️ Fuera de horario (9am-6pm lun-vie). Saltando.');
+    return { sent1: 0, sent2: 0, skipped: 0 };
+  }
+
+  let sent1 = 0, sent2 = 0, skipped = 0;
+
+  // ── RONDA 1: Recordatorio 24h ─────────────────────────────────────────────
+  const quotes24h = await findQuotesForReminder1();
+  console.log(`[AXEL-REMINDER] 🔍 Cotizaciones para recordatorio 24h: ${quotes24h.length}`);
+
+  for (const q of quotes24h) {
+    try {
+      const result = await sendAxelReminderEmail({
+        type: 1,
+        customerEmail: q.email,
+        customerName: q.client_name,
+        vehicleData: { brand: q.vehicle_brand, model: q.vehicle_model, year: q.vehicle_year },
+        quoteCode: q.quote_code,
+        priceRange: { min: q.price_min, max: q.price_max }
+      });
+      if (result.success) {
+        await markReminder1Sent(q.quote_code);
+        sent1++;
+        await new Promise(r => setTimeout(r, 1500));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[AXEL-REMINDER] ❌ Error 24h ${q.quote_code}:`, err.message);
+      skipped++;
+    }
+  }
+
+  // ── RONDA 2: Recordatorio 7 días ─────────────────────────────────────────
+  const quotes7d = await findQuotesForReminder2();
+  console.log(`[AXEL-REMINDER] 🔍 Cotizaciones para recordatorio 7d: ${quotes7d.length}`);
+
+  for (const q of quotes7d) {
+    try {
+      const result = await sendAxelReminderEmail({
+        type: 2,
+        customerEmail: q.email,
+        customerName: q.client_name,
+        vehicleData: { brand: q.vehicle_brand, model: q.vehicle_model, year: q.vehicle_year },
+        quoteCode: q.quote_code,
+        priceRange: { min: q.price_min, max: q.price_max }
+      });
+      if (result.success) {
+        await markReminder2Sent(q.quote_code);
+        sent2++;
+        await new Promise(r => setTimeout(r, 1500));
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      console.error(`[AXEL-REMINDER] ❌ Error 7d ${q.quote_code}:`, err.message);
+      skipped++;
+    }
+  }
+
+  console.log(`[AXEL-REMINDER] 📊 Resumen: ${sent1} enviados (24h), ${sent2} enviados (7d), ${skipped} saltados`);
+  return { sent1, sent2, skipped };
 }

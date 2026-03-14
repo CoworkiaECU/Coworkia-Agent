@@ -2429,7 +2429,9 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         console.error(`[WASSENGER-V735] ❌ AgentStateManager falló:`, updateResult.error);
       }
     } else if (!shouldChangeAgent) {
-      console.log(`[WASSENGER-DEBUG] ✅ Agente NO cambió, manteniendo: ${profile.activeAgent}`);
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log(`[WASSENGER-DEBUG] ✅ Agente NO cambió, manteniendo: ${profile.activeAgent}`);
+      }
     }
 
     // Cancelación (si orquestador lo marca)
@@ -2566,14 +2568,16 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // 🧠 Generar respuesta (OpenAI) según sistema de Aurora Core
     
     // 🔍 DEBUG: Verificar specialMode
-    console.log('[WASSENGER] 🔍 DEBUG - Antes de OpenAI:', {
-      userId,
-      agenteKey: resultado.agenteKey,
-      specialMode: resultado.metadata?.specialMode,
-      hasVirtualAgentSalesFlag: resultado.metadata?.intent?.flags?.virtualAgentSalesPromo,
-      systemPromptLength: resultado.systemPrompt?.length,
-      systemPromptStart: resultado.systemPrompt?.substring(0, 200)
-    });
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[WASSENGER] 🔍 DEBUG - Antes de OpenAI:', {
+        userId,
+        agenteKey: resultado.agenteKey,
+        specialMode: resultado.metadata?.specialMode,
+        hasVirtualAgentSalesFlag: resultado.metadata?.intent?.flags?.virtualAgentSalesPromo,
+        systemPromptLength: resultado.systemPrompt?.length,
+        systemPromptStart: resultado.systemPrompt?.substring(0, 200)
+      });
+    }
     
     // 🔧 VALIDACIÓN CRÍTICA: Si orquestador ya devolvió respuesta lista, NO llamar OpenAI
     // Casos: mantenimiento de agente, cancelación, error específico

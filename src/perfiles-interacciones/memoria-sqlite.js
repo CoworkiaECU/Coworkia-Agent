@@ -177,7 +177,9 @@ export async function loadProfile(userId) {
   }
   
   try {
-    console.log('[MEMORIA DEBUG] Llamando userRepository.findByPhone...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[MEMORIA DEBUG] Llamando userRepository.findByPhone...');
+    }
     
     // ⚡ OPTIMIZACIÓN v426: Ejecutar queries en paralelo
     const [user, reservationHistory, upcomingReservations, pendingConfirmation, justState] = await Promise.all([
@@ -188,10 +190,14 @@ export async function loadProfile(userId) {
       getJustConfirmedState(userId)
     ]);
     
-    console.log('[MEMORIA DEBUG] findByPhone completado, user:', user ? 'FOUND' : 'NULL');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[MEMORIA DEBUG] findByPhone completado, user:', user ? 'FOUND' : 'NULL');
+    }
     
     if (!user) {
-      console.log('[MEMORIA DEBUG] Usuario no encontrado, retornando null');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[MEMORIA DEBUG] Usuario no encontrado, retornando null');
+      }
       return null;
     }
 

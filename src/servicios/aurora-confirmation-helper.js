@@ -53,17 +53,21 @@ export function extractReservationData(message, userProfile) {
     
     if (meetingRoomPatterns.some(pattern => pattern.test(message))) {
       serviceType = 'meetingRoom';
-      if (process.env.DEBUG === 'true') {
+      if (process.env.DEBUG_MODE === 'true') {
         console.log('[DEBUG] 🏢 DETECTADO: Sala de Reunión solicitada');
       }
     }
 
     // 🎯 MEJORADO: Buscar patrones de fecha con más flexibilidad
-    console.log('[AURORA-EXTRACT] 📝 Analizando mensaje:', message.substring(0, 200) + '...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[AURORA-EXTRACT] 📝 Analizando mensaje:', message.substring(0, 200) + '...');
+    }
     
     // Detectar fechas: números, "hoy", "mañana", días de semana
     const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|ma\u00f1ana|hoy|hoi|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)/i);
-    console.log('[AURORA-EXTRACT] 📅 dateMatch:', dateMatch ? dateMatch[1] : 'NO DETECTADO');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[AURORA-EXTRACT] 📅 dateMatch:', dateMatch ? dateMatch[1] : 'NO DETECTADO');
+    }
     
     // 🎯 MEJORADO: Detectar horarios con múltiples formatos naturales
     // Patrones: "10am", "10 am", "10:00", "10:30am", "3pm", "15:00", "6pm"
@@ -71,11 +75,15 @@ export function extractReservationData(message, userProfile) {
     const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/gi) ||  // "6pm", "10:30am"
                      message.match(/(\d{1,2}:\d{2})/g) ||                        // "14:30", "9:00"
                      message.match(/(\d{1,2})\s+(am|pm|AM|PM)/gi);               // "6 pm" con espacio
-    console.log('[AURORA-EXTRACT] 🕐 timeMatch:', timeMatch ? timeMatch : 'NO DETECTADO');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[AURORA-EXTRACT] 🕐 timeMatch:', timeMatch ? timeMatch : 'NO DETECTADO');
+    }
     
     const priceMatch = message.match(/\$(\d+\.?\d*)/);
     const durationMatch = message.match(/(\d+)\s*hora[s]?/i);
-    console.log('[AURORA-EXTRACT] ⏱️ durationMatch:', durationMatch ? durationMatch[1] + 'h' : 'NO DETECTADO');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[AURORA-EXTRACT] ⏱️ durationMatch:', durationMatch ? durationMatch[1] + 'h' : 'NO DETECTADO');
+    }
     
     // 🚨 VALIDACIÓN TEMPRANA: Si no hay hora, abortar con mensaje útil
     if (!timeMatch || timeMatch.length === 0) {
@@ -97,7 +105,7 @@ export function extractReservationData(message, userProfile) {
     if (timeMatch && timeMatch.length >= 1) {
       // Normalizar primer horario detectado (SIEMPRE ES LA HORA DE INICIO)
       startTime = normalizeTimeFormat(timeMatch[0]);
-      if (process.env.DEBUG === 'true') {
+      if (process.env.DEBUG_MODE === 'true') {
         console.log('[DEBUG] 🕐 startTime normalizado:', startTime);
       }
       
@@ -112,14 +120,18 @@ export function extractReservationData(message, userProfile) {
         const diffMins = (endH * 60 + endM) - (startH * 60 + startM);
         if (diffMins > 0 && diffMins <= 13 * 60) {
           durationHours = Math.round(diffMins / 60 * 10) / 10;
-          console.log(`[AURORA-EXTRACT] 🎯 Rango detectado: ${startTime} → ${endNormalized} = ${durationHours}h`);
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log(`[AURORA-EXTRACT] 🎯 Rango detectado: ${startTime} → ${endNormalized} = ${durationHours}h`);
+          }
         } else if (durationMatch) {
           durationHours = Math.min(parseInt(durationMatch[1]), 13);
         }
       } else if (durationMatch) {
         const requestedDuration = parseInt(durationMatch[1]);
         durationHours = Math.min(requestedDuration, 13);
-        console.log('[DEBUG] ⏱️ Duración explícita:', durationHours, 'horas');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[DEBUG] ⏱️ Duración explícita:', durationHours, 'horas');
+        }
       } else {
         // Sin duración ni rango = 2 horas por defecto
         durationHours = 2;
@@ -133,14 +145,14 @@ export function extractReservationData(message, userProfile) {
       // 🛡️ FIX: Validar desborde de día (ej: 23:30 + 2h → 01:30 del día siguiente)
       if (endHour >= 24) {
         endHour = endHour % 24; // Convertir 25:30 → 01:30
-        if (process.env.DEBUG === 'true') {
+        if (process.env.DEBUG_MODE === 'true') {
           console.log('[DEBUG] ⚠️ Horario desbordaría día siguiente, ajustando a:', endHour);
         }
       }
       
       endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
       
-      if (process.env.DEBUG === 'true') {
+      if (process.env.DEBUG_MODE === 'true') {
         console.log('[DEBUG] 📅 Horario final:', startTime, '-', endTime, `(${durationHours}h)`);
       }
     }
@@ -164,8 +176,10 @@ export function extractReservationData(message, userProfile) {
     const ecuadorMinute = parseInt(ecuadorParts.find(p => p.type === 'minute').value);
     const ecuadorDate = `${ecuadorParts.find(p => p.type === 'year').value}-${ecuadorParts.find(p => p.type === 'month').value}-${ecuadorParts.find(p => p.type === 'day').value}`;
     
-    console.log('[VALIDATION] Hora Ecuador actual:', ecuadorHour, '- Fecha:', ecuadorDate);
-    console.log('[VALIDATION] Horario solicitado:', startTime, 'fecha:', reservationDate);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[VALIDATION] Hora Ecuador actual:', ecuadorHour, '- Fecha:', ecuadorDate);
+      console.log('[VALIDATION] Horario solicitado:', startTime, 'fecha:', reservationDate);
+    }
     
     // Solo validar si es el mismo día
     if (reservationDate === ecuadorDate) {
@@ -183,9 +197,13 @@ export function extractReservationData(message, userProfile) {
         startTime = `${nextHour.toString().padStart(2, '0')}:00`;
         const endHour = nextHour + durationHours;
         endTime = `${endHour.toString().padStart(2, '0')}:00`;
-        console.log('[VALIDATION] Horario ajustado Ecuador:', startTime, '-', endTime);
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[VALIDATION] Horario ajustado Ecuador:', startTime, '-', endTime);
+        }
       } else {
-        console.log('[VALIDATION] ✅ Horario válido para Ecuador');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[VALIDATION] ✅ Horario válido para Ecuador');
+        }
       }
     }
 
@@ -225,19 +243,25 @@ function normalizeTimeFormat(timeStr) {
   // Limpiar y normalizar
   timeStr = timeStr.toLowerCase().trim();
   
-  console.log('[NORMALIZE-TIME] 🕐 Input:', timeStr);
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log('[NORMALIZE-TIME] 🕐 Input:', timeStr);
+  }
   
   // Si ya está en formato HH:MM, verificar y retornar
   if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
     const normalized = timeStr.padStart(5, '0');
-    console.log('[NORMALIZE-TIME] ✅ Formato HH:MM detectado →', normalized);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[NORMALIZE-TIME] ✅ Formato HH:MM detectado →', normalized);
+    }
     return normalized;
   }
   
   // Extraer componentes (mejorado para capturar am/pm sin espacio)
   const match = timeStr.match(/(\d{1,2}):?(\d{0,2})\s*(am|pm)?/i);
   if (!match) {
-    console.log('[NORMALIZE-TIME] ❌ No match, usando default 09:00');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[NORMALIZE-TIME] ❌ No match, usando default 09:00');
+    }
     return '09:00';
   }
   
@@ -245,15 +269,21 @@ function normalizeTimeFormat(timeStr) {
   let minutes = parseInt(match[2] || '0');
   const period = match[3];
   
-  console.log('[NORMALIZE-TIME] 📊 Parsed: hour=', hour, 'minutes=', minutes, 'period=', period);
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log('[NORMALIZE-TIME] 📊 Parsed: hour=', hour, 'minutes=', minutes, 'period=', period);
+  }
   
   // Convertir AM/PM a formato 24h
   if (period === 'pm' && hour !== 12) {
     hour += 12;
-    console.log('[NORMALIZE-TIME] 🔄 Converted PM: hour=', hour);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[NORMALIZE-TIME] 🔄 Converted PM: hour=', hour);
+    }
   } else if (period === 'am' && hour === 12) {
     hour = 0;
-    console.log('[NORMALIZE-TIME] 🔄 Converted 12AM: hour=', hour);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[NORMALIZE-TIME] 🔄 Converted 12AM: hour=', hour);
+    }
   }
   
   // Asegurar formato válido
@@ -261,7 +291,9 @@ function normalizeTimeFormat(timeStr) {
   if (minutes > 59) minutes = 0;
   
   const result = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  console.log('[NORMALIZE-TIME] ✅ Result:', result);
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log('[NORMALIZE-TIME] ✅ Result:', result);
+  }
   return result;
 }
 

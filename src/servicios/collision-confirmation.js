@@ -19,8 +19,7 @@
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
 import axelRepository from '../database/axelRepository.js';
-import { generateEmailForAgent } from './generic-email-templates.js';
-import { sendEmail } from './email.js';
+import { sendQuoteEmail } from './axel-quote-email.js';
 import { analyzeCollisionPhotos } from './axel-vision-analysis.js';
 import { generateQuote } from './axel-quote-generator.js';
 
@@ -185,42 +184,28 @@ export async function confirmCollisionQuote(userId, userProfile) {
 
     if (formData.email) {
       try {
-        console.log(`[COLLISION-CONFIRM] 📧 Enviando email a ${formData.email}...`);
-        
-        // Generar HTML del email con template de PaintBull
-        const { html: emailHTML } = generateEmailForAgent('AXEL', 'client', {
-          clientName: formData.fullName,
-          quoteId,
-          quoteCode,
-          damageType: formData.damageType || 'General',
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone || userId,
-          vehicleBrand: formData.vehicleBrand,
-          vehicleModel: formData.vehicleModel,
-          vehicleYear: formData.vehicleYear,
-          damageDescription: formData.damageDescription || 'Ver análisis adjunto',
-          damageAnalysis: {
-            severity: damageAnalysis.severity,
-            details: damageAnalysis.damageDetails,
-            parts: damageAnalysis.affectedParts?.join(', ') || 'N/A',
-            risk: damageAnalysis.hiddenDamageRisk,
-            estimatedDays: damageAnalysis.estimatedRepairDays
+        const emailResult = await sendQuoteEmail({
+          customerEmail: formData.email,
+          customerName: formData.fullName,
+          vehicleData: {
+            marca: formData.vehicleBrand,
+            modelo: formData.vehicleModel,
+            año: formData.vehicleYear
           },
-          quoteDetails,
-          priceMin: priceRange.min,
-          priceMax: priceRange.max,
-          photoCount: formData.photoUrls?.length || 0
+          damageAnalysis,
+          quote: quoteDetails,
+          priceRange,
+          photoUrls: formData.photoUrls || [],
+          quoteCode
         });
 
-        await sendEmail({
-          to: formData.email,
-          subject: `🔨 Cotización de Reparación - PaintBull | ${formData.vehicleBrand} ${formData.vehicleModel}`,
-          html: emailHTML
-        });
-
-        emailSent = true;
-        console.log('[COLLISION-CONFIRM] ✅ Email enviado exitosamente');
+        emailSent = emailResult.success;
+        if (!emailResult.success) {
+          emailError = emailResult.error;
+          console.error('[COLLISION-CONFIRM] ❌ Error enviando email:', emailResult.error);
+        } else {
+          console.log('[COLLISION-CONFIRM] ✅ Email enviado exitosamente con fotos');
+        }
       } catch (error) {
         console.error('[COLLISION-CONFIRM] ❌ Error enviando email:', error);
         emailError = error.message;

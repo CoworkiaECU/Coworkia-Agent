@@ -139,11 +139,13 @@ export async function createCalendarEvent(reservationData) {
     const startDateTime = new Date(startDateTimeStr);
     const endDateTime = new Date(endDateTimeStr);
 
-    console.log('[CALENDAR] 🔧 DEBUG Timezone Ecuador:');
-    console.log(`  - Input: ${dateStr} ${startTime} (Ecuador UTC-5)`);
-    console.log(`  - Start con offset: ${startDateTimeStr}`);
-    console.log(`  - Start ISO (UTC): ${startDateTime.toISOString()}`);
-    console.log(`  - End ISO (UTC): ${endDateTime.toISOString()}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[CALENDAR] 🔧 DEBUG Timezone Ecuador:');
+      console.log(`  - Input: ${dateStr} ${startTime} (Ecuador UTC-5)`);
+      console.log(`  - Start con offset: ${startDateTimeStr}`);
+      console.log(`  - Start ISO (UTC): ${startDateTime.toISOString()}`);
+      console.log(`  - End ISO (UTC): ${endDateTime.toISOString()}`);
+    }
 
     // 🎯 Formato del título con nombres correctos de servicios
     const guestCount = reservationData.guestCount || 0;

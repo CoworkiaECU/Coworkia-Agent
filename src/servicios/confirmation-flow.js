@@ -671,15 +671,17 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
     // 4. Si es gratis, enviar email y calendar INLINE (no encolar)
     if (pendingReservation.wasFree) {
-      console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, enviando notificaciones INLINE');
-      console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);
-      console.log('[Confirmation] 🔍 DEBUG: Datos reserva:', {
-        date: confirmedDate,
-        startTime: confirmedStart,
-        endTime: confirmedEnd,
-        serviceType: pendingReservation.serviceType,
-        wasFree: true
-      });
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[Confirmation] 🔍 DEBUG: Reserva gratis detectada, enviando notificaciones INLINE');
+        console.log('[Confirmation] 🔍 DEBUG: Email usuario:', userProfile.email);
+        console.log('[Confirmation] 🔍 DEBUG: Datos reserva:', {
+          date: confirmedDate,
+          startTime: confirmedStart,
+          endTime: confirmedEnd,
+          serviceType: pendingReservation.serviceType,
+          wasFree: true
+        });
+      }
       
       let confirmationDeliveryLine = userProfile.email
         ? '📧 Te enviaré la confirmación por email en unos segundos.'

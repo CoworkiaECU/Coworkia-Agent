@@ -15,6 +15,7 @@ import {
   checkVisitAvailability 
 } from './paula-visit-scheduler.js';
 import { savePendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
+import { normalizeTimeFormat, parseDate } from '../utils/date-time-parser.js';
 
 /**
  * ✅ Detecta si Paula quiere activar confirmación de visita
@@ -68,7 +69,7 @@ export function extractVisitData(message, userProfile) {
     }
     
     // Normalizar horario
-    const startTime = normalizeTimeFormat(timeMatch[0]);
+    const startTime = normalizeTimeFormat(timeMatch[0], '10:00');
     
     // Fecha por defecto: mañana
     const tomorrow = new Date();
@@ -96,93 +97,7 @@ export function extractVisitData(message, userProfile) {
   }
 }
 
-/**
- * 📅 Normaliza formato de hora
- */
-function normalizeTimeFormat(timeStr) {
-  if (!timeStr) return '10:00';
-  
-  timeStr = timeStr.toLowerCase().trim();
-  
-  // Si ya está en formato HH:MM
-  if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
-    return timeStr.padStart(5, '0');
-  }
-  
-  // Extraer componentes
-  const match = timeStr.match(/(\d{1,2}):?(\d{0,2})\s*(am|pm)?/i);
-  if (!match) return '10:00';
-  
-  let hour = parseInt(match[1]);
-  let minutes = parseInt(match[2] || '0');
-  const meridiem = match[3] ? match[3].toLowerCase() : null;
-  
-  // Convertir a 24h si tiene am/pm
-  if (meridiem === 'pm' && hour !== 12) {
-    hour += 12;
-  } else if (meridiem === 'am' && hour === 12) {
-    hour = 0;
-  }
-  
-  return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
 
-/**
- * 📅 Parsea fecha en lenguaje natural
- */
-function parseDate(dateStr) {
-  const today = new Date();
-  const str = dateStr.toLowerCase().trim();
-  
-  // Hoy
-  if (str === 'hoy' || str === 'hoi') {
-    return today.toISOString().split('T')[0];
-  }
-  
-  // Mañana
-  if (str === 'mañana' || str === 'manana') {
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  }
-  
-  // Días de la semana
-  const daysMap = {
-    'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
-    'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 0
-  };
-  
-  if (daysMap.hasOwnProperty(str)) {
-    const targetDay = daysMap[str];
-    const currentDay = today.getDay();
-    let daysAhead = targetDay - currentDay;
-    
-    if (daysAhead <= 0) {
-      daysAhead += 7; // Próxima semana
-    }
-    
-    const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() + daysAhead);
-    return targetDate.toISOString().split('T')[0];
-  }
-  
-  // Formato DD/MM/YYYY o DD-MM-YYYY
-  const dateMatch = str.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
-  if (dateMatch) {
-    let [_, day, month, year] = dateMatch;
-    
-    if (year.length === 2) {
-      year = '20' + year;
-    }
-    
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-  
-  // Si no se puede parsear, devolver mañana
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toISOString().split('T')[0];
-}
 
 /**
  * 🔄 Activa confirmación de visita desde mensaje de Paula

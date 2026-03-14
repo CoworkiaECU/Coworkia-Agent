@@ -22,30 +22,7 @@ import gabiRepository from '../database/gabiRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
-
-/**
- * 🔢 Genera código secuencial de consulta legal
- */
-async function generateConsultationCode() {
-  const year = new Date().getFullYear();
-  const prefix = `GRC-${year}-`;
-  
-  const query = `
-    SELECT consultation_code FROM legal_leads 
-    WHERE consultation_code LIKE ? 
-    ORDER BY consultation_code DESC 
-    LIMIT 1
-  `;
-  
-  const result = await databaseService.get(query, [`${prefix}%`]);
-  
-  if (result && result.consultation_code) {
-    const lastNumber = parseInt(result.consultation_code.split('-')[2]);
-    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
-  }
-  
-  return `${prefix}001`;
-}
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
  * ✅ Procesa confirmación SI de Gabi
@@ -71,7 +48,7 @@ export async function confirmLegalConsultation(userId, userProfile) {
     // 1️⃣ GUARDAR EN BASE DE DATOS usando gabiRepository
     // ==========================================
     
-    const consultationCode = await generateConsultationCode();
+    const consultationCode = await generateSequentialCode('GAB', 'legal_leads', 'consultation_code', 3);
     
     const leadData = {
       consultationCode: consultationCode,

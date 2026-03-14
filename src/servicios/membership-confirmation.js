@@ -16,33 +16,10 @@ import { generateEmailForAgent } from './generic-email-templates.js';
 import { PLAN_DATA, normalizePlanKey } from './aluna-proforma-email.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { createCalendarEvent } from './google-calendar.js';
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
- * 🔢 Genera código secuencial de lead de membresía
- */
-async function generateLeadCode() {
-  const year = new Date().getFullYear();
-  const prefix = `MB-${year}-`;
-  
-  const query = `
-    SELECT id FROM membership_leads 
-    WHERE id LIKE ? 
-    ORDER BY id DESC 
-    LIMIT 1
-  `;
-  
-  const result = await databaseService.get(query, [`${prefix}%`]);
-  
-  if (result && result.id) {
-    const lastNumber = parseInt(result.id.split('-')[2]);
-    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
-  }
-  
-  return `${prefix}001`;
-}
-
-/**
- * 💰 Obtiene precio y beneficios por tipo de membresía
+ *  Obtiene precio y beneficios por tipo de membresía
  */
 function getMembershipDetails(membershipType) {
   const plans = {
@@ -127,7 +104,7 @@ export async function confirmMembershipLead(userId, userProfile) {
     // 1️⃣ GUARDAR EN BASE DE DATOS usando alunaRepository
     // ==========================================
     
-    const membershipCode = await generateLeadCode();
+    const membershipCode = await generateSequentialCode('ALU', 'membership_leads', 'id', 3);
     const membershipDetails = getMembershipDetails(formData.membershipType);
     
     const leadData = {

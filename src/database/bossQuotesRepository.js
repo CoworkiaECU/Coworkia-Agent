@@ -5,6 +5,7 @@
  */
 
 import databaseService from './database.js';
+import { AGENT_CODE_PREFIX } from '../utils/code-generator.js';
 
 /**
  * 💾 Guarda una cotización del jefe en boss_quotes
@@ -57,7 +58,7 @@ export async function saveBossQuote({
 }
 
 // ─── PREFIJOS POR AGENTE ─────────────────────────────────────────────────────
-const AGENT_PREFIX = { GABI: 'GRC', ENZO: 'ML', PAULA: 'PRE', AXEL: 'AXEL', ALUNA: 'PRO', ADRIANA: 'SEG' };
+const AGENT_PREFIX = AGENT_CODE_PREFIX;
 
 /**
  * 🔢 Genera código secuencial de documento por agente y año.

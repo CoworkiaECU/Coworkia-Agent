@@ -20,30 +20,7 @@ import databaseService from '../database/database.js';
 import enzoRepository from '../database/enzoRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
-
-/**
- * 🔢 Genera código secuencial de proyecto
- */
-async function generateProjectCode() {
-  const year = new Date().getFullYear();
-  const prefix = `ML-${year}-`;
-  
-  const query = `
-    SELECT project_code FROM marketing_leads 
-    WHERE project_code LIKE ? 
-    ORDER BY project_code DESC 
-    LIMIT 1
-  `;
-  
-  const result = await databaseService.get(query, [`${prefix}%`]);
-  
-  if (result && result.project_code) {
-    const lastNumber = parseInt(result.project_code.split('-')[2]);
-    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
-  }
-  
-  return `${prefix}001`;
-}
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
  * ✅ Procesa confirmación SI de Enzo
@@ -69,7 +46,7 @@ export async function confirmMarketingProject(userId, userProfile) {
     // 1️⃣ GUARDAR EN BASE DE DATOS usando enzoRepository
     // ==========================================
     
-    const projectCode = await generateProjectCode();
+    const projectCode = await generateSequentialCode('ENZ', 'marketing_leads', 'project_code', 3);
     
     const leadData = {
       projectCode: projectCode,

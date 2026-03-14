@@ -23,30 +23,7 @@ import paulaRepository from '../database/paulaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { confirmPropertyVisit } from './paula-confirmation-helper.js';
-
-/**
- * 🔢 Genera código secuencial de lead inmobiliario
- */
-async function generateLeadCode() {
-  const year = new Date().getFullYear();
-  const prefix = `PE-${year}-`;
-  
-  const query = `
-    SELECT id FROM real_estate_leads 
-    WHERE id LIKE ? 
-    ORDER BY id DESC 
-    LIMIT 1
-  `;
-  
-  const result = await databaseService.get(query, [`${prefix}%`]);
-  
-  if (result && result.id) {
-    const lastNumber = parseInt(result.id.split('-')[2]);
-    return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
-  }
-  
-  return `${prefix}001`;
-}
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
  * ✅ Procesa confirmación SI de Paula (Router principal)
@@ -115,7 +92,7 @@ async function confirmPropertyLead(userId, userProfile) {
     // 1️⃣ GUARDAR EN BASE DE DATOS usando paulaRepository
     // ==========================================
     
-    const leadId = await generateLeadCode();
+    const leadId = await generateSequentialCode('PAU', 'real_estate_leads', 'id', 3);
     
     // Construir objeto requirements con campos opcionales
     const requirements = {

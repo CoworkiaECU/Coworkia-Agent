@@ -20,37 +20,10 @@ import { createCalendarEvent } from './google-calendar.js';
 import { sendEmail } from './email.js';
 import { savePendingConfirmation, clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { generateVisitConfirmationEmail } from './email-templates-paula.js';
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
- * 📅 Genera código único de visita (similar a reservas)
- * Formato: PV-2026-001, PV-2026-002, etc.
- */
-async function generateVisitCode() {
-  const year = new Date().getFullYear();
-  const prefix = `PV-${year}-`;
-  
-  // Buscar el último código del año actual
-  const lastVisit = await databaseService.get(
-    `SELECT id FROM property_visits 
-     WHERE id LIKE ? 
-     ORDER BY id DESC 
-     LIMIT 1`,
-    [`${prefix}%`]
-  );
-  
-  if (!lastVisit) {
-    return `${prefix}001`;
-  }
-  
-  // Extraer número y aumentar
-  const lastNumber = parseInt(lastVisit.id.split('-')[2]);
-  const newNumber = (lastNumber + 1).toString().padStart(3, '0');
-  
-  return `${prefix}${newNumber}`;
-}
-
-/**
- * 🗓️ Verifica disponibilidad de horario para visitas
+ * ️ Verifica disponibilidad de horario para visitas
  * @param {string} date - Fecha YYYY-MM-DD
  * @param {string} startTime - Hora HH:MM
  * @param {string} propertyCode - Código de propiedad (ECU-001, DOM-002, etc.)
@@ -195,7 +168,7 @@ export async function schedulePropertyVisit(visitData) {
     }
     
     // Generar código único
-    const visitId = await generateVisitCode();
+    const visitId = await generateSequentialCode('PAU', 'property_visits', 'id', 3);
     
     // Calcular hora de fin (1 hora después)
     const [hour, minute] = startTime.split(':').map(Number);

@@ -21,49 +21,7 @@ import databaseService from '../database/database.js';
 import adrianaRepository from '../database/adrianaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
-
-/**
- * 🔢 Genera código secuencial de cotización
- * Formato: SEG-YYYY-NNN (ej: SEG-2026-001)
- */
-async function generateQuoteCode() {
-  databaseService.ensureInitialized();
-  
-  const year = new Date().getFullYear();
-  const prefix = `SEG-${year}`;
-  
-  try {
-    // Buscar la última cotización del año actual
-    const query = `
-      SELECT quote_code FROM insurance_leads 
-      WHERE quote_code LIKE ? 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
-    const lastQuote = await databaseService.get(query, [`${prefix}%`]);
-    
-    let nextNumber = 1;
-    if (lastQuote && lastQuote.quote_code) {
-      // Extraer el número de la última cotización
-      const lastCode = lastQuote.quote_code;
-      const lastNumber = parseInt(lastCode.split('-')[2]);
-      nextNumber = lastNumber + 1;
-    }
-    
-    // Formatear con 3 dígitos: 001, 002, etc.
-    const sequentialNumber = String(nextNumber).padStart(3, '0');
-    const quoteCode = `${prefix}-${sequentialNumber}`;
-    
-    console.log(`[INSURANCE-CONFIRM] 🔢 Código de cotización generado: ${quoteCode}`);
-    return quoteCode;
-    
-  } catch (error) {
-    console.error('[INSURANCE-CONFIRM] ⚠️ Error generando código, usando timestamp:', error);
-    // Fallback: usar timestamp si falla la consulta
-    const timestamp = Date.now().toString().slice(-6);
-    return `${prefix}-${timestamp}`;
-  }
-}
+import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
  * 🎯 Procesa la confirmación de cotización de seguro
@@ -94,7 +52,7 @@ export async function processInsuranceConfirmation(userId, message, userProfile)
     // 1️⃣ GUARDAR EN BASE DE DATOS usando adrianaRepository
     // ==========================================
     
-    const quoteCode = await generateQuoteCode();
+    const quoteCode = await generateSequentialCode('ADR', 'insurance_leads', 'quote_code', 3);
     
     const leadData = {
       quoteCode: quoteCode,

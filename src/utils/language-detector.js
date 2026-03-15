@@ -573,12 +573,12 @@ export function getLanguageListResponse(lang = 'es', agentId = null) {
       qu: "MedBeneficios 19 suyupi kashan 💚 Qhali kayniykita qhaway:"
     },
     AXEL: {
-      es: '¡El mercado automotriz es global! 🔧 Cotizo tu vehículo en:',
-      en: "The auto market is global! 🔧 I quote your vehicle in:",
-      fr: "Le marché auto est mondial! 🔧 Je cotise votre véhicule en:",
-      it: "Il mercato auto è globale! 🔧 Quotizo il tuo veicolo in:",
-      pt: "O mercado automotivo é global! 🔧 Coto seu veículo em:",
-      qu: "Auto mercado tukuy pachapi! 🔧 Cocheykita taripaní:"
+      es: '¡Soy experto en reparación de colisiones! 🔧 PaintBull trabaja contigo en:',
+      en: "I'm a collision repair expert! 🔧 PaintBull works with you in:",
+      fr: "Je suis expert en réparation de carrosserie! 🔧 PaintBull travaille avec vous en:",
+      it: "Sono esperto in riparazione di carrozzeria! 🔧 PaintBull lavora con te in:",
+      pt: "Sou especialista em reparação de colisões! 🔧 PaintBull trabalha com você em:",
+      qu: "Ñuqa kani choque allichaypi yachaqsapa! 🔧 PaintBull qamwan llamkani:"
     },
     GABI: {
       es: '¡El mundo financiero no tiene fronteras! ⚖️ Asesoro tus consultas en:',

@@ -30,10 +30,16 @@ export const ALUNA = {
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 😊🏢 Soy Aluna, especialista en membresías de Coworkia, tomo el relevo desde ahora.\n\nSi necesitas hablar con Aurora nuevamente, solo escribe @aurora y retomas la conversación donde la dejaste.\n\n¿Qué tipo de plan te interesa? Cuéntame sobre tu rutina de trabajo.' :
              userLanguage === 'en' ? 'Hi {nombre}! 😊🏢 I\'m Aluna, Coworkia membership specialist, taking over now.\n\nIf you need to talk to Aurora again, just write @aurora and you\'ll pick up where you left off.\n\nWhat type of plan interests you? Tell me about your work routine.' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! 😊🏢 Je suis Aluna, spécialiste des adhésions Coworkia, je prends le relais maintenant.\n\nSi vous avez besoin de parler à Aurora à nouveau, écrivez simplement @aurora et vous reprendrez où vous en étiez.\n\nQuel type de plan vous intéresse? Parlez-moi de votre routine de travail.' :
+             userLanguage === 'it' ? 'Ciao {nombre}! 😊🏢 Sono Aluna, specialista in abbonamenti Coworkia, prendo il controllo da ora.\n\nSe hai bisogno di parlare di nuovo con Aurora, scrivi solo @aurora e riprenderai da dove eravate rimasti.\n\nChe tipo di piano ti interessa? Raccontami della tua routine lavorativa.' :
+             userLanguage === 'pt' ? 'Olá {nombre}! 😊🏢 Sou Aluna, especialista em membresías Coworkia, assumo o controle a partir de agora.\n\nSe precisar falar com Aurora novamente, escreva apenas @aurora e retomará a conversa de onde pararam.\n\nQue tipo de plano te interessa? Conte-me sobre sua rotina de trabalho.' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}! 😊🏢 Ñuqa kani Aluna, Coworkia miembro yanapaq, kunanmanta ñuqa yanapasqayki.\n\nAurora-wan rimayta munaspayki, @aurora nispa qillqay chaymanta rimasqaykuta katisaqku.\n\nIma planmi sunquykipi? Ruwanaykimanta willaway.' :
              'Hi {nombre}! 😊🏢 I\'m Aluna, Coworkia membership specialist, taking over now.\n\nIf you need to talk to Aurora again, just write @aurora and you\'ll pick up where you left off.\n\nWhat type of plan interests you? Tell me about your work routine.',
     despedida: userLanguage === 'es' ? 'Genial {nombre}, ha sido un gusto asesorarte.\n\nEn cualquier momento puedes retomar, solo di @Aluna y tu consulta. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊' :
                userLanguage === 'fr' ? 'Génial {nombre}, ce fut un plaisir de vous conseiller.\n\nVous pouvez revenir à tout moment, dites simplement @Aluna et votre question. Je serai là! 😊' :
+               userLanguage === 'it' ? 'Ottimo {nombre}, è stato un piacere consigliarti.\n\nIn qualsiasi momento puoi riprendere, di solo @Aluna e la tua domanda. Sarò qui! 😊' :
+               userLanguage === 'pt' ? 'Ótimo {nombre}, foi um prazer te aconselhar.\n\nA qualquer momento pode retomar, só diga @Aluna e sua dúvida. Estarei aqui! 😊' :
+               userLanguage === 'qu' ? 'Allinmi {nombre}, kusikuni yanapasqaymanta.\n\nMayqin pachapipas kutimunki, @Aluna nispa tapuyniyki qillqay. Kaypi kasaq! 😊' :
                'Great {nombre}, it\'s been a pleasure advising you.\n\nYou can always come back, just say @Aluna and your question. I\'ll be here! 😊'
   }),
 
@@ -130,6 +136,13 @@ export const ALUNA = {
   },
 
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
+    // Normalizar idioma
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage) ? normalizedLanguage : 'es';
     return `Eres Aluna, la closer de ventas de Coworkia especializada en membresías.
 
 🧠 CONTEXTO DE CONVERSACIÓN
@@ -159,9 +172,9 @@ DETECTA SIEMPRE:
 🌍 IDIOMA Y COMUNICACIÓN
 ━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : 'Español 🇪🇸'}
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇧🇷' : userLanguage === 'qu' ? 'Runasimi 🌎' : 'Español 🇪🇸'}
 
-⚠️ REGLA CRÍTICA #1: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : 'español'}
+⚠️ REGLA CRÍTICA #1: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : userLanguage === 'qu' ? 'Runasimi (Quechua)' : 'español'}
 
 ⚠️ REGLA CRÍTICA #2: NUNCA mezcles idiomas en la misma respuesta
 - ❌ MAL: "Hello! 👋 Soy Aluna, ¿qué plan buscas?"
@@ -170,7 +183,7 @@ IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userL
 ⚠️ REGLA CRÍTICA #3: Si el usuario cambia de idioma, detecta y responde en el nuevo idioma
 
 ADAPTACIÓN CULTURAL:
-${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expresiones: "¡Perfecto!", "¡Genial!", "¿Arrancamos?"' : ''}${userLanguage === 'en' ? '- Use friendly, professional tone\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Perfect!", "Great!", "Shall we start?"' : ''}
+${userLanguage === 'es' ? '- Usa "tú" informal, cálido y cercano\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expresiones: "¡Perfecto!", "¡Genial!", "¿Arrancamos?"' : ''}${userLanguage === 'en' ? '- Use friendly, professional tone\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Perfect!", "Great!", "Shall we start?"' : ''}${userLanguage === 'fr' ? '- Ton amical et professionnel\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressions: "Parfait!", "Super!", "On commence?"' : ''}${userLanguage === 'it' ? '- Tono amichevole e professionale\n- Emojis: 😊 💼 🚀 💡 ✨\n- Espressioni: "Perfetto!", "Ottimo!", "Iniziamo?"' : ''}${userLanguage === 'pt' ? '- Tom amigável e profissional\n- Emojis: 😊 💼 🚀 💡 ✨\n- Expressões: "Perfeito!", "Ótimo!", "Vamos começar?"' : ''}${userLanguage === 'qu' ? '- Kallpachaq, allin sunqu\n- Emojis: 😊 💼 🚀 💡 ✨\n- Imaynapis: "Allinmi!", "Kusikuymi!", "Qallarisunchik?"' : ''}
 
 PERFIL: Closer de ventas consultiva, moderna y entusiasta (28 años). Transmites valor sin presión.
 

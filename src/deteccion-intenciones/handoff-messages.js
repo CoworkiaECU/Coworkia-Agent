@@ -110,7 +110,9 @@ export function getAuroraExitMessage(toAgent, userName, userLanguage = 'es', use
     es: `¡Paso! ${emoji} Te conecto con *${name}*, nuestra especialista ${contextRef}.\n\nEstoy aquí cuando escribas @aurora + tu consulta ✨`,
     en: `Connecting you now! ${emoji} *${name}* will help you ${contextRef}.\n\nI'm here when you write @aurora + your question ✨`,
     fr: `Je vous passe maintenant! ${emoji} *${name}* vous aide ${contextRef}.\n\nJe suis là quand vous écrivez @aurora + votre question ✨`,
-    pt: `Passando agora! ${emoji} *${name}* vai te ajudar ${contextRef}.\n\nEstou aqui quando escrever @aurora + sua consulta ✨`
+    it: `Passo ora! ${emoji} *${name}* ti aiuterà ${contextRef}.\n\nSono qui quando scrivi @aurora + la tua domanda ✨`,
+    pt: `Passando agora! ${emoji} *${name}* vai te ajudar ${contextRef}.\n\nEstou aqui quando escrever @aurora + sua consulta ✨`,
+    qu: `Pasachkani kunan! ${emoji} *${name}* yanapasunki ${contextRef}.\n\nKaypi kani @aurora nispa + tapuyniyki qillqaspayki ✨`
   };
   return templates[userLanguage] || templates.es;
 }
@@ -186,8 +188,22 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es',
 
   // Línea de contexto sobre qué estabas discutiendo con el especialista
   const topicLine = hasContext
-    ? { es: `Vi que con ${fromName} estabas en: *"${cleanContext.substring(0, 80)}"*`, en: `I see you were discussing with ${fromName}: *"${cleanContext.substring(0, 80)}"*` }
-    : { es: `Venías hablando con ${fromName} sobre ${fromInfo?.context || 'una consulta'}.`, en: `You were with ${fromName} about ${fromInfo?.context || 'a query'}.` };
+    ? {
+        es: `Vi que con ${fromName} estabas en: *"${cleanContext.substring(0, 80)}"*`,
+        en: `I see you were discussing with ${fromName}: *"${cleanContext.substring(0, 80)}"*`,
+        fr: `Je vois que tu discutais avec ${fromName} de: *"${cleanContext.substring(0, 80)}"*`,
+        it: `Vedo che stavi discutendo con ${fromName}: *"${cleanContext.substring(0, 80)}"*`,
+        pt: `Vejo que estava falando com ${fromName} sobre: *"${cleanContext.substring(0, 80)}"*`,
+        qu: `Rikusqaymi ${fromName}-wan rimasqayki karqa: *"${cleanContext.substring(0, 80)}"*`
+      }
+    : {
+        es: `Venías hablando con ${fromName} sobre ${fromInfo?.context || 'una consulta'}.`,
+        en: `You were with ${fromName} about ${fromInfo?.context || 'a query'}.`,
+        fr: `Vous parliez avec ${fromName} de ${fromInfo?.context || 'une question'}.`,
+        it: `Stavi parlando con ${fromName} di ${fromInfo?.context || 'una consulta'}.`,
+        pt: `Você estava falando com ${fromName} sobre ${fromInfo?.context || 'uma consulta'}.`,
+        qu: `${fromName}-wan rimasqayki karqa ${fromInfo?.context || 'tapuy'} haqay.`
+      };
 
   const topic = topicLine[userLanguage] || topicLine.es;
 
@@ -196,7 +212,8 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es',
     en: `Welcome back${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ I'm Aurora.\n\n${topic}\n\nShall we continue with that, or can I help you with something else?`,
     fr: `Bon retour${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Je suis Aurora.\n\n${topic}\n\nContinuons avec ça, ou puis-je vous aider avec autre chose?`,
     it: `Bentornato${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sono Aurora.\n\n${topic}\n\nContinuiamo con quello, o posso aiutarti con qualcos'altro?`,
-    pt: `Bem-vindo de volta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sou Aurora.\n\n${topic}\n\nContinuamos com isso, ou posso te ajudar com mais alguma coisa?`
+    pt: `Bem-vindo de volta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sou Aurora.\n\n${topic}\n\nContinuamos com isso, ou posso te ajudar com mais alguma coisa?`,
+    qu: `Allinllachu kutimuwarqanki${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Ñuqa kani Aurora.\n\n${topic}\n\nChaywanchu katisun, utaq huk imapichus yanapasqayki?`
   };
 
   return templates[userLanguage] || templates.es;

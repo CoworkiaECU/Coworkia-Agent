@@ -349,8 +349,8 @@ export async function transcribeAudio(audioUrl, options = {}) {
     console.log('[Whisper] Agente:', agentName);
     console.log('[Whisper] Usuario:', userName);
 
-    // Validar idioma soportado: 6 idiomas (es, en, fr, it, pt, qu)
-    const supportedLanguages = ['es', 'en', 'fr', 'it', 'pt', 'qu'];
+    // Quechua no tiene soporte nativo en Whisper — auto-detect funciona mejor
+    const supportedLanguages = ['es', 'en', 'fr', 'it', 'pt']; // 'qu' excluido intencionalmente
     const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
     
     if (language !== whisperLanguage) {

@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 15 Mar 2026 — Noche (sprint multiidioma completo ✅)
+> **Última actualización:** 17 Mar 2026 — P3-REFACTOR completado `6b73aa0` · 5 archivos · 659 inserciones · 433 eliminaciones
 
 ---
 
@@ -48,20 +48,122 @@
 
 ---
 
+## ✅ ML-4 — Emails HTML Multiidioma `15–16 Mar`
+**Deployed: `076d56f`** · 4 archivos · 1159 inserciones · 192 eliminaciones
+
+- **`email-i18n.js`** (nuevo, 961L): 5 idiomas (ES/EN/FR/IT/PT) × 5 namespaces (aluna · gabi · axel · enzo · proforma) — strings de UI completos por idioma
+- **`generic-email-templates.js`**: 5 funciones actualizadas con param `userLanguage = 'es'` — Aluna, Gabi, Axel, Enzo, AlunaProforma
+- **`generateEmailForAgent()`**: extrae `const lang = data.userLanguage || 'es'` y lo propaga a todas las llamadas
+- **`marketing-confirmation.js`**: pasa `userLanguage: userProfile?.preferredLanguage || 'es'`
+- **`membership-confirmation.js`**: mismo patrón en envíos de Aluna admin + proforma
+- **Smoke tests:** 10/10 ✅ (5 plantillas × ES + EN)
+- **Pendiente (por diseño):** `generateAdrianaEmailHTML` + `generatePaulaEmailHTML` — dejados para después de P3-REFACTOR
+
+---
+
+## ✅ P3 — Auditoría HTML Emails `16 Mar`
+> 12 archivos · 5,515 líneas auditadas · Hallazgos documentados abajo
+
+### 🗺️ Mapa arquitectural completo
+
+| Agente | Bot flow (genérico) | Boss-cmd / VisionAI | Scheduler / Receipts | Estado |
+|--------|--------------------|--------------------|----------------------|--------|
+| **Aluna** | `generateAlunaEmailHTML` ✅ i18n | `aluna-proforma-email.js` → llama genérico ✅ | — | 🟢 LIMPIO |
+| **Gabi** | `generateGabiEmailHTML` ✅ i18n | `gabi-cotizacion-email.js` → llama genérico ✅ | `payment-receipt-email.js` ⚠️ SMTP | 🟡 UN PARCHE |
+| **Enzo** | `generateEnzoEmailHTML` ✅ i18n | `_enzoProposalHTML` helper en genérico ✅ `{ type: 'proposal' }` | — | 🟢 UNIFICADO |
+| **Adriana** | `generateAdrianaEmailHTML` (sin i18n) | `_adrianaQuoteHTML` helper en genérico ✅ `{ type: 'quote' }` | — | 🟢 UNIFICADO |
+| **Axel** | `generateAxelEmailHTML` ✅ i18n | `generateQuoteEmailHTML()` VisionAI (intencional, async+fotos) · dirección ✅ fix | — | 🟡 INTENCIONAL |
+| **Paula** | `generatePaulaEmailHTML` (sin i18n) | `paula-cotizacion-email.js` → brochure propio (intencional El Morenal) | `email-templates-paula.js` → 4 templates full PropElite CSS ✅ | 🟢 CSS FIXED |
+| **Aurora** | `generateAuroraEmailHTML` | — | — | 🔵 sin auditar |
+| **Angela** | — | — | — | 🔵 sin templates de email |
+
+---
+
+### 🔴 CRÍTICO — Builders HTML duplicados (4 agentes afectados)
+
+**C1 — Enzo: dos sistemas paralelos**
+- `generic-email-templates.js` → `generateEnzoEmailHTML()` → bot confirmation flow, **con i18n (ML-4)**
+- `enzo-cotizacion-email.js` → `buildEnzoEmailHTML()` → boss-command flow, **sin i18n, español hardcodeado**
+- Ambos producen emails visualmente diferentes para el mismo agente
+- El boss-cmd tiene footer `© 2026 Coworkia Ecuador` (año hardcodeado) y duplica sección ecosistema + footer verde
+
+**C2 — Adriana: dos sistemas paralelos**
+- `generic-email-templates.js` → `generateAdrianaEmailHTML()` → insurance confirmation flow
+- `adriana-cotizacion-email.js` → `buildAdrianaEmailHTML()` → boss-command, **color scheme completamente diferente**: azul `#1E3A8A` + dorado `#FFD700`
+- El footer de Coworkia en boss-cmd usa acento `#FFD700` en vez del teal `#00C2A0` estándar
+- Los dos sistemas nunca han sido sincronizados de diseño desde que se crearon
+
+**C3 — Axel: tres templates para un agente**
+- `generic-email-templates.js` → `generateAxelEmailHTML()` → bot flow, **con i18n (ML-4)**
+- `axel-quote-email.js` → `generateQuoteEmailHTML()` (async, 548L con foto processing) → VisionAI flow
+- `axel-quote-email.js` → `generateReminder1EmailHTML()` + `generateReminder2EmailHTML()` → follow-up automático
+- Quote email y generic son visualmente inconsistentes (rojo #DC2626 en ambos, pero estructura diferente)
+- Dirección del taller inconsistente: reminders dicen `Av. Gonzalo Escudero N44-53`, quote dice `Calle N44-53 y`
+
+**C4 — Paula: tres sistemas completamente separados**
+- `generic-email-templates.js` → `generatePaulaEmailHTML()` → bot confirmation (sin i18n, pendiente)
+- `email-templates-paula.js` → `generateVisitConfirmationEmail()` → usado por `paula-visit-scheduler.js`
+- `paula-cotizacion-email.js` → boss-cmd brochure propio (catálogo de casas El Morenal)
+- Los 3 tienen colores/tipografía distintos (`#D4AF37`/`#3D4436` lujo vs dark navy Coworkia)
+
+---
+
+### 🟡 DEUDA — Diseño sin CSS / emails bare HTML
+
+**D1 — Paula visit scheduler: 3 templates sin estilos**
+En `email-templates-paula.js`:
+- `generateRescheduleEmail()` → `<h2>Visita Reagendada</h2>` + párrafos planos, **sin ningún CSS**
+- `generateCancellationEmail()` → igual de bare
+- `generateReminderEmail()` → lista `<ul>` sin estilos
+Solo `generateVisitConfirmationEmail()` tiene diseño completo
+Impacto: clientes que reagendan o cancelan reciben un email sin marca → confusión
+
+**D2 — Email hardcodeado `contacto@propelite.ec`**
+- `email-templates-paula.js` footer usa `contacto@propelite.ec` — diferente del email operativo real
+- Este dominio no está en el sistema de email (usa Resend con `coworkia.ec`) → potencial bounce o no monitoreado
+
+---
+
+### 🟠 INFRAESTRUCTURA — Transporters divergentes
+
+**I1 — payment-receipt-email.js usa Gmail SMTP distinto**
+- Importa `getTransporter` desde `./mailer.js` + `EMAIL_USER` (Gmail legacy)
+- Todos los otros 11 archivos usan `sendEmail` desde `./email.js` (Resend API)
+- Impacto: recibos de Gabi tienen diferente entregabilidad, sin tracking de aperturas, diferente remitente
+
+---
+
+### 🔵 MENOR — Parches visibles
+
+| # | Archivo | Descripción |
+|---|---------|-------------|
+| M1 | `enzo-cotizacion-email.js` | `© 2026` hardcodeado en footer (debería ser `new Date().getFullYear()`) |
+| M2 | `adriana-cotizacion-email.js` | Acento Coworkia `#FFD700` en vez de `#00C2A0` en co-branding |
+| M3 | `axel-quote-email.js` reminders | Dirección `Av. Gonzalo Escudero N44-53` ≠ quote `Calle N44-53 y` |
+| M4 | `enzo-cotizacion-email.js` | Boss-cmd CTA `💬 Quiero avanzar con mi agente IA →` hardcodeado en español (sin i18n) |
+| M5 | `adriana-cotizacion-email.js` | Boss-cmd todos los textos en español hardcodeado (sin i18n) |
+
+---
+
+## ✅ P3-REFACTOR — Unificar builders HTML duplicados `17 Mar`
+**Deployed: `6b73aa0`** · 5 archivos · 659 inserciones · 433 eliminaciones
+
+- **Enzo C1 ✅:** `buildEnzoEmailHTML` (221L) eliminado de `enzo-cotizacion-email.js` → extraído como `_enzoProposalHTML` helper privado en `generic-email-templates.js`. Boss-cmd llama `generateEnzoEmailHTML({...datos, quoteCode, waNumber: ADMIN_WA}, { type: 'proposal' })`
+- **Adriana C2 ✅:** `buildAdrianaEmailHTML` (161L) eliminado de `adriana-cotizacion-email.js` → extraído como `_adrianaQuoteHTML` helper privado en generic. Boss-cmd llama `generateAdrianaEmailHTML({...datos, quoteCode, quotedPremium, quotedMonthly, waNumber: ADMIN_WA}, { type: 'quote' })`
+- **Paula D1 ✅:** 3 templates bare `generateRescheduleEmail`, `generateCancellationEmail`, `generateReminderEmail` → reemplazados con PropElite full CSS (dark olive header + gold accent + Georgia serif)
+- **Axel M3 ✅:** Dirección `Calle N44-53 y, Quito` → `Av. Gonzalo Escudero N44-53, Quito` en 4 ocurrencias
+- **M1 ✅:** Copyright `© 2026` hardcodeado → `© ${new Date().getFullYear()}` en Enzo proposal footer
+
+**Deferred (out of scope):**
+- Axel VisionAI builder separado (intencional — async foto processing + sharp compression, arquitectura diferente)
+- Paula boss-cmd brochure separado (intencional — catálogo El Morenal con branding propio)
+- `generateAdrianaEmailHTML` + `generatePaulaEmailHTML` i18n — pendiente ML-4 deferral
+- `payment-receipt-email.js` SMTP Gmail → Resend migration (I1) — evaluar en P4
+
 ## ⏳ PENDIENTE — Siguiente sprint
 
-### 🔜 ML-4 — Emails HTML multiidioma ← **SIGUIENTE**
-**Alcance:** `generic-email-templates.js` — añadir `userLanguage` param, traducir asunto/saludo/CTA/pie
-**Estrategia:** parámetro `userLanguage` en funciones de generación → strings condicionales por idioma
-**Nota:** no rediseñar templates, solo localizar textos UI
-**Complejidad:** alta — requiere sesión dedicada
-
-### P3 — Auditoría de emails HTML (6 archivos, 8 agentes)
-**Objetivo:** Inventariar templates, detectar campos vacíos, agentes sin HTML, inconsistencias de branding
-**Diferida** — conviene hacer junto o después de ML-4
-
 ### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
-**Diferida** — requiere P3 terminado
+**Diferida** — conviene hacer después de P3-REFACTOR para no duplicar trabajo en templates que van a cambiar
 
 ### P6 — TODOs bloqueados por cliente
 - **AXEL:** Tarifario oficial de The PaintBull
@@ -118,25 +220,13 @@
 
 ---
 
-## ⏳ PENDIENTE — Siguiente sprint
+## ⏳ PENDIENTE — Siguiente sprint (detalle extendido)
 
-### ML-4 — Emails HTML multiidioma (fase 1: textos de UI)
-**Alcance:** `generic-email-templates.js` — añadir `userLanguage` param, traducir asunto/saludo/CTA/footer  
-**Estrategia:** parámetro `userLanguage` en funciones de generación → strings condicionales por idioma  
-**Nota:** no rediseñar templates, solo localizar textos de UI  
-**Bloqueo:** es el más complejo — requiere sesión dedicada
-
-### P3 — Auditoría de emails HTML (6 archivos, 8 agentes)
-**Objetivo:** Saber cuál agente tiene template viejo, cuál no envía, cuál tiene campos mal.  
-**Diferida** — esperar ML-4 primero para no duplicar trabajo
+### P3-REFACTOR — Unificar builders HTML ← **SIGUIENTE**
+> Ver sección P3-REFACTOR arriba para el plan completo.
 
 ### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
-**Diferida** — requiere P3 terminado
-
-### P6 — TODOs bloqueados por cliente
-- **AXEL:** Tarifario oficial de The PaintBull
-- **PAULA:** Links de Drive para 5 propiedades
-- **ALUNA:** Definir si el tour post-pago va a Google Calendar
+**Diferida** — requiere P3-REFACTOR terminado
 
 ---
 

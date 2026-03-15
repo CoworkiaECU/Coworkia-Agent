@@ -87,7 +87,8 @@ export async function confirmMarketingProject(userId, userProfile) {
           phone: formData.phone || userId,
           budget: formData.budget || 'Por definir',
           urgency: formData.urgency || 'Flexible',
-          description: formData.description || 'Proyecto de marketing digital'
+          description: formData.description || 'Proyecto de marketing digital',
+          userLanguage: userProfile?.preferredLanguage || 'es'
         });
 
         await sendEmail({

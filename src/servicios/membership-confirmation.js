@@ -139,7 +139,8 @@ export async function confirmMembershipLead(userId, userProfile) {
       phone: formData.phone,
       startDate: formData.startDate || 'Flexible',
       specialRequirements: formData.specialRequirements || 'Ninguno',
-      whatsappLink: `https://wa.me/${userId.replace('+', '')}`
+      whatsappLink: `https://wa.me/${userId.replace('+', '')}`,
+      userLanguage: userProfile?.preferredLanguage || 'es'
     });
 
     await sendEmail(adminEmail, emailToAdmin.subject, emailToAdmin.html);
@@ -194,6 +195,7 @@ export async function confirmMembershipLead(userId, userProfile) {
         proformaCode: membershipCode,
         nota: formData.specialRequirements || null,
         coworkiaWhatsApp: '593994837117',
+        userLanguage: userProfile?.preferredLanguage || 'es'
       });
 
       await sendEmail({

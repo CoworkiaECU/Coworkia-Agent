@@ -7,6 +7,7 @@
 import { LOGOS_BASE64, DARK_MODE_CSS } from './email-assets.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
+import { EMAIL_TRANSLATIONS } from './email-i18n.js';
 
 /**
  * 🛡️ ADRIANA - SegPopular (Seguros)
@@ -213,7 +214,8 @@ export function generateAdrianaEmailHTML(leadData) {
  * Diseño premium con foto-grid CID, tabla de trabajos, badges de severidad
  * Parámetros: { customerName, vehicleData, damageAnalysis, quote, priceRange, photoAssets, quoteCode }
  */
-export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAnalysis = {}, quote, priceRange, photoAssets = [], quoteCode }) {
+export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAnalysis = {}, quote, priceRange, photoAssets = [], quoteCode, userLanguage = 'es' }) {
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).axel;
   const formatDate = new Date().toLocaleDateString('es-EC', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
@@ -221,9 +223,9 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
   const q = (quote && typeof quote === 'object' && !quote.raw_text) ? quote : null;
 
   const severityMap = {
-    LEVE:    { bg: '#DCFCE7', color: '#166534', dot: '#22C55E', label: 'DAÑO LEVE' },
-    MODERADO:{ bg: '#FEF3C7', color: '#92400E', dot: '#F59E0B', label: 'DAÑO MODERADO' },
-    GRAVE:   { bg: '#FEE2E2', color: '#991B1B', dot: '#EF4444', label: 'DAÑO GRAVE' },
+    LEVE:    { bg: '#DCFCE7', color: '#166534', dot: '#22C55E', label: t.severityLabels.LEVE },
+    MODERADO:{ bg: '#FEF3C7', color: '#92400E', dot: '#F59E0B', label: t.severityLabels.MODERADO },
+    GRAVE:   { bg: '#FEE2E2', color: '#991B1B', dot: '#EF4444', label: t.severityLabels.GRAVE },
   };
   const sv = severityMap[damageAnalysis.severity] || severityMap.MODERADO;
 
@@ -244,9 +246,9 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
       </tr>`).join('');
 
     const rows = [
-      q.subtotal_mano_obra?.min ? ['🔧 Mano de obra', q.subtotal_mano_obra.min, q.subtotal_mano_obra.max] : null,
-      q.subtotal_materiales?.min ? ['🎨 Materiales', q.subtotal_materiales.min, q.subtotal_materiales.max] : null,
-      q.subtotal_repuestos?.min ? ['🔩 Repuestos', q.subtotal_repuestos.min, q.subtotal_repuestos.max] : null,
+      q.subtotal_mano_obra?.min ? [t.labelLabor, q.subtotal_mano_obra.min, q.subtotal_mano_obra.max] : null,
+      q.subtotal_materiales?.min ? [t.labelMaterials, q.subtotal_materiales.min, q.subtotal_materiales.max] : null,
+      q.subtotal_repuestos?.min ? [t.labelParts, q.subtotal_repuestos.min, q.subtotal_repuestos.max] : null,
     ].filter(Boolean);
 
     desgloseHTML = rows.map(([label, min, max]) => `
@@ -255,13 +257,13 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
         <span style="color:#374151;font-size:14px;font-weight:600;">$${min} – $${max}</span>
       </div>`).join('');
   } else {
-    const rawText = (quote && quote.raw_text) ? quote.raw_text : (typeof quote === 'string' ? quote : 'Ver detalles de la reparación');
+    const rawText = (quote && quote.raw_text) ? quote.raw_text : (typeof quote === 'string' ? quote : t.worksFallback);
     trabajosHTML = `<tr><td colspan="3" style="padding:20px;font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">${rawText}</td></tr>`;
   }
 
-  const photoGrid = photoAssets.length > 0
+      const photoGrid = photoAssets.length > 0
     ? `<div style="margin-bottom:28px;">
-        <div style="color:#6B7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📸 Fotos del siniestro</div>
+        <div style="color:#6B7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">${t.photosLabel}</div>
         <div style="display:grid;grid-template-columns:repeat(${Math.min(photoAssets.length, 4)},1fr);gap:6px;">
           ${photoAssets.map((_, i) => `<img src="cid:foto-${i+1}@paintbull" alt="Foto ${i+1}" width="100%" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid #E5E7EB;display:block;" />`).join('')}
         </div>
@@ -274,7 +276,7 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
   const vModelo = vehicleData.modelo && vehicleData.modelo !== 'Pendiente' ? vehicleData.modelo : '';
   const vAño = vehicleData.año && vehicleData.año !== 'Pendiente' ? vehicleData.año : '';
   const vehicleTitle = [vMarca, vModelo].filter(Boolean).join(' ') || 'Por inspeccionar';
-  const vehicleYearLine = vAño ? `Año ${vAño}` : 'Inspección presencial';
+  const vehicleYearLine = vAño ? `Año ${vAño}` : t.inspectionFallback;
 
   const ecosistemaItems = ecosistemaTable({
     aliados: ['enzo', 'gabi', 'angela', 'adriana', 'paula', 'aurora'],
@@ -307,7 +309,7 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     <div style="color:white;font-size:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">The PaintBull</div>
     <div style="color:rgba(255,255,255,0.75);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">Colisiones & Pintura Vehicular · Quito</div>
     <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 28px;display:inline-block;text-align:left;min-width:300px;">
-      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Cotización preparada para</div>
+      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">${t.preparedFor}</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px;">
         <div style="color:#111827;font-size:22px;font-weight:700;line-height:1.2;">${customerName}</div>
         <span style="background:#DC2626;color:white;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;letter-spacing:1px;white-space:nowrap;flex-shrink:0;margin-top:4px;">${quoteCode}</span>
@@ -319,9 +321,9 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
   <!-- ══ PRECIO TOTAL ══ -->
   ${priceRange ? `
   <div style="background:white;padding:32px 40px;border-bottom:1px solid #F3F4F6;text-align:center;">
-    <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">Inversión estimada para su reparación</div>
+    <div style="color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">${t.investmentTitle}</div>
     <div style="color:#DC2626;font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1;">$${priceRange.min} <span style="font-size:28px;color:#9CA3AF;font-weight:500;">–</span> $${priceRange.max}</div>
-    <div style="color:#6B7280;font-size:14px;margin-top:6px;">USD · cotización preliminar por análisis fotográfico con IA</div>
+    <div style="color:#6B7280;font-size:14px;margin-top:6px;">${t.investmentSub}</div>
   </div>` : ''}
 
   <!-- ══ CUERPO ══ -->
@@ -330,7 +332,7 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     <!-- Vehículo + Severidad -->
     <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
       <div style="flex:1;min-width:200px;background:#FFF8F8;border:1px solid #FECACA;border-radius:14px;padding:20px;">
-        <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Vehículo</div>
+        <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t.labelVehicle}</div>
         <div style="color:#111827;font-size:22px;font-weight:800;line-height:1.2;">${vehicleTitle}</div>
         <div style="color:#6B7280;font-size:15px;margin-top:4px;">${vehicleYearLine}</div>
       </div>
@@ -339,13 +341,13 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
         <div style="background:${sv.bg};border:2px solid ${sv.dot};border-radius:8px;padding:6px 14px;display:inline-block;">
           <span style="color:${sv.color};font-size:13px;font-weight:700;">${sv.label}</span>
         </div>
-        <div style="color:${sv.color};font-size:12px;margin-top:10px;opacity:0.8;">Riesgo daños ocultos: <strong>${damageAnalysis.hiddenDamageRisk || 'MEDIO'}</strong></div>
+        <div style="color:${sv.color};font-size:12px;margin-top:10px;opacity:0.8;">${t.hiddenDamageRisk}: <strong>${damageAnalysis.hiddenDamageRisk || 'MEDIO'}</strong></div>
       </div>
     </div>
 
     ${parts.length > 0 ? `
     <div style="margin-bottom:28px;">
-      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:10px;">Áreas con daño detectado</div>
+      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:10px;">${t.affectedAreas}</div>
       <div>${partsBadges}</div>
     </div>` : ''}
 
@@ -353,20 +355,20 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
 
     ${q?.resumen_danos ? `
     <div style="background:#FFF8F8;border-left:4px solid #DC2626;border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:28px;">
-      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Diagnóstico</div>
+      <div style="color:#DC2626;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">${t.sectionDiagnosis}</div>
       <p style="color:#374151;font-size:14px;line-height:1.75;margin:0;">${q.resumen_danos}</p>
     </div>` : ''}
 
     <!-- Tabla de trabajos -->
     <div style="margin-bottom:28px;">
-      <div style="color:#374151;font-size:14px;font-weight:700;margin-bottom:12px;">Trabajos requeridos</div>
+      <div style="color:#374151;font-size:14px;font-weight:700;margin-bottom:12px;">${t.sectionWorks}</div>
       <div style="border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
         <table style="width:100%;border-collapse:collapse;">
           <thead>
             <tr style="background:#111827;">
-              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Trabajo</th>
-              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Proceso</th>
-              <th style="padding:12px 16px;text-align:right;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">Rango</th>
+              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">${t.colWork}</th>
+              <th style="padding:12px 16px;text-align:left;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">${t.colProcess}</th>
+              <th style="padding:12px 16px;text-align:right;color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">${t.colRange}</th>
             </tr>
           </thead>
           <tbody>${trabajosHTML}</tbody>
@@ -376,10 +378,10 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
 
     ${desgloseHTML ? `
     <div style="background:#F9FAFB;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
-      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:12px;">Desglose de costos</div>
+      <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:12px;">${t.sectionBreakdown}</div>
       ${desgloseHTML}
       <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;margin-top:4px;border-top:2px solid #E5E7EB;">
-        <span style="color:#111827;font-size:15px;font-weight:700;">Total estimado</span>
+        <span style="color:#111827;font-size:15px;font-weight:700;">${t.totalLabel}</span>
         <span style="color:#DC2626;font-size:20px;font-weight:800;">$${priceRange?.min || q?.total_min || '—'} – $${priceRange?.max || q?.total_max || '—'} USD</span>
       </div>
     </div>` : ''}
@@ -388,44 +390,44 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;">
       <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:12px;padding:18px;text-align:center;">
         <div style="font-size:28px;margin-bottom:6px;">⏱️</div>
-        <div style="color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Tiempo de entrega</div>
+        <div style="color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.deliveryLabel}</div>
         <div style="color:#15803D;font-size:16px;font-weight:700;">${q?.dias_entrega || damageAnalysis.estimatedRepairDays || '3-5 días hábiles'}</div>
       </div>
       <div style="background:#EFF6FF;border:1px solid #93C5FD;border-radius:12px;padding:18px;text-align:center;">
         <div style="font-size:28px;margin-bottom:6px;">🛡️</div>
-        <div style="color:#1E40AF;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Garantía</div>
-        <div style="color:#1D4ED8;font-size:13px;font-weight:600;line-height:1.4;">${q?.garantia || 'Garantía escrita en pintura y mano de obra'}</div>
+        <div style="color:#1E40AF;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.warrantyLabel}</div>
+        <div style="color:#1D4ED8;font-size:13px;font-weight:600;line-height:1.4;">${q?.garantia || t.warrantyFallback}</div>
       </div>
     </div>
 
     <!-- Nota inspección -->
     <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;margin-bottom:28px;display:flex;gap:10px;align-items:flex-start;">
       <span style="font-size:18px;flex-shrink:0;">⚠️</span>
-      <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;">${q?.nota_inspeccion || 'Cotización preliminar basada en análisis fotográfico con IA. La inspección física puede revelar daños estructurales adicionales no visibles en fotos.'}</p>
+      <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;">${q?.nota_inspeccion || t.noteInspection}</p>
     </div>
 
     <!-- CTA -->
     <div style="background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
-      <div style="color:rgba(255,255,255,0.85);font-size:13px;margin-bottom:8px;">¿Listo para dejar tu vehículo como nuevo?</div>
-      <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">Agenda tu cita ahora</div>
-      <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:24px;">Respuesta en menos de 1 hora · Presupuesto sin compromiso</div>
+      <div style="color:rgba(255,255,255,0.85);font-size:13px;margin-bottom:8px;">${t.ctaTitle1}</div>
+      <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">${t.ctaTitle2}</div>
+      <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:24px;">${t.ctaDesc}</div>
       <a href="${waLink}" style="display:inline-block;background:white;color:#DC2626;padding:16px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,0.25);letter-spacing:0.3px;">
-        🔧 Confirmar cotización ${quoteCode} →
+        ${t.ctaButton(quoteCode)}
       </a>
       <div style="margin-top:24px;">
         <div style="background:rgba(0,0,0,0.18);border-radius:10px;padding:14px 20px;display:inline-block;">
-          <div style="color:rgba(255,255,255,0.85);font-size:12px;">📍 Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
-          <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;">📱 +593 99 483 7117 · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:white;text-decoration:none;">Ver en mapa →</a></div>
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;">${t.address}</div>
+          <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;">${t.phone} · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:white;text-decoration:none;">Ver en mapa →</a></div>
         </div>
       </div>
     </div>
 
     <!-- Por qué PaintBull -->
     <div style="padding:28px 0;border-top:1px solid #F3F4F6;margin-top:10px;">
-      <div style="text-align:center;color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">Por qué The PaintBull</div>
+      <div style="text-align:center;color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">${t.whyTitle}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;">
-        ${[['🏆','15 años','de experiencia'],['✅','Garantía','escrita siempre'],['⚡','Tecnología','Vision AI']].map(([ic,t,d])=>`
-        <div><div style="font-size:28px;margin-bottom:6px;">${ic}</div><div style="color:#111827;font-size:13px;font-weight:700;">${t}</div><div style="color:#9CA3AF;font-size:12px;">${d}</div></div>`).join('')}
+        ${[['🏆',t.proof1t,t.proof1d],['✅',t.proof2t,t.proof2d],['⚡',t.proof3t,t.proof3d]].map(([ic,tt,d])=>`
+        <div><div style="font-size:28px;margin-bottom:6px;">${ic}</div><div style="color:#111827;font-size:13px;font-weight:700;">${tt}</div><div style="color:#9CA3AF;font-size:12px;">${d}</div></div>`).join('')}
       </div>
     </div>
   </div>
@@ -433,21 +435,17 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
   <!-- ══ CO-BRANDING COWORKIA ══ -->
   <div style="background:white;border-radius:0 0 20px 20px;padding:44px;text-align:center;border-top:1px solid #F3F4F6;">
     <div style="border-top:1px solid #F3F4F6;padding-top:32px;margin-bottom:28px;">
-      <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
+      <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">${t.cobrandingTag}</div>
       <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
       <div style="color:#DC2626;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
     </div>
     <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
     <div style="margin-bottom:28px;">${ecosistemaItems}</div>
     <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin-bottom:22px;">
-      <p style="color:#7F1D1D;font-size:12px;line-height:1.8;margin:0;">
-        Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
-        <strong style="color:#991B1B;">Tu vehículo en las mejores manos de Ecuador.</strong>
-      </p>
+      <p style="color:#7F1D1D;font-size:12px;line-height:1.8;margin:0;">${t.cobrandingBlurb}</p>
     </div>
     <div style="color:#9CA3AF;font-size:11px;line-height:1.7;">
-      Cotización generada por <strong style="color:#6B7280;">Axel</strong> · The PaintBull<br>
-      Coworkia Intelligence System · ${formatDate}
+      ${t.footerBy('Axel', formatDate)}
     </div>
   </div>
 
@@ -460,7 +458,8 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
  * 🎯 ENZO - MarketingLab
  * Paleta: Teal (#2DD4BF, #0D9488) + Fondo navy (#0A0F1E) — logo mantiene su color único
  */
-export function generateEnzoEmailHTML(leadData) {
+export function generateEnzoEmailHTML(leadData, userLanguage = 'es') {
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).enzo;
   const {
     userName,
     projectType,
@@ -497,20 +496,20 @@ export function generateEnzoEmailHTML(leadData) {
           <div style="color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px;">ESTRATEGIAS QUE FUNCIONAN</div>
           <!-- Tarjeta oscura métricas style -->
           <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.3); border-radius: 14px; padding: 24px; max-width: 340px; margin: 0 auto;">
-            <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; text-align: center; margin-bottom: 16px;">· PROYECTO PARA ·</div>
+            <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; text-align: center; margin-bottom: 16px;">${t.cardProjectLabel}</div>
             <div style="color: white; font-size: 22px; font-weight: 800; text-align: center; line-height: 1.2; margin-bottom: 16px;">${userName}</div>
             <div style="border-top: 1px solid rgba(45,212,191,0.2); margin-bottom: 16px;"></div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 50%; padding: 0 4px 0 0;">
                   <div style="background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 12px; text-align: center;">
-                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">PROYECTO</div>
+                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.colProject}</div>
                     <div style="color: white; font-size: 13px; font-weight: 700; line-height: 1.3;">${projectType}</div>
                   </div>
                 </td>
                 <td style="width: 50%; padding: 0 0 0 4px;">
                   <div style="background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 12px; text-align: center;">
-                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">REFERENCIA</div>
+                    <div style="color: #2DD4BF; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.colRef}</div>
                     <div style="color: white; font-size: 13px; font-weight: 700; line-height: 1.3;">${leadId}</div>
                   </div>
                 </td>
@@ -528,39 +527,38 @@ export function generateEnzoEmailHTML(leadData) {
 
           <!-- Intro -->
           <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
-            Recibimos tu proyecto de <strong style="color: #2DD4BF;">${projectType}</strong>${companyName ? ` para <strong style="color: #374151;">${companyName}</strong>` : ''}.<br>
-            <span style="color: #6B7280;">Aquí está nuestra propuesta personalizada.</span>
+            ${t.introReceived(projectType, companyName)}
           </p>
 
           <!-- Resumen del proyecto -->
           <div style="background: #F8FFFE; border-left: 4px solid #2DD4BF; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 0 0 24px;">
-            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;">📋 Resumen del proyecto</div>
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;">${t.sectionSummary}</div>
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px; width: 40%;">Tipo</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${projectType}</td></tr>
-              ${companyName ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Empresa</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${companyName}</td></tr>` : ''}
-              ${budget ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Presupuesto</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${budget}</td></tr>` : ''}
-              ${urgency ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Urgencia</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${urgency}</td></tr>` : ''}
-              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">Referencia</td><td style="padding: 6px 0; color: #2DD4BF; font-size: 13px; font-weight: 700;">${leadId}</td></tr>
+              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px; width: 40%;">${t.labelType}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${projectType}</td></tr>
+              ${companyName ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelCompany}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${companyName}</td></tr>` : ''}
+              ${budget ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelBudget}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${budget}</td></tr>` : ''}
+              ${urgency ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelUrgency}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${urgency}</td></tr>` : ''}
+              <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelRef}</td><td style="padding: 6px 0; color: #2DD4BF; font-size: 13px; font-weight: 700;">${leadId}</td></tr>
             </table>
           </div>
 
           <!-- Servicios -->
           <div style="margin: 0 0 24px;">
-            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">⚡ Lo que activamos en tu proyecto</div>
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">${t.sectionServices}</div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 50%; padding: 0 8px 8px 0; vertical-align: top;">
                   <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
                     <div style="font-size: 22px; margin-bottom: 6px;">🤖</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">IA con OpenAI</div>
-                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Chatbots, automatizaciones y contenido generado con IA</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">${t.svc1t}</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">${t.svc1d}</div>
                   </div>
                 </td>
                 <td style="width: 50%; padding: 0 0 8px 0; vertical-align: top;">
                   <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
                     <div style="font-size: 22px; margin-bottom: 6px;">🎯</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Campañas Meta &amp; Google</div>
-                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Ads optimizados para máximo ROAS y conversiones</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">${t.svc2t}</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">${t.svc2d}</div>
                   </div>
                 </td>
               </tr>
@@ -568,15 +566,15 @@ export function generateEnzoEmailHTML(leadData) {
                 <td style="width: 50%; padding: 0 8px 0 0; vertical-align: top;">
                   <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
                     <div style="font-size: 22px; margin-bottom: 6px;">📱</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Contenido &amp; Social</div>
-                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Producción de contenido para IG, FB y TikTok</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">${t.svc3t}</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">${t.svc3d}</div>
                   </div>
                 </td>
                 <td style="width: 50%; padding: 0; vertical-align: top;">
                   <div style="background: #F0FDFC; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px;">
                     <div style="font-size: 22px; margin-bottom: 6px;">📊</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">Analytics &amp; Reportes</div>
-                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">Dashboard semanal con KPIs y proyecciones</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0D9488; margin-bottom: 4px;">${t.svc4t}</div>
+                    <div style="color: #6B7280; font-size: 12px; line-height: 1.4;">${t.svc4d}</div>
                   </div>
                 </td>
               </tr>
@@ -585,11 +583,11 @@ export function generateEnzoEmailHTML(leadData) {
 
           <!-- Tabla de precios -->
           <div style="margin: 0 0 24px;">
-            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">💰 Inversión mensual detallada</div>
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">${t.sectionPricing}</div>
             <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden;">
               <tr style="background: #0A0F1E;">
-                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Servicio</td>
-                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: right;">Precio / mes</td>
+                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">${t.colService}</td>
+                <td style="padding: 10px 14px; color: #2DD4BF; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: right;">${t.colPrice}</td>
               </tr>
               <tr style="background: #F9FAFB;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #ECFDF5;">🎯 Gestión Meta Ads + Google Ads</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #ECFDF5;">$900</td></tr>
               <tr style="background: white;"><td style="padding: 11px 14px; color: #374151; font-size: 13px; border-bottom: 1px solid #ECFDF5;">📱 Producción de contenido (IG / FB / TikTok)</td><td style="padding: 11px 14px; color: #1F2937; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #ECFDF5;">$600</td></tr>
@@ -607,52 +605,52 @@ export function generateEnzoEmailHTML(leadData) {
 
           <!-- CTA consultoría -->
           <div style="background: linear-gradient(135deg, #1F2937 0%, #0A0F1E 100%); border-radius: 14px; padding: 28px 24px; margin: 0 0 24px; text-align: center;">
-            <div style="color: #2DD4BF; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">🎁 INCLUIDO SIN COSTO</div>
-            <div style="color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px;">Consultoría estratégica inicial</div>
-            <div style="color: rgba(255,255,255,0.65); font-size: 13px; line-height: 1.7; margin-bottom: 22px;">30 minutos con Enzo para analizar tu proyecto, definir objetivos y presentarte un plan de acción con IA.</div>
+            <div style="color: #2DD4BF; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">${t.sectionBonus}</div>
+            <div style="color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px;">${t.bonusTitle}</div>
+            <div style="color: rgba(255,255,255,0.65); font-size: 13px; line-height: 1.7; margin-bottom: 22px;">${t.bonusDesc}</div>
             <a href="https://wa.me/593994837117?text=%40enzo%2C%20mejoremos%20el%20precio%20de%20tu%20oferta%20y%20cerremos%20este%20negocio%20en%20una%20reuni%C3%B3n%20en%20tu%20oficina"
                style="display: inline-block; background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); color: #042f2e; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 15px; box-shadow: 0 6px 20px rgba(45,212,191,0.40); letter-spacing: 0.3px;">
-              🤝 ¿Negociamos el precio?
+              ${t.ctaNegotiate}
             </a>
-            <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 12px 0 0; letter-spacing: 0.3px;">Abre WhatsApp directo con Enzo · Responde en minutos</p>
+            <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 12px 0 0; letter-spacing: 0.3px;">${t.ctaNegotiateNote}</p>
           </div>
 
           <!-- Cronograma de implementación -->
           <div style="margin: 0 0 24px;">
-            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">📅 Cronograma de implementación</div>
-            <p style="color: #6B7280; font-size: 13px; margin: 0 0 16px; line-height: 1.6;">Así se verá <strong style="color: #374151;">${companyName || userName}</strong> en 30 días activa en redes, con campañas corriendo y datos reales:</p>
+            <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">${t.sectionTimeline}</div>
+            <p style="color: #6B7280; font-size: 13px; margin: 0 0 16px; line-height: 1.6;">${t.timelineIntro(companyName || userName)}</p>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 25%; padding: 0 4px 0 0; vertical-align: top; height: 175px;">
                   <div style="background: #0A0F1E; border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
-                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 1</div>
-                    <div style="font-size: 22px; margin-bottom: 6px;">🚀</div>
-                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Setup</div>
-                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Auditoría, pixel tracking, cuentas publicitarias configuradas</div>
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.week(1)}</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">${t.weekIcons[0]}</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">${t.weekTitles[0]}</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">${t.weekDescs[0]}</div>
                   </div>
                 </td>
                 <td style="width: 25%; padding: 0 4px; vertical-align: top; height: 175px;">
                   <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
-                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 2</div>
-                    <div style="font-size: 22px; margin-bottom: 6px;">📢</div>
-                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Lanzamiento</div>
-                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Primeras campañas live, calendario editorial publicado</div>
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.week(2)}</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">${t.weekIcons[1]}</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">${t.weekTitles[1]}</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">${t.weekDescs[1]}</div>
                   </div>
                 </td>
                 <td style="width: 25%; padding: 0 4px; vertical-align: top; height: 175px;">
                   <div style="background: #0D1520; border: 1px solid rgba(45,212,191,0.2); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
-                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 3</div>
-                    <div style="font-size: 22px; margin-bottom: 6px;">📈</div>
-                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Optimización</div>
-                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">A/B testing, audiencias refinadas, primeros leads entrando</div>
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.week(3)}</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">${t.weekIcons[2]}</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">${t.weekTitles[2]}</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">${t.weekDescs[2]}</div>
                   </div>
                 </td>
                 <td style="width: 25%; padding: 0 0 0 4px; vertical-align: top; height: 175px;">
                   <div style="background: linear-gradient(135deg, #042f2e 0%, #0A0F1E 100%); border: 1px solid rgba(45,212,191,0.4); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
-                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">Semana 4</div>
-                    <div style="font-size: 22px; margin-bottom: 6px;">🏆</div>
-                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Resultados</div>
-                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">Reporte de KPIs: CAC, ROAS, engagement y proyección mes 2</div>
+                    <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.week(4)}</div>
+                    <div style="font-size: 22px; margin-bottom: 6px;">${t.weekIcons[3]}</div>
+                    <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">${t.weekTitles[3]}</div>
+                    <div style="color: rgba(255,255,255,0.5); font-size: 10px; line-height: 1.5;">${t.weekDescs[3]}</div>
                   </div>
                 </td>
               </tr>
@@ -661,12 +659,12 @@ export function generateEnzoEmailHTML(leadData) {
 
           <!-- CTA WhatsApp -->
           <div style="text-align: center; margin: 0 0 8px;">
-            <p style="color: #6B7280; font-size: 14px; margin: 0 0 14px; font-weight: 500;">💬 ¿Tienes preguntas sobre tu proyecto?</p>
+            <p style="color: #6B7280; font-size: 14px; margin: 0 0 14px; font-weight: 500;">${t.ctaQue}</p>
             <a href="https://wa.me/593994837117?text=%40enzo%20recib%C3%AD%20tu%20cotizaci%C3%B3n%20por%20correo%20(${encodeURIComponent(leadId)})%20y%20tengo%20algunas%20dudas"
                style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; padding: 13px 32px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 5px 18px rgba(37,211,102,0.35); font-size: 14px;">
-              📱 Habla con Enzo por WhatsApp
+              ${t.ctaWa}
             </a>
-            <p style="color: #9CA3AF; font-size: 11px; margin: 10px 0 0;">Respuesta instantánea · Lunes a sábado</p>
+            <p style="color: #9CA3AF; font-size: 11px; margin: 10px 0 0;">${t.ctaWaSub}</p>
           </div>
 
         </div>
@@ -675,8 +673,8 @@ export function generateEnzoEmailHTML(leadData) {
       <!-- ═══ ECOSISTEMA DE AGENTES ═══ -->
       <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #0D9488;">
         <div style="max-width:480px;margin:0 auto 28px;">
-          <h2 style="color:#2DD4BF;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
-          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
+          <h2 style="color:#2DD4BF;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">${t.ecosistemaTitle}</h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">${t.ecosistemaDesc}</p>
         </div>
         <div style="margin-bottom:22px;">${ecosistemaTable({aliados:['aurora','adriana','angela','axel','aluna','gabi','paula','custom'],theme:'dark'})}</div>
         <div style="background:rgba(13,148,136,0.06);border:1px solid rgba(13,148,136,0.12);border-radius:10px;padding:14px;margin-bottom:36px;">
@@ -688,7 +686,7 @@ export function generateEnzoEmailHTML(leadData) {
         <!-- Brand footer -->
         <div style="border-top: 1px solid rgba(255,255,255,0.07); padding: 28px 20px 32px; text-align: center;">
           <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}" alt="MarketingLab" style="max-width: 180px; height: auto; display: block; margin: 0 auto 12px;" />
-          <div style="color: rgba(255,255,255,0.35); font-size: 12px; letter-spacing: 1px; margin-bottom: 16px;">estrategia · digital · resultados</div>
+          <div style="color: rgba(255,255,255,0.35); font-size: 12px; letter-spacing: 1px; margin-bottom: 16px;">${t.footerTagline}</div>
           <div style="color: rgba(255,255,255,0.25); font-size: 11px; line-height: 1.8;">
             © 2026 Coworkia Ecuador — Espacios que inspiran<br>
             Whymper 403, Edificio Finistere - Planta Baja, Quito<br>
@@ -864,7 +862,7 @@ export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
  * 🎫 ALUNA - Coworkia Membresías
  * Colores: Turquesa Coworkia (#4ECDC4, #44A08D)
  */
-export function generateAlunaEmailHTML(leadData) {
+export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
   const {
     userName,
     membershipType,
@@ -874,6 +872,7 @@ export function generateAlunaEmailHTML(leadData) {
     companyName,
     leadId
   } = leadData;
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).aluna;
 
   return `
     <!DOCTYPE html>
@@ -901,8 +900,8 @@ export function generateAlunaEmailHTML(leadData) {
             Business Center
           </div>
           <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">✅ Solicitud de Membresía</h1>
-            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">El equipo te contactará pronto</p>
+            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">${t.title}</h1>
+            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">${t.subtitle}</p>
           </div>
         </div>
 
@@ -910,28 +909,28 @@ export function generateAlunaEmailHTML(leadData) {
           
           <!-- Saludo personalizado -->
           <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
+            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${userName}! ${t.greetingEnd}</h2>
             <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Recibimos tu interés en <strong style="color: #4ECDC4;">${membershipType}</strong>
+              ${t.interest} <strong style="color: #4ECDC4;">${membershipType}</strong>
             </p>
           </div>
 
           <!-- Detalles de la membresía -->
           <div style="background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(78,205,196,0.1);">
-            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">🎫 TU MEMBRESÍA</h3>
+            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">${t.sectionMembership}</h3>
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
                 <div style="display: flex; align-items: center;">
                   <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">🎫</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${membershipType}</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelType}: ${membershipType}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
                 <div style="display: flex; align-items: center;">
                   <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">📅</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Inicio: ${startDate}</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelStart}: ${startDate}</span>
                 </div>
               </div>
 
@@ -965,39 +964,39 @@ export function generateAlunaEmailHTML(leadData) {
             <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Próximos Pasos:</h3>
             <div style="color: #374151; font-size: 15px; line-height: 1.8;">
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">1.</strong> Te contactaremos para agendar un tour de las instalaciones
+                <strong style="color: #10B981;">1.</strong> ${t.step1}
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">2.</strong> Conocerás todos los beneficios y amenidades
+                <strong style="color: #10B981;">2.</strong> ${t.step2}
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">3.</strong> Revisaremos el plan que mejor se ajuste a tus necesidades
+                <strong style="color: #10B981;">3.</strong> ${t.step3}
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">4.</strong> ¡Activa tu membresía y comienza a crecer!
+                <strong style="color: #10B981;">4.</strong> ${t.step4}
               </p>
             </div>
           </div>
 
           <!-- Beneficios -->
           <div style="background: rgba(78,205,196,0.05); border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">🌟 Lo que incluye:</h3>
+            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">${t.includesTitle}</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
                 <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">☕</span>
-                <span style="color: #374151; font-weight: 500;">Café ilimitado</span>
+                <span style="color: #374151; font-weight: 500;">${t.amenityCoffee}</span>
               </div>
               <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
                 <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🌐</span>
-                <span style="color: #374151; font-weight: 500;">Internet 300 Mbps</span>
+                <span style="color: #374151; font-weight: 500;">${t.amenityWifi}</span>
               </div>
               <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
                 <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🖨️</span>
-                <span style="color: #374151; font-weight: 500;">Impresiones incluidas</span>
+                <span style="color: #374151; font-weight: 500;">${t.amenityPrint}</span>
               </div>
               <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
                 <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🤝</span>
-                <span style="color: #374151; font-weight: 500;">Networking</span>
+                <span style="color: #374151; font-weight: 500;">${t.amenityNetwork}</span>
               </div>
             </div>
           </div>
@@ -1012,18 +1011,18 @@ export function generateAlunaEmailHTML(leadData) {
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              💬 Tu espacio ideal te está esperando
+              ${t.ctaTagline}
             </p>
             <a href="https://wa.me/593994837117?text=%40paula%2C%20%C2%A1este%20es%20el%20lugar%20perfecto!%20%C2%BFCu%C3%A1ndo%20lo%20veo%3F" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              🏢 Quiero Ver Mi Espacio Ideal
+              ${t.ctaButton}
             </a>
           </div>
 
           <!-- Footer -->
           <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-radius: 12px;">
-            <p style="color: #4ECDC4; font-size: 18px; font-weight: 700; margin: 0;">¡Bienvenido a la comunidad! 🚀</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0;">Equipo Coworkia</p>
+            <p style="color: #4ECDC4; font-size: 18px; font-weight: 700; margin: 0;">${t.footerWelcome}</p>
+            <p style="color: #374151; font-size: 14px; margin: 8px 0;">${t.footerTeam}</p>
           </div>
 
         </div>
@@ -1036,7 +1035,7 @@ export function generateAlunaEmailHTML(leadData) {
 /** * ⚖️ GABI - GR Consulting (Consultoría Legal y Contable)
  * Colores: Azul profesional (#1E3A8A, #3B82F6, #1E40AF)
  */
-export function generateGabiEmailHTML(leadData) {
+export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
   const {
     userName,
     consultationType,
@@ -1048,8 +1047,9 @@ export function generateGabiEmailHTML(leadData) {
     urgency,
     consultationCode,
     recipientType = 'client',
-    aiAnalysis = null, // OpenAI-generated persuasion text (pass from confirmation flow)
+    aiAnalysis = null,
   } = leadData;
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).gabi;
 
   const gabiWaNumber = '593994837117';
 
@@ -1070,7 +1070,7 @@ export function generateGabiEmailHTML(leadData) {
   // Opening: AI-personalized if provided, else persuasive default
   const openingText = aiAnalysis
     ? aiAnalysis
-    : `Hemos revisado tu solicitud de asesoría en <strong style="color:#1B3358;">${consultationType}</strong>${company ? ` para <strong>${company}</strong>` : ''}. Gabi ya tiene el camino trazado para tu caso. La primera sesión de diagnóstico (30 min) es completamente gratuita y sin compromiso — ahí mapeamos tu situación, identificamos riesgos y definimos el alcance exacto. Si decides avanzar, la <strong style="color:#1B3358;">asesoría profunda de 90 minutos por $100</strong> es donde construimos juntos el plan de acción completo con informe profesional listo para ejecutar.`;
+    : (t.fallbackOpening ? t.fallbackOpening(userName, consultationType) : `Hemos revisado tu solicitud de asesoría en <strong style="color:#1B3358;">${consultationType}</strong>${company ? ` para <strong>${company}</strong>` : ''}. Gabi ya tiene el camino trazado para tu caso. La primera sesión de diagnóstico (30 min) es completamente gratuita y sin compromiso — ahí mapeamos tu situación, identificamos riesgos y definimos el alcance exacto. Si decides avanzar, la <strong style="color:#1B3358;">asesoría profunda de 90 minutos por $100</strong> es donde construimos juntos el plan de acción completo con informe profesional listo para ejecutar.`);
 
   // 6-area services grid
   const services = [
@@ -1108,7 +1108,7 @@ export function generateGabiEmailHTML(leadData) {
 
     <!-- Summary card -->
     <div style="background:#F9FAFB;border-left:4px solid #C9A82A;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 24px;">
-      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">📋 Tu solicitud en resumen</div>
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">📋 ${t.sectionSummary}</div>
       <table style="width:100%;border-collapse:collapse;">
         <tr><td style="padding:6px 0;color:#6B7280;font-size:13px;width:40%;">Tipo de consultoría</td><td style="padding:6px 0;color:#1B3358;font-size:13px;font-weight:700;">${consultationType}</td></tr>
         ${company ? `<tr><td style="padding:6px 0;color:#6B7280;font-size:13px;">Empresa</td><td style="padding:6px 0;color:#1F2937;font-size:13px;font-weight:600;">${company}</td></tr>` : ''}
@@ -1120,73 +1120,73 @@ export function generateGabiEmailHTML(leadData) {
 
     <!-- Services: 6-area grid -->
     <div style="margin:0 0 24px;">
-      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">⚖️ TODO LO QUE GABI MANEJA EN TU EMPRESA</div>
-      <p style="color:#6B7280;font-size:13px;margin:0 0 14px;line-height:1.6;">Cada empresa en Ecuador carga con obligaciones legales, fiscales y laborales. Gabi las convierte en <strong style="color:#1B3358;">ventajas competitivas</strong>.</p>
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">${t.sectionServices}</div>
+      <p style="color:#6B7280;font-size:13px;margin:0 0 14px;line-height:1.6;">${t.servicesDesc}</p>
       <table style="width:100%;border-collapse:collapse;">${servicesHTML}</table>
     </div>
 
     <!-- OFFER: clear 2-tier pitch -->
     <div style="background:linear-gradient(145deg,#1B3358 0%,#0D2137 100%);border-radius:16px;padding:32px 24px;margin:0 0 24px;text-align:center;">
       <div style="background:rgba(255,224,51,0.1);border:1px solid rgba(255,224,51,0.3);border-radius:20px;padding:5px 18px;display:inline-block;margin-bottom:20px;">
-        <span style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">🎁 TU RUTA HACIA LA SOLUCIÓN</span>
+        <span style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">🎁 ${t.sectionOffer}</span>
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <tr>
           <td style="width:50%;padding:0 6px 0 0;vertical-align:top;">
             <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px;text-align:center;">
-              <div style="color:rgba(255,255,255,0.45);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">DIAGNÓSTICO INICIAL</div>
-              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">$0</div>
-              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">30 minutos · Gratis</div>
-              <div style="color:rgba(255,255,255,0.45);font-size:11px;line-height:1.5;">Mapeamos tu situación e identificamos riesgos y el camino a seguir</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">${t.tierFreeLabel}</div>
+              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">${t.tierFreePrice}</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">${t.tierFreeDuration}</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;line-height:1.5;">${t.tierFreeDesc}</div>
             </div>
           </td>
           <td style="width:50%;padding:0 0 0 6px;vertical-align:top;">
             <div style="background:rgba(255,224,51,0.07);border:2px solid rgba(255,224,51,0.5);border-radius:12px;padding:18px;text-align:center;">
-              <div style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">ASESORÍA PROFUNDA</div>
-              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">$100</div>
-              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">90 minutos · Plan de acción</div>
-              <div style="color:rgba(255,255,255,0.6);font-size:11px;line-height:1.5;">Plan completo + informe profesional entregable listo para ejecutar</div>
+              <div style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">${t.tierPaidLabel}</div>
+              <div style="color:#FFE033;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">${t.tierPaidPrice}</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:10px;">${t.tierPaidDuration}</div>
+              <div style="color:rgba(255,255,255,0.6);font-size:11px;line-height:1.5;">${t.tierPaidDesc}</div>
             </div>
           </td>
         </tr>
       </table>
       <div style="color:rgba(255,255,255,0.65);font-size:14px;line-height:1.8;margin-bottom:26px;max-width:380px;margin-left:auto;margin-right:auto;">
-        Empieza gratis, sin compromiso. Cuando decidas avanzar, <strong style="color:#FFE033;">$100 te da 90 minutos de asesoría profunda</strong> más el informe profesional que define tu plan de acción.
+        ${t.offerDesc}
       </div>
       <a href="${clientWaCTA1}"
          style="display:inline-block;background:linear-gradient(135deg,#FFE033 0%,#E8B800 100%);color:#0D2137;padding:16px 36px;text-decoration:none;border-radius:50px;font-weight:900;font-size:15px;box-shadow:0 6px 22px rgba(255,224,51,0.5);letter-spacing:0.3px;">
-        ✨ Quiero seguir con la asesoría
+        ${t.ctaPrimary}
       </a>
-      <p style="color:rgba(255,255,255,0.35);font-size:11px;margin:12px 0 0;letter-spacing:0.3px;">Abre WhatsApp con Gabi · Activa el pago seguro por $100</p>
+      <p style="color:rgba(255,255,255,0.35);font-size:11px;margin:12px 0 0;letter-spacing:0.3px;">${t.ctaNote}</p>
     </div>
 
     <!-- Process: 3 steps -->
     <div style="margin:0 0 24px;">
-      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">🗺️ LO QUE OCURRE DESPUÉS</div>
+      <div style="font-size:11px;font-weight:700;color:#1B3358;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">${t.sectionProcess}</div>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           <td style="width:33.3%;padding:0 5px 0 0;vertical-align:top;">
             <div style="background:#0A0F1E;border-radius:10px;padding:16px 12px;text-align:center;">
-              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Hoy</div>
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${t.processDay1}</div>
               <div style="font-size:24px;margin-bottom:8px;">📞</div>
-              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Diagnóstico</div>
-              <div style="color:rgba(255,255,255,0.45);font-size:11px;">30 min gratuitos</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">${t.process1Title}</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">${t.process1Sub}</div>
             </div>
           </td>
           <td style="width:33.3%;padding:0 5px;vertical-align:top;">
             <div style="background:#0D1520;border:1px solid rgba(255,224,51,0.2);border-radius:10px;padding:16px 12px;text-align:center;">
-              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Paso 2</div>
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${t.processStep2}</div>
               <div style="font-size:24px;margin-bottom:8px;">💳</div>
-              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Pago $100</div>
-              <div style="color:rgba(255,255,255,0.45);font-size:11px;">PayPal · seguro</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">${t.process2Title}</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">${t.process2Sub}</div>
             </div>
           </td>
           <td style="width:33.3%;padding:0 0 0 5px;vertical-align:top;">
             <div style="background:linear-gradient(135deg,#2a1a00 0%,#0A0F1E 100%);border:1px solid rgba(255,224,51,0.4);border-radius:10px;padding:16px 12px;text-align:center;">
-              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Resultado</div>
+              <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${t.processResult}</div>
               <div style="font-size:24px;margin-bottom:8px;">📋</div>
-              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">Plan de Acción</div>
-              <div style="color:rgba(255,255,255,0.45);font-size:11px;">90 min + informe</div>
+              <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">${t.process3Title}</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:11px;">${t.process3Sub}</div>
             </div>
           </td>
         </tr>
@@ -1195,12 +1195,12 @@ export function generateGabiEmailHTML(leadData) {
 
     <!-- CTA 2: WhatsApp questions -->
     <div style="text-align:center;margin:0 0 8px;">
-      <p style="color:#6B7280;font-size:14px;margin:0 0 14px;font-weight:500;">💬 ¿Tienes preguntas sobre la propuesta?</p>
+      <p style="color:#6B7280;font-size:14px;margin:0 0 14px;font-weight:500;">${t.ctaQue}</p>
       <a href="${clientWaCTA2}"
          style="background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
-        📱 Habla con Gabi por WhatsApp
+        ${t.ctaWa}
       </a>
-      <p style="color:#9CA3AF;font-size:11px;margin:10px 0 0;">Respuesta instantánea 24/7</p>
+      <p style="color:#9CA3AF;font-size:11px;margin:10px 0 0;">${t.ctaWaSub}</p>
     </div>
   `;
 
@@ -1260,7 +1260,7 @@ export function generateGabiEmailHTML(leadData) {
 
           <!-- Metrics card -->
           <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,224,51,0.35);border-radius:14px;padding:20px 26px;max-width:340px;margin:0 auto;">
-            <div style="color:#FFE033;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;text-align:center;margin-bottom:12px;">· PROPUESTA PERSONALIZADA ·</div>
+            <div style="color:#FFE033;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;text-align:center;margin-bottom:12px;">${t.headerSub}</div>
             <div style="color:white;font-size:22px;font-weight:800;text-align:center;line-height:1.2;margin-bottom:14px;">${userName}</div>
             <div style="border-top:1px solid rgba(255,224,51,0.2);margin-bottom:14px;"></div>
             <table style="width:100%;border-collapse:collapse;">
@@ -1295,8 +1295,8 @@ export function generateGabiEmailHTML(leadData) {
       <!-- ═══ ECOSISTEMA ═══ -->
       <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #FFE033;">
         <div style="max-width:480px;margin:0 auto 28px;">
-          <h2 style="color:#FFE033;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
-          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
+          <h2 style="color:#FFE033;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">${t.ecosistemaTitle}</h2>
+          <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">${t.ecosistemaDesc}</p>
         </div>
         <div style="margin-bottom:22px;">${ecosistemaItems}</div>
         <div style="background:rgba(255,224,51,0.04);border:1px solid rgba(255,224,51,0.1);border-radius:10px;padding:14px;margin-bottom:36px;">
@@ -1307,7 +1307,7 @@ export function generateGabiEmailHTML(leadData) {
         </div>
         <div style="border-top:1px solid rgba(255,255,255,0.07);padding:28px 20px 32px;text-align:center;">
           <h2 style="color:white;font-size:24px;font-weight:900;margin:0 0 6px;letter-spacing:1px;font-family:Georgia,serif;">GR CONSULTING</h2>
-          <div style="color:rgba(255,255,255,0.35);font-size:12px;letter-spacing:1px;margin-bottom:16px;">financiero · legal · cumplimiento</div>
+          <div style="color:rgba(255,255,255,0.35);font-size:12px;letter-spacing:1px;margin-bottom:16px;">${t.footerTagline}</div>
           <div style="color:rgba(255,255,255,0.25);font-size:11px;line-height:1.8;">
             © 2026 Coworkia Ecuador — Espacios que inspiran<br>
             Whymper 403, Edificio Finistere - Planta Baja, Quito<br>
@@ -1326,7 +1326,8 @@ export function generateGabiEmailHTML(leadData) {
  * � ALUNA PROFORMA — Email de propuesta de membresía específica
  * Solo muestra el plan elegido. Colores: Verde Oscuro (#047857 → #065F46)
  */
-export function generateAlunaProformaHTML(data) {
+export function generateAlunaProformaHTML(data, userLanguage = 'es') {
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).proforma;
   const {
     clientName,
     planName,
@@ -1363,27 +1364,27 @@ export function generateAlunaProformaHTML(data) {
   <!-- POTENCIA TU MEMBRESÍA -->
   <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:16px;padding:28px;margin:28px 0;">
     <div style="text-align:center;margin-bottom:20px;">
-      <div style="background:#065F46;color:white;display:inline-block;padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">🏢 POTENCIA TU MEMBRESÍA</div>
-      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">🏢 Oficina Virtual + Presencia Legal</div>
-      <div style="color:#047857;font-size:14px;font-weight:600;">Muchas empresas lo necesitan sin saberlo</div>
+      <div style="background:#065F46;color:white;display:inline-block;padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">${t.upsellHeader}</div>
+      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">${t.upsellTitle}</div>
+      <div style="color:#047857;font-size:14px;font-weight:600;">${t.upsellSubtitle}</div>
     </div>
     <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin-bottom:20px;">
       ${[
-        '<strong>Dirección comercial oficial</strong> para tu empresa (Whymper 403, Quito)',
-        '<strong>Cumplimiento legal Ecuador:</strong> SRI, IESS, permisos municipales',
-        '<strong>Recepción de correspondencia</strong> y notificaciones oficiales',
-        '<strong>Sala de Reuniones incluida</strong> (1 vez al mes, 2 horas)',
-      ].map(item => `<div style="padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;margin-right:10px;vertical-align:top;">✓</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
+        t.upsellBenefits[0],
+        t.upsellBenefits[1],
+        t.upsellBenefits[2],
+        t.upsellBenefits[3],
+      ].map(item => `<div style="padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;margin-right:10px;vertical-align:top;">\u2713</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
     </div>
     <div style="background:#FFFBEB;border:2px dashed #F59E0B;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
-      <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">⚡ OFERTA ESPECIAL COMBO</div>
+      <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">${t.comboLabel}</div>
       <div style="color:#111827;font-size:18px;font-weight:800;margin-bottom:6px;">${comboLabel}</div>
-      <div style="color:#DC2626;font-size:32px;font-weight:900;line-height:1;margin-bottom:6px;">${comboDiscount} DESCUENTO</div>
-      <div style="color:#6B7280;font-size:13px;">en Oficina Virtual ($365 → ${comboPrice} USD/año)</div>
+      <div style="color:#DC2626;font-size:32px;font-weight:900;line-height:1;margin-bottom:6px;">${comboDiscount} ${t.discountSuffix}</div>
+      <div style="color:#6B7280;font-size:13px;">${t.ofVirtual.replace('{price}', comboPrice)}</div>
     </div>
     <div style="text-align:center;">
-      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">🏢 Quiero el Combo con Descuento</a>
-      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Solo válido al contratar por 1 año</div>
+      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">${t.comboCTA}</a>
+      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">${t.comboNote}</div>
     </div>
   </div>` : '';
 
@@ -1415,12 +1416,12 @@ export function generateAlunaProformaHTML(data) {
       
       <!-- Tarjeta membresía preparada para —— diseño aprobado -->
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
-        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">· MEMBRESÍA PREPARADA PARA ·</div>
+        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">${t.headerLabel}</div>
         <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${clientName}</div>
         <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;text-align:center;">
           <span style="font-size:18px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:16px;font-weight:700;vertical-align:middle;">${planName}</strong>&nbsp;&nbsp;${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;vertical-align:middle;">${proformaCode}</span>` : ''}
         </div>
-        <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
+        <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">${t.agentTag}</div>
       </div>
     </div>
 
@@ -1428,9 +1429,9 @@ export function generateAlunaProformaHTML(data) {
 
       <!-- Saludo -->
       <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${clientName}! 👋</h2>
+        <h2 style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${clientName}! ${t.greetingEnd}</h2>
         <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-          Aquí tienes los detalles del plan que mejor se ajusta a lo que buscas.
+          ${t.greetingBody}
         </p>
       </div>
 
@@ -1444,7 +1445,7 @@ export function generateAlunaProformaHTML(data) {
               </div>
             </td>
             <td style="vertical-align:middle;">
-              <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">MEMBRESÍA COWORKIA</div>
+              <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${t.membershipLabel}</div>
               <div style="color:#1f2937;font-size:24px;font-weight:800;line-height:1;">${planName}</div>
             </td>
           </tr>
@@ -1452,7 +1453,7 @@ export function generateAlunaProformaHTML(data) {
 
         <!-- Precio destacado -->
         <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(4,120,87,0.2); margin-bottom: 15px; text-align: center; box-shadow: 0 2px 6px rgba(4,120,87,0.08);">
-          <div style="color: #6B7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">INVERSIÓN</div>
+          <div style="color: #6B7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">${t.investmentLabel}</div>
           <div style="color: #047857; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${planPrice}</div>
         </div>
 
@@ -1471,7 +1472,7 @@ export function generateAlunaProformaHTML(data) {
         ${planIdeal ? `
         <div style="background: linear-gradient(135deg, rgba(4,120,87,0.06), rgba(5,150,105,0.06)); border-radius: 10px; padding: 14px 18px; border: 1px solid rgba(4,120,87,0.2);">
           <span style="color: #059669; font-size: 15px; margin-right: 8px;">🎯</span>
-          <span style="color: #047857; font-size: 14px; font-weight: 600;">Ideal para: </span>
+          <span style="color: #047857; font-size: 14px; font-weight: 600;">${t.idealLabel}</span>
           <span style="color: #374151; font-size: 14px;">${planIdeal}</span>
         </div>` : ''}
       </div>
@@ -1479,7 +1480,7 @@ export function generateAlunaProformaHTML(data) {
       <!-- Beneficios -->
       ${planBenefits.length > 0 ? `
       <div style="margin-bottom: 25px;">
-        <h3 style="color: #1f2937; font-size: 18px; font-weight: 700; margin: 0 0 15px 0;">✨ Todo lo que incluye</h3>
+        <h3 style="color: #1f2937; font-size: 18px; font-weight: 700; margin: 0 0 15px 0;">${t.benefitsTitle}</h3>
         <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid #D1FAE5;">
           ${benefitsList}
         </div>
@@ -1487,21 +1488,21 @@ export function generateAlunaProformaHTML(data) {
 
       <!-- Diferenciador IA -->
       <div style="background: linear-gradient(135deg, #047857, #065F46); border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; box-shadow: 0 4px 16px rgba(4,120,87,0.25);">
-        <div style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">SOLO EN COWORKIA</div>
-        <div style="color: white; font-size: 22px; font-weight: 800; margin-bottom: 10px;">🤖 Secretaria Virtual con IA</div>
-        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; line-height: 1.6;">Disponible en contratos de 9+ meses. Tu asistente IA 24/7 para agenda, reservas y recordatorios.</p>
+        <div style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">${t.aiSectionLabel}</div>
+        <div style="color: white; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${t.aiTitle}</div>
+        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; line-height: 1.6;">${t.aiDesc}</p>
       </div>
 
       <!-- CTA WhatsApp -->
       <div style="text-align: center; margin: 25px 0;">
         <p style="color: #374151; font-size: 14px; margin: 5px 0 15px 0; font-weight: 600;">
-          💬 Tu espacio ideal te está esperando
+          ${t.ctaTagline}
         </p>
         <a href="https://wa.me/${coworkiaWhatsApp}?text=${waText}"
            style="background: linear-gradient(135deg, #047857, #065F46); color: white; padding: 14px 32px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(4,120,87,0.35); font-size: 15px;">
-          &#10003; Quiero Empezar Ahora
+          ${t.ctaButton}
         </a>
-        <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">También puedes responder este correo</p>
+        <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">${t.ctaNote}</p>
       </div>
 
       ${upsellSection}
@@ -1531,7 +1532,7 @@ export function generateAlunaProformaHTML(data) {
           <tr>
             <td style="width:30px;vertical-align:top;padding-right:10px;padding-top:2px;"><span style="font-size:20px;">📝</span></td>
             <td style="vertical-align:top;">
-              <div style="color:#92400E;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Nota del equipo</div>
+              <div style="color:#92400E;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.noteTitle}</div>
               <div style="color:#78350F;font-size:14px;line-height:1.6;">${nota}</div>
             </td>
           </tr>
@@ -1542,8 +1543,8 @@ export function generateAlunaProformaHTML(data) {
 
     <!-- ECOSISTEMA 8 AGENTES + FOOTER -->
     <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
-      <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">Tu próximo equipo no se contrata. Se activa.</div>
-      <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales 24/7 — sin turnos, sin tiempos de espera, sin límites.</div>
+      <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">${t.ecosistemaTitle}</div>
+      <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">${t.ecosistemaDesc}</div>
       <div style="margin-bottom:22px;">${ecosistemaItems}</div>
       <!-- texto conector -->
       <div style="margin-bottom:28px;padding:0 8px;">
@@ -1552,7 +1553,7 @@ export function generateAlunaProformaHTML(data) {
       <!-- footer dentro del dark section -->
       <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
         <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
-        <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">work · connect · grow</div>
+        <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">${t.footerTagline}</div>
         <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
           © 2026 Coworkia Ecuador — Espacios que inspiran<br>
           Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
@@ -1576,13 +1577,14 @@ export function generateAlunaProformaHTML(data) {
  */
 export function generateEmailForAgent(agentName, type, data) {
   const clientName = data.clientName || data.userName || 'Cliente';
+  const lang = data.userLanguage || 'es';
 
   switch (agentName) {
     case 'ALUNA': {
       if (type === 'proforma') {
         return {
           subject: `Tu propuesta de ${data.planName} — Coworkia`,
-          html: generateAlunaProformaHTML(data)
+          html: generateAlunaProformaHTML(data, lang)
         };
       }
       if (type === 'admin') {
@@ -1610,7 +1612,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
       // type === 'client'
       return {
         subject: `✅ Solicitud de membresía confirmada — Coworkia`,
-        html: generateAlunaEmailHTML({ ...data, userName: clientName })
+        html: generateAlunaEmailHTML({ ...data, userName: clientName }, lang)
       };
     }
 
@@ -1619,7 +1621,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         subject: type === 'admin'
           ? `💼 Nueva consultoría: ${clientName} · ${data.consultationType}`
           : `Cotización 💼 ${data.consultationCode} — ${data.consultationType} · ${data.company || clientName} | Gabi - GR Consulting`,
-        html: generateGabiEmailHTML({ ...data, userName: clientName })
+        html: generateGabiEmailHTML({ ...data, userName: clientName }, lang)
       };
 
     case 'AXEL': {
@@ -1633,7 +1635,8 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
           quote: data.quoteDetails || null,
           priceRange: { min: data.priceMin || 0, max: data.priceMax || 0 },
           photoAssets: [],
-          quoteCode: data.quoteCode || 'PB-XXXX'
+          quoteCode: data.quoteCode || 'PB-XXXX',
+          userLanguage: lang
         })
       };
     }
@@ -1643,7 +1646,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         subject: type === 'admin'
           ? `📊 Nueva propuesta marketing: ${clientName}`
           : `Cotización 🚀 ${data.leadId} — ${data.projectType} · ${data.companyName || clientName} | Enzo - MarketingLab`,
-        html: generateEnzoEmailHTML({ ...data, userName: clientName })
+        html: generateEnzoEmailHTML({ ...data, userName: clientName }, lang)
       };
 
     case 'PAULA':

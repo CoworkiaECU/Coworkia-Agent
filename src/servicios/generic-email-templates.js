@@ -35,6 +35,8 @@ function _adrianaQuoteHTML(d) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Cotización Seguro — ${vehicleLabel}</title>
 </head>
 <body style="margin:0;padding:0;background:#F0F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
@@ -226,6 +228,8 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
       <title>${t.title} - SegPopular</title>
       ${DARK_MODE_CSS}
     </head>
@@ -544,30 +548,36 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     <div style="background:#F9FAFB;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
       <div style="color:#374151;font-size:13px;font-weight:700;margin-bottom:12px;">${t.sectionBreakdown}</div>
       ${desgloseHTML}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;margin-top:4px;border-top:2px solid #E5E7EB;">
-        <span style="color:#111827;font-size:15px;font-weight:700;">${t.totalLabel}</span>
-        <span style="color:#DC2626;font-size:20px;font-weight:800;">$${priceRange?.min || q?.total_min || '—'} – $${priceRange?.max || q?.total_max || '—'} USD</span>
+      <div style="display:table;width:100%;padding-top:14px;margin-top:4px;border-top:2px solid #E5E7EB;">
+        <span style="display:table-cell;color:#111827;font-size:15px;font-weight:700;vertical-align:middle;">${t.totalLabel}</span>
+        <span style="display:table-cell;text-align:right;color:#DC2626;font-size:20px;font-weight:800;vertical-align:middle;white-space:nowrap;">$${priceRange?.min || q?.total_min || '—'} – $${priceRange?.max || q?.total_max || '—'} USD</span>
       </div>
     </div>` : ''}
 
     <!-- Tiempo + Garantía -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;">
-      <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:12px;padding:18px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:6px;">⏱️</div>
-        <div style="color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.deliveryLabel}</div>
-        <div style="color:#15803D;font-size:16px;font-weight:700;">${q?.dias_entrega || damageAnalysis.estimatedRepairDays || '3-5 días hábiles'}</div>
-      </div>
-      <div style="background:#EFF6FF;border:1px solid #93C5FD;border-radius:12px;padding:18px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:6px;">🛡️</div>
-        <div style="color:#1E40AF;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.warrantyLabel}</div>
-        <div style="color:#1D4ED8;font-size:13px;font-weight:600;line-height:1.4;">${q?.garantia || t.warrantyFallback}</div>
-      </div>
-    </div>
+<table role="presentation" width="100%" style="border-collapse:collapse;border-spacing:0;margin-bottom:28px;">
+      <tr>
+        <td width="48%" style="padding-right:14px;vertical-align:top;">
+          <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:12px;padding:18px;text-align:center;">
+            <div style="font-size:28px;margin-bottom:6px;">⏱️</div>
+            <div style="color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.deliveryLabel}</div>
+            <div style="color:#15803D;font-size:16px;font-weight:700;">${q?.dias_entrega || damageAnalysis.estimatedRepairDays || '3-5 días hábiles'}</div>
+          </div>
+        </td>
+        <td width="48%" style="vertical-align:top;">
+          <div style="background:#EFF6FF;border:1px solid #93C5FD;border-radius:12px;padding:18px;text-align:center;">
+            <div style="font-size:28px;margin-bottom:6px;">🛡️</div>
+            <div style="color:#1E40AF;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.warrantyLabel}</div>
+            <div style="color:#1D4ED8;font-size:13px;font-weight:600;line-height:1.4;">${q?.garantia || t.warrantyFallback}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
 
     <!-- Nota inspección -->
-    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;margin-bottom:28px;display:flex;gap:10px;align-items:flex-start;">
-      <span style="font-size:18px;flex-shrink:0;">⚠️</span>
-      <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;">${q?.nota_inspeccion || t.noteInspection}</p>
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;margin-bottom:28px;display:table;width:100%;box-sizing:border-box;">
+      <span style="font-size:18px;display:table-cell;width:28px;vertical-align:top;padding-top:1px;">⚠️</span>
+      <p style="color:#92400E;font-size:13px;line-height:1.65;margin:0;display:table-cell;vertical-align:top;padding-left:10px;">${q?.nota_inspeccion || t.noteInspection}</p>
     </div>
 
     <!-- CTA -->
@@ -589,10 +599,12 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     <!-- Por qué PaintBull -->
     <div style="padding:28px 0;border-top:1px solid #F3F4F6;margin-top:10px;">
       <div style="text-align:center;color:#9CA3AF;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">${t.whyTitle}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;">
-        ${[['🏆',t.proof1t,t.proof1d],['✅',t.proof2t,t.proof2d],['⚡',t.proof3t,t.proof3d]].map(([ic,tt,d])=>`
-        <div><div style="font-size:28px;margin-bottom:6px;">${ic}</div><div style="color:#111827;font-size:13px;font-weight:700;">${tt}</div><div style="color:#9CA3AF;font-size:12px;">${d}</div></div>`).join('')}
-      </div>
+      <table role="presentation" width="100%" style="border-collapse:collapse;border-spacing:0;text-align:center;">
+        <tr>
+          ${[['🏆',t.proof1t,t.proof1d],['✅',t.proof2t,t.proof2d],['⚡',t.proof3t,t.proof3d]].map(([ic,tt,d])=>`
+          <td width="33%" style="padding:0 7px;vertical-align:top;text-align:center;"><div style="font-size:28px;margin-bottom:6px;">${ic}</div><div style="color:#111827;font-size:13px;font-weight:700;">${tt}</div><div style="color:#9CA3AF;font-size:12px;">${d}</div></td>`).join('')}
+        </tr>
+      </table>
     </div>
   </div>
 
@@ -673,6 +685,8 @@ function _enzoProposalHTML(d) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Propuesta MarketingLab IA — ${d.empresa}</title>
 </head>
 <body style="margin:0;padding:0;background:#EEF2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
@@ -1118,6 +1132,8 @@ export function generatePaulaEmailHTML(leadData, { userLanguage = 'es', leadScor
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
       <title>Búsqueda de Propiedad - PropElite</title>
       <style>
         ${DARK_MODE_CSS}
@@ -1268,6 +1284,8 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light">
+      <meta name="supported-color-schemes" content="light">
       <title>Membresía Coworkia</title>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
@@ -1369,24 +1387,36 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
           <!-- Beneficios -->
           <div style="background: rgba(78,205,196,0.05); border-radius: 12px; padding: 25px; margin: 25px 0;">
             <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">${t.includesTitle}</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
-                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">☕</span>
-                <span style="color: #374151; font-weight: 500;">${t.amenityCoffee}</span>
-              </div>
-              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
-                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🌐</span>
-                <span style="color: #374151; font-weight: 500;">${t.amenityWifi}</span>
-              </div>
-              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
-                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🖨️</span>
-                <span style="color: #374151; font-weight: 500;">${t.amenityPrint}</span>
-              </div>
-              <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid rgba(78,205,196,0.2);">
-                <span style="color: #4ECDC4; font-size: 18px; margin-right: 8px;">🤝</span>
-                <span style="color: #374151; font-weight: 500;">${t.amenityNetwork}</span>
-              </div>
-            </div>
+            <table role="presentation" width="100%" style="border-collapse:collapse;border-spacing:0;">
+              <tr>
+                <td width="48%" style="padding:0 3% 12px 0;vertical-align:top;">
+                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
+                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">☕</span>
+                    <span style="color:#374151;font-weight:500;">${t.amenityCoffee}</span>
+                  </div>
+                </td>
+                <td width="48%" style="padding:0 0 12px;vertical-align:top;">
+                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
+                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🌐</span>
+                    <span style="color:#374151;font-weight:500;">${t.amenityWifi}</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td width="48%" style="padding:0 3% 0;vertical-align:top;">
+                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
+                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🖨️</span>
+                    <span style="color:#374151;font-weight:500;">${t.amenityPrint}</span>
+                  </div>
+                </td>
+                <td width="48%" style="padding:0;vertical-align:top;">
+                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
+                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🤝</span>
+                    <span style="color:#374151;font-weight:500;">${t.amenityNetwork}</span>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <!-- Referencia -->

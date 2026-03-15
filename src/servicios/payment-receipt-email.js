@@ -215,7 +215,7 @@ function generatePaymentReceiptHTML(paymentData) {
                 <span style="color: #4ECDC4; font-size: 16px; margin-right: 6px;">🌐</span>
                 <span style="color: #374151; font-weight: 500; font-size: 13px;">Internet alta velocidad</span>
               </div>
-              <div style="background: white; border-rounded: 8px; padding: 12px; border: 1px solid rgba(78,205,196,0.2);">
+              <div style="background: white; border-radius: 8px; padding: 12px; border: 1px solid rgba(78,205,196,0.2);">
                 <span style="color: #4ECDC4; font-size: 16px; margin-right: 6px;">🖥️</span>
                 <span style="color: #374151; font-weight: 500; font-size: 13px;">Espacios modernos</span>
               </div>

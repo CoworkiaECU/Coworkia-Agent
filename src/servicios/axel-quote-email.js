@@ -260,7 +260,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       </a>
       <div style="margin-top:24px;">
         <div style="background:rgba(0,0,0,0.18);border-radius:10px;padding:14px 20px;display:inline-block;">
-          <div style="color:rgba(255,255,255,0.85);font-size:12px;">📍 Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;">📍 Av. Gonzalo Escudero N44-53, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00</div>
           <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:4px;">📱 +593 99 483 7117 · <a href="https://www.google.com/maps?q=-0.1640916,-78.4665958" style="color:white;text-decoration:none;">Ver en mapa →</a></div>
         </div>
       </div>
@@ -295,7 +295,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
       <div style="color:rgba(255,255,255,0.35);font-size:12px;letter-spacing:1px;margin-bottom:16px;">colisiones · pintura · carrocería</div>
       <div style="color:rgba(255,255,255,0.25);font-size:11px;line-height:1.8;">
         © ${new Date().getFullYear()} Coworkia Ecuador — Espacios que inspiran<br>
-        Calle N44-53 y, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00<br>
+        Av. Gonzalo Escudero N44-53, Quito · Lun-Vie 8:00-18:00 · Sáb 9:00-14:00<br>
         <span style="font-size:10px;">coworkia.ec@gmail.com · +593 99 483 7117</span>
       </div>
     </div>

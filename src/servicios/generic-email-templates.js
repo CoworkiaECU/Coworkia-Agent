@@ -13,7 +13,170 @@ import { EMAIL_TRANSLATIONS } from './email-i18n.js';
  * 🛡️ ADRIANA - SegPopular (Seguros)
  * Colores: Azul profesional (#1E40AF, #3B82F6)
  */
-export function generateAdrianaEmailHTML(leadData) {
+// ─── HTML ─────────────────────────────────────────────────────────────────────
+
+function _adrianaQuoteHTML(d) {
+  const fechaFmt = new Date().toLocaleDateString('es-EC', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+  const premium = { annual: d.quotedPremium || 0, monthly: d.quotedMonthly || Math.round((d.quotedPremium || 0) / 10) };
+  const vehicleLabel = `${d.vehicleBrand} ${d.vehicleModel} ${d.vehicleYear}`;
+  const waLink = `https://wa.me/${d.waNumber || '593994837117'}?text=${encodeURIComponent(
+    `Hola Adriana! Soy ${d.nombre}. Recibí la cotización de seguro para mi ${vehicleLabel} (${d.quoteCode}). Me interesa proceder.`
+  )}`;
+
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['enzo', 'gabi', 'angela', 'axel', 'paula', 'aurora'],
+    theme: 'dark',
+  });
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cotización Seguro — ${vehicleLabel}</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<div style="max-width:640px;margin:30px auto;">
+
+  <!-- ══ HEADER SEGPOPULAR ══ -->
+  <div style="background:#FFD700;border-radius:20px 20px 0 0;padding:44px 40px 38px;text-align:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(30,58,138,0.06);pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-30px;left:-30px;width:130px;height:130px;border-radius:50%;background:rgba(30,58,138,0.04);pointer-events:none;"></div>
+
+    <div style="margin-bottom:22px;">
+      <img src="data:image/png;base64,${LOGOS_BASE64.segpopular}"
+           alt="SegPopular"
+           style="max-width:240px;height:auto;display:block;margin:0 auto;" />
+    </div>
+    <div style="color:#1E3A8A;font-size:11px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;margin-bottom:26px;">Seguros Vehiculares · Ecuador</div>
+
+    <div style="background:white;border:2px solid #1E3A8A;border-radius:14px;padding:20px 28px;display:inline-block;box-shadow:0 4px 16px rgba(30,58,138,0.2);">
+      <div style="color:#1E3A8A;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">Cotización para</div>
+      <div style="color:#1E3A8A;font-size:22px;font-weight:800;margin-bottom:3px;">${d.nombre}</div>
+      <div style="color:#6B7280;font-size:12px;margin-bottom:6px;">${fechaFmt}</div>
+      ${d.quoteCode ? `<div style="color:#1E3A8A;font-size:11px;font-family:monospace;font-weight:700;background:#FFF9C4;border-radius:5px;padding:3px 10px;display:inline-block;">${d.quoteCode}</div>` : ''}
+    </div>
+  </div>
+
+  <!-- ══ CUERPO ══ -->
+  <div style="background:white;padding:40px 40px 12px;">
+
+    <!-- Intro personalizada (OpenAI) -->
+    <div style="background:#FFFBEB;border-left:4px solid #FFD700;border-radius:0 12px 12px 0;padding:20px 24px;margin-bottom:30px;">
+      <p style="color:#1E3A8A;font-size:15px;line-height:1.85;margin:0;">${d.intro_personalizada}</p>
+    </div>
+
+    <!-- Ficha del Vehículo -->
+    <div style="border:2px solid #E5E7EB;border-radius:16px;overflow:hidden;margin-bottom:26px;">
+      <div style="background:#1E3A8A;padding:18px 24px;display:flex;align-items:center;gap:14px;">
+        <div style="font-size:28px;">🚗</div>
+        <div>
+          <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Vehículo asegurado</div>
+          <div style="color:white;font-size:18px;font-weight:800;">${vehicleLabel}</div>
+        </div>
+      </div>
+      <div style="padding:20px 24px;background:#FAFAFA;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:9px 0;color:#6B7280;font-size:13px;border-bottom:1px solid #F3F4F6;width:45%;">Marca</td>
+            <td style="padding:9px 0;color:#1E3A8A;font-size:13px;font-weight:700;border-bottom:1px solid #F3F4F6;">${d.vehicleBrand}</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 0;color:#6B7280;font-size:13px;border-bottom:1px solid #F3F4F6;">Modelo</td>
+            <td style="padding:9px 0;color:#1E3A8A;font-size:13px;font-weight:700;border-bottom:1px solid #F3F4F6;">${d.vehicleModel}</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 0;color:#6B7280;font-size:13px;border-bottom:1px solid #F3F4F6;">Año</td>
+            <td style="padding:9px 0;color:#1E3A8A;font-size:13px;font-weight:700;border-bottom:1px solid #F3F4F6;">${d.vehicleYear}</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 0;color:#6B7280;font-size:13px;border-bottom:1px solid #F3F4F6;">Valor comercial</td>
+            <td style="padding:9px 0;color:#1E3A8A;font-size:13px;font-weight:700;border-bottom:1px solid #F3F4F6;">${(d.commercialValue || 0).toLocaleString()} USD</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 0;color:#6B7280;font-size:13px;">Ciudad</td>
+            <td style="padding:9px 0;color:#1E3A8A;font-size:13px;font-weight:700;">${d.city}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ PRIMA ══ -->
+    <div style="background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin-bottom:26px;">
+      <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Tu cotización anual</div>
+      <div style="color:white;font-size:46px;font-weight:900;line-height:1;margin-bottom:6px;">${premium.annual.toLocaleString()}</div>
+      <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:22px;">USD incluye IVA · Seguro ${d.insuranceType}</div>
+      <div style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:14px;display:inline-block;margin-bottom:20px;">
+        <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">O en cómodas cuotas</div>
+        <div style="color:white;font-size:22px;font-weight:800;">${premium.monthly}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 10</span></div>
+      </div>
+      <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
+        🛡️ Quiero activar mi seguro →
+      </a>
+    </div>
+
+    <!-- ¿Qué incluye? -->
+    <div style="margin-bottom:26px;">
+      <div style="color:#6B7280;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">¿Qué cubre tu seguro?</div>
+      <div style="background:#F8FAFC;border-radius:12px;padding:6px 20px;">
+        ${[
+          '🚗 Pérdida total o parcial por colisión',
+          '🔥 Incendio, rayo y explosión',
+          '🌊 Fenómenos naturales (terremoto, inundación)',
+          '🚨 Robo total del vehículo',
+          '💥 Responsabilidad civil frente a terceros',
+          '🔧 Asistencia en carretera 24/7',
+          '🔄 Vehículo de reemplazo (cobertura completa)',
+        ].map(item => `
+        <div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #F3F4F6;font-size:14px;color:#374151;align-items:center;">
+          <span style="flex-shrink:0;">${item.split(' ')[0]}</span>
+          <span>${item.split(' ').slice(1).join(' ')}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Por qué SegPopular -->
+    <div style="background:linear-gradient(135deg,#FFFBEB,#FFF9C4);border:2px solid #FFD700;border-radius:14px;padding:24px;margin-bottom:10px;">
+      <div style="color:#1E3A8A;font-size:14px;font-weight:700;margin-bottom:12px;">⭐ ¿Por qué elegir SegPopular?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${[
+          ['🏢', 'Edificio Finistere, Whymper 403, Quito'],
+          ['⏱️', 'Trámite de siniestro en 24 horas'],
+          ['📋', 'Contratos claros, sin letra pequeña'],
+          ['💬', 'Adriana te atiende personalmente por WhatsApp'],
+        ].map(([ic, txt]) => `
+        <div style="display:flex;gap:10px;align-items:baseline;">
+          <span style="font-size:15px;flex-shrink:0;">${ic}</span>
+          <span style="color:#374151;font-size:13px;line-height:1.6;">${txt}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CO-BRANDING COWORKIA ══ -->
+  <div style="background:linear-gradient(180deg,#0A1520 0%,#060E17 100%);border-radius:0 0 20px 20px;padding:40px;text-align:center;">
+    <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:30px;margin-bottom:26px;">
+      <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
+      <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
+      <div style="color:#FFD700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+    </div>
+    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
+    <div style="margin-bottom:26px;">${ecosistemaItems}</div>
+    <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
+      Cotización generada por <strong style="color:rgba(255,255,255,0.3);">Adriana</strong> · SegPopular<br>
+      Coworkia Intelligence System · ${fechaFmt}
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
+export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', userLanguage = 'es' } = {}) {
+  if (type === 'quote') return _adrianaQuoteHTML(leadData);
   const {
     userName,
     insuranceType,
@@ -458,7 +621,230 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
  * 🎯 ENZO - MarketingLab
  * Paleta: Teal (#2DD4BF, #0D9488) + Fondo navy (#0A0F1E) — logo mantiene su color único
  */
-export function generateEnzoEmailHTML(leadData, userLanguage = 'es') {
+// ─── HTML ─────────────────────────────────────────────────────────────────────
+
+function _enzoProposalHTML(d) {
+  const formatDate = new Date().toLocaleDateString('es-EC', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const waLink = `https://wa.me/${d.waNumber || '593994837117'}?text=${encodeURIComponent(
+    `Hola Enzo! Soy ${d.contacto} de ${d.empresa}. Quiero avanzar con la propuesta de agente IA que me enviaron.`
+  )}`;
+
+  const nivelLabel = {
+    basico:    { txt: 'Agente IA Esencial',    sub: 'Responde preguntas frecuentes y deriva casos complejos' },
+    intermedio:{ txt: 'Agente IA Profesional', sub: 'Captura leads, califica clientes y automatiza ventas' },
+    avanzado:  { txt: 'Agente IA Premium',     sub: 'Analiza fotos/documentos e integra con sistemas externos' },
+  }[d.nivel_agente] || { txt: 'Agente IA Profesional', sub: 'Captura leads, califica clientes y automatiza ventas' };
+
+  const incluyeItems = [
+    'Análisis y diseño de personalidad del agente',
+    'Integración con WhatsApp Business',
+    'Entrenamiento inicial con casos de uso de su negocio',
+    'Pruebas y ajustes (2 semanas)',
+    'Documentación técnica',
+    'Capacitación al equipo (2 horas)',
+    'Primer mes de mantenimiento GRATIS',
+    'Garantía 15 días — si no cumple expectativas, devolvemos',
+  ].map(i => `
+    <li style="padding:9px 0;display:flex;gap:11px;align-items:baseline;border-bottom:1px solid #F3F4F6;font-size:14px;color:#374151;line-height:1.55;">
+      <span style="color:#00C2A0;font-weight:700;flex-shrink:0;">✓</span>${i}
+    </li>`).join('');
+
+  const casosItems = (d.casos_uso || []).map((c, i) => `
+    <div style="display:flex;gap:14px;padding:14px 0;${i > 0 ? 'border-top:1px solid #F3F4F6;' : ''}">
+      <div style="width:30px;height:30px;background:linear-gradient(135deg,#00C2A0,#00A08A);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:800;color:white;">${i+1}</div>
+      <div style="font-size:14px;color:#374151;line-height:1.65;padding-top:4px;">${c}</div>
+    </div>`).join('');
+
+  const ecosistemaItems = ecosistemaTable({
+    aliados: ['gabi', 'angela', 'adriana', 'axel', 'paula', 'aurora'],
+    theme: 'dark',
+  });
+
+  const precioOriginal  = d.precio_desarrollo;
+  const precioFinal     = d.aplica_descuento ? d.precio_con_descuento : d.precio_desarrollo;
+  const ahorro          = precioOriginal - precioFinal;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Propuesta MarketingLab IA — ${d.empresa}</title>
+</head>
+<body style="margin:0;padding:0;background:#EEF2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<div style="max-width:660px;margin:30px auto;">
+
+  <!-- ══ HEADER MARKETINGLAB ══ -->
+  <div style="background:linear-gradient(145deg,#0D1B2A 0%,#142235 50%,#0A1520 100%);border-radius:20px 20px 0 0;padding:50px 42px 44px;text-align:center;position:relative;overflow:hidden;">
+    <!-- Logo MarketingLab real -->
+    <div style="margin-bottom:20px;">
+      <img src="data:image/png;base64,${LOGOS_BASE64.marketinglab}"
+           alt="MarketingLab"
+           style="max-width:312px;height:auto;display:block;margin:0 auto;" />
+    </div>
+    <div style="color:rgba(255,255,255,0.85);font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;margin-bottom:30px;">Estrategias que funcionan</div>
+
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,194,160,0.3);border-radius:16px;padding:22px 30px;display:inline-block;">
+      <div style="color:#00E5C0;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Propuesta Personalizada</div>
+      <div style="color:white;font-size:24px;font-weight:700;margin-bottom:3px;">${d.empresa}</div>
+      <div style="color:rgba(255,255,255,0.45);font-size:12px;">${formatDate}</div>
+      ${d.quoteCode ? `<div style="color:#00E5C0;font-size:11px;font-family:monospace;letter-spacing:0.5px;margin-top:6px;background:rgba(0,194,160,0.1);border-radius:6px;padding:3px 10px;display:inline-block;">${d.quoteCode}</div>` : ''}
+    </div>
+  </div>
+
+  <!-- ══ CUERPO ══ -->
+  <div style="background:white;padding:42px 42px 10px;">
+
+    <!-- Saludo personalizado (OpenAI) -->
+    <div style="background:#F0FDFB;border-left:4px solid #00C2A0;border-radius:0 12px 12px 0;padding:22px 26px;margin-bottom:32px;">
+      <p style="color:#0D3B2E;font-size:15px;line-height:1.85;margin:0;">${d.intro_personalizada}</p>
+    </div>
+
+    <!-- Sector & Necesidad -->
+    <div style="display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;background:#F8FAFC;border-radius:12px;padding:18px;text-align:center;">
+        <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Sector</div>
+        <div style="color:#1E293B;font-size:15px;font-weight:700;">${d.sector}</div>
+      </div>
+      <div style="flex:2;min-width:200px;background:#F8FAFC;border-radius:12px;padding:18px;">
+        <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Necesidad identificada</div>
+        <div style="color:#1E293B;font-size:14px;font-weight:600;line-height:1.5;">${d.necesidad_raw}</div>
+      </div>
+    </div>
+
+    <!-- ══ SOLUCIÓN PROPUESTA ══ -->
+    <div style="border:2px solid #E2E8F0;border-radius:16px;padding:30px;margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="background:linear-gradient(135deg,#00C2A0,#00A08A);width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🤖</div>
+        <div>
+          <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Solución diseñada para ${d.empresa}</div>
+          <div style="color:#0D1B2A;font-size:22px;font-weight:800;margin-top:4px;">${nivelLabel.txt}</div>
+        </div>
+      </div>
+      <p style="color:#374151;font-size:15px;line-height:1.75;margin:0 0 24px 0;">${d.propuesta_tecnica}</p>
+      <ul style="list-style:none;margin:0;padding:4px 0;">${incluyeItems}</ul>
+    </div>
+
+    <!-- ══ CASOS DE USO ESPECÍFICOS ══ -->
+    <div style="margin-bottom:28px;">
+      <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:16px;">Cómo trabajará el agente en ${d.empresa}</div>
+      <div style="background:#F8FAFC;border-radius:14px;padding:8px 20px;">${casosItems}</div>
+    </div>
+
+    <!-- ══ ROI ══ -->
+    <div style="background:linear-gradient(135deg,#0D1B2A,#142235);border-radius:16px;padding:30px;margin-bottom:28px;text-align:center;">
+      <div style="color:#00E5C0;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Retorno de inversión estimado</div>
+      <div style="color:white;font-size:16px;line-height:1.75;max-width:480px;margin:0 auto 20px;">${d.roi_estimado}</div>
+      <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
+        <div style="background:rgba(0,194,160,0.12);border:1px solid rgba(0,194,160,0.25);border-radius:10px;padding:14px 22px;">
+          <div style="color:#00E5C0;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Disponibilidad</div>
+          <div style="color:white;font-size:20px;font-weight:800;">24/7</div>
+        </div>
+        <div style="background:rgba(0,194,160,0.12);border:1px solid rgba(0,194,160,0.25);border-radius:10px;padding:14px 22px;">
+          <div style="color:#00E5C0;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Tiempo respuesta</div>
+          <div style="color:white;font-size:20px;font-weight:800;">&lt; 2 seg</div>
+        </div>
+        <div style="background:rgba(0,194,160,0.12);border:1px solid rgba(0,194,160,0.25);border-radius:10px;padding:14px 22px;">
+          <div style="color:#00E5C0;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Error humano</div>
+          <div style="color:white;font-size:20px;font-weight:800;">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ INVERSIÓN ══ -->
+    <div style="border:2px solid #E2E8F0;border-radius:16px;padding:30px;margin-bottom:28px;">
+      <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px;">Inversión</div>
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+        <div>
+          ${d.aplica_descuento ? `
+          <div style="color:#9CA3AF;font-size:13px;text-decoration:line-through;margin-bottom:4px;">Precio regular: ${precioOriginal.toLocaleString()} USD</div>
+          <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:4px 14px;display:inline-block;margin-bottom:8px;">
+            <span style="color:#065F46;font-size:12px;font-weight:700;">🎁 ${d.razon_descuento || 'Descuento por temporada'} ${d.porcentaje_descuento || 20}% = -${ahorro.toLocaleString()}</span>
+          </div>
+          ` : ''}
+          <div>
+            <span style="color:#0D1B2A;font-size:38px;font-weight:900;">${precioFinal.toLocaleString()}</span>
+            <span style="color:#6B7280;font-size:14px;"> USD desarrollo</span>
+          </div>
+          <div style="color:#6B7280;font-size:13px;margin-top:6px;">+ ${d.mantenimiento_mensual}/mes mantenimiento<br><span style="color:#00A08A;font-weight:600;">Primer mes de mantenimiento GRATIS ✓</span></div>
+        </div>
+
+        <div style="text-align:right;">
+          <div style="color:#9CA3AF;font-size:12px;margin-bottom:6px;">Modalidad de pago</div>
+          <div style="background:#F8FAFC;border-radius:10px;padding:14px 18px;text-align:left;">
+            <div style="color:#374151;font-size:13px;line-height:1.8;">
+              50% inicio → <strong>${Math.round(precioFinal/2).toLocaleString()} USD</strong><br>
+              50% entrega → <strong>${Math.round(precioFinal/2).toLocaleString()} USD</strong><br>
+              Mantenimiento mensual adelantado
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#FEF9EC;border:1px solid #FCD34D;border-radius:8px;padding:12px 16px;margin-top:18px;">
+        <div style="color:#92400E;font-size:12px;line-height:1.7;">
+          ⏰ <strong>Oferta válida 30 días</strong> · ⚡ Tiempo de desarrollo: 3-4 semanas · 🛡️ Garantía 15 días
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CTA ══ -->
+    <div style="background:linear-gradient(145deg,#0D1B2A,#0A1520);border-radius:18px;padding:38px;text-align:center;margin-bottom:10px;">
+      <div style="color:#00E5C0;font-size:14px;font-weight:600;margin-bottom:10px;">Próximo paso</div>
+      <p style="color:rgba(255,255,255,0.8);font-size:15px;line-height:1.75;margin:0 0 26px 0;max-width:400px;margin-left:auto;margin-right:auto;">${d.cierre_emocional}</p>
+      <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#00C2A0,#00E5C0);color:#0D1B2A;padding:17px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(0,194,160,0.5);">
+        💬 Quiero avanzar con mi agente IA →
+      </a>
+      <div style="margin-top:18px;">
+        <div style="color:#374151;font-size:13px;line-height:1.7;background:#F8FAFC;border-radius:10px;padding:14px;">
+          Propuesta elaborada por <strong>Enzo</strong> — MarketingLab<br>
+          📧 secretaria.coworkia@gmail.com &nbsp;|&nbsp; 📱 +593 98 777 0788
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CO-BRANDING COWORKIA ══ -->
+  <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
+      <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Propuesta presentada a través de</div>
+      <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
+      <div style="color:#00C2A0;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+    </div>
+
+    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todos los agentes IA del ecosistema</div>
+    <div style="margin-bottom:28px;">${ecosistemaItems}</div>
+
+    <div style="background:rgba(0,194,160,0.06);border:1px solid rgba(0,194,160,0.12);border-radius:10px;padding:14px;">
+      <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
+        Un solo ecosistema. Agentes especializados que se hablan entre sí.<br>
+        <strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar por WhatsApp.</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- FOOTER COWORKIA (mismo que Aluna/Aurora) -->
+  <div style="background:linear-gradient(135deg,#00C2A0,#00A08A);text-align:center;padding:28px;border-radius:0 0 20px 20px;">
+    <div style="color:#E0F7F4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
+    <div style="color:rgba(224,247,244,0.7);font-size:10px;letter-spacing:2px;margin-bottom:2px;text-transform:uppercase;">work · connect · grow</div>
+    <div style="color:rgba(224,247,244,0.6);font-size:12px;line-height:1.6;margin-top:12px;">
+      © ${new Date().getFullYear()} Coworkia Ecuador — Espacios que inspiran<br>
+      Whymper 403, Edificio Finistere, Quito<br>
+      <span style="font-size:11px;margin-top:6px;display:block;">secretaria.coworkia@gmail.com · +593 98 777 0788</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
+export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLanguage = 'es' } = {}) {
+  if (type === 'proposal') return _enzoProposalHTML(leadData);
   const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).enzo;
   const {
     userName,
@@ -1646,7 +2032,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         subject: type === 'admin'
           ? `📊 Nueva propuesta marketing: ${clientName}`
           : `Cotización 🚀 ${data.leadId} — ${data.projectType} · ${data.companyName || clientName} | Enzo - MarketingLab`,
-        html: generateEnzoEmailHTML({ ...data, userName: clientName }, lang)
+        html: generateEnzoEmailHTML({ ...data, userName: clientName }, { type: 'confirmation', userLanguage: lang })
       };
 
     case 'PAULA':
@@ -1660,7 +2046,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
     case 'ADRIANA':
       return {
         subject: `🛡️ Solicitud de seguro — ${clientName}`,
-        html: generateAdrianaEmailHTML({ ...data, userName: clientName })
+        html: generateAdrianaEmailHTML({ ...data, userName: clientName }, { type: 'confirmation', userLanguage: lang })
       };
 
     default:

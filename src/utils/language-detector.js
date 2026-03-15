@@ -93,10 +93,14 @@ const LANGUAGE_PATTERNS = {
   // Quechua (Runasimi) - Palabras comunes
   qu: {
     commonWords: [
-      'allinllachu', 'imaynalla', 'ima', 'maypi', 'hayka', 'pi',
+      'allinllachu', 'imaynalla', 'imanalla', 'ima', 'maypi', 'hayka', 'pi',
       'munani', 'necesitani', 'yachani', 'kani', 'atini',
       'kay', 'chay', 'huk', 'kunan', 'paqarin', 'qayna',
-      'yanapay', 'chanin', 'willay', 'tapuy'
+      'yanapay', 'chanin', 'willay', 'tapuy',
+      'yupaichani', 'allinmi', 'napaykullayki', 'rimaykullayki',
+      'sumaq', 'yuyarini', 'wayki', 'panay', 'tayta',
+      'ñuqa', 'qam', 'pay', 'allinta', 'kusikuni',
+      'ari', 'manam', 'qhali', 'kawsay', 'pachapi'
     ],
     specialChars: /[qkhw]/i, // Letras características del quechua
     weight: 1.0
@@ -515,8 +519,9 @@ export function detectLanguageListQuery(message) {
  * @param {string} lang - Idioma actual del usuario (es|en|fr|it|pt|qu)
  * @returns {string}
  */
-export function getLanguageListResponse(lang = 'es') {
-  const intro = {
+export function getLanguageListResponse(lang = 'es', agentId = null) {
+  // Intro genérico por idioma (fallback si no hay agente)
+  const genericIntro = {
     es: '¡Claro! Puedo atenderte en:',
     en: 'Of course! I can assist you in:',
     fr: 'Bien sûr! Je peux vous répondre en:',
@@ -524,7 +529,77 @@ export function getLanguageListResponse(lang = 'es') {
     pt: 'Claro! Posso atendê-lo(a) em:',
     qu: 'Ariy! Kay simikuanapi rimani:'
   };
-  const header = intro[lang] || intro.es;
+
+  // Intro personalizado por agente — refleja el contexto único de cada uno
+  const agentIntros = {
+    AURORA: {
+      es: '¡Soy el corazón de Coworkia! ✨ Te conecto con todo en:',
+      en: "I'm the heart of Coworkia! ✨ I connect you with everything in:",
+      fr: "Je suis le cœur de Coworkia! ✨ Je vous connecte avec tout en:",
+      it: "Sono il cuore di Coworkia! ✨ Ti connetto con tutto in:",
+      pt: "Sou o coração da Coworkia! ✨ Me conecto com tudo em:",
+      qu: "Ñuqa kani Coworkia sunqun! ✨ Tukuyta tupachini:"
+    },
+    ALUNA: {
+      es: '¡Cierro membresías sin fronteras! 💼 Me adapto a ti en:',
+      en: "I close memberships across borders! 💼 I adapt to you in:",
+      fr: "Je conclus des adhésions sans frontières! 💼 Je m'adapte à toi en:",
+      it: "Chiudo abbonamenti senza confini! 💼 Mi adatto a te in:",
+      pt: "Fecho membresías sem fronteiras! 💼 Me adapto a você em:",
+      qu: "Tukuy suyupi miembro ruwaytas wanchini! 💼 Qamwan rimayta atini:"
+    },
+    ADRIANA: {
+      es: 'Corredora con 33 licencias en Latinoamérica 🛡️ Proceso tus pólizas en:',
+      en: "Broker with 33 licenses across Latin America 🛡️ I process your policies in:",
+      fr: "Courtière avec 33 licences en Amérique Latine 🛡️ Je traite vos polices en:",
+      it: "Broker con 33 licenze in America Latina 🛡️ Gestisco le tue polizze in:",
+      pt: "Corretora com 33 licenças na América Latina 🛡️ Processo suas apólices em:",
+      qu: "33 licenciayuq corredora Latinoamérica-pi 🛡️ Seguroykita kamachikuní:"
+    },
+    ENZO: {
+      es: '¡Llevo proyectos a todo el mundo! 🚀 MarketingLab opera en:',
+      en: "I take projects worldwide! 🚀 MarketingLab operates in:",
+      fr: "Je porte des projets partout dans le monde! 🚀 MarketingLab opère en:",
+      it: "Porto progetti in tutto il mondo! 🚀 MarketingLab opera in:",
+      pt: "Levo projetos para o mundo inteiro! 🚀 MarketingLab opera em:",
+      qu: "Tukuy pachaman proyectota apani! 🚀 MarketingLab kay simikuanapi:"
+    },
+    ANGELA: {
+      es: 'MedBeneficios está en 19 países 💚 Cuido tu salud en:',
+      en: "MedBeneficios is in 19 countries 💚 I take care of your health in:",
+      fr: "MedBeneficios est dans 19 pays 💚 Je prends soin de votre santé en:",
+      it: "MedBeneficios è in 19 paesi 💚 Mi prendo cura della tua salute in:",
+      pt: "MedBeneficios está em 19 países 💚 Cuido da sua saúde em:",
+      qu: "MedBeneficios 19 suyupi kashan 💚 Qhali kayniykita qhaway:"
+    },
+    AXEL: {
+      es: '¡El mercado automotriz es global! 🔧 Cotizo tu vehículo en:',
+      en: "The auto market is global! 🔧 I quote your vehicle in:",
+      fr: "Le marché auto est mondial! 🔧 Je cotise votre véhicule en:",
+      it: "Il mercato auto è globale! 🔧 Quotizo il tuo veicolo in:",
+      pt: "O mercado automotivo é global! 🔧 Coto seu veículo em:",
+      qu: "Auto mercado tukuy pachapi! 🔧 Cocheykita taripaní:"
+    },
+    GABI: {
+      es: '¡El mundo financiero no tiene fronteras! ⚖️ Asesoro tus consultas en:',
+      en: "The financial world has no borders! ⚖️ I advise your queries in:",
+      fr: "Le monde financier n'a pas de frontières! ⚖️ Je conseille en:",
+      it: "Il mondo finanziario non ha frontiere! ⚖️ Consiglio in:",
+      pt: "O mundo financeiro não tem fronteiras! ⚖️ Assessoro em:",
+      qu: "Financiero pacha mana sayaqchu! ⚖️ Tapuyniykipi yanapani:"
+    },
+    PAULA: {
+      es: '¡Las propiedades no tienen fronteras! 🏡 Asesoro en bienes raíces en:',
+      en: "Properties have no borders! 🏡 I advise on real estate in:",
+      fr: "L'immobilier n'a pas de frontières! 🏡 Je conseille en immobilier en:",
+      it: "Gli immobili non hanno frontiere! 🏡 Consiglio in immobiliare in:",
+      pt: "Os imóveis não têm fronteiras! 🏡 Assessoro em imóveis em:",
+      qu: "Causay wasikunaqa mana sayaqchu! 🏡 Wasi allinchanaykipi yanapani:"
+    }
+  };
+
+  const agentIntro = agentId && agentIntros[agentId];
+  const header = (agentIntro && agentIntro[lang]) || (agentIntro && agentIntro.es) || genericIntro[lang] || genericIntro.es;
   return `${header}\n\n🇪🇸 Español\n🇬🇧 English\n🇫🇷 Français\n🇮🇹 Italiano\n🇧🇷 Português\n⛰️ Quechua`;
 }
 

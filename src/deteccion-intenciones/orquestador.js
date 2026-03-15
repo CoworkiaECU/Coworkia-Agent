@@ -64,7 +64,7 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     const userLang = perfil.preferredLanguage || 'es';
     console.log(`[IDIOMAS] 🌍 Consulta de idiomas detectada para ${userId} (agente: ${activeAgent}, lang: ${userLang})`);
     return {
-      respuesta: getLanguageListResponse(userLang),
+      respuesta: getLanguageListResponse(userLang, activeAgent),
       shouldReply: true,
       agente: activeAgent,
       activeAgent: activeAgent
@@ -417,7 +417,17 @@ ${specialMode ? '- ⚠️ MODO ESPECIAL ACTIVO: Sigue el formato exacto del syst
     systemPrompt = agente.systemPrompt;
   }
 
-  // 🔧 Reemplazar placeholders con datos reales del usuario
+  // � Language lock: reinforce language at top+bottom for non-Spanish to prevent AI reverting to Spanish
+  const activeLang = perfil.preferredLanguage || 'es';
+  if (activeLang !== 'es') {
+    const langNames = { en: 'ENGLISH', fr: 'FRANÇAIS', it: 'ITALIANO', pt: 'PORTUGUÊS', qu: 'RUNASIMI (QUECHUA)' };
+    const langName = langNames[activeLang] || activeLang.toUpperCase();
+    const topLock = `🔒 IDIOMA ACTIVO: ${langName}\n⚠️ RESPONDE EXCLUSIVAMENTE EN ESTE IDIOMA. IGNORA el idioma del historial anterior.\n${'\u2501'.repeat(40)}\n\n`;
+    const bottomLock = `\n\n${'\u2501'.repeat(40)}\n🔒 RECORDATORIO FINAL: El idioma activo es ${langName}. TODA respuesta en este idioma. Sin excepción.`;
+    systemPrompt = topLock + systemPrompt + bottomLock;
+  }
+
+  // �🔧 Reemplazar placeholders con datos reales del usuario
   const userName = perfil.name || perfil.whatsappDisplayName || 'amigo';
   const systemPromptWithData = systemPrompt.replace(/\{nombre\}/g, userName);
   const promptWithData = prompt.replace(/\{nombre\}/g, userName);

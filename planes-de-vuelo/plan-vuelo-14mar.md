@@ -1,20 +1,12 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 17 Mar 2026 — P3-REFACTOR completado `6b73aa0` · 4 commits pendientes de deploy a Heroku
+> **Última actualización:** 17 Mar 2026 — ML-4b + I1 completados `7451bf9` · v946 en Heroku
 
 ---
 
-## 🚨 DEPLOY PENDIENTE — 4 commits sin desplegar a Heroku
+## 🚨 DEPLOY PENDIENTE — NINGUNO
 
-```
-62db252  docs: plan de vuelo P3-REFACTOR
-6b73aa0  P3-REFACTOR: email templates unificados
-076d56f  feat(ML-4): emails HTML multiidioma 5 agentes
-bb57f96  docs: sprint multiidioma
-```
-
-> Heroku apunta a `1437dff` (ML-6). Los clientes aún no reciben emails en su idioma ni los templates PropElite corregidos.
-> **Acción:** `git push heroku main` + smoke test
+> Heroku apunta a `7451bf9` (ML-4b + I1). Todo el trabajo está en producción.
 
 ---
 
@@ -174,27 +166,22 @@ Impacto: clientes que reagendan o cancelan reciben un email sin marca → confus
 - `generateAdrianaEmailHTML` + `generatePaulaEmailHTML` i18n — pendiente ML-4 deferral
 - `payment-receipt-email.js` SMTP Gmail → Resend migration (I1) — evaluar en P4
 
+## ✅ ML-4b — i18n emails Adriana + Paula `17 Mar`
+**Deployed: `7451bf9`** · 3 archivos · 328 inserciones · 81 eliminaciones
+
+- **`email-i18n.js`**: namespaces `adriana` (18 claves) + `paula` (15 claves) en 5 idiomas (ES/EN/FR/IT/PT)
+- **`generateAdrianaEmailHTML`**: confirmation mode usa `t.xxx` (18 strings — title, subtitle, greeting, datos, premium, pasos, servicios, oficina, footer)
+- **`generatePaulaEmailHTML`**: firma cambia a `(leadData, { userLanguage, leadScoreData } = {})` — 15 strings via `t.paula`
+- Dispatcher `generateEmailForAgent` pasa `{ userLanguage: lang }` a Paula
+
+## ✅ I1 — Unificar infraestructura de email `17 Mar`
+**Deployed: `7451bf9`**
+
+- **`payment-receipt-email.js`**: elimina `getTransporter` + `EMAIL_USER` de `mailer.js` — ahora usa `sendEmail()` de `email.js`
+- Todos los 12 archivos de email del sistema comparten la misma infraestructura
+- Remitente: `"Gabi - Coworkia Financiera" <noreply@coworkia.ec>` (antes usaba `coworkia.ec@gmail.com`)
+
 ## ⏳ PENDIENTE — Siguiente sprint
-
-### 🔜 DEPLOY — Publicar ML-4 + P3-REFACTOR en Heroku ← **PRIMERO**
-**Bloquea todo lo demás.** Los 4 commits locales incluyen email templates corregidos visibles para usuarios.
-- `git push heroku main`
-- Smoke test: disparar 1 cotización Enzo + 1 Adriana + verificar template en inbox
-- Verificar que `generateRescheduleEmail` de Paula llega con CSS (no bare HTML)
-
-### 🔜 I1 — Migrar `payment-receipt-email.js` a Resend API
-**Infraestructura:** único archivo que aún usa Gmail SMTP (`mailer.js` + `EMAIL_USER`). Los recibos de pago de Gabi tienen entregabilidad diferente, sin tracking de aperturas, remitente distinto.
-- Reemplazar `getTransporter` / `transporter.sendMail` por `sendEmail` de `./email.js`
-- Remitente: `pagos@coworkia.ec` (crear alias en Resend o usar `noreply@coworkia.ec`)
-- Verificar que el template de recibo en `paymentReceiptHTML()` pasa `node --check`
-- Test: pago de prueba Gabi → recibo llega desde dominio Resend
-
-### 🔜 ML-4b — i18n emails Adriana + Paula (confirmation mode)
-**Deferred desde ML-4.** Las dos funciones públicas restantes siguen con español hardcodeado:
-- `generateAdrianaEmailHTML(leadData, { type: 'confirmation', userLanguage })` — ignoraba `userLanguage` antes de P3-REFACTOR; ahora el parámetro existe pero el layout confirmation no usa `email-i18n.js`
-- `generatePaulaEmailHTML(leadData, { userLanguage })` — mismo caso
-- Añadir namespaces `adriana` + `paula` en `email-i18n.js`
-- Pasar `t.adriana[key]` / `t.paula[key]` igual que Aluna/Gabi/Axel/Enzo
 
 ### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
 **Desbloqueado por P3-REFACTOR.** Todos los templates ya están en `generic-email-templates.js` — no habrá cambios de estructura que anulen el trabajo.

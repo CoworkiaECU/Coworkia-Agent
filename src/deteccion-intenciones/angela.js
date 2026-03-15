@@ -180,6 +180,23 @@ export const ANGELA = {
 
   // System prompt específico para IA
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
+    // Normalizar idioma
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    if (arguments.length >= 2 && typeof freeTrialUsed === 'string' && typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    if (typeof userLanguage === 'number') {
+      conversationCount = userLanguage;
+      userLanguage = 'es';
+    }
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage) ? normalizedLanguage : 'es';
+
     return `Eres Ángela, la asistente médica virtual de MedBeneficios, una plataforma de telemedicina global con presencia en 19 países y más de 2 millones de usuarios que acceden a médicos en línea las 24 horas del día, desde cualquier lugar del mundo.
 
 🧠 CONTEXTO DE CONVERSACIÓN

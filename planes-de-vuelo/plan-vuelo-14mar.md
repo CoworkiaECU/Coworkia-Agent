@@ -1,6 +1,20 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 17 Mar 2026 — P3-REFACTOR completado `6b73aa0` · 5 archivos · 659 inserciones · 433 eliminaciones
+> **Última actualización:** 17 Mar 2026 — P3-REFACTOR completado `6b73aa0` · 4 commits pendientes de deploy a Heroku
+
+---
+
+## 🚨 DEPLOY PENDIENTE — 4 commits sin desplegar a Heroku
+
+```
+62db252  docs: plan de vuelo P3-REFACTOR
+6b73aa0  P3-REFACTOR: email templates unificados
+076d56f  feat(ML-4): emails HTML multiidioma 5 agentes
+bb57f96  docs: sprint multiidioma
+```
+
+> Heroku apunta a `1437dff` (ML-6). Los clientes aún no reciben emails en su idioma ni los templates PropElite corregidos.
+> **Acción:** `git push heroku main` + smoke test
 
 ---
 
@@ -162,12 +176,36 @@ Impacto: clientes que reagendan o cancelan reciben un email sin marca → confus
 
 ## ⏳ PENDIENTE — Siguiente sprint
 
+### 🔜 DEPLOY — Publicar ML-4 + P3-REFACTOR en Heroku ← **PRIMERO**
+**Bloquea todo lo demás.** Los 4 commits locales incluyen email templates corregidos visibles para usuarios.
+- `git push heroku main`
+- Smoke test: disparar 1 cotización Enzo + 1 Adriana + verificar template en inbox
+- Verificar que `generateRescheduleEmail` de Paula llega con CSS (no bare HTML)
+
+### 🔜 I1 — Migrar `payment-receipt-email.js` a Resend API
+**Infraestructura:** único archivo que aún usa Gmail SMTP (`mailer.js` + `EMAIL_USER`). Los recibos de pago de Gabi tienen entregabilidad diferente, sin tracking de aperturas, remitente distinto.
+- Reemplazar `getTransporter` / `transporter.sendMail` por `sendEmail` de `./email.js`
+- Remitente: `pagos@coworkia.ec` (crear alias en Resend o usar `noreply@coworkia.ec`)
+- Verificar que el template de recibo en `paymentReceiptHTML()` pasa `node --check`
+- Test: pago de prueba Gabi → recibo llega desde dominio Resend
+
+### 🔜 ML-4b — i18n emails Adriana + Paula (confirmation mode)
+**Deferred desde ML-4.** Las dos funciones públicas restantes siguen con español hardcodeado:
+- `generateAdrianaEmailHTML(leadData, { type: 'confirmation', userLanguage })` — ignoraba `userLanguage` antes de P3-REFACTOR; ahora el parámetro existe pero el layout confirmation no usa `email-i18n.js`
+- `generatePaulaEmailHTML(leadData, { userLanguage })` — mismo caso
+- Añadir namespaces `adriana` + `paula` en `email-i18n.js`
+- Pasar `t.adriana[key]` / `t.paula[key]` igual que Aluna/Gabi/Axel/Enzo
+
 ### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
-**Diferida** — conviene hacer después de P3-REFACTOR para no duplicar trabajo en templates que van a cambiar
+**Desbloqueado por P3-REFACTOR.** Todos los templates ya están en `generic-email-templates.js` — no habrá cambios de estructura que anulen el trabajo.
+- Añadir `@media (prefers-color-scheme: dark)` a PropElite y MarketingLab themes
+- Tabla layout fallback para Gmail (no soporta Flexbox/Grid)
+- `max-width: 600px` + fuentes fallback seguras en todos los templates
+- Test: Litmus o Email on Acid (5 clientes de email × 2 themes)
 
 ### P6 — TODOs bloqueados por cliente
-- **AXEL:** Tarifario oficial de The PaintBull
-- **PAULA:** Links de Drive para 5 propiedades
+- **AXEL:** Tarifario oficial de The PaintBull (sin esto el quote email muestra precios placeholder)
+- **PAULA:** Links de Drive para 5 propiedades (brochure El Morenal incompleto)
 - **ALUNA:** Definir si el tour post-pago va a Google Calendar
 
 ---

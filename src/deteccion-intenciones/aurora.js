@@ -37,12 +37,14 @@ export const AURORA = {
              userLanguage === 'fr' ? 'Bonjour {nombre}! Je suis Aurora ✨ Votre assistante Coworkia Business Center.\n\nComment puis-je vous aider?' :
              userLanguage === 'it' ? 'Ciao {nombre}! Sono Aurora ✨ La tua assistente del Coworkia Business Center.\n\nCome posso aiutarti?' :
              userLanguage === 'pt' ? 'Olá {nombre}! Sou Aurora ✨ Sua assistente do Coworkia Business Center.\n\nComo posso ajudar?' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}! Ñuqa kani Aurora ✨ Coworkia Business Center-manta yanapaq.\n\nImaynatataq yanapasqayki?' :
              'Hello {nombre}! I\'m Aurora ✨ Your Coworkia Business Center assistant.\n\nHow can I help you?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo escríbeme. ¡Aquí estaré! 😊' :
                userLanguage === 'en' ? 'Perfect {nombre}, it was a pleasure helping you.\n\nYou can always come back, just write to me. I\'ll be here! 😊' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, écrivez-moi. Je serai là! 😊' :
                userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere aiutarti.\n\nPuoi tornare quando vuoi, scrivimi. Sarò qui! 😊' :
                userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer ajudar você.\n\nVolte quando quiser, é só me chamar. Estarei aqui! 😊' :
+               userLanguage === 'qu' ? 'Allinmi {nombre}, kusikuni yanapasqaymanta.\n\nMayqin pachapipas kutimunki, qillqawayku. Kaypi kasaq! 😊' :
                'Perfect {nombre}, it was a pleasure helping you.\n\nYou can always come back, just write to me. I\'ll be here! 😊'
   }),
 
@@ -250,7 +252,7 @@ Para activar IA en tu empresa, habla con @enzo 🚀"
 - Si preguntan precio → deriva a @enzo
 - Si mencionan agente → ejecutar handoff
 
-${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate to English, keep same structure.' : userLanguage === 'fr' ? '\n⚠️ USER SPEAKS FRENCH: Translate to French, keep same structure.' : ''}`;
+${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate to English, keep same structure.' : userLanguage === 'fr' ? '\n⚠️ USER SPEAKS FRENCH: Translate to French, keep same structure.' : userLanguage === 'it' ? '\n⚠️ USER SPEAKS ITALIAN: Translate to Italian, keep same structure.' : userLanguage === 'pt' ? '\n⚠️ USER SPEAKS PORTUGUESE: Translate to Portuguese, keep same structure.' : userLanguage === 'qu' ? '\n⚠️ USUARIO HABLA QUECHUA/RUNASIMI: Responde en Quechua, mantén la misma estructura.' : ''}`;
   },
 
   /**
@@ -330,6 +332,14 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate to English, k
     }
     
     // ... continúa con system prompt normal
+    // Normalizar idioma
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage) ? normalizedLanguage : 'es';
+
     // Usar definiciones centralizadas
     const hotDeskInfo = freeTrialUsed 
       ? this.serviciosInfo.hotDesk.sinPrimeraVisita
@@ -349,9 +359,14 @@ MENSAJES PREVIOS EN ESTA CONVERSACIÓN: ${conversationCount}
 🌍 IDIOMA
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-IDIOMA ACTUAL: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : 'Español 🇪🇸'}
-• Responde SOLO en este idioma, sin mezclar
-• Tono: cálido, informal, emojis moderados 😊 🚀 ✨
+IDIOMA ACTUAL DEL USUARIO: ${userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇧🇷' : userLanguage === 'qu' ? 'Runasimi 🌎' : 'Español 🇪🇸'}
+
+⚠️ REGLA CRÍTICA #1: Responde SIEMPRE en ${userLanguage === 'es' ? 'español' : userLanguage === 'en' ? 'English' : userLanguage === 'fr' ? 'français' : userLanguage === 'it' ? 'italiano' : userLanguage === 'pt' ? 'português' : userLanguage === 'qu' ? 'Runasimi (Quechua)' : 'español'}
+⚠️ REGLA CRÍTICA #2: NUNCA mezcles idiomas en la misma respuesta
+⚠️ REGLA CRÍTICA #3: Si el usuario cambia de idioma, detecta y responde en el nuevo idioma
+
+ADAPTACIÓN CULTURAL:
+${userLanguage === 'es' ? '- Usa "tú" cálido y cercano\n- Emojis: ✨ 😊 🚀 🎯 💡 🏢\n- Expresiones: "¡Perfecto!", "¡Claro que sí!", "¿Empezamos?"' : ''}${userLanguage === 'en' ? '- Use warm, friendly and welcoming tone\n- Emojis: ✨ 😊 🚀 🎯 💡 🏢\n- Expressions: "Perfect!", "Of course!", "Shall we start?"' : ''}${userLanguage === 'fr' ? '- Utilise un ton chaleureux et accueillant\n- Emojis: ✨ 😊 🚀 🎯 💡 🏢\n- Expressions: "Parfait!", "Bien sûr!", "On commence?"' : ''}${userLanguage === 'it' ? '- Usa un tono caldo e accogliente\n- Emoji: ✨ 😊 🚀 🎯 💡 🏢\n- Espressioni: "Perfetto!", "Certo!", "Iniziamo?"' : ''}${userLanguage === 'pt' ? '- Use um tom caloroso e acolhedor\n- Emojis: ✨ 😊 🚀 🎯 💡 🏢\n- Expressões: "Perfeito!", "Claro!", "Vamos começar?"' : ''}${userLanguage === 'qu' ? '- Sumaq, kallpachaq, allin sunqu\n- Emojis: ✨ 😊 🚀 🎯 💡 🏢\n- Imaynapis: "Allinmi!", "Qallarisunchik!", "Kusikuymi!"' : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 TU IDENTIDAD

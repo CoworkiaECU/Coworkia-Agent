@@ -1,9 +1,7 @@
 // 🧾 Sistema de Recibos de Pago por Email - Gabi Financiera
 // Envía recibos profesionales HTML por email (NO interactúa con usuarios)
 
-import { EMAIL_USER, getTransporter } from './mailer.js';
-
-const RECEIPT_FROM_EMAIL = EMAIL_USER || 'coworkia.ec@gmail.com';
+import { sendEmail } from './email.js';
 
 /**
  * 🎨 Genera HTML template para recibo de pago (estilo formal/legal)
@@ -297,41 +295,23 @@ export async function sendPaymentReceipt(paymentData) {
   console.log('[GABI-EMAIL] - Email:', paymentData.memberEmail);
   console.log('[GABI-EMAIL] - Recibo:', paymentData.receiptNumber);
 
-  const transporter = await getTransporter();
-  
-  if (!transporter) {
-    console.error('[GABI-EMAIL] ❌ No se pudo crear transportador. Email no enviado.');
-    return { success: false, error: 'Transportador no disponible' };
-  }
-
   const htmlContent = generatePaymentReceiptHTML(paymentData);
 
-  const mailOptions = {
-    from: `"Gabi - Coworkia Financiera" <${RECEIPT_FROM_EMAIL}>`,
+  const result = await sendEmail({
+    from: '"Gabi - Coworkia Financiera" <noreply@coworkia.ec>',
     to: paymentData.memberEmail,
     subject: `🧾 Recibo de Pago - ${paymentData.receiptNumber} - Coworkia`,
     html: htmlContent
-  };
+  });
 
-  try {
-    console.log('[GABI-EMAIL] 📤 Enviando recibo por email...');
-    const info = await transporter.sendMail(mailOptions);
+  if (result.success) {
     console.log('[GABI-EMAIL] ✅ Recibo enviado exitosamente');
-    console.log('[GABI-EMAIL] - Message ID:', info.messageId);
-    console.log('[GABI-EMAIL] - Response:', info.response);
-    
-    return { 
-      success: true, 
-      messageId: info.messageId,
-      response: info.response 
-    };
-  } catch (error) {
-    console.error('[GABI-EMAIL] ❌ Error enviando recibo:', error);
-    return { 
-      success: false, 
-      error: error.message 
-    };
+    console.log('[GABI-EMAIL] - Message ID:', result.messageId);
+  } else {
+    console.error('[GABI-EMAIL] ❌ Error enviando recibo:', result.error);
   }
+
+  return result;
 }
 
 /**

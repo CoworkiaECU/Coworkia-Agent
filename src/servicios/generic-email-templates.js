@@ -177,6 +177,7 @@ function _adrianaQuoteHTML(d) {
 
 export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', userLanguage = 'es' } = {}) {
   if (type === 'quote') return _adrianaQuoteHTML(leadData);
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).adriana;
   const {
     userName,
     insuranceType,
@@ -196,15 +197,15 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
 
   const premiumSection = quotedPremium ? `
     <div style="background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin:25px 0;">
-      <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Tu prima anual confirmada</div>
+      <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">${t.premiumLabel}</div>
       <div style="color:white;font-size:46px;font-weight:900;line-height:1;margin-bottom:6px;">$${quotedPremium.toLocaleString()}</div>
-      <div style="color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:20px;">USD incluye IVA · Seguro ${insuranceType || 'Vehículo Liviano'}</div>
+      <div style="color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:20px;">${t.premiumCurrency} · Seguro ${insuranceType || 'Vehículo Liviano'}</div>
       <div style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:14px;display:inline-block;margin-bottom:22px;">
-        <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">O en cómodas cuotas</div>
-        <div style="color:white;font-size:22px;font-weight:800;">$${monthlyPremium}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 10</span></div>
+        <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${t.installmentsLabel}</div>
+        <div style="color:white;font-size:22px;font-weight:800;">$${monthlyPremium}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">${t.installmentsSuffix}</span></div>
       </div>
       <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
-        🛡️ Confirmar y activar seguro →
+        ${t.ctaConfirm}
       </a>
     </div>
   ` : '';
@@ -213,9 +214,9 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
     <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
       <div style="display: flex; align-items: center;">
         <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🚗</span>
-        <span style="color: #374151; font-weight: 600; font-size: 16px;">Vehículo: ${vehicleBrand} ${vehicleModel || ''}${vehicleYear ? ` ${vehicleYear}` : ''}</span>
+        <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelVehicle}: ${vehicleBrand} ${vehicleModel || ''}${vehicleYear ? ` ${vehicleYear}` : ''}</span>
       </div>
-      ${commercialValue ? `<div style="margin-top:8px;color:#6B7280;font-size:13px;padding-left:32px;">Valor comercial declarado: <strong style="color:#1E3A8A;">$${Number(commercialValue).toLocaleString()} USD</strong></div>` : ''}
+      ${commercialValue ? `<div style="margin-top:8px;color:#6B7280;font-size:13px;padding-left:32px;">${t.labelCommercialValue}: <strong style="color:#1E3A8A;">$${Number(commercialValue).toLocaleString()} USD</strong></div>` : ''}
     </div>
   ` : '';
 
@@ -225,7 +226,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Solicitud de Seguro - SegPopular</title>
+      <title>${t.title} - SegPopular</title>
       ${DARK_MODE_CSS}
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
@@ -241,8 +242,8 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
                  style="max-width: 280px; height: auto; display: block; margin: 0 auto;" />
           </div>
           <div class="card-white shadow" style="background: white; color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 3px solid #1E3A8A;">
-            <h1 class="brand-blue" style="margin: 0; font-size: 22px; font-weight: 600; color: #1E3A8A;">✅ Solicitud Recibida</h1>
-            <p class="text-gray" style="margin: 8px 0 0 0; color: #374151; font-size: 15px;">Adriana te contactará pronto</p>
+            <h1 class="brand-blue" style="margin: 0; font-size: 22px; font-weight: 600; color: #1E3A8A;">${t.title}</h1>
+            <p class="text-gray" style="margin: 8px 0 0 0; color: #374151; font-size: 15px;">${t.subtitle}</p>
           </div>
         </div>
 
@@ -250,28 +251,28 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
           
           <!-- Saludo personalizado -->
           <div style="text-align: center; margin-bottom: 25px;">
-            <h2 class="text-dark" style="color: #1f2937; font-size: 20px; margin: 0;">¡Hola, ${userName}! 👋</h2>
+            <h2 class="text-dark" style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${userName}! ${t.greetingEnd}</h2>
             <p class="text-gray" style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              Recibimos tu solicitud de seguro de <strong class="brand-blue" style="color: #1E3A8A;">${insuranceType}</strong>
+              ${t.requestReceived} <strong class="brand-blue" style="color: #1E3A8A;">${insuranceType}</strong>
             </p>
           </div>
 
           <!-- Detalles de la solicitud -->
           <div style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.3)); border-left: 4px solid #1E3A8A; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(30,58,138,0.2);">
-            <h3 class="brand-blue" style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">📋 TUS DATOS</h3>
+            <h3 class="brand-blue" style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">${t.sectionData}</h3>
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
                 <div style="display: flex; align-items: center;">
                   <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🛡️</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Tipo: ${insuranceType}</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelInsuranceType}: ${insuranceType}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
                 <div style="display: flex; align-items: center;">
                   <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🆔</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">Cédula: ${cedula}</span>
+                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelId}: ${cedula}</span>
                 </div>
               </div>
               
@@ -297,16 +298,16 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
 
           <!-- Próximos pasos -->
           <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Próximos Pasos:</h3>
+            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">${t.stepsTitle}</h3>
             <div style="color: #374151; font-size: 15px; line-height: 1.8;">
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">1.</strong> Adriana agendará tu inspección vehicular
+                <strong style="color: #10B981;">1.</strong> ${t.step1}
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">2.</strong> Te contactará para coordinar fecha y lugar
+                <strong style="color: #10B981;">2.</strong> ${t.step2}
               </p>
               <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">3.</strong> Tu póliza se activa tras la inspección
+                <strong style="color: #10B981;">3.</strong> ${t.step3}
               </p>
             </div>
           </div>
@@ -314,28 +315,28 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
           <!-- Referencia -->
           <!-- Información adicional sobre servicios -->
           <div style="background: white; border: 2px solid #1E3A8A; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #1E3A8A; font-size: 18px; margin-bottom: 15px; font-weight: 600;">🛡️ Seguros que cotizamos:</h3>
+            <h3 style="color: #1E3A8A; font-size: 18px; margin-bottom: 15px; font-weight: 600;">${t.servicesTitle}</h3>
             <div style="color: #374151; font-size: 15px; line-height: 1.8;">
-              <p style="margin: 8px 0;">✓ Seguro para Vehículos livianos</p>
-              <p style="margin: 8px 0;">✓ Seguro vida individual</p>
-              <p style="margin: 8px 0;">✓ Ramos generales</p>
-              <p style="margin: 8px 0;">✓ Asistencia médica popular - MedBeneficios</p>
+              <p style="margin: 8px 0;">✓ ${t.svc1}</p>
+              <p style="margin: 8px 0;">✓ ${t.svc2}</p>
+              <p style="margin: 8px 0;">✓ ${t.svc3}</p>
+              <p style="margin: 8px 0;">✓ ${t.svc4}</p>
             </div>
           </div>
 
           <!-- Ubicación y contacto -->
           <div style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.3)); border-radius: 12px; padding: 25px; margin: 25px 0; border: 2px solid #1E3A8A;">
-            <h3 style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">📍 NUESTRA OFICINA</h3>
+            <h3 style="color: #1E3A8A; margin-top: 0; font-size: 18px; font-weight: 600;">${t.officeTitle}</h3>
             <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0;">
               <p style="margin: 5px 0; color: #1E3A8A; font-weight: 700; font-size: 18px;">SegPopular</p>
-              <p style="margin: 5px 0; color: #374151; font-weight: 500;">Edificio Finistere - Planta Baja</p>
-              <p style="margin: 5px 0; color: #374151;">Whymper 403, Quito</p>
+              <p style="margin: 5px 0; color: #374151; font-weight: 500;">${t.officeAddress}</p>
+              <p style="margin: 5px 0; color: #374151;">${t.officeCity}</p>
               <p style="margin: 10px 0 5px 0; color: #1E3A8A; font-weight: 600;">🌐 www.segpopular.com</p>
             </div>
             <div style="text-align: center; margin: 20px 0;">
               <a href="https://goo.gl/maps/9GD83LV3XRf23XK59" 
                  style="background: #1E3A8A; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(30,58,138,0.4);">
-                📍 Ver en Google Maps
+              ${t.mapsBtn}
               </a>
             </div>
           </div>
@@ -350,19 +351,19 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
           <!-- Contacto -->
           <div style="text-align: center; margin: 25px 0;">
             <p style="color: #374151; font-size: 14px; margin: 5px 0 15px 0; font-weight: 600;">
-              💬 Protege lo que más te importa hoy mismo
+              ${t.ctaTagline}
             </p>
             <a href="https://wa.me/593994837117?text=%40adriana%2C%20es%20exactamente%20lo%20que%20buscaba%20%C2%BFActivamos%20mi%20seguro%20ahora%3F" 
                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              � Activar Mi Seguro Ahora
+              ${t.ctaActivate}
             </a>
           </div>
 
           <!-- Footer -->
           <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: #FFD700; border-radius: 12px; border: 3px solid #1E3A8A;">
-            <p style="color: #1E3A8A; font-size: 18px; font-weight: 700; margin: 0;">¡Gracias por confiar en nosotros! 🛡️</p>
-            <p style="color: #1E3A8A; font-size: 14px; margin: 8px 0; font-weight: 600;">Adriana - SegPopular</p>
-            <p style="color: #1E3A8A; font-size: 13px; margin: 5px 0;">Asesores de Seguros Populares</p>
+            <p style="color: #1E3A8A; font-size: 18px; font-weight: 700; margin: 0;">${t.footerWelcome}</p>
+            <p style="color: #1E3A8A; font-size: 14px; margin: 8px 0; font-weight: 600;">${t.footerTeam}</p>
+            <p style="color: #1E3A8A; font-size: 13px; margin: 5px 0;">${t.footerSub}</p>
           </div>
 
         </div>
@@ -1090,7 +1091,8 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
  * 🏘️ PAULA - PropElite Bienes Raíces (Real Estate Expert)
  * Colores: Rosa elegante (#DB2777, #EC4899) + Verde esmeralda (#059669)
  */
-export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
+export function generatePaulaEmailHTML(leadData, { userLanguage = 'es', leadScoreData = null } = {}) {
+  const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).paula;
   const {
     userName,
     operationType,
@@ -1144,8 +1146,8 @@ export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
           
           <!-- Card de confirmación -->
           <div class="card-white shadow" style="background: #EDE8D0; color: #3D4436; padding: 28px 40px; border-radius: 0; display: inline-block; box-shadow: 0 8px 30px rgba(0,0,0,0.25); border: 1px solid #D4AF37;">
-            <h1 class="text-dark" style="margin: 0; font-size: 20px; font-weight: 600; color: #3D4436; letter-spacing: 3px; font-family: 'Georgia', serif; text-transform: uppercase;">Búsqueda Iniciada</h1>
-            <p class="text-gray" style="margin: 10px 0 0 0; color: #52594B; font-size: 13px; font-family: 'Arial', sans-serif; letter-spacing: 1px;">Su búsqueda exclusiva ha comenzado</p>
+            <h1 class="text-dark" style="margin: 0; font-size: 20px; font-weight: 600; color: #3D4436; letter-spacing: 3px; font-family: 'Georgia', serif; text-transform: uppercase;">${t.title}</h1>
+            <p class="text-gray" style="margin: 10px 0 0 0; color: #52594B; font-size: 13px; font-family: 'Arial', sans-serif; letter-spacing: 1px;">${t.subtitle}</p>
           </div>
         </div>
 
@@ -1155,32 +1157,32 @@ export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
           <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #D4AF37; padding-bottom: 30px;">
             <h2 class="text-dark" style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; font-family: 'Georgia', serif; letter-spacing: 2px;">${userName}</h2>
             <p class="text-gray" style="color: #52594B; font-size: 15px; margin: 0; font-family: 'Arial', sans-serif;">
-              Iniciamos la búsqueda de su <span style="color: #D4AF37; font-weight: 700; font-family: 'Georgia', serif;">${propertyType}</span>
+              ${t.searchStarted} <span style="color: #D4AF37; font-weight: 700; font-family: 'Georgia', serif;">${propertyType}</span>
             </p>
           </div>
 
           <!-- Detalles de la búsqueda -->
           <div class="card-white-border" style="background: #4A5241; border: 2px solid #D4AF37; border-radius: 0; padding: 35px; margin: 35px 0; box-shadow: 0 4px 20px rgba(74,82,65,0.3);">
-            <h3 class="text-dark" style="color: #D4AF37; margin-top: 0; font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif; border-bottom: 2px solid #D4AF37; padding-bottom: 15px; margin-bottom: 25px;">Especificaciones</h3>
+            <h3 class="text-dark" style="color: #D4AF37; margin-top: 0; font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif; border-bottom: 2px solid #D4AF37; padding-bottom: 15px; margin-bottom: 25px;">${t.sectionSpecs}</h3>
             
             <div style="margin: 25px 0;">
               <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
-                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Operación</div>
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">${t.labelOperation}</div>
                 <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${operationType}</div>
               </div>
               
               <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
-                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Tipo de Propiedad</div>
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">${t.labelPropertyType}</div>
                 <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyType}</div>
               </div>
               
               <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
-                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Zona</div>
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">${t.labelZone}</div>
                 <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${zone}</div>
               </div>
               
               <div class="card-white-border" style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 15px 0; border-left: 4px solid #D4AF37;">
-                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Presupuesto</div>
+                <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">${t.labelBudget}</div>
                 <div class="text-dark" style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${budgetRange}</div>
               </div>
             </div>
@@ -1189,31 +1191,31 @@ export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
           <!-- Contacto -->
           <div class="card-white-border" style="background: #EDE8D0; border: 2px solid #D4AF37; border-radius: 0; padding: 30px; margin: 30px 0;">
             <div style="margin: 12px 0;">
-              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Email</span>
+              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">${t.labelEmail}</span>
               <div class="text-dark" style="color: #3D4436; font-weight: 600; font-size: 15px; font-family: 'Arial', sans-serif; margin-top: 6px;">${email}</div>
             </div>
             <div style="height: 2px; background: #D4AF37; margin: 20px 0;"></div>
             <div style="margin: 12px 0;">
-              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Teléfono</span>
+              <span class="text-muted" style="color: #52594B; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">${t.labelPhone}</span>
               <div class="text-dark" style="color: #3D4436; font-weight: 600; font-size: 15px; font-family: 'Arial', sans-serif; margin-top: 6px;">${phone}</div>
             </div>
           </div>
 
           <!-- Próximos pasos -->
           <div class="card-white-border" style="background: #4A5241; border: 2px solid #D4AF37; border-radius: 0; padding: 35px; margin: 35px 0;">
-            <h3 style="color: #D4AF37; font-size: 15px; margin-bottom: 25px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif;">Proceso Elite</h3>
+            <h3 style="color: #D4AF37; font-size: 15px; margin-bottom: 25px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-family: 'Arial', sans-serif;">${t.processTitle}</h3>
             <div style="color: #EDE8D0; font-size: 15px; line-height: 2.2; font-family: 'Georgia', serif;">
               <p style="margin: 15px 0;">
-                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">I.</span> &nbsp; Selección personalizada de propiedades exclusivas
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">I.</span> &nbsp; ${t.step1}
               </p>
               <p style="margin: 15px 0;">
-                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">II.</span> &nbsp; Presentación detallada con documentación completa
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">II.</span> &nbsp; ${t.step2}
               </p>
               <p style="margin: 15px 0;">
-                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">III.</span> &nbsp; Visitas privadas coordinadas a su conveniencia
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">III.</span> &nbsp; ${t.step3}
               </p>
               <p style="margin: 15px 0;">
-                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">IV.</span> &nbsp; Asesoría completa hasta la transacción final
+                <span style="color: #D4AF37; font-weight: 700; font-size: 18px; font-family: 'Georgia', serif;">IV.</span> &nbsp; ${t.step4}
               </p>
             </div>
           </div>
@@ -1234,7 +1236,7 @@ export function generatePaulaEmailHTML(leadData, leadScoreData = null) {
             <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
             <p style="color: #EDE8D0; font-size: 10px; margin: 8px 0 15px 0; font-family: 'Helvetica Neue', 'Arial', sans-serif; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">PRIME LIVING</p>
             <div style="height: 1px; width: 60px; background: rgba(212,175,55,0.3); margin: 20px auto;"></div>
-            <p style="color: #EDE8D0; font-size: 11px; margin: 8px 0 0 0; font-family: 'Arial', sans-serif; opacity: 0.7;">Paula - Real Estate Advisor</p>
+            <p style="color: #EDE8D0; font-size: 11px; margin: 8px 0 0 0; font-family: 'Arial', sans-serif; opacity: 0.7;">${t.footerRole}</p>
           </div>
 
         </div>
@@ -2040,7 +2042,7 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         subject: type === 'admin'
           ? `🏡 Nuevo lead inmobiliario: ${clientName}`
           : `✅ Búsqueda confirmada — El Morenal`,
-        html: generatePaulaEmailHTML({ ...data, userName: clientName })
+        html: generatePaulaEmailHTML({ ...data, userName: clientName }, { userLanguage: lang })
       };
 
     case 'ADRIANA':

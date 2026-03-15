@@ -1,90 +1,72 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 15 Mar 2026 — Noche (post-auditoría Whisper + multiidioma 8 agentes)
+> **Última actualización:** 15 Mar 2026 — Noche (sprint multiidioma completo ✅)
 
 ---
 
-### ✓ P5 — Homologación de idiomas (4 agentes, 6 idiomas) `15 Mar`
-- Axel, Gabi, Enzo, Paula: `getMensajes` actualizado a ES/EN/FR/IT/PT/QU (entrada + despedida)
-- `getSystemPrompt`: bloque de normalización + `Idioma:` / `idioma const` / `REGLA CRÍTICA` / `ADAPTACIÓN CULTURAL` en 6 langs
-- Paula `personalidad.idiomas`: expandido de 2 → 6 idiomas
-- Deployed: `fa5329f`
+## ✅ SPRINT MULTIIDIOMA — COMPLETADO HOY `15 Mar`
 
-### ✓ Fix: respuesta "¿qué idiomas hablas?" `15 Mar`
-- `detectLanguageListQuery()` — 13 patrones, detecta la pregunta en los 6 idiomas
-- `getLanguageListResponse()` — intro en idioma del usuario + lista 🇪🇸🇬🇧🇫🇷🇮🇹🇧🇷⛰️
-- Orquestador intercepta antes de OpenAI (sin costo de tokens) → `a41de06`
-- Bug fix: faltaba `shouldReply: true` → caía a OpenAI con `prompt=undefined` → `bd6e682`
+### ML-1 — Homologar Aurora, Adriana, Aluna, Ángela a 6 idiomas `15 Mar`
+**Deployed: `e82cc14`**
+- Aurora/Adriana/Aluna/Ángela: `getMensajes` + `getSystemPrompt` → 6 langs (ES/EN/FR/IT/PT/QU)
 
-### ✓ ML-5 — Multiidioma impecable: 8 agentes completos `15 Mar`
-**Deployed: `88b4524` (Aurora/Gabi/Enzo) + `53da0c1` (Axel/Adriana/Angela/Paula) + `ab77af0` (Enzo fix)**
+### ML-2 — Completar `handoff-messages.js` `15 Mar`
+**Deployed: `e82cc14`**
+- `getAuroraExitMessage`, `getAuroraReturnMessage`, `topicLine` → FR/IT/PT/QU añadidos
 
-Auditoría completa + correcciones aplicadas a los 8 agentes:
+### ML-3 — Whisper: excluir `qu` del idioma forzado `15 Mar`
+**Deployed: `e82cc14`**
+- `supportedLanguages = ['es','en','fr','it','pt']` — QU excluido (usa auto-detect nativo)
 
-| Agente | getMensajes 6L | Normalización | IDIOMA ACTUAL | REGLA CRÍTICA #1/2/3 | ADAPTACIÓN CULTURAL 6L |
-|--------|---------------|---------------|---------------|----------------------|------------------------|
-| Aurora | ✅ | ✅ fix | ✅ | ✅ fix | ✅ fix |
-| Aluna  | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Enzo   | ✅ | ✅ | ✅ | ✅ fix (#1→#1/2/3) | ✅ (QU expandido) |
-| Gabi   | ✅ | ✅ | ✅ fix | ✅ fix | ✅ fix |
-| Axel   | ✅ | ✅ | ✅ fix | ✅ fix | ✅ fix |
-| Adriana| ✅ fix (it/pt/qu) | ✅ fix (full compat) | ✅ | ✅ fix (#1→#1/2/3) | ✅ fix |
-| Angela | ✅ | ✅ fix | ✅ | ✅ | ✅ |
-| Paula  | ✅ | ✅ fix (full compat) | ✅ fix | ✅ fix | ✅ fix |
+### Fix — Respuesta "¿qué idiomas hablas?" `15 Mar`
+**Deployed: `a41de06` + `bd6e682`**
+- `detectLanguageListQuery()` + `getLanguageListResponse()` por agente con intro única
+
+### Fix — Quechua persistencia + language lock `15 Mar`
+**Deployed: `cebb482` + `73d672f`**
+- Language lock en orquestador: inyecta `🔒 IDIOMA ACTIVO` al TOP+BOTTOM de todos los system prompts
+- Detector QU mejorado con palabras clave faltantes
+
+### ML-5 — Multiidioma impecable: 8 agentes completos `15 Mar`
+**Deployed: `88b4524` + `53da0c1` + `ab77af0`**
+
+| Agente  | getMensajes 6L    | Normalización         | REGLA CRÍTICA #1/2/3 | ADAPTACIÓN CULTURAL 6L |
+|---------|-------------------|-----------------------|----------------------|------------------------|
+| Aurora  | ✅ | ✅ fix           | ✅ fix               | ✅ fix                 |
+| Aluna   | ✅ | ✅               | ✅                   | ✅                     |
+| Enzo    | ✅ | ✅               | ✅ fix (#1→#1/2/3)  | ✅ (QU expandido)      |
+| Gabi    | ✅ | ✅               | ✅ fix               | ✅ fix                 |
+| Axel    | ✅ | ✅               | ✅ fix               | ✅ fix                 |
+| Adriana | ✅ fix (it/pt/qu) | ✅ fix (full compat)  | ✅ fix (#1→#1/2/3)  | ✅ fix                 |
+| Angela  | ✅ | ✅ fix           | ✅                   | ✅                     |
+| Paula   | ✅ | ✅ fix (full compat) | ✅ fix           | ✅ fix                 |
+
+### ML-6 — Bugs Whisper multiidioma `15 Mar`
+**Deployed: `1437dff`**
+- `openai.js`: `whisperLanguage null` para QU → Whisper auto-detect nativo (antes forzaba español → texto basura)
+- `wassenger.js`: `blockedMessages` 3 → 6 idiomas (añadidos fr/it/pt)
 
 ---
 
-## ✅ ML-6 — Bugs Whisper multiidioma `15 Mar`
-**Deployed: pendiente commit**
+## ⏳ PENDIENTE — Siguiente sprint
 
-- **Bug 1 CRÍTICO fix:** `openai.js` — `whisperLanguage` para `qu` ahora es `null` (auto-detect) en vez de `'es'`. API call omite `language` cuando es null. Retorno incluye `language: whisperLanguage || language` para trazabilidad.
-- **Bug 2 MENOR fix:** `wassenger.js` — `blockedMessages` expandido de 3 → 6 idiomas (añadidos fr/it/pt)
+### 🔜 ML-4 — Emails HTML multiidioma ← **SIGUIENTE**
+**Alcance:** `generic-email-templates.js` — añadir `userLanguage` param, traducir asunto/saludo/CTA/pie
+**Estrategia:** parámetro `userLanguage` en funciones de generación → strings condicionales por idioma
+**Nota:** no rediseñar templates, solo localizar textos UI
+**Complejidad:** alta — requiere sesión dedicada
 
-### Bug 1 — CRÍTICO: Quechua fuerza español en Whisper
-**Archivo:** `src/servicios-ia/openai.js` línea 354
-**Afecta:** Los 8 agentes cuando `preferredLanguage === 'qu'`
+### P3 — Auditoría de emails HTML (6 archivos, 8 agentes)
+**Objetivo:** Inventariar templates, detectar campos vacíos, agentes sin HTML, inconsistencias de branding
+**Diferida** — conviene hacer junto o después de ML-4
 
-```js
-// ACTUAL — MAL: para 'qu' devuelve 'es' → fuerza transcripción en español
-const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
+### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
+**Diferida** — requiere P3 terminado
 
-// CORRECTO: para 'qu' devuelve null → Whisper hace auto-detect
-const whisperLanguage = supportedLanguages.includes(language) ? language : null;
-```
-
-Además la llamada a la API debe condicionarse:
-```js
-// Si whisperLanguage es null, no pasar language (= auto-detect Whisper nativo)
-const params = { file: audioFile, model: 'whisper-1', response_format: 'text' };
-if (whisperLanguage) params.language = whisperLanguage;
-const transcription = await client.audio.transcriptions.create(params);
-```
-
-### Bug 2 — MENOR: Mensaje "tipo bloqueado" incompleto
-**Archivo:** `src/express-servidor/endpoints-api/wassenger.js` ~línea 1070
-**Afecta:** usuarios FR/IT/PT que envíen sticker/documento/ubicación → reciben mensaje en español
-
-```js
-// ACTUAL — solo 3 idiomas:
-const blockedMessages = { es: '...', en: '...', qu: '...' };
-
-// CORRECTO — 6 idiomas:
-const blockedMessages = {
-  es: '📝 Por favor envía tu mensaje por texto, imagen o audio.\n\nNo puedo procesar este tipo de archivo.',
-  en: '📝 Please send your message as text, image or audio.\n\nI cannot process this type of file.',
-  fr: '📝 Envoyez votre message par texte, image ou audio.\n\nJe ne peux pas traiter ce type de fichier.',
-  it: '📝 Invia il tuo messaggio come testo, immagine o audio.\n\nNon posso elaborare questo tipo di file.',
-  pt: '📝 Envie sua mensagem como texto, imagem ou áudio.\n\nNão posso processar este tipo de arquivo.',
-  qu: '📝 Ama hina willayta qillqasqapi, imaynapi utaq uyarinapaq apachimuy.\n\nMana atinichu kay laya willakuna ruwayta.'
-};
-```
-
-### Lo que sí está bien ✅
-- `getLocalizedAudioError()` en `audio-validator.js`: 6 idiomas completos ✅
-- Fallback "no pude acceder al audio": 6 idiomas completos ✅
-- `supportedLanguages = ['es','en','fr','it','pt']` (qu excluido) — correcto en concepto ✅
-- Whisper recibe `userLanguage` del perfil del usuario → misma ruta para los 8 agentes ✅
-- `agentName: 'orquestador'` en logs → correcto (Whisper es pre-agente) ✅
+### P6 — TODOs bloqueados por cliente
+- **AXEL:** Tarifario oficial de The PaintBull
+- **PAULA:** Links de Drive para 5 propiedades
+- **ALUNA:** Definir si el tour post-pago va a Google Calendar
 
 ---
 

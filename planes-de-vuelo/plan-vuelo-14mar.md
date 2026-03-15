@@ -1,58 +1,170 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Inicio:** 14 Mar 2026 — Mañana
+> **Última actualización:** 15 Mar 2026 — Tarde (post-pruebas ML-1/2/3)
 
 ---
 
-## ✅ TAREAS COMPLETADAS
+### ✓ P5 — Homologación de idiomas (4 agentes, 6 idiomas) `15 Mar`
+- Axel, Gabi, Enzo, Paula: `getMensajes` actualizado a ES/EN/FR/IT/PT/QU (entrada + despedida)
+- `getSystemPrompt`: bloque de normalización + `Idioma:` / `idioma const` / `REGLA CRÍTICA` / `ADAPTACIÓN CULTURAL` en 6 langs
+- Paula `personalidad.idiomas`: expandido de 2 → 6 idiomas
+- Deployed: `fa5329f`
 
-### ✓ Auditoría diaria del repo
-- Estructura general revisada
-- Detectados problema y oportunidades
-- Plan de trabajo creado
+### ✓ Fix: respuesta "¿qué idiomas hablas?" `15 Mar`
+- `detectLanguageListQuery()` — 13 patrones, detecta la pregunta en los 6 idiomas
+- `getLanguageListResponse()` — intro en idioma del usuario + lista 🇪🇸🇬🇧🇫🇷🇮🇹🇧🇷⛰️
+- Orquestador intercepta antes de OpenAI (sin costo de tokens) → `a41de06`
+- Bug fix: faltaba `shouldReply: true` → caía a OpenAI con `prompt=undefined` → `bd6e682`
 
 ---
 
-## 🔥 EN PROGRESO
+## ✅ ML-1 — Homologar Aurora, Adriana, Aluna, Ángela a 6 idiomas `15 Mar`
+**Deployed: `e82cc14`**
 
-Ninguna tarea en progreso todavía.
+- **Aurora** `getMensajes`: QU añadido (entrada + despedida)
+- **Aurora** `getSystemPrompt` IDIOMA: extendido a 6 langs
+- **Aurora** `getVirtualAgentSalesPrompt`: añadidos IT/PT/QU
+- **Adriana** `getMensajes`: IT/PT/QU añadidos
+- **Adriana** `getSystemPrompt`: normalización + IDIOMA/REGLA → 6 langs
+- **Aluna** `getMensajes`: IT/PT/QU añadidos
+- **Aluna** `getSystemPrompt`: normalización + IDIOMA/REGLA/ADAPTACIÓN CULTURAL → 6 langs
+- **Ángela** `getMensajes`: FR/IT/PT añadidos (entre EN y QU)
+- **Ángela** `getSystemPrompt`: IDIOMA/REGLA/ADAPTACIÓN CULTURAL → 6 langs (FR/IT/PT sobre QU)
+
+## ✅ ML-2 — Completar `handoff-messages.js` `15 Mar`
+**Deployed: `e82cc14`**
+
+- `getAuroraExitMessage`: añadidos `it` y `qu`
+- `getAuroraReturnMessage`: añadido `qu`
+- `topicLine` (hasContext true/false): extendido a FR/IT/PT/QU
+
+## ✅ ML-3 — Whisper: excluir `qu` del idioma forzado `15 Mar`
+**Deployed: `e82cc14`**
+
+- `supportedLanguages` Whisper: `['es', 'en', 'fr', 'it', 'pt']` — `qu` excluido
+- Quechua usa auto-detect nativo (mejor precisión que forzar código no soportado)
+
+## ✅ Fix: respuestas de idiomas personalizadas por agente `15 Mar`
+**Deployed: `cebb482` + `73d672f`**
+
+- `getLanguageListResponse(lang, agentId)`: cada agente tiene intro única que refleja su especialidad
+  - Aurora: "¡Soy el corazón de Coworkia! ✨ Te conecto con todo en:"
+  - Aluna: "¡Cierro membresías sin fronteras! 💼 Me adapto a ti en:"
+  - Adriana: "Corredora con 33 licencias en Latinoamérica 🛡️ Proceso tus pólizas en:"
+  - Enzo: "¡Llevo proyectos a todo el mundo! 🚀 MarketingLab opera en:"
+  - Ángela: "MedBeneficios está en 19 países 💚 Cuido tu salud en:"
+  - Axel: "¡Soy experto en reparación de colisiones! 🔧 PaintBull trabaja contigo en:"
+  - Gabi: "¡El mundo financiero no tiene fronteras! ⚖️ Asesoro tus consultas en:"
+  - Paula: "¡Las propiedades no tienen fronteras! 🏡 Asesoro en bienes raíces en:"
+- Orquestador: pasa `activeAgent` a `getLanguageListResponse`
+
+## ✅ Fix: Quechua persistencia en Ángela (y todos los agentes) `15 Mar`
+**Deployed: `cebb482`**
+
+- **Language lock** en orquestador: cuando `preferredLanguage !== 'es'`, inyecta bloque `🔒 IDIOMA ACTIVO` al TOP y BOTTOM de todos los system prompts — evita que el AI revierta al español por el historial
+- **Detector QU**: añadidas palabras clave faltantes (`yupaichani`, `imanalla`, `allinmi`, `napaykullayki`, `sumaq`, etc.)
 
 ---
 
-## 📋 TAREAS PENDIENTES
+## ⏳ PENDIENTE — Siguiente sprint
 
-### 🧹 LIMPIEZA RÁPIDA
+### ML-4 — Emails HTML multiidioma (fase 1: textos de UI)
+**Alcance:** `generic-email-templates.js` — añadir `userLanguage` param, traducir asunto/saludo/CTA/footer  
+**Estrategia:** parámetro `userLanguage` en funciones de generación → strings condicionales por idioma  
+**Nota:** no rediseñar templates, solo localizar textos de UI  
+**Bloqueo:** es el más complejo — requiere sesión dedicada
 
-#### 3. Borrar archivos .DS_Store
-**Estado:** ✅ Aprobado ("verde nena")
-- Son archivos basura de Mac que aparecen por todos lados
-- Ubicaciones detectadas:
-  - public/assets/logos/.DS_Store
-  - public/images/.DS_Store
-  - public/images/axel-demo/.DS_Store
-  - public/images/axel-demo/*/DS_Store (varios dentro de carpetas de fotos)
-- **Acción:** Borrarlos todos + agregar exclusión al .gitignore si no existe
+### P3 — Auditoría de emails HTML (6 archivos, 8 agentes)
+**Objetivo:** Saber cuál agente tiene template viejo, cuál no envía, cuál tiene campos mal.  
+**Diferida** — esperar ML-4 primero para no duplicar trabajo
 
-#### 4. Borrar carpeta data/ vacía
-**Estado:** ✅ Aprobado
-- La carpeta existe pero está completamente vacía
-- No hay referencias a ella en el código
-- **Acción:** Eliminarla
+### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
+**Diferida** — requiere P3 terminado
 
-#### 5. Limpiar console.log de DEBUG en producción
-**Estado:** ✅ Aprobado ("verde nena")
-- 28 líneas con console.log/warn/error que contienen "DEBUG" o "test"
-- **Ubicaciones principales:**
-  - openai.js (3 líneas de DEBUG)
-  - memoria-sqlite.js (4 líneas de DEBUG)
-  - postgres-adapter.js (4 líneas de DEBUG)
-  - wassenger.js (5 líneas de DEBUG/debug)
-  - aurora-confirmation-helper.js (4 líneas de DEBUG)
-  - confirmation-flow.js (3 líneas de DEBUG)
-  - google-calendar.js (1 línea de DEBUG)
-  - membership-payment-verification.js (1 TODO console)
-  - payment-receipts.js (1 test console)
-- **Acción:** Comentarlos o ponerlos detrás de flag `if (process.env.DEBUG_MODE === 'true')`
+### P6 — TODOs bloqueados por cliente
+- **AXEL:** Tarifario oficial de The PaintBull
+- **PAULA:** Links de Drive para 5 propiedades
+- **ALUNA:** Definir si el tour post-pago va a Google Calendar
+
+---
+
+## 📋 HISTORIAL COMPLETO DE TAREAS ANTERIORES
+
+## ✅ TAREAS COMPLETADAS HOY
+
+### ✓ Fases 1–5 del repo (mañana, v925→v930)
+- F1.1: Template Axel premium migrado al sistema genérico
+- F2: `isPositiveResponse`/`isNegativeResponse` unificados en `generic-confirmation-flow.js`
+- F3: `code-generator.js` centralizado + 8 repositorios usan prefijos `AXL-/ADR-/GAB-/ENZ-/PAU-/ALU-/AUR-`
+- F4: `parseDate` + `normalizeTimeFormat` centralizados en `date-time-parser.js` (Ecuador UTC-5)
+- F5: `BaseRepository.js` creado — adriana, gabi, enzo, paula refactorizados (-236 líneas boilerplate)
+
+### ✓ Desvío Axel v2 (tarde)
+Tres mejoras entregadas, en producción desde `f8b17b2`:
+
+**A — CTAs emocionales** (`axel-quote-email.js`, `collision-confirmation.js`, `wassenger.js`)
+- Botón email: *"Agendar mi cita — mi auto lo merece 🚗✨"*
+- `smsSummary` WhatsApp: copy con *"Tu auto habla por ti. Sin abolladuras = autoestima."*
+- Post-email consent: Axel pregunta fecha de cita directamente en WA
+
+**B — Agendamiento en taller** (`axel-appointment.js` nuevo, `wassenger.js`, `axelRepository.js`)
+- `detectSchedulingIntent()` + `processWorkshopScheduling()` parsean lenguaje natural ("el martes en la mañana")
+- `axelSchedulingPending` Map en wassenger — guarda `quoteCode` hasta que usuario dé fecha
+- Guarda `collision_quotes.inspection_scheduled` en DB cuando el usuario agenda
+
+**C — Recordatorios automáticos** (`postgres-adapter.js`, `axelRepository.js`, `axel-quote-email.js`, `follow-up-service.js`, `cron-scheduler.js`)
+- 2 columnas nuevas en DB: `reminder_1_sent_at`, `reminder_2_sent_at`
+- Email 24h: tono suave *"Tu cotización todavía te espera ⏳"*
+- Email 7 días: tono diferente *"La vida se ve diferente desde un auto impecable 💪"*
+- `processAxelQuoteReminders()` respeta horario 9am–6pm lun–vie Ecuador
+- Cron: `0 10 * * 1-5` (10:00 AM lun–vie), solo si `inspection_scheduled IS NULL`
+
+### ✓ P1 — Limpiar console.log DEBUG (tarde)
+- Auditados 28 `console.log/warn/error` con "DEBUG" o "test"
+- Resultado: 27 ya estaban gateados detrás de `DEBUG_MODE === 'true'` desde versiones anteriores
+- El único expuesto era `payment-receipts.js:489` (comprobante test Diego) — gateado ahora
+- Deployed: `d20a799`
+
+### ✓ P2 — Borrar .DS_Store + carpeta data/
+- 4 archivos `.DS_Store` eliminados: `./`, `public/`, `public/images/`, `public/images/axel-demo/`
+- Carpeta `data/` (vacía) eliminada
+- `.gitignore` ya los tenía cubiertos — no se commitean de nuevo
+- Deployed: `d20a799`
+
+---
+
+## 🍽️ EN PAUSA — Almuerzo
+
+---
+
+## 📋 PRÓXIMAS TAREAS (orden recomendado)
+
+### P3 — Auditoría de emails HTML (6 archivos, 8 agentes)
+**Objetivo:** Saber cuál agente tiene template viejo, cuál no envía, cuál tiene campos mal.**Qué investigar concretamente:**
+- `scripts/test-{agente}-email.mjs` existen para: adriana, aluna, axel — ¿y los demás?
+- Inventariar los 12 archivos de email en `src/servicios/` — cuál usa cuál
+- Revisar `generic-email-templates.js` vs templates propios (adriana, enzo, gabi, paula, aurora tienen propios)
+- Identificar qué agentes NO tienen template HTML propio y qué envían (texto plano o nada)
+- Detectar campos vacíos en los templates: logos que fallan, colores de marca inconsistentes
+- **No hacer aún:** refactoring — solo auditar y listar hallazgos
+
+### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
+**Objetivo:** Emails que se vean bien en Gmail, Outlook, iOS y Android en dark mode.**Qué implica concretamente:**
+- Los templates actuales usan `div` en vez de `table` (rompe Outlook)
+- Estilos CSS no son todos inline (Gmail los stripea)
+- No hay `@media (prefers-color-scheme: dark)` → dark mode muestra texto blanco sobre fondo blanco
+- Imágenes sin dimensiones fijas → layout se rompe en mobile
+- **Solución:** migrar a estructura tabla + inline CSS + media query dark mode en los templates más usados (Aurora, Axel, Aluna primero)
+
+### P5 — Homologación de idiomas (8 agentes, 6 idiomas)
+~~**Objetivo:** Todos los agentes responden en el idioma del usuario.~~
+**✅ COMPLETADO `15 Mar`** — ver sección de tareas completadas.
+
+### P6 — TODOs bloqueados por cliente
+**No se pueden hacer hasta que el cliente entregue:**
+- **AXEL:** Tarifario oficial de The PaintBull → `axel-quote-generator.js` + `axel-demo-cotizacion.js`
+- **PAULA:** Links de Drive para 5 propiedades (Casa 1, 3, 6, 7, Generales) → `paula-casas-links.js`
+- **ALUNA:** Definir si el tour post-pago va a Google Calendar o es solo recordatorio → `membership-payment-verification.js`
 
 ---
 

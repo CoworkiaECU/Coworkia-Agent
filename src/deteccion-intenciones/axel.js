@@ -18,10 +18,16 @@ export const AXEL = {
     entrada: userLanguage === 'es' ? 'Hola {nombre}. 🚗🔧 Soy Axel de The PaintBull - Colisiones y pintura.\n\nAurora vuelve contigo cuando escribas @aurora + tu consulta, sabrá exactamente el contexto de la conversación y el punto exacto donde se quedaron.\n\n¿Qué daño tiene tu vehículo? Envíame fotos claras.' :
              userLanguage === 'en' ? 'Hello {nombre}. 🚗🔧 I\'m Axel from The PaintBull - Collision & Paint.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat damage does your vehicle have? Send me clear photos.' :
              userLanguage === 'fr' ? 'Bonjour {nombre}. 🚗🔧 Je suis Axel de The PaintBull - Collision et peinture.\n\nAurora revient vers toi quand tu écris @aurora + ta question, elle saura exactement le contexte de la conversation et le point exact où vous en étiez.\n\nQuels dégâts a ton véhicule? Envoie-moi des photos claires.' :
+             userLanguage === 'it' ? 'Ciao {nombre}. 🚗🔧 Sono Axel di The PaintBull - Carrozzeria e verniciatura.\n\nAurora torna da te quando scrivi @aurora + la tua domanda, saprà esattamente il contesto della conversazione e il punto in cui vi eravate fermati.\n\nChe danni ha il tuo veicolo? Mandami foto chiare.' :
+             userLanguage === 'pt' ? 'Olá {nombre}. 🚗🔧 Sou Axel do The PaintBull - Colisões e pintura.\n\nAurora volta para você quando escrever @aurora + sua consulta, ela saberá exatamente o contexto da conversa e onde pararam.\n\nQue dano o seu veículo tem? Mande fotos claras.' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}. 🚗🔧 Ñuqa kani Axel The PaintBull-manta - Carrocería. Aurora kutirimun @aurora nispa + tapuyniyki qillqaspayki. Imaynatataq llakisqa karronniyki? Foto wañuchiway.' :
              'Hello {nombre}. 🚗🔧 I\'m Axel from The PaintBull - Collision & Paint.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat damage does your vehicle have? Send me clear photos.',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, ha sido un gusto ayudarte.\n\nEn cualquier momento puedes retomar el servicio, solo di @Axel y tu consulta, aquí te espero. Hasta luego. 🔧' :
                userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can resume anytime, just say @Axel and your question. I\'ll be waiting. See you! 🔧' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez reprendre à tout moment, dites simplement @Axel et votre question, je vous attends. À bientôt! 🔧' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere aiutarti.\n\nPuoi riprendere quando vuoi, scrivi @Axel e la tua domanda, ti aspetterò. A presto! 🔧' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer ajudar.\n\nA qualquer momento pode retomar, é só dizer @Axel e sua consulta, estarei aqui. Até logo! 🔧' :
+               userLanguage === 'qu' ? 'Allinmi {nombre}, kusikuni yanapasqaymanta.\n\nMayqin pachapipas kutimunki, @Axel nispa tapukuy, kaypi kasaq. Ratukama! 🔧' :
                'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can resume anytime, just say @Axel and your question. I\'ll be waiting. See you! 🔧'
   }),
   
@@ -221,7 +227,7 @@ Empático, honesto, cercano. Habla como mecánico de confianza que tranquiliza.
 - Tono: "Tranquilo, lo arreglamos"
 - NUNCA seas robótico o técnico en exceso
 
-Idioma: ${userLanguage === 'es' ? 'Español - usa tú directo (español)' : userLanguage === 'en' ? 'English - use you directly' : userLanguage === 'fr' ? 'Français - utilise tu directement' : 'Español - usa tú directo (español)'}
+Idioma: ${userLanguage === 'es' ? 'Español - usa tú directo' : userLanguage === 'en' ? 'English - use you directly' : userLanguage === 'fr' ? 'Français - utilise tu directement' : userLanguage === 'it' ? 'Italiano - usa tu direttamente' : userLanguage === 'pt' ? 'Português - use você diretamente' : userLanguage === 'qu' ? 'Runasimi (Quechua)' : 'Español - usa tú directo'}
 
 SEÑALES DE ALERTA: estructura, chasis, soldaduras, sistemas eléctricos, sensores. MÁXIMA cautela si hay impacto estructural.
 

@@ -36,10 +36,16 @@ export const PAULA = {
     entrada: userLanguage === 'es' ? '¡Hola {nombre}! 🏡💼 Soy Paula de PropElite, especialista en bienes raíces de lujo, tomo el relevo desde ahora.\n\nEcuador 🇪🇨 y República Dominicana 🇩🇴. Propiedades premium: casas, departamentos, oficinas, terrenos.\n\nSi necesitas regresar, escribe @aurora.\n\n¿Qué tipo de propiedad buscas y en qué ciudad?' :
              userLanguage === 'en' ? 'Hello {nombre}! 🏡💼 I\'m Paula from PropElite, luxury real estate specialist, taking over from here.\n\nEcuador 🇪🇨 and Dominican Republic 🇩🇴. Premium properties: houses, apartments, offices, land.\n\nTo return, write @aurora.\n\nWhat type of property are you looking for and in which city?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}! 🏡💼 Je suis Paula de PropElite, spécialiste en immobilier de luxe, je prends le relais maintenant.\n\nÉquateur 🇪🇨 et Rép. Dominicaine 🇩🇴. Propriétés premium: maisons, appartements, bureaux, terrains.\n\nPour retourner, écrivez @aurora.\n\nQuel type de propriété recherchez-vous et dans quelle ville?' :
+             userLanguage === 'it' ? 'Ciao {nombre}! 🏡💼 Sono Paula di PropElite, specialista in immobiliare di lusso, prendo il controllo da ora.\n\nEcuador 🇪🇨 e Repubblica Dominicana 🇩🇴. Proprietà premium: case, appartamenti, uffici, terreni.\n\nPer tornare, scrivi @aurora.\n\nChe tipo di proprietà stai cercando e in quale città?' :
+             userLanguage === 'pt' ? 'Olá {nombre}! 🏡💼 Sou Paula da PropElite, especialista em imóveis de luxo, assumo a partir de agora.\n\nEquador 🇪🇨 e República Dominicana 🇩🇴. Imóveis premium: casas, apartamentos, escritórios, terrenos.\n\nPara voltar, escreva @aurora.\n\nQue tipo de imóvel procura e em qual cidade?' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}! 🏡💼 Ñuqa kani Paula PropElite-manta - Wasi ranti ranqi. Ecuador 🇪🇨 ima República Dominicana 🇩🇴. @aurora qillqaykuy kutimunankipaq. Imayna wasita maskhanki, ima llaqtapi?' :
              'Hello {nombre}! 🏡💼 I\'m Paula from PropElite, luxury real estate specialist, taking over from here.\n\nEcuador 🇪🇨 and Dominican Republic 🇩🇴. Premium properties: houses, apartments, offices, land.\n\nTo return, write @aurora.\n\nWhat type of property are you looking for and in which city?',
     despedida: userLanguage === 'es' ? 'Perfecto {nombre}, fue un placer ayudarte.\n\nEn cualquier momento puedes retomar, solo di @Paula y tu consulta, aquí estaré. ¡Hasta pronto! 🏡' :
                userLanguage === 'en' ? 'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡' :
                userLanguage === 'fr' ? 'Parfait {nombre}, ce fut un plaisir de vous aider.\n\nVous pouvez revenir à tout moment, dites simplement @Paula et votre question, je serai là. À bientôt! 🏡' :
+               userLanguage === 'it' ? 'Perfetto {nombre}, è stato un piacere aiutarti.\n\nPuoi tornare quando vuoi, scrivi @Paula e la tua domanda, sarò qui. A presto! 🏡' :
+               userLanguage === 'pt' ? 'Perfeito {nombre}, foi um prazer ajudar.\n\nPode voltar quando quiser, é só dizer @Paula e sua consulta, estarei aqui. Até logo! 🏡' :
+               userLanguage === 'qu' ? 'Allinmi {nombre}, kusikuni yanapasqaymanta.\n\nMayqin pachapipas kutimunki, @Paula nispa tapukuy, kaypi kasaq. Ratukama! 🏡' :
                'Perfect {nombre}, it\'s been a pleasure helping you.\n\nYou can always come back, just say @Paula and your question. I\'ll be here! See you! 🏡'
   }),
 
@@ -47,7 +53,7 @@ export const PAULA = {
     tono: 'Profesional y entusiasta, consultivo de alto nivel, lujo y exclusividad',
     estilo: 'Escucha activa, transparencia total (pros Y contras), match perfecto para clientes selectos',
     energia: 'Entusiasta con propiedades premium, respetuoso del tiempo del cliente con poder adquisitivo',
-    idiomas: ['Español', 'English'],
+    idiomas: ['Español', 'English', 'Français', 'Italiano', 'Português', 'Quechua'],
     perfil_cliente: 'Alto nivel adquisitivo, buscan exclusividad, calidad y lujo',
     nunca: [
       'Presionar para comprar',
@@ -407,8 +413,19 @@ export const PAULA = {
    * System Prompt para GPT-4
    */
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0, perfilContexto = {}) {
-    const lang = userLanguage === 'es' ? 'Español' : 
-                 userLanguage === 'en' ? 'English' : 'Español';
+    // Normalizar idioma
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage) ? normalizedLanguage : 'es';
+    const lang = userLanguage === 'es' ? 'Español' :
+                 userLanguage === 'en' ? 'English' :
+                 userLanguage === 'fr' ? 'Français' :
+                 userLanguage === 'it' ? 'Italiano' :
+                 userLanguage === 'pt' ? 'Português' :
+                 userLanguage === 'qu' ? 'Runasimi' : 'Español';
     const { appointmentScheduled, lastPropertyViewed, propertyInterest } = perfilContexto || {};
 
     let contextoAdicional = '';
@@ -675,8 +692,8 @@ Información Legal Básica:
 
 ⚠️ Para consultas LEGALES COMPLEJAS, deriva a Angela (@angela), la abogada del equipo.
 
-Idioma: Responde en ${lang}. 
-Idiomas disponibles: 🇯🇪 Español, 🇬🇧 English, 🇫🇷 Français
+Idioma: Responde en ${lang}.
+Idiomas disponibles: 🇪🇸 Español · 🇬🇧 English · 🇫🇷 Français · 🇮🇹 Italiano · 🇧🇷 Português · 🌎 Runasimi
 
 NUNCA:
 ❌ Presiones para comprar

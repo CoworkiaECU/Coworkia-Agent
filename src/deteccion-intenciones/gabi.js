@@ -12,10 +12,16 @@ export const GABI = {
     entrada: userLanguage === 'es' ? 'Hola {nombre}. ⚖️💼 Soy Gabi de GR Consulting - Finanzas y legal.\n\nAurora vuelve contigo cuando escribas @aurora + tu consulta, sabrá exactamente el contexto de la conversación y el punto exacto donde se quedaron.\n\n¿Qué necesitas? ¿Temas fiscales, contables o legales?' :
              userLanguage === 'en' ? 'Hello {nombre}. ⚖️💼 I\'m Gabi from GR Consulting - Finance & Legal.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat do you need? Tax, accounting or legal matters?' :
              userLanguage === 'fr' ? 'Bonjour {nombre}. ⚖️💼 Je suis Gabi de GR Consulting - Finance et juridique.\n\nAurora revient vers toi quand tu écris @aurora + ta question, elle saura exactement le contexte de la conversation et le point exact où vous en étiez.\n\nDe quoi as-tu besoin? Questions fiscales, comptables ou juridiques?' :
+             userLanguage === 'it' ? 'Salve {nombre}. ⚖️💼 Sono Gabi di GR Consulting - Finanza e legale.\n\nAurora torna da te quando scrivi @aurora + la tua domanda, saprà esattamente il contesto della conversazione e il punto in cui vi eravate fermati.\n\nDi cosa hai bisogno? Questioni fiscali, contabili o legali?' :
+             userLanguage === 'pt' ? 'Olá {nombre}. ⚖️💼 Sou Gabi da GR Consulting - Finanças e jurídico.\n\nAurora volta para você quando escrever @aurora + sua consulta, ela saberá exatamente o contexto da conversa e onde pararam.\n\nDo que você precisa? Questões fiscais, contábeis ou jurídicas?' :
+             userLanguage === 'qu' ? 'Napaykullayki {nombre}. ⚖️💼 Ñuqa kani Gabi GR Consulting-manta - Qullqi ima Limaykuna. Aurora kutirimun @aurora nispa + tapuyniyki qillqaspayki. Imatam munankichik? Qullqi, contabilidad ima legal tapuykukunachu?' :
              'Hello {nombre}. ⚖️💼 I\'m Gabi from GR Consulting - Finance & Legal.\n\nAurora returns to you when you write @aurora + your question, she will know exactly the context of the conversation and where you left off.\n\nWhat do you need? Tax, accounting or legal matters?',
     despedida: userLanguage === 'es' ? 'Fue un placer ayudarte {nombre}.\n\nPara cualquier consulta administrativa, solo di @Gabi y tu consulta, aquí estaré. 💼' :
                userLanguage === 'en' ? 'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼' :
                userLanguage === 'fr' ? 'Ce fut un plaisir de vous aider {nombre}.\n\nPour toute question administrative, dites simplement @Gabi et votre question, je serai là. 💼' :
+               userLanguage === 'it' ? 'È stato un piacere aiutarti {nombre}.\n\nPer qualsiasi consulenza, scrivi semplicemente @Gabi e la tua domanda, sarò qui. 💼' :
+               userLanguage === 'pt' ? 'Foi um prazer ajudar você {nombre}.\n\nPara qualquer consulta, é só dizer @Gabi e sua consulta, estarei aqui. 💼' :
+               userLanguage === 'qu' ? 'Kusikuni yanapasqaymanta {nombre}.\n\nMayqin tapuypiñataq, @Gabi nispa tapukuy, kaypi kasaq. 💼' :
                'It was a pleasure helping you {nombre}.\n\nFor any administrative query, just say @Gabi and your question, I\'ll be here. 💼'
   }),
   
@@ -89,7 +95,14 @@ export const GABI = {
   },
 
   getSystemPrompt(freeTrialUsed = false, userLanguage = 'es', conversationCount = 0) {
-    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : 'Español 🇪🇸';
+    // Normalizar idioma y manejar invocación directa getSystemPrompt('en')
+    if (arguments.length === 1 && typeof freeTrialUsed === 'string') {
+      userLanguage = freeTrialUsed;
+      freeTrialUsed = false;
+    }
+    const normalizedLanguage = (userLanguage || 'es').toLowerCase();
+    userLanguage = ['es', 'en', 'fr', 'it', 'pt', 'qu'].includes(normalizedLanguage) ? normalizedLanguage : 'es';
+    const idioma = userLanguage === 'es' ? 'Español 🇪🇸' : userLanguage === 'en' ? 'English 🇺🇸' : userLanguage === 'fr' ? 'Français 🇫🇷' : userLanguage === 'it' ? 'Italiano 🇮🇹' : userLanguage === 'pt' ? 'Português 🇧🇷' : userLanguage === 'qu' ? 'Runasimi 🌎' : 'Español 🇪🇸';
     
     return `Eres Gabi, experta en Finanzas, Contabilidad, RRHH y Legal de Coworkia Business Center 💼
 

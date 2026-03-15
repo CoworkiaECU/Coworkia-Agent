@@ -54,6 +54,7 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     console.log(`[KEYWORD-IA] 🎯 Keyword "IA" detectada para ${userId} — respondiendo CAMPAÑA #2`);
     return {
       respuesta: AURORA.getKeywordIAResponse(nombre),
+      shouldReply: true,
       agente: 'AURORA',
       activeAgent: activeAgent
     };
@@ -64,6 +65,7 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     console.log(`[IDIOMAS] 🌍 Consulta de idiomas detectada para ${userId} (agente: ${activeAgent}, lang: ${userLang})`);
     return {
       respuesta: getLanguageListResponse(userLang),
+      shouldReply: true,
       agente: activeAgent,
       activeAgent: activeAgent
     };

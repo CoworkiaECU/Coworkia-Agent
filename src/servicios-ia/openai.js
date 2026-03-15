@@ -349,12 +349,12 @@ export async function transcribeAudio(audioUrl, options = {}) {
     console.log('[Whisper] Agente:', agentName);
     console.log('[Whisper] Usuario:', userName);
 
-    // Quechua no tiene soporte nativo en Whisper — auto-detect funciona mejor
+    // Quechua no tiene soporte nativo en Whisper — null = auto-detect nativo (mejor precisión)
     const supportedLanguages = ['es', 'en', 'fr', 'it', 'pt']; // 'qu' excluido intencionalmente
-    const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
+    const whisperLanguage = supportedLanguages.includes(language) ? language : null;
     
-    if (language !== whisperLanguage) {
-      console.warn(`[Whisper] ⚠️ Idioma '${language}' no soportado, usando '${whisperLanguage}'`);
+    if (!whisperLanguage) {
+      console.warn(`[Whisper] ⚠️ Idioma '${language}' no soportado en Whisper — usando auto-detect nativo`);
     }
 
     // Descargar audio con retry y timeout (Wassenger puede tardar)
@@ -434,24 +434,22 @@ export async function transcribeAudio(audioUrl, options = {}) {
     });
 
     // Transcribir con Whisper (multiidioma)
-    const transcription = await client.audio.transcriptions.create({
-      file: audioFile,
-      model: 'whisper-1',
-      language: whisperLanguage,
-      response_format: 'text'
-    });
+    // Si whisperLanguage es null (ej: 'qu'), omitir language → Whisper auto-detect
+    const transcribeParams = { file: audioFile, model: 'whisper-1', response_format: 'text' };
+    if (whisperLanguage) transcribeParams.language = whisperLanguage;
+    const transcription = await client.audio.transcriptions.create(transcribeParams);
 
     const preview = transcription.length > 100 
       ? transcription.substring(0, 100) + '...' 
       : transcription;
     
     console.log('[Whisper] ✅ Transcripción exitosa:', preview);
-    console.log('[Whisper] Idioma usado:', whisperLanguage);
+    console.log('[Whisper] Idioma usado:', whisperLanguage || `auto-detect (pedido: ${language})`);
 
     return {
       success: true,
       text: transcription,
-      language: whisperLanguage
+      language: whisperLanguage || language
     };
 
   } catch (error) {

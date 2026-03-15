@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 15 Mar 2026 — Tarde (post-pruebas ML-1/2/3)
+> **Última actualización:** 15 Mar 2026 — Noche (post-auditoría Whisper + multiidioma 8 agentes)
 
 ---
 
@@ -15,6 +15,76 @@
 - `getLanguageListResponse()` — intro en idioma del usuario + lista 🇪🇸🇬🇧🇫🇷🇮🇹🇧🇷⛰️
 - Orquestador intercepta antes de OpenAI (sin costo de tokens) → `a41de06`
 - Bug fix: faltaba `shouldReply: true` → caía a OpenAI con `prompt=undefined` → `bd6e682`
+
+### ✓ ML-5 — Multiidioma impecable: 8 agentes completos `15 Mar`
+**Deployed: `88b4524` (Aurora/Gabi/Enzo) + `53da0c1` (Axel/Adriana/Angela/Paula) + `ab77af0` (Enzo fix)**
+
+Auditoría completa + correcciones aplicadas a los 8 agentes:
+
+| Agente | getMensajes 6L | Normalización | IDIOMA ACTUAL | REGLA CRÍTICA #1/2/3 | ADAPTACIÓN CULTURAL 6L |
+|--------|---------------|---------------|---------------|----------------------|------------------------|
+| Aurora | ✅ | ✅ fix | ✅ | ✅ fix | ✅ fix |
+| Aluna  | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Enzo   | ✅ | ✅ | ✅ | ✅ fix (#1→#1/2/3) | ✅ (QU expandido) |
+| Gabi   | ✅ | ✅ | ✅ fix | ✅ fix | ✅ fix |
+| Axel   | ✅ | ✅ | ✅ fix | ✅ fix | ✅ fix |
+| Adriana| ✅ fix (it/pt/qu) | ✅ fix (full compat) | ✅ | ✅ fix (#1→#1/2/3) | ✅ fix |
+| Angela | ✅ | ✅ fix | ✅ | ✅ | ✅ |
+| Paula  | ✅ | ✅ fix (full compat) | ✅ fix | ✅ fix | ✅ fix |
+
+---
+
+## ✅ ML-6 — Bugs Whisper multiidioma `15 Mar`
+**Deployed: pendiente commit**
+
+- **Bug 1 CRÍTICO fix:** `openai.js` — `whisperLanguage` para `qu` ahora es `null` (auto-detect) en vez de `'es'`. API call omite `language` cuando es null. Retorno incluye `language: whisperLanguage || language` para trazabilidad.
+- **Bug 2 MENOR fix:** `wassenger.js` — `blockedMessages` expandido de 3 → 6 idiomas (añadidos fr/it/pt)
+
+### Bug 1 — CRÍTICO: Quechua fuerza español en Whisper
+**Archivo:** `src/servicios-ia/openai.js` línea 354
+**Afecta:** Los 8 agentes cuando `preferredLanguage === 'qu'`
+
+```js
+// ACTUAL — MAL: para 'qu' devuelve 'es' → fuerza transcripción en español
+const whisperLanguage = supportedLanguages.includes(language) ? language : 'es';
+
+// CORRECTO: para 'qu' devuelve null → Whisper hace auto-detect
+const whisperLanguage = supportedLanguages.includes(language) ? language : null;
+```
+
+Además la llamada a la API debe condicionarse:
+```js
+// Si whisperLanguage es null, no pasar language (= auto-detect Whisper nativo)
+const params = { file: audioFile, model: 'whisper-1', response_format: 'text' };
+if (whisperLanguage) params.language = whisperLanguage;
+const transcription = await client.audio.transcriptions.create(params);
+```
+
+### Bug 2 — MENOR: Mensaje "tipo bloqueado" incompleto
+**Archivo:** `src/express-servidor/endpoints-api/wassenger.js` ~línea 1070
+**Afecta:** usuarios FR/IT/PT que envíen sticker/documento/ubicación → reciben mensaje en español
+
+```js
+// ACTUAL — solo 3 idiomas:
+const blockedMessages = { es: '...', en: '...', qu: '...' };
+
+// CORRECTO — 6 idiomas:
+const blockedMessages = {
+  es: '📝 Por favor envía tu mensaje por texto, imagen o audio.\n\nNo puedo procesar este tipo de archivo.',
+  en: '📝 Please send your message as text, image or audio.\n\nI cannot process this type of file.',
+  fr: '📝 Envoyez votre message par texte, image ou audio.\n\nJe ne peux pas traiter ce type de fichier.',
+  it: '📝 Invia il tuo messaggio come testo, immagine o audio.\n\nNon posso elaborare questo tipo di file.',
+  pt: '📝 Envie sua mensagem como texto, imagem ou áudio.\n\nNão posso processar este tipo de arquivo.',
+  qu: '📝 Ama hina willayta qillqasqapi, imaynapi utaq uyarinapaq apachimuy.\n\nMana atinichu kay laya willakuna ruwayta.'
+};
+```
+
+### Lo que sí está bien ✅
+- `getLocalizedAudioError()` en `audio-validator.js`: 6 idiomas completos ✅
+- Fallback "no pude acceder al audio": 6 idiomas completos ✅
+- `supportedLanguages = ['es','en','fr','it','pt']` (qu excluido) — correcto en concepto ✅
+- Whisper recibe `userLanguage` del perfil del usuario → misma ruta para los 8 agentes ✅
+- `agentName: 'orquestador'` en logs → correcto (Whisper es pre-agente) ✅
 
 ---
 

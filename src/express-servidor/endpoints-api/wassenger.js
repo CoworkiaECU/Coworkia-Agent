@@ -1070,6 +1070,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       const blockedMessages = {
         es: '📝 Por favor envía tu mensaje por texto, imagen o audio.\n\nNo puedo procesar este tipo de archivo.',
         en: '📝 Please send your message as text, image or audio.\n\nI cannot process this type of file.',
+        fr: '📝 Envoyez votre message par texte, image ou audio.\n\nJe ne peux pas traiter ce type de fichier.',
+        it: '📝 Invia il tuo messaggio come testo, immagine o audio.\n\nNon posso elaborare questo tipo di file.',
+        pt: '📝 Envie sua mensagem como texto, imagem ou áudio.\n\nNão posso processar este tipo de arquivo.',
         qu: '📝 Ama hina willayta qillqasqapi, imaynapi utaq uyarinapaq apachimuy.\n\nMana atinichu kay laya willakuna ruwayta.'
       };
       

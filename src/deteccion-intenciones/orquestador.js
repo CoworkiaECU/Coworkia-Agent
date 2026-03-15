@@ -12,7 +12,7 @@ import { PAULA } from './paula.js';
 import { detectarIntencion, detectarSolicitudRecibo } from './detectar-intencion.js';
 import { detectKeywordIA } from './intent-detection-helpers.js';
 import { loggers } from '../utils/logger.js';
-import { detectLanguage, detectLanguageCommand } from '../utils/language-detector.js';
+import { detectLanguage, detectLanguageCommand, detectLanguageListQuery, getLanguageListResponse } from '../utils/language-detector.js';
 import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
@@ -58,7 +58,16 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
       activeAgent: activeAgent
     };
   }
-
+  // 🗣️ IDIOMAS: respuesta fija cuando preguntan qué idiomas habla el agente
+  if (detectLanguageListQuery(mensaje)) {
+    const userLang = perfil.preferredLanguage || 'es';
+    console.log(`[IDIOMAS] 🌍 Consulta de idiomas detectada para ${userId} (agente: ${activeAgent}, lang: ${userLang})`);
+    return {
+      respuesta: getLanguageListResponse(userLang),
+      agente: activeAgent,
+      activeAgent: activeAgent
+    };
+  }
   // �🌍 Detectar idioma automáticamente en cada mensaje
   const languageCommand = detectLanguageCommand(mensaje);
   const languageDetection = detectLanguage(mensaje, perfil.preferredLanguage);

@@ -470,9 +470,69 @@ export function testLanguageDetection() {
   }
 }
 
+/**
+ * 🗣️ Detecta si el usuario está preguntando qué idiomas habla el agente.
+ * Reconoce la pregunta en los 6 idiomas soportados.
+ * @param {string} message
+ * @returns {boolean}
+ */
+export function detectLanguageListQuery(message) {
+  if (!message || typeof message !== 'string') return false;
+  const patterns = [
+    // Español
+    /qu[eé]\s+idiomas?\s+(puedes?|sabes?|hablas?|manejas?|dominas?)/i,
+    /en\s+qu[eé]\s+idiomas?\s+(\w+\s+)?(puedes?|atiendes?|respondes?|hablas?)/i,
+    /cu[aá]les?\s+idiomas?\s+(hablas?|manejas?|dominas?|sabes?)/i,
+    /hablas?\s+otros?\s+idiomas?/i,
+    /qu[eé]\s+lenguas?\s+(hablas?|dominas?|manejas?)/i,
+    // English
+    /what\s+languages?\s+(do\s+you\s+speak|can\s+you\s+speak|do\s+you\s+know|do\s+you\s+support)/i,
+    /which\s+languages?\s+(do\s+you\s+speak|can\s+you\s+speak|do\s+you\s+know)/i,
+    /what\s+languages?\s+(are\s+you\s+available|you\s+speak)/i,
+    /do\s+you\s+speak\s+other\s+languages?/i,
+    /languages?\s+(you\s+speak|available)/i,
+    // Français
+    /quelles?\s+langues?\s+(parles?-?tu|pouvez-?vous|vous\s+parlez|tu\s+parles)/i,
+    /quelles?\s+langues?\s+(sont\s+disponibles?|tu\s+ma[iî]trises?)/i,
+    /tu\s+parles?\s+quelles?\s+langues?/i,
+    // Italiano
+    /quali?\s+lingue\s+(parli|puoi\s+parlare|conosci|hai\s+disponibili)/i,
+    /che\s+lingue\s+(parli|conosci|puoi\s+usare)/i,
+    /parli\s+altre\s+lingue/i,
+    // Português
+    /qu(ais|al)\s+(s[ãa]o\s+os\s+)?idiomas?\s+(voc[eê]\s+fala|disponíveis?|suportados?)/i,
+    /que\s+idiomas?\s+(voc[eê]\s+fala|você\s+conhece|estão\s+disponíveis?)/i,
+    /voc[eê]\s+fala\s+(quais?|outros?)\s+idiomas?/i,
+    // Quechua / Runasimi
+    /ima\s+simikuna/i,
+    /ima\s+rimayta\s+yach/i
+  ];
+  return patterns.some(p => p.test(message));
+}
+
+/**
+ * 🌐 Genera la respuesta de lista de idiomas adaptada al idioma actual.
+ * @param {string} lang - Idioma actual del usuario (es|en|fr|it|pt|qu)
+ * @returns {string}
+ */
+export function getLanguageListResponse(lang = 'es') {
+  const intro = {
+    es: '¡Claro! Puedo atenderte en:',
+    en: 'Of course! I can assist you in:',
+    fr: 'Bien sûr! Je peux vous répondre en:',
+    it: 'Certo! Posso assisterti in:',
+    pt: 'Claro! Posso atendê-lo(a) em:',
+    qu: 'Ariy! Kay simikuanapi rimani:'
+  };
+  const header = intro[lang] || intro.es;
+  return `${header}\n\n🇪🇸 Español\n🇬🇧 English\n🇫🇷 Français\n🇮🇹 Italiano\n🇧🇷 Português\n⛰️ Quechua`;
+}
+
 export default {
   detectLanguage,
   detectLanguageCommand,
+  detectLanguageListQuery,
+  getLanguageListResponse,
   getUserLanguage,
   getLanguageChangeConfirmation,
   SUPPORTED_LANGUAGES,

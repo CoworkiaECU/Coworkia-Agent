@@ -1774,37 +1774,134 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
 
   // Upsell solo para planes Hot Desk (Plan 10 y Plan 20)
   const isHotDeskPlan = planName && (planName.includes('Plan 10') || planName.includes('Plan 20'));
-  const comboLabel = planName?.includes('Plan 20') ? 'Plan 20 + Oficina Virtual (1 año)' : 'Plan 10 + Oficina Virtual (1 año)';
-  const comboDiscount = planName?.includes('Plan 20') ? '15%' : '10%';
-  const comboPrice = planName?.includes('Plan 20') ? '$310' : '$328';
+  const is20 = planName?.includes('Plan 20');
+  const comboDiscount = is20 ? '15%' : '10%';
+  // Precios mensuales con descuento aplicado (contrato anual)
+  const planMonthlyBase  = is20 ? 250 : 140;
+  const discountRate     = is20 ? 0.15 : 0.10;
+  const planMonthlyNet   = Math.round(planMonthlyBase * (1 - discountRate));
+  const ovMonthlyNet     = Math.round(365 * (1 - discountRate) / 12);
+  const comboTotalMonthly = planMonthlyNet + ovMonthlyNet;
 
   const upsellSection = isHotDeskPlan ? `
   <!-- POTENCIA TU MEMBRESÍA -->
-  <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:16px;padding:28px;margin:28px 0;">
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="background:#065F46;color:white;display:inline-block;padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">${t.upsellHeader}</div>
-      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">${t.upsellTitle}</div>
-      <div style="color:#047857;font-size:14px;font-weight:600;">${t.upsellSubtitle}</div>
+  <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:18px 16px;margin:22px 0;">
+    <!-- Header compacto -->
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="background:#065F46;color:white;display:inline-block;padding:5px 14px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">${t.upsellHeader}</div>
+      <div style="color:#111827;font-size:17px;font-weight:800;line-height:1.3;">${t.upsellTitle}</div>
+      <div style="color:#047857;font-size:12px;font-weight:600;margin-top:3px;">${t.upsellSubtitle}</div>
     </div>
-    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin-bottom:20px;">
-      ${[
-        t.upsellBenefits[0],
-        t.upsellBenefits[1],
-        t.upsellBenefits[2],
-        t.upsellBenefits[3],
-      ].map(item => `<div style="padding:8px 0;border-bottom:1px solid #F3F4F6;"><span style="color:#047857;font-size:16px;margin-right:10px;vertical-align:top;">\u2713</span><span style="color:#374151;font-size:14px;">${item}</span></div>`).join('')}
+    <!-- Beneficios COMBO: plan + oficina virtual -->
+    <div style="background:white;border:1px solid #D1FAE5;border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+      <!-- Label plan -->
+      <div style="color:#047857;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;border-bottom:1px solid #D1FAE5;padding-bottom:4px;">✦ ${planName || 'Tu Plan'}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+        ${(() => {
+          const rows = [];
+          const items = planBenefits.length > 0 ? planBenefits : [];
+          for (let i = 0; i < items.length; i += 2) {
+            const pair = items.slice(i, i + 2);
+            rows.push(`<tr>${pair.map(b => `<td style="width:50%;padding:3px 4px;vertical-align:top;"><div style="font-size:11px;color:#374151;line-height:1.4;"><span style="color:#059669;margin-right:4px;">✓</span>${b}</div></td>`).join(pair.length < 2 ? '<td></td>' : '')}</tr>`);
+          }
+          return rows.join('');
+        })()}
+      </table>
+      <!-- Label oficina virtual -->
+      <div style="color:#047857;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;border-bottom:1px solid #D1FAE5;padding-bottom:4px;">🏢 Oficina Virtual</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          ${[t.upsellBenefits[0], t.upsellBenefits[1]].map(b => `<td style="width:50%;padding:3px 4px;vertical-align:top;"><div style="font-size:11px;color:#374151;line-height:1.4;"><span style="color:#059669;margin-right:4px;">✓</span>${b}</div></td>`).join('')}
+        </tr>
+        <tr>
+          ${[t.upsellBenefits[2], t.upsellBenefits[3]].map(b => `<td style="width:50%;padding:3px 4px;vertical-align:top;"><div style="font-size:11px;color:#374151;line-height:1.4;"><span style="color:#059669;margin-right:4px;">✓</span>${b}</div></td>`).join('')}
+        </tr>
+      </table>
     </div>
-    <div style="background:#FFFBEB;border:2px dashed #F59E0B;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
-      <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">${t.comboLabel}</div>
-      <div style="color:#111827;font-size:18px;font-weight:800;margin-bottom:6px;">${comboLabel}</div>
-      <div style="color:#DC2626;font-size:32px;font-weight:900;line-height:1;margin-bottom:6px;">${comboDiscount} ${t.discountSuffix}</div>
-      <div style="color:#6B7280;font-size:13px;">${t.ofVirtual.replace('{price}', comboPrice)}</div>
+    <!-- Descuentos: dos tarjetas -->
+    <div style="background:#FFFBEB;border:2px dashed #F59E0B;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+      <div style="color:#D97706;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:8px;">⚡ ${t.comboLabel}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+        <tr>
+          <td style="width:50%;padding:0 3px 0 0;vertical-align:top;">
+            <div style="background:white;border:1px solid #FDE68A;border-radius:7px;padding:7px 8px;text-align:center;">
+              <div style="color:#D97706;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Oficina Virtual</div>
+              <div style="color:#DC2626;font-size:20px;font-weight:900;line-height:1;">${comboDiscount} OFF</div>
+            </div>
+          </td>
+          <td style="width:50%;padding:0 0 0 3px;vertical-align:top;">
+            <div style="background:white;border:1px solid #FDE68A;border-radius:7px;padding:7px 8px;text-align:center;">
+              <div style="color:#D97706;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Plan Mensual</div>
+              <div style="color:#DC2626;font-size:20px;font-weight:900;line-height:1;">${comboDiscount} OFF</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <!-- Desglose mensual -->
+      <div style="background:white;border-radius:7px;padding:8px 12px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <tr>
+            <td style="color:#6B7280;padding:3px 0;">Plan mensual c/dcto.</td>
+            <td style="color:#111827;font-weight:700;text-align:right;padding:3px 0;">\$${planMonthlyNet}/mes</td>
+          </tr>
+          <tr>
+            <td style="color:#6B7280;padding:3px 0;">Oficina Virtual c/dcto.</td>
+            <td style="color:#111827;font-weight:700;text-align:right;padding:3px 0;">\$${ovMonthlyNet}/mes</td>
+          </tr>
+          <tr>
+            <td style="color:#047857;font-weight:700;padding:5px 0 0;border-top:1px solid #E5E7EB;">Total mensual</td>
+            <td style="color:#047857;font-size:16px;font-weight:900;text-align:right;padding:5px 0 0;border-top:1px solid #E5E7EB;">\$${comboTotalMonthly}/mes</td>
+          </tr>
+        </table>
+        <div style="color:#9CA3AF;font-size:10px;text-align:center;margin-top:4px;">Cobro mensual · contrato anual</div>
+      </div>
     </div>
     <div style="text-align:center;">
-      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">${t.comboCTA}</a>
-      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">${t.comboNote}</div>
+      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:12px 28px;text-decoration:none;border-radius:22px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:14px;">${t.comboCTA}</a>
+      <div style="color:#9CA3AF;font-size:11px;margin-top:6px;">${t.comboNote}</div>
     </div>
   </div>` : '';
+
+  // ─── CUPONES EXCLUSIVOS ───────────────────────────────────────────────────────
+  // Para añadir un cupón nuevo: agrega un objeto al array. El grid 2 col es automático.
+  const cupones = [
+    {
+      icon: '🎉',
+      discount: '30% OFF',
+      titulo: 'Descuento primer mes',
+      desc: 'Adquiere hoy y tu primer mes tiene 30% de descuento automático.',
+      badge: 'Tiempo limitado',
+    },
+    {
+      icon: '🚗',
+      discount: '+$35/mes',
+      titulo: 'Parqueadero Privado',
+      desc: 'Subsuelo 2 del Edificio Finistere — espacio exclusivo para miembros.',
+      badge: 'Disponible ahora',
+    },
+  ];
+  const cuponesRows = [];
+  for (let i = 0; i < cupones.length; i += 2) {
+    const pair = cupones.slice(i, i + 2);
+    cuponesRows.push(`<tr>${pair.map((c, j) => `
+      <td style="width:50%;padding:${j === 0 ? '0 5px 10px 0' : '0 0 10px 5px'};vertical-align:top;">
+        <div style="background:#F0FDF4;border:1.5px solid #6EE7B7;border-radius:12px;padding:16px 14px;text-align:center;">
+          <div style="font-size:26px;margin-bottom:6px;">${c.icon}</div>
+          <div style="background:#047857;color:white;font-size:13px;font-weight:900;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;">${c.discount}</div>
+          <div style="color:#065F46;font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3;">${c.titulo}</div>
+          <div style="color:#6B7280;font-size:11px;line-height:1.5;">${c.desc}</div>
+          <div style="background:#DCFCE7;color:#166534;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:8px;">${c.badge}</div>
+        </div>
+      </td>`).join('')}</tr>`);
+  }
+  const cuponesSection = `
+  <!-- CUPONES EXCLUSIVOS -->
+  <div style="margin:25px 0;">
+    <div style="text-align:center;margin-bottom:14px;">
+      <span style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:8px;padding:6px 16px;color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;display:inline-block;">🏷️ Cupones Exclusivos · Solo para ti</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">${cuponesRows.join('')}</table>
+  </div>`;
 
   const ecosistemaItems = ecosistemaTable({
     aliados: ['aurora', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'],
@@ -1922,6 +2019,8 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
         </a>
         <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">${t.ctaNote}</p>
       </div>
+
+      ${cuponesSection}
 
       ${upsellSection}
 

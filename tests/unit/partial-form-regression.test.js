@@ -206,7 +206,7 @@ describe('🧠 Formulario parcial - Flujo progresivo', () => {
     const form = new PartialReservationForm('test-user');
     form.updateField('spaceType', 'hotDesk');
     form.updateField('date', '2026-02-13');
-    form.updateField('time', '10:31');
+    form.updateField('time', '13:00'); // 13:00 está fuera de la ventana gratuita 08:00–12:00
     form.updateField('email', 'trial@example.com');
 
     const missing = form.getMissingFields();

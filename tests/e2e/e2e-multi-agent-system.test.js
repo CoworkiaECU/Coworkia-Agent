@@ -230,7 +230,7 @@ describe('🎯 E2E: Sistema Multi-Agente Completo', () => {
       expect(ANGELA.personalidad.idiomas).toHaveLength(6);
       expect(AXEL.personalidad.idiomas).toHaveLength(6);
       expect(GABI.personalidad.idiomas).toHaveLength(6);
-      expect(PAULA.personalidad.idiomas).toHaveLength(2); // es/en (bienes raíces)
+      expect(PAULA.personalidad.idiomas).toHaveLength(6); // todos los idiomas tras ML-5/6
     });
   });
   

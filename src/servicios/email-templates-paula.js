@@ -146,7 +146,7 @@ export function generateVisitConfirmationEmail(visitData) {
       
       <div style="margin: 20px 0;">
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 contacto@propelite.ec</p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
       </div>
       
@@ -255,7 +255,7 @@ export function generateRescheduleEmail(visitData) {
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 contacto@propelite.ec</p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
@@ -347,7 +347,7 @@ export function generateCancellationEmail(visitData) {
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 contacto@propelite.ec</p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
@@ -461,7 +461,7 @@ export function generateReminderEmail(visitData) {
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 contacto@propelite.ec</p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
         <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">

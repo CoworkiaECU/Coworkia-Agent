@@ -24,11 +24,11 @@ describe('🎯 Routing Edge Cases', () => {
       expect(intent.reason).toMatch(/trigger @Aurora/i);
     });
 
-    test('saludo + keyword membresía → casual greeting (prioridad)', () => {
+    test('saludo + keyword membresía → ALUNA (keyword toma prioridad sobre saludo)', () => {
       const intent = detectarIntencion('Hola quiero membresía mensual', 'AURORA');
-      // Saludos tienen prioridad > keywords
-      expect(intent.agent).toBe('AURORA');
-      expect(intent.flags?.casualGreeting).toBe(true);
+      // Excepción documentada: saludo + Aluna keyword → handoff a ALUNA (no casualGreeting)
+      expect(intent.agent).toBe('ALUNA');
+      expect(intent.flags?.agentHandoff).toBe(true);
     });
   });
 
@@ -83,11 +83,11 @@ describe('🎯 Routing Edge Cases', () => {
       expect(intent.reason).toContain('sticky_agent');
     });
 
-    test('agente dice "pagué" → MANTIENE ALUNA (sticky agents)', () => {
+    test('agente dice "pagué" en ALUNA → AURORA (retorno automático por keyword de pago)', () => {
       const intent = detectarIntencion('ya pagué la transferencia', 'ALUNA');
-      // Sticky Agents: Solo @menciones cambian de agente
-      expect(intent.agent).toBe('ALUNA');
-      expect(intent.reason).toContain('sticky_agent');
+      // ALUNA→AURORA automático: 'transferencia' es AURORA_KEYWORD (confirmación de pago)
+      expect(intent.agent).toBe('AURORA');
+      expect(intent.flags?.agentHandoff).toBe(true);
     });
 
     test('agente dice "cambiar fecha" → AURORA obligatorio', () => {

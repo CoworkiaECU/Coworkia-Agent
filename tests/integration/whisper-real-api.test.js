@@ -24,10 +24,11 @@ import { test, expect } from '@jest/globals';
 const SKIP_REAL_API_TESTS = process.env.REAL_API_TESTS !== 'true';
 
 if (SKIP_REAL_API_TESTS) {
-  console.log('\n⏭️  Tests de API real SKIPPED (requiere REAL_API_TESTS=true)\n');
-  console.log('   Para ejecutar: REAL_API_TESTS=true npm test -- whisper-real-api.test.js\n');
-  test.skip('Real API tests disabled', () => {});
-  process.exit(0);
+  // Usar describe.skip en vez de process.exit para no crashear la suite
+  const { describe, test } = await import('@jest/globals');
+  describe.skip('⏭️ Real API tests disabled (requiere REAL_API_TESTS=true)', () => {
+    test('skip', () => {});
+  });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -102,7 +102,7 @@ const LANGUAGE_PATTERNS = {
       'ñuqa', 'qam', 'pay', 'allinta', 'kusikuni',
       'ari', 'manam', 'qhali', 'kawsay', 'pachapi'
     ],
-    specialChars: /[qkhw]/i, // Letras características del quechua
+    specialChars: null, // Las commonWords son suficientemente específicas; letras sueltas como h/k/w causan falsos positivos con español
     weight: 1.0
   }
 };

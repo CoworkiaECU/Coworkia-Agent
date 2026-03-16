@@ -23,10 +23,17 @@ jest.unstable_mockModule('../../src/database/postgres-adapter.js', () => ({
   }
 }));
 
-// Mock de email
+// Mock de email (incluye sendEmail que usa payment-receipt-email.js)
 jest.unstable_mockModule('../../src/servicios/email.js', () => ({
+  sendEmail: jest.fn().mockResolvedValue({ success: true }),
   sendMembershipApprovalNotification: jest.fn(),
   sendMembershipRejectionNotification: jest.fn()
+}));
+
+// Mock de payment-receipt-email (dependencia de membership-payment-verification)
+jest.unstable_mockModule('../../src/servicios/payment-receipt-email.js', () => ({
+  sendPaymentReceipt: jest.fn().mockResolvedValue({ success: true }),
+  prepareReceiptData: jest.fn().mockReturnValue({})
 }));
 
 const { processMembershipPayment, findPendingMembershipLead } = await import('../../src/servicios/membership-payment-verification.js');
@@ -67,7 +74,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'W70613140',
         amount: 365.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
         isValid: true,
@@ -100,7 +107,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012012345',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         transactionTime: '10:30:00',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
@@ -150,7 +157,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'W70615789',
         amount: 250.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         transactionTime: '14:15:00',
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
@@ -197,7 +204,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012099999',
         amount: 50.00, // Monto muy bajo // Pagó $100 en vez de $150
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '02003018431',
@@ -244,7 +251,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012011111',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '99999999999', // Cuenta INCORRECTA
@@ -290,7 +297,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'BLUR123456',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '20059783069',
@@ -335,7 +342,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012054321',
         amount: 365.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '20059783069',
@@ -382,7 +389,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'DUP789012', // Ya procesado
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-01-20',
+        transactionDate: '2026-03-10',
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
         isValid: true,

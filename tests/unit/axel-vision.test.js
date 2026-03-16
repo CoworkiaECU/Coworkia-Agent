@@ -162,7 +162,7 @@ describe('🏗️ AXEL VISION AI - EDGE CASES', () => {
      5️⃣ MÚLTIPLES FOTOS (LIMITACIÓN ACTUAL)
   ═══════════════════════════════════════════════════════════════ */
   
-  test('⚠️ Solo analiza primera foto (limitación documentada)', async () => {
+  test('✅ Analiza TODAS las fotos en una sola llamada array (mejora sobre limitación anterior)', async () => {
     mockAnalyzeImage.mockResolvedValue({
       success: true,
       analysis: JSON.stringify({
@@ -185,10 +185,11 @@ describe('🏗️ AXEL VISION AI - EDGE CASES', () => {
     
     expect(result.success).toBe(true);
     expect(result.photoCount).toBe(3); // Reporta 3 fotos
-    expect(mockAnalyzeImage).toHaveBeenCalledTimes(1); // ⚠️ Solo 1 llamada
+    expect(mockAnalyzeImage).toHaveBeenCalledTimes(1); // 1 llamada con array de todas las fotos
     expect(mockAnalyzeImage).toHaveBeenCalledWith(
-      'https://example.com/photo1.jpg', // Solo primera foto
-      expect.any(String)
+      photoUrls, // Todas las fotos como array
+      expect.any(String),
+      expect.any(Object)
     );
   });
 

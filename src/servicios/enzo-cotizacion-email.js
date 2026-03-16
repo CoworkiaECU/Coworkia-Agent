@@ -16,6 +16,7 @@
 
 import { complete } from '../servicios-ia/openai.js';
 import { generateEnzoEmailHTML } from './generic-email-templates.js';
+import { generateEnzoBriefContent, renderEnzoBriefHTML } from './enzo-brief-generator.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { conocimientoEnzo } from '../deteccion-intenciones/enzo-knowledge.js';
 
@@ -125,18 +126,44 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
     return { success: false, error: 'No se pudo extraer email/datos del mensaje' };
   }
 
-  console.log(`[ENZO-COTI] 📧 Enviando propuesta → ${datos.empresa} (${datos.email})`);
-
-  // 2. Construir HTML con el código de documento
-  const html = generateEnzoEmailHTML({ ...datos, quoteCode, waNumber: ADMIN_WA }, { type: 'proposal' });
-
   const NIVEL_LABEL = {
     basico: 'Agente IA Esencial', intermedio: 'Agente IA Profesional', avanzado: 'Agente IA Premium',
   };
+
+  console.log(`[ENZO-COTI] 📧 Enviando propuesta → ${datos.empresa} (${datos.email})`);
+
+  // 2. Generar brief competitivo IA (best-effort)
+  const briefData = await generateEnzoBriefContent({
+    description: datos.necesidad_raw,
+    companyName: datos.empresa,
+    projectType:  NIVEL_LABEL[datos.nivel_agente] || datos.nivel_agente,
+    sector:       datos.sector,
+  });
+  const briefHTML = renderEnzoBriefHTML(briefData);
+  if (briefHTML) {
+    console.log('[ENZO-COTI] ✅ Brief competitivo generado para propuesta boss-command');
+  }
+
+  // 3. Construir HTML con template cliente aprobado
+  const html = generateEnzoEmailHTML({
+    userName:     datos.contacto || datos.empresa,
+    projectType:  NIVEL_LABEL[datos.nivel_agente] || 'Agente IA Profesional',
+    companyName:  datos.empresa,
+    email:        datos.email,
+    phone:        datos.telefono || '',
+    budget:       datos.aplica_descuento
+                    ? `$${datos.precio_con_descuento.toLocaleString()} USD (antes $${datos.precio_desarrollo.toLocaleString()})`
+                    : `$${datos.precio_desarrollo.toLocaleString()} USD`,
+    urgency:      '',
+    description:  datos.necesidad_raw,
+    leadId:       quoteCode,
+    briefHTML,
+  }, { type: 'confirmation' });
+
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
   const subject   = `Cotización 🚀 ${codeLabel}${NIVEL_LABEL[datos.nivel_agente] || 'Propuesta IA'} · ${datos.empresa} | Enzo - MarketingLab`;
 
-  // 3. Enviar
+  // 4. Enviar
   const result = await sendEmail({
     to:      datos.email,
     cc:      ML_ADMIN_CC,

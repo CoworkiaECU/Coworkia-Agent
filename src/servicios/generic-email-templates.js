@@ -214,9 +214,9 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
 
   const specificDetails = vehicleBrand ? `
     <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-      <div style="display: flex; align-items: center;">
-        <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🚗</span>
-        <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelVehicle}: ${vehicleBrand} ${vehicleModel || ''}${vehicleYear ? ` ${vehicleYear}` : ''}</span>
+      <div style="display:table;width:100%;">
+        <span style="display:table-cell;color:#1E3A8A;font-size:20px;width:32px;vertical-align:middle;">🚗</span>
+        <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelVehicle}: ${vehicleBrand} ${vehicleModel || ''}${vehicleYear ? ` ${vehicleYear}` : ''}</span>
       </div>
       ${commercialValue ? `<div style="margin-top:8px;color:#6B7280;font-size:13px;padding-left:32px;">${t.labelCommercialValue}: <strong style="color:#1E3A8A;">$${Number(commercialValue).toLocaleString()} USD</strong></div>` : ''}
     </div>
@@ -267,30 +267,30 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🛡️</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelInsuranceType}: ${insuranceType}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#1E3A8A;font-size:20px;width:32px;vertical-align:middle;">🛡️</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelInsuranceType}: ${insuranceType}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">🆔</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelId}: ${cedula}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#1E3A8A;font-size:20px;width:32px;vertical-align:middle;">🆔</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelId}: ${cedula}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📧</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#1E3A8A;font-size:20px;width:32px;vertical-align:middle;">📧</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${email}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(30,58,138,0.3);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #1E3A8A; font-size: 20px; margin-right: 12px;">📱</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#1E3A8A;font-size:20px;width:32px;vertical-align:middle;">📱</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${phone}</span>
                 </div>
               </div>
 
@@ -420,9 +420,9 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     ].filter(Boolean);
 
     desgloseHTML = rows.map(([label, min, max]) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F3F4F6;">
-        <span style="color:#6B7280;font-size:14px;">${label}</span>
-        <span style="color:#374151;font-size:14px;font-weight:600;">$${min} – $${max}</span>
+      <div style="display:table;width:100%;padding:10px 0;border-bottom:1px solid #F3F4F6;">
+        <span style="display:table-cell;color:#6B7280;font-size:14px;vertical-align:middle;">${label}</span>
+        <span style="display:table-cell;text-align:right;color:#374151;font-size:14px;font-weight:600;vertical-align:middle;white-space:nowrap;">$${min} – $${max}</span>
       </div>`).join('');
   } else {
     const rawText = (quote && quote.raw_text) ? quote.raw_text : (typeof quote === 'string' ? quote : t.worksFallback);
@@ -1327,39 +1327,39 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
             
             <div style="margin: 20px 0;">
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">🎫</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelType}: ${membershipType}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">🎫</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelType}: ${membershipType}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">📅</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${t.labelStart}: ${startDate}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📅</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelStart}: ${startDate}</span>
                 </div>
               </div>
 
               ${companyName ? `
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">🏢</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${companyName}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">🏢</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${companyName}</span>
                 </div>
               </div>
               ` : ''}
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">📧</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${email}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📧</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${email}</span>
                 </div>
               </div>
               
               <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display: flex; align-items: center;">
-                  <span style="color: #4ECDC4; font-size: 20px; margin-right: 12px;">📱</span>
-                  <span style="color: #374151; font-weight: 600; font-size: 16px;">${phone}</span>
+                <div style="display:table;width:100%;">
+                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📱</span>
+                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${phone}</span>
                 </div>
               </div>
             </div>

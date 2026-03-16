@@ -1,10 +1,10 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Guía maestra diaria. Auditada y actualizada cada sesión.
-> **Última actualización:** 15 Mar 2026 — P4b completado `08f6353` · **v948 en Heroku** ✅
+> **Última actualización:** 15 Mar 2026 — `8d64064` · **v949 en Heroku** ✅
 
 ---
 
-## 🚨 DEPLOY: v948 EN HEROKU — NADA PENDIENTE
+## 🚨 DEPLOY: v949 EN HEROKU — NADA PENDIENTE
 
 ---
 
@@ -22,6 +22,7 @@
 | **P3-REFACTOR** `17 Mar` | Enzo C1 · Adriana C2 · Paula D1 (3 templates bare → PropElite CSS) · Axel M3 dirección · M1 copyright dinámico | `6b73aa0` | ✅ |
 | **ML-4b + I1** `17 Mar` | i18n Adriana + Paula (18/15 strings) · payment-receipt Gmail→Resend · 12 archivos email = 1 infra | `7451bf9`→`v946` | ✅ |
 | **P4 + P4b** `15 Mar` | display:grid (3 casos) → table · display:flex (10 casos) → table · meta color-scheme 5 templates · typo border-rounded | `df24767`+`08f6353`→`v948` | ✅ |
+| **Tests + D2 + Quechua** `15 Mar` | 34/34 suites verdes (6 tests fix + 3 suites de infraestructura) · D2 footer Paula `contacto@propelite.ec` → `noreply@coworkia.ec` · bug Quechua false positive (`/[qkhw]/i` matchaba 'H' en "Hola") | `8d64064`→`v949` | ✅ |
 
 ---
 
@@ -35,7 +36,7 @@
 | **Adriana** | `generateAdrianaEmailHTML` ✅ i18n | `_adrianaQuoteHTML` en genérico `{ type:'quote' }` ✅ | — | 🟢 |
 | **Axel** | `generateAxelEmailHTML` ✅ i18n | `generateQuoteEmailHTML()` VisionAI async+fotos (intencional) | reminders 24h+7d ✅ | 🟡 |
 | **Paula** | `generatePaulaEmailHTML` ✅ i18n | `paula-cotizacion-email.js` brochure El Morenal (intencional) | `email-templates-paula.js` 4 templates ✅ | 🟢 |
-| **Aurora** | `generateAuroraEmailHTML` | — | — | 🔵 sin auditar |
+| **Aurora** | WA only (reservas/coordinación, sin email bot-flow) | — | — | 🟢 auditado |
 | **Angela** | — | — | — | 🔵 sin templates |
 
 **Deferred intencional (no tocar):**
@@ -47,39 +48,9 @@
 
 ## ⏳ PENDIENTE
 
-### 🛑 P6 — Bloqueado por cliente
-- **AXEL:** Tarifario oficial The PaintBull → actualmente usa precios demo
-- **PAULA:** Links Drive 5 propiedades (Casa 1, 3, 6, 7, Generales) → brochure El Morenal incompleto
-- **ALUNA:** ¿Tour post-pago → Google Calendar o recordatorio WA? → `membership-payment-verification.js`
-
----
-
-### 🎤 Whisper multiagente — routing pendiente
-**Problema:** Audio transcrito SIEMPRE va a Aurora. No hay routing por agente.
-
-```
-Flujo actual:    Audio → Whisper → texto → Aurora (siempre)
-Flujo propuesto: Audio → Whisper → texto → detectar @agente/contexto → agente correcto
-```
-
-**Cambio:** `wassenger.js` ~línea 1175 — intent detection post-Whisper.
-- Con `@mención` → rutear al mencionado
-- Conversación activa con agente → continuar ese agente
-- Sin contexto → Aurora default
-
----
-
-### 🧪 Tests: 13 fallando (7 suites)
-Más crítico: `partial-form-regression.test.js` espera campo `paymentMethod` que ya no existe.
-```bash
-NODE_OPTIONS=--experimental-vm-modules npx jest --forceExit 2>&1 | grep -E "FAIL|●"
-```
-
----
-
-### 🔵 Menor pendiente
-- **D2:** `contacto@propelite.ec` hardcodeado en footer Paula → cambiar a `noreply@coworkia.ec`
-- **Aurora email:** `generateAuroraEmailHTML` no auditado en P3
+### 🛑 P6 — Bloqueado por cliente (en pausa)
+- **AXEL P6.1:** Tarifario oficial The PaintBull → actualmente usa precios demo *(esperando info del cliente)*
+- **PAULA P6.2:** Links Drive 5 propiedades (Casa 1, 3, 6, 7, Generales) *(esperando info del cliente)*
 
 ---
 
@@ -112,7 +83,7 @@ node scripts/preview-emails.mjs --open
 | # | Detalle | Estado |
 |---|---------|--------|
 | D1 | Paula 3 templates bare sin CSS | ✅ PropElite CSS aplicado |
-| D2 | `contacto@propelite.ec` hardcodeado footer Paula | ⏳ pendiente |
+| D2 | `contacto@propelite.ec` hardcodeado footer Paula | ✅ → `noreply@coworkia.ec` |
 | M1 | `© 2026` hardcodeado Enzo | ✅ `new Date().getFullYear()` |
 | M2 | Acento `#FFD700` vs `#00C2A0` Adriana boss-cmd | ✅ unificado |
 | M3 | Dirección taller inconsistente Axel reminders vs quote | ✅ `Av. Gonzalo Escudero N44-53` |

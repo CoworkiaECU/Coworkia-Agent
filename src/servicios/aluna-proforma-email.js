@@ -202,7 +202,7 @@ export async function saveAlunaLeadFromProforma({ userId, clientName, clientEmai
     
     // ✅ Activar seguimiento automático (24h + 3 días)
     const userPhone = fromAdmin ? (phone || userId) : userId;
-    await trackAlunaProspect(userPhone, clientName, plan?.name || planKey);
+    await trackAlunaProspect(userPhone, clientName, plan?.name || planKey, code, clientEmail || null);
     console.log(`[ALUNA-PROFORMA] 📌 Seguimiento automático activado para ${userPhone}`);
     
     return { success: true, leadId: saved?.id || code };

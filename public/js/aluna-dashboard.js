@@ -117,10 +117,13 @@ async function loadPipeline() {
         <td>${p.user_phone}</td>
         <td>${p.user_name || '-'}</td>
         <td>${p.membership_type || '-'}</td>
+        <td>${p.membership_code ? `<a href="/aluna-proformas.html?code=${p.membership_code}" style="color:#047857;font-weight:600;font-size:12px;">${p.membership_code}</a>` : '<span style="color:#9ca3af">—</span>'}</td>
         <td>${getTempBadge(p.temperature)}</td>
         <td>${formatDate(p.interest_at)}</td>
         <td>${p.followup_24h_sent_at ? formatDate(p.followup_24h_sent_at) : '<span style="color:#9ca3af">Pendiente</span>'}</td>
+        <td>${p.followup_24h_email_sent_at ? formatDate(p.followup_24h_email_sent_at) : (p.email ? '<span style="color:#f59e0b">Pendiente</span>' : '<span style="color:#d1d5db">Sin email</span>')}</td>
         <td>${p.followup_3d_sent_at  ? formatDate(p.followup_3d_sent_at)  : '<span style="color:#9ca3af">Pendiente</span>'}</td>
+        <td>${p.followup_3d_email_sent_at ? formatDate(p.followup_3d_email_sent_at) : (p.email ? '<span style="color:#f59e0b">Pendiente</span>' : '<span style="color:#d1d5db">Sin email</span>')}</td>
       </tr>
     `).join('');
   } catch (err) {

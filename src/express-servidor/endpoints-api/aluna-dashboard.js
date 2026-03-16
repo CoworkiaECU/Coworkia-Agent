@@ -281,8 +281,9 @@ router.get('/pipeline', async (req, res) => {
           AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'`),
       databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NOT NULL`),
       databaseService.all(`
-        SELECT user_phone, user_name, membership_type, interest_at,
-               followup_24h_sent_at, followup_3d_sent_at, converted_at
+        SELECT user_phone, user_name, membership_type, membership_code, email,
+               interest_at, followup_24h_sent_at, followup_3d_sent_at,
+               followup_24h_email_sent_at, followup_3d_email_sent_at, converted_at
         FROM aluna_prospect_followups
         ORDER BY interest_at DESC LIMIT 50
       `)

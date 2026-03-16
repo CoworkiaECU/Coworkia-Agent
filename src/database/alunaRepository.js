@@ -265,25 +265,26 @@ export async function updateMembershipLeadStatus(membershipCode, status, notes =
 // ============================================================================
 
 /**
- * 📌 Registrar (o actualizar nombre/tipo) a un prospecto de Aluna.
- * Idempotente: si el usuario ya existe, solo actualiza nombre y tipo si cambian.
+ * 📌 Registrar (o actualizar nombre/tipo/email/código) a un prospecto de Aluna.
+ * Idempotente: si el usuario ya existe, solo actualiza los campos no nulos.
  */
-export async function trackAlunaProspect(userPhone, userName = null, membershipType = null) {
+export async function trackAlunaProspect(userPhone, userName = null, membershipType = null, membershipCode = null, email = null) {
   await databaseService.ensureInitialized();
   try {
     await databaseService.run(
-      `INSERT INTO aluna_prospect_followups (user_phone, user_name, membership_type, interest_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      `INSERT INTO aluna_prospect_followups (user_phone, user_name, membership_type, membership_code, email, interest_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
        ON CONFLICT (user_phone) DO UPDATE
-         SET user_name      = COALESCE($2, aluna_prospect_followups.user_name),
+         SET user_name       = COALESCE($2, aluna_prospect_followups.user_name),
              membership_type = COALESCE($3, aluna_prospect_followups.membership_type),
-             updated_at     = CURRENT_TIMESTAMP
+             membership_code = COALESCE($4, aluna_prospect_followups.membership_code),
+             email           = COALESCE($5, aluna_prospect_followups.email),
+             updated_at      = CURRENT_TIMESTAMP
          WHERE aluna_prospect_followups.converted_at IS NULL`,
-      [userPhone, userName, membershipType]
+      [userPhone, userName, membershipType, membershipCode, email]
     );
     console.log(`[ALUNA-REPO] 📌 Prospecto Aluna registrado/actualizado: ${userPhone}`);
   } catch (err) {
-    // No crítico: no interrumpir el flujo principal si esto falla
     console.warn('[ALUNA-REPO] ⚠️ trackAlunaProspect no crítico:', err.message);
   }
 }
@@ -295,18 +296,12 @@ export async function trackAlunaProspect(userPhone, userName = null, membershipT
 export async function findProspectsFor24hFollowUp() {
   await databaseService.ensureInitialized();
   return databaseService.all(
-    `SELECT apf.user_phone, apf.user_name, apf.membership_type, apf.interest_at,
-            u.email,
-            CASE LOWER(REPLACE(apf.membership_type, ' ', ''))
-              WHEN 'plan20' THEN 250
-              ELSE 140
-            END AS monthly_fee
-       FROM aluna_prospect_followups apf
-       LEFT JOIN users u ON u.phone_number = apf.user_phone
-      WHERE apf.followup_24h_sent_at IS NULL
-        AND apf.converted_at IS NULL
-        AND apf.interest_at <= NOW() - INTERVAL '24 hours'
-      ORDER BY apf.interest_at ASC
+    `SELECT user_phone, user_name, membership_type, membership_code, email, interest_at
+       FROM aluna_prospect_followups
+      WHERE followup_24h_sent_at IS NULL
+        AND converted_at IS NULL
+        AND interest_at <= NOW() - INTERVAL '24 hours'
+      ORDER BY interest_at ASC
       LIMIT 50`,
     []
   );
@@ -319,25 +314,19 @@ export async function findProspectsFor24hFollowUp() {
 export async function findProspectsFor3dFollowUp() {
   await databaseService.ensureInitialized();
   return databaseService.all(
-    `SELECT apf.user_phone, apf.user_name, apf.membership_type, apf.interest_at, apf.followup_24h_sent_at,
-            u.email,
-            CASE LOWER(REPLACE(apf.membership_type, ' ', ''))
-              WHEN 'plan20' THEN 250
-              ELSE 140
-            END AS monthly_fee
-       FROM aluna_prospect_followups apf
-       LEFT JOIN users u ON u.phone_number = apf.user_phone
-      WHERE apf.followup_24h_sent_at IS NOT NULL
-        AND apf.followup_3d_sent_at IS NULL
-        AND apf.converted_at IS NULL
-        AND apf.followup_24h_sent_at <= NOW() - INTERVAL '168 hours'
-      ORDER BY apf.followup_24h_sent_at ASC
+    `SELECT user_phone, user_name, membership_type, membership_code, email, interest_at, followup_24h_sent_at
+       FROM aluna_prospect_followups
+      WHERE followup_24h_sent_at IS NOT NULL
+        AND followup_3d_sent_at IS NULL
+        AND converted_at IS NULL
+        AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'
+      ORDER BY followup_24h_sent_at ASC
       LIMIT 50`,
     []
   );
 }
 
-/** Marca el follow-up de 24h como enviado */
+/** Marca el follow-up WA de 24h como enviado */
 export async function markProspect24hSent(userPhone) {
   await databaseService.ensureInitialized();
   await databaseService.run(
@@ -348,12 +337,34 @@ export async function markProspect24hSent(userPhone) {
   );
 }
 
-/** Marca el follow-up de 3 días como enviado */
+/** Marca el follow-up WA de 3 días como enviado */
 export async function markProspect3dSent(userPhone) {
   await databaseService.ensureInitialized();
   await databaseService.run(
     `UPDATE aluna_prospect_followups
         SET followup_3d_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE user_phone = $1`,
+    [userPhone]
+  );
+}
+
+/** Marca el email de follow-up 24h como enviado */
+export async function markProspect24hEmailSent(userPhone) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE aluna_prospect_followups
+        SET followup_24h_email_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE user_phone = $1`,
+    [userPhone]
+  );
+}
+
+/** Marca el email de follow-up 7d como enviado */
+export async function markProspect3dEmailSent(userPhone) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE aluna_prospect_followups
+        SET followup_3d_email_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE user_phone = $1`,
     [userPhone]
   );

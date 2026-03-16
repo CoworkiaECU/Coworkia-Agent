@@ -1339,146 +1339,6 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
 </html>`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 💌 ALUNA — Follow-up Email 2 (oferta 15% adicional, válida 7 días)
-// ─────────────────────────────────────────────────────────────────────────────
-export function generateAlunaFollowup2HTML({ userName, membershipType, planPrice, expiryDate, waLink = 'https://wa.me/593994837117?text=%40aluna%2C%20quiero%20el%2015%25%20adicional' }) {
-  const name = (userName || '').split(' ')[0] || 'Hola';
-  const plan = membershipType || 'tu plan';
-  const price = planPrice || '';
-  const expiry = expiryDate || (() => {
-    const d = new Date(); d.setDate(d.getDate() + 7);
-    return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'long' });
-  })();
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Oferta exclusiva — Coworkia</title></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
-<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
-    <div style="color:white;font-size:70px;font-weight:700;margin-bottom:8px;line-height:0.9;">Coworkia</div>
-    <div style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">BUSINESS CENTER</div>
-    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:20px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
-      <div style="background:#DC2626;color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:4px 14px;border-radius:6px;display:inline-block;margin-bottom:10px;">⚡ OFERTA EXCLUSIVA</div>
-      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">${name}, solo para ti</div>
-      <div style="color:#047857;font-size:13px;font-weight:700;">15% adicional sobre cualquier plan</div>
-    </div>
-  </div>
-
-  <div style="padding:32px 30px 28px;">
-
-    <p style="color:#111827;font-size:15px;font-weight:700;margin:0 0 6px 0;">Hola ${name} 👋 — aún pienso en ti.</p>
-    <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 22px 0;">Sé que revisaste la propuesta de <strong style="color:#111827;">${plan}</strong>${price ? ` (${price})` : ''}. Para que no quede nada sobre la mesa, hablo con el equipo y conseguí esto solo para ti:</p>
-
-    <!-- Oferta principal -->
-    <div style="background:#FFFBEB;border:2px solid #F59E0B;border-radius:14px;padding:20px 22px;margin-bottom:22px;text-align:center;">
-      <div style="color:#D97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">🔥 DESCUENTO ESPECIAL</div>
-      <div style="color:#DC2626;font-size:42px;font-weight:900;line-height:1;margin-bottom:6px;">15% OFF</div>
-      <div style="color:#374151;font-size:14px;font-weight:600;margin-bottom:4px;">adicional sobre <strong>${plan}</strong></div>
-      <div style="color:#9CA3AF;font-size:12px;">Se suma a cualquier descuento que ya tengas</div>
-      <div style="background:#DC2626;color:white;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;display:inline-block;margin-top:12px;">⏰ Válido hasta el ${expiry}</div>
-    </div>
-
-    <!-- Lo que incluye de todas formas -->
-    <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:22px;">
-      <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Recuerda todo lo que te llevás 👇</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, WiFi 300 Mbps y café ilimitado cada día</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Salas de reuniones, impresoras, locker privado</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Comunidad de profesionales que ya crecen aquí</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Secretaria Virtual IA incluida en contratos anuales</div>
-    </div>
-
-    <!-- CTA -->
-    <div style="text-align:center;margin-bottom:20px;">
-      <a href="${waLink}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">
-        🔥 Quiero el 15% adicional
-      </a>
-      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Abre WhatsApp con Aluna · Respuesta en minutos</div>
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;padding:16px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
-      <p style="color:#DC2626;font-size:12px;font-weight:700;margin:0 0 4px 0;">❗ Esta oferta vence el ${expiry} — no se renueva</p>
-      <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
-    </div>
-
-  </div>
-</div>
-</body>
-</html>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 💌 ALUNA — Follow-up Email 3 (FOMO "último día" — 7 días después del email 2)
-// ─────────────────────────────────────────────────────────────────────────────
-export function generateAlunaFollowup3HTML({ userName, membershipType, planPrice, waLink = 'https://wa.me/593994837117?text=%40aluna%2C%20quiero%20activar%20mi%20membresia%20hoy' }) {
-  const name = (userName || '').split(' ')[0] || 'Hola';
-  const plan = membershipType || 'tu plan';
-  const price = planPrice || '';
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Último día — Coworkia</title></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
-<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-
-  <!-- Header urgencia -->
-  <div style="background:linear-gradient(135deg,#7F1D1D 0%,#991B1B 100%);text-align:center;padding:40px 20px 35px;">
-    <div style="color:white;font-size:70px;font-weight:700;margin-bottom:8px;line-height:0.9;">Coworkia</div>
-    <div style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">BUSINESS CENTER</div>
-    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:20px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
-      <div style="background:#7F1D1D;color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:4px 14px;border-radius:6px;display:inline-block;margin-bottom:10px;">⏰ ÚLTIMO DÍA</div>
-      <div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:6px;">${name}, se acaba hoy</div>
-      <div style="color:#991B1B;font-size:13px;font-weight:700;">La oferta cierra a medianoche</div>
-    </div>
-  </div>
-
-  <div style="padding:32px 30px 28px;">
-
-    <p style="color:#111827;font-size:15px;font-weight:700;margin:0 0 6px 0;">${name}, ya solo tienes hoy. 🕒</p>
-    <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 22px 0;">La membresía <strong style="color:#111827;">${plan}</strong>${price ? ` por ${price}` : ''} con el 15% de descuento adicional vence hoy a medianoche. Después de eso, el precio vuelve a su valor normal y no puedo garantizarlo.</p>
-
-    <!-- Lo que dejas ir si no actúas -->
-    <div style="background:#FEF2F2;border:2px solid #FECACA;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
-      <div style="color:#991B1B;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">❌ Lo que pierdes si no actúas hoy</div>
-      <div style="color:#374151;font-size:13px;margin:6px 0;"><span style="color:#DC2626;margin-right:8px;font-weight:700;">✗</span>El 15% de descuento adicional sobre ${plan}</div>
-      <div style="color:#374151;font-size:13px;margin:6px 0;"><span style="color:#DC2626;margin-right:8px;font-weight:700;">✗</span>Tu precio congelado de por vida (sube cada año)</div>
-      <div style="color:#374151;font-size:13px;margin:6px 0;"><span style="color:#DC2626;margin-right:8px;font-weight:700;">✗</span>Los días de trabajo productivo que ya perdiste esta semana</div>
-      <div style="color:#374151;font-size:13px;margin:6px 0;"><span style="color:#DC2626;margin-right:8px;font-weight:700;">✗</span>Acceso a la comunidad de profesionales que ya están creciendo</div>
-      <div style="color:#374151;font-size:13px;margin:6px 0;"><span style="color:#DC2626;margin-right:8px;font-weight:700;">✗</span>La Secretaria Virtual IA incluida en tu contrato anual</div>
-    </div>
-
-    <!-- Lo que ganas si actúas -->
-    <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:22px;">
-      <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">✅ Lo que ganas activando hoy</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>${plan} con 15% OFF adicional — precio bloqueado</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Tu espacio en el calendario desde mañana</div>
-      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Garantía: si en 15 días no te convence, devolución completa</div>
-    </div>
-
-    <!-- CTA urgente -->
-    <div style="text-align:center;margin-bottom:20px;">
-      <a href="${waLink}" style="background:linear-gradient(135deg,#991B1B,#7F1D1D);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(153,27,27,0.4);font-size:15px;">
-        ⚡ Activar mi membresía hoy
-      </a>
-      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Abre WhatsApp con Aluna · Cerramos hoy</div>
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;padding:16px;background:#FEF2F2;border-radius:10px;">
-      <p style="color:#991B1B;font-size:12px;font-weight:700;margin:0 0 4px 0;">Oferta válida solo hoy — sin excepciones</p>
-      <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
-    </div>
-
-  </div>
-</div>
-</body>
-</html>`;
-}
-
 /** * ⚖️ GABI - GR Consulting (Consultoría Legal y Contable)
  * Colores: Azul profesional (#1E3A8A, #3B82F6, #1E40AF)
  */
@@ -2121,6 +1981,97 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
  * @param {Object} data - Datos del email
  * @returns {{ subject: string, html: string }}
  */
+// ─── ALUNA FOLLOW-UP TEMPLATES ────────────────────────────────────────────────
+// Helper privado DRY: genera el header verde oscuro idéntico al de la proforma.
+function _alunaEmailHeader(userName, badgeLabel) {
+  return `
+    <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+      <div style="color:white;font-size:70px;font-weight:700;margin-bottom:8px;line-height:0.9;">Coworkia</div>
+      <div style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">BUSINESS CENTER</div>
+      <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:20px 32px;display:inline-block;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">${badgeLabel}</div>
+        <div style="color:#111827;font-size:22px;font-weight:800;">${userName}</div>
+      </div>
+    </div>`;
+}
+
+/**
+ * 🔥 ALUNA — Follow-up 2 (24h): oferta 15% adicional, válida 7 días
+ */
+export function generateAlunaFollowup2HTML({ userName, membershipType, membershipCode, expiryDate }) {
+  const firstName = (userName || 'Hola').split(' ')[0];
+  const waText = encodeURIComponent(`@aluna, quiero el 15% adicional en ${membershipType || 'mi plan'} — ¿lo activamos?`);
+  const proformaRef = membershipCode
+    ? `<div style="background:#F0FDF4;border:1px solid #D1FAE5;border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:11px;color:#065F46;">Ref. proforma: <strong>${membershipCode}</strong></div>`
+    : '';
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Oferta especial — Coworkia</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+  ${_alunaEmailHeader(firstName, '· OFERTA ESPECIAL PARA TI ·')}
+  <div style="padding:28px 30px 24px;">
+    ${proformaRef}
+    <p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 6px 0;">¡Conseguí algo especial para ti, ${firstName}! 🔥</p>
+    <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 20px 0;">Hablé con el equipo y reservé un <strong style="color:#047857;">15% de descuento adicional</strong> sobre ${membershipType || 'el plan que cotizaste'}. Se suma al precio normal y tu tarifa queda congelada mientras seas miembro.</p>
+    <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+      <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Tu oferta incluye</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>15% adicional sobre el precio del plan</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Precio congelado de por vida como miembro</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Garantía de devolución los primeros 15 días</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#DC2626;margin-right:8px;">⏰</span>Oferta válida hasta el <strong>${expiryDate || '7 días desde hoy'}</strong></div>
+    </div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <a href="https://wa.me/593994837117?text=${waText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">🔥 Quiero mi 15% adicional</a>
+      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Respuesta en minutos · Abre WhatsApp directo con Aluna</div>
+    </div>
+    <div style="text-align:center;padding:16px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
+      <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
+    </div>
+  </div>
+</div>
+</body></html>`;
+}
+
+/**
+ * ⏰ ALUNA — Follow-up 3 (7d): FOMO "último día"
+ */
+export function generateAlunaFollowup3HTML({ userName, membershipType, membershipCode }) {
+  const firstName = (userName || 'Hola').split(' ')[0];
+  const waText = encodeURIComponent(`@aluna, quiero activar ${membershipType || 'mi plan'} antes que venza la oferta`);
+  const proformaRef = membershipCode
+    ? `<div style="background:#F0FDF4;border:1px solid #D1FAE5;border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:11px;color:#065F46;">Ref. proforma: <strong>${membershipCode}</strong></div>`
+    : '';
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Última oportunidad — Coworkia</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+  ${_alunaEmailHeader(firstName, '· ÚLTIMO DÍA · OFERTA VENCE HOY ·')}
+  <div style="padding:28px 30px 24px;">
+    ${proformaRef}
+    <p style="color:#DC2626;font-size:16px;font-weight:700;margin:0 0 6px 0;">${firstName}, hoy es el último día. ⏰</p>
+    <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 20px 0;">La oferta del 15% adicional sobre ${membershipType || 'tu plan'} vence hoy a medianoche. Después vuelve al precio normal sin excepciones.</p>
+    <div style="background:#FEF2F2;border-left:4px solid #DC2626;border-radius:10px;padding:14px 18px;margin-bottom:14px;">
+      <div style="color:#991B1B;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Lo que dejas ir si no actúas hoy</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#DC2626;margin-right:8px;">✗</span>El 15% de descuento adicional</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#DC2626;margin-right:8px;">✗</span>Tu precio congelado de por vida</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#DC2626;margin-right:8px;">✗</span>Los días productivos sin espacio fijo</div>
+    </div>
+    <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+      <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Lo que ganas activando ahora</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Tu espacio separado desde mañana</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Precio con el mejor descuento posible</div>
+      <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Garantía: 15 días de devolución completa si no convence</div>
+    </div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <a href="https://wa.me/593994837117?text=${waText}" style="background:linear-gradient(135deg,#DC2626,#991B1B);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(220,38,38,0.4);font-size:15px;">⚡ Activar ahora — último día</a>
+      <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">En 10 minutos queda todo listo</div>
+    </div>
+    <div style="text-align:center;padding:16px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
+      <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
+    </div>
+  </div>
+</div>
+</body></html>`;
+}
+
 export function generateEmailForAgent(agentName, type, data) {
   const clientName = data.clientName || data.userName || 'Cliente';
   const lang = data.userLanguage || 'es';
@@ -2153,6 +2104,19 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         return {
           subject: `🎫 Nuevo lead membresía: ${clientName} — ${data.membershipType || 'Plan'}`,
           html: adminHtml
+        };
+      }
+      if (type === 'followup2') {
+        const expiryDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'long' }); })();
+        return {
+          subject: `🔥 ${clientName.split(' ')[0]}, 15% adicional reservado para ti — vence en 7 días`,
+          html: generateAlunaFollowup2HTML({ ...data, userName: clientName, expiryDate })
+        };
+      }
+      if (type === 'followup3') {
+        return {
+          subject: `⏰ ${clientName.split(' ')[0]}, hoy es el último día — oferta cierra a medianoche`,
+          html: generateAlunaFollowup3HTML({ ...data, userName: clientName })
         };
       }
       // type === 'client'

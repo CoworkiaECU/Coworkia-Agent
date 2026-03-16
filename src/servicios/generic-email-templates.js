@@ -870,7 +870,8 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
     budget,
     urgency,
     description,
-    leadId
+    leadId,
+    briefHTML = null,
   } = leadData;
 
   return `
@@ -931,8 +932,8 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
             ${t.introReceived(projectType, companyName)}
           </p>
 
-          <!-- Resumen del proyecto -->
-          <div style="background: #F8FFFE; border-left: 4px solid #2DD4BF; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 0 0 24px;">
+          <!-- Resumen del proyecto / Brief IA -->
+          ${briefHTML || `<div style="background: #F8FFFE; border-left: 4px solid #2DD4BF; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 0 0 24px;">
             <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;">${t.sectionSummary}</div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px; width: 40%;">${t.labelType}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${projectType}</td></tr>
@@ -941,7 +942,7 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
               ${urgency ? `<tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelUrgency}</td><td style="padding: 6px 0; color: #1F2937; font-size: 13px; font-weight: 600;">${urgency}</td></tr>` : ''}
               <tr><td style="padding: 6px 0; color: #6B7280; font-size: 13px;">${t.labelRef}</td><td style="padding: 6px 0; color: #2DD4BF; font-size: 13px; font-weight: 700;">${leadId}</td></tr>
             </table>
-          </div>
+          </div>`}
 
           <!-- Servicios -->
           <div style="margin: 0 0 24px;">

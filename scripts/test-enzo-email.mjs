@@ -13,6 +13,7 @@
 
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../src/servicios/email.js';
 import { generateEmailForAgent } from '../src/servicios/generic-email-templates.js';
+import { generateEnzoBriefContent, renderEnzoBriefHTML } from '../src/servicios/enzo-brief-generator.js';
 
 const args = process.argv.slice(2);
 
@@ -56,11 +57,30 @@ console.log(`📧 Destinatario:  ${testEmail}`);
 console.log(`🎯 Proyecto:      ${leadData.projectType}`);
 console.log(`🏢 Empresa:       ${leadData.companyName}`);
 console.log('');
-console.log('⏳ Enviando email de prueba...');
+console.log('⏳ Generando brief competitivo con OpenAI...');
 console.log('');
 
 try {
-  const { subject, html } = generateEmailForAgent('ENZO', 'client', leadData);
+  const briefData = await generateEnzoBriefContent({
+    description: leadData.description,
+    companyName: leadData.companyName,
+    projectType:  leadData.projectType,
+  });
+  const briefHTML = renderEnzoBriefHTML(briefData);
+
+  if (briefHTML) {
+    console.log('✅ Brief generado — competidores + FODA incluidos');
+  } else {
+    console.log('⚠️  Brief no disponible — se usará tabla estática de fallback');
+  }
+  console.log('');
+  console.log('⏳ Enviando email de prueba...');
+  console.log('');
+
+  const { subject, html } = generateEmailForAgent('ENZO', 'client', {
+    ...leadData,
+    briefHTML,
+  });
 
   await sendEmail({
     to:      testEmail,

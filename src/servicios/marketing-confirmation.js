@@ -21,6 +21,7 @@ import enzoRepository from '../database/enzoRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { sendEmail } from './email.js';
 import { generateSequentialCode } from '../utils/code-generator.js';
+import { generateEnzoBriefContent, renderEnzoBriefHTML } from './enzo-brief-generator.js';
 
 /**
  * ✅ Procesa confirmación SI de Enzo
@@ -74,6 +75,19 @@ export async function confirmMarketingProject(userId, userProfile) {
     if (formData.email) {
       try {
         console.log(`[MARKETING-CONFIRM] 📧 Enviando email a ${formData.email}...`);
+
+        // Generar brief competitivo con OpenAI (best-effort, no bloquea si falla)
+        const briefData = await generateEnzoBriefContent({
+          description: formData.description,
+          companyName: formData.companyName,
+          projectType: formData.projectType,
+        });
+        const briefHTML = renderEnzoBriefHTML(briefData);
+        if (briefHTML) {
+          console.log('[MARKETING-CONFIRM] ✅ Brief competitivo generado');
+        } else {
+          console.log('[MARKETING-CONFIRM] ⚠️ Sin brief (fallback a tabla estática)');
+        }
         
         // Generar HTML del email con template de MarketingLab
         const { html: emailHTML } = generateEmailForAgent('ENZO', 'client', {
@@ -88,7 +102,8 @@ export async function confirmMarketingProject(userId, userProfile) {
           budget: formData.budget || 'Por definir',
           urgency: formData.urgency || 'Flexible',
           description: formData.description || 'Proyecto de marketing digital',
-          userLanguage: userProfile?.preferredLanguage || 'es'
+          userLanguage: userProfile?.preferredLanguage || 'es',
+          briefHTML,
         });
 
         await sendEmail({

@@ -55,6 +55,7 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
+import { processEnzoConsultingFlowFull } from '../../servicios/enzo-consulting-flow.js';
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
@@ -1902,6 +1903,27 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // - Cualquier otro mensaje con intención de reserva: SÍ activar formulario
     const shouldActivateForm = !hasVirtualAgentPromo && (hasServiceInterest || isReservationIntent(processedText) || hasActiveForm || isFormContinuation);
     
+    // 🎯 ENZO - Flujo consultivo conversacional (decode → qualify → confirm → plan)
+    if (profile.activeAgent === 'ENZO' && !isEnzoBossQuoteCommand(processedText)) {
+      try {
+        const enzoResult = await processEnzoConsultingFlowFull(userId, processedText, profile);
+        if (enzoResult.handled) {
+          console.log('[ENZO-FLOW] ✅ Manejado por flujo consultivo');
+          await enviarWhatsApp(userId, enzoResult.reply);
+          await saveConversationMessage(userId, { role: 'assistant', content: enzoResult.reply, agent: 'ENZO' });
+          await saveInteraction({
+            userId, agent: 'ENZO', agentName: 'Enzo - MarketingLab',
+            intentReason: 'enzo_consulting_flow',
+            input: processedText, output: enzoResult.reply,
+            meta: { envelope }
+          });
+          return;
+        }
+      } catch (enzoErr) {
+        console.error('[ENZO-FLOW] ❌ Error en flujo consultivo, fallback al LLM:', enzoErr.message);
+      }
+    }
+
     // 💼 ALUNA - Formulario de membresías
     if (profile.activeAgent === 'ALUNA') {
       // Detectar si el usuario muestra interés en una membresía (detección amplia)

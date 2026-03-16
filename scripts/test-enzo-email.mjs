@@ -37,15 +37,16 @@ if (!testEmail.includes('@')) {
 
 // ─── Datos de prueba realistas ──────────────────────────────────────────────
 const leadData = {
-  userName:    'Diego Villota',
-  projectType: 'Campaña Digital',
-  companyName: 'Coworkia Ecuador',
-  email:       testEmail,
-  phone:       '+593 99 483 7117',
-  budget:      '$1.500 - $3.000 / mes',
-  urgency:     'Alta — queremos lanzar en 2 semanas',
-  description: 'Necesitamos posicionar Coworkia como el mejor business center de Quito: campañas en Meta Ads, contenido para redes y email marketing para la base de clientes.',
-  leadId:      'ML-2026-0005',
+  userName:     'Diego Villota',
+  projectType:  'Campaña Digital',
+  companyName:  'Coworkia Ecuador',
+  socialHandle: '@coworkia.ec',
+  email:        testEmail,
+  phone:        '+593 99 483 7117',
+  budget:       '$1.500 - $3.000 / mes',
+  urgency:      'Alta — queremos lanzar en 2 semanas',
+  description:  'Necesitamos posicionar Coworkia como el mejor business center de Quito: campañas en Meta Ads, contenido para redes y email marketing para la base de clientes.',
+  leadId:       'ML-2026-0005',
 };
 
 console.log('');
@@ -62,9 +63,10 @@ console.log('');
 
 try {
   const briefData = await generateEnzoBriefContent({
-    description: leadData.description,
-    companyName: leadData.companyName,
+    description:  leadData.description,
+    companyName:  leadData.companyName,
     projectType:  leadData.projectType,
+    socialHandle: leadData.socialHandle,
   });
   const briefHTML = renderEnzoBriefHTML(briefData);
 

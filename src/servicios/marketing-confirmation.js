@@ -78,9 +78,10 @@ export async function confirmMarketingProject(userId, userProfile) {
 
         // Generar brief competitivo con OpenAI (best-effort, no bloquea si falla)
         const briefData = await generateEnzoBriefContent({
-          description: formData.description,
-          companyName: formData.companyName,
-          projectType: formData.projectType,
+          description:  formData.description,
+          companyName:  formData.companyName,
+          projectType:  formData.projectType,
+          socialHandle: formData.socialHandle || formData.instagram || null,
         });
         const briefHTML = renderEnzoBriefHTML(briefData);
         if (briefHTML) {

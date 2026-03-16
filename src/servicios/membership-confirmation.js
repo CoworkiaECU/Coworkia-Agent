@@ -15,7 +15,8 @@ import { saveMembershipLead } from '../database/alunaRepository.js';
 import { generateEmailForAgent } from './generic-email-templates.js';
 import { PLAN_DATA, normalizePlanKey } from './aluna-proforma-email.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
-import { createCalendarEvent } from './google-calendar.js';
+import { createCalendarEvent, blockMembershipCalendar } from './google-calendar.js';
+import { updateMembershipLeadStatus } from '../database/alunaRepository.js';
 import { generateSequentialCode } from '../utils/code-generator.js';
 
 /**
@@ -106,7 +107,14 @@ export async function confirmMembershipLead(userId, userProfile) {
     
     const membershipCode = await generateSequentialCode('ALU', 'membership_leads', 'membership_code', 4);
     const membershipDetails = getMembershipDetails(formData.membershipType);
-    
+    const planKey = normalizePlanKey(formData.membershipType);
+    const planInfo = PLAN_DATA[planKey];
+
+    // Calcular tarifa numérica; aplicar 15% si el cliente aceptó oferta de seguimiento
+    const baseNumericFee = planInfo?.price ? parseFloat(planInfo.price.match(/[\d.]+/)?.[0]) || 0 : 0;
+    const hasPromo = !!(formData.promoDiscount);
+    const numericFee = hasPromo ? Math.round(baseNumericFee * 0.85) : baseNumericFee;
+
     const leadData = {
       id: `MB-${Date.now()}_${userId.replace(/\+/g, '')}`,
       membershipCode: membershipCode,
@@ -118,11 +126,26 @@ export async function confirmMembershipLead(userId, userProfile) {
       phone: formData.phone,
       companyName: null,
       specialRequirements: formData.specialRequirements || null,
-      monthlyFee: membershipDetails.price
+      monthlyFee: numericFee || null
     };
     
     const { id: leadId } = await saveMembershipLead(leadData);
     console.log(`[MEMBERSHIP-CONFIRM] ✅ Lead guardado: ${leadId}`);
+
+    // Si el cliente aceptó la oferta con descuento: marcar como aceptado + bloquear calendario
+    if (hasPromo) {
+      try {
+        await updateMembershipLeadStatus(membershipCode, 'accepted', `Descuento 15% aplicado — tarifa: $${numericFee} USD/mes`);
+        console.log(`[MEMBERSHIP-CONFIRM] 🏷️ Status actualizado a 'accepted' con promo`);
+      } catch (statusErr) { console.warn('[MEMBERSHIP-CONFIRM] ⚠️ Error actualizando status:', statusErr.message); }
+
+      if (formData.startDate) {
+        try {
+          await blockMembershipCalendar({ clientName: formData.fullName, membershipType: formData.membershipType, startDate: formData.startDate, membershipCode, planKey });
+          console.log(`[MEMBERSHIP-CONFIRM] 📅 Días de membresía bloqueados en calendario`);
+        } catch (calBlockErr) { console.warn('[MEMBERSHIP-CONFIRM] ⚠️ Error bloqueando calendario:', calBlockErr.message); }
+      }
+    }
 
     // ==========================================
     // 2️⃣ ENVIAR EMAIL A ADMIN COWORKIA

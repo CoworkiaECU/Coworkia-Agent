@@ -387,8 +387,71 @@ export async function deleteCalendarEvent(eventId) {
   }
 }
 
+/**
+ * 📅 Bloquear días de membresía en el calendario de Coworkia
+ * Crea N eventos "HOT DESK RESERVADO" distribuidos entre los días laborables del mes
+ * Plan 10 → 11 días | Plan 20 → 22 días
+ */
+export async function blockMembershipCalendar({ clientName, membershipType, startDate, membershipCode, planKey }) {
+  const normalizedPlan = (planKey || membershipType || '').toLowerCase().replace(/[\s-]/g, '');
+  const planDays = normalizedPlan.includes('20') ? 22 : normalizedPlan.includes('10') ? 11 : 0;
+
+  if (planDays === 0) {
+    console.log('[CALENDAR] ℹ️ Plan sin días de bloqueo (no es plan10/plan20)');
+    return { success: true, blocked: 0 };
+  }
+
+  const calendar = await createCalendarClient();
+  if (!calendar) {
+    console.error('[CALENDAR] ❌ No se pudo crear cliente para bloqueo de membresía');
+    return { success: false, error: 'Cliente de calendario no disponible' };
+  }
+
+  const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+  const baseDate = startDate ? new Date(startDate) : new Date();
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth(); // 0-indexed
+
+  // Recolectar días laborables (lun–vie) del mes
+  const workDays = [];
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= lastDay; d++) {
+    const dow = new Date(year, month, d).getDay();
+    if (dow !== 0 && dow !== 6) workDays.push({ year, month: month + 1, day: d });
+  }
+
+  const planLabel = normalizedPlan.includes('20') ? 'Plan 20' : 'Plan 10';
+  const summary = `HOT DESK RESERVADO — ${clientName} (${planLabel}) ${membershipCode}`;
+  const daysToBlock = workDays.slice(0, planDays);
+  let blocked = 0;
+
+  for (const { year: y, month: m, day: d } of daysToBlock) {
+    const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    try {
+      await calendar.events.insert({
+        calendarId,
+        requestBody: {
+          summary,
+          start: { date: dateStr },
+          end:   { date: dateStr },
+          transparency: 'opaque',
+          colorId: '2',
+          description: `Membresía Coworkia — ${membershipCode}\nCliente: ${clientName}`
+        }
+      });
+      blocked++;
+    } catch (err) {
+      console.warn(`[CALENDAR] ⚠️ No se pudo bloquear ${dateStr}:`, err.message);
+    }
+  }
+
+  console.log(`[CALENDAR] ✅ ${blocked}/${daysToBlock.length} días bloqueados para ${clientName} (${planLabel})`);
+  return { success: true, blocked, total: daysToBlock.length };
+}
+
 export default {
   createCalendarEvent,
   testCalendarConnection,
-  deleteCalendarEvent
+  deleteCalendarEvent,
+  blockMembershipCalendar
 };

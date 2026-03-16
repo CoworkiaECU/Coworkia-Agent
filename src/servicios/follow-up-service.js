@@ -21,6 +21,8 @@ import {
   markReminder2Sent
 } from '../database/axelRepository.js';
 import { sendAxelReminderEmail } from './axel-quote-email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { generateAlunaFollowup2HTML, generateAlunaFollowup3HTML } from './generic-email-templates.js';
 
 const TWO_HOURS_MS = 120 * 60 * 1000; // 2 horas en milisegundos
 
@@ -241,45 +243,53 @@ export function isWithinAlunaFollowUpHours() {
 }
 
 /**
- * 💌 Genera mensaje de follow-up 24h para Aluna
+ * 💌 Genera mensaje WA de follow-up 24h para Aluna (oferta 15% adicional)
  */
 function buildAluna24hMessage(prospect) {
   const name = (prospect.user_name || '').split(' ')[0] || 'Hola';
-  const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'nuestros planes de membresía';
-  return `Hola ${name} 🌙
+  const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'nuestros planes';
+  const expiryDate = (() => {
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'long' });
+  })();
+  return `Hola ${name} 👋
 
-Ayer conversamos sobre ${plan} y quería saber si tuviste la oportunidad de revisar la info 😊
+Revisé tu consulta sobre ${plan} y hablé con el equipo — conseguí algo especial para ti:
 
-¿Tienes alguna duda o necesitas más detalles?
+🔥 *15% de descuento adicional* sobre cualquier plan que elijas.
 
-Y si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina. Solo di que eres invitada/o de Aluna en recepción 🏢✨
+✅ Se suma a los precios normales
+✅ Precio congelado mientras seas miembro
+✅ Garantía de devolución los primeros 15 días
 
-Sin compromiso, solo para que lo vivas. ¿Cuándo te quedaría bien?`;
+⏰ *Esta oferta vence el ${expiryDate}* — después vuelve al precio normal.
+
+¿Lo tomamos? Escríbeme aquí mismo y lo activamos hoy 🏢`;
 }
 
 /**
- * 💌 Genera mensaje de follow-up 3 días para Aluna
+ * 💌 Genera mensaje WA de follow-up 7 días para Aluna (FOMO "último día")
  */
 function buildAluna3dMessage(prospect) {
   const name = (prospect.user_name || '').split(' ')[0] || 'Hola';
   const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'una membresía';
-  return `Hola ${name} 👋
+  return `${name}, hoy es el último día. ⏰
 
-¿Cómo estás? Hace unos días charlamos sobre ${plan} y quería hacer un último intento antes de cerrar tu expediente 😊
+La oferta del 15% adicional sobre ${plan} vence hoy a medianoche.
 
-*Mi propuesta concreta:* ven a Coworkia un día completo, completamente gratis.
+*Lo que dejas ir si no actúas hoy:*
+❌ El 15% de descuento adicional
+❌ Tu precio congelado de por vida
+❌ Los días productivos que sigues perdiendo sin un espacio fijo
 
-📍 *Tu día de prueba:*
-• Sin costo, sin restricciones de horario
-• De *8am a 7pm* — usas todo el espacio
-• Hot desk, WiFi ultra rápido, café, locker, sala de reuniones
-• Solo di en recepción que eres invitada/o de Aluna 🏢
+*Lo que ganas activando ahora:*
+✅ Tu plan con el mejor precio posible
+✅ Tu espacio separado desde mañana
+✅ Garantía: si en 15 días no te convence, devolución completa
 
-Es mi invitación personal para que lo vivas y decidas con info de primera mano.
+¿Lo activamos hoy? Solo escríbeme y en 10 minutos queda todo listo. 🏢
 
-¿Qué día de esta semana te queda bien? 🗓️
-
-_(Si ya tomaste otra decisión o las circunstancias cambiaron, no hay problema — aquí estaré cuando lo necesites 😊)_`;
+_(Si ya tomaste otra decisión, sin problema \u2014 aquí estaré cuando lo necesites)_`;
 }
 
 /**
@@ -355,10 +365,17 @@ export async function processAlunaLeadFollowUps() {
       if (ok) {
         await markProspect24hSent(prospect.user_phone);
         sent24h++;
-        await new Promise(r => setTimeout(r, 2000)); // pausa entre mensajes
-      } else {
-        skipped++;
-      }
+        // Enviar email simultáneo si tiene email registrado
+        if (prospect.email) {
+          const expiryDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'long' }); })();
+          try {
+            const html = generateAlunaFollowup2HTML({ userName: prospect.user_name, membershipType: prospect.membership_type, planPrice: prospect.monthly_fee, expiryDate });
+            await sendEmail({ to: prospect.email, subject: `🔥 ${(prospect.user_name||'').split(' ')[0]}, 15% adicional reservado para ti — vence en 7 días`, html, from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL } });
+            console.log(`[ALUNA-FOLLOWUP] 📧 Email oferta 24h enviado a ${prospect.email}`);
+          } catch (emailErr) { console.warn('[ALUNA-FOLLOWUP] ⚠️ Email 24h falló (no crítico):', emailErr.message); }
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      } else { skipped++; }
     } catch (err) {
       console.error(`[ALUNA-FOLLOWUP] ❌ Error 24h ${prospect.user_phone}:`, err.message);
       skipped++;
@@ -376,10 +393,16 @@ export async function processAlunaLeadFollowUps() {
       if (ok) {
         await markProspect3dSent(prospect.user_phone);
         sent3d++;
+        // Enviar email FOMO simultáneo si tiene email registrado
+        if (prospect.email) {
+          try {
+            const html = generateAlunaFollowup3HTML({ userName: prospect.user_name, membershipType: prospect.membership_type, planPrice: prospect.monthly_fee });
+            await sendEmail({ to: prospect.email, subject: `⏰ ${(prospect.user_name||'').split(' ')[0]}, hoy es el último día — oferta cierra a medianoche`, html, from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL } });
+            console.log(`[ALUNA-FOLLOWUP] 📧 Email FOMO enviado a ${prospect.email}`);
+          } catch (emailErr) { console.warn('[ALUNA-FOLLOWUP] ⚠️ Email 3d falló (no crítico):', emailErr.message); }
+        }
         await new Promise(r => setTimeout(r, 2000));
-      } else {
-        skipped++;
-      }
+      } else { skipped++; }
     } catch (err) {
       console.error(`[ALUNA-FOLLOWUP] ❌ Error 3d ${prospect.user_phone}:`, err.message);
       skipped++;

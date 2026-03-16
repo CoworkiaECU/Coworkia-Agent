@@ -295,12 +295,18 @@ export async function trackAlunaProspect(userPhone, userName = null, membershipT
 export async function findProspectsFor24hFollowUp() {
   await databaseService.ensureInitialized();
   return databaseService.all(
-    `SELECT user_phone, user_name, membership_type, interest_at
-       FROM aluna_prospect_followups
-      WHERE followup_24h_sent_at IS NULL
-        AND converted_at IS NULL
-        AND interest_at <= NOW() - INTERVAL '24 hours'
-      ORDER BY interest_at ASC
+    `SELECT apf.user_phone, apf.user_name, apf.membership_type, apf.interest_at,
+            u.email,
+            CASE LOWER(REPLACE(apf.membership_type, ' ', ''))
+              WHEN 'plan20' THEN 250
+              ELSE 140
+            END AS monthly_fee
+       FROM aluna_prospect_followups apf
+       LEFT JOIN users u ON u.phone_number = apf.user_phone
+      WHERE apf.followup_24h_sent_at IS NULL
+        AND apf.converted_at IS NULL
+        AND apf.interest_at <= NOW() - INTERVAL '24 hours'
+      ORDER BY apf.interest_at ASC
       LIMIT 50`,
     []
   );
@@ -313,13 +319,19 @@ export async function findProspectsFor24hFollowUp() {
 export async function findProspectsFor3dFollowUp() {
   await databaseService.ensureInitialized();
   return databaseService.all(
-    `SELECT user_phone, user_name, membership_type, interest_at, followup_24h_sent_at
-       FROM aluna_prospect_followups
-      WHERE followup_24h_sent_at IS NOT NULL
-        AND followup_3d_sent_at IS NULL
-        AND converted_at IS NULL
-        AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'
-      ORDER BY followup_24h_sent_at ASC
+    `SELECT apf.user_phone, apf.user_name, apf.membership_type, apf.interest_at, apf.followup_24h_sent_at,
+            u.email,
+            CASE LOWER(REPLACE(apf.membership_type, ' ', ''))
+              WHEN 'plan20' THEN 250
+              ELSE 140
+            END AS monthly_fee
+       FROM aluna_prospect_followups apf
+       LEFT JOIN users u ON u.phone_number = apf.user_phone
+      WHERE apf.followup_24h_sent_at IS NOT NULL
+        AND apf.followup_3d_sent_at IS NULL
+        AND apf.converted_at IS NULL
+        AND apf.followup_24h_sent_at <= NOW() - INTERVAL '168 hours'
+      ORDER BY apf.followup_24h_sent_at ASC
       LIMIT 50`,
     []
   );

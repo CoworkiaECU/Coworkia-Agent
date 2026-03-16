@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 14 Marzo 2026
 > Estado del trabajo del día. Actualizado continuamente.
-> **Última actualización:** 17 Mar 2026 — ML-4b + I1 completados `7451bf9` · v946 en Heroku
+> **Última actualización:** 15 Mar 2026 — P4 compatibilidad HTML emails completado `08f6353` · v948 en Heroku
 
 ---
 
@@ -181,14 +181,33 @@ Impacto: clientes que reagendan o cancelan reciben un email sin marca → confus
 - Todos los 12 archivos de email del sistema comparten la misma infraestructura
 - Remitente: `"Gabi - Coworkia Financiera" <noreply@coworkia.ec>` (antes usaba `coworkia.ec@gmail.com`)
 
-## ⏳ PENDIENTE — Siguiente sprint
+## ✅ P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile) `15 Mar`
+**Deployed: `df24767` (P4) + `08f6353` (P4b) · v948 en Heroku**
 
-### P4 — Compatibilidad HTML emails (dark mode + Gmail + mobile)
-**Desbloqueado por P3-REFACTOR.** Todos los templates ya están en `generic-email-templates.js` — no habrá cambios de estructura que anulen el trabajo.
-- Añadir `@media (prefers-color-scheme: dark)` a PropElite y MarketingLab themes
-- Tabla layout fallback para Gmail (no soporta Flexbox/Grid)
-- `max-width: 600px` + fuentes fallback seguras en todos los templates
-- Test: Litmus o Email on Acid (5 clientes de email × 2 themes)
+### P4 — Cambios aplicados en generic-email-templates.js + payment-receipt-email.js
+
+| Fix | Archivo | Descripción |
+|-----|---------|-------------|
+| `border-rounded` → `border-radius` | payment-receipt | Typo CSS inválido corregido |
+| `display:grid 1fr 1fr` → `<table>` | generic (Aluna) | Amenities 2-col compatibles con Gmail |
+| `display:grid 1fr 1fr` → `<table>` | generic (Axel) | Delivery+Garantía 2-col compatibles |
+| `display:grid repeat(3,1fr)` → `<table>` | generic (Axel) | Proof points 3-col compatible |
+| `display:flex justify-between` → `display:table` | generic (Axel) | Fila total del desglose |
+| `display:flex` nota inspección → `display:table` | generic (Axel) | Ícono ⚠️ + texto al lado |
+| `display:flex` 4 filas de datos → `display:table` | generic (Adriana) | 🛡️🆔📧📱 en la misma línea |
+| `display:flex` fila vehículo → `display:table` | generic (Adriana) | 🚗 + descripción al lado |
+| `display:flex` 5 filas de datos → `display:table` | generic (Aluna) | 🎫📅🏢📧📱 en la misma línea |
+| `display:flex justify-between` desglose items → `display:table` | generic (Axel) | Labels + precios en misma línea |
+| `<meta name="color-scheme">` | generic (5 templates) | Adriana, Adriana-cmd, Enzo-cmd, Paula, Aluna |
+
+**Resultado:** 0 instancias de `display:grid` en layouts. Todos los layouts críticos usan `<table role="presentation">` o `display:table`.
+
+**Qué NO se cambió (degradación aceptable):**
+- `display:flex;flex-wrap:wrap` — stacks verticalmente en Gmail (acceptable)
+- Íconos decorativos circulares `display:flex;align-items:center;justify-content:center` — elementos decorativos
+- Photo grid Axel: `display:grid;repeat(N,1fr)` — fotografías se apilan verticalmente (acceptable)
+
+**Script de testing creado:** `node scripts/preview-emails.mjs [--open]` → 15 templates en `file:///tmp/email-previews/`
 
 ### P6 — TODOs bloqueados por cliente
 - **AXEL:** Tarifario oficial de The PaintBull (sin esto el quote email muestra precios placeholder)

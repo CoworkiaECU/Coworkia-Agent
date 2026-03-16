@@ -180,32 +180,26 @@ export async function confirmMembershipLead(userId, userProfile) {
     // ==========================================
     
     if (formData.email) {
-      // ✅ Usar siempre el template aprobado (proforma) — igual que el Boss Command
-      const planKey = normalizePlanKey(formData.membershipType);
-      const plan = PLAN_DATA[planKey] || PLAN_DATA['plan10'];
-
-      const emailToClient = generateEmailForAgent('ALUNA', 'proforma', {
-        clientName: formData.fullName,
-        planName: plan.name,
-        planPrice: plan.price,
-        planDays: plan.days,
-        planHours: plan.hours,
-        planBenefits: plan.benefits,
-        planIdeal: plan.ideal,
-        proformaCode: membershipCode,
-        nota: formData.specialRequirements || null,
-        coworkiaWhatsApp: '593994837117',
+      // ✅ Email de confirmación: invita al cliente a reservar su primera visita gratuita
+      const emailToClient = generateEmailForAgent('ALUNA', 'client', {
+        userName: formData.fullName,
+        membershipType: formData.membershipType,
+        startDate: formData.startDate || null,
+        email: formData.email,
+        phone: formData.phone,
+        companyName: null,
+        leadId: membershipCode,
         userLanguage: userProfile?.preferredLanguage || 'es'
       });
 
       await sendEmail({
         to: formData.email,
         cc: 'coworkia.ec@gmail.com',
-        subject: `Membresía Coworkia ${membershipCode} - Aluna`,
+        subject: `✅ Tu membresía Coworkia está lista — reserva tu visita gratuita`,
         html: emailToClient.html,
         from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL }
       });
-      console.log('[MEMBERSHIP-CONFIRM] 📧 Email proforma enviado al cliente (template unificado)');
+      console.log('[MEMBERSHIP-CONFIRM] 📧 Email confirmación + visita gratuita enviado al cliente');
     }
 
     // ==========================================

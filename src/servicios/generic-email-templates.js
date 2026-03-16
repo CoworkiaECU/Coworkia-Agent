@@ -1278,176 +1278,65 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
   } = leadData;
   const t = (EMAIL_TRANSLATIONS[userLanguage] || EMAIL_TRANSLATIONS.es).aluna;
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="color-scheme" content="light">
-      <meta name="supported-color-schemes" content="light">
-      <title>Membresía Coworkia</title>
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
-      
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        
-        <!-- Header Coworkia -->
-        <div style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); text-align: center; padding: 40px 20px;">
-          <!-- Placeholder para logo Coworkia -->
-          <div style="background: white; width: 120px; height: 120px; margin: 0 auto 20px; border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <div style="color: #4ECDC4; font-size: 48px; font-weight: 700;">🎫</div>
-          </div>
-          
-          <div style="color: white; font-size: 42px; font-weight: 700; letter-spacing: -1px; margin-bottom: 6px;">
-            Coworkia
-          </div>
-          <div style="color: rgba(255,255,255,0.95); font-size: 18px; font-weight: 500; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase;">
-            Business Center
-          </div>
-          <div style="background: rgba(255,255,255,0.95); color: #374151; padding: 20px 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #374151;">${t.title}</h1>
-            <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 15px;">${t.subtitle}</p>
-          </div>
+  const waVisita = encodeURIComponent(`@aluna, quiero reservar mi visita gratuita, ¿cuándo puedo ir?`);
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membresía Coworkia</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+    <!-- Header — mismo estilo aprobado de la proforma -->
+    <div style="background: linear-gradient(135deg, #047857 0%, #065F46 100%); text-align: center; padding: 40px 20px 35px;">
+      <div style="color: white; font-size: 70px; font-weight: 700; margin-bottom: 8px; line-height: 0.9;">Coworkia</div>
+      <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 30px;">BUSINESS CENTER</div>
+      <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">· SOLICITUD RECIBIDA ·</div>
+        <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${userName}</div>
+        <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;text-align:center;">
+          <span style="font-size:18px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:16px;font-weight:700;vertical-align:middle;">${membershipType}</strong>
         </div>
-
-        <div style="padding: 30px;">
-          
-          <!-- Saludo personalizado -->
-          <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${userName}! ${t.greetingEnd}</h2>
-            <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
-              ${t.interest} <strong style="color: #4ECDC4;">${membershipType}</strong>
-            </p>
-          </div>
-
-          <!-- Detalles de la membresía -->
-          <div style="background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(78,205,196,0.1);">
-            <h3 style="color: #374151; margin-top: 0; font-size: 18px; font-weight: 600;">${t.sectionMembership}</h3>
-            
-            <div style="margin: 20px 0;">
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display:table;width:100%;">
-                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">🎫</span>
-                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelType}: ${membershipType}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display:table;width:100%;">
-                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📅</span>
-                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${t.labelStart}: ${startDate}</span>
-                </div>
-              </div>
-
-              ${companyName ? `
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display:table;width:100%;">
-                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">🏢</span>
-                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${companyName}</span>
-                </div>
-              </div>
-              ` : ''}
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display:table;width:100%;">
-                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📧</span>
-                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${email}</span>
-                </div>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid rgba(78,205,196,0.2);">
-                <div style="display:table;width:100%;">
-                  <span style="display:table-cell;color:#4ECDC4;font-size:20px;width:32px;vertical-align:middle;">📱</span>
-                  <span style="display:table-cell;color:#374151;font-weight:600;font-size:16px;vertical-align:middle;">${phone}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Próximos pasos -->
-          <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">✨ Próximos Pasos:</h3>
-            <div style="color: #374151; font-size: 15px; line-height: 1.8;">
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">1.</strong> ${t.step1}
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">2.</strong> ${t.step2}
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">3.</strong> ${t.step3}
-              </p>
-              <p style="margin: 10px 0;">
-                <strong style="color: #10B981;">4.</strong> ${t.step4}
-              </p>
-            </div>
-          </div>
-
-          <!-- Beneficios -->
-          <div style="background: rgba(78,205,196,0.05); border-radius: 12px; padding: 25px; margin: 25px 0;">
-            <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px; font-weight: 600;">${t.includesTitle}</h3>
-            <table role="presentation" width="100%" style="border-collapse:collapse;border-spacing:0;">
-              <tr>
-                <td width="48%" style="padding:0 3% 12px 0;vertical-align:top;">
-                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
-                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">☕</span>
-                    <span style="color:#374151;font-weight:500;">${t.amenityCoffee}</span>
-                  </div>
-                </td>
-                <td width="48%" style="padding:0 0 12px;vertical-align:top;">
-                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
-                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🌐</span>
-                    <span style="color:#374151;font-weight:500;">${t.amenityWifi}</span>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td width="48%" style="padding:0 3% 0;vertical-align:top;">
-                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
-                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🖨️</span>
-                    <span style="color:#374151;font-weight:500;">${t.amenityPrint}</span>
-                  </div>
-                </td>
-                <td width="48%" style="padding:0;vertical-align:top;">
-                  <div style="background:white;border-radius:8px;padding:15px;border:1px solid rgba(78,205,196,0.2);">
-                    <span style="color:#4ECDC4;font-size:18px;margin-right:8px;">🤝</span>
-                    <span style="color:#374151;font-weight:500;">${t.amenityNetwork}</span>
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </div>
-
-          <!-- Referencia -->
-          <div style="background: rgba(78,205,196,0.05); border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <p style="color: #6B7280; font-size: 13px; margin: 0;">
-              <strong>Referencia:</strong> ${leadId}
-            </p>
-          </div>
-
-          <!-- Contacto -->
-          <div style="text-align: center; margin: 25px 0;">
-            <p style="color: #6b7280; font-size: 14px; margin: 5px 0 15px 0;">
-              ${t.ctaTagline}
-            </p>
-            <a href="https://wa.me/593994837117?text=%40paula%2C%20%C2%A1este%20es%20el%20lugar%20perfecto!%20%C2%BFCu%C3%A1ndo%20lo%20veo%3F" 
-               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
-              ${t.ctaButton}
-            </a>
-          </div>
-
-          <!-- Footer -->
-          <div style="text-align: center; margin: 35px 0 0 0; padding: 25px; background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(68,160,141,0.1)); border-radius: 12px;">
-            <p style="color: #4ECDC4; font-size: 18px; font-weight: 700; margin: 0;">${t.footerWelcome}</p>
-            <p style="color: #374151; font-size: 14px; margin: 8px 0;">${t.footerTeam}</p>
-          </div>
-
-        </div>
+        <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
       </div>
-    </body>
-    </html>
-  `;
+    </div>
+
+    <div style="padding: 32px 30px 28px;">
+
+      <!-- Texto corto vendedor -->
+      <p style="color:#111827;font-size:15px;font-weight:700;margin:0 0 6px 0;">¡${userName}, ya tenemos todo listo para recibirte! 🎉</p>
+      <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 20px 0;">Tu solicitud llegó perfectamente. Antes de activar tu membresía, queremos que <strong style="color:#047857;">vengas un día completo sin costo</strong> — prueba el espacio, trabajo, café y WiFi incluidos. Si te convence, lo activamos ese mismo día.</p>
+
+      <!-- Lo que te espera -->
+      <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:22px;">
+        <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Lo que te espera 👇</div>
+        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, WiFi 300 Mbps y café ilimitado desde que llegas</div>
+        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Salas de reuniones, impresoras y toda la infraestructura disponible</div>
+        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Una comunidad de profesionales y empresarios que ya están creciendo aquí</div>
+      </div>
+
+      <!-- CTA único -->
+      <div style="text-align:center;margin-bottom:20px;">
+        <a href="https://wa.me/593994837117?text=${waVisita}"
+           style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">
+          📅 Reservar mi primera visita gratuita
+        </a>
+        <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Respuesta en minutos · Puedes venir cualquier día de la semana</div>
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align:center;padding:18px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
+        <p style="color:#047857;font-size:14px;font-weight:700;margin:0 0 4px 0;">¡Te esperamos con el café listo! ☕</p>
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 /** * ⚖️ GABI - GR Consulting (Consultoría Legal y Contable)

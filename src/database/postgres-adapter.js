@@ -1020,15 +1020,23 @@ class PostgresAdapter {
           user_phone TEXT PRIMARY KEY,
           user_name TEXT,
           membership_type TEXT,
+          membership_code TEXT,
+          email TEXT,
           interest_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           followup_24h_sent_at TIMESTAMP,
+          followup_24h_email_sent_at TIMESTAMP,
           followup_3d_sent_at TIMESTAMP,
+          followup_3d_email_sent_at TIMESTAMP,
           converted_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      // Migraciones sin romper: añadir columnas si la tabla ya existe
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS membership_code TEXT`).catch(()=>{});
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS email TEXT`).catch(()=>{});
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS followup_24h_email_sent_at TIMESTAMP`).catch(()=>{});
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS followup_3d_email_sent_at TIMESTAMP`).catch(()=>{});
 
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_aluna_prospects_followup_24h

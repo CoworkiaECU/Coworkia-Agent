@@ -606,6 +606,7 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
             ▶ Filtrando por etapa — <button onclick="clearStageFilter()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">Limpiar ✕</button>
           </span>
           <span class="text-muted" style="font-size:12px;">Auto-refresh 30s</span>
+          <button class="btn btn-primary btn-sm" onclick="openAddProspectModal()">➕ Registrar prospecto</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -642,6 +643,97 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 
 <!-- Toast -->
 <div id="toast"></div>
+
+<!-- Modal: Registrar prospecto en pipeline -->
+<div id="modal-prospect" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:200; align-items:center; justify-content:center;">
+  <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; width:440px; max-width:95vw;">
+    <h3 style="color:#f1f5f9; margin:0 0 20px; font-size:16px;">➕ Registrar prospecto en pipeline</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px;">Teléfono WhatsApp *</label>
+        <input id="mp-phone" type="tel" placeholder="0991234567 o +593991234567"
+          style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:14px;">
+      </div>
+      <div>
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px;">Nombre completo *</label>
+        <input id="mp-name" type="text" placeholder="Nombre del prospecto"
+          style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:14px;">
+      </div>
+      <div>
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px;">Plan de membresía</label>
+        <select id="mp-plan"
+          style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:14px;">
+          <option value="Plan 20">Plan 20 — $100/mes</option>
+          <option value="Plan 30">Plan 30 — $150/mes</option>
+          <option value="Plan 40">Plan 40 — $200/mes</option>
+          <option value="Plan Full">Plan Full — $250/mes</option>
+        </select>
+      </div>
+      <div>
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px;">Código proforma (opcional)</label>
+        <input id="mp-code" type="text" placeholder="Ej: CW-2025-001"
+          style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:14px;">
+      </div>
+      <div>
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:4px;">Email (opcional)</label>
+        <input id="mp-email" type="email" placeholder="correo@ejemplo.com"
+          style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:14px;">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;color:#94a3b8;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="mp-converted" style="width:16px;height:16px;accent-color:#34d399;">
+        Marcar como ya convertido (venta cerrada)
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button onclick="submitAddProspect()"
+        style="flex:1;background:#3b82f6;border:none;border-radius:8px;padding:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Registrar</button>
+      <button onclick="closeProspectModal()"
+        style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;font-size:14px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAddProspectModal() {
+  const m = document.getElementById('modal-prospect');
+  m.style.display = 'flex';
+  document.getElementById('mp-phone').value = '';
+  document.getElementById('mp-name').value = '';
+  document.getElementById('mp-plan').value = 'Plan 20';
+  document.getElementById('mp-code').value = '';
+  document.getElementById('mp-email').value = '';
+  document.getElementById('mp-converted').checked = false;
+}
+function closeProspectModal() {
+  document.getElementById('modal-prospect').style.display = 'none';
+}
+async function submitAddProspect() {
+  const phone = document.getElementById('mp-phone').value.trim();
+  const name  = document.getElementById('mp-name').value.trim();
+  const membershipType = document.getElementById('mp-plan').value;
+  const membershipCode = document.getElementById('mp-code').value.trim() || null;
+  const email = document.getElementById('mp-email').value.trim() || null;
+  const alreadyConverted = document.getElementById('mp-converted').checked;
+  if (!phone || !name) { toast('⚠️ Teléfono y nombre son requeridos'); return; }
+  try {
+    const r = await fetch('/api/aluna/prospects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, name, membershipType, membershipCode, email, alreadyConverted })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      toast('✅ Prospecto registrado en pipeline');
+      closeProspectModal();
+      loadPipeline();
+    } else {
+      toast('❌ Error: ' + (j.error || 'desconocido'));
+    }
+  } catch (e) {
+    toast('❌ Error de red: ' + e.message);
+  }
+}
+</script>
 
 <script src="/js/aluna-dashboard.js"></script>
 </body>

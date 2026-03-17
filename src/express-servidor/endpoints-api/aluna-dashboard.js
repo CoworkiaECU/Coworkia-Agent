@@ -323,6 +323,48 @@ router.get('/pipeline', async (req, res) => {
 });
 
 /**
+ * POST /api/aluna/prospects
+ * Registra manualmente un prospecto en el pipeline (desde el dashboard admin).
+ * Body: { phone, name, membershipType, membershipCode?, email?, alreadyConverted? }
+ * Normaliza el teléfono a formato +593...
+ */
+router.post('/prospects', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    let { phone, name, membershipType, membershipCode, email, alreadyConverted } = req.body;
+    
+    if (!phone || !name) {
+      return res.status(400).json({ ok: false, error: 'phone y name son requeridos' });
+    }
+    
+    // Normalizar teléfono ecuatoriano
+    phone = String(phone).trim().replace(/\s/g, '');
+    if (/^09\d{8}$/.test(phone))  phone = '+593' + phone.slice(1);
+    else if (/^9\d{8}$/.test(phone)) phone = '+593' + phone;
+    
+    const convertedAt = alreadyConverted ? 'CURRENT_TIMESTAMP' : 'NULL';
+    
+    await databaseService.run(
+      `INSERT INTO aluna_prospect_followups
+         (user_phone, user_name, membership_type, membership_code, email, interest_at, converted_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, ${alreadyConverted ? 'CURRENT_TIMESTAMP' : 'NULL'})
+       ON CONFLICT (user_phone) DO UPDATE SET
+         user_name       = COALESCE($2, aluna_prospect_followups.user_name),
+         membership_type = COALESCE($3, aluna_prospect_followups.membership_type),
+         membership_code = COALESCE($4, aluna_prospect_followups.membership_code),
+         email           = COALESCE($5, aluna_prospect_followups.email),
+         updated_at      = CURRENT_TIMESTAMP`,
+      [phone, name, membershipType || null, membershipCode || null, email || null]
+    );
+    
+    return res.json({ ok: true, phone, name, alreadyConverted: !!alreadyConverted });
+  } catch (error) {
+    console.error('[ALUNA-API] Error registrando prospecto:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
  * POST /api/aluna/prospect/:phone/convert
  * Marca un prospecto como convertido manualmente desde el dashboard
  */

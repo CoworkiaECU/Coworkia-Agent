@@ -237,7 +237,8 @@ ${membershipDetails.benefits.map(b => `• ${b}`).join('\n')}
 3. Responderé todas tus preguntas en persona
 4. Si todo está bien, procesamos el pago y ¡empiezas!
 
-💳 **Link de pago:** (Te lo envío después del tour)
+💳 **Link de pago:** https://pay.payphoneapp.com/coworkia
+🏦 **Transferencia:** Produbanco · Cta Ahorros 20059783069 · Coworkia
 
 💡 **Recuerda:** 
 • Garantía devolución dinero primeros 15 días

@@ -299,3 +299,63 @@ Antes de tocar cualquier archivo crítico:
 ---
 
 *Última actualización: 14 Mar 2026 — v930 (Fases 1-5 completas. Desvío Axel v2 pendiente: CTAs + calendario + recordatorios). Siguiente: P9 Homologación idiomas.*
+
+---
+
+## 12. Plan de vuelo — Flujo de venta de membresía (embarque 17 Mar 2026)
+
+### Estado del flujo completo Plan 20 (y todos los planes)
+
+| # | Paso | Responsable | Estado | Archivos clave |
+|---|------|-------------|--------|----------------|
+| 1 | Usuario pregunta por planes | Aluna (WA) | ✅ Funciona | `aluna.js`, `wassenger.js` |
+| 2 | Aluna presenta plan + CTA "¿Arrancamos?" | Aluna (WA) | ✅ Funciona | `aluna.js` intent detection |
+| 3 | Formulario recopila datos (nombre, email, teléfono, plan, fecha) | Aluna (WA) | ✅ Funciona | `membership-form.js` → `generic-form-handler.js` |
+| 4 | Usuario confirma con SI → Lead guardado en BD | Aluna (WA) | ✅ Funciona | `membership-confirmation.js` → `alunaRepository.js` |
+| 5 | Aluna envía resumen + **link PayPhone real** + datos transferencia Produbanco | Aluna (WA) | ✅ **CORREGIDO 17 Mar** — antes decía "te lo envío después del tour" | `membership-confirmation.js` |
+| 6 | Cliente paga → envía comprobante screenshot | Cliente | ✅ Funciona | — |
+| 7 | VisionAI valida comprobante (20 parámetros) | Sistema automático | ✅ Funciona | `membership-payment-verification.js` + `openai.js` |
+| 8 | **Gabi envía recibo financiero por email** | Gabi | ✅ Funciona | `payment-receipt-email.js` |
+| 9 | **Aluna envía email de bienvenida** con: bienvenida personalizada, número de contrato, beneficios del plan, WiFi 3 dispositivos vigencia del plan, próximos pasos | Aluna | ✅ **IMPLEMENTADO 17 Mar** | `aluna-welcome-email.js` (nuevo) |
+| 10 | **Google Calendar bloquea hot desk L-V 8:30–19:00** desde el día siguiente al pago hasta fin de mes | Sistema automático | ✅ **IMPLEMENTADO 17 Mar** (antes: TODO comentado, eventos all-day sin hora) | `google-calendar.js` → `blockMembershipCalendar()` |
+| 11 | Pipeline Aluna actualiza prospecto como "Convertido" | Sistema automático | ✅ Funciona | `alunaRepository.js` → `markAlunaProspectConverted()` |
+
+### Detalles técnicos de los cambios del 17 Mar 2026
+
+#### `src/servicios/google-calendar.js` — `blockMembershipCalendar()`
+- **Antes:** Creaba eventos all-day (`{ date: dateStr }`) — no bloqueaba horario real en Calendar, Aurora podía ver el espacio como libre
+- **Ahora:** Eventos con hora real `T08:30:00-05:00` → `T19:00:00-05:00` (America/Guayaquil), `transparency: 'opaque'`
+- **Antes:** Iteraba desde día 1 del mes, ignorando `startDate`
+- **Ahora:** Itera desde `startDate` (día siguiente al pago) hasta fin de mes → solo bloquea los días que el cliente pagó
+
+#### `src/servicios/membership-payment-verification.js` — `approveLead()`
+- **Antes:** Solo llamaba Gabi (recibo) + TODO comentado para calendar + TODO para tour
+- **Ahora:** Orquesta 4 pasos en orden: Gabi recibo → Aluna welcome email → Calendar blocking → Pipeline convertido
+- Calendar y welcome email son **fire-and-forget** (`.catch()`) para no bloquear la respuesta WA al cliente
+
+#### `src/servicios/aluna-welcome-email.js` — **NUEVO ARCHIVO**
+- Enviado por: `"Aluna - Coworkia Membresías" <noreply@coworkia.ec>`
+- CC: `coworkia.ec@gmail.com`
+- Asunto: `🎉 ¡Bienvenida a Coworkia, [Nombre]! — Tu [Plan] está activa · [CÓDIGO]`
+- Contenido: bienvenida, número de contrato destacado, tabla de plan contratado (días/horario/precio/inicio/pago), lista de beneficios, sección WiFi (red + clave + 3 dispositivos + vigencia), próximos pasos, contacto
+- Compatible con pagos mixtos (efectivo + canje)
+- Si el lead no tiene email: `console.log` warning, no falla
+
+#### Credenciales WiFi codificadas (operativas a 17 Mar 2026)
+- Red: `Coworkia-Pro`
+- Clave: `coworkia2024`
+- 3 dispositivos por membresía activa
+- Activación: presentar código de contrato en recepción
+
+#### PayPhone — URL canónica del sistema
+- `https://pay.payphoneapp.com/coworkia` (mismo link que Aurora para hot desk)
+- Cuenta ahorros Produbanco: `20059783069` · Titular: VILLOTA IZURIETA GONZALO
+
+### Pendientes del flujo de membresía (próxima fase)
+
+| ID | Pendiente | Prioridad |
+|----|-----------|-----------|
+| M1 | Pagos mixtos canje — formalizar contrato automático (documento PDF firmable) | Alta |
+| M2 | Email de recordatorio renovación D-5 (día 25): ya existe en `follow-up-service.js` — verificar que dispara correctamente | Media |
+| M3 | Página de confirmación web post-PayPhone (redirect URL para pagos con tarjeta automáticos sin comprobante WA) | Media |
+| M4 | Dashboard: registro manual de Francisco (Plan 20, $100 efectivo + $150 canje video) — pendiente número de teléfono | Baja |

@@ -396,13 +396,14 @@ export async function blockMembershipCalendar({ clientName, membershipType, star
   const calendar = await createCalendarClient();
   if (!calendar) return { success: false, error: 'Sin cliente Calendar' };
 
+  // startDate = día en que empieza la membresía (día siguiente al pago si no se especifica)
   const base = new Date(startDate);
   const year = base.getFullYear();
   const month = base.getMonth();
 
-  // Recopilar todos los días laborales (L-V) del mes
+  // Recopilar todos los días laborales (L-V) del mes a partir de startDate
   const workingDays = [];
-  for (const d = new Date(year, month, 1); d.getMonth() === month; d.setDate(d.getDate() + 1)) {
+  for (const d = new Date(year, month, base.getDate()); d.getMonth() === month; d.setDate(d.getDate() + 1)) {
     const dow = d.getDay();
     if (dow !== 0 && dow !== 6) workingDays.push(d.toISOString().slice(0, 10));
   }
@@ -419,10 +420,11 @@ export async function blockMembershipCalendar({ clientName, membershipType, star
         resource: {
           summary,
           description,
-          start: { date: dateStr },
-          end:   { date: dateStr },
-          colorId: '11',        // Tomato — visualmente destacado como bloqueado
-          transparency: 'opaque' // Aparece como OCUPADO
+          // Horario operativo Coworkia: 8:30 am → 7:00 pm Ecuador (UTC-5)
+          start: { dateTime: `${dateStr}T08:30:00-05:00`, timeZone: 'America/Guayaquil' },
+          end:   { dateTime: `${dateStr}T19:00:00-05:00`, timeZone: 'America/Guayaquil' },
+          colorId: '11',         // Tomato — visualmente destacado como bloqueado
+          transparency: 'opaque' // Aparece como OCUPADO para Aurora
         }
       });
       created++;

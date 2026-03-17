@@ -18,7 +18,8 @@ import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
 import db from '../database/postgres-adapter.js';
 import { sendPaymentReceipt, prepareReceiptData } from './payment-receipt-email.js';
 import { markAlunaProspectConverted } from '../database/alunaRepository.js';
-// import { createMembershipTourEvent } from './google-calendar.js'; // TODO: Implementar
+import { blockMembershipCalendar } from './google-calendar.js';
+import { sendAlunaWelcomeEmail } from './aluna-welcome-email.js';
 
 // Constantes de validación
 const CUENTA_COWORKIA = '20059783069';
@@ -472,28 +473,45 @@ async function approveLead(lead, payment, compositePayment = null) {
       [lead.id]
     );
     
-    // 💚 GABI: Enviar recibo profesional por email
+    // ── 1. GABI: Recibo financiero por email ─────────────────────────────────
     console.log('[PAYMENT-VERIFICATION] 💚 Gabi enviando recibo por email...');
     const receiptData = prepareReceiptData(lead, payment, compositePayment);
     const emailResult = await sendPaymentReceipt(receiptData);
-    
     if (emailResult.success) {
-      console.log('[PAYMENT-VERIFICATION] ✅ Recibo enviado por Gabi:', receiptData.receiptNumber);
+      console.log('[PAYMENT-VERIFICATION] ✅ Recibo Gabi enviado:', receiptData.receiptNumber);
     } else {
-      console.error('[PAYMENT-VERIFICATION] ⚠️ Error enviando recibo:', emailResult.error);
-      // No fallar si email falla, pero registrar el error
+      console.error('[PAYMENT-VERIFICATION] ⚠️ Recibo Gabi falló:', emailResult.error);
     }
-    
-    // TODO: Programar tour (si aplica)
-    // if (lead.membership_type !== 'Oficina Virtual') {
-    //   await createMembershipTourEvent(lead);
-    // }
-    console.log('[PAYMENT-VERIFICATION] 📅 TODO: Programar tour del espacio');
-    
-    console.log('[PAYMENT-VERIFICATION] ✅ Lead aprobado:', lead.id);
 
-    // 🌙 Marcar prospecto como convertido en el sistema de follow-up de Aluna
+    // ── 2. ALUNA: Email de bienvenida con beneficios + WiFi + contrato ────────
+    console.log('[PAYMENT-VERIFICATION] 🌙 Aluna enviando email de bienvenida...');
+    sendAlunaWelcomeEmail(lead, payment, compositePayment).catch(err =>
+      console.error('[PAYMENT-VERIFICATION] ⚠️ Welcome email falló:', err.message)
+    );
+
+    // ── 3. CALENDAR: Bloquear hot desk L-V 8:30-19:00 desde mañana ───────────
+    if (lead.membership_type !== 'Oficina Virtual') {
+      console.log('[PAYMENT-VERIFICATION] 📅 Bloqueando hot desk en Google Calendar...');
+      const membershipStart = lead.start_date
+        ? new Date(lead.start_date)
+        : (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })();
+
+      blockMembershipCalendar({
+        clientName:     lead.full_name,
+        membershipType: lead.membership_type,
+        startDate:      membershipStart.toISOString(),
+        membershipCode: lead.membership_code
+      }).then(r => {
+        console.log(`[PAYMENT-VERIFICATION] 📅 Calendar bloqueado: ${r.created}/${r.total} días — ${lead.membership_code}`);
+      }).catch(err => {
+        console.error('[PAYMENT-VERIFICATION] ⚠️ Calendar blocking falló:', err.message);
+      });
+    }
+
+    // ── 4. PIPELINE: Marcar prospecto como convertido ─────────────────────────
     markAlunaProspectConverted(lead.user_phone).catch(() => {});
+
+    console.log('[PAYMENT-VERIFICATION] ✅ Lead aprobado:', lead.id);
 
     return { 
       success: true, 

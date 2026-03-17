@@ -63,9 +63,9 @@ export async function generateWifiCode({ reservationId, userPhone, durationHours
     try {
       await databaseService.run(
         `INSERT INTO wifi_codes
-           (id, code, reservation_id, user_phone, duration_hours, valid_for_date, status, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'available', CURRENT_TIMESTAMP)`,
-        [id, code, reservationId || null, userPhone, Math.max(2, Number(durationHours)), validForDate]
+           (id, code, reservation_id, membership_code, user_phone, duration_hours, valid_for_date, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'available', CURRENT_TIMESTAMP)`,
+        [id, code, reservationId || null, null, userPhone, Math.max(2, Number(durationHours)), validForDate]
       );
 
       console.log(`[WiFi-Codes] ✅ Código generado: ${code} (${durationHours}h, fecha: ${validForDate})`);
@@ -84,6 +84,98 @@ export async function generateWifiCode({ reservationId, userPhone, durationHours
   }
 
   return { success: false, error: 'No se pudo generar un código único después de 5 intentos' };
+}
+
+// ---------------------------------------------------------------------------
+// 🏢 Generar código WiFi para membresía mensual
+// Un código por membresía — válido todo el período del contrato
+// ---------------------------------------------------------------------------
+// Horas de validez por plan (31 días = período mensual completo)
+const MEMBERSHIP_DURATION_HOURS = {
+  'Plan 10':        31 * 24,  // 744h
+  'Plan 20':        31 * 24,
+  'Plan 30':        31 * 24,
+  'Plan Full':      31 * 24,
+  'Oficina Virtual': 0        // sin acceso WiFi físico
+};
+
+/**
+ * Genera un código WiFi para una membresía mensual.
+ * No requiere reservation_id — el código está ligado al membership_code.
+ *
+ * @param {object} params
+ * @param {string}  params.membershipCode  - Código de contrato (ej: ALU-0099)
+ * @param {string}  params.userPhone       - Teléfono del miembro (WhatsApp)
+ * @param {string}  params.membershipType  - Tipo de plan (Plan 10, Plan 20, …)
+ * @param {string}  [params.startDate]     - Fecha inicio membresía 'YYYY-MM-DD'
+ * @returns {Promise<{success: boolean, code?: string, id?: string, error?: string}>}
+ */
+export async function generateMembershipWifiCode({ membershipCode, userPhone, membershipType, startDate }) {
+  if (!membershipCode || !userPhone) {
+    return { success: false, error: 'Faltan parámetros (membershipCode, userPhone)' };
+  }
+
+  const durationHours = MEMBERSHIP_DURATION_HOURS[membershipType];
+  if (!durationHours) {
+    // Oficina Virtual u otro plan sin acceso físico
+    return { success: false, error: `Plan sin acceso WiFi físico: ${membershipType}` };
+  }
+
+  // valid_for_date = fin del período (inicio + 31 días)
+  // Así el cron nocturno no expira el código hasta después del mes
+  const start = startDate ? new Date(startDate) : new Date();
+  const endDate = new Date(start);
+  endDate.setDate(endDate.getDate() + 31);
+  const validForDate = endDate.toISOString().split('T')[0];
+
+  let attempts = 0;
+  while (attempts < 5) {
+    const code = generateSingleCode();
+    const id = uuidv4();
+
+    try {
+      await databaseService.run(
+        `INSERT INTO wifi_codes
+           (id, code, reservation_id, membership_code, user_phone, duration_hours, valid_for_date, status, created_at)
+         VALUES (?, ?, NULL, ?, ?, ?, ?, 'available', CURRENT_TIMESTAMP)`,
+        [id, code, membershipCode, userPhone, durationHours, validForDate]
+      );
+
+      console.log(`[WiFi-Codes] 🏢 Código membresía generado: ${code} | ${membershipCode} | ${durationHours}h | válido hasta ${validForDate}`);
+      return { success: true, code, id, durationHours, validForDate };
+
+    } catch (err) {
+      if (err?.code === '23505' || err?.message?.includes('unique') || err?.message?.includes('UNIQUE')) {
+        attempts++;
+        continue;
+      }
+      console.error('[WiFi-Codes] ❌ Error guardando código de membresía:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: false, error: 'No se pudo generar código único después de 5 intentos' };
+}
+
+// ---------------------------------------------------------------------------
+// 🔍 Obtener código WiFi para una membresía (evita duplicados al reenviar)
+// ---------------------------------------------------------------------------
+export async function getWifiCodeForMembership(membershipCode) {
+  try {
+    const row = await databaseService.get(
+      `SELECT id, code, duration_hours, valid_for_date, status, created_at
+       FROM wifi_codes
+       WHERE membership_code = ?
+         AND status NOT IN ('cancelled', 'expired')
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [membershipCode]
+    );
+    return row || null;
+  } catch (err) {
+    console.error('[WiFi-Codes] Error buscando código por membresía:', err);
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +317,9 @@ export async function getWifiCodesStats() {
 
 export default {
   generateWifiCode,
+  generateMembershipWifiCode,
   getWifiCodeForReservation,
+  getWifiCodeForMembership,
   getPendingCodes,
   markCodesAsSynced,
   expireCodesForDate,

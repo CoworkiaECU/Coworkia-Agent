@@ -80,7 +80,7 @@ const PLAN_DETAILS = {
   }
 };
 
-function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDate, totalAmount, cashAmount, canjeAmount, canjeDescription }) {
+function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDate, totalAmount, cashAmount, canjeAmount, canjeDescription, wifiCode }) {
   const plan = PLAN_DETAILS[membershipType] || PLAN_DETAILS['Plan 20'];
 
   const formatDate = (d) => new Date(d).toLocaleDateString('es-EC', {
@@ -185,26 +185,26 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
 
       <!-- WiFi — Portal cautivo Coworkia -->
       <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:20px;margin:0 0 20px;">
-        <div style="color:#047857;font-size:16px;font-weight:700;margin-bottom:12px;">📡 Acceso a Internet — 3 Dispositivos</div>
-        <p style="color:#374151;margin:0 0 14px;font-size:14px;line-height:1.6;">Tu plan incluye acceso WiFi de alta velocidad para hasta <strong>3 dispositivos simultáneos</strong>, activo durante todo el período de tu membresía.</p>
+        <div style="color:#047857;font-size:16px;font-weight:700;margin-bottom:12px;">📡 Acceso WiFi — Portal Cautivo</div>
+        <p style="color:#374151;margin:0 0 14px;font-size:14px;line-height:1.6;">Tu membresía incluye acceso a internet en Coworkia. Cuando llegues por primera vez, el staff activa tu acceso personalmente.</p>
         <div style="background:white;border-radius:10px;padding:16px;border:1px solid #D1FAE5;">
           <table style="width:100%;font-size:14px;border-collapse:collapse;">
             <tr>
-              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Acceso</td>
+              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Sistema</td>
               <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">Portal cautivo Coworkia</td>
             </tr>
             <tr>
-              <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Dispositivos</td>
-              <td style="color:#047857;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">3 simultáneos</td>
+              <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Tu código WiFi</td>
+              <td style="color:#047857;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;font-family:monospace;font-size:16px;letter-spacing:2px;">${wifiCode ? wifiCode : '<span style="font-family:sans-serif;font-size:13px;font-weight:400;color:#6B7280;">te lo entregamos en recepción</span>'}</td>
             </tr>
             <tr>
               <td style="color:#6B7280;padding:7px 0;">Vigencia</td>
-              <td style="color:#374151;padding:7px 0;">Todo el período de tu membresía</td>
+              <td style="color:#374151;padding:7px 0;">Todo el período de tu membresía activa</td>
             </tr>
           </table>
         </div>
         <div style="background:#D1FAE5;border-radius:8px;padding:12px 14px;margin-top:12px;">
-          <p style="color:#065F46;font-size:13px;margin:0;line-height:1.6;">💡 <strong>En tu primera visita:</strong> conéctate a la red WiFi de Coworkia → el portal te pedirá un código de acceso → el staff te lo entrega en recepción con tu contrato <strong>${membershipCode}</strong>.</p>
+          <p style="color:#065F46;font-size:13px;margin:0;line-height:1.6;">💡 <strong>Cómo conectarte:</strong> abre cualquier página en tu navegador estando conectado a la red Coworkia → el portal te pide tu código → ingrésalo → ¡listo!</p>
         </div>
       </div>
 
@@ -222,7 +222,7 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
           </div>
           <div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid #F0FDF4;">
             <span style="color:#047857;font-weight:800;font-size:15px;min-width:22px;">3.</span>
-            <span style="color:#374151;font-size:14px;line-height:1.6;">Recibe tu código de portal WiFi → conectá hasta <strong style="color:#065F46;">3 dispositivos</strong></span>
+            <span style="color:#374151;font-size:14px;line-height:1.6;">Ingresa tu código WiFi en el portal cautivo → acceso a internet activado</span>
           </div>
           <div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;">
             <span style="color:#047857;font-weight:800;font-size:15px;min-width:22px;">4.</span>
@@ -273,7 +273,7 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
  * @param {Object} composite  - Pago compuesto {cashAmount, canjeAmount, canjeDescription} o null
  * @returns {Object}          - { success, messageId }
  */
-export async function sendAlunaWelcomeEmail(lead, payment, composite = null) {
+export async function sendAlunaWelcomeEmail(lead, payment, composite = null, wifiCode = null) {
   if (!lead.email) {
     console.log('[ALUNA-WELCOME] ⚠️ Lead sin email — se omite correo de bienvenida');
     return { success: false, error: 'Sin email' };
@@ -292,7 +292,8 @@ export async function sendAlunaWelcomeEmail(lead, payment, composite = null) {
     totalAmount:      composite?.totalAmount ?? payment?.amount ?? 0,
     cashAmount:       composite?.cashAmount  ?? payment?.amount ?? 0,
     canjeAmount:      composite?.canjeAmount ?? 0,
-    canjeDescription: composite?.canjeDescription ?? ''
+    canjeDescription: composite?.canjeDescription ?? '',
+    wifiCode
   });
 
   const result = await sendEmail({

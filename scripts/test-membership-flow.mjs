@@ -207,16 +207,16 @@ if (welcomeSrc.includes('benefitsHTML') && welcomeSrc.includes('plan.beneficios'
        'No se encontró la lógica de beneficios en el template');
 }
 
-// T4 — WiFi portal real (sin credenciales WPA inventadas)
+// T4 — WiFi portal real (sin datos inventados, sin '3 dispositivos')
 const wifiChecks = [
-  welcomeSrc.includes('portal cautivo') || welcomeSrc.includes('portal'),
-  welcomeSrc.includes('3 dispositivos'),
-  welcomeSrc.includes('America/Guayaquil') || welcomeSrc.includes('vigencia') || welcomeSrc.includes('Vigencia')
+  welcomeSrc.includes('portal cautivo'),
+  welcomeSrc.includes('wifiCode'),          // prop dinámica en buildWelcomeHTML
+  welcomeSrc.includes('Vigencia') || welcomeSrc.includes('vigencia')
 ];
 if (wifiChecks.every(Boolean)) {
-  ok('T4  Sección WiFi usa portal cautivo real (sin credenciales WPA inventadas)');
+  ok('T4  Sección WiFi usa portal cautivo real (sin datos inventados)');
 } else {
-  const missing = ['portal cautivo Coworkia', '3 dispositivos', 'vigencia membresía']
+  const missing = ['portal cautivo', 'wifiCode (dinámico)', 'vigencia']
     .filter((_, i) => !wifiChecks[i]);
   fail('T4  Sección WiFi usa portal cautivo real',
        `Falta: ${missing.join(', ')}`);
@@ -362,7 +362,7 @@ CHECKLIST PARA VALIDAR EN EL EMAIL:
   ✓ Plan "${MEMBERSHIP_TYPE}" con días y horario correcto
   ✓ Lista de beneficios del plan
   ✓ Pago mixto: $100 efectivo + $150 canje video redes sociales
-  ✓ Sección WiFi: portal cautivo Coworkia · 3 dispositivos · código en recepción
+  ✓ Sección WiFi: portal cautivo Coworkia · código real (wifiCode) o fallback recepción
   ✓ Remitente: "Aluna - Coworkia Membresías"
   ✓ CC a coworkia.ec@gmail.com
   ✓ Próximos pasos con código de contrato

@@ -1010,6 +1010,15 @@ class PostgresAdapter {
           WHERE status IN ('available', 'synced');
       `);
 
+      // Migración: columna membership_code para vincular códigos a membresías
+      await client.query(`
+        ALTER TABLE wifi_codes ADD COLUMN IF NOT EXISTS membership_code TEXT;
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_wifi_codes_membership ON wifi_codes(membership_code)
+          WHERE membership_code IS NOT NULL;
+      `).catch(() => {/* índice puede ya existir */});
+
       // ===================================================================
       // TABLA: Seguimiento de prospectos Aluna (sistema de follow-up 24h/3d)
       // Registra TODOS los usuarios que consultaron sobre membresías,

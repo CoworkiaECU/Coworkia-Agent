@@ -20,6 +20,7 @@ import { sendPaymentReceipt, prepareReceiptData } from './payment-receipt-email.
 import { markAlunaProspectConverted } from '../database/alunaRepository.js';
 import { blockMembershipCalendar } from './google-calendar.js';
 import { sendAlunaWelcomeEmail } from './aluna-welcome-email.js';
+import { generateMembershipWifiCode } from './wifi-codes-service.js';
 
 // Constantes de validación
 const CUENTA_COWORKIA = '20059783069';
@@ -485,7 +486,26 @@ async function approveLead(lead, payment, compositePayment = null) {
 
     // ── 2. ALUNA: Email de bienvenida con beneficios + WiFi + contrato ────────
     console.log('[PAYMENT-VERIFICATION] 🌙 Aluna enviando email de bienvenida...');
-    sendAlunaWelcomeEmail(lead, payment, compositePayment).catch(err =>
+
+    // Generar código WiFi real para la membresía (excepto Oficina Virtual)
+    let wifiCode = null;
+    if (lead.membership_type !== 'Oficina Virtual') {
+      const wifiResult = await generateMembershipWifiCode({
+        membershipCode: lead.membership_code,
+        userPhone:      lead.user_phone,
+        membershipType: lead.membership_type,
+        startDate:      lead.start_date
+      }).catch(err => {
+        console.error('[PAYMENT-VERIFICATION] ⚠️ WiFi code generation falló:', err.message);
+        return null;
+      });
+      if (wifiResult?.success) {
+        wifiCode = wifiResult.code;
+        console.log(`[PAYMENT-VERIFICATION] 📡 Código WiFi generado: ${wifiCode}`);
+      }
+    }
+
+    sendAlunaWelcomeEmail(lead, payment, compositePayment, wifiCode).catch(err =>
       console.error('[PAYMENT-VERIFICATION] ⚠️ Welcome email falló:', err.message)
     );
 

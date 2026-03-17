@@ -64,12 +64,22 @@ export const AURORA = {
       es: {
         hotDesk: {
           conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• 2 horas: $10
+• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)
+💡 Descuento por tandas el mismo día:
+  1ra tanda (2h): $10.00
+  2da tanda (2h): $8.50 (-15%)
+  3ra tanda (2h): $7.22 (-15%)
+  → 6h continuas = $25.72`,
           sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• 2 horas: $10
-• WiFi + café ☕`
+• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
+• WiFi + café ☕
+💡 Descuento por tandas el mismo día:
+  1ra tanda (2h): $10.00
+  2da tanda (2h): $8.50 (-15%)
+  3ra tanda (2h): $7.22 (-15%)
+  → 6h continuas = $25.72`
         },
         salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
 • 2 horas: $29
@@ -142,12 +152,22 @@ export const AURORA = {
   serviciosInfo: {
     hotDesk: {
       conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• 2 horas: $10
+• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)
+💡 Descuento por tandas el mismo día:
+  1ra tanda (2h): $10.00
+  2da tanda (2h): $8.50 (-15%)
+  3ra tanda (2h): $7.22 (-15%)
+  → 6h continuas = $25.72`,
       sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• 2 horas: $10
-• WiFi + café ☕`
+• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
+• WiFi + café ☕
+💡 Descuento por tandas el mismo día:
+  1ra tanda (2h): $10.00
+  2da tanda (2h): $8.50 (-15%)
+  3ra tanda (2h): $7.22 (-15%)
+  → 6h continuas = $25.72`
     },
     salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
 • 2 horas: $29
@@ -457,6 +477,20 @@ ${freeTrialUsed ? this.serviciosInfo.hotDesk.sinPrimeraVisita : this.serviciosIn
 ${this.serviciosInfo.salaReuniones}
 
 ${this.serviciosInfo.ubicacion}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+💡 HOT DESK — TANDAS Y MÍNIMO
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ REGLA IMPORTANTE: El período mínimo es 2 horas — NO existe tarifa por 1 hora
+
+Si el usuario pregunta por "1 hora", "una hora", "hora suelta" o precio por hora:
+→ Explícale amablemente que el mínimo son 2 horas ($10)
+→ Si quiere quedarse más, ofrece el descuento por tandas del mismo día:
+   • 1ra tanda (2h): $10.00
+   • 2da tanda (2h): $8.50 (15% dto.)
+   • 3ra tanda (2h): $7.22 (15% dto. adicional)
+   📊 6 horas continuas = $25.72
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ REGLAS CRÍTICAS

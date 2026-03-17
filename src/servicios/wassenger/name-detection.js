@@ -19,7 +19,8 @@ export function cleanWhatsAppName(whatsappName) {
   const businessKeywords = [
     'whatsapp business', 'business', 'empresa', 'company', 
     'servicio', 'service', 'oficial', 'official', '\\+593', '\\+1',
-    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención'
+    'contacto', 'contact', 'ventas', 'sales', 'info', 'atención',
+    'coworkia', 'coworking'
   ];
   
   for (const keyword of businessKeywords) {

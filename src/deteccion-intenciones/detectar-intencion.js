@@ -31,7 +31,11 @@ const ALUNA_KEYWORDS = [
 const AURORA_KEYWORDS = [
   'hot desk', 'day pass', 'día gratis', 'dia gratis',
   'reserva', 'reservar', 'sala', 'reunión', 'reunion',
-  'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone'
+  'pagar', 'pago', 'transferencia', 'tarjeta', 'payphone',
+  // Sinónimos de Hot Desk — evitar que vayan a Aluna por error (A3)
+  'espacio individual', 'espacio de trabajo', 'puesto individual',
+  'puesto de trabajo', 'espacio compartido', 'escritorio compartido',
+  'escritorio individual', 'lugar de trabajo', 'sitio de trabajo'
 ];
 
 // Keywords Paula: Requiere PROPERTY keywords (obligatorio) + LOCATION opcional

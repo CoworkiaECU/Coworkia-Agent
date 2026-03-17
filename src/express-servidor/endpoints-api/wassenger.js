@@ -102,7 +102,7 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
    de procesar, extendiendo el timer con cada mensaje nuevo.
 ───────────────────────────────────────────────────────────── */
 const pendingWebhooks = new Map(); // userId → { timer, handlers: [], count }
-const DEBOUNCE_WINDOW_MS = 1500; // 1.5s: acumula ráfagas de mensajes separados
+const DEBOUNCE_WINDOW_MS = 8000; // 8s: acumula ráfagas de mensajes separados
 
 /**
  * Agrupa webhooks del mismo usuario que lleguen en ráfaga.
@@ -2496,7 +2496,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       const targetAgent = resultado.metadata.targetAgent;
       const fromAgent = originalFromAgent; // ← Usar original, NO el actualizado
       const userLanguage = profile.preferredLanguage || 'es';
-      const userName = profile.name || profile.whatsappDisplayName || 'amigo';
+      const userName = profile.name || profile.whatsappDisplayName || '';
 
       // 🎯 V833/V834 FASE 5: Para cualquier @mention puro (sin query), usar
       // el último mensaje con contenido real como contexto del handoff

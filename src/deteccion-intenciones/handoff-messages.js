@@ -127,7 +127,7 @@ export function getAuroraExitMessage(toAgent, userName, userLanguage = 'es', use
  * @param {string|null} userContext - Último mensaje del usuario (para personalizar)
  * @returns {string} Mensaje de entrada
  */
-export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLanguage = 'es', isReturning = false, userContext = null) {
+export function getEntryMessage(toAgent, fromAgent, userName = '', userLanguage = 'es', isReturning = false, userContext = null) {
   const info = AGENT_INFO[toAgent] || AGENT_INFO.AURORA;
   const lang = userLanguage || 'es';
   
@@ -152,7 +152,6 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
     ? (lang === 'es' ? `Vi que preguntas por *"${userContext.substring(0, 60)}"* — ` : `I see you asked about *"${userContext.substring(0, 60)}"* — `)
     : '';
   const replacements = {
-    '{userName}': userName,
     '{emoji}': info.emoji,
     '{toAgent}': info.name,
     '{toAgentHandle}': toAgent?.toLowerCase() || '',
@@ -162,8 +161,8 @@ export function getEntryMessage(toAgent, fromAgent, userName = 'amigo', userLang
     '{contextLine}': contextLine
   };
   
-  // Aplicar reemplazos
-  let message = text;
+  // Aplicar reemplazos: nombre primero (manejo especial para nombre vacío)
+  let message = text.replace(/ \{userName\}|\{userName\}/g, userName ? ` ${userName}` : '');
   for (const [key, value] of Object.entries(replacements)) {
     message = message.replace(new RegExp(key, 'g'), value);
   }
@@ -208,12 +207,12 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es',
   const topic = topicLine[userLanguage] || topicLine.es;
 
   const templates = {
-    es: `¡Bienvenido de vuelta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Soy Aurora.\n\n${topic}\n\n¿Continuamos con eso o te ayudo con algo más?`,
-    en: `Welcome back${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ I'm Aurora.\n\n${topic}\n\nShall we continue with that, or can I help you with something else?`,
-    fr: `Bon retour${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Je suis Aurora.\n\n${topic}\n\nContinuons avec ça, ou puis-je vous aider avec autre chose?`,
-    it: `Bentornato${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sono Aurora.\n\n${topic}\n\nContinuiamo con quello, o posso aiutarti con qualcos'altro?`,
-    pt: `Bem-vindo de volta${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Sou Aurora.\n\n${topic}\n\nContinuamos com isso, ou posso te ajudar com mais alguma coisa?`,
-    qu: `Allinllachu kutimuwarqanki${userName !== 'amigo' ? `, ${userName}` : ''}! ✨ Ñuqa kani Aurora.\n\n${topic}\n\nChaywanchu katisun, utaq huk imapichus yanapasqayki?`
+    es: `¡Bienvenido de vuelta${userName ? `, ${userName}` : ''}! ✨ Soy Aurora.\n\n${topic}\n\n¿Continuamos con eso o te ayudo con algo más?`,
+    en: `Welcome back${userName ? `, ${userName}` : ''}! ✨ I'm Aurora.\n\n${topic}\n\nShall we continue with that, or can I help you with something else?`,
+    fr: `Bon retour${userName ? `, ${userName}` : ''}! ✨ Je suis Aurora.\n\n${topic}\n\nContinuons avec ça, ou puis-je vous aider avec autre chose?`,
+    it: `Bentornato${userName ? `, ${userName}` : ''}! ✨ Sono Aurora.\n\n${topic}\n\nContinuiamo con quello, o posso aiutarti con qualcos'altro?`,
+    pt: `Bem-vindo de volta${userName ? `, ${userName}` : ''}! ✨ Sou Aurora.\n\n${topic}\n\nContinuamos com isso, ou posso te ajudar com mais alguma coisa?`,
+    qu: `Allinllachu kutimuwarqanki${userName ? `, ${userName}` : ''}! ✨ Ñuqa kani Aurora.\n\n${topic}\n\nChaywanchu katisun, utaq huk imapichus yanapasqayki?`
   };
 
   return templates[userLanguage] || templates.es;
@@ -230,7 +229,7 @@ export function getAuroraReturnMessage(fromAgent, userName, userLanguage = 'es',
  * @param {boolean} isReturning - Si usuario ya estuvo con toAgent antes
  * @returns {{ despedida: null, entrada: string }} Mensajes de handoff
  */
-export function getHandoffMessages(fromAgent, toAgent, userName = 'amigo', userLanguage = 'es', isReturning = false, userContext = null) {
+export function getHandoffMessages(fromAgent, toAgent, userName = '', userLanguage = 'es', isReturning = false, userContext = null) {
   let entryMessage;
   let exitMessage = null;
   

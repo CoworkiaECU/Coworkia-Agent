@@ -11,7 +11,7 @@
 - **Sin tecnicismos en el plan.** Lenguaje humano. Código solo tras aprobación.
 - **No toques lo que funciona.** Nada de refactorizar "de paso".
 - **"verde nena" = gas.** Sin esa frase, solo analizar y proponer.
-- **No auditar sin que lo pida.** Auditorías y revisiones completas solo cuando el usuario las solicite explícitamente.- **Plan de vuelo siempre al día.** Actualizar `planes-de-vuelo/plan-vuelo-14mar.md` y `reglas_multiagente.md` al cerrar cada fase o desvío.
+- **No auditar sin que lo pida.** Auditorías y revisiones completas solo cuando el usuario las solicite explícitamente.- **Plan de vuelo siempre al día.** Actualizar `planes-de-vuelo/plan-vuelo-15mar.md` y `reglas_multiagente.md` al cerrar cada fase o desvío.
 - **Resumen del próximo tema al cerrar.** Cuando se complete una tarea grande, agregar un bloque “🔮 LO QUE VIENE DESPUÉS” en el plan para evitar perder contexto en la siguiente sesión.
 - **Desvios documentados.** Cualquier imprevisto que interrumpa el plan → checkpoint en el plan de vuelo con: resultado de pruebas, bugs encontrados, mejoras identificadas.
 ---

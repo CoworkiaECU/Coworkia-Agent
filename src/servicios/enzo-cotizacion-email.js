@@ -16,7 +16,6 @@
 
 import { complete } from '../servicios-ia/openai.js';
 import { generateEnzoEmailHTML } from './generic-email-templates.js';
-import { generateEnzoBriefContent, renderEnzoBriefHTML } from './enzo-brief-generator.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { conocimientoEnzo } from '../deteccion-intenciones/enzo-knowledge.js';
 
@@ -43,31 +42,30 @@ export function isEnzoBossQuoteCommand(mensaje) {
  * y generar la propuesta personalizada completa.
  */
 async function procesarConOpenAI(mensajeJefe) {
-  const systemPrompt = `Eres Enzo, Director de MarketingLab Ecuador. Experto en IA aplicada a negocios, marketing digital y automatización.
+  const systemPrompt = `Eres Enzo, Director de MarketingLab Ecuador. Experto en marketing digital, branding, IA aplicada a negocios y automatización.
 
 Recibes un mensaje del CEO quien está presencialmente con un cliente potencial y te dicta todos los datos.
 Tu tarea: procesar ese mensaje y devolver un JSON con la propuesta lista.
 
-GUÍA DE PRECIOS ECUADOR (mercado realista para startups/PYMES):
-- Agentes IA simples: $800-$1,500 USD (FAQ, derivación básica)
-- Agentes IA intermedios: $1,800-$3,200 USD (formularios, CRM, integraciones)
-- Agentes IA avanzados: $3,500-$5,500 USD (Vision AI, análisis documentos, WhatsApp)
-- Mantenimiento mensual: $120-$280/mes según complejidad (1er mes GRATIS)
-- Descuento por temporada: 15-25% disponible para cierre rápido
+SERVICIOS MARKETINGLAB — elige el más adecuado según lo que el cliente necesita:
+- Agentes IA WhatsApp: FAQ, ventas, reservas, Vision AI ($800–$5,500 USD)
+- Identidad visual / Branding / Manual de marca: estilo, colores, tipografía, guías ($800–$2,000 USD)
+- Marketing digital / Estrategia: ads, contenido, posicionamiento ($600–$2,500 USD)
+- Automatización de procesos: flujos, CRM, integraciones ($1,200–$3,500 USD)
+- Sitio web + SEO: diseño + posicionamiento ($700–$2,000 USD)
+- Consultoría estratégica: análisis, roadmap, mentoring ($500–$1,500 USD)
 
-REGLAS para elegir nivel:
-- "básico/preguntas frecuentes/FAQ/simple/chatbot" → rango bajo-medio
-- "ventas/CRM/formularios/membresías/agendamiento/reservas" → rango medio
-- "fotos/imágenes/vision/colisiones/documentos/pagos/análisis visual" → rango medio-alto
-- Si no especifica → rango medio (más vendible)
+PRECIOS — decide basándote en complejidad, tamaño de empresa y valor que genera.
+Mantenimiento mensual: $120–$280/mes según complejidad (1er mes GRATIS si aplica).
+Descuento por temporada: 15–25% disponible para cierre rápido.
 
-DEBES decidir el precio específico basándote en:
-1. Complejidad técnica de lo que necesitan
-2. Tamaño/presupuesto aparente de la empresa
-3. Urgencia del proyecto
-4. Valor que generará para su negocio
-
-Sé realista para el mercado ecuatoriano. No sobrevaloramos.
+SERVICIOS QUE OFRECEMOS (usa la categoría más adecuada):
+- Agentes IA WhatsApp: $800-$5,500 USD según complejidad
+- Marketing digital / Estrategia: $600-$2,500 USD
+- Identidad visual / Branding / Manual de marca: $800-$2,000 USD
+- Automatización de procesos: $1,200-$3,500 USD
+- Sitio web + SEO: $700-$2,000 USD
+- Consultoría estratégica: $500-$1,500 USD
 
 RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
 {
@@ -78,15 +76,26 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   "sector": "sector del negocio detectado",
   "necesidad_raw": "frase exacta de lo que necesitan",
   "nivel_agente": "basico|intermedio|avanzado",
+  "project_title": "título del servicio propuesto, específico (ej: 'Manual de Marca', 'Agente IA Profesional', 'Estrategia Digital 360°')",
+  "project_subtitle": "subtítulo breve que describe el beneficio clave — 1 línea",
   "precio_desarrollo": 2800,
   "precio_con_descuento": 2380,
   "aplica_descuento": true,
   "porcentaje_descuento": 15,
   "razon_descuento": "Descuento por temporada",
   "mantenimiento_mensual": 180,
-  "dolor_principal": "problema clave que resuelve este agente para su negocio",
+  "dolor_principal": "problema clave que resuelve este servicio para su negocio",
   "roi_estimado": "texto corto de ROI realista para su negocio en Ecuador",
   "casos_uso": ["caso 1 específico para su sector", "caso 2", "caso 3"],
+  "deliverables": [
+    "Entregable 1 — específico para lo que necesitan (no genérico)",
+    "Entregable 2",
+    "Entregable 3",
+    "Entregable 4",
+    "Entregable 5",
+    "Entregable 6",
+    "Garantía 15 días — si no cumple expectativas, devolvemos"
+  ],
   "intro_personalizada": "párrafo de 3-4 líneas de apertura personalizada para este cliente, convincente, que conecte con su sector y necesidad específica",
   "propuesta_tecnica": "descripción técnica de qué recibirán exactamente, 4-5 líneas, detallada y vendedora",
   "cierre_emocional": "frase de cierre poderosa, 2-3 líneas, conecta con su sector"
@@ -95,7 +104,7 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   const raw = await complete(mensajeJefe, {
     system: systemPrompt,
     temperature: 0.4,
-    max_tokens: 900,
+    max_tokens: 1400,
     model: 'gpt-4o',
   });
 
@@ -126,42 +135,14 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
     return { success: false, error: 'No se pudo extraer email/datos del mensaje' };
   }
 
-  const NIVEL_LABEL = {
-    basico: 'Agente IA Esencial', intermedio: 'Agente IA Profesional', avanzado: 'Agente IA Premium',
-  };
-
   console.log(`[ENZO-COTI] 📧 Enviando propuesta → ${datos.empresa} (${datos.email})`);
 
-  // 2. Generar brief competitivo IA (best-effort)
-  const briefData = await generateEnzoBriefContent({
-    description: datos.necesidad_raw,
-    companyName: datos.empresa,
-    projectType:  NIVEL_LABEL[datos.nivel_agente] || datos.nivel_agente,
-    sector:       datos.sector,
-  });
-  const briefHTML = renderEnzoBriefHTML(briefData);
-  if (briefHTML) {
-    console.log('[ENZO-COTI] ✅ Brief competitivo generado para propuesta boss-command');
-  }
+  // 2. Construir HTML con template de propuesta (precios dinámicos por proyecto)
+  const html = generateEnzoEmailHTML({ ...datos, quoteCode }, { type: 'proposal' });
 
-  // 3. Construir HTML con template cliente aprobado
-  const html = generateEnzoEmailHTML({
-    userName:     datos.contacto || datos.empresa,
-    projectType:  NIVEL_LABEL[datos.nivel_agente] || 'Agente IA Profesional',
-    companyName:  datos.empresa,
-    email:        datos.email,
-    phone:        datos.telefono || '',
-    budget:       datos.aplica_descuento
-                    ? `$${datos.precio_con_descuento.toLocaleString()} USD (antes $${datos.precio_desarrollo.toLocaleString()})`
-                    : `$${datos.precio_desarrollo.toLocaleString()} USD`,
-    urgency:      '',
-    description:  datos.necesidad_raw,
-    leadId:       quoteCode,
-    briefHTML,
-  }, { type: 'confirmation' });
-
-  const codeLabel = quoteCode ? `${quoteCode} — ` : '';
-  const subject   = `Cotización 🚀 ${codeLabel}${NIVEL_LABEL[datos.nivel_agente] || 'Propuesta IA'} · ${datos.empresa} | Enzo - MarketingLab`;
+  const titleLabel = datos.project_title || 'Propuesta Personalizada';
+  const codeLabel  = quoteCode ? `${quoteCode} — ` : '';
+  const subject    = `Cotización 🚀 ${codeLabel}${titleLabel} · ${datos.empresa} | Enzo - MarketingLab`;
 
   // 4. Enviar
   const result = await sendEmail({

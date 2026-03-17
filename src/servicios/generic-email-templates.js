@@ -642,7 +642,7 @@ function _enzoProposalHTML(d) {
   });
 
   const waLink = `https://wa.me/${d.waNumber || '593994837117'}?text=${encodeURIComponent(
-    `Hola Enzo! Soy ${d.contacto} de ${d.empresa}. Quiero avanzar con la propuesta de agente IA que me enviaron.`
+    `Hola Enzo! Soy ${d.contacto || 'el equipo'} de ${d.empresa}. Quiero avanzar con la propuesta que me enviaron.`
   )}`;
 
   const nivelLabel = {
@@ -651,7 +651,10 @@ function _enzoProposalHTML(d) {
     avanzado:  { txt: 'Agente IA Premium',     sub: 'Analiza fotos/documentos e integra con sistemas externos' },
   }[d.nivel_agente] || { txt: 'Agente IA Profesional', sub: 'Captura leads, califica clientes y automatiza ventas' };
 
-  const incluyeItems = [
+  // project_title viene de OpenAI — es el título real del servicio cotizado
+  const projectTitleFinal = d.project_title || nivelLabel.txt;
+
+  const defaultDeliverables = [
     'Análisis y diseño de personalidad del agente',
     'Integración con WhatsApp Business',
     'Entrenamiento inicial con casos de uso de su negocio',
@@ -660,7 +663,9 @@ function _enzoProposalHTML(d) {
     'Capacitación al equipo (2 horas)',
     'Primer mes de mantenimiento GRATIS',
     'Garantía 15 días — si no cumple expectativas, devolvemos',
-  ].map(i => `
+  ];
+
+  const incluyeItems = (d.deliverables || defaultDeliverables).map(i => `
     <li style="padding:9px 0;display:flex;gap:11px;align-items:baseline;border-bottom:1px solid #F3F4F6;font-size:14px;color:#374151;line-height:1.55;">
       <span style="color:#00C2A0;font-weight:700;flex-shrink:0;">✓</span>${i}
     </li>`).join('');
@@ -736,7 +741,7 @@ function _enzoProposalHTML(d) {
         <div style="background:linear-gradient(135deg,#00C2A0,#00A08A);width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🤖</div>
         <div>
           <div style="color:#9CA3AF;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Solución diseñada para ${d.empresa}</div>
-          <div style="color:#0D1B2A;font-size:22px;font-weight:800;margin-top:4px;">${nivelLabel.txt}</div>
+          <div style="color:#0D1B2A;font-size:22px;font-weight:800;margin-top:4px;">${projectTitleFinal}</div>
         </div>
       </div>
       <p style="color:#374151;font-size:15px;line-height:1.75;margin:0 0 24px 0;">${d.propuesta_tecnica}</p>

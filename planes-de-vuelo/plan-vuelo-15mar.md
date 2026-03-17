@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 15 Marzo 2026
 > Guía maestra diaria. Auditada y actualizada cada sesión.
-> **Última actualización:** 16 Mar 2026 — `802f775` · **v951 en Heroku** — Aluna ✅ Enzo ✅ Arquitectura HTML auditada ✅
+> **Última actualización:** 16 Mar 2026 — `e11aeaf` · **v951+ en Heroku** — Aluna ✅ Enzo pricing limpio ✅ Preview "3 Actos" con ecosistema completo ✅
 
 ---
 
@@ -151,6 +151,7 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 | noche | `3f61eab` | Intento fix boss-command WELLFEST: añade `project_title`+`deliverables` a OpenAI JSON, cambia a `type:'proposal'` → sigue usando template incorrecto (no deployado aún a Heroku) |
 | noche | `802f775` | **FIX DEFINITIVO**: elimina `_enzoProposalHTML` (229 líneas hardcodeadas), elimina rama `type==='proposal'`, crea `_renderBossQuoteBriefHTML()` que construye HTML dinámico desde OpenAI data, pasa como `briefHTML` al template único `generateEnzoEmailHTML`. Secciones estáticas envueltas en `${!briefHTML ? ... : ''}`. Audit completo: 7/7 agentes con arquitectura justificada. Regla `0.2` escrita en `reglas_multiagente.md`. |
 | noche | `f4f7f31` | Precio limpio: elimina descuento artificial / precio tachado / badge / footer amarillo / "Garantía 15 días". OpenAI calcula precio real ecuatoriano sin rangos fijos. |
+| noche | `e11aeaf` | Preview "3 actos" completa: `public/enzo-propuesta-preview.html` — header PNG + tarjeta oscura + 3 actos + **8 tarjetas ecosistema SVG** con WA deep links + footer real Coworkia. Lista para aprobación visual antes de codificar en producción. |
 
 ---
 
@@ -171,4 +172,15 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 - Tone change: pensar como copywriter sénior de agencia, no como asistente corporativo
 - Entregables: cada uno con contexto del *por qué*, no solo el *qué*
 
-**Estado:** Preview en `public/preview-enzo-g.html` — aprobado concepto visual, pendiente aprobación final antes de reemplazar `_renderBossQuoteBriefHTML()` en `enzo-cotizacion-email.js` y commit.
+**Estado preview:** `e11aeaf` en Heroku — `public/enzo-propuesta-preview.html`
+- ✅ Header real: logo PNG MarketingLab + tarjeta oscura cliente/proyecto/ref
+- ✅ Cuerpo 3 actos: diagnóstico (amber) + construcción (entregables + dark box) + inversión
+- ✅ **Ecosistema 8 agentes completo:** Aurora, Adriana, Angela, Axel, Aluna, Gabi, Paula, Custom — tarjetas SVG + WA deep links + 2 columnas
+- ✅ Footer real: © 2026 Coworkia Ecuador · Whymper 403 · coworkia.ec@gmail.com · +593 99 483 7117
+
+**Próximos pasos (al volver):**
+1. ⏳ Aprobar preview final en browser → dar luz verde
+2. ⏳ Añadir campo `titular` al prompt OpenAI en `procesarConOpenAI()` de `enzo-cotizacion-email.js`
+3. ⏳ Reemplazar `_renderBossQuoteBriefHTML()` con el nuevo diseño 3 actos aprobado
+4. ⏳ Deploy producción y probar con boss-command real
+5. ⏳ P7.4 Gabi

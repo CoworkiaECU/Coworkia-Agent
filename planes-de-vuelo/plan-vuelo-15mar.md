@@ -150,3 +150,25 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 | noche | `9a339b9` | **P7.3 + P8.1 Enzo**: `enzo-consulting-flow.js` — flujo consultivo WA completo: decode→qualify→confirm→plan. OpenAI co-construye el brief con el cliente antes de generar el plan estratégico (idea central + objetivos SMART + plan 4 semanas + KPIs + email). Hook en `wassenger.js` para agente ENZO. |
 | noche | `3f61eab` | Intento fix boss-command WELLFEST: añade `project_title`+`deliverables` a OpenAI JSON, cambia a `type:'proposal'` → sigue usando template incorrecto (no deployado aún a Heroku) |
 | noche | `802f775` | **FIX DEFINITIVO**: elimina `_enzoProposalHTML` (229 líneas hardcodeadas), elimina rama `type==='proposal'`, crea `_renderBossQuoteBriefHTML()` que construye HTML dinámico desde OpenAI data, pasa como `briefHTML` al template único `generateEnzoEmailHTML`. Secciones estáticas envueltas en `${!briefHTML ? ... : ''}`. Audit completo: 7/7 agentes con arquitectura justificada. Regla `0.2` escrita en `reglas_multiagente.md`. |
+| noche | `f4f7f31` | Precio limpio: elimina descuento artificial / precio tachado / badge / footer amarillo / "Garantía 15 días". OpenAI calcula precio real ecuatoriano sin rangos fijos. |
+
+---
+
+## 🔮 RETOMAR AQUÍ — Rediseño briefHTML de Enzo (pendiente de aprobación)
+
+**Problema identificado:** El `_renderBossQuoteBriefHTML()` actual genera cards/grids/bullets numerados — se ve como landing page SaaS, no como propuesta de agencia boutique. El cliente quiere algo persuasivo, narrativo, con peso de copywriter de agencia.
+
+**Concepto aprobado: Opción G — "3 Actos"**
+- `01 El diagnóstico` — párrafo narrativo + caja amber con la consecuencia real
+- `02 Lo que construimos` — párrafo + entregables detallados con *por qué* + dark box con resultado real
+- `03 La inversión` — precio único enorme, 50/50, deadline
+- CTA conversacional: `"¿Le damos luz verde?"` + botón `"Arrancar con [empresa] →"`
+- Header: logo real PNG de MarketingLab (no texto) + tarjeta oscura con nombre cliente/proyecto/ref
+- Footer: logo pequeño blanco + ecosistema agentes + datos reales (igual que el template actual)
+
+**Mejora pendiente al prompt de OpenAI:**
+- Añadir campo `titular` — frase de golpe de apertura generada por OpenAI (estilo: *"WELLFEST no necesita un logo. Necesita una razón para que la gente vuelva."*)
+- Tone change: pensar como copywriter sénior de agencia, no como asistente corporativo
+- Entregables: cada uno con contexto del *por qué*, no solo el *qué*
+
+**Estado:** Preview en `public/preview-enzo-g.html` — aprobado concepto visual, pendiente aprobación final antes de reemplazar `_renderBossQuoteBriefHTML()` en `enzo-cotizacion-email.js` y commit.

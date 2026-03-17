@@ -191,12 +191,12 @@ const origSendEmail = emailModule.sendEmail;
 
 const welcomeSrc = readFileSync(`${ROOT}/src/servicios/aluna-welcome-email.js`, 'utf8');
 
-// T2 — Número de contrato prominente
-if (welcomeSrc.includes('membershipCode') && welcomeSrc.includes('font-family:\'Courier New\'')) {
-  ok('T2  HTML incluye número de contrato en tipografía monospace destacada');
+// T2 — Número de contrato prominente (verde, letter-spacing grande — template aprobado)
+if (welcomeSrc.includes('membershipCode') && welcomeSrc.includes('letter-spacing:4px') && welcomeSrc.includes('#065F46')) {
+  ok('T2  HTML incluye número de contrato destacado con paleta verde aprobada');
 } else {
-  fail('T2  HTML incluye número de contrato en tipografía monospace destacada',
-       'No se encontró el bloque de contrato monospace en el template');
+  fail('T2  HTML incluye número de contrato destacado con paleta verde aprobada',
+       'No se encontró el bloque de contrato con letter-spacing:4px y color #065F46');
 }
 
 // T3 — Beneficios del plan

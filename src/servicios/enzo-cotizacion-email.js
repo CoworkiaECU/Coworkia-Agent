@@ -47,6 +47,8 @@ async function procesarConOpenAI(mensajeJefe) {
 Recibes un mensaje del CEO quien está presencialmente con un cliente potencial y te dicta todos los datos.
 Tu tarea: procesar ese mensaje y devolver un JSON con la propuesta lista.
 
+Escribe como copywriter sénior de agencia de publicidad boutique en Ecuador. Narrativo, directo, sin corporativismos. Cada frase tiene intención.
+
 SERVICIOS MARKETINGLAB — elige el más adecuado según lo que el cliente necesita:
 - Agentes IA WhatsApp: FAQ, ventas, reservas, Vision AI
 - Identidad visual / Branding / Manual de marca: estilo, colores, tipografía, guías
@@ -83,15 +85,17 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
     "Entregable 4",
     "Entregable 5"
   ],
+  "titular": "frase de apertura de golpe — máximo 2 líneas, sin comillas, copywriter senior, específica para este cliente y sector (ej: WELLFEST no necesita un logo. Necesita una razón para que la gente vuelva.)",
+  "diagnostico": "párrafo narrativo de 2-3 frases para sección diagnóstico — qué está pasando sin este servicio, qué consecuencia concreta tiene para este negocio en Ecuador, tono directo y específico",
   "intro_personalizada": "párrafo de 3-4 líneas de apertura personalizada para este cliente, convincente, que conecte con su sector y necesidad específica",
-  "propuesta_tecnica": "descripción técnica de qué recibirán exactamente, 4-5 líneas, detallada y vendedora",
+  "propuesta_tecnica": "descripción narrativa de qué recibirán exactamente y por qué importa, 3-4 líneas, vendedora pero sin tecnicismos",
   "cierre_emocional": "frase de cierre poderosa, 2-3 líneas, conecta con su sector"
 }`;
 
   const raw = await complete(mensajeJefe, {
     system: systemPrompt,
     temperature: 0.4,
-    max_tokens: 1400,
+    max_tokens: 1800,
     model: 'gpt-4o',
   });
 
@@ -109,11 +113,17 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
 
 /**
  * Convierte los datos enriquecidos por OpenAI en el bloque briefHTML
- * que se inyecta en el template único de Enzo (generateEnzoEmailHTML confirmation).
- * Incluye: sector/necesidad, intro, solución+deliverables, casos, ROI, precio, cierre.
+ * que se inyecta en el template único de Enzo (generateEnzoEmailHTML).
+ * Diseño: 3 actos — diagnóstico → construcción → inversión + CTA.
  */
-function _renderBossQuoteBriefHTML(d) {
-  const precio = d.precio_desarrollo;
+function _renderBossQuoteBriefHTML(d, quoteCode = '') {
+  const precio = d.precio_desarrollo || 0;
+  const mitad  = Math.round(precio / 2);
+
+  const ctaText = encodeURIComponent(
+    `@enzo quiero arrancar con ${d.project_title || 'el proyecto'}${quoteCode ? ` (${quoteCode})` : ''}`
+  );
+  const waLink = `https://wa.me/${ADMIN_WA}?text=${ctaText}`;
 
   const defaultDeliverables = [
     'Desarrollo personalizado para su negocio',
@@ -122,79 +132,82 @@ function _renderBossQuoteBriefHTML(d) {
   ];
 
   const deliverableItems = (d.deliverables || defaultDeliverables)
-    .map(item => `
-      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:14px;color:#374151;line-height:1.5;align-items:baseline;">
-        <span style="color:#0D9488;font-weight:700;flex-shrink:0;">✓</span>${item}
-      </div>`)
+    .map(item => {
+      const sep  = item.indexOf(' — ');
+      const name = sep > -1 ? item.slice(0, sep) : item;
+      const why  = sep > -1 ? item.slice(sep + 3) : '';
+      return `<div style="font-size:13px;color:#1E293B;padding:8px 0;border-bottom:1px solid #F1F5F9;line-height:1.55;"><span style="color:#2DD4BF;font-weight:800;margin-right:10px;">✓</span><strong>${name}</strong>${why ? ` — <span style="color:#6B7280;">${why}</span>` : ''}</div>`;
+    })
     .join('');
 
-  const casosItems = (d.casos_uso || [])
-    .map((c, i) => `
-      <div style="display:flex;gap:12px;padding:10px 0;${i > 0 ? 'border-top:1px solid #F3F4F6;' : ''}">
-        <div style="width:26px;height:26px;background:linear-gradient(135deg,#0D9488,#2DD4BF);border-radius:7px;flex-shrink:0;font-size:12px;font-weight:800;color:white;display:flex;align-items:center;justify-content:center;">${i + 1}</div>
-        <div style="font-size:13px;color:#374151;line-height:1.6;padding-top:3px;">${c}</div>
-      </div>`)
-    .join('');
+  // Fallback para backward-compat si llega request sin titular/diagnostico
+  const titular    = d.titular    || `${d.empresa} merece una estrategia diseñada a su medida.`;
+  const diagnostico = d.diagnostico || d.intro_personalizada || '';
 
   return `
-    <!-- Sector + Necesidad -->
-    <div style="display:flex;gap:12px;margin:0 0 20px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:120px;background:#F8FAFC;border-radius:10px;padding:14px;text-align:center;">
-        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Sector</div>
-        <div style="color:#1E293B;font-size:13px;font-weight:700;">${d.sector || '—'}</div>
-      </div>
-      <div style="flex:2;min-width:180px;background:#F8FAFC;border-radius:10px;padding:14px;">
-        <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Necesidad identificada</div>
-        <div style="color:#1E293B;font-size:13px;font-weight:600;line-height:1.4;">${d.necesidad_raw || '—'}</div>
-      </div>
+    <!-- TITULAR -->
+    <div style="margin-bottom:32px;">
+      <p style="font-size:22px;font-weight:800;color:#0A0F1E;line-height:1.3;margin:0 0 16px;">&ldquo;${titular}&rdquo;</p>
+      <p style="font-size:14px;color:#6B7280;line-height:1.8;margin:0;">${d.intro_personalizada || ''}</p>
     </div>
 
-    <!-- Intro personalizada -->
-    <div style="background:#F0FDFB;border-left:4px solid #2DD4BF;border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:20px;">
-      <p style="color:#0D3B2E;font-size:14px;line-height:1.8;margin:0;">${d.intro_personalizada || ''}</p>
-    </div>
+    <div style="height:1px;background:linear-gradient(90deg,#E5E7EB,transparent);margin-bottom:32px;"></div>
 
-    <!-- Solución + deliverables -->
-    <div style="border:2px solid #E2E8F0;border-radius:14px;padding:22px;margin-bottom:20px;">
-      <div style="font-size:10px;font-weight:700;color:#9CA3AF;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Solución diseñada para ${d.empresa}</div>
-      <div style="color:#0D1B2A;font-size:18px;font-weight:800;margin-bottom:12px;">${d.project_title || 'Propuesta Personalizada'}</div>
-      <p style="color:#374151;font-size:14px;line-height:1.7;margin:0 0 16px;">${d.propuesta_tecnica || ''}</p>
-      ${deliverableItems}
-    </div>
-
-    ${casosItems ? `
-    <!-- Casos de uso -->
-    <div style="margin-bottom:20px;">
-      <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Cómo se aplica en ${d.empresa}</div>
-      <div style="background:#F8FAFC;border-radius:12px;padding:6px 16px;">${casosItems}</div>
-    </div>` : ''}
-
-    ${d.roi_estimado ? `
-    <!-- ROI -->
-    <div style="background:#F0FDFB;border:1px solid rgba(13,148,136,0.2);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
-      <div style="color:#0D9488;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Retorno estimado</div>
-      <div style="color:#0D3B2E;font-size:13px;line-height:1.7;">${d.roi_estimado}</div>
-    </div>` : ''}
-
-    <!-- Inversión -->
-    <div style="border:2px solid #E2E8F0;border-radius:14px;padding:22px;margin-bottom:20px;">
-      <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Inversión</div>
-      <div style="margin-bottom:6px;">
-        <span style="color:#0D1B2A;font-size:34px;font-weight:900;">${precio.toLocaleString()}</span>
-        <span style="color:#6B7280;font-size:13px;"> USD</span>
+    <!-- 01 El problema real -->
+    <div style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:28px;height:28px;background:#0A0F1E;border-radius:7px;font-size:10px;font-weight:800;color:#2DD4BF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">01</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;color:#9CA3AF;text-transform:uppercase;">El problema real</div>
       </div>
-      ${d.mantenimiento_mensual ? `<div style="color:#6B7280;font-size:12px;margin-bottom:14px;">+ $${d.mantenimiento_mensual}/mes mantenimiento · <span style="color:#0D9488;font-weight:600;">1er mes GRATIS ✓</span></div>` : ''}
-      <div style="background:#F8FAFC;border-radius:9px;padding:12px 16px;font-size:13px;color:#374151;line-height:1.8;">
-        50% inicio → <strong>$${Math.round(precio / 2).toLocaleString()} USD</strong><br>
-        50% entrega → <strong>$${Math.round(precio / 2).toLocaleString()} USD</strong>
+      <p style="font-size:14px;line-height:1.85;color:#374151;margin:0 0 14px;">${diagnostico}</p>
+      <div style="background:#FFF7ED;border-left:3px solid #F59E0B;border-radius:0 10px 10px 0;padding:14px 18px;">
+        <p style="font-size:13px;color:#92400E;line-height:1.7;margin:0;font-weight:500;">${d.dolor_principal || ''}</p>
       </div>
     </div>
 
-    ${d.cierre_emocional ? `
-    <!-- Cierre -->
-    <div style="background:linear-gradient(135deg,#0A0F1E 0%,#0D1A2B 100%);border-left:3px solid #2DD4BF;border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:20px;">
-      <p style="color:rgba(255,255,255,0.85);font-size:13px;line-height:1.7;margin:0;">${d.cierre_emocional}</p>
-    </div>` : ''}
+    <div style="height:1px;background:linear-gradient(90deg,#E5E7EB,transparent);margin-bottom:32px;"></div>
+
+    <!-- 02 Lo que construimos -->
+    <div style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:28px;height:28px;background:#0A0F1E;border-radius:7px;font-size:10px;font-weight:800;color:#2DD4BF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">02</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;color:#9CA3AF;text-transform:uppercase;">Lo que construimos</div>
+      </div>
+      <p style="font-size:14px;line-height:1.85;color:#374151;margin:0 0 20px;">${d.propuesta_tecnica || ''}</p>
+      <div style="border:1.5px solid #E5E7EB;border-radius:12px;padding:20px 22px;margin-bottom:18px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#9CA3AF;text-transform:uppercase;margin-bottom:14px;">Todo lo que incluye</div>
+        ${deliverableItems}
+      </div>
+      ${d.roi_estimado ? `<div style="background:linear-gradient(135deg,#050B15,#0D1B2A);border-radius:12px;padding:22px 24px;"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#2DD4BF;text-transform:uppercase;margin-bottom:10px;">Qué cambia el día que entregamos esto</div><p style="font-size:13px;color:rgba(255,255,255,0.78);line-height:1.85;margin:0;">${d.roi_estimado}</p></div>` : ''}
+    </div>
+
+    <div style="height:1px;background:linear-gradient(90deg,#E5E7EB,transparent);margin-bottom:32px;"></div>
+
+    <!-- 03 La inversión -->
+    <div style="margin-bottom:40px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <div style="width:28px;height:28px;background:#0A0F1E;border-radius:7px;font-size:10px;font-weight:800;color:#2DD4BF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">03</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;color:#9CA3AF;text-transform:uppercase;">La inversión</div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:6px;line-height:1;">
+        <span style="font-size:56px;font-weight:900;color:#0A0F1E;letter-spacing:-2px;">$${precio.toLocaleString()}</span>
+        <span style="font-size:15px;color:#9CA3AF;padding-bottom:12px;">USD</span>
+      </div>
+      ${d.mantenimiento_mensual ? `<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">+ $${d.mantenimiento_mensual} / mes mantenimiento</div>` : ''}
+      <div style="background:#F8FAFC;border-radius:9px;padding:12px 18px;font-size:13px;color:#374151;line-height:2;margin-bottom:12px;">
+        50% al arrancar → <strong style="color:#0A0F1E;">$${mitad.toLocaleString()} USD</strong><br>
+        50% al entregar → <strong style="color:#0A0F1E;">$${mitad.toLocaleString()} USD</strong>
+      </div>
+      <p style="font-size:12px;color:#9CA3AF;margin:0;line-height:1.6;">Incluye 2 rondas de revisiones.</p>
+    </div>
+
+    <!-- CTA -->
+    <div style="background:linear-gradient(135deg,#ECFDF9,#F0FDFA);border:1.5px solid rgba(45,212,191,0.3);border-radius:14px;padding:28px;text-align:center;margin-bottom:4px;">
+      <p style="font-size:15px;font-weight:700;color:#0A0F1E;margin:0 0 6px;">¿Le damos luz verde a ${d.empresa}?</p>
+      <p style="font-size:13px;color:#6B7280;margin:0 0 22px;line-height:1.6;">${d.contacto ? `${d.contacto}, arrancar` : 'Arrancar'} es una conversación de 15 minutos.<br>Escríbame ahora y lo coordinamos hoy mismo.</p>
+      <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#059669,#2DD4BF);color:white;font-size:15px;font-weight:800;padding:16px 42px;border-radius:50px;text-decoration:none;box-shadow:0 6px 22px rgba(13,148,136,0.4);letter-spacing:0.3px;">Arrancar con ${d.empresa} →</a>
+      <p style="font-size:11px;color:#9CA3AF;margin:14px 0 0;">Respondo en menos de 2 horas · Lunes a sábado · Sin compromiso</p>
+    </div>
   `;
 }
 
@@ -218,7 +231,7 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
   console.log(`[ENZO-COTI] 📧 Enviando propuesta → ${datos.empresa} (${datos.email})`);
 
   // Generar briefHTML desde datos OpenAI e inyectar en el template único
-  const briefHTML = _renderBossQuoteBriefHTML(datos);
+  const briefHTML = _renderBossQuoteBriefHTML(datos, quoteCode);
 
   const html = generateEnzoEmailHTML({
     userName:    datos.contacto || datos.empresa,

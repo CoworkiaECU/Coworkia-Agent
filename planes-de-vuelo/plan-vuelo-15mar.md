@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 15 Marzo 2026
 > Guía maestra diaria. Auditada y actualizada cada sesión.
-> **Última actualización:** 17 Mar 2026 — `7b6ee98` · **Heroku live** — Aluna welcome email: paleta verde + WiFi portal + CTA persuasivo + Ecosistema ✔️
+> **Última actualización:** 17 Mar 2026 — `ab3765b` · **Heroku live** — Integración WiFi portal cautivo completa ✅ + Email bienvenida Aluna: código real, sin datos inventados, 17/17 tests
 
 ---
 
@@ -30,7 +30,7 @@
 | # | Agente | Templates en pie | Estado |
 |---|--------|-----------------|--------|
 | P7.1 | **Aurora** | ❌ Sin template email (WA only — por diseño) | ✅ confirmado |
-| P7.2 | **Aluna** | Proforma + Email 2 (24h 15%) + Email 3 (7d FOMO) + confirmación + **Welcome post-pago** | ✅ funnel completo `7b6ee98` — welcome: paleta verde aprobada, WiFi portal real, CTA persuasivo, ecosistema 8 agentes |
+| P7.2 | **Aluna** | Proforma + Email 2 (24h 15%) + Email 3 (7d FOMO) + confirmación + **Welcome post-pago** | ✅ funnel completo `ab3765b` — welcome: paleta verde, WiFi código real (portal cautivo), CTA persuasivo, ecosistema 8 agentes |
 | P7.3 | **Enzo** | Flujo consultivo WA (decode→qualify→confirm→plan) + email plan estratégico | ✅ `cd21965` `fe1bdc2` `9a339b9` `3f61eab` `802f775` `f4f7f31` `00e075f` — Template 3 actos en producción: titular+diagnostico OpenAI, _renderBossQuoteBriefHTML narrativo con CTA WA |
 | P7.4 | **Gabi** | `generateGabiEmailHTML` (cliente + admin — mismo fn, `recipientType`) | ⏳ siguiente |
 | P7.5 | **Axel** | `generateAxelEmailHTML` (cotización con fotos + tabla trabajos) — 1 fn, CONFIRMADO ✅ | ⏳ revisar |
@@ -102,21 +102,29 @@
 
 ---
 
-## 📡 INTEGRACIÓN PENDIENTE — Aurora ↔ WiFi Portal Coworkia
+## 📡 INTEGRACIÓN COMPLETADA — Aurora ↔ WiFi Portal Coworkia
 
-> **Contexto:** El portal cautivo del Mac Mini (`WiFi Coworkia`) ya implementa el sync unidireccional desde Aurora (`sync-from-aurora.js` espera `/api/wifi-codes/pending`). La integración inversa (Aurora genera códigos WiFi cuando aprueba una membresía) está pendiente.
+> `ab3765b` — Integrado y en producción desde 17 Mar 2026
 
-**Objetivo:** Cuando Aluna aprueba un pago → Aurora genera un código de portal WiFi con `duration_hours` = duración del contrato → el Mac Mini lo sincroniza cada 5 min → el email de bienvenida incluye el código real.
+**Flujo real activo:**
+`pago aprobado → approveLead() → generateMembershipWifiCode() → guarda en Postgres → incluido en email → Mac Mini descarga cada 5 min via sync-from-aurora.js → miembro ingresa código en portal cautivo → internet activado`
 
 | # | Tarea | Archivo | Estado |
 |---|-------|---------|--------|
-| W1 | Endpoint `POST /api/wifi-codes/create` en Aurora (genera código + guarda en BD con `duration_hours` según plan) | `src/express-servidor/endpoints-api/wifi-codes.js` (nuevo) | ⏳ pendiente |
-| W2 | Tabla `wifi_codes` en Postgres Heroku (code, phone, plan, duration_hours, created_at, synced_at) | `src/database/postgres-adapter.js` | ⏳ pendiente |
-| W3 | Llamada a `createWifiCode(membershipCode, plan)` desde `approveLead()` | `membership-payment-verification.js` | ⏳ pendiente |
-| W4 | Inyectar código real en sección WiFi del email de bienvenida | `aluna-welcome-email.js` | ⏳ pendiente |
-| W5 | Adaptar `sync-from-aurora.js` para calcular `expires_at` desde `duration_hours` (planes: 10d=220h, 20d=440h, 30d=660h, full=720h+sábados) | `WiFi Coworkia/scripts/sync-from-aurora.js` | ⏳ pendiente |
+| W1 | Endpoints `GET /api/wifi-codes/pending` y `POST /confirm-sync` en Aurora | `src/express-servidor/endpoints-api/wifi-codes.js` | ✅ `ab3765b` |
+| W2 | Tabla `wifi_codes` en Postgres + columna `membership_code` (migración auto) | `src/database/postgres-adapter.js` | ✅ `ab3765b` |
+| W3 | `generateMembershipWifiCode()` desde `approveLead()` (744h/mes, linkeado a `membership_code`) | `membership-payment-verification.js` | ✅ `ab3765b` |
+| W4 | Código real inyectado en email bienvenida (fallback honesto: recepción) | `aluna-welcome-email.js` | ✅ `ab3765b` |
+| W5 | `sync-from-aurora.js` en Mac Mini: descarga códigos y confirma sync (ya estaba implementado) | `WiFi Coworkia/scripts/sync-from-aurora.js` | ✅ preexistía |
 
-**Prerequisito:** Pruebas de Aluna al 100% ✅ — Actualmente 17/17 tests verdes.
+**Pendiente operacional (no es código, es configuración en Mac Mini):**
+- Configurar `AURORA_API_URL` y `WIFI_SYNC_API_KEY` en `.env` del Mac Mini
+- Activar crontab: `*/5 * * * * node /path/to/sync-from-aurora.js`
+- Configurar `WIFI_SYNC_API_KEY` en Heroku (vars de entorno)
+
+---
+
+## 📡 INTEGRACIÓN PENDIENTE — (sección archivada, ver arriba)
 
 ---
 

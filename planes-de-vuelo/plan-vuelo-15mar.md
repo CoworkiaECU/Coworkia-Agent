@@ -167,13 +167,52 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 
 **Estado P7.3 Enzo:** ✅ COMPLETO — `00e075f` en Heroku
 
-**Próxima prioridad:** Auditoría de errores constantes en Aurora y Aluna.
-- Identificar bugs recurrentes con las reservas Aurora
-- Identificar bugs recurrentes con el flujo Aluna (proformas, membresías, followup emails)
-- Verificar que los 34/34 tests siguen verdes tras cambios de Enzo
-- Documentar hallazgos y plantear fixes en orden de impacto
+---
 
-**Pendiente también:**
-- ⏳ P7.4 Gabi
-- ⏳ P8.2 Gabi presentación
-- ⏳ P9.1/2/3 SENADI Gabi
+## 🚨 DESVÍO 17 MAR — Sprint Aurora/Aluna + LOPD
+
+> Iniciado a pedido del usuario. P7.4 Gabi queda en pausa hasta completar este sprint.
+
+### A1 — Aurora no reconoce nombre del usuario
+**Causa:** Fallback `'amigo'` en orquestador línea 431 + handoff-messages.js. Nombres genéricos de WA Business ("Coworkia") pasan como nombre real.
+**Fix:** Filtrar lista negra de nombres genéricos antes de usar `perfil.name`. Si no válido, saludo sin nombre.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+### A2 — Aurora no explica períodos 2h ni descuento acumulado
+**Causa:** System prompt menciona `$10/2h` pero sin instrucción para solicitudes de "1 hora" ni tabla de tandas.
+**Lógica de precios:**
+- 1ra tanda (2h) → $10.00
+- 2da tanda (2h) → $10 × 85% = $8.50
+- 3ra tanda (2h) → $8.50 × 85% = $7.22
+- Total 3 tandas (6h) = **$25.72**
+**Fix:** Añadir sección en `getSystemPrompt` y en `getServiciosInfo` de aurora.js.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+### A3 — "espacio individual" no reconocido como Hot Desk
+**Causa:** Falta en `AURORA_KEYWORDS` → sistema no lo detecta → handoff a Aluna que ofrece membresías.
+**Fix:** Añadir keywords en `detectar-intencion.js` + instrucción en system prompt de Aurora.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+### A4 — Mensajes en ráfaga: respuesta por cada mensaje separado
+**Causa:** Wassenger.js no tiene debounce/cola por usuario.
+**Fix:** Map `userMessageQueue` en wassenger.js — acumula 4s, concatena, procesa como uno solo.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+### A5 — Dashboard Aluna: listado de prospectos de membresía
+**Causa:** Dash no muestra usuarios con intención de membresía clasificada.
+**Fix:** Endpoint `GET /api/aluna/prospects` + tabla en dash con columnas: Consultó precios / Plan 10 / Plan 20 / Recibió cotización / N° mensajes.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+### A6 — LOPD Ecuador: cumplimiento Ley Orgánica Protección Datos 
+**Causa:** No existe consentimiento ni derechos ARCO en ningún agente.
+**Fix:** `src/servicios/lopd-service.js` + tabla `user_consents` en BD + aviso automático en primer contacto de cada agente + registro completo LOPDP.
+| Estado | ⏳ pendiente |
+|--------|------|
+
+**Orden de ejecución:** A1 → A2 → A3 (rápidos, mismo día) → A4 (medium) → A5 → A6 (estructurales)
+**Pendiente tras este sprint:** P7.4 Gabi · P8.2 Gabi · P9.1/2/3 SENADI

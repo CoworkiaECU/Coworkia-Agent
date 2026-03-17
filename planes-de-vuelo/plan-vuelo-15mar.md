@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 15 Marzo 2026
 > Guía maestra diaria. Auditada y actualizada cada sesión.
-> **Última actualización:** 16 Mar 2026 — `9a339b9` · **v951 en Heroku** — Aluna ✅ Enzo ✅
+> **Última actualización:** 16 Mar 2026 — `802f775` · **v951 en Heroku** — Aluna ✅ Enzo ✅ Arquitectura HTML auditada ✅
 
 ---
 
@@ -31,11 +31,11 @@
 |---|--------|-----------------|--------|
 | P7.1 | **Aurora** | ❌ Sin template email (WA only — por diseño) | ✅ confirmado |
 | P7.2 | **Aluna** | Proforma + Email 2 (24h 15%) + Email 3 (7d FOMO) + confirmación | ✅ funnel completo `7b1cf02` |
-| P7.3 | **Enzo** | Flujo consultivo WA (decode→qualify→confirm→plan) + email plan estratégico | ✅ `cd21965` `fe1bdc2` `9a339b9` |
+| P7.3 | **Enzo** | Flujo consultivo WA (decode→qualify→confirm→plan) + email plan estratégico | ✅ `cd21965` `fe1bdc2` `9a339b9` `3f61eab` `802f775` — `_enzoProposalHTML` eliminado, template único con `briefHTML` dinámico |
 | P7.4 | **Gabi** | `generateGabiEmailHTML` (cliente + admin — mismo fn, `recipientType`) | ⏳ siguiente |
-| P7.5 | **Axel** | `generateAxelEmailHTML` (cotización con fotos + tabla trabajos) | ⏳ revisar |
-| P7.6 | **Adriana** | `generateAdrianaEmailHTML` (confirmación) + `_adrianaQuoteHTML` (cotización) | ⏳ revisar |
-| P7.7 | **Paula** | `generatePaulaEmailHTML` (búsqueda) + `email-templates-paula.js` (4 templates visitas/contratos) | ⏳ revisar |
+| P7.5 | **Axel** | `generateAxelEmailHTML` (cotización con fotos + tabla trabajos) — 1 fn, CONFIRMADO ✅ | ⏳ revisar |
+| P7.6 | **Adriana** | `_adrianaQuoteHTML` (cotización vehículo+prima) + `generateAdrianaEmailHTML` (router: confirmación/cotización) — 2 fns JUSTIFICADAS ✅ | ⏳ revisar |
+| P7.7 | **Paula** | `generatePaulaEmailHTML` (lead confirmation) + `buildPaulaEmailHTML` (brochure propiedades boss-cmd) — 2 fns JUSTIFICADAS ✅ | ⏳ revisar |
 
 ---
 
@@ -102,18 +102,17 @@
 
 ---
 
-## 🗺️ ARQUITECTURA EMAIL — REFERENCIA
+## 🗺️ ARQUITECTURA EMAIL — REFERENCIA (auditada 802f775)
 
-| Agente | Bot-flow (confirmación) | Boss-cmd / VisionAI | 2do template |
-|--------|------------------------|---------------------|-------------|
-| Aluna | `generateAlunaEmailHTML` ✅ | `aluna-proforma-email.js` → genérico | `generateAlunaProformaHTML` ✅ |
-| Gabi | `generateGabiEmailHTML` ✅ | `gabi-cotizacion-email.js` → genérico | recipientType admin/client |
-| Enzo | `generateEnzoEmailHTML` ✅ | `enzo-cotizacion-email.js` → aprobado + brief IA | ~~`_enzoProposalHTML`~~ (rechazado) |
-| Adriana | `generateAdrianaEmailHTML` ✅ | `adriana-cotizacion-email.js` → genérico | `_adrianaQuoteHTML` ✅ |
-| Axel | `generateAxelEmailHTML` ✅ | direct (VisionAI async) | reminders 24h+7d |
-| Paula | `generatePaulaEmailHTML` ✅ | `paula-cotizacion-email.js` | `email-templates-paula.js` (4 templates) |
-| Aurora | WA only — sin templates email | — | — |
-| Angela | Sin templates aún | — | — |
+| Agente | Funciones | Justificación |
+|--------|-----------|---------------|
+| **Aluna** | `generateAlunaEmailHTML` + `generateAlunaProformaHTML` + `generateAlunaFollowup2HTML` + `generateAlunaFollowup3HTML` | 4 etapas del funnel distintas ✅ |
+| **Gabi** | `generateGabiEmailHTML` (`recipientType` param) | Template único, 1 fn ✅ |
+| **Enzo** | `generateEnzoEmailHTML` + `_renderBossQuoteBriefHTML()` helper | Template único, briefHTML dinámico desde OpenAI ✅ |
+| **Adriana** | `generateAdrianaEmailHTML` (router) + `_adrianaQuoteHTML` (privada) | Confirmation VS cotización con prima calculada ✅ |
+| **Axel** | `generateAxelEmailHTML` | Template único ✅ |
+| **Paula** | `generatePaulaEmailHTML` (lead confirmation) + `buildPaulaEmailHTML` (brochure boss-cmd) | Lead confirmation VS propiedad con cards y pricing ✅ |
+| **Aurora** | `generateConfirmationEmailHTML` en `email.js` | Reservas, no mover a generic-email-templates ✅ |
 
 ---
 
@@ -149,3 +148,5 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 | tarde | `fe1bdc2` | P7.3 Enzo fix: boss-command migrado al template aprobado, elimina `_enzoProposalHTML` |
 | noche | `refactor` | Brief v2: reemplazado por diagnóstico @handle + matriz capacidades + superpoderes (descartado — sobreprometía) |
 | noche | `9a339b9` | **P7.3 + P8.1 Enzo**: `enzo-consulting-flow.js` — flujo consultivo WA completo: decode→qualify→confirm→plan. OpenAI co-construye el brief con el cliente antes de generar el plan estratégico (idea central + objetivos SMART + plan 4 semanas + KPIs + email). Hook en `wassenger.js` para agente ENZO. |
+| noche | `3f61eab` | Intento fix boss-command WELLFEST: añade `project_title`+`deliverables` a OpenAI JSON, cambia a `type:'proposal'` → sigue usando template incorrecto (no deployado aún a Heroku) |
+| noche | `802f775` | **FIX DEFINITIVO**: elimina `_enzoProposalHTML` (229 líneas hardcodeadas), elimina rama `type==='proposal'`, crea `_renderBossQuoteBriefHTML()` que construye HTML dinámico desde OpenAI data, pasa como `briefHTML` al template único `generateEnzoEmailHTML`. Secciones estáticas envueltas en `${!briefHTML ? ... : ''}`. Audit completo: 7/7 agentes con arquitectura justificada. Regla `0.2` escrita en `reglas_multiagente.md`. |

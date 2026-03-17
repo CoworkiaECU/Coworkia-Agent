@@ -29,6 +29,42 @@
 
 ---
 
+## 0.2 Arquitectura de emails HTML — regla de oro
+
+**Una función por tipo de email por agente. Sin duplicados.**
+
+### La regla
+- Cada **tipo de email** tiene exactamente UNA función con nombre claro en `generic-email-templates.js`.
+- Contenido dinámico (propuesta, cotización, plan) se construye como fragmento `briefHTML` en el servicio que lo llama, y se inyecta en el template único.
+- Las secciones genéricas/estáticas del template se ocultan con `${!briefHTML ? \`...\` : ''}` cuando hay `briefHTML`.
+
+### Tres contextos, un solo template
+| Contexto | Quién genera `briefHTML` | Pasa a |
+|---|---|---|
+| Boss-command (jefe dicta) | `_render[Agent]BossQuoteBriefHTML()` en `[agent]-cotizacion-email.js` | `generate[Agent]EmailHTML({ briefHTML })` |
+| Web form (formulario web) | `render[Agent]BriefHTML()` en `[agent]-brief-generator.js` | `generate[Agent]EmailHTML({ briefHTML })` |
+| WA consulting flow | `renderPlanHTML()` en `[agent]-consulting-flow.js` | `generate[Agent]EmailHTML({ briefHTML })` |
+
+### Inventario oficial de templates (auditado 16 Mar 2026)
+| Agente | Funciones | Justificación |
+|---|---|---|
+| **Aurora** | `generateConfirmationEmailHTML()` en `email.js` — 1 fn | Confirmación de reserva. No mover a generic-email-templates. |
+| **Aluna** | `generateAlunaEmailHTML` + `generateAlunaProformaHTML` + `generateAlunaFollowup2HTML` + `generateAlunaFollowup3HTML` — 4 fn | Etapas distintas del funnel: confirmation → proforma → 24h followup → 7d FOMO. |
+| **Enzo** | `generateEnzoEmailHTML()` — 1 fn, recibe `briefHTML` | Template único. `_renderBossQuoteBriefHTML()` en `enzo-cotizacion-email.js` genera el briefHTML dinámico desde OpenAI. |
+| **Adriana** | `_adrianaQuoteHTML()` (privada) + `generateAdrianaEmailHTML()` (router) — 2 pathways | Datos estructuralmente distintos: confirmación de recepción vs cotización completa con vehículo + prima calculada. |
+| **Axel** | `generateAxelEmailHTML()` — 1 fn | Template único con fotos + tabla de trabajos. |
+| **Paula** | `generatePaulaEmailHTML()` en `generic-email-templates.js` + `buildPaulaEmailHTML()` en `paula-cotizacion-email.js` — 2 fn | Usos distintos: confirmation de lead vs brochure de propiedad (boss-command PropElite). |
+| **Gabi** | `generateGabiEmailHTML()` — 1 fn (`recipientType` param) | Template único, param controla versión cliente/admin. |
+
+### Lo que NUNCA hacer
+- Crear `_[agent]ProposalHTML()` o cualquier función privada paralela al template principal del mismo tipo de email.
+- Agregar `if (type === 'X') return _otroTemplate()` en `generate[Agent]EmailHTML()` — apunta al template correcto directamente.
+- Hardcodear deliverables/servicios/precios en el template — van en el `briefHTML` generado por OpenAI.
+- Crear archivos `[agent]-email-templates.js` separados cuando ya existe la función en `generic-email-templates.js`.
+- **Señal de alarma:** Si existe más de una función que renderiza el mismo tipo de email para el mismo agente → es un duplicado. Eliminar el más nuevo y consolidar en el existente.
+
+---
+
 ## 1. Mapa del ecosistema
 
 | Agente    | Empresa            | Especialidad                              | Tipo     |

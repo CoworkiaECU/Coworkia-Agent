@@ -48,24 +48,18 @@ Recibes un mensaje del CEO quien está presencialmente con un cliente potencial 
 Tu tarea: procesar ese mensaje y devolver un JSON con la propuesta lista.
 
 SERVICIOS MARKETINGLAB — elige el más adecuado según lo que el cliente necesita:
-- Agentes IA WhatsApp: FAQ, ventas, reservas, Vision AI ($800–$5,500 USD)
-- Identidad visual / Branding / Manual de marca: estilo, colores, tipografía, guías ($800–$2,000 USD)
-- Marketing digital / Estrategia: ads, contenido, posicionamiento ($600–$2,500 USD)
-- Automatización de procesos: flujos, CRM, integraciones ($1,200–$3,500 USD)
-- Sitio web + SEO: diseño + posicionamiento ($700–$2,000 USD)
-- Consultoría estratégica: análisis, roadmap, mentoring ($500–$1,500 USD)
+- Agentes IA WhatsApp: FAQ, ventas, reservas, Vision AI
+- Identidad visual / Branding / Manual de marca: estilo, colores, tipografía, guías
+- Marketing digital / Estrategia: ads, contenido, posicionamiento
+- Automatización de procesos: flujos, CRM, integraciones
+- Sitio web + SEO: diseño + posicionamiento
+- Consultoría estratégica: análisis, roadmap, mentoring
 
-PRECIOS — decide basándote en complejidad, tamaño de empresa y valor que genera.
-Mantenimiento mensual: $120–$280/mes según complejidad (1er mes GRATIS si aplica).
-Descuento por temporada: 15–25% disponible para cierre rápido.
-
-SERVICIOS QUE OFRECEMOS (usa la categoría más adecuada):
-- Agentes IA WhatsApp: $800-$5,500 USD según complejidad
-- Marketing digital / Estrategia: $600-$2,500 USD
-- Identidad visual / Branding / Manual de marca: $800-$2,000 USD
-- Automatización de procesos: $1,200-$3,500 USD
-- Sitio web + SEO: $700-$2,000 USD
-- Consultoría estratégica: $500-$1,500 USD
+PRECIO — MarketingLab es una agencia boutique en Ecuador. Nuestros precios son SIEMPRE más competitivos que agencias tradicionales ecuatorianas. Determina un precio específico (un solo número concreto, sin rangos) basándote en:
+- Complejidad real del proyecto y horas estimadas
+- Capacidad del cliente (micro-empresa vs PYME establecida en Ecuador)
+- Valor concreto que genera para ese negocio específico
+- Mantenimiento mensual solo si el servicio lo requiere (soporte continuo, actualizaciones, hosting)
 
 RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
 {
@@ -75,15 +69,10 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   "telefono": "+593... o ''",
   "sector": "sector del negocio detectado",
   "necesidad_raw": "frase exacta de lo que necesitan",
-  "nivel_agente": "basico|intermedio|avanzado",
   "project_title": "título del servicio propuesto, específico (ej: 'Manual de Marca', 'Agente IA Profesional', 'Estrategia Digital 360°')",
   "project_subtitle": "subtítulo breve que describe el beneficio clave — 1 línea",
-  "precio_desarrollo": 2800,
-  "precio_con_descuento": 2380,
-  "aplica_descuento": true,
-  "porcentaje_descuento": 15,
-  "razon_descuento": "Descuento por temporada",
-  "mantenimiento_mensual": 180,
+  "precio_desarrollo": 1800,
+  "mantenimiento_mensual": 150,
   "dolor_principal": "problema clave que resuelve este servicio para su negocio",
   "roi_estimado": "texto corto de ROI realista para su negocio en Ecuador",
   "casos_uso": ["caso 1 específico para su sector", "caso 2", "caso 3"],
@@ -92,9 +81,7 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
     "Entregable 2",
     "Entregable 3",
     "Entregable 4",
-    "Entregable 5",
-    "Entregable 6",
-    "Garantía 15 días — si no cumple expectativas, devolvemos"
+    "Entregable 5"
   ],
   "intro_personalizada": "párrafo de 3-4 líneas de apertura personalizada para este cliente, convincente, que conecte con su sector y necesidad específica",
   "propuesta_tecnica": "descripción técnica de qué recibirán exactamente, 4-5 líneas, detallada y vendedora",
@@ -126,15 +113,12 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
  * Incluye: sector/necesidad, intro, solución+deliverables, casos, ROI, precio, cierre.
  */
 function _renderBossQuoteBriefHTML(d) {
-  const precioFinal  = d.aplica_descuento ? d.precio_con_descuento : d.precio_desarrollo;
-  const precioBase   = d.precio_desarrollo;
-  const ahorro       = precioBase - precioFinal;
+  const precio = d.precio_desarrollo;
 
   const defaultDeliverables = [
     'Desarrollo personalizado para su negocio',
     'Documentación de entrega',
     'Revisiones incluidas',
-    'Garantía 15 días — si no cumple expectativas, devolvemos',
   ];
 
   const deliverableItems = (d.deliverables || defaultDeliverables)
@@ -195,22 +179,14 @@ function _renderBossQuoteBriefHTML(d) {
     <!-- Inversión -->
     <div style="border:2px solid #E2E8F0;border-radius:14px;padding:22px;margin-bottom:20px;">
       <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Inversión</div>
-      ${d.aplica_descuento ? `
-      <div style="color:#9CA3AF;font-size:12px;text-decoration:line-through;margin-bottom:4px;">Precio regular: $${precioBase.toLocaleString()} USD</div>
-      <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:3px 12px;display:inline-block;margin-bottom:8px;">
-        <span style="color:#065F46;font-size:12px;font-weight:700;">🎁 ${d.razon_descuento || 'Descuento'} ${d.porcentaje_descuento || 15}% = -$${ahorro.toLocaleString()}</span>
-      </div>` : ''}
       <div style="margin-bottom:6px;">
-        <span style="color:#0D1B2A;font-size:34px;font-weight:900;">${precioFinal.toLocaleString()}</span>
+        <span style="color:#0D1B2A;font-size:34px;font-weight:900;">${precio.toLocaleString()}</span>
         <span style="color:#6B7280;font-size:13px;"> USD</span>
       </div>
       ${d.mantenimiento_mensual ? `<div style="color:#6B7280;font-size:12px;margin-bottom:14px;">+ $${d.mantenimiento_mensual}/mes mantenimiento · <span style="color:#0D9488;font-weight:600;">1er mes GRATIS ✓</span></div>` : ''}
       <div style="background:#F8FAFC;border-radius:9px;padding:12px 16px;font-size:13px;color:#374151;line-height:1.8;">
-        50% inicio → <strong>$${Math.round(precioFinal / 2).toLocaleString()} USD</strong><br>
-        50% entrega → <strong>$${Math.round(precioFinal / 2).toLocaleString()} USD</strong>
-      </div>
-      <div style="background:#FEF9EC;border:1px solid #FCD34D;border-radius:7px;padding:10px 14px;margin-top:12px;font-size:12px;color:#92400E;">
-        ⏰ Oferta válida 30 días · ⚡ Tiempo: 3–4 semanas · 🛡️ Garantía 15 días
+        50% inicio → <strong>$${Math.round(precio / 2).toLocaleString()} USD</strong><br>
+        50% entrega → <strong>$${Math.round(precio / 2).toLocaleString()} USD</strong>
       </div>
     </div>
 
@@ -271,8 +247,7 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
     empresa:  datos.empresa,
     contacto: datos.contacto,
     email:    datos.email,
-    nivel:    datos.nivel_agente,
-    precio:   datos.aplica_descuento ? datos.precio_con_descuento : datos.precio_desarrollo,
+    precio:   datos.precio_desarrollo,
     quoteCode,
   };
 }

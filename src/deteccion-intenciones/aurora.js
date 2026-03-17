@@ -64,22 +64,12 @@ export const AURORA = {
       es: {
         hotDesk: {
           conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
+• 1 reserva = 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)
-💡 Descuento por tandas el mismo día:
-  1ra tanda (2h): $10.00
-  2da tanda (2h): $8.50 (-15%)
-  3ra tanda (2h): $7.22 (-15%)
-  → 6h continuas = $25.72`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
           sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
-• WiFi + café ☕
-💡 Descuento por tandas el mismo día:
-  1ra tanda (2h): $10.00
-  2da tanda (2h): $8.50 (-15%)
-  3ra tanda (2h): $7.22 (-15%)
-  → 6h continuas = $25.72`
+• 1 reserva = 2 horas: $10
+• WiFi + café ☕`
         },
         salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
 • 2 horas: $29
@@ -152,22 +142,12 @@ export const AURORA = {
   serviciosInfo: {
     hotDesk: {
       conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
+• 1 reserva = 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)
-💡 Descuento por tandas el mismo día:
-  1ra tanda (2h): $10.00
-  2da tanda (2h): $8.50 (-15%)
-  3ra tanda (2h): $7.22 (-15%)
-  → 6h continuas = $25.72`,
+• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
       sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
-• Período mínimo: 2 horas por tanda ($10) — no hay tarifa por 1 hora
-• WiFi + café ☕
-💡 Descuento por tandas el mismo día:
-  1ra tanda (2h): $10.00
-  2da tanda (2h): $8.50 (-15%)
-  3ra tanda (2h): $7.22 (-15%)
-  → 6h continuas = $25.72`
+• 1 reserva = 2 horas: $10
+• WiFi + café ☕`
     },
     salaReuniones: `🏢 Sala de Reuniones (Privada para 3-4 personas)
 • 2 horas: $29
@@ -479,18 +459,24 @@ ${this.serviciosInfo.salaReuniones}
 ${this.serviciosInfo.ubicacion}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-💡 HOT DESK — TANDAS Y MÍNIMO
+💡 HOT DESK — RESERVAS Y PRECIOS
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ REGLA IMPORTANTE: El período mínimo es 2 horas — NO existe tarifa por 1 hora
+PRECIO BASE: 1 reserva = 2 horas = $10. NO existe tarifa por 1 hora.
 
-Si el usuario pregunta por "1 hora", "una hora", "hora suelta" o precio por hora:
-→ Explícale amablemente que el mínimo son 2 horas ($10)
-→ Si quiere quedarse más, ofrece el descuento por tandas del mismo día:
-   • 1ra tanda (2h): $10.00
-   • 2da tanda (2h): $8.50 (15% dto.)
-   • 3ra tanda (2h): $7.22 (15% dto. adicional)
-   📊 6 horas continuas = $25.72
+Si preguntan "cuánto cuesta 1 hora" / "precio por hora":
+→ "El mínimo es 1 reserva de 2 horas por $10"
+
+🔒 DESCUENTO POR RESERVAS ADICIONALES — REVELAR SOLO CUANDO:
+• El cliente ya tiene reserva Y pregunta si puede quedarse más tiempo
+• Pregunta "cuánto sale la segunda reserva", "me quedo 4 horas", "¿puedo extender?"
+• Pregunta por precio de más reservas en el mismo día
+
+➡️ SOLO ENTONCES, como beneficio exclusivo (NO en la presentación inicial):
+"¿Te quedas más? La segunda reserva del mismo día sale a $8.50 (en lugar de $10 😄). Y si haces una tercera, $7.22. En total, 6 horas = $25.72 — son $4.29/hora."
+
+🚫 NO mencionar el descuento hasta que el cliente pregunte por más tiempo
+✅ SÍ revelarlo cuando ya está enganchado y pregunta cómo extender su reserva
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ REGLAS CRÍTICAS

@@ -3,6 +3,589 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aluna — Membresías</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── layout ── */
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    /* ── nav top ── */
+    .top-nav {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; background: #1e293b; border: 1px solid #334155;
+      color: #94a3b8; text-decoration: none; border-radius: 7px;
+      font-size: 13px; font-weight: 500; transition: all .15s;
+    }
+    .nav-btn:hover { background: #334155; color: #e2e8f0; }
+    .nav-btn.current { background: #047857; color: #fff; border-color: #047857; }
+    .nav-btn svg { width: 14px; height: 14px; }
+
+    /* ── header ── */
+    .page-header {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      padding: 24px 28px; margin-bottom: 22px;
+    }
+    .page-header h1 {
+      font-size: 24px; font-weight: 700; color: #f1f5f9;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .page-header p { color: #64748b; font-size: 14px; margin-top: 4px; }
+
+    /* ── stats ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px;
+    }
+    @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .stats-row { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 9px;
+      padding: 18px 20px; border-left: 3px solid #047857;
+    }
+    .stat-card.red    { border-left-color: #dc2626; }
+    .stat-card.orange { border-left-color: #f97316; }
+    .stat-card.blue   { border-left-color: #3b82f6; }
+    .stat-card.green  { border-left-color: #047857; }
+    .stat-label { color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; }
+    .stat-value { font-size: 30px; font-weight: 700; color: #f1f5f9; line-height: 1.2; margin-top: 4px; }
+    .stat-value.money { color: #34d399; }
+    .stat-sub   { color: #475569; font-size: 12px; margin-top: 2px; }
+
+    /* ── tabs ── */
+    .tab-nav {
+      display: flex; gap: 4px; border-bottom: 1px solid #334155; margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 10px 20px; border: none; background: transparent; color: #64748b;
+      font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 7px 7px 0 0;
+      border-bottom: 2px solid transparent; transition: all .15s;
+    }
+    .tab-btn:hover { color: #e2e8f0; background: #1e293b; }
+    .tab-btn.active { color: #34d399; border-bottom-color: #34d399; background: #1e293b; }
+    .tab-count {
+      display: inline-block; background: #334155; color: #94a3b8;
+      font-size: 11px; padding: 1px 7px; border-radius: 10px; margin-left: 6px;
+    }
+    .tab-btn.active .tab-count { background: #064e3b; color: #34d399; }
+
+    /* ── card ── */
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      margin-bottom: 18px; overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid #334155;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+    .card-body  { padding: 18px 20px; }
+
+    /* ── sequence timeline ── */
+    .seq-toggle {
+      background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      padding: 12px 16px; cursor: pointer; display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 16px; color: #94a3b8;
+      font-size: 13px; font-weight: 500; user-select: none; transition: background .15s;
+    }
+    .seq-toggle:hover { background: #1e293b; }
+    .seq-toggle .arrow { transition: transform .2s; }
+    .seq-toggle.open .arrow { transform: rotate(90deg); }
+
+    .seq-body { display: none; }
+    .seq-body.open { display: block; }
+
+    .seq-step {
+      display: flex; gap: 16px; margin-bottom: 20px; position: relative;
+    }
+    .seq-step::before {
+      content: ''; position: absolute; left: 16px; top: 36px;
+      width: 2px; height: calc(100% + 4px); background: #1e3a5f;
+    }
+    .seq-step:last-child::before { display: none; }
+
+    .seq-num {
+      width: 34px; height: 34px; min-width: 34px; border-radius: 50%;
+      background: #0f172a; border: 2px solid #1e3a5f; display: flex;
+      align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+      color: #3b82f6; z-index: 1;
+    }
+    .seq-num.green { border-color: #047857; color: #34d399; }
+
+    .seq-content { flex: 1; }
+    .seq-title { font-size: 13px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; }
+    .seq-timing { font-size: 11px; color: #f59e0b; margin-bottom: 8px; }
+    .seq-msg {
+      background: #0f172a; border: 1px solid #1e3a5f; border-left: 3px solid #3b82f6;
+      border-radius: 0 6px 6px 0; padding: 10px 12px;
+      font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 8px;
+      white-space: pre-line;
+    }
+    .seq-msg.email { border-left-color: #a855f7; }
+    .seq-msg-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+      color: #3b82f6; margin-bottom: 4px;
+    }
+    .seq-msg-label.email { color: #a855f7; }
+
+    /* ── filters ── */
+    .filters-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    select, input[type="text"] {
+      padding: 8px 10px; background: #0f172a; border: 1px solid #334155;
+      border-radius: 6px; color: #e2e8f0; font-size: 13px;
+    }
+    select:focus, input:focus { outline: none; border-color: #047857; }
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all .15s;
+    }
+    .btn-primary { background: #047857; color: #fff; }
+    .btn-primary:hover { background: #065f46; }
+    .btn-secondary { background: #334155; color: #94a3b8; }
+    .btn-secondary:hover { background: #475569; color: #e2e8f0; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; }
+    .btn-convert { background: #064e3b; color: #34d399; border: 1px solid #047857; }
+    .btn-convert:hover { background: #047857; color: #fff; }
+    .btn-convert:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-wa { background: #0d3b26; color: #4ade80; border: 1px solid #15803d; }
+    .btn-wa:hover { background: #15803d; color: #fff; }
+    .btn-wa:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: #0f172a; }
+    th {
+      text-align: left; padding: 11px 14px; font-size: 11px; font-weight: 600;
+      color: #475569; text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid #334155;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: middle; }
+    tr:hover td { background: #0f1e32; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge-pending         { background: #451a03; color: #fb923c; }
+    .badge-pending_payment { background: #431407; color: #f97316; }
+    .badge-tour_scheduled  { background: #1e1b4b; color: #818cf8; }
+    .badge-negotiating     { background: #1e3a5f; color: #60a5fa; }
+    .badge-accepted        { background: #064e3b; color: #34d399; }
+    .badge-active          { background: #022c22; color: #6ee7b7; }
+    .badge-cancelled       { background: #450a0a; color: #f87171; }
+    .badge-expired         { background: #1e293b; color: #64748b; }
+    .badge-boss            { background: #1e293b; color: #f1f5f9; }
+    .badge-aluna           { background: #064e3b; color: #34d399; }
+
+    .temp-hot  { background: #451a03; color: #fb923c; }
+    .temp-warm { background: #422006; color: #f59e0b; }
+    .temp-cold { background: #1e3a5f; color: #60a5fa; }
+    .temp-done { background: #022c22; color: #6ee7b7; }
+
+    .phase-badge {
+      font-size: 11px; color: #64748b; display: block; margin-top: 2px;
+    }
+
+    /* ── avatar ── */
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #0f172a; border: 1px solid #334155;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #34d399;
+    }
+    .name-cell { display: flex; align-items: center; gap: 10px; }
+    .name-main { font-weight: 600; color: #f1f5f9; font-size: 13px; }
+    .name-sub  { color: #475569; font-size: 11px; }
+
+    /* ── status stamp ── */
+    .ts-cell { display: flex; flex-direction: column; gap: 3px; }
+    .ts-sent { color: #34d399; font-size: 12px; }
+    .ts-pending { color: #f59e0b; font-size: 12px; }
+    .ts-none    { color: #334155; font-size: 12px; }
+
+    /* ── empty / loading ── */
+    .empty { text-align: center; padding: 48px 20px; color: #475569; }
+    .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
+    .loading-row td { text-align: center; padding: 32px; color: #475569; }
+
+    /* ── progress bar (fase) ── */
+    .phase-bar {
+      display: flex; gap: 3px; margin-top: 4px;
+    }
+    .phase-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #334155;
+    }
+    .phase-dot.done { background: #34d399; }
+    .phase-dot.active { background: #f59e0b; }
+
+    /* ── toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; border: 1px solid #334155; color: #f1f5f9;
+      padding: 12px 20px; border-radius: 8px; font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── refresh fab ── */
+    .fab {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: all .15s;
+    }
+    .fab:hover { background: #047857; color: #fff; border-color: #047857; }
+    .fab svg { width: 20px; height: 20px; }
+
+    /* ── footer ── */
+    .ml-footer {
+      margin-top: 40px; padding: 20px; text-align: center;
+      border-top: 1px solid #1e293b;
+    }
+    .ml-footer img { height: 22px; opacity: .5; }
+    .ml-footer img:hover { opacity: .75; }
+
+    .money-green { color: #34d399; font-weight: 600; }
+    .text-muted  { color: #475569; }
+    .code-link   { color: #34d399; font-weight: 600; font-size: 12px; text-decoration: none; }
+    .code-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Nav top -->
+  <nav class="top-nav">
+    <a href="/admin-coworkia.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Admin
+    </a>
+    <a href="/aurora-reservas.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Aurora
+    </a>
+    <a href="/aluna-proformas.html" class="nav-btn current">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Aluna
+    </a>
+    <a href="/enzo-proyectos.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Enzo
+    </a>
+    <a href="/gabi-consultas.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+      Gabi
+    </a>
+    <a href="/adriana-seguros.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      Adriana
+    </a>
+    <a href="/axel-cotizaciones.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      Axel
+    </a>
+    <a href="/paula-inmobiliaria.html" class="nav-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Paula
+    </a>
+  </nav>
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>🌙 Aluna — Gestión de Membresías</h1>
+    <p>Proformas enviadas · Pipeline de seguimiento automático · Renovaciones</p>
+  </div>
+
+  <!-- Stats globales -->
+  <div class="stats-row" id="global-stats">
+    <div class="stat-card green">
+      <div class="stat-label">Total Proformas</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-sub">Todas las cotizaciones</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Este Mes</div>
+      <div class="stat-value" id="stat-month">—</div>
+      <div class="stat-sub">Mes en curso</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Últimos 7 días</div>
+      <div class="stat-value" id="stat-week">—</div>
+      <div class="stat-sub">Semana actual</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Revenue Potencial</div>
+      <div class="stat-value money" id="stat-revenue">$0</div>
+      <div class="stat-sub">Mensual estimado</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="proformas" onclick="switchTab('proformas')">
+      📋 Proformas <span class="tab-count" id="tab-count-proformas"></span>
+    </button>
+    <button class="tab-btn" data-tab="pipeline" onclick="switchTab('pipeline')">
+      🔄 Pipeline de Seguimiento <span class="tab-count" id="tab-count-pipeline"></span>
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       TAB: PROFORMAS
+  ══════════════════════════════════════════ -->
+  <div id="tab-proformas" class="tab-content">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Todas las proformas</span>
+        <div class="filters-row" style="margin-bottom:0;">
+          <div class="filter-group">
+            <label>Estado</label>
+            <select id="filter-status">
+              <option value="">Todos</option>
+              <option value="pending">Pendiente</option>
+              <option value="pending_payment">Pago Pendiente</option>
+              <option value="tour_scheduled">Tour Agendado</option>
+              <option value="negotiating">Negociando</option>
+              <option value="accepted">Aceptada</option>
+              <option value="active">Activa</option>
+              <option value="cancelled">Cancelada</option>
+              <option value="expired">Expirada</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Origen</label>
+            <select id="filter-origin">
+              <option value="">Todos</option>
+              <option value="aluna">Aluna</option>
+              <option value="bigboss">Big Boss</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Buscar</label>
+            <input type="text" id="search" placeholder="Nombre, email, código…">
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:18px;" onclick="resetFilters()">Limpiar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div id="loading-proformas" class="empty">
+          <p>Cargando proformas…</p>
+        </div>
+        <div id="error-proformas" style="display:none; padding:16px; color:#f87171; font-size:13px;"></div>
+        <table id="proformas-table" style="display:none;">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>$/Mes</th>
+              <th>Estado</th>
+              <th>Origen</th>
+              <th>Enviada</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div id="empty-proformas" class="empty" style="display:none;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <p>Sin proformas con estos filtros</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-proformas -->
+
+
+  <!-- ══════════════════════════════════════════
+       TAB: PIPELINE
+  ══════════════════════════════════════════ -->
+  <div id="tab-pipeline" class="tab-content" style="display:none;">
+
+    <!-- Stats pipeline -->
+    <div class="stats-row" style="margin-bottom:18px;">
+      <div class="stat-card red">
+        <div class="stat-label">🔥 Prospectos activos</div>
+        <div class="stat-value" id="pipe-active" style="color:#f87171;">—</div>
+        <div class="stat-sub">Sin convertir</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">⏳ Listos para D+1</div>
+        <div class="stat-value" id="pipe-24h" style="color:#f97316;">—</div>
+        <div class="stat-sub">Primer contacto pendiente</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">🟡 Listos para D+3</div>
+        <div class="stat-value" id="pipe-3d" style="color:#60a5fa;">—</div>
+        <div class="stat-sub">Segundo contacto pendiente</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">✅ Convertidos</div>
+        <div class="stat-value" id="pipe-converted" style="color:#34d399;">—</div>
+        <div class="stat-sub">Membresía confirmada</div>
+      </div>
+    </div>
+
+    <!-- Secuencia programada -->
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-header">
+        <span class="card-title">🤖 Automatizaciones programadas — Secuencia por prospecto</span>
+        <button class="btn btn-secondary btn-sm" onclick="toggleSeq(this)">Ver secuencia ▶</button>
+      </div>
+      <div id="seq-body" style="display:none; padding: 20px 24px;">
+
+        <div class="seq-step">
+          <div class="seq-num green">0</div>
+          <div class="seq-content">
+            <div class="seq-title">Captación — Inmediata</div>
+            <div class="seq-timing">⚡ Al instante en que Aluna detecta interés en membresía</div>
+            <div class="seq-msg">El prospecto queda registrado en el pipeline automáticamente. Aluna guarda nombre, teléfono, plan de interés y código de proforma (si se generó). Estado inicial: 🔥 Caliente.</div>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="seq-num">1</div>
+          <div class="seq-content">
+            <div class="seq-title">D+1 — 24 horas post-contacto</div>
+            <div class="seq-timing">⏰ Enviado automáticamente entre 8:00 am – 7:00 pm (hora Ecuador)</div>
+            <div class="seq-msg-label">📱 WhatsApp</div>
+            <div class="seq-msg">Hola [Nombre] 🌙
+
+Ayer conversamos sobre [Plan] y quería saber si tuviste oportunidad de revisar la info 😊
+
+¿Tienes alguna duda o necesitas más detalles?
+
+Y si quieres conocer el espacio antes de decidir, te invito a venir un día completo sin ningún costo — de 8am a 7pm, usas todo como si ya fuera tu oficina 🏢✨
+
+Sin compromiso. ¿Cuándo te quedaría bien?</div>
+            <div class="seq-msg-label email">📧 Email (si tiene dirección registrada)</div>
+            <div class="seq-msg email">Asunto: "🔥 [Nombre], 15% adicional reservado para ti — vence en 7 días"
+
+→ Template HTML con oferta de descuento del 15% en la primera mensualidad,
+  con fecha de vencimiento 7 días desde el envío.</div>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="seq-num">2</div>
+          <div class="seq-content">
+            <div class="seq-title">D+3 — 72 horas después del primer seguimiento</div>
+            <div class="seq-timing">⏰ Enviado entre 8:00 am – 7:00 pm (hora Ecuador) · Solo si D+1 fue enviado</div>
+            <div class="seq-msg-label">📱 WhatsApp</div>
+            <div class="seq-msg">Hola [Nombre] 👋
+
+¿Cómo estás? Hace unos días charlamos sobre [Plan] y quería hacer un último intento antes de cerrar tu expediente 😊
+
+Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
+
+📍 Tu día de prueba:
+• Sin costo, sin restricciones de horario
+• De 8am a 7pm — usas todo el espacio
+• Hot desk, WiFi ultra rápido, café, locker, sala de reuniones
+• Solo di en recepción que eres invitada/o de Aluna 🏢
+
+¿Qué día de esta semana te queda bien? 🗓️</div>
+            <div class="seq-msg-label email">📧 Email (si tiene dirección registrada)</div>
+            <div class="seq-msg email">Asunto: "⏰ [Nombre], hoy es el último día — oferta cierra a medianoche"
+
+→ Template HTML con FOMO: la oferta del 15% vence hoy.
+  Urgencia + propuesta de día de prueba gratis.</div>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="seq-num green">3</div>
+          <div class="seq-content">
+            <div class="seq-title">D+25 desde último pago — Para miembros ACTIVOS</div>
+            <div class="seq-timing">⏰ Recordatorio de renovación #1 — 5 días antes del vencimiento</div>
+            <div class="seq-msg">📱 WhatsApp automático recordando que la membresía vence en 5 días, con instrucciones de renovación y enlace de pago.</div>
+          </div>
+        </div>
+
+        <div class="seq-step">
+          <div class="seq-num green">4</div>
+          <div class="seq-content">
+            <div class="seq-title">D+30 desde último pago — Para miembros ACTIVOS</div>
+            <div class="seq-timing">⏰ Recordatorio de renovación #2 — Día de vencimiento</div>
+            <div class="seq-msg">📱 WhatsApp automático el día que vence la membresía. Último aviso para renovar y mantener acceso continuo.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tabla de prospectos -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Prospectos en seguimiento</span>
+        <span class="text-muted" style="font-size:12px;">Actualización automática · cada 30s</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Lead</th>
+              <th>Plan</th>
+              <th>Temp.</th>
+              <th>Fase</th>
+              <th>D+0 Interés</th>
+              <th>D+1 📱</th>
+              <th>D+1 📧</th>
+              <th>D+3 📱</th>
+              <th>D+3 📧</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="pipeline-body">
+            <tr class="loading-row"><td colspan="10">Cargando pipeline…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-pipeline -->
+
+</div><!-- /wrap -->
+
+<!-- Footer -->
+<footer class="ml-footer">
+  <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab">
+</footer>
+
+<!-- FAB refresh -->
+<button class="fab" onclick="refreshAll()" title="Actualizar">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+</button>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="/js/aluna-dashboard.js"></script>
+</body>
+</html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Proformas - Aluna</title>
   <style>
     * {

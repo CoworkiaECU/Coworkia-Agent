@@ -1,252 +1,325 @@
-console.log('[ALUNA-DASH] 🚀 Script iniciado');
+/* ══════════════════════════════════════════════════════════════
+   aluna-dashboard.js  —  Proformas + Pipeline de seguimiento
+   ══════════════════════════════════════════════════════════════ */
+
 const API_BASE = window.location.origin;
-console.log('[ALUNA-DASH] API_BASE:', API_BASE);
 
-// Estado de la aplicación
 let allProformas = [];
-let currentFilters = {
-  status: '',
-  origin: '',
-  search: ''
-};
+let currentFilters = { status: '', origin: '', search: '' };
+let currentTab = 'proformas';
 
-// Formateo de fecha
-function formatDate(dateString) {
-  if (!dateString) return '-';
+/* ─── toast ─────────────────────────────────────────────────── */
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ─── tabs ───────────────────────────────────────────────────── */
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.getElementById('tab-proformas').style.display = name === 'proformas' ? '' : 'none';
+  document.getElementById('tab-pipeline').style.display  = name === 'pipeline'  ? '' : 'none';
+}
+
+/* ─── sequence accordion ─────────────────────────────────────── */
+function toggleSeq(btn) {
+  const body = document.getElementById('seq-body');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'Ver secuencia ▶' : 'Ocultar ▲';
+}
+
+/* ─── helpers ────────────────────────────────────────────────── */
+function formatDate(d) {
+  if (!d) return '—';
   try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '-';
-    
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    
-    return date.toLocaleDateString('es-EC', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
-    });
-  } catch (e) {
-    return '-';
-  }
+    const date = new Date(d);
+    if (isNaN(date)) return '—';
+    const diff = Math.floor((Date.now() - date) / 86400000);
+    if (diff === 0) return 'Hoy';
+    if (diff === 1) return 'Ayer';
+    if (diff < 7)  return `Hace ${diff}d`;
+    return date.toLocaleDateString('es-EC', { day: '2-digit', month: 'short' });
+  } catch { return '—'; }
 }
 
-// Formateo de precio
-function formatPrice(price, allowDash = true) {
-  if (!price || price == 0) return allowDash ? '-' : '$0.00';
-  return `$${parseFloat(price).toFixed(2)}`;
+function formatDateShort(d) {
+  if (!d) return null;
+  try {
+    const date = new Date(d);
+    if (isNaN(date)) return null;
+    return date.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: '2-digit' });
+  } catch { return null; }
 }
 
-// Formateo de estado
-function getStatusBadge(status) {
-  const statusMap = {
-    'pending': 'Pendiente',
-    'pending_payment': 'Pago Pendiente',
-    'tour_scheduled': 'Tour Agendado',
-    'negotiating': 'Negociando',
-    'accepted': 'Aceptada',
-    'active': 'Activa',
-    'cancelled': 'Cancelada',
-    'expired': 'Expirada'
-  };
-  
-  const label = statusMap[status] || status;
-  const className = `status-${status}`;
-  
-  return `<span class="status-badge ${className}">${label}</span>`;
+function formatPrice(v) {
+  if (!v || v == 0) return '$0.00';
+  return `$${parseFloat(v).toFixed(2)}`;
 }
 
-// Formateo de plan
-function formatPlan(plan) {
-  if (!plan) return '-';
-  return plan.replace('plan_', 'Plan ').replace('_', ' ');
+function isBigBoss(sr) {
+  const s = (sr || '').toLowerCase();
+  return s.includes('enviado por administrador') || s.includes('admin:') || s.includes('big boss');
 }
 
-// Detectar si una proforma fue enviada por Big Boss (admin)
-function isBigBoss(specialRequirements) {
-  const req = (specialRequirements || '').toLowerCase();
-  return req.includes('enviado por administrador') ||
-         req.includes('admin:') ||
-         req.includes('big boss');
+function getOriginBadge(sr) {
+  return isBigBoss(sr)
+    ? '<span class="badge badge-boss">Big Boss</span>'
+    : '<span class="badge badge-aluna">Aluna</span>';
 }
 
-// Formateo de origen (Big Boss vs Aluna)
-function getOriginBadge(specialRequirements) {
-  if (isBigBoss(specialRequirements)) {
-    return '<span class="origin-badge origin-boss">Big Boss</span>';
-  } else {
-    return '<span class="origin-badge origin-aluna">Aluna</span>';
-  }
-}
-
-// Formateo de temperatura del prospecto
-function getTempBadge(temperature) {
+function getStatusBadge(st) {
   const map = {
-    hot:  { label: '🔥 Caliente', cls: 'temp-hot' },
-    warm: { label: '🟡 Tibio',    cls: 'temp-warm' },
-    cold: { label: '❄️ Frío',    cls: 'temp-cold' }
+    pending:         'Pendiente',
+    pending_payment: 'Pago Pendiente',
+    tour_scheduled:  'Tour Agendado',
+    negotiating:     'Negociando',
+    accepted:        'Aceptada',
+    active:          'Activa',
+    cancelled:       'Cancelada',
+    expired:         'Expirada'
   };
-  const t = map[temperature] || map.cold;
-  return `<span class="temp-badge ${t.cls}">${t.label}</span>`;
+  const label = map[st] || st;
+  return `<span class="badge badge-${st}">${label}</span>`;
 }
 
-// Cargar pipeline de prospectos
+function getTempBadge(t) {
+  const map = {
+    hot:  ['🔥 Caliente', 'temp-hot'],
+    warm: ['🟡 Tibio',    'temp-warm'],
+    cold: ['❄️ Frío',    'temp-cold']
+  };
+  const [label, cls] = map[t] || map['cold'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function getPhase(p) {
+  if (p.converted_at)      return ['✅ Convertido', 'temp-done'];
+  if (p.followup_3d_sent_at) return ['D+3 enviado', 'temp-cold'];
+  if (p.followup_24h_sent_at) return ['Esperando D+3', 'temp-warm'];
+  const hrs = (Date.now() - new Date(p.interest_at)) / 3600000;
+  if (hrs < 24) return ['🔥 Reciente', 'temp-hot'];
+  return ['Esperando D+1', 'temp-warm'];
+}
+
+function tsCell(ts) {
+  const dt = formatDateShort(ts);
+  if (dt) return `<span class="ts-sent">✓ ${dt}</span>`;
+  return `<span class="ts-none">—</span>`;
+}
+
+function initials(name) {
+  if (!name) return '?';
+  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
+/* ─── pipeline actions ────────────────────────────────────────── */
+async function convertProspect(phone, btn) {
+  if (!confirm('¿Marcar este prospecto como convertido?')) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API_BASE}/api/aluna/prospect/${encodeURIComponent(phone)}/convert`, { method: 'POST' });
+    const j = await r.json();
+    if (j.ok) {
+      toast('✅ Prospecto marcado como convertido');
+      await loadPipeline();
+    } else {
+      toast('⚠️ Error: ' + (j.error || 'desconocido'));
+      btn.disabled = false;
+    }
+  } catch (e) {
+    toast('❌ Error de red');
+    btn.disabled = false;
+  }
+}
+
+async function sendWANow(phone, btn) {
+  if (!confirm('¿Enviar WhatsApp de seguimiento ahora?')) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando…';
+  try {
+    const r = await fetch(`${API_BASE}/api/aluna/prospect/${encodeURIComponent(phone)}/sendwa`, { method: 'POST' });
+    const j = await r.json();
+    if (j.ok) {
+      toast('📱 WA enviado — ' + (j.message || ''));
+      await loadPipeline();
+    } else {
+      toast('⚠️ Error: ' + (j.error || 'desconocido'));
+      btn.disabled = false;
+      btn.textContent = '📱 WA ahora';
+    }
+  } catch (e) {
+    toast('❌ Error de red');
+    btn.disabled = false;
+    btn.textContent = '📱 WA ahora';
+  }
+}
+
+/* ─── load pipeline ──────────────────────────────────────────── */
 async function loadPipeline() {
   try {
-    const response = await fetch(`${API_BASE}/api/aluna/pipeline`);
-    const result = await response.json();
-    if (!result.ok) return;
+    const r = await fetch(`${API_BASE}/api/aluna/pipeline`);
+    const res = await r.json();
+    if (!res.ok) return;
 
-    const { data } = result;
-    document.getElementById('pipe-active').textContent    = data.activeProspects;
-    document.getElementById('pipe-24h').textContent       = data.readyFor24h;
-    document.getElementById('pipe-3d').textContent        = data.readyFor3d;
-    document.getElementById('pipe-converted').textContent = data.converted;
+    const d = res.data;
+    document.getElementById('pipe-active').textContent    = d.activeProspects ?? '—';
+    document.getElementById('pipe-24h').textContent       = d.readyFor24h ?? '—';
+    document.getElementById('pipe-3d').textContent        = d.readyFor3d ?? '—';
+    document.getElementById('pipe-converted').textContent = d.converted ?? '—';
+
+    const count = (d.prospects || []).length;
+    document.getElementById('tab-count-pipeline').textContent = count;
 
     const tbody = document.getElementById('pipeline-body');
-    if (!data.prospects || data.prospects.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#6b7280;">Sin prospectos aún. Los leads de la pauta aparecen aquí.</td></tr>';
+    if (!d.prospects || d.prospects.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#475569;">Sin prospectos aún. Los leads de Aluna aparecen aquí automáticamente.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = data.prospects.map(p => `
+    tbody.innerHTML = d.prospects.map(p => {
+      const [phaseLabel, phaseCls] = getPhase(p);
+      const converted = !!p.converted_at;
+      const wa24Done  = !!p.followup_24h_sent_at;
+      const wa3dDone  = !!p.followup_3d_sent_at;
+      const allDone   = converted || (wa24Done && wa3dDone);
+      
+      // Botón WA: qué mensaje queda por enviar
+      let waBtnLabel = '📱 WA D+1';
+      if (wa24Done && !wa3dDone) waBtnLabel = '📱 WA D+3';
+      
+      return `
       <tr>
-        <td>${p.user_phone}</td>
-        <td>${p.user_name || '-'}</td>
-        <td>${p.membership_type || '-'}</td>
-        <td>${p.membership_code ? `<a href="/aluna-proformas.html?code=${p.membership_code}" style="color:#047857;font-weight:600;font-size:12px;">${p.membership_code}</a>` : '<span style="color:#9ca3af">—</span>'}</td>
+        <td>
+          <div class="name-cell">
+            <div class="avatar">${initials(p.user_name)}</div>
+            <div>
+              <div class="name-main">${p.user_name || p.user_phone}</div>
+              <div class="name-sub">${p.user_phone}</div>
+              ${p.user_email ? `<div class="name-sub">${p.user_email}</div>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>${p.membership_type || '—'}</td>
         <td>${getTempBadge(p.temperature)}</td>
-        <td>${formatDate(p.interest_at)}</td>
-        <td>${p.followup_24h_sent_at ? formatDate(p.followup_24h_sent_at) : '<span style="color:#9ca3af">Pendiente</span>'}</td>
-        <td>${p.followup_24h_email_sent_at ? formatDate(p.followup_24h_email_sent_at) : (p.email ? '<span style="color:#f59e0b">Pendiente</span>' : '<span style="color:#d1d5db">Sin email</span>')}</td>
-        <td>${p.followup_3d_sent_at  ? formatDate(p.followup_3d_sent_at)  : '<span style="color:#9ca3af">Pendiente</span>'}</td>
-        <td>${p.followup_3d_email_sent_at ? formatDate(p.followup_3d_email_sent_at) : (p.email ? '<span style="color:#f59e0b">Pendiente</span>' : '<span style="color:#d1d5db">Sin email</span>')}</td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    console.error('[ALUNA-DASH] Error cargando pipeline:', err);
+        <td><span class="badge ${phaseCls}" style="white-space:nowrap;">${phaseLabel}</span></td>
+        <td>${tsCell(p.interest_at)}</td>
+        <td>${tsCell(p.followup_24h_sent_at)}</td>
+        <td>${p.user_email ? tsCell(p.followup_24h_email_sent_at) : '<span class="ts-none" title="Sin email">—</span>'}</td>
+        <td>${tsCell(p.followup_3d_sent_at)}</td>
+        <td>${p.user_email ? tsCell(p.followup_3d_email_sent_at) : '<span class="ts-none" title="Sin email">—</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-sm btn-convert" onclick="convertProspect('${p.user_phone}', this)" ${converted ? 'disabled' : ''}>
+            ${converted ? '✅ Ya convertido' : '✅ Convertir'}
+          </button>
+          <button class="btn btn-sm btn-wa" onclick="sendWANow('${p.user_phone}', this)" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
+            ${allDone ? '✓ Secuencia completa' : waBtnLabel}
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch (e) {
+    console.error('[ALUNA-DASH] Error cargando pipeline:', e);
   }
 }
 
-// Cargar estadísticas
+/* ─── load stats ─────────────────────────────────────────────── */
 async function loadStats() {
   try {
-    console.log('[ALUNA-DASH] Cargando stats desde:', `${API_BASE}/api/aluna/stats`);
-    const response = await fetch(`${API_BASE}/api/aluna/stats`);
-    console.log('[ALUNA-DASH] Response status:', response.status);
-    const result = await response.json();
-    console.log('[ALUNA-DASH] Stats result:', result);
-    
-    if (result.ok) {
-      const { data } = result;
-      document.getElementById('stat-total').textContent = data.total || 0;
-      document.getElementById('stat-month').textContent = data.recent?.thisMonth || 0;
-      document.getElementById('stat-week').textContent = data.recent?.last7Days || 0;
-      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.potential || 0, false);
-    } else {
-      console.error('[ALUNA-DASH] Stats failed:', result.error);
-    }
-  } catch (error) {
-    console.error('[ALUNA-DASH] Error cargando stats:', error);
+    const r = await fetch(`${API_BASE}/api/aluna/stats`);
+    const res = await r.json();
+    if (!res.ok) return;
+    const d = res.data;
+    document.getElementById('stat-total').textContent   = d.total || 0;
+    document.getElementById('stat-month').textContent   = d.recent?.thisMonth || 0;
+    document.getElementById('stat-week').textContent    = d.recent?.last7Days || 0;
+    document.getElementById('stat-revenue').textContent = formatPrice(d.revenue?.potential || 0);
+  } catch (e) {
+    console.error('[ALUNA-DASH] Error cargando stats:', e);
   }
 }
 
-// Cargar proformas
+/* ─── load proformas ─────────────────────────────────────────── */
 async function loadProformas() {
-  const loadingEl = document.getElementById('loading');
-  const errorEl = document.getElementById('error');
-  const tableEl = document.getElementById('proformas-table');
-  const emptyEl = document.getElementById('empty-state');
-  const tbody = document.getElementById('table-body');
-  
-  // Mostrar loading
+  const loadingEl = document.getElementById('loading-proformas');
+  const errorEl   = document.getElementById('error-proformas');
+  const tableEl   = document.getElementById('proformas-table');
+  const emptyEl   = document.getElementById('empty-proformas');
+  const tbody     = document.getElementById('table-body');
+
   loadingEl.style.display = 'block';
-  errorEl.style.display = 'none';
-  tableEl.style.display = 'none';
-  emptyEl.style.display = 'none';
-  
+  errorEl.style.display   = 'none';
+  tableEl.style.display   = 'none';
+  emptyEl.style.display   = 'none';
+
   try {
-    // Construir URL con filtros
-    const params = new URLSearchParams();
-    if (currentFilters.status) params.append('status', currentFilters.status);
-    params.append('limit', '1000'); // Cargar todas
-    
-    const url = `${API_BASE}/api/aluna/proformas?${params}`;
-    console.log('[ALUNA-DASH] Cargando proformas desde:', url);
-    
-    const response = await fetch(url);
-    console.log('[ALUNA-DASH] Response status:', response.status);
-    
-    const result = await response.json();
-    console.log('[ALUNA-DASH] Result:', result);
-    console.log('[ALUNA-DASH] Data length:', result.data?.length);
-    
-    if (!result.ok) {
-      throw new Error(result.error || 'Error cargando proformas');
-    }
-    
-    allProformas = result.data || [];
-    console.log('[ALUNA-DASH] Proformas cargadas:', allProformas.length);
-    
-    // Aplicar filtros locales (origen + búsqueda)
+    const params = new URLSearchParams({ limit: 1000 });
+    if (currentFilters.status) params.set('status', currentFilters.status);
+    const r = await fetch(`${API_BASE}/api/aluna/proformas?${params}`);
+    const res = await r.json();
+    if (!res.ok) throw new Error(res.error || 'Error cargando proformas');
+
+    allProformas = res.data || [];
+
     let filtered = allProformas;
     if (currentFilters.origin) {
       const wantBoss = currentFilters.origin === 'bigboss';
       filtered = filtered.filter(p => isBigBoss(p.special_requirements) === wantBoss);
     }
     if (currentFilters.search) {
-      const search = currentFilters.search.toLowerCase();
-      filtered = filtered.filter(p => 
-        (p.client_name || '').toLowerCase().includes(search) ||
-        (p.email || '').toLowerCase().includes(search) ||
-        (p.membership_code || '').toLowerCase().includes(search) ||
-        (p.phone || '').toLowerCase().includes(search)
+      const s = currentFilters.search.toLowerCase();
+      filtered = filtered.filter(p =>
+        (p.client_name || '').toLowerCase().includes(s) ||
+        (p.email || '').toLowerCase().includes(s) ||
+        (p.membership_code || '').toLowerCase().includes(s) ||
+        (p.phone || '').toLowerCase().includes(s)
       );
     }
-    
-    console.log('[ALUNA-DASH] Proformas filtradas:', filtered.length);
-    
-    // Renderizar tabla
+
+    document.getElementById('tab-count-proformas').textContent = filtered.length;
     loadingEl.style.display = 'none';
-    
+
     if (filtered.length === 0) {
-      console.log('[ALUNA-DASH] No hay proformas para mostrar');
       emptyEl.style.display = 'block';
     } else {
-      console.log('[ALUNA-DASH] Renderizando tabla...');
       tbody.innerHTML = filtered.map(p => `
         <tr>
-          <td><strong>${p.membership_code || '-'}</strong></td>
-          <td>${p.client_name || '-'}</td>
-          <td>${p.email || '-'}</td>
-          <td>${formatPlan(p.membership_type)}</td>
-          <td class="money">${formatPrice(p.monthly_fee)}</td>
+          <td><strong style="color:#f1f5f9;">${p.membership_code || '—'}</strong></td>
+          <td>${p.client_name || '—'}</td>
+          <td class="text-muted">${p.email || '—'}</td>
+          <td>${(p.membership_type || '—').replace('plan_','').replace('_',' ')}</td>
+          <td class="money-green">${formatPrice(p.monthly_fee)}</td>
           <td>${getStatusBadge(p.status)}</td>
           <td>${getOriginBadge(p.special_requirements)}</td>
-          <td>${formatDate(p.quote_sent_at || p.created_at)}</td>
-        </tr>
-      `).join('');
-      
+          <td class="text-muted">${formatDate(p.quote_sent_at || p.created_at)}</td>
+        </tr>`).join('');
       tableEl.style.display = 'table';
-      console.log('[ALUNA-DASH] Tabla renderizada');
     }
-    
-    // Actualizar stats
+
     await loadStats();
-    
-  } catch (error) {
-    console.error('[ALUNA-DASH] Error completo:', error);
-    console.error('[ALUNA-DASH] Error stack:', error.stack);
+
+  } catch (e) {
+    console.error('[ALUNA-DASH] Error:', e);
     loadingEl.style.display = 'none';
-    errorEl.textContent = `Error: ${error.message}`;
+    errorEl.textContent = 'Error: ' + e.message;
     errorEl.style.display = 'block';
   }
 }
 
-// Resetear filtros
+/* ─── refresh all ────────────────────────────────────────────── */
+function refreshAll() {
+  loadStats();
+  loadProformas();
+  loadPipeline();
+}
+
+/* ─── reset filters ──────────────────────────────────────────── */
 function resetFilters() {
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-origin').value = '';
@@ -255,49 +328,25 @@ function resetFilters() {
   loadProformas();
 }
 
-// Event listeners
-try {
-  console.log('[ALUNA-DASH] Configurando event listeners...');
-  
-  document.getElementById('filter-status').addEventListener('change', (e) => {
-    currentFilters.status = e.target.value;
-    loadProformas();
-  });
+/* ─── init ───────────────────────────────────────────────────── */
+document.getElementById('filter-status').addEventListener('change', e => {
+  currentFilters.status = e.target.value;
+  loadProformas();
+});
+document.getElementById('filter-origin').addEventListener('change', e => {
+  currentFilters.origin = e.target.value;
+  loadProformas();
+});
+document.getElementById('search').addEventListener('input', e => {
+  currentFilters.search = e.target.value;
+  clearTimeout(window._searchTimer);
+  window._searchTimer = setTimeout(loadProformas, 450);
+});
 
-  document.getElementById('filter-origin').addEventListener('change', (e) => {
-    currentFilters.origin = e.target.value;
-    loadProformas();
-  });
+loadProformas();
+loadPipeline();
 
-  document.getElementById('search').addEventListener('input', (e) => {
-    currentFilters.search = e.target.value;
-    // Debounce: recargar después de 500ms de inactividad
-    clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => loadProformas(), 500);
-  });
+setInterval(() => { loadStats(); loadPipeline(); }, 30000);
 
-  document.getElementById('search').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      clearTimeout(window.searchTimeout);
-      loadProformas();
-    }
-  });
-
-  console.log('[ALUNA-DASH] Event listeners configurados');
-  
-  // Cargar al inicio
-  console.log('[ALUNA-DASH] Iniciando carga de proformas...');
-  loadPipeline();
-  loadProformas().catch(err => {
-    console.error('[ALUNA-DASH] Error fatal en carga inicial:', err);
-    alert('Error cargando dashboard: ' + err.message + '\nRevisa el Console (Cmd+Option+J) para más detalles');
-  });
-
-  // Auto-refresh cada 30 segundos
-  setInterval(() => { loadStats(); loadPipeline(); }, 30000);
-  
-  console.log('[ALUNA-DASH] ✅ Inicialización completa');
-} catch (error) {
-  console.error('[ALUNA-DASH] ❌ Error en inicialización:', error);
-  alert('Error inicializando dashboard: ' + error.message);
-}
+/* ─── end ───────────────────────────────────────────────────── */
+// Estado de la aplicación -- LEGACY (removed)

@@ -322,4 +322,81 @@ router.get('/pipeline', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/aluna/prospect/:phone/convert
+ * Marca un prospecto como convertido manualmente desde el dashboard
+ */
+router.post('/prospect/:phone/convert', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { phone } = req.params;
+    const result = await databaseService.run(
+      `UPDATE aluna_prospect_followups
+          SET converted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE user_phone = $1 AND converted_at IS NULL`,
+      [phone]
+    );
+    return res.json({ ok: true, message: 'Prospecto marcado como convertido' });
+  } catch (error) {
+    console.error('[ALUNA-API] Error convirtiendo prospecto:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/aluna/prospect/:phone/sendwa
+ * Envía el WA de seguimiento correspondiente de inmediato (acción manual)
+ * Envía mensaje 24h si no se ha enviado aún, o mensaje 3d si ya pasó el 24h
+ */
+router.post('/prospect/:phone/sendwa', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { phone } = req.params;
+
+    const prospect = await databaseService.get(
+      `SELECT * FROM aluna_prospect_followups WHERE user_phone = $1`,
+      [phone]
+    );
+    if (!prospect) {
+      return res.status(404).json({ ok: false, error: 'Prospecto no encontrado' });
+    }
+
+    const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+    const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
+    if (!WASSENGER_TOKEN || !WASSENGER_DEVICE_ID) {
+      return res.status(500).json({ ok: false, error: 'Credenciales Wassenger no configuradas' });
+    }
+
+    const name = (prospect.user_name || '').split(' ')[0] || 'Hola';
+    const plan = prospect.membership_type ? `*${prospect.membership_type}*` : 'los planes de membresía';
+
+    let message, followUpType;
+    if (!prospect.followup_24h_sent_at) {
+      followUpType = '24h_manual';
+      message = `Hola ${name} 🌙\n\nQuería hacer seguimiento sobre ${plan} que estuviste revisando 😊\n\n¿Tienes alguna duda o necesitas más detalles?\n\nY si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina 🏢✨\n\nSin compromiso. ¿Cuándo te quedaría bien?`;
+    } else {
+      followUpType = '3d_manual';
+      message = `Hola ${name} 👋\n\n¿Cómo estás? Hace unos días charlamos sobre ${plan} y quería hacer un último acercamiento 😊\n\n*Mi propuesta:* ven a Coworkia un día completo, completamente gratis.\n\n📍 Sin costo, de *8am a 7pm* — WiFi, café, hot desk, sala de reuniones.\nSolo di en recepción que eres invitada/o de Aluna 🏢\n\n¿Qué día de esta semana te queda bien? 🗓️`;
+    }
+
+    const waResponse = await fetch('https://api.wassenger.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+      body: JSON.stringify({ phone, message, device: WASSENGER_DEVICE_ID })
+    });
+    if (!waResponse.ok) throw new Error(`Wassenger error: ${waResponse.status}`);
+
+    const updateField = followUpType === '24h_manual' ? 'followup_24h_sent_at' : 'followup_3d_sent_at';
+    await databaseService.run(
+      `UPDATE aluna_prospect_followups SET ${updateField} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_phone = $1`,
+      [phone]
+    );
+
+    return res.json({ ok: true, message: `WA enviado (${followUpType})`, type: followUpType });
+  } catch (error) {
+    console.error('[ALUNA-API] Error enviando WA manual:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

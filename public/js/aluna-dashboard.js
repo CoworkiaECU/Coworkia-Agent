@@ -26,15 +26,102 @@ function switchTab(name) {
   document.getElementById('tab-pipeline').style.display  = name === 'pipeline'  ? '' : 'none';
 }
 
+/* ─── stage filter ───────────────────────────────────────────── */
+let activeStageFilter = null;
+
+function filterByStage(stage) {
+  if (activeStageFilter === stage) {
+    clearStageFilter();
+    return;
+  }
+  activeStageFilter = stage;
+  document.querySelectorAll('.funnel-stage').forEach(el => el.classList.remove('active'));
+  const map = { captado: 'fs-captado', d1: 'fs-d1', d3: 'fs-d3', converted: 'fs-conv' };
+  if (map[stage]) document.getElementById(map[stage]).classList.add('active');
+  const label = document.getElementById('stage-filter-label');
+  const names = { captado: '🎯 Captado', d1: '📨 D+1 Enviado', d3: '⏰ D+3 Enviado', converted: '🏆 Convertido' };
+  label.querySelector('button').previousSibling.textContent = `▶ ${names[stage]} — `;
+  label.style.display = 'inline-flex';
+  renderPipelineRows(window._lastProspects || []);
+}
+
+function clearStageFilter() {
+  activeStageFilter = null;
+  document.querySelectorAll('.funnel-stage').forEach(el => el.classList.remove('active'));
+  document.getElementById('stage-filter-label').style.display = 'none';
+  renderPipelineRows(window._lastProspects || []);
+}
+
+function getProspectStage(p) {
+  if (p.converted_at)        return 'converted';
+  if (p.followup_3d_sent_at)  return 'd3';
+  if (p.followup_24h_sent_at) return 'd1';
+  return 'captado';
+}
+
 /* ─── sequence accordion ─────────────────────────────────────── */
 function toggleSeq(btn) {
   const body = document.getElementById('seq-body');
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : 'block';
-  btn.textContent = open ? 'Ver secuencia ▶' : 'Ocultar ▲';
+  btn.textContent = open ? 'Ver mensajes programados ▶' : 'Ocultar ▲';
 }
 
-/* ─── helpers ────────────────────────────────────────────────── */
+/* ─── stepper builder ────────────────────────────────────────── */
+function buildStepper(p) {
+  const stage = getProspectStage(p);
+  const steps = [
+    { label: 'Captado', key: 'captado' },
+    { label: 'D+1 📱',  key: 'd1' },
+    { label: 'D+3 📱',  key: 'd3' },
+    { label: '✅',       key: 'converted' },
+  ];
+  const order = ['captado', 'd1', 'd3', 'converted'];
+  const pos = order.indexOf(stage);
+
+  let html = '<div style="margin-bottom:4px;"><div class="stepper">';
+  steps.forEach((s, i) => {
+    const isDone    = i < pos;
+    const isCurrent = i === pos;
+    const cls = isDone ? 'done' : (isCurrent ? 'current' : '');
+    html += `<div class="step-dot ${cls}" title="${s.label}">${isDone ? '✓' : (i + 1)}</div>`;
+    if (i < steps.length - 1) {
+      html += `<div class="step-line ${isDone ? 'done' : ''}"></div>`;
+    }
+  });
+  html += '</div>';
+
+  // labels row
+  html += '<div style="display:flex;align-items:center;gap:0;margin-top:3px;">';
+  steps.forEach((s, i) => {
+    const isDone    = i < pos;
+    const isCurrent = i === pos;
+    const col = isDone ? '#34d399' : (isCurrent ? '#f97316' : '#334155');
+    html += `<div style="width:22px;text-align:center;font-size:8px;color:${col};flex-shrink:0;">${s.label.split(' ')[0]}</div>`;
+    if (i < steps.length - 1) html += '<div style="width:16px;flex-shrink:0;"></div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+/* ─── next action ────────────────────────────────────────────── */
+function getNextAction(p) {
+  if (p.converted_at) return `<span class="next-action na-done">🏆 Convertido</span>`;
+  if (p.followup_3d_sent_at) {
+    const diff = Math.floor((Date.now() - new Date(p.followup_3d_sent_at)) / 86400000);
+    return `<span class="next-action na-waiting">⏳ Esperando resp. (D+${diff})</span>`;
+  }
+  if (p.followup_24h_sent_at) {
+    const diff = Math.floor((Date.now() - new Date(p.followup_24h_sent_at)) / 3600000);
+    const label = diff >= 72 ? `📱 Enviar D+3 — pendiente` : `⏳ D+3 en ${Math.max(0, 72 - diff)}h`;
+    const cls = diff >= 72 ? 'na-pending' : 'na-waiting';
+    return `<span class="next-action ${cls}">${label}</span>`;
+  }
+  const hrs = Math.floor((Date.now() - new Date(p.interest_at)) / 3600000);
+  const label = hrs >= 24 ? `📱 Enviar D+1 — pendiente` : `⏳ D+1 en ${Math.max(0, 24 - hrs)}h`;
+  const cls = hrs >= 24 ? 'na-pending' : 'na-waiting';
+  return `<span class="next-action ${cls}">${label}</span>`;
+}
 function formatDate(d) {
   if (!d) return '—';
   try {
@@ -98,14 +185,6 @@ function getTempBadge(t) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
-function getPhase(p) {
-  if (p.converted_at)      return ['✅ Convertido', 'temp-done'];
-  if (p.followup_3d_sent_at) return ['D+3 enviado', 'temp-cold'];
-  if (p.followup_24h_sent_at) return ['Esperando D+3', 'temp-warm'];
-  const hrs = (Date.now() - new Date(p.interest_at)) / 3600000;
-  if (hrs < 24) return ['🔥 Reciente', 'temp-hot'];
-  return ['Esperando D+1', 'temp-warm'];
-}
 
 function tsCell(ts) {
   const dt = formatDateShort(ts);
@@ -168,65 +247,83 @@ async function loadPipeline() {
     if (!res.ok) return;
 
     const d = res.data;
-    document.getElementById('pipe-active').textContent    = d.activeProspects ?? '—';
-    document.getElementById('pipe-24h').textContent       = d.readyFor24h ?? '—';
-    document.getElementById('pipe-3d').textContent        = d.readyFor3d ?? '—';
-    document.getElementById('pipe-converted').textContent = d.converted ?? '—';
+    const prospects = d.prospects || [];
+    window._lastProspects = prospects;
 
-    const count = (d.prospects || []).length;
-    document.getElementById('tab-count-pipeline').textContent = count;
+    // Count per stage
+    const counts = { captado: 0, d1: 0, d3: 0, converted: 0 };
+    prospects.forEach(p => counts[getProspectStage(p)]++);
+    const total = prospects.length || 1;
 
-    const tbody = document.getElementById('pipeline-body');
-    if (!d.prospects || d.prospects.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#475569;">Sin prospectos aún. Los leads de Aluna aparecen aquí automáticamente.</td></tr>`;
-      return;
-    }
+    document.getElementById('pipe-captado').textContent   = counts.captado;
+    document.getElementById('pipe-d1').textContent        = counts.d1;
+    document.getElementById('pipe-d3').textContent        = counts.d3;
+    document.getElementById('pipe-converted').textContent = counts.converted;
 
-    tbody.innerHTML = d.prospects.map(p => {
-      const [phaseLabel, phaseCls] = getPhase(p);
-      const converted = !!p.converted_at;
-      const wa24Done  = !!p.followup_24h_sent_at;
-      const wa3dDone  = !!p.followup_3d_sent_at;
-      const allDone   = converted || (wa24Done && wa3dDone);
-      
-      // Botón WA: qué mensaje queda por enviar
-      let waBtnLabel = '📱 WA D+1';
-      if (wa24Done && !wa3dDone) waBtnLabel = '📱 WA D+3';
-      
-      return `
-      <tr>
-        <td>
-          <div class="name-cell">
-            <div class="avatar">${initials(p.user_name)}</div>
-            <div>
-              <div class="name-main">${p.user_name || p.user_phone}</div>
-              <div class="name-sub">${p.user_phone}</div>
-              ${p.user_email ? `<div class="name-sub">${p.user_email}</div>` : ''}
-            </div>
-          </div>
-        </td>
-        <td>${p.membership_type || '—'}</td>
-        <td>${getTempBadge(p.temperature)}</td>
-        <td><span class="badge ${phaseCls}" style="white-space:nowrap;">${phaseLabel}</span></td>
-        <td>${tsCell(p.interest_at)}</td>
-        <td>${tsCell(p.followup_24h_sent_at)}</td>
-        <td>${p.user_email ? tsCell(p.followup_24h_email_sent_at) : '<span class="ts-none" title="Sin email">—</span>'}</td>
-        <td>${tsCell(p.followup_3d_sent_at)}</td>
-        <td>${p.user_email ? tsCell(p.followup_3d_email_sent_at) : '<span class="ts-none" title="Sin email">—</span>'}</td>
-        <td style="white-space:nowrap;">
-          <button class="btn btn-sm btn-convert" onclick="convertProspect('${p.user_phone}', this)" ${converted ? 'disabled' : ''}>
-            ${converted ? '✅ Ya convertido' : '✅ Convertir'}
-          </button>
-          <button class="btn btn-sm btn-wa" onclick="sendWANow('${p.user_phone}', this)" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
-            ${allDone ? '✓ Secuencia completa' : waBtnLabel}
-          </button>
-        </td>
-      </tr>`;
-    }).join('');
+    // Fill funnel bars
+    document.getElementById('bar-captado').style.width = Math.round(counts.captado / total * 100) + '%';
+    document.getElementById('bar-d1').style.width      = Math.round(counts.d1 / total * 100) + '%';
+    document.getElementById('bar-d3').style.width      = Math.round(counts.d3 / total * 100) + '%';
+    document.getElementById('bar-conv').style.width    = Math.round(counts.converted / total * 100) + '%';
+
+    document.getElementById('tab-count-pipeline').textContent = prospects.length;
+
+    renderPipelineRows(prospects);
 
   } catch (e) {
     console.error('[ALUNA-DASH] Error cargando pipeline:', e);
   }
+}
+
+function renderPipelineRows(prospects) {
+  const tbody = document.getElementById('pipeline-body');
+
+  let list = prospects;
+  if (activeStageFilter) {
+    list = prospects.filter(p => getProspectStage(p) === activeStageFilter);
+  }
+
+  if (list.length === 0) {
+    const msg = activeStageFilter
+      ? 'Sin prospectos en esta etapa.'
+      : 'Sin prospectos aún. Los leads de Aluna aparecen aquí automáticamente.';
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#475569;">${msg}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(p => {
+    const converted = !!p.converted_at;
+    const wa24Done  = !!p.followup_24h_sent_at;
+    const wa3dDone  = !!p.followup_3d_sent_at;
+    const allDone   = converted || (wa24Done && wa3dDone);
+    let waBtnLabel  = wa24Done && !wa3dDone ? '📱 WA D+3' : '📱 WA D+1';
+
+    return `
+    <tr>
+      <td>
+        <div class="name-cell">
+          <div class="avatar">${initials(p.user_name)}</div>
+          <div>
+            <div class="name-main">${p.user_name || p.user_phone}</div>
+            <div class="name-sub">${p.user_phone}</div>
+            ${p.user_email ? `<div class="name-sub">${p.user_email}</div>` : ''}
+            <div style="margin-top:4px;">${getTempBadge(p.temperature)}</div>
+          </div>
+        </div>
+      </td>
+      <td>${p.membership_type || '—'}</td>
+      <td>${buildStepper(p)}</td>
+      <td>${getNextAction(p)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm btn-convert" onclick="convertProspect('${p.user_phone}', this)" ${converted ? 'disabled' : ''}>
+          ${converted ? '✅ Convertido' : '✅ Convertir'}
+        </button>
+        <button class="btn btn-sm btn-wa" onclick="sendWANow('${p.user_phone}', this)" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
+          ${allDone ? '✓ Secuencia OK' : waBtnLabel}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 /* ─── load stats ─────────────────────────────────────────────── */

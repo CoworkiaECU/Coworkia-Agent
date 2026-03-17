@@ -27,7 +27,7 @@
 - **Confirmar al usuario** el código de proforma generado para que pueda verificar en su bandeja.
 - **La nota de prueba va vacía** (`nota: null`) — el template debe verse limpio y real.
 - **Ecosistema siempre antes del footer.** Todo email HTML de cliente DEBE incluir la sección oscura del ecosistema de 8 agentes (`ecosistemaTable` de `./email-ecosystem.js`) como penúltima sección, fusionada con el footer dark. Sin excepción. Los `aliados` excluyen al agente autor del email.
-- **Credenciales WiFi honestas.** El email de bienvenida NO muestra redes WPA ni contraseñas inventadas. El acceso WiFi real usa el portal cautivo (código personal entregado en recepción). Hasta que Aurora↔WiFi estén integrados: indicar solo “portal cautivo · código en recepción”.
+- **Credenciales WiFi honestas.** El email de bienvenida NO muestra: redes WPA, contraseñas, nombres de red inventados ("Red Coworkia"), ni velocidades específicas ("300 Mbps") que no vienen de datos reales del sistema. El acceso WiFi real usa portal cautivo (código personal entregado en recepción). Solo mostrar: acceso="portal cautivo Coworkia", dispositivos (del plan), vigencia, instrucción de recepción.
 
 ---
 

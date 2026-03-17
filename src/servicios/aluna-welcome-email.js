@@ -190,12 +190,8 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
         <div style="background:white;border-radius:10px;padding:16px;border:1px solid #D1FAE5;">
           <table style="width:100%;font-size:14px;border-collapse:collapse;">
             <tr>
-              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Portal WiFi</td>
-              <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">Red Coworkia · portal cautivo</td>
-            </tr>
-            <tr>
-              <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Velocidad</td>
-              <td style="color:#374151;padding:7px 0;border-bottom:1px solid #F0FDF4;">300 Mbps fibra óptica</td>
+              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Acceso</td>
+              <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">Portal cautivo Coworkia</td>
             </tr>
             <tr>
               <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Dispositivos</td>

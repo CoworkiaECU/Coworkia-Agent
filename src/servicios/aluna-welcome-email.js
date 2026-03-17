@@ -13,6 +13,7 @@
  */
 
 import { sendEmail } from './email.js';
+import { ecosistemaTable } from './email-ecosystem.js';
 
 // ─── Datos de planes ─────────────────────────────────────────────────────────
 const PLAN_DETAILS = {
@@ -182,19 +183,15 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
         </div>
       </div>
 
-      <!-- WiFi — fondo verde claro, idéntico a la paleta aprobada -->
+      <!-- WiFi — Portal cautivo Coworkia -->
       <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:20px;margin:0 0 20px;">
         <div style="color:#047857;font-size:16px;font-weight:700;margin-bottom:12px;">📡 Acceso a Internet — 3 Dispositivos</div>
-        <p style="color:#374151;margin:0 0 14px;font-size:14px;line-height:1.6;">Tu plan incluye conexión estable y segura para <strong>3 dispositivos simultáneos</strong> durante todo el mes de tu membresía.</p>
+        <p style="color:#374151;margin:0 0 14px;font-size:14px;line-height:1.6;">Tu plan incluye acceso WiFi de alta velocidad para hasta <strong>3 dispositivos simultáneos</strong>, activo durante todo el período de tu membresía.</p>
         <div style="background:white;border-radius:10px;padding:16px;border:1px solid #D1FAE5;">
           <table style="width:100%;font-size:14px;border-collapse:collapse;">
             <tr>
-              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Red WiFi</td>
-              <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">Coworkia-Pro</td>
-            </tr>
-            <tr>
-              <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Contraseña</td>
-              <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">coworkia2024</td>
+              <td style="color:#6B7280;padding:7px 0;width:45%;border-bottom:1px solid #F0FDF4;">Portal WiFi</td>
+              <td style="color:#065F46;font-weight:700;padding:7px 0;border-bottom:1px solid #F0FDF4;">Red Coworkia · portal cautivo</td>
             </tr>
             <tr>
               <td style="color:#6B7280;padding:7px 0;border-bottom:1px solid #F0FDF4;">Velocidad</td>
@@ -206,11 +203,13 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
             </tr>
             <tr>
               <td style="color:#6B7280;padding:7px 0;">Vigencia</td>
-              <td style="color:#374151;padding:7px 0;">Todo el mes de tu membresía</td>
+              <td style="color:#374151;padding:7px 0;">Todo el período de tu membresía</td>
             </tr>
           </table>
         </div>
-        <p style="color:#6B7280;font-size:12px;margin:12px 0 0;">💡 Al llegar por primera vez, menciona tu código de contrato en recepción para que activen tus dispositivos.</p>
+        <div style="background:#D1FAE5;border-radius:8px;padding:12px 14px;margin-top:12px;">
+          <p style="color:#065F46;font-size:13px;margin:0;line-height:1.6;">💡 <strong>En tu primera visita:</strong> conéctate a la red WiFi de Coworkia → el portal te pedirá un código de acceso → el staff te lo entrega en recepción con tu contrato <strong>${membershipCode}</strong>.</p>
+        </div>
       </div>
 
       <!-- Próximos pasos -->
@@ -227,7 +226,7 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
           </div>
           <div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid #F0FDF4;">
             <span style="color:#047857;font-weight:800;font-size:15px;min-width:22px;">3.</span>
-            <span style="color:#374151;font-size:14px;line-height:1.6;">Conecta tus dispositivos a <strong style="color:#065F46;">Coworkia-Pro</strong></span>
+            <span style="color:#374151;font-size:14px;line-height:1.6;">Recibe tu código de portal WiFi → conectá hasta <strong style="color:#065F46;">3 dispositivos</strong></span>
           </div>
           <div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;">
             <span style="color:#047857;font-weight:800;font-size:15px;min-width:22px;">4.</span>
@@ -236,25 +235,32 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
         </div>
       </div>
 
-      <!-- CTA WhatsApp -->
-      <div style="text-align:center;margin:25px 0;">
-        <p style="color:#374151;font-size:14px;margin:0 0 14px;font-weight:600;">¿Tienes alguna duda? Estamos en WhatsApp para ti:</p>
-        <a href="https://wa.me/593994837117" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">📱 Contactar a Aluna</a>
-        <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">secretaria.coworkia@gmail.com · Whymper 403, Edificio Finistere - PB, Quito</p>
+      <!-- CTA WhatsApp — persuasivo y contextual al momento post-pago -->
+      <div style="text-align:center;margin:25px 0 30px;">
+        <p style="color:#374151;font-size:14px;margin:0 0 6px;font-weight:600;">¿Todo listo para tu primer día?</p>
+        <p style="color:#6B7280;font-size:13px;margin:0 0 16px;line-height:1.5;">Escríbeme ahora y coordinamos la hora de llegada — quiero asegurarme de que todo esté perfecto.</p>
+        <a href="https://wa.me/593994837117?text=${encodeURIComponent('@aluna soy ' + memberName + ', acabo de confirmar mi ' + membershipType + ' (' + membershipCode + ') — ¿a qué hora puedo llegar mañana para mi primer día?')}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:15px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;letter-spacing:0.3px;">¿Cuándo empiezo mi primer día? →</a>
+        <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">Whymper 403, Edificio Finistere - PB, Quito · secretaria.coworkia@gmail.com</p>
       </div>
 
     </div>
 
-    <!-- FOOTER DARK — igual al footer del template aprobado de proformas -->
+    <!-- ECOSISTEMA 8 AGENTES + FOOTER (igual al template aprobado de proformas) -->
     <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
-      <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:4px;line-height:1.3;">Coworkia</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">BUSINESS CENTER · ECOSISTEMA IA</div>
-      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;">
+      <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">Todo el ecosistema a tu servicio</div>
+      <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">Como miembro de Coworkia tienes acceso a todos nuestros especialistas. Cada uno resuelve un área de tu negocio — seguros, marketing, bienes raíces, colisiones, finanzas y más.</div>
+      <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'], theme: 'dark' })}</div>
+      <div style="margin-bottom:28px;padding:0 8px;">
+        <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
+        <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
+        <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER · ECOSISTEMA IA</div>
         <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
           © 2026 Coworkia Ecuador — Espacios que inspiran<br>
           Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
           coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117<br>
-          <span style="font-size:10px;color:rgba(255,255,255,0.25);">Este email fue enviado por Aluna, tu asistente de membresías.</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.25);">Email enviado por Aluna · asistente de membresías Coworkia</span>
         </div>
       </div>
     </div>

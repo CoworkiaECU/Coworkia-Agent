@@ -26,6 +26,8 @@
 - **Datos reales siempre.** Nunca usar textos placeholder ("Plan Piloto Test", "Usuario de Prueba", etc.) — el test debe verse idéntico a lo que recibirá un cliente real. Usar `Diego Villota` como nombre por defecto en tests.
 - **Confirmar al usuario** el código de proforma generado para que pueda verificar en su bandeja.
 - **La nota de prueba va vacía** (`nota: null`) — el template debe verse limpio y real.
+- **Ecosistema siempre antes del footer.** Todo email HTML de cliente DEBE incluir la sección oscura del ecosistema de 8 agentes (`ecosistemaTable` de `./email-ecosystem.js`) como penúltima sección, fusionada con el footer dark. Sin excepción. Los `aliados` excluyen al agente autor del email.
+- **Credenciales WiFi honestas.** El email de bienvenida NO muestra redes WPA ni contraseñas inventadas. El acceso WiFi real usa el portal cautivo (código personal entregado en recepción). Hasta que Aurora↔WiFi estén integrados: indicar solo “portal cautivo · código en recepción”.
 
 ---
 

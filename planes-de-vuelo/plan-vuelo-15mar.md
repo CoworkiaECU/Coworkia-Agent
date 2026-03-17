@@ -1,6 +1,6 @@
 # 🚀 Plan de Vuelo — 15 Marzo 2026
 > Guía maestra diaria. Auditada y actualizada cada sesión.
-> **Última actualización:** 16 Mar 2026 — `e11aeaf` · **v951+ en Heroku** — Aluna ✅ Enzo pricing limpio ✅ Preview "3 Actos" con ecosistema completo ✅
+> **Última actualización:** 17 Mar 2026 — `00e075f` · **Heroku live** — Enzo 3 actos ✅ en producción — Próximo: Auditoría Aurora/Aluna
 
 ---
 
@@ -31,7 +31,7 @@
 |---|--------|-----------------|--------|
 | P7.1 | **Aurora** | ❌ Sin template email (WA only — por diseño) | ✅ confirmado |
 | P7.2 | **Aluna** | Proforma + Email 2 (24h 15%) + Email 3 (7d FOMO) + confirmación | ✅ funnel completo `7b1cf02` |
-| P7.3 | **Enzo** | Flujo consultivo WA (decode→qualify→confirm→plan) + email plan estratégico | ✅ `cd21965` `fe1bdc2` `9a339b9` `3f61eab` `802f775` — `_enzoProposalHTML` eliminado, template único con `briefHTML` dinámico |
+| P7.3 | **Enzo** | Flujo consultivo WA (decode→qualify→confirm→plan) + email plan estratégico | ✅ `cd21965` `fe1bdc2` `9a339b9` `3f61eab` `802f775` `f4f7f31` `00e075f` — Template 3 actos en producción: titular+diagnostico OpenAI, _renderBossQuoteBriefHTML narrativo con CTA WA |
 | P7.4 | **Gabi** | `generateGabiEmailHTML` (cliente + admin — mismo fn, `recipientType`) | ⏳ siguiente |
 | P7.5 | **Axel** | `generateAxelEmailHTML` (cotización con fotos + tabla trabajos) — 1 fn, CONFIRMADO ✅ | ⏳ revisar |
 | P7.6 | **Adriana** | `_adrianaQuoteHTML` (cotización vehículo+prima) + `generateAdrianaEmailHTML` (router: confirmación/cotización) — 2 fns JUSTIFICADAS ✅ | ⏳ revisar |
@@ -155,32 +155,25 @@ node scripts/test-aluna-email.mjs yo@diegovillota.com plan20
 
 ---
 
-## 🔮 RETOMAR AQUÍ — Rediseño briefHTML de Enzo (pendiente de aprobación)
+## 📋 LOG SESIÓN 17 MAR 2026
 
-**Problema identificado:** El `_renderBossQuoteBriefHTML()` actual genera cards/grids/bullets numerados — se ve como landing page SaaS, no como propuesta de agencia boutique. El cliente quiere algo persuasivo, narrativo, con peso de copywriter de agencia.
+| Hora | Commit | Qué se hizo |
+|------|--------|-------------|
+| mañana | `00e075f` | **P7.3 Enzo COMPLETO**: `_renderBossQuoteBriefHTML()` reemplazado con diseño 3 actos — titular (OpenAI copywriter) + 01 diagnóstico (amber box) + 02 lo que construimos (entregables bold+why + dark result box) + 03 inversión (precio $56px) + CTA teal WA. Nuevos campos OpenAI: `titular`, `diagnostico`. max_tokens → 1800. quoteCode pasa al CTA WA link. |
 
-**Concepto aprobado: Opción G — "3 Actos"**
-- `01 El diagnóstico` — párrafo narrativo + caja amber con la consecuencia real
-- `02 Lo que construimos` — párrafo + entregables detallados con *por qué* + dark box con resultado real
-- `03 La inversión` — precio único enorme, 50/50, deadline
-- CTA conversacional: `"¿Le damos luz verde?"` + botón `"Arrancar con [empresa] →"`
-- Header: logo real PNG de MarketingLab (no texto) + tarjeta oscura con nombre cliente/proyecto/ref
-- Footer: logo pequeño blanco + ecosistema agentes + datos reales (igual que el template actual)
+---
 
-**Mejora pendiente al prompt de OpenAI:**
-- Añadir campo `titular` — frase de golpe de apertura generada por OpenAI (estilo: *"WELLFEST no necesita un logo. Necesita una razón para que la gente vuelva."*)
-- Tone change: pensar como copywriter sénior de agencia, no como asistente corporativo
-- Entregables: cada uno con contexto del *por qué*, no solo el *qué*
+## 🔮 RETOMAR AQUÍ — Auditoría Aurora/Aluna (errores constantes)
 
-**Estado preview:** `e11aeaf` en Heroku — `public/enzo-propuesta-preview.html`
-- ✅ Header real: logo PNG MarketingLab + tarjeta oscura cliente/proyecto/ref
-- ✅ Cuerpo 3 actos: diagnóstico (amber) + construcción (entregables + dark box) + inversión
-- ✅ **Ecosistema 8 agentes completo:** Aurora, Adriana, Angela, Axel, Aluna, Gabi, Paula, Custom — tarjetas SVG + WA deep links + 2 columnas
-- ✅ Footer real: © 2026 Coworkia Ecuador · Whymper 403 · coworkia.ec@gmail.com · +593 99 483 7117
+**Estado P7.3 Enzo:** ✅ COMPLETO — `00e075f` en Heroku
 
-**Próximos pasos (al volver):**
-1. ⏳ Aprobar preview final en browser → dar luz verde
-2. ⏳ Añadir campo `titular` al prompt OpenAI en `procesarConOpenAI()` de `enzo-cotizacion-email.js`
-3. ⏳ Reemplazar `_renderBossQuoteBriefHTML()` con el nuevo diseño 3 actos aprobado
-4. ⏳ Deploy producción y probar con boss-command real
-5. ⏳ P7.4 Gabi
+**Próxima prioridad:** Auditoría de errores constantes en Aurora y Aluna.
+- Identificar bugs recurrentes con las reservas Aurora
+- Identificar bugs recurrentes con el flujo Aluna (proformas, membresías, followup emails)
+- Verificar que los 34/34 tests siguen verdes tras cambios de Enzo
+- Documentar hallazgos y plantear fixes en orden de impacto
+
+**Pendiente también:**
+- ⏳ P7.4 Gabi
+- ⏳ P8.2 Gabi presentación
+- ⏳ P9.1/2/3 SENADI Gabi

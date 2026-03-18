@@ -181,11 +181,45 @@ export class PartialReservationForm {
   /**
    * 💰 Calcula el precio base según tipo de espacio
    */
+  /**
+   * 💰 Calcula el precio base según duración con descuentos progresivos
+   * MODELO DE PRECIOS:
+   * - 1º bloque (2h): $10.00 (precio base)
+   * - 2º bloque (2h): $8.50 (15% descuento)
+   * - 3º bloque (2h): $7.22 (15% descuento adicional sobre $8.50)
+   * - 4º bloque (2h): $6.14 (15% descuento adicional sobre $7.22)
+   * Y así sucesivamente...
+   */
   getBasePrice() {
     if (this.spaceType === 'hotDesk') {
-      return 10; // $10 por 2 horas
+      const basePerBlock = 10; // $10 por 2 horas (primer bloque)
+      const hoursPerBlock = 2;
+      const blocks = this.durationHours / hoursPerBlock;
+      
+      // Si es exactamente 2 horas o menos, precio base
+      if (blocks <= 1) {
+        return basePerBlock;
+      }
+      
+      // Calcular precio con descuentos progresivos del 15% por bloque
+      let totalPrice = 0;
+      let currentBlockPrice = basePerBlock;
+      
+      for (let i = 0; i < blocks; i++) {
+        totalPrice += currentBlockPrice;
+        // Aplicar 15% de descuento para el siguiente bloque
+        currentBlockPrice = currentBlockPrice * 0.85;
+      }
+      
+      return Math.round(totalPrice * 100) / 100; // Redondear a 2 decimales
+      
     } else if (this.spaceType === 'meetingRoom') {
-      return 29; // $29 por 2 horas
+      const basePerBlock = 29; // $29 por 2 horas
+      const hoursPerBlock = 2;
+      const blocks = this.durationHours / hoursPerBlock;
+      
+      // Para sala de reuniones, precio proporcional sin descuentos
+      return Math.round(basePerBlock * blocks * 100) / 100;
     }
     return 0;
   }
@@ -505,12 +539,28 @@ export class PartialReservationForm {
       const metodoPago = metodoPagoDisplay[this.paymentMethod] || this.paymentMethod;
       
       message += `\n💰 *Costo:*\n`;
-      message += `Base: $${pricing.base.toFixed(2)}\n`;
+      
+      // Mostrar desglose de bloques si son más de 2 horas (hot desk)
+      if (this.spaceType === 'hotDesk' && this.durationHours > 2) {
+        const blocks = this.durationHours / 2;
+        let blockPrice = 10;
+        message += `📦 Desglose (bloques de 2h):\n`;
+        
+        for (let i = 0; i < blocks; i++) {
+          const blockNum = i + 1;
+          const discount = i > 0 ? ` (${15}% desc)` : '';
+          message += `   ${blockNum}º bloque: $${blockPrice.toFixed(2)}${discount}\n`;
+          blockPrice = blockPrice * 0.85; // 15% descuento para siguiente bloque
+        }
+        message += `───────────────────\n`;
+      }
+      
+      message += `Subtotal: $${pricing.base.toFixed(2)}\n`;
       message += `IVA (15%): $${pricing.iva.toFixed(2)}\n`;
       if (pricing.cardFee > 0) {
         message += `Comisión tarjeta (5%): $${pricing.cardFee.toFixed(2)}\n`;
       }
-      message += `*TOTAL: $${pricing.total.toFixed(2)} USD*\n\n`;
+      message += `💵 *TOTAL: $${pricing.total.toFixed(2)} USD*\n\n`;
       message += `💳 Pago: ${metodoPago}\n\n`;
       
       // Si es segunda reserva de hotDesk, agregar referral

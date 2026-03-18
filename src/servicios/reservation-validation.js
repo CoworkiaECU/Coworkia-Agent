@@ -8,7 +8,7 @@ const BUSINESS_CONFIG = {
   // Horarios laborales (horario de Ecuador UTC-5)
   // IMPORTANTE: Debe coincidir con lo que Aurora comunica a los usuarios
   weekdayStart: '07:00',  // 7:00 AM como dice Aurora
-  weekdayEnd: '20:00',    // 8:00 PM
+  weekdayEnd: '19:00',    // 7:00 PM - CIERRE
   weekendStart: '08:00',  // Sábados desde 8 AM
   weekendEnd: '18:00',    // Hasta 6 PM
   

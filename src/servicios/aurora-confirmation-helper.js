@@ -558,7 +558,20 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
         const isOverMax = reservationData.durationHours > 8;
         
         if (isOverMax) {
-          userMessage += `⚠️ La reserva que solicitaste excede nuestro límite por WhatsApp:
+          // Calcular el máximo hasta las 7pm (cierre)
+          const closeTime = '19:00';
+          const [startH, startM] = reservationData.startTime.split(':').map(Number);
+          const [closeH, closeM] = closeTime.split(':').map(Number);
+          const startMinutes = startH * 60 + startM;
+          const closeMinutes = closeH * 60 + closeM;
+          const maxDurationToClose = Math.floor((closeMinutes - startMinutes) / 60 * 10) / 10;
+          const suggestedDuration = Math.min(8, maxDurationToClose);
+          const suggestedEnd = calcEndTime(reservationData.startTime, suggestedDuration);
+          const basePricePerHour = 5; // $5 por hora
+          const baseTotal = suggestedDuration * basePricePerHour;
+          const totalWithTax = Math.round(baseTotal * 1.15 * 100) / 100;
+          
+          userMessage += `⚠️ La reserva que solicitaste excede nuestro límite:
 
 📍 *Tu solicitud:*
 🕐 Horario: ${reservationData.startTime} - ${endTime}
@@ -566,23 +579,14 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
 
 📋 *Límites de reserva:*
 • Mínimo: 2 horas
-• Máximo por WhatsApp: 8 horas
+• Máximo: 8 horas
+• Cierre del espacio: 7:00 PM
 
-💡 *¿Qué puedes hacer?*
+💡 *Ajustando a máximo disponible:*
+🕐 ${reservationData.startTime} - ${suggestedEnd} (${suggestedDuration}h)
+💰 Costo: $${baseTotal} base + IVA = $${totalWithTax} total
 
-1️⃣ *Ajustar* a máximo 8 horas:
-   • Ejemplo: ${reservationData.startTime} - ${calcEndTime(reservationData.startTime, 8)} (8h)
-   • Costo: $40 base + IVA = $46 total
-
-2️⃣ *Dividir* en dos reservas:
-   • Día 1: 8h ($46)
-   • Día 2: ${Math.round((reservationData.durationHours - 8) * 10) / 10}h
-
-3️⃣ *Reserva extendida* (>8h):
-   • Contacta: secretaria.coworkia@gmail.com
-   • O llama: +593 99 123 4567
-
-¿Quieres ajustar a 8 horas o prefieres otra duración?`;
+¿Te parece bien con ${suggestedDuration} horas?`;
         } else {
           userMessage += `❌ La duración debe ser entre 2 y 8 horas 🕐
 

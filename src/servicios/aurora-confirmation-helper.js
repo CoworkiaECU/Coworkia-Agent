@@ -534,22 +534,66 @@ Por favor, verifica la fecha de tu reserva e intenta nuevamente. ¿Para qué dí
       console.log('[AURORA-PROCESS] 💡 Alternativas sugeridas:', alternatives.slice(0, 3));
       
       // 🎯 RESPUESTA AMIGABLE basada en el tipo de error
-      let userMessage = '❌ ';
+      let userMessage = '';
       
       // FIX: validation.errors contiene objetos {valid, reason, suggestion}, no strings
       if (validation.errors.some(err => err.reason?.includes('horario') || err.reason?.includes('Fuera del horario'))) {
-        userMessage += `Ese horario no está disponible 😕
+        userMessage += `❌ Ese horario no está disponible 😕
 
 📅 ¿Qué tal alguna de estas opciones?
 ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.endTime}`).join('\n')}
 
 ¿Te sirve alguna?`;
       } else if (validation.errors.some(err => err.reason?.includes('duración') || err.reason?.includes('Duración'))) {
-        userMessage += `La duración debe ser entre 1 y 8 horas 🕐
+        // 🎯 FIX: Mensaje detallado con horario solicitado y límites correctos
+        const calcEndTime = (start, durationH) => {
+          const [h, m] = start.split(':').map(Number);
+          const totalMin = h * 60 + (m || 0) + Math.round(durationH * 60);
+          const eh = Math.floor(totalMin / 60) % 24;
+          const em = totalMin % 60;
+          return `${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+        };
+        
+        const endTime = calcEndTime(reservationData.startTime, reservationData.durationHours);
+        const isOverMax = reservationData.durationHours > 8;
+        
+        if (isOverMax) {
+          userMessage += `⚠️ La reserva que solicitaste excede nuestro límite por WhatsApp:
 
-¿Cuántas horas necesitas?`;
+📍 *Tu solicitud:*
+🕐 Horario: ${reservationData.startTime} - ${endTime}
+⏱️ Duración: ${reservationData.durationHours}h
+
+📋 *Límites de reserva:*
+• Mínimo: 2 horas
+• Máximo por WhatsApp: 8 horas
+
+💡 *¿Qué puedes hacer?*
+
+1️⃣ *Ajustar* a máximo 8 horas:
+   • Ejemplo: ${reservationData.startTime} - ${calcEndTime(reservationData.startTime, 8)} (8h)
+   • Costo: $40 base + IVA = $46 total
+
+2️⃣ *Dividir* en dos reservas:
+   • Día 1: 8h ($46)
+   • Día 2: ${Math.round((reservationData.durationHours - 8) * 10) / 10}h
+
+3️⃣ *Reserva extendida* (>8h):
+   • Contacta: secretaria.coworkia@gmail.com
+   • O llama: +593 99 123 4567
+
+¿Quieres ajustar a 8 horas o prefieres otra duración?`;
+        } else {
+          userMessage += `❌ La duración debe ser entre 2 y 8 horas 🕐
+
+*Tu solicitud:*
+🕐 ${reservationData.startTime} - ${endTime}
+⏱️ Duración: ${reservationData.durationHours}h
+
+¿Cuántas horas necesitas? (2-8h)`;
+        }
       } else {
-        userMessage += formatValidationErrors(validation);
+        userMessage += '❌ ' + formatValidationErrors(validation);
       }
       
       return {

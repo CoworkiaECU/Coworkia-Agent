@@ -13,8 +13,8 @@ const BUSINESS_CONFIG = {
   weekendEnd: '18:00',    // Hasta 6 PM
   
   // Restricciones de duración
-  minDurationHours: 1,
-  maxDurationHours: 8,
+  minDurationHours: 2,    // Mínimo 2 horas (no existe tarifa de 1 hora)
+  maxDurationHours: 8,    // Máximo 8 horas por WhatsApp
   defaultDurationHours: 2,
   
   // Ventana de reserva

@@ -474,8 +474,12 @@ Por favor, verifica la fecha de tu reserva e intenta nuevamente. ¿Para qué dí
       const requestedHour = parseInt(reqHour);
       const requestedMinute = parseInt(reqMin);
       
-      const isPast = requestedHour < currentEcuadorHour || 
-                     (requestedHour === currentEcuadorHour && requestedMinute <= currentEcuadorMinute);
+      // 🎯 FIX A6: Permitir reservas con 5 minutos de buffer (ej: si son 10:45, permitir hasta 10:40)
+      const requestedTotalMinutes = requestedHour * 60 + requestedMinute;
+      const currentTotalMinutes = currentEcuadorHour * 60 + currentEcuadorMinute;
+      const BUFFER_MINUTES = 5;
+      
+      const isPast = requestedTotalMinutes < (currentTotalMinutes - BUFFER_MINUTES);
       
       if (isPast) {
         console.warn('[AURORA-PROCESS] ⏰ Hora en el pasado:', reservationData.startTime, 'vs', `${currentEcuadorHour}:${currentEcuadorMinute}`);

@@ -441,4 +441,145 @@ router.post('/prospect/:phone/sendwa', async (req, res) => {
   }
 });
 
+/**
+ * 🎭 GET /api/aluna/seed-demo-contacts
+ * Crea 27 contactos demo realistas para presentaciones
+ * ⚠️ SOLO PARA DEMO - No usar en producción real
+ */
+router.get('/seed-demo-contacts', async (req, res) => {
+  try {
+    console.log('🎭 [ALUNA] Iniciando seed de contactos demo...');
+    await databaseService.ensureInitialized();
+    
+    // Datos de contactos demo
+    const DEMO_CONTACTS = [
+      // 8 ACTIVE (ingresos mensuales reales)
+      { id: 'ML-DEMO-0001', phone: '+593983000000', name: 'María José González', email: 'maria.gonzalez@gmail.com', company: 'TechVentures EC', plan: 'plan-10', fee: 189, status: 'active', daysAgo: 45, activated: true },
+      { id: 'ML-DEMO-0002', phone: '+593993000001', name: 'Carlos Andrés Pérez', email: 'carlos.perez@hotmail.com', company: 'Innovación Digital Quito', plan: 'plan-15', fee: 269, status: 'active', daysAgo: 60, activated: true },
+      { id: 'ML-DEMO-0003', phone: '+593963000002', name: 'Ana Lucía Moreno', email: 'ana.moreno@outlook.com', company: 'StartUp Solutions', plan: 'plan-5', fee: 99, status: 'active', daysAgo: 30, activated: true },
+      { id: 'ML-DEMO-0004', phone: '+593973000003', name: 'Diego Fernando Sánchez', email: 'diego.sanchez@yahoo.com', company: 'Digital Marketing Pro', plan: 'plan-20', fee: 349, status: 'active', daysAgo: 75, activated: true },
+      { id: 'ML-DEMO-0005', phone: '+593953000004', name: 'Gabriela Alejandra Torres', email: 'gabriela.torres@live.com', company: 'Consultores Empresariales', plan: 'plan-10', fee: 189, status: 'active', daysAgo: 20, activated: true },
+      { id: 'ML-DEMO-0006', phone: '+593983000005', name: 'Luis Alberto Ramírez', email: 'luis.ramirez@icloud.com', company: 'Arquitectos Asociados', plan: 'plan-15', fee: 269, status: 'active', daysAgo: 50, activated: true },
+      { id: 'ML-DEMO-0007', phone: '+593993000006', name: 'Carolina Isabel Castro', email: 'carolina.castro@gmail.com', company: 'Legal Advisors EC', plan: 'plan-5', fee: 99, status: 'active', daysAgo: 15, activated: true },
+      { id: 'ML-DEMO-0008', phone: '+593963000007', name: 'Roberto Javier Mendoza', email: 'roberto.mendoza@hotmail.com', company: 'Contadores Públicos CIA', plan: 'oficina-virtual', fee: 79, status: 'active', daysAgo: 40, activated: true },
+      // 4 TOUR SCHEDULED
+      { id: 'ML-DEMO-0009', phone: '+593973000008', name: 'Valentina Sofía Flores', email: 'valentina.flores@outlook.com', company: 'Software House Latam', plan: 'plan-15', fee: 269, status: 'tour_scheduled', daysAgo: 5, tourDays: 2 },
+      { id: 'ML-DEMO-0010', phone: '+593953000009', name: 'Miguel Ángel Herrera', email: 'miguel.herrera@yahoo.com', company: 'E-Commerce Ecuador', plan: 'plan-10', fee: 189, status: 'tour_scheduled', daysAgo: 3, tourDays: 1 },
+      { id: 'ML-DEMO-0011', phone: '+593983000010', name: 'Andrea Paola Jiménez', email: 'andrea.jimenez@live.com', company: 'Agencia Creativa 360', plan: 'plan-20', fee: 349, status: 'tour_scheduled', daysAgo: 7, tourDays: 3 },
+      { id: 'ML-DEMO-0012', phone: '+593993000011', name: 'Sebastián David Ortiz', email: 'sebastian.ortiz@icloud.com', company: 'Inversiones Estratégicas', plan: 'plan-10', fee: 189, status: 'tour_scheduled', daysAgo: 4, tourDays: 4 },
+      // 5 PENDING
+      { id: 'ML-DEMO-0013', phone: '+593963000012', name: 'Daniela Teresa Vargas', email: 'daniela.vargas@gmail.com', company: 'Importadora del Pacífico', plan: 'plan-5', fee: 99, status: 'pending', daysAgo: 1 },
+      { id: 'ML-DEMO-0014', phone: '+593973000013', name: 'Fernando José Castillo', email: 'fernando.castillo@hotmail.com', company: 'Distribuidora Nacional', plan: 'plan-10', fee: 189, status: 'pending', daysAgo: 2 },
+      { id: 'ML-DEMO-0015', phone: '+593953000014', name: 'Mónica Cristina Delgado', email: 'monica.delgado@outlook.com', company: 'Servicios Logísticos', plan: 'oficina-virtual', fee: 79, status: 'pending', daysAgo: 1 },
+      { id: 'ML-DEMO-0016', phone: '+593983000015', name: 'Juan Pablo Aguilar', email: 'juan.aguilar@yahoo.com', company: 'Academia de Idiomas', plan: 'plan-15', fee: 269, status: 'pending', daysAgo: 3 },
+      { id: 'ML-DEMO-0017', phone: '+593993000016', name: 'Verónica Alejandra Silva', email: 'veronica.silva@live.com', company: 'Centro de Capacitación', plan: 'plan-10', fee: 189, status: 'pending', daysAgo: 2 },
+      // 3 NEGOTIATING
+      { id: 'ML-DEMO-0018', phone: '+593963000017', name: 'Patricio Xavier Ruiz', email: 'patricio.ruiz@icloud.com', company: 'Asesoría Financiera Plus', plan: 'plan-20', fee: 349, status: 'negotiating', daysAgo: 10 },
+      { id: 'ML-DEMO-0019', phone: '+593973000018', name: 'Isabel Mariana Guzmán', email: 'isabel.guzman@gmail.com', company: 'Desarrollo Web Studio', plan: 'plan-15', fee: 269, status: 'negotiating', daysAgo: 8 },
+      { id: 'ML-DEMO-0020', phone: '+593953000019', name: 'Andrés Mauricio León', email: 'andres.leon@hotmail.com', company: 'Marketing Digital Agency', plan: 'plan-10', fee: 189, status: 'negotiating', daysAgo: 12 },
+      // 3 PENDING_PAYMENT
+      { id: 'ML-DEMO-0021', phone: '+593983000020', name: 'Claudia Fernanda Romero', email: 'claudia.romero@outlook.com', company: 'Consultoría IT', plan: 'plan-10', fee: 189, status: 'pending_payment', daysAgo: 6 },
+      { id: 'ML-DEMO-0022', phone: '+593993000021', name: 'Eduardo Rafael Vega', email: 'eduardo.vega@yahoo.com', company: 'Producción Audiovisual', plan: 'plan-5', fee: 99, status: 'pending_payment', daysAgo: 5 },
+      { id: 'ML-DEMO-0023', phone: '+593963000022', name: 'Melissa Andrea Chávez', email: 'melissa.chavez@live.com', company: 'Diseño Gráfico Express', plan: 'oficina-virtual', fee: 79, status: 'pending_payment', daysAgo: 7 },
+      // 2 ACCEPTED
+      { id: 'ML-DEMO-0024', phone: '+593973000023', name: 'Ricardo Enrique Paredes', email: 'ricardo.paredes@icloud.com', company: 'Comunicación Corporativa', plan: 'plan-15', fee: 269, status: 'accepted', daysAgo: 4 },
+      { id: 'ML-DEMO-0025', phone: '+593953000024', name: 'Stephanie Nicole Campos', email: 'stephanie.campos@gmail.com', company: 'Comercio Exterior SA', plan: 'plan-10', fee: 189, status: 'accepted', daysAgo: 3 },
+      // 2 CANCELLED/EXPIRED
+      { id: 'ML-DEMO-0026', phone: '+593983000025', name: 'Javier Orlando Navarro', email: 'javier.navarro@hotmail.com', company: 'Trading Internacional', plan: 'plan-5', fee: 99, status: 'cancelled', daysAgo: 25 },
+      { id: 'ML-DEMO-0027', phone: '+593993000026', name: 'Natalia Soledad Reyes', email: 'natalia.reyes@outlook.com', company: 'Freelancer Independiente', plan: 'oficina-virtual', fee: 79, status: 'expired', daysAgo: 35 }
+    ];
+    
+    // 1. Limpiar demos anteriores
+    await databaseService.run(`DELETE FROM membership_leads WHERE notes LIKE '%DEMO SEED%'`);
+    console.log('🗑️ Demos anteriores limpiados');
+    
+    // 2. Insertar cada contacto
+    let created = 0;
+    for (const contact of DEMO_CONTACTS) {
+      // Crear usuario primero
+      await databaseService.run(`
+        INSERT INTO users (phone_number, name, email, first_visit, free_trial_used)
+        VALUES ($1, $2, $3, false, false)
+        ON CONFLICT (phone_number) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email
+      `, [contact.phone, contact.name, contact.email]);
+      
+      // Calcular fechas
+      const createdAt = new Date();
+      createdAt.setDate(createdAt.getDate() - contact.daysAgo);
+      const updatedAt = new Date();
+      updatedAt.setDate(updatedAt.getDate() - Math.floor(contact.daysAgo / 2));
+      
+      let activationDate = null;
+      let tourScheduled = null;
+      let tourCompleted = false;
+      let assignedTo = null;
+      
+      if (contact.activated) {
+        activationDate = createdAt.toISOString().split('T')[0];
+        tourCompleted = true;
+        assignedTo = 'Aluna';
+      }
+      
+      if (contact.status === 'tour_scheduled') {
+        const tourDate = new Date();
+        tourDate.setDate(tourDate.getDate() + contact.tourDays);
+        tourScheduled = tourDate.toISOString();
+        assignedTo = contact.tourDays % 2 === 0 ? 'Aluna' : 'Diego';
+      }
+      
+      if (['negotiating', 'accepted', 'pending_payment'].includes(contact.status)) {
+        tourCompleted = true;
+        assignedTo = 'Aluna';
+      }
+      
+      // Insertar membership lead
+      await databaseService.run(`
+        INSERT INTO membership_leads (
+          id, user_phone, membership_type, start_date, client_name, email, phone,
+          company_name, tour_scheduled, tour_completed, membership_activated,
+          activation_date, monthly_fee, status, assigned_to, notes, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      `, [
+        contact.id, contact.phone, contact.plan, 
+        activationDate || updatedAt.toISOString().split('T')[0],
+        contact.name, contact.email, contact.phone, contact.company,
+        tourScheduled, tourCompleted, contact.activated || false,
+        activationDate, contact.fee, contact.status, assignedTo,
+        'DEMO SEED - Contacto generado para presentación de cliente',
+        createdAt.toISOString(), updatedAt.toISOString()
+      ]);
+      
+      created++;
+    }
+    
+    // 3. Estadísticas finales
+    const stats = await databaseService.all(`
+      SELECT status, COUNT(*) as count, SUM(monthly_fee) as revenue
+      FROM membership_leads
+      WHERE notes LIKE '%DEMO SEED%'
+      GROUP BY status
+      ORDER BY CASE status
+        WHEN 'active' THEN 1 WHEN 'accepted' THEN 2 WHEN 'negotiating' THEN 3
+        WHEN 'tour_scheduled' THEN 4 WHEN 'pending_payment' THEN 5
+        WHEN 'pending' THEN 6 ELSE 7 END
+    `);
+    
+    const totalRevenue = stats
+      .filter(s => ['active', 'accepted'].includes(s.status))
+      .reduce((sum, s) => sum + parseFloat(s.revenue || 0), 0);
+    
+    console.log(`✅ [ALUNA] ${created} contactos demo creados. Ingresos: $${totalRevenue}`);
+    
+    return res.json({
+      ok: true,
+      message: `${created} contactos demo creados exitosamente`,
+      stats: { total: created, distribution: stats, monthlyRevenue: totalRevenue }
+    });
+    
+  } catch (error) {
+    console.error('❌ [ALUNA] Error en seed:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

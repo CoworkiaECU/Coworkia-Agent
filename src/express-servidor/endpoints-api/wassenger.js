@@ -681,6 +681,15 @@ async function handleFormResult(formResult, userId, agentName, profile) {
         // pending_confirmation, causando un loop de resumen de confirmación infinito.
         await clearAgentForm(userId, agentName);
         return true; // Manejado - hacer return
+      } else {
+        // 🎯 FIX A6: Manejar errores de validación (duración >8h, horario inválido, etc.)
+        // Si la validación falla, enviar el mensaje de error al usuario y limpiar formulario
+        console.log('[AURORA-FORM] ❌ Validación fallida:', confirmationResult.error);
+        await enviarWhatsApp(userId, confirmationResult.userMessage || '❌ No pude procesar tu reserva. Por favor, intenta con otros datos.');
+        await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.userMessage, agent: agentName });
+        // Limpiar formulario para que el usuario pueda empezar de nuevo
+        await clearAgentForm(userId, agentName);
+        return true; // Manejado - hacer return
       }
     }
     

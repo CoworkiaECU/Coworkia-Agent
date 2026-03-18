@@ -1083,7 +1083,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           userId: userId || 'NULL',
           messageId,
           type,
-          hasText: !!text,
+          hasText: !!webhookData.text,
           hasMedia: !!mediaUrl,
           prod: isProd
         });
@@ -1098,7 +1098,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
       }
       
       // 🔁 ECO: Ignorar webhooks de mensajes que el sistema acaba de enviar
-      if (isEchoMessage(userId, text)) {
+      if (isEchoMessage(userId, webhookData.text)) {
         console.log(`[DEDUP] 🔁 Ignorando eco - mensaje enviado por el sistema`);
         return;
       }

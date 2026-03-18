@@ -934,21 +934,47 @@ export function extractDataFromMessage(message, currentForm) {
 
   // Si no hubo rango, detectar hora simple
   if (!detectedTime) {
-    const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
-    for (const match of message.matchAll(timeRegex)) {
-      const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
-      const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
-      const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
-      const isTimeContext = Boolean(prefix);
-      if (!isTimeContext && !meridiem && !hasExplicitMinutes) continue;
-      let hour = parseInt(hourStr, 10);
-      if (Number.isNaN(hour)) continue;
-      const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
-      if (meridiem === 'pm' && hour < 12) hour += 12;
-      if (meridiem === 'am' && hour === 12) hour = 0;
-      detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      console.log('[FORM-TIME] ✨ Hora simple detectada:', detectedTime);
-      break;
+    // 🆕 MAPA DE NÚMEROS ESCRITOS → números (lenguaje natural)
+    const numberWords = {
+      'una': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5,
+      'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10,
+      'once': 11, 'doce': 12, 'trece': 13, 'catorce': 14, 'quince': 15,
+      'dieciséis': 16, 'diecisiete': 17, 'dieciocho': 18, 'diecinueve': 19, 'veinte': 20
+    };
+
+    // 🌅 Detectar "diez de la mañana", "tres de la tarde", "ocho de la noche"
+    const writtenTimeMatch = lowerMsg.match(/\b(una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\s+(?:de\s+la\s+)?(ma[ñn]ana|tarde|noche)\b/);
+    
+    if (writtenTimeMatch) {
+      const hourWord = writtenTimeMatch[1];
+      const period = writtenTimeMatch[2];
+      let hour = numberWords[hourWord] || 0;
+      
+      // Convertir mañana/tarde/noche a formato 24h
+      if (period === 'tarde' && hour < 12) hour += 12;  // 3 tarde = 15:00
+      if (period === 'noche' && hour < 12) hour += 12;  // 8 noche = 20:00
+      if (period === 'mañana' && hour === 12) hour = 0; // 12 mañana = 00:00 (medianoche)
+      
+      detectedTime = `${hour.toString().padStart(2, '0')}:00`;
+      console.log('[FORM-TIME] ✨ Hora escrita detectada:', writtenTimeMatch[0], '→', detectedTime);
+    } else {
+      // Regex original para números
+      const timeRegex = /(?:\b(a\s+las|a\s+la|las|hora|hacia|sobre|desde\s+las|desde\s+la)\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+      for (const match of message.matchAll(timeRegex)) {
+        const [fullMatch, prefix, hourStr, minuteStr, meridiemRaw] = match;
+        const meridiem = meridiemRaw ? meridiemRaw.toLowerCase() : null;
+        const hasExplicitMinutes = Boolean(minuteStr) || /:/.test(match[0]);
+        const isTimeContext = Boolean(prefix);
+        if (!isTimeContext && !meridiem && !hasExplicitMinutes) continue;
+        let hour = parseInt(hourStr, 10);
+        if (Number.isNaN(hour)) continue;
+        const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
+        if (meridiem === 'pm' && hour < 12) hour += 12;
+        if (meridiem === 'am' && hour === 12) hour = 0;
+        detectedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        console.log('[FORM-TIME] ✨ Hora simple detectada:', detectedTime);
+        break;
+      }
     }
   }
 
@@ -1019,6 +1045,47 @@ export function extractDataFromMessage(message, currentForm) {
       
       break;
     }
+  }
+
+  // 🔍 FIX A6.3: DETECCIÓN DE CONTRADICCIONES (comparar valores nuevos vs existentes)
+  const conflicts = [];
+  
+  if (updates.date && currentForm.date && updates.date !== currentForm.date) {
+    conflicts.push({
+      field: 'date',
+      oldValue: currentForm.date,
+      newValue: updates.date,
+      message: `📅 Cambié la fecha de ${currentForm.date} a ${updates.date} según tu último mensaje`
+    });
+    console.log('[FORM-CONFLICT] ⚠️ Contradicción en fecha:', currentForm.date, '→', updates.date);
+  }
+  
+  if (updates.time && currentForm.time && updates.time !== currentForm.time) {
+    conflicts.push({
+      field: 'time',
+      oldValue: currentForm.time,
+      newValue: updates.time,
+      message: `⏰ Cambié la hora de ${currentForm.time} a ${updates.time} según tu último mensaje`
+    });
+    console.log('[FORM-CONFLICT] ⚠️ Contradicción en hora:', currentForm.time, '→', updates.time);
+  }
+  
+  if (updates.spaceType && currentForm.spaceType && updates.spaceType !== currentForm.spaceType) {
+    const oldLabel = currentForm.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+    const newLabel = updates.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+    conflicts.push({
+      field: 'spaceType',
+      oldValue: currentForm.spaceType,
+      newValue: updates.spaceType,
+      message: `🏢 Cambié de ${oldLabel} a ${newLabel} según tu último mensaje`
+    });
+    console.log('[FORM-CONFLICT] ⚠️ Contradicción en tipo:', currentForm.spaceType, '→', updates.spaceType);
+  }
+  
+  // Agregar conflictos al objeto updates para que wassenger pueda informar al usuario
+  if (conflicts.length > 0) {
+    updates._conflicts = conflicts;
+    console.log('[FORM-CONFLICT] 📢', conflicts.length, 'cambios detectados - se informará al usuario');
   }
 
   console.log('[FORM-EXTRACT] ✅ FIN extractDataFromMessage - updates:', updates);

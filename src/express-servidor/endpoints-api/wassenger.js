@@ -100,36 +100,65 @@ if (!globalThis.__AURORA_CORE_UNHANDLED__) {
    su pensamiento en varios mensajes cortos seguidos (patrón
    común en WhatsApp). Siempre espera la ventana completa antes
    de procesar, extendiendo el timer con cada mensaje nuevo.
+   
+   🎯 FIX A4: Consolidar textos antes de procesar para reducir 
+   llamadas a OpenAI (de N llamadas → 1 llamada consolidada).
 ───────────────────────────────────────────────────────────── */
-const pendingWebhooks = new Map(); // userId → { timer, handlers: [], count }
-const DEBOUNCE_WINDOW_MS = 8000; // 8s: acumula ráfagas de mensajes separados
+const pendingWebhooks = new Map(); // userId → { timer, payloads: [], count }
+const DEBOUNCE_WINDOW_MS = 4000; // 🔧 FIX A4: Reducido de 8s a 4s (más responsive)
 
 /**
  * Agrupa webhooks del mismo usuario que lleguen en ráfaga.
  * Todos los mensajes esperan la ventana completa antes de procesarse.
  * Cada mensaje adicional reinicia el timer (ventana deslizante).
- * Los mensajes acumulados se procesan secuencialmente al final.
+ * 
+ * 🎯 FIX A4: Los mensajes de TEXTO se consolidan en uno solo antes
+ * de procesar. Mensajes con media (imagen/audio) se procesan por separado.
+ * 
+ * @param {string} userId - ID del usuario
+ * @param {object} webhookData - Datos completos del webhook (data, text, mediaUrl, type, etc)
+ * @param {function} handler - Función que procesa el webhook
  */
-function debounceUserWebhook(userId, handler) {
+function debounceUserWebhook(userId, webhookData, handler) {
   if (pendingWebhooks.has(userId)) {
     const existing = pendingWebhooks.get(userId);
     clearTimeout(existing.timer);
-    existing.handlers.push(handler);
+    existing.items.push({ webhookData, handler });
     existing.count++;
     console.log(`[DEBOUNCE] 📦 Mensaje ${existing.count} de ${userId}, reagrupando`);
   } else {
-    pendingWebhooks.set(userId, { timer: null, handlers: [handler], count: 1 });
+    pendingWebhooks.set(userId, { timer: null, items: [{ webhookData, handler }], count: 1 });
     console.log(`[DEBOUNCE] ⏱️ Iniciando ventana ${DEBOUNCE_WINDOW_MS}ms para ${userId}`);
   }
 
   // Siempre (re)programar el timer — ventana se extiende con cada mensaje nuevo
   const state = pendingWebhooks.get(userId);
   state.timer = setTimeout(async () => {
-    const allHandlers = state.handlers;
+    const allItems = state.items;
     pendingWebhooks.delete(userId);
-    console.log(`[DEBOUNCE] ✅ Procesando ${allHandlers.length} mensaje(s) de ${userId}`);
-    for (const h of allHandlers) {
-      await h();
+    console.log(`[DEBOUNCE] ✅ Procesando ${allItems.length} mensaje(s) de ${userId}`);
+    
+    // 🎯 FIX A4: CONSOLIDAR mensajes de texto, procesar media por separado
+    const textOnly = allItems.filter(item => !item.webhookData.mediaUrl && item.webhookData.text);
+    const withMedia = allItems.filter(item => item.webhookData.mediaUrl || !item.webhookData.text);
+    
+    // Consolidar textos en un solo mensaje
+    if (textOnly.length > 1) {
+      const consolidatedText = textOnly.map(item => item.webhookData.text).join(' ');
+      console.log(`[DEBOUNCE] 🔀 Consolidando ${textOnly.length} textos:`, consolidatedText.substring(0, 100));
+      // Modificar el webhookData del primero con texto consolidado
+      textOnly[0].webhookData.text = consolidatedText;
+      textOnly[0].webhookData._consolidated = true;
+      textOnly[0].webhookData._originalCount = textOnly.length;
+      await textOnly[0].handler();
+    } else if (textOnly.length === 1) {
+      // Un solo texto, procesar normal
+      await textOnly[0].handler();
+    }
+    
+    // Procesar media por separado (no consolidable)
+    for (const item of withMedia) {
+      await item.handler();
     }
   }, DEBOUNCE_WINDOW_MS);
 }
@@ -267,6 +296,7 @@ function buildMediaUrl(data) {
 /**
  * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
  * Remueve emojis, keywords empresariales, números de teléfono
+ * 🎯 FIX A1: Blacklist de nombres genéricos post-limpieza
  */
 function cleanWhatsAppName(whatsappName) {
   if (!whatsappName || typeof whatsappName !== 'string') return null;
@@ -305,6 +335,27 @@ function cleanWhatsAppName(whatsappName) {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  }
+  
+  // 🎯 FIX A1: BLACKLIST de nombres genéricos post-limpieza
+  // Estos nombres no son útiles como identificación real
+  const GENERIC_NAME_BLACKLIST = [
+    // Nombres de 1 letra (aliases comunes)
+    /^[A-Z]$/i,
+    // Nombres genéricos sin valor
+    /^(Usuario|User|Cliente|Client|Test|Testing|Prueba)$/i,
+    // Nombres que son solo el nombre del negocio
+    /^(Coworkia|Oficina|Office|Admin|Administrator|Info|Contacto)$/i,
+    // Números o códigos
+    /^\d+$/
+  ];
+  
+  if (cleaned.length > 1) {
+    const isGeneric = GENERIC_NAME_BLACKLIST.some(pattern => pattern.test(cleaned));
+    if (isGeneric) {
+      console.log('[NAME-BLACKLIST] 🚫 Nombre genérico detectado y rechazado:', cleaned);
+      return null; // Forzar a que el sistema pregunte el nombre real
+    }
   }
   
   return cleaned.length > 1 ? cleaned : null;
@@ -579,7 +630,17 @@ async function updateProfile(userId, updates, metadata = {}) {
 async function handleFormResult(formResult, userId, agentName, profile) {
   if (!formResult) return false;
 
-  // 🚨 Validaciones del formulario (ej: domingo/feriado) → respuesta inmediata
+  // � FIX A6.3: INFORMAR CONFLICTOS AL USUARIO (cambios detectados en fecha/hora/tipo)
+  if (formResult.updates && formResult.updates._conflicts && formResult.updates._conflicts.length > 0) {
+    const conflictMessages = formResult.updates._conflicts.map(c => c.message);
+    const conflictAlert = conflictMessages.join('\n');
+    console.log('[FORM-CONFLICT] 📢 Informando cambios al usuario:', conflictAlert);
+    // Enviar mensaje de alerta antes de continuar
+    await enviarWhatsApp(userId, `⚠️ *Nota:*\n${conflictAlert}`);
+    await saveConversationMessage(userId, { role: 'assistant', content: conflictAlert, agent: agentName });
+  }
+
+  // �🚨 Validaciones del formulario (ej: domingo/feriado) → respuesta inmediata
   if (formResult.validationError) {
     const errorMessage = formResult.validationError.message;
     await enviarWhatsApp(userId, errorMessage);
@@ -604,7 +665,12 @@ async function handleFormResult(formResult, userId, agentName, profile) {
     // 🔥 HOTFIX v636: Guardar confirmación pendiente si es Aurora
     if (agentName === 'AURORA' && formResult.form) {
       const { processAuroraConfirmationRequest } = await import('../../servicios/aurora-confirmation-helper.js');
-      const confirmationResult = await processAuroraConfirmationRequest('FORM_COMPLETE', profile, { form: formResult.form });
+      // 🎯 FIX A6: Construir mensaje de confirmación desde datos del formulario directamente
+      // En lugar de pasar string 'FORM_COMPLETE', construir descripción completa
+      const form = formResult.form;
+      const spaceLabel = form.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+      const confirmMsg = `Perfecto, confirmo tu reserva: ${spaceLabel} para el ${form.date} a las ${form.time} (${form.durationHours}h). Email: ${form.email}. ¿Confirmamos?`;
+      const confirmationResult = await processAuroraConfirmationRequest(confirmMsg, profile, { form: formResult.form });
       
       if (confirmationResult.success) {
         await enviarWhatsApp(userId, confirmationResult.confirmationMessage);
@@ -997,10 +1063,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     try {
       userId = normalizeUserId(data);
       const name = normalizeName(data);
-      let text = normalizeText(data);
       const type = normalizeType(data);
       const mediaUrl = buildMediaUrl(data);
       const messageId = data.id || data.messageId || `${userId}_${Date.now()}`;
+      
+      // 🎯 FIX A4: Usar objeto mutable para permitir consolidación de texto
+      const webhookData = {
+        text: normalizeText(data),
+        mediaUrl,
+        type,
+        data,
+        name,
+        messageId
+      };
 
       if (debug) {
         console.log('[WASSENGER] Incoming:', {
@@ -1044,8 +1119,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // ⏱️ DEBOUNCE: Agrupar mensajes rápidos del mismo usuario
     // TODOS los webhooks que pasen los filtros básicos entran al debounce
-    debounceUserWebhook(userId, async () => {
+    // 🎯 FIX A4: Pasar webhookData para consolidar textos
+    debounceUserWebhook(userId, webhookData, async () => {
       try {
+      // 🎯 FIX A4: Extraer variables del webhookData (puede estar consolidado)
+      let text = webhookData.text;
+      const { mediaUrl, type, name, messageId } = webhookData;
+      
+      if (webhookData._consolidated) {
+        console.log(`[DEBOUNCE] ✨ Procesando texto consolidado de ${webhookData._originalCount} mensajes`);
+      }
+      
       // 🚦 Rate limiting - Prevenir spam/abuso
       const rateLimitCheck = checkRateLimit(userId);
     if (!rateLimitCheck.allowed) {
@@ -1299,6 +1383,17 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
 
     // 📸 Si hay imagen pero no texto, usar placeholder descriptivo
     const messageContent = processedText || (mediaUrl && type === 'image' ? '[Usuario envió imagen]' : '');
+    
+    // 🔒 FIX A7: Incrementar contador de mensajes desde último handoff (para cooldown)
+    if (profile.lastHandoffCount !== undefined) {
+      profile.lastHandoffCount = Math.min((profile.lastHandoffCount || 0) + 1, 10); // Max 10 para no crecer indefinidamente
+      await saveProfile(userId, profile);
+      console.log('[HANDOFF-TRACKING] 📈 Mensaje post-handoff:', profile.lastHandoffCount);
+    } else {
+      // Primera vez - inicializar
+      profile.lastHandoffCount = 10; // Valor alto = sin cooldown
+      await saveProfile(userId, profile);
+    }
 
     await saveConversationMessage(userId, {
       role: 'user',
@@ -2497,6 +2592,19 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       const fromAgent = originalFromAgent; // ← Usar original, NO el actualizado
       const userLanguage = profile.preferredLanguage || 'es';
       const userName = profile.name || profile.whatsappDisplayName || '';
+      
+      // 🔒 FIX A7: Tracking de handoff para cooldown (resetear contador)
+      profile.lastHandoffCount = 0;
+      await saveProfile(userId, profile);
+      console.log('[HANDOFF-TRACKING] 🔄 Handoff ejecutado - contador reseteado a 0');
+
+      // 🎯 FIX A7: Enviar mensaje explícito de handoff si existe
+      const explicitMessage = resultado.metadata.intent?.flags?.explicitHandoffMessage;
+      if (explicitMessage) {
+        console.log('[HANDOFF-MESSAGE] 📢 Enviando mensaje explícito:', explicitMessage);
+        await enviarWhatsApp(userId, explicitMessage);
+        await saveConversationMessage(userId, { role: 'assistant', content: explicitMessage, agent: fromAgent });
+      }
 
       // 🎯 V833/V834 FASE 5: Para cualquier @mention puro (sin query), usar
       // el último mensaje con contenido real como contexto del handoff

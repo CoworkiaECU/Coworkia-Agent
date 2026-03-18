@@ -372,10 +372,55 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
     }
   }
   
+  // 🔒 FIX A7: HANDOFF PROTECTION - funciones helper
+  /**
+   * Verifica si hay cooldown activo (handoff reciente en últimos 3 mensajes)
+   * @returns {boolean} true si debe bloquear handoff
+   */
+  function shouldBlockDueToCooldown() {
+    const lastHandoffCount = context?.perfil?.lastHandoffCount || 0;
+    if (lastHandoffCount > 0 && lastHandoffCount <= 3) {
+      console.log('[HANDOFF-PROTECTION] 🚫 Cooldown activo - bloqueando handoff (último hace', lastHandoffCount, 'mensajes)');
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Verifica si hay formulario activo con >2 campos llenos
+   * @returns {boolean} true si debe bloquear handoff
+   */
+  function shouldBlockDueToActiveForm() {
+    const formData = context?.formData;
+    if (!formData) return false;
+    
+    // Contar campos llenos en el formulario
+    const filledFields = [
+      formData.spaceType, formData.date, formData.time,
+      formData.email, formData.numPeople, formData.durationHours
+    ].filter(Boolean).length;
+    
+    if (filledFields > 2) {
+      console.log('[HANDOFF-PROTECTION] 🚫 Formulario activo con', filledFields, 'campos - bloqueando handoff');
+      return true;
+    }
+    return false;
+  }
+  
   // 5.0c) Si ALUNA está activa: detectar keywords Aurora → retorno automático
   //       Permite la ida y vuelta natural AURORA ↔ ALUNA sin @mención
   if (currentAgent === 'ALUNA') {
     if (AURORA_KEYWORDS.some(k => text.includes(k))) {
+      // 🔒 FIX A7: HANDOFF PROTECTION
+      if (shouldBlockDueToCooldown() || shouldBlockDueToActiveForm()) {
+        console.log('[DETECT-INTENT] 🚫 Handoff ALUNA→AURORA bloqueado por protección');
+        return {
+          agent: 'ALUNA',
+          reason: 'handoff_blocked_protection',
+          flags: { maintainingActive: true, handoffBlocked: true }
+        };
+      }
+
       console.log('[DETECT-INTENT] 💡 Aluna detectó tema Aurora - cambiar a AURORA');
       return {
         agent: 'AURORA',
@@ -385,7 +430,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
           suggestedAgent: 'AURORA',
           fromAgent: currentAgent,
           targetAgent: 'AURORA',
-          isKeywordMatch: true
+          isKeywordMatch: true,
+          explicitHandoffMessage: '🔄 Te paso con Aurora para coordinar tu reserva...' // 🎯 FIX A7: Mensaje explícito
         }
       };
     }
@@ -410,6 +456,16 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   if (currentAgent === 'AURORA') {
     // Detectar keywords Aluna (membresías)
     if (ALUNA_KEYWORDS.some(k => text.includes(k))) {
+      // 🔒 FIX A7: HANDOFF PROTECTION
+      if (shouldBlockDueToCooldown() || shouldBlockDueToActiveForm()) {
+        console.log('[DETECT-INTENT] 🚫 Handoff AURORA→ALUNA bloqueado por protección');
+        return {
+          agent: 'AURORA',
+          reason: 'handoff_blocked_protection',
+          flags: { maintainingActive: true, handoffBlocked: true }
+        };
+      }
+
       console.log('[DETECT-INTENT] 💡 Aurora detectó tema Aluna - cambiar a ALUNA');
       return { 
         agent: 'ALUNA',
@@ -419,7 +475,8 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
           suggestedAgent: 'ALUNA',
           fromAgent: currentAgent,
           targetAgent: 'ALUNA',
-          isKeywordMatch: true
+          isKeywordMatch: true,
+          explicitHandoffMessage: '🔄 Te paso con Aluna para info sobre membresías...' // 🎯 FIX A7: Mensaje explícito
         }
       };
     }

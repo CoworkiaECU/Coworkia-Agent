@@ -109,8 +109,8 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
     });
   }
 
-  // 1. Detectar intención
-  const intent = detectarIntencion(mensaje, activeAgent);
+  // 1. Detectar intención (🎯 FIX A7: pasar context con perfil y formData)
+  const intent = detectarIntencion(mensaje, activeAgent, { perfil, formData });
   loggers.orquestador.debug('Intención detectada', { 
     userId, 
     activeAgent, 

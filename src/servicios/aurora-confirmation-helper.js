@@ -141,7 +141,13 @@ export function extractReservationData(message, userProfile) {
       // 🎯 CALCULAR endTime desde startTime + duración validada
       const startHour = parseInt(startTime.split(':')[0]);
       const startMinutes = parseInt(startTime.split(':')[1] || '0');
-      let endHour = startHour + durationHours;
+      
+      // 🎯 FIX A6: Calcular endTime correctamente con duraciones decimales
+      const startTotalMinutes = startHour * 60 + startMinutes;
+      const durationMinutes = Math.round(durationHours * 60);
+      const endTotalMinutes = startTotalMinutes + durationMinutes;
+      let endHour = Math.floor(endTotalMinutes / 60);
+      const endMin = endTotalMinutes % 60;
       
       // 🛡️ FIX: Validar desborde de día (ej: 23:30 + 2h → 01:30 del día siguiente)
       if (endHour >= 24) {
@@ -151,7 +157,7 @@ export function extractReservationData(message, userProfile) {
         }
       }
       
-      endTime = `${endHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+      endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
       
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[DEBUG] 📅 Horario final:', startTime, '-', endTime, `(${durationHours}h)`);
@@ -261,7 +267,13 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
       // Construir reservationData desde el formulario
       if (form.date && form.time && form.spaceType) {
         const [hour, minutes = '0'] = form.time.split(':');
-        const endHour = parseInt(hour) + (form.durationHours || 2);
+        
+        // 🎯 FIX A6: Calcular endTime correctamente con duraciones decimales
+        const startMinutes = parseInt(hour) * 60 + parseInt(minutes);
+        const durationMinutes = Math.round((form.durationHours || 2) * 60);
+        const endMinutes = startMinutes + durationMinutes;
+        const endHour = Math.floor(endMinutes / 60) % 24;
+        const endMin = endMinutes % 60;
         
         const _serviceType = form.spaceType === 'meetingRoom' ? 'meetingRoom' : 'hotDesk';
         const _isFreeWindow = !userProfile.freeTrialUsed && _serviceType === 'hotDesk' && (() => {
@@ -289,7 +301,7 @@ export async function processAuroraConfirmationRequest(originalMessage, userProf
         reservationData = {
           date: form.date,
           startTime: form.time,
-          endTime: `${endHour.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`,
+          endTime: `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`,
           durationHours: form.durationHours || 2,
           serviceType: _serviceType,
           email: form.email || userProfile.email,

@@ -48,6 +48,7 @@ import gabiDashboardRouter from './endpoints-api/gabi-dashboard.js';
 import alunaDashboardRouter from './endpoints-api/aluna-dashboard.js';
 import auroraDashboardRouter from './endpoints-api/aurora-dashboard.js';
 import enzoDashboardRouter from './endpoints-api/enzo-dashboard.js';
+import adminSeedRouter from './endpoints-api/admin-seed.js';
 import paulaDashboardRouter from './endpoints-api/paula-dashboard.js';
 import axelDashboardRouter from './endpoints-api/axel-dashboard.js';
 import adrianaDashboardRouter from './endpoints-api/adriana-dashboard.js';
@@ -208,6 +209,7 @@ app.use('/api/enzo', enzoDashboardRouter);
 app.use('/api/paula', paulaDashboardRouter);
 app.use('/api/axel', axelDashboardRouter);
 app.use('/api/adriana', adrianaDashboardRouter);
+app.use('/api/admin', adminSeedRouter);
 app.use('/', wifiCodesRouter);
 
 // 404 final

@@ -843,6 +843,84 @@ class PostgresAdapter {
         END $$;
       `);
 
+      // Agregar columnas de tracking de automatizaciones e interacciones a membership_leads
+      await client.query(`
+        DO $$ 
+        BEGIN
+          -- Campos de automatizaciones
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'membership_code'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN membership_code TEXT;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'followup_24h_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN followup_24h_sent_at TIMESTAMP;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'followup_3d_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN followup_3d_sent_at TIMESTAMP;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'automation_d1_sent'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN automation_d1_sent BOOLEAN DEFAULT FALSE;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'automation_d3_sent'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN automation_d3_sent BOOLEAN DEFAULT FALSE;
+          END IF;
+          
+          -- Campos de interacción con cliente
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'last_interaction_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN last_interaction_at TIMESTAMP;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'client_response_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN client_response_at TIMESTAMP;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'client_whatsapp_reply'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN client_whatsapp_reply BOOLEAN DEFAULT FALSE;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'client_email_reply'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN client_email_reply BOOLEAN DEFAULT FALSE;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'membership_leads' AND column_name = 'quote_sent_at'
+          ) THEN
+            ALTER TABLE membership_leads ADD COLUMN quote_sent_at TIMESTAMP;
+          END IF;
+        END $$;
+      `);
+
       // Índices para mejorar performance
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

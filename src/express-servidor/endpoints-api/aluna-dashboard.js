@@ -46,6 +46,14 @@ router.get('/proformas', async (req, res) => {
         status,
         special_requirements,
         quote_sent_at,
+        followup_24h_sent_at,
+        followup_3d_sent_at,
+        automation_d1_sent,
+        automation_d3_sent,
+        last_interaction_at,
+        client_response_at,
+        client_whatsapp_reply,
+        client_email_reply,
         created_at,
         updated_at
       FROM membership_leads
@@ -532,20 +540,66 @@ router.get('/seed-demo-contacts', async (req, res) => {
         assignedTo = 'Aluna';
       }
       
-      // Insertar membership lead
+      // Calcular automatizaciones (simular envíos)
+      let d1Sent = null;
+      let d3Sent = null;
+      let quoteTime = createdAt;
+      
+      // Si tiene más de 1 día, simulamos D+1 enviado
+      if (contact.daysAgo >= 1) {
+        d1Sent = new Date(createdAt);
+        d1Sent.setDate(d1Sent.getDate() + 1);
+      }
+      
+      // Si tiene más de 3 días, simulamos D+3 enviado
+      if (contact.daysAgo >= 3) {
+        d3Sent = new Date(createdAt);
+        d3Sent.setDate(d3Sent.getDate() + 3);
+      }
+      
+      // Simular respuestas de clientes (algunos respondieron)
+      const hasClientResponse = ['tour_scheduled', 'negotiating', 'accepted', 'active'].includes(contact.status);
+      let lastInteraction = updatedAt;
+      let clientResponseAt = null;
+      let whatsappReply = false;
+      let emailReply = false;
+      
+      if (hasClientResponse) {
+        clientResponseAt = new Date(createdAt);
+        clientResponseAt.setDate(clientResponseAt.getDate() + Math.floor(contact.daysAgo / 3));
+        lastInteraction = clientResponseAt;
+        
+        // Alternar entre WhatsApp y Email
+        if (parseInt(contact.id.slice(-1)) % 2 === 0) {
+          whatsappReply = true;
+        } else {
+          emailReply = true;
+        }
+      }
+      
+      // Insertar membership lead con campos de tracking
       await databaseService.run(`
         INSERT INTO membership_leads (
-          id, user_phone, membership_type, start_date, client_name, email, phone,
+          id, membership_code, user_phone, membership_type, start_date, client_name, email, phone,
           company_name, tour_scheduled, tour_completed, membership_activated,
-          activation_date, monthly_fee, status, assigned_to, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+          activation_date, monthly_fee, status, assigned_to, notes,
+          quote_sent_at, followup_24h_sent_at, followup_3d_sent_at,
+          automation_d1_sent, automation_d3_sent,
+          last_interaction_at, client_response_at,
+          client_whatsapp_reply, client_email_reply,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
       `, [
-        contact.id, contact.phone, contact.plan, 
+        contact.id, contact.id, contact.phone, contact.plan, 
         activationDate || updatedAt.toISOString().split('T')[0],
         contact.name, contact.email, contact.phone, contact.company,
         tourScheduled, tourCompleted, contact.activated || false,
         activationDate, contact.fee, contact.status, assignedTo,
         'DEMO SEED - Contacto generado para presentación de cliente',
+        quoteTime.toISOString(), d1Sent ? d1Sent.toISOString() : null, d3Sent ? d3Sent.toISOString() : null,
+        !!d1Sent, !!d3Sent,
+        lastInteraction.toISOString(), clientResponseAt ? clientResponseAt.toISOString() : null,
+        whatsappReply, emailReply,
         createdAt.toISOString(), updatedAt.toISOString()
       ]);
       

@@ -149,6 +149,80 @@ function formatPrice(v) {
   return `$${parseFloat(v).toFixed(2)}`;
 }
 
+function getDetailedStatusBadge(status) {
+  const badges = {
+    'pending': '<span class="badge pending" title="Esperando respuesta inicial">⏳ Pendiente</span>',
+    'quoted': '<span class="badge pending" title="Cotización enviada, sin respuesta">📨 Cotizado</span>',
+    'tour_scheduled': '<span class="badge tour" title="Tour programado - próximo paso">📅 Tour Agendado</span>',
+    'negotiating': '<span class="badge negotiating" title="En proceso de negociación">💬 Negociando</span>',
+    'pending_payment': '<span class="badge payment" title="Esperando confirmación de pago">💳 Pago Pendiente</span>',
+    'accepted': '<span class="badge accepted" title="Aceptado, esperando inicio">✅ Aceptado</span>',
+    'active': '<span class="badge active" title="Cliente activo con membresía">🟢 Activo</span>',
+    'cancelled': '<span class="badge cancelled" title="Cliente canceló el proceso">🚫 Cancelado</span>',
+    'expired': '<span class="badge expired" title="Proforma expirada sin respuesta">⏰ Expirado</span>'
+  };
+  return badges[status] || `<span class="badge">${status}</span>`;
+}
+
+function getAutomationStatus(p) {
+  const d1Sent = p.followup_24h_sent_at || p.automation_d1_sent;
+  const d3Sent = p.followup_3d_sent_at || p.automation_d3_sent;
+  
+  let html = '<div style="display:flex;gap:6px;align-items:center;font-size:11px;">';
+  
+  if (d1Sent) {
+    html += '<span title="D+1 enviado" style="background:#064e3b;color:#34d399;padding:2px 8px;border-radius:10px;font-weight:600;">✓ D+1</span>';
+  } else {
+    html += '<span title="D+1 pendiente" style="background:#334155;color:#64748b;padding:2px 8px;border-radius:10px;">◯ D+1</span>';
+  }
+  
+  if (d3Sent) {
+    html += '<span title="D+3 enviado" style="background:#064e3b;color:#34d399;padding:2px 8px;border-radius:10px;font-weight:600;">✓ D+3</span>';
+  } else {
+    html += '<span title="D+3 pendiente" style="background:#334155;color:#64748b;padding:2px 8px;border-radius:10px;">◯ D+3</span>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+function getTimeSinceLastContact(p) {
+  const dates = [
+    p.last_interaction_at,
+    p.client_response_at,
+    p.followup_3d_sent_at,
+    p.followup_24h_sent_at,
+    p.quote_sent_at,
+    p.created_at
+  ].filter(d => d);
+  
+  if (dates.length === 0) return '<span style="color:#64748b;">Sin contacto</span>';
+  
+  const lastDate = new Date(Math.max(...dates.map(d => new Date(d))));
+  const diff = Math.floor((Date.now() - lastDate) / 86400000);
+  
+  let color = '#34d399';
+  let emoji = '🟢';
+  if (diff > 7) { color = '#f87171'; emoji = '🔴'; }
+  else if (diff > 3) { color = '#f59e0b'; emoji = '🟡'; }
+  
+  const text = diff === 0 ? 'Hoy' : diff === 1 ? 'Ayer' : `Hace ${diff}d`;
+  return `<span style="color:${color};font-weight:500;">${emoji} ${text}</span>`;
+}
+
+function getClientInteraction(p) {
+  if (p.client_whatsapp_reply) {
+    return '<span title="Cliente respondió por WhatsApp" style="background:#064e3b;color:#34d399;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;">📱 WhatsApp</span>';
+  }
+  if (p.client_email_reply) {
+    return '<span title="Cliente respondió por Email" style="background:#1e40af;color:#93c5fd;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;">📧 Email</span>';
+  }
+  if (p.client_response_at) {
+    return '<span title="Cliente hizo contacto" style="background:#065f46;color:#6ee7b7;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;">✓ Respondió</span>';
+  }
+  return '<span style="color:#475569;font-size:11px;">Sin respuesta</span>';
+}
+
 function isBigBoss(sr) {
   const s = (sr || '').toLowerCase();
   return s.includes('enviado por administrador') || s.includes('admin:') || s.includes('big boss');
@@ -385,16 +459,17 @@ async function loadProformas() {
     if (filtered.length === 0) {
       emptyEl.style.display = 'block';
     } else {
-      tbody.innerHTML = filtered.map(p => `
+      tbody.innerHTML = filtered.map((p, idx) => `
         <tr>
+          <td><strong style="color:#64748b;">${idx + 1}</strong></td>
           <td><strong style="color:#f1f5f9;">${p.membership_code || '—'}</strong></td>
           <td>${p.client_name || '—'}</td>
-          <td class="text-muted">${p.email || '—'}</td>
-          <td>${(p.membership_type || '—').replace('plan_','').replace('_',' ')}</td>
+          <td>${(p.membership_type || '—').replace('plan-','Plan ').replace('plan_','Plan ').replace('_',' ')}</td>
           <td class="money-green">${formatPrice(p.monthly_fee)}</td>
-          <td>${getStatusBadge(p.status)}</td>
-          <td>${getOriginBadge(p.special_requirements)}</td>
-          <td class="text-muted">${formatDate(p.quote_sent_at || p.created_at)}</td>
+          <td>${getDetailedStatusBadge(p.status)}</td>
+          <td>${getAutomationStatus(p)}</td>
+          <td class="text-muted">${getTimeSinceLastContact(p)}</td>
+          <td>${getClientInteraction(p)}</td>
         </tr>`).join('');
       tableEl.style.display = 'table';
     }

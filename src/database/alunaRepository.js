@@ -290,6 +290,71 @@ export async function trackAlunaProspect(userPhone, userName = null, membershipT
 }
 
 /**
+ * 🎯 Capturar lead de Aluna con keywords detectadas en Wassenger (tiempo real)
+ * Crea/actualiza entrada en membership_leads para dashboard
+ */
+export async function captureAlunaLeadFromKeywords(userPhone, userName, messageText) {
+  await databaseService.ensureInitialized();
+  
+  const ALUNA_KEYWORDS = ['plan', 'membresi', 'mensual', 'oficina', 'cowork'];
+  const textLower = (messageText || '').toLowerCase();
+  const hasKeyword = ALUNA_KEYWORDS.some(kw => textLower.includes(kw));
+  
+  if (!hasKeyword) return; // No keywords, no crear lead
+  
+  try {
+    // Verificar si ya existe el lead
+    const existing = await databaseService.get(
+      'SELECT id FROM membership_leads WHERE user_phone = $1',
+      [userPhone]
+    );
+    
+    if (existing) {
+      // Ya existe, solo actualizar last_interaction_at
+      await databaseService.run(
+        `UPDATE membership_leads 
+         SET last_interaction_at = CURRENT_TIMESTAMP 
+         WHERE user_phone = $1`,
+        [userPhone]
+      );
+      console.log(`[ALUNA-CAPTURE] 🔄 Lead existente actualizado: ${userPhone}`);
+    } else {
+      // Crear nuevo lead
+      const leadId = `ML-WS-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+      const email = `wassenger+${userPhone.replace(/[^0-9]/g, '')}@coworkia.space`;
+      
+      await databaseService.run(
+        `INSERT INTO membership_leads (
+          id, membership_code, user_phone, client_name, phone,
+          status, monthly_fee, membership_type,
+          last_interaction_at, quote_sent_at,
+          special_requirements, notes,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          leadId,
+          leadId,
+          userPhone,
+          userName || 'Sin nombre',
+          userPhone,
+          'pending',
+          0,
+          null,
+          new Date().toISOString(),
+          new Date().toISOString(),
+          'Capturado automáticamente - Keywords detectadas en conversación',
+          `Keywords: ${ALUNA_KEYWORDS.filter(kw => textLower.includes(kw)).join(', ')}. Mensaje: ${messageText.substring(0, 200)}`
+        ]
+      );
+      
+      console.log(`[ALUNA-CAPTURE] ✅ Nuevo lead capturado: ${leadId} (${userName || userPhone})`);
+    }
+  } catch (err) {
+    console.warn('[ALUNA-CAPTURE] ⚠️ Error capturando lead (no crítico):', err.message);
+  }
+}
+
+/**
  * 🔍 Prospectos que necesitan follow-up de 24 horas
  * (han pasado ≥24h desde interest_at, sin followup_24h aún, sin conversión)
  */

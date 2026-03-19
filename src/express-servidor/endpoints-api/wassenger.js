@@ -2028,18 +2028,20 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
-    // 💼 ALUNA - Formulario de membresías
+    // 💼 ALUNA - Formulario de membresías  
     if (profile.activeAgent === 'ALUNA') {
       // Detectar si el usuario muestra interés en una membresía (detección amplia)
       const membershipInterest =
-        // Verbo de acción + plan/membresía (patrón original ampliado)
-        /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz[a-z]*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText) ||
+        // Verbo de acción + plan/membresía (patrón original ampliado) - ✅ FIX: \w* acepta tildes
+        /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz\w*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText) ||
         // Mención directa de plan específico (plan 10, plan 20, plan mensual)
         /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText) ||
         // Mención directa de tipo de membresía (solo "oficina virtual" → sala y hot desk son productos de Aurora)
         /\b(oficina\s*virtual)\b/i.test(processedText) ||
-        // Petición de cotización o proforma (sin importar qué sigue)
-        /\b(cot[ií]zame|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
+        // Petición de cotización o proforma (sin importar qué sigue) - ✅ FIX: \w* acepta tildes
+        /\b(cot[ií]z\w*|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText) ||
+        // ✅ NUEVO: Detectar "por mail/email" explícitamente para activar flujo email
+        /\b(por|v[ií]a)\s+(mail|email|correo)\b/i.test(processedText);
 
       // 🛡️ GUARDS: Excluir del formulario mensajes de queja o afirmaciones vacías
       const isAlunaComplaint = /\b(no me llega|no lleg[oó]|no funciona|no lo recib[ií]|no recib[ií]|no envió|no envio|nunca lleg[oó]|no llegó|no me llegó|no arrib[oó])\b/i.test(processedText);

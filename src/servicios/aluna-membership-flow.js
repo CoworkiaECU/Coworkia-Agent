@@ -17,8 +17,7 @@
 import { processMembershipForm } from './membership-form.js';
 import { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } from './aluna-proforma-email.js';
 import { getAgentForm, saveAgentForm, clearAgentForm } from './agent-form-manager.js';
-import { trackAlunaProspect } from './aluna-prospect-tracker.js';
-import { captureAlunaLeadFromKeywords } from './aluna-lead-capture.js';
+import { trackAlunaProspect, captureAlunaLeadFromKeywords } from '../database/alunaRepository.js';
 import { enviarWhatsApp } from '../wassenger/wassenger-service.js';
 import { saveConversationMessage } from '../database/conversationRepository.js';
 import { saveInteraction } from '../database/interactionRepository.js';

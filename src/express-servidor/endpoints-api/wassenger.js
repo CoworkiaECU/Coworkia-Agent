@@ -2558,6 +2558,36 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       console.warn('[ALUNA-TRACKING] ⚠️ Error tracking respuesta:', trackErr.message);
     }
 
+
+    // 🎯 ALUNA HIGH INTENT DETECTION: Detectar señales de alto interés comercial
+    // Keywords: precio exacto, disponibilidad, me interesa, quiero contratar, etc.
+    // Acción: Cambiar status a 'negotiating' + notificar Diego
+    if (profile.activeAgent === 'ALUNA' && processedText) {
+      try {
+        const { detectHighIntentKeywords, buildHighIntentNotification } = await import('../../servicios/aluna-high-intent-detector.js');
+        const detection = detectHighIntentKeywords(processedText);
+        
+        if (detection.detected) {
+          console.log(`[ALUNA-HIGH-INTENT] 🔥 Detectado: ${detection.category} - "${detection.keyword}"`);
+          
+          // Obtener info del prospecto para la notificación
+          const prospectInfo = await alunaRepository.getAlunaProspectInfo(userId);
+          
+          // Cambiar status a negotiating
+          await alunaRepository.markAlunaLeadAsNegotiating(userId);
+          
+          // Notificar a Diego (solo si admin phone configurado)
+          if (ADMIN_PHONE && prospectInfo) {
+            const notification = buildHighIntentNotification(prospectInfo, detection, processedText);
+            await enviarWhatsApp(ADMIN_PHONE, notification);
+            console.log(`[ALUNA-HIGH-INTENT] 📢 Notificación enviada a Diego`);
+          }
+        }
+      } catch (highIntentErr) {
+        // No crítico - no bloquear flujo principal
+        console.warn('[ALUNA-HIGH-INTENT] ⚠️ Error en detección:', highIntentErr.message);
+      }
+    }
     // �📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     

@@ -477,6 +477,59 @@ export async function markAlunaClientResponse(userPhone, channel = 'whatsapp') {
   }
 }
 
+/**
+ * Marca un lead de membresía como "negotiating" (alto interés detectado)
+ * Se usa cuando el sistema detecta keywords de high intent
+ * @param {string} userPhone - Teléfono del prospecto
+ */
+export async function markAlunaLeadAsNegotiating(userPhone) {
+  await databaseService.ensureInitialized();
+  try {
+    await databaseService.run(
+      `UPDATE membership_leads
+          SET status = 'negotiating', updated_at = CURRENT_TIMESTAMP
+        WHERE user_phone = $1 AND status NOT IN ('active', 'cancelled')`,
+      [userPhone]
+    );
+    console.log(`[ALUNA-REPO] 🔥 Lead marcado como NEGOTIATING (high intent): ${userPhone}`);
+  } catch (err) {
+    console.warn('[ALUNA-REPO] ⚠️ markAlunaLeadAsNegotiating no crítico:', err.message);
+  }
+}
+
+/**
+ * Obtiene información de un prospecto para notificaciones
+ * Combina datos de membership_leads y aluna_prospect_followups
+ * @param {string} userPhone - Teléfono del prospecto
+ * @returns {object|null} Información del prospecto
+ */
+export async function getAlunaProspectInfo(userPhone) {
+  await databaseService.ensureInitialized();
+  try {
+    // Intentar primero desde membership_leads (tiene más info)
+    const lead = await databaseService.get(
+      `SELECT user_phone, client_name, membership_type, membership_code, email, status
+       FROM membership_leads WHERE user_phone = $1
+       ORDER BY created_at DESC LIMIT 1`,
+      [userPhone]
+    );
+    
+    if (lead) return lead;
+    
+    // Fallback: intentar desde aluna_prospect_followups
+    const prospect = await databaseService.get(
+      `SELECT user_phone, user_name as client_name, membership_type, membership_code, email
+       FROM aluna_prospect_followups WHERE user_phone = $1`,
+      [userPhone]
+    );
+    
+    return prospect || null;
+  } catch (err) {
+    console.warn('[ALUNA-REPO] ⚠️ getAlunaProspectInfo error:', err.message);
+    return null;
+  }
+}
+
 // ============================================================================
 // ALUNA RENEWAL REMINDERS — Recordatorios de renovación de membresías activas
 // ============================================================================

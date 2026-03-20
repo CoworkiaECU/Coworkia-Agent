@@ -42,6 +42,10 @@ import { executeHandoff } from '../../servicios/handoff-manager.js';
 import { isUpdateInProgress } from '../../servicios/agent-state-manager.js';
 import { updateAgent as updateAgentState } from '../../servicios/agent-state-manager.js';
 
+// 🤖 SISTEMA AUTÓNOMO - Comandos autopilot desde WhatsApp
+import { detectSystemCommand, isWaitingForApproval } from '../../servicios/autopilot-state.js';
+import { executeSystemCommand } from '../../servicios/autopilot-command-executor.js';
+
 import {
   loadProfile,
   saveProfile,
@@ -2496,6 +2500,38 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       console.log('[CAMPAIGN-2] 🚀 Post-promo interest detectado → handoff automático a ENZO');
       await updateProfile(userId, { lastVirtualAgentPromoAt: null }, { reason: 'post_promo_enzo_handoff' });
       auroraInput = `@enzo ${auroraInput}`;
+    }
+
+    // 🤖 AUTOPILOT: Detectar comandos del sistema ANTES del orquestador
+    // Si Diego responde "Si"/"No"/"Review" a una pregunta pendiente,
+    // ejecutar la acción directamente sin pasar por el LLM
+    const systemCommand = detectSystemCommand(userId, processedText || '');
+    if (systemCommand) {
+      console.log(`[AUTOPILOT] 🎮 Comando del sistema detectado: ${systemCommand.command}`);
+      
+      const commandResult = await executeSystemCommand(systemCommand, userId, enviarWhatsApp);
+      
+      if (commandResult.executed) {
+        console.log(`[AUTOPILOT] ✅ Comando ejecutado: ${commandResult.action}`);
+        
+        // Guardar en historial como mensaje del sistema
+        await saveConversationMessage(userId, {
+          role: 'user',
+          content: processedText,
+          metadata: { systemCommand: true, command: systemCommand.command }
+        });
+        
+        await saveConversationMessage(userId, {
+          role: 'assistant',
+          content: commandResult.message || 'Comando ejecutado',
+          metadata: { systemResponse: true, action: commandResult.action }
+        });
+        
+        // NO continuar al orquestador - retornar aquí
+        return;
+      } else {
+        console.log(`[AUTOPILOT] ⚠️ Comando falló, continuando con orquestador normal`);
+      }
     }
 
     // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)

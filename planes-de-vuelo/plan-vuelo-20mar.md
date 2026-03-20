@@ -337,49 +337,64 @@ Crear skills para VS Code Copilot que permitan al agente trabajar autónomamente
 - **Ejecución**: Supervisada → Autónoma 2-3h
 - **ROI**: +4-6h/día para ventas
 
-### 🚀 Próximos Pasos (Fase A - Bloques 2 y 3)
-1. **Bloque 2**: Sistema de comandos desde WhatsApp (Si/No/Review/Deploy)
-2. **Bloque 3**: Integración con autopilot (notificar en eventos clave)
-3. Testing real de notificaciones con número configurado
+### 🚀 Próximos Pasos (Fase A - Bloque 3)
+1. ~~**Bloque 1**: Sistema base de notificaciones~~ ✅ COMPLETADO
+2. ~~**Bloque 2**: Sistema de comandos desde WhatsApp (Si/No/Review/Deploy)~~ ✅ COMPLETADO
+3. **Bloque 3**: Integración con autopilot (notificar en eventos clave) - PRÓXIMO
+4. Testing real de notificaciones con número configurado
 
 ### 📦 Archivos Creados
 ```
 .github/skills/
-├── README.md (nuevo)
+├── README.md (creado)
 ├── coworkia-memory/
-│   └── SKILL.md (nuevo)
+│   └── SKILL.md (creado)
 ├── coworkia-autopilot/
-│   └── SKILL.md (nuevo)
+│   └── SKILL.md (creado)
 ├── coworkia-notifications/
-│   └── SKILL.md (nuevo)
+│   └── SKILL.md (creado)
 └── coworkia-planning/
-    └── SKILL.md (nuevo)
+    └── SKILL.md (creado)
 
 planes-de-vuelo/
-└── queue.json (nuevo)
+└── queue.json (creado)
 
 src/utils/
-└── plan-queue-manager.js (nuevo)
+└── plan-queue-manager.js (creado)
 
 src/express-servidor/endpoints-api/
-├── internal-notifications.js (nuevo)
-└── wassenger.js (modificado - export enviarWhatsApp)
+├── internal-notifications.js (creado - Bloque 1)
+├── NOTIFICATIONS-SETUP.md (creado - Bloque 1)
+├── ANTI-CONFLICTO.md (creado - Bloque 1)
+├── COMMANDS-USAGE.md (creado - Bloque 2)
+└── wassenger.js (modificado - exports + interceptor comandos)
+
+src/servicios/
+├── autopilot-state.js (creado - Bloque 1, actualizado Bloque 2)
+├── autopilot-command-executor.js (creado - Bloque 2)
+└── autopilot-question-db.js (creado - Bloque 2)
 
 scripts/
-└── test-notifications.js (nuevo)
+└── test-notifications.js (creado - Bloque 1)
 ```
 
-### ⏱️ Tiempo Total: ~4h
+### ⏱️ Tiempo Total Skills Autónomo: 5.25h
 - Análisis y contexto: 45min
 - Skills FASE 1-2: 2h
 - Skills FASE 3-4: 1h
-- Implementación base: 45min
-- **Fase A - Bloque 1**: 30min (notificaciones base)
+- **Fase A - Bloque 1**: 45min (notificaciones base) ✅
+- **Fase A - Bloque 2**: 45min (comandos WhatsApp) ✅
+- **Fase A - Bloque 3**: 45min (integración autopilot) ⏳ PENDIENTE
+
+### 💾 Commits Realizados
+1. **feat: Sistema de Skills documentado** (4 skills + queue + docs)
+2. **feat: Sistema de notificaciones WhatsApp - Bloque 1** (internal-notifications + state + tests)
+3. **feat: Comandos WhatsApp - Bloque 2** (command executor + DB persistence + interceptor) ⬅️ ACTUAL
 
 ---
 
-**ÚLTIMA ACTUALIZACIÓN**: 20 Mar 2026 - 09:00 AM ECT
-**ESTADO**: 🟢 Campaña al aire - Aluna 30% operativo, Aurora 100% estable
-**PRÓXIMO CHECK**: Fin de Bloque 2 (follow-ups completos)
+**ÚLTIMA ACTUALIZACIÓN**: 20 Mar 2026 - 10:30 AM ECT
+**ESTADO**: 🟢 Fase A Bloque 2 completado - Sistema de comandos funcional
+**PRÓXIMO CHECK**: Bloque 3 (integración autopilot) o cambio a Aluna
 
-**SKILLS READY**: 🎓 4/4 skills creados, sistema documentado, listo para commit & deploy
+**SKILLS READY**: 🎓 Sistema autónomo 67% completo (2/3 bloques Fase A)

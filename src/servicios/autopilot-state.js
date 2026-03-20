@@ -6,7 +6,12 @@
  * Distinguir entre:
  * - Comandos del sistema (Si/No cuando hay pregunta pendiente)
  * - Mensajes normales de prueba de agentes
+ * 
+ * INTEGRADO CON:
+ * - autopilot-question-db.js para persistencia en PostgreSQL
  */
+
+import { savePendingQuestion as dbSavePending, getPendingQuestion as dbGetPending, markQuestionAnswered } from './autopilot-question-db.js';
 
 // Estado en memoria (en producción podría ser Redis o DB)
 let autopilotState = {
@@ -107,8 +112,11 @@ export function detectSystemCommand(userId, message) {
 
 /**
  * 📝 Registra una pregunta pendiente
+ * Guarda en memoria Y en PostgreSQL para persistencia
  */
-export function setPendingQuestion(type, question, data = {}) {
+export async function setPendingQuestion(type, question, data = {}) {
+  const DIEGO_PERSONAL = process.env.DIEGO_PERSONAL_PHONE;
+  
   autopilotState.waitingForApproval = true;
   autopilotState.pendingQuestion = {
     type,      // 'deploy', 'architectural_change', 'decision', etc
@@ -118,16 +126,38 @@ export function setPendingQuestion(type, question, data = {}) {
   };
   
   console.log(`[AUTOPILOT] ❓ Pregunta pendiente: ${type}`);
+  
+  // Guardar en DB para persistencia
+  if (DIEGO_PERSONAL) {
+    try {
+      const questionId = await dbSavePending(DIEGO_PERSONAL, type, question, data);
+      autopilotState.pendingQuestion.id = questionId;
+    } catch (error) {
+      console.error('[AUTOPILOT] ⚠️ Error guardando en DB (estado solo en memoria):', error.message);
+    }
+  }
 }
 
 /**
  * 🧹 Limpia pregunta pendiente
+ * Marca como respondida en DB si tiene ID
  */
-export function clearPendingQuestion() {
+export async function clearPendingQuestion(answer = null, result = {}) {
+  const questionId = autopilotState.pendingQuestion?.id;
+  
   autopilotState.waitingForApproval = false;
   autopilotState.pendingQuestion = null;
   
   console.log('[AUTOPILOT] ✓ Pregunta respondida/expirada');
+  
+  // Marcar como respondida en DB
+  if (questionId) {
+    try {
+      await markQuestionAnswered(questionId, answer, result);
+    } catch (error) {
+      console.error('[AUTOPILOT] ⚠️ Error actualizando DB:', error.message);
+    }
+  }
 }
 
 /**

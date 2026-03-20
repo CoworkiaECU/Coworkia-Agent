@@ -18,9 +18,7 @@ import { processMembershipForm } from './membership-form.js';
 import { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } from './aluna-proforma-email.js';
 import { getAgentForm, saveAgentForm, clearAgentForm } from './agent-form-manager.js';
 import { trackAlunaProspect, captureAlunaLeadFromKeywords } from '../database/alunaRepository.js';
-import { enviarWhatsApp } from '../wassenger/wassenger-service.js';
-import { saveConversationMessage } from '../database/conversationRepository.js';
-import { saveInteraction } from '../database/interactionRepository.js';
+import { saveConversationMessage, saveInteraction } from '../perfiles-interacciones/memoria-sqlite.js';
 
 /**
  * Detecta si el mensaje muestra interés en membresías
@@ -191,7 +189,7 @@ Si después de revisar tienes alguna pregunta o decides activar tu membresía, s
 
 ¡Que tengas un excelente día! ✨`;
 
-            await enviarWhatsApp(userId, softCloseMessage);
+            // Guardar en memoria antes de enviar
             await saveConversationMessage(userId, {
               role: 'assistant',
               content: `Proforma de ${proResult.planName} enviada a ${fd.email}. Cliente puede revisar con calma.`,
@@ -212,9 +210,9 @@ Si después de revisar tienes alguna pregunta o decides activar tu membresía, s
       }
     }
 
-    // 📋 PASO 7: Formulario necesita más datos → enviar pregunta
+    // 📋 PASO 7: Formulario necesita más datos → retornar pregunta (wassenger.js la envía)
     if (formResult.needsMoreInfo && formResult.nextQuestion) {
-      await enviarWhatsApp(userId, formResult.nextQuestion);
+      // Guardar en memoria
       await saveConversationMessage(userId, {
         role: 'assistant',
         content: formResult.nextQuestion,

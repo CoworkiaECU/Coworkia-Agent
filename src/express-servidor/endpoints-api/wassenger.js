@@ -2046,6 +2046,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
 
       if (alunaResult.handled) {
         console.log('[ALUNA-FLOW] ✅ Mensaje manejado por flujo de membresías');
+        
+        // Si el flow retorna un mensaje, enviarlo
+        if (alunaResult.reply) {
+          await enviarWhatsApp(userId, alunaResult.reply);
+          console.log('[ALUNA-FLOW] 📤 Mensaje enviado al usuario');
+        }
+        
         return;
       }
       // Si no maneja el mensaje → continúa al LLM

@@ -2090,12 +2090,22 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
                 if (proResult.success) {
                   fd.proformaSent = true;
                   formResult.form.data.proformaSent = true;
-                  await saveAgentForm(userId, 'ALUNA', formResult.form.toJSON(), 120);
                   await saveAlunaLeadFromProforma({ userId, clientName: proformaName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
                   console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${fd.email} (${proResult.planName})`);
-                  // Notificar brevemente al usuario (sin interrumpir el flujo del formulario)
-                  await enviarWhatsApp(userId, `📧 Te envié la proforma de *${proResult.planName}* a ${fd.email}.\n\nRevisa tu bandeja de entrada (y la carpeta de spam, por las dudas).`);
-                  await saveConversationMessage(userId, { role: 'assistant', content: `Proforma de ${proResult.planName} enviada a ${fd.email}`, agent: 'ALUNA' });
+                  
+                  // 🎯 FIX v980: SOFT-CLOSE después de enviar email (no presionar)
+                  // Usuario eligió analizar con calma → confiar en follow-ups automáticos
+                  const softCloseMessage = `📧 ¡Listo, ${proformaName}! Te envié toda la información detallada de *${proResult.planName}* a ${fd.email}.\n\nRevisa tu bandeja de entrada (y la carpeta de spam, por las dudas). 😊\n\nSi después de revisar tienes alguna pregunta o decides activar tu membresía, simplemente escríbeme @aluna y con gusto te ayudo.\n\n¡Que tengas un excelente día! ✨`;
+                  
+                  await enviarWhatsApp(userId, softCloseMessage);
+                  await saveConversationMessage(userId, { role: 'assistant', content: `Proforma de ${proResult.planName} enviada a ${fd.email}. Cliente puede revisar con calma.`, agent: 'ALUNA' });
+                  
+                  // 🧹 LIMPIAR FORMULARIO - No seguir pidiendo datos después del email
+                  await clearAgentForm(userId, 'ALUNA');
+                  console.log('[ALUNA-PROFORMA] 🧹 Formulario limpiado después de enviar email - soft-close activado');
+                  
+                  // ⚠️ CRÍTICO: Return true para evitar que handleFormResult siga procesando
+                  return; // Termina aquí, confía en follow-ups automáticos
                 }
               } catch (proErr) {
                 console.error('[ALUNA-PROFORMA] ⚠️ Error enviando proforma (no crítico):', proErr.message);

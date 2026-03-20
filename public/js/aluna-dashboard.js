@@ -407,10 +407,33 @@ async function loadStats() {
     const res = await r.json();
     if (!res.ok) return;
     const d = res.data;
+    
+    // Stats generales (legacy)
     document.getElementById('stat-total').textContent   = d.total || 0;
     document.getElementById('stat-month').textContent   = d.recent?.thisMonth || 0;
     document.getElementById('stat-week').textContent    = d.recent?.last7Days || 0;
     document.getElementById('stat-revenue').textContent = formatPrice(d.revenue?.potential || 0);
+    
+    // Stats de follow-ups (nuevas - BLOQUE 2)
+    if (d.followups) {
+      const fu = d.followups;
+      
+      // D+1 Enviados
+      document.getElementById('stat-d1-pct').textContent = `${fu.automation.d1Percentage}%`;
+      document.getElementById('stat-d1-sub').textContent = `${fu.automation.d1Sent} de ${fu.leads.active} prospectos`;
+      
+      // D+3 Enviados
+      document.getElementById('stat-d3-pct').textContent = `${fu.automation.d3Percentage}%`;
+      document.getElementById('stat-d3-sub').textContent = `${fu.automation.d3Sent} de ${fu.leads.active} prospectos`;
+      
+      // Tasa de respuesta
+      document.getElementById('stat-response-pct').textContent = `${fu.engagement.responseRate}%`;
+      document.getElementById('stat-response-sub').textContent = `${fu.engagement.responded} de ${fu.engagement.withFollowups} respondieron`;
+      
+      // Tasa de conversión
+      document.getElementById('stat-conv-pct').textContent = `${fu.conversion.conversionRate}%`;
+      document.getElementById('stat-conv-sub').textContent = `${fu.conversion.converted} de ${fu.conversion.total} convertidos`;
+    }
   } catch (e) {
     console.error('[ALUNA-DASH] Error cargando stats:', e);
   }

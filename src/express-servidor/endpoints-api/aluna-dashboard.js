@@ -139,11 +139,89 @@ router.get('/proformas/:membershipCode', async (req, res) => {
 
 /**
  * GET /api/aluna/stats
- * Obtiene estadísticas generales de proformas
+ * Obtiene estadísticas generales de proformas + métricas de efectividad de follow-ups
+ * 
+ * Incluye:
+ * - Total leads (últimos 7d, 30d)
+ * - % D+1 enviados
+ * - % D+3 enviados
+ * - % Clientes que respondieron después de follow-ups
+ * - Tasa de conversión
+ * - Stats generales de proformas (legacy)
  */
 router.get('/stats', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
+    
+    // ── MÉTRICAS DE FOLLOW-UPS (nuevas - BLOQUE 2) ──────────────────────────
+    
+    // Total leads en pipeline de follow-ups (últimos 7 y 30 días)
+    const leadsLast7d = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE interest_at >= NOW() - INTERVAL '7 days'`
+    );
+    
+    const leadsLast30d = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE interest_at >= NOW() - INTERVAL '30 days'`
+    );
+    
+    // Total prospectos en pipeline (no convertidos)
+    const totalProspectsResult = await databaseService.get(
+      `SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NULL`
+    );
+    const totalProspects = parseInt(totalProspectsResult?.total || 0);
+    
+    // D+1 enviados (WhatsApp o Email)
+    const d1SentResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE (followup_24h_sent_at IS NOT NULL OR followup_24h_email_sent_at IS NOT NULL)
+         AND converted_at IS NULL`
+    );
+    const d1Sent = parseInt(d1SentResult?.count || 0);
+    
+    // D+3 enviados (WhatsApp o Email)
+    const d3SentResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE (followup_3d_sent_at IS NOT NULL OR followup_3d_email_sent_at IS NOT NULL)
+         AND converted_at IS NULL`
+    );
+    const d3Sent = parseInt(d3SentResult?.count || 0);
+    
+    // Clientes que respondieron después de recibir follow-ups
+    const respondedResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE client_response_at IS NOT NULL AND converted_at IS NULL`
+    );
+    const responded = parseInt(respondedResult?.count || 0);
+    
+    // Prospectos con follow-ups enviados (base para calcular % respuesta)
+    const withFollowupsResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+       WHERE (followup_24h_sent_at IS NOT NULL OR followup_3d_sent_at IS NOT NULL)
+         AND converted_at IS NULL`
+    );
+    const withFollowups = parseInt(withFollowupsResult?.count || 0);
+    
+    // Conversiones
+    const convertedResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM aluna_prospect_followups WHERE converted_at IS NOT NULL`
+    );
+    const converted = parseInt(convertedResult?.count || 0);
+    
+    // Total histórico (incluyendo convertidos)
+    const totalHistoricalResult = await databaseService.get(
+      `SELECT COUNT(*) as total FROM aluna_prospect_followups`
+    );
+    const totalHistorical = parseInt(totalHistoricalResult?.total || 0);
+    
+    // Calcular porcentajes
+    const d1Percentage = totalProspects > 0 ? ((d1Sent / totalProspects) * 100).toFixed(1) : '0.0';
+    const d3Percentage = totalProspects > 0 ? ((d3Sent / totalProspects) * 100).toFixed(1) : '0.0';
+    const responseRate = withFollowups > 0 ? ((responded / withFollowups) * 100).toFixed(1) : '0.0';
+    const conversionRate = totalHistorical > 0 ? ((converted / totalHistorical) * 100).toFixed(1) : '0.0';
+    
+    // ── STATS GENERALES DE PROFORMAS (legacy) ────────────────────────────────
     
     // Total proformas enviadas
     const totalResult = await databaseService.get(
@@ -184,6 +262,31 @@ router.get('/stats', async (req, res) => {
     return res.json({
       ok: true,
       data: {
+        // ── Nuevas métricas de follow-ups ──
+        followups: {
+          leads: {
+            last7d: parseInt(leadsLast7d?.count || 0),
+            last30d: parseInt(leadsLast30d?.count || 0),
+            active: totalProspects
+          },
+          automation: {
+            d1Sent: d1Sent,
+            d1Percentage: parseFloat(d1Percentage),
+            d3Sent: d3Sent,
+            d3Percentage: parseFloat(d3Percentage)
+          },
+          engagement: {
+            responded: responded,
+            responseRate: parseFloat(responseRate),
+            withFollowups: withFollowups
+          },
+          conversion: {
+            converted: converted,
+            conversionRate: parseFloat(conversionRate),
+            total: totalHistorical
+          }
+        },
+        // ── Stats generales (legacy) ──
         total: totalResult?.total || 0,
         byStatus: byStatus || [],
         byType: byType || [],

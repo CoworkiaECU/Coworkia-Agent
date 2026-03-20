@@ -11,6 +11,7 @@
 
 import { notifyDiego } from '../express-servidor/endpoints-api/internal-notifications.js';
 import { clearPendingQuestion, getAutopilotState } from './autopilot-state.js';
+import { resumeAutopilot } from './autopilot-engine.js';
 import { query } from '../database/database.js';
 import { loggers } from '../utils/logger.js';
 
@@ -107,22 +108,37 @@ async function executeApprove(question, userId, sendMessage) {
       };
       
     case 'architectural_change':
-      // Cambio arquitectural aprobado
+      // Cambio arquitectural aprobado → resumir autopilot
       await sendMessage(userId, '✅ Cambio arquitectural aprobado. Continuando...');
-      // El autopilot continuará ejecutando
+      
+      // Resumir autopilot automáticamente
+      const resumeResult = resumeAutopilot();
+      if (resumeResult.success) {
+        logger.info('[AUTOPILOT-CMD] ▶️ Autopilot resumido automáticamente');
+      }
+      
       return {
         executed: true,
         action: 'architecture_approved',
-        message: '✅ Continuando con el cambio aprobado.'
+        message: '✅ Continuando con el cambio aprobado.',
+        autopilotResumed: resumeResult.success
       };
       
     case 'decision':
-      // Decisión general aprobada
+      // Decisión general aprobada → resumir autopilot
       await sendMessage(userId, '✅ Aprobado. Continuando...');
+      
+      // Resumir autopilot automáticamente
+      const resumeDecision = resumeAutopilot();
+      if (resumeDecision.success) {
+        logger.info('[AUTOPILOT-CMD] ▶️ Autopilot resumido automáticamente');
+      }
+      
       return {
         executed: true,
         action: 'decision_approved',
-        message: '✅ Decisión aprobada.'
+        message: '✅ Decisión aprobada.',
+        autopilotResumed: resumeDecision.success
       };
       
     case 'plan_complete':

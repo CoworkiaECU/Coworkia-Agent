@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-03-20T00:00:00Z",
+  "currentPlan": "plan-vuelo-20mar.md",
+  "queue": [
+    {
+      "id": "skills-sistema-autonomo",
+      "title": "Skills Sistema Autónomo Coworkia",
+      "status": "in-progress",
+      "plan": "plan-vuelo-20mar.md",
+      "startedAt": "2026-03-20T10:00:00Z",
+      "estimatedTime": "3-4h",
+      "tasksTotal": 8,
+      "tasksCompleted": 6,
+      "blockers": [],
+      "priority": "critical",
+      "notes": "Sistema de memoria + autopilot + notificaciones + planning. Reducir intervención 50%."
+    },
+    {
+      "id": "aluna-dashboard-mejoras",
+      "title": "Dashboard Aluna - Mejoras Pausadas",
+      "status": "pending",
+      "plan": null,
+      "estimatedTime": "2-3h",
+      "dependencies": [],
+      "priority": "low",
+      "notes": "Botones manuales D+1/D+3, modal campañas, templates editables. Pausado por campaña al aire."
+    },
+    {
+      "id": "axel-v2-features",
+      "title": "Axel v2 - CTAs + Calendario + Recordatorios",
+      "status": "pending",
+      "plan": null,
+      "estimatedTime": "2-3h",
+      "dependencies": [],
+      "priority": "medium",
+      "notes": "Mejoras UX: CTAs persuasivos, agendamiento calendario, recordatorios automáticos."
+    }
+  ],
+  "metrics": {
+    "avgTaskTime": "12min",
+    "avgPlanTime": "2.5h",
+    "successRate": 0.85,
+    "blockerRate": 0.15,
+    "totalPlansCompleted": 18,
+    "mostCommonBlockers": [
+      "Decisión arquitectónica",
+      "Testing complejo",
+      "Dependencia externa"
+    ]
+  }
+}

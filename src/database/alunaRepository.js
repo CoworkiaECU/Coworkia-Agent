@@ -339,7 +339,7 @@ export async function captureAlunaLeadFromKeywords(userPhone, userName, messageT
           userPhone,
           'pending',
           0,
-          null,
+          'consulta-inicial',  // ← FIX: valor por defecto en lugar de null
           new Date().toISOString(),
           new Date().toISOString(),
           'Capturado automáticamente - Keywords detectadas en conversación',

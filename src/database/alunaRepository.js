@@ -451,6 +451,32 @@ export async function markAlunaProspectConverted(userPhone) {
   }
 }
 
+/** 
+ * Marca cuando un prospecto responde después de recibir follow-ups
+ * Tracking para medir efectividad de secuencia automatizada D+1 y D+3
+ * @param {string} userPhone - Teléfono del prospecto
+ * @param {string} channel - Canal de respuesta: 'whatsapp' o 'email'
+ */
+export async function markAlunaClientResponse(userPhone, channel = 'whatsapp') {
+  await databaseService.ensureInitialized();
+  try {
+    const updateFields = ['client_response_at = CURRENT_TIMESTAMP', 'updated_at = CURRENT_TIMESTAMP'];
+    if (channel === 'whatsapp') {
+      updateFields.push('client_whatsapp_reply = TRUE');
+    }
+    
+    await databaseService.run(
+      `UPDATE aluna_prospect_followups
+          SET ${updateFields.join(', ')}
+        WHERE user_phone = $1 AND client_response_at IS NULL`,
+      [userPhone]
+    );
+    console.log(`[ALUNA-REPO] 💬 Cliente respondió (${channel}): ${userPhone}`);
+  } catch (err) {
+    console.warn('[ALUNA-REPO] ⚠️ markAlunaClientResponse no crítico:', err.message);
+  }
+}
+
 // ============================================================================
 // ALUNA RENEWAL REMINDERS — Recordatorios de renovación de membresías activas
 // ============================================================================

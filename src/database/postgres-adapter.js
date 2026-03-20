@@ -1124,6 +1124,9 @@ class PostgresAdapter {
       await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS email TEXT`).catch(()=>{});
       await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS followup_24h_email_sent_at TIMESTAMP`).catch(()=>{});
       await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS followup_3d_email_sent_at TIMESTAMP`).catch(()=>{});
+      // Tracking de respuestas del cliente (20 Mar 2026)
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS client_response_at TIMESTAMP`).catch(()=>{});
+      await client.query(`ALTER TABLE aluna_prospect_followups ADD COLUMN IF NOT EXISTS client_whatsapp_reply BOOLEAN DEFAULT FALSE`).catch(()=>{});
 
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_aluna_prospects_followup_24h

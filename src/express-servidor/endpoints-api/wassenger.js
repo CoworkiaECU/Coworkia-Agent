@@ -22,6 +22,7 @@ import { generateQuote } from '../../servicios/axel-quote-generator.js';
 import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
 import { detectSchedulingIntent, processWorkshopScheduling } from '../../servicios/axel-appointment.js';
 import { query } from '../../database/database.js';
+import databaseService from '../../database/database.js';
 import { processMembershipForm } from '../../servicios/membership-form.js';
 import { processAlunaMembershipFlow } from '../../servicios/aluna-membership-flow.js';
 
@@ -34,7 +35,7 @@ import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation }
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms, cancelAgentForm } from '../../servicios/agent-form-manager.js';
 import { normalizeAgentName } from '../../utils/agent-normalizer.js';
-import { trackAlunaProspect, captureAlunaLeadFromKeywords } from '../../database/alunaRepository.js';
+import { trackAlunaProspect, captureAlunaLeadFromKeywords, markAlunaClientResponse } from '../../database/alunaRepository.js';
 
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
@@ -2534,7 +2535,30 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
-    // 📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
+    // � ALUNA CLIENT RESPONSE TRACKING: Detectar y marcar respuestas de prospectos
+    // Si el usuario tiene follow-ups enviados (D+1 o D+3) y aún no ha respondido,
+    // marcar su respuesta para medir efectividad de la secuencia automatizada
+    try {
+      const prospectStatus = await databaseService.get(
+        `SELECT followup_24h_sent_at, followup_3d_sent_at, client_response_at 
+         FROM aluna_prospect_followups 
+         WHERE user_phone = $1`,
+        [userId]
+      );
+
+      if (prospectStatus && 
+          (prospectStatus.followup_24h_sent_at || prospectStatus.followup_3d_sent_at) && 
+          !prospectStatus.client_response_at) {
+        // Cliente tiene follow-ups enviados pero no ha respondido → marcar ahora
+        await alunaRepository.markAlunaClientResponse(userId, 'whatsapp');
+        console.log(`[ALUNA-TRACKING] 💬 Prospecto respondió después de follow-up: ${userId}`);
+      }
+    } catch (trackErr) {
+      // No crítico - no bloquear flujo principal
+      console.warn('[ALUNA-TRACKING] ⚠️ Error tracking respuesta:', trackErr.message);
+    }
+
+    // �📌 Orquestador = Aurora Core decide TODO (incluye handoffs)
     loggers.webhook.debug('Calling orquestador', { userId, agent: profile.activeAgent, messagePreview: auroraInput.substring(0, 50) });
     
     const resultado = await procesarMensaje(auroraInput, profile, conversationHistory, {

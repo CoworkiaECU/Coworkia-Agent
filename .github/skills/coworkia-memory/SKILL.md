@@ -13,7 +13,70 @@ Este skill contiene la memoria completa del proyecto Coworkia Agent: arquitectur
 
 ---
 
-## 📦 SETUP DEL PROYECTO
+## � PROTOCOLO DE INICIO DE SESIÓN
+
+**Cada vez que Diego inicia una sesión de trabajo, el agente DEBE:**
+
+### 1. Configurar Workspace en Dos Ventanas
+```
+┌─────────────────────┬─────────────────────┐
+│  PLAN DE VUELO      │   CHAT ACTIVO       │
+│  (archivo .md)      │   (conversación)    │
+│                     │                     │
+│  - Plan del día     │   - Work in         │
+│  - Tareas           │     progress        │
+│  - Checkpoints      │   - Requests        │
+│                     │   - Updates         │
+└─────────────────────┴─────────────────────┘
+```
+
+### 2. Abrir Automáticamente Estos Archivos:
+
+**Panel Izquierdo** (Archivo de contexto):
+- **Prioridad 1**: `planes-de-vuelo/plan-vuelo-[fecha actual].md`
+- **Prioridad 2** (si no existe plan del día): `planes-de-vuelo/plan-vuelo-[último disponible].md`
+- **Prioridad 3** (si trabaja en skills): `.github/skills/coworkia-memory/SKILL.md`
+
+**Panel Derecho**: 
+- **Chat activo** (siempre visible)
+
+### 3. Saludo de Inicio de Sesión
+
+Al abrir, el agente debe decir:
+
+```
+¡Hola Diego! 👋
+
+📋 Plan de vuelo cargado: [nombre del archivo]
+🧠 Memoria del proyecto cargada
+🎯 Listo para trabajar
+
+¿Continuamos donde lo dejamos o hay algo nuevo? 🚀
+```
+
+### 4. Verificación de Continuidad
+
+Antes de empezar trabajo nuevo:
+- ✅ Leer plan de vuelo actual
+- ✅ Verificar últimos checkpoints
+- ✅ Revisar pendientes del día anterior
+- ✅ Preguntar si hay cambios de prioridad
+
+### 5. Regla de Dos Archivos Siempre Visibles
+
+**NUNCA** trabajar solo con el chat. **SIEMPRE** tener:
+1. **Contexto escrito** (plan de vuelo o skill)
+2. **Chat activo** para interacción
+
+Esto permite:
+- 📊 Ver progreso en tiempo real
+- ✅ Marcar tareas completadas
+- 🔄 Mantener contexto compartido
+- 📝 Documentar mientras trabajamos
+
+---
+
+## �📦 SETUP DEL PROYECTO
 
 ### Identidad del Sistema
 - **Nombre**: Coworkia Agent (Aurora)

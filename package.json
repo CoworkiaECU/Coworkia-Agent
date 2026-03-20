@@ -3,6 +3,7 @@
   "version": "0.3.2",
   "type": "module",
   "scripts": {
+    "setup": "node scripts/session-setup.mjs",
     "dev": "nodemon --config nodemon.json src/express-servidor/index.js",
     "start": "node src/express-servidor/index.js",
     "test:aurora": "node tests/manual/test-aurora-local.js",

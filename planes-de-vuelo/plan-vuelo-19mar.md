@@ -367,3 +367,198 @@ Si algo falla:
 - Wassenger: Token válido hasta 2027
 - OpenAI: Límites OK
 - Heroku: Dyno Professional ($50/mes)
+
+---
+
+## 🌙 SESIÓN NOCTURNA: 19 MAR 2026 (20:00 - 21:40)
+
+### ✅ COMPLETADO
+
+#### 1. Testing Inicial
+- ✅ **Aurora**: Funcionando perfectamente (reserva AUR-2026-0009 completada)
+- 🔴 **Aluna**: Flujo roto - emails NO se envían
+
+#### 2. Diagnóstico del Problema (v978-v981)
+**Intentos fallidos**:
+- v978: Añadir PASO 5 en system prompt → ❌ NO resolvió
+- v979: Fix regex tildes (`[a-z]*` → `\w*`) → ❌ NO resolvió
+- v980: Soft-close después de email → ❌ Email nunca llega
+- v981: Deploy debug logs → **✅ ROOT CAUSE DESCUBIERTO**
+
+**Evidencia del problema**:
+```
+[AGENT-FORM] 📭 No hay form activo → mensaje va directo a OpenAI
+LLM responde: "Te enviaré toda la información..."
+Form NUNCA se activa → Email NUNCA se envía
+```
+
+**Root Cause**: Keywords de Aluna se detectaban POST-LLM en lugar de PRE-LLM
+
+#### 3. Refactorización Completa (v982) - "Opción B"
+**Decisión**: Usuario solicitó refactorización completa siguiendo `reglas_multiagente.md`
+
+**Cambios arquitectónicos**:
+- ✅ Creado: `src/servicios/aluna-membership-flow.js` (280 líneas)
+  - Flujo PRE-LLM como Aurora
+  - 5 regex patterns con soporte Unicode
+  - Sistema de guards (quejas, handoffs, afirmaciones vacías)
+  - Función: `processAlunaMembershipFlow()`
+  
+- ✅ Simplificado: `wassenger.js`
+  - Removido: 120 líneas de código inline
+  - Agregado: 18 líneas limpias llamando al nuevo módulo
+  - Patrón: Ejecuta ANTES del orquestador/LLM
+
+- ✅ Validado: No errors TypeScript/ESLint
+
+**Aprobación**: Usuario dio "verde nena C" para deploy
+
+#### 4. Deploy y Hotfixes (v983-v986)
+
+**v982** - Commit inicial
+- Status: ✅ Committed (44471d0)
+- Issue: Build failed → imports incorrectos
+
+**v983** - Hotfix imports (trackAlunaProspect)
+- Fixed: `./aluna-prospect-tracker.js` → `../database/alunaRepository.js`
+- Status: ✅ Deployed
+- New issue: `wassenger-service.js` no existe
+
+**v984** - Hotfix imports completo
+- Fixed: 
+  - ❌ `../wassenger/wassenger-service.js` (no existe)
+  - ✅ `../perfiles-interacciones/memoria-sqlite.js` (correcto)
+  - Eliminado: Llamadas directas a `enviarWhatsApp()`
+  - Agregado: wassenger.js envía replies automáticamente
+- Status: ✅ Deployed (v985 en Heroku)
+
+**v986** - Debug logs
+- Agregado: Logs para diagnosticar por qué ALUNA-FLOW no se ejecuta
+- Status: ✅ Deployed
+- Output esperado: `[ALUNA-FLOW-DEBUG] Verificando condiciones...`
+
+### 🔴 PROBLEMA ACTUAL
+
+**Estado**: Servidor funciona ✅ pero ALUNA-FLOW no se ejecuta ❌
+
+**Síntomas**:
+- No aparecen logs `[ALUNA-FLOW]` en producción
+- Mensaje del usuario: `"me explicas nuevamente el plan 20 que beneficios tiene Envíame la información por Mail. Gracias"`
+- Keywords correctos detectados localmente
+- Pero en producción: forma nunca se activa
+
+**Logs vistos**:
+```
+[AGENT-FORM] 📭 No hay form activo de ALUNA para +593987770788
+activeAgent: 'ALUNA'
+→ Va directo a orquestador/LLM
+→ ALUNA-FLOW nunca ejecuta
+```
+
+**Hipótesis**:
+1. El bloque de código ALUNA-FLOW está después de algo que retorna early
+2. La condición `profile.activeAgent === 'ALUNA'` no se cumple
+3. `processedText` es null/undefined
+
+**Debug logs deployados (v986)**:
+```javascript
+console.log(`[ALUNA-FLOW-DEBUG] Verificando condiciones: 
+  activeAgent=${profile.activeAgent}, 
+  hasProcessedText=${!!processedText}`);
+```
+
+### 📋 PRÓXIMOS PASOS (CUANDO REGRESES)
+
+1. **INMEDIATO**: Probar Aluna con mensaje real
+   ```
+   @aluna cotízame plan 20 por mail
+   ```
+
+2. **Ver debug logs**:
+   ```bash
+   heroku logs --tail | grep "ALUNA-FLOW"
+   ```
+
+3. **Diagnosticar según output**:
+   
+   **Si NO aparece `[ALUNA-FLOW-DEBUG]`**:
+   - El bloque nunca se ejecuta
+   - Revisar código ANTES del bloque (líneas 1800-2038 en wassenger.js)
+   - Buscar `return;` prematuros
+   
+   **Si aparece `[ALUNA-FLOW-DEBUG] ❌ Condiciones NO satisfechas`**:
+   - Ver qué condición falla: `activeAgent` o `processedText`
+   - Si `activeAgent !== 'ALUNA'`: verificar cómo se asigna el agente
+   - Si `processedText === null`: revisar transformación de texto
+   
+   **Si aparece `[ALUNA-FLOW-DEBUG] ✅ Condiciones satisfechas`**:
+   - El problema está DENTRO de `processAlunaMembershipFlow()`
+   - Agregar más logs dentro del módulo
+   - Verificar que `detectMembershipInterest()` funciona
+
+4. **Código de diagnóstico útil**:
+   ```bash
+   # Ver toda la ejecución de un mensaje
+   heroku logs -n 500 | grep -E "WASSENGER|ALUNA|DEBOUNCE.*Procesando"
+   
+   # Ver estructura del profile
+   heroku logs -n 500 | grep "activeAgent"
+   
+   # Ver texto procesado
+   heroku logs -n 500 | grep "processedText"
+   ```
+
+5. **Si todo lo demás falla**:
+   - Rollback a versión estable anterior a refactorización
+   - Revisar approach: ¿PRE-LLM es el lugar correcto?
+   - Considerar ejecutar DENTRO del orquestador como estaba antes
+
+### 🎯 OBJETIVO DE LA PRÓXIMA SESIÓN
+
+**Resolver**: ¿Por qué el bloque ALUNA-FLOW no se ejecuta a pesar de estar deployado?
+
+**Success Criteria**:
+- ✅ Logs `[ALUNA-FLOW]` aparecen en producción
+- ✅ Form se activa con keywords
+- ✅ Email se envía automáticamente
+- ✅ Usuario recibe proforma
+
+**Tiempo estimado**: 30-60 min (debugging + fix)
+
+### 📊 VERSIONES DEPLOYADAS
+
+| Versión | Descripción | Status | Commit |
+|---------|-------------|--------|--------|
+| v982 | Refactorización PRE-LLM | ❌ Failed (import error) | 44471d0 |
+| v983 | Hotfix imports alunaRepository | ❌ Failed (wassenger-service) | 7f79307 |
+| v984 | Hotfix imports memoria-sqlite | ✅ Deployed (no ejecuta) | 9fe5f93 |
+| v986 | Debug logs diagnostico | ✅ **ACTUAL EN PROD** | c3304a8 |
+
+### 💡 LECCIONES APRENDIDAS
+
+1. **Imports**: Siempre verificar paths de imports antes de commit
+2. **Testing local**: Probar funcionamiento básico antes de deploy
+3. **Logs incrementales**: Agregar logs paso a paso, no todo de una vez
+4. **Rollback ready**: Tener versión estable identificada por si acaso
+5. **User feedback**: Screenshots del usuario son críticos para debugging
+
+---
+
+## 📝 NOTAS PARA RETOMAR
+
+- Servidor está UP y funcional (v986)
+- Aurora funcionando perfecto
+- Aluna con arquitectura nueva pero NO ejecutándose
+- Debug logs deployados listos para diagnóstico
+- Usuario se desconectó esperando fix
+
+**Comando para cuando regreses**:
+```bash
+# Ver status actual
+heroku logs -n 200 | grep "ALUNA"
+
+# Si necesitas más detalle
+heroku logs --tail | grep -E "ALUNA|activeAgent|processedText"
+```
+
+**IMPORTANTE**: Antes de hacer más cambios, CONFIRMAR con logs qué está fallando exactamente.

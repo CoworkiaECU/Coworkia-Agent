@@ -3125,4 +3125,11 @@ router.post('/webhooks/wassenger/control', (req, res) => {
   });
 });
 
+/* ─────────────────────────────────────────────────────────────
+   Exports
+───────────────────────────────────────────────────────────── */
+
+// Exportar función de envío para uso interno (notifications, scripts, etc)
+export { enviarWhatsApp, enviarWhatsAppVoz };
+
 export default router;

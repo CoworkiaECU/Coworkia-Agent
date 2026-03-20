@@ -300,14 +300,21 @@ Crear skills para VS Code Copilot que permitan al agente trabajar autónomamente
   - Rollback automático
   - Comando: `"autopilot verde nena"`
 
-#### FASE 3: Notificaciones WhatsApp ✅
-- ✅ **coworkia-notifications/SKILL.md** - Sistema de notificaciones
-  - Notificaciones al celular personal de Diego
-  - Tipos: success, error crítico, necesita decisión, checkpoint
-  - Comandos por WhatsApp: Si/No/Review/Deploy
-  - Integración con autopilot
-  - Fallback a email
-  - **Estado**: Documentado (implementación pendiente)
+#### FASE 3: Notificaciones WhatsApp ✅ (EN PROGRESO)
+- ✅ **coworkia-notifications/SKILL.md** - Sistema de notificaciones (documentado)
+- ✅ **internal-notifications.js** - Implementación base de notificaciones
+  - Función `notifyDiego(type, title, data)` con 4 tipos: success, error, question, checkpoint
+  - Formateo inteligente de mensajes con emojis
+  - Fallback a email si WhatsApp falla (placeholder)
+  - Sistema de logs opcional
+  - Habilitación via .env `NOTIFICATIONS_ENABLED` y `NOTIFICATIONS_CHECKPOINT`
+- ✅ **test-notifications.js** - Script de prueba completo
+  - Prueba de notificaciones individuales por tipo
+  - Modo "all" para probar todos los tipos
+  - Validación de configuración
+- ✅ **wassenger.js** - Exportación de `enviarWhatsApp` para uso interno
+- ⏳ **PENDIENTE**: Comandos desde WhatsApp (Bloque 2)
+- ⏳ **PENDIENTE**: Integración con autopilot (Bloque 3)
 
 #### FASE 4: Continuidad Entre Planes ✅
 - ✅ **coworkia-planning/SKILL.md** - Gestión de planes
@@ -330,11 +337,10 @@ Crear skills para VS Code Copilot que permitan al agente trabajar autónomamente
 - **Ejecución**: Supervisada → Autónoma 2-3h
 - **ROI**: +4-6h/día para ventas
 
-### 🚀 Próximos Pasos
-1. Testing de autopilot con plan real
-2. Implementar sistema de notificaciones WhatsApp
-3. Generar planes desde queue automáticamente
-4. Iterar basado en uso real
+### 🚀 Próximos Pasos (Fase A - Bloques 2 y 3)
+1. **Bloque 2**: Sistema de comandos desde WhatsApp (Si/No/Review/Deploy)
+2. **Bloque 3**: Integración con autopilot (notificar en eventos clave)
+3. Testing real de notificaciones con número configurado
 
 ### 📦 Archivos Creados
 ```
@@ -354,13 +360,21 @@ planes-de-vuelo/
 
 src/utils/
 └── plan-queue-manager.js (nuevo)
+
+src/express-servidor/endpoints-api/
+├── internal-notifications.js (nuevo)
+└── wassenger.js (modificado - export enviarWhatsApp)
+
+scripts/
+└── test-notifications.js (nuevo)
 ```
 
-### ⏱️ Tiempo Total: ~3.5h
+### ⏱️ Tiempo Total: ~4h
 - Análisis y contexto: 45min
 - Skills FASE 1-2: 2h
 - Skills FASE 3-4: 1h
 - Implementación base: 45min
+- **Fase A - Bloque 1**: 30min (notificaciones base)
 
 ---
 

@@ -2035,7 +2035,11 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // de keywords active el formulario en lugar de que el modelo responda
     // conversacionalmente sin recolectar datos.
     // ═══════════════════════════════════════════════════════════════════════
+    console.log(`[ALUNA-FLOW-DEBUG] Verificando condiciones: activeAgent=${profile.activeAgent}, hasProcessedText=${!!processedText}`);
+    
     if (profile.activeAgent === 'ALUNA' && processedText) {
+      console.log('[ALUNA-FLOW-DEBUG] ✅ Condiciones satisfechas - ejecutando processAlunaMembershipFlow');
+      
       const alunaResult = await processAlunaMembershipFlow(
         userId,
         processedText,
@@ -2056,6 +2060,8 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         return;
       }
       // Si no maneja el mensaje → continúa al LLM
+    } else {
+      console.log('[ALUNA-FLOW-DEBUG] ❌ Condiciones NO satisfechas - saltando flujo');
     }
 
     // 🏡 PAULA - Formulario de búsqueda inmobiliaria

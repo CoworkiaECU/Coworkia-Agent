@@ -2030,18 +2030,28 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
 
     // 💼 ALUNA - Formulario de membresías  
     if (profile.activeAgent === 'ALUNA') {
+      // 🔍 DEBUG v981: Testear todas las regex individualmente
+      const test1 = /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz\w*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText);
+      const test2 = /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText);
+      const test3 = /\b(oficina\s*virtual)\b/i.test(processedText);
+      const test4 = /\b(cot[ií]z\w*|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
+      const test5 = /\b(por|v[ií]a)\s+(mail|email|correo)\b/i.test(processedText);
+      
+      console.log('[ALUNA-DEBUG v981] 🔍 Testing regex patterns:', {
+        userId,
+        processedText: processedText?.substring(0, 150),
+        test1_accion_plan: test1,
+        test2_plan_numero: test2,
+        test3_oficina_virtual: test3,
+        test4_cotizacion: test4,
+        test5_por_mail: test5,
+        hasActiveForm
+      });
+      
       // Detectar si el usuario muestra interés en una membresía (detección amplia)
-      const membershipInterest =
-        // Verbo de acción + plan/membresía (patrón original ampliado) - ✅ FIX: \w* acepta tildes
-        /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz\w*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText) ||
-        // Mención directa de plan específico (plan 10, plan 20, plan mensual)
-        /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText) ||
-        // Mención directa de tipo de membresía (solo "oficina virtual" → sala y hot desk son productos de Aurora)
-        /\b(oficina\s*virtual)\b/i.test(processedText) ||
-        // Petición de cotización o proforma (sin importar qué sigue) - ✅ FIX: \w* acepta tildes
-        /\b(cot[ií]z\w*|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText) ||
-        // ✅ NUEVO: Detectar "por mail/email" explícitamente para activar flujo email
-        /\b(por|v[ií]a)\s+(mail|email|correo)\b/i.test(processedText);
+      const membershipInterest = test1 || test2 || test3 || test4 || test5;
+      
+      console.log('[ALUNA-DEBUG v981] 📊 Result:', { membershipInterest, willActivateForm: membershipInterest || hasActiveForm });
 
       // 🛡️ GUARDS: Excluir del formulario mensajes de queja o afirmaciones vacías
       const isAlunaComplaint = /\b(no me llega|no lleg[oó]|no funciona|no lo recib[ií]|no recib[ií]|no envió|no envio|nunca lleg[oó]|no llegó|no me llegó|no arrib[oó])\b/i.test(processedText);

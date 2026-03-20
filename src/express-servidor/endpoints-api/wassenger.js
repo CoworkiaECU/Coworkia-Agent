@@ -23,6 +23,7 @@ import { sendQuoteEmail } from '../../servicios/axel-quote-email.js';
 import { detectSchedulingIntent, processWorkshopScheduling } from '../../servicios/axel-appointment.js';
 import { query } from '../../database/database.js';
 import { processMembershipForm } from '../../servicios/membership-form.js';
+import { processAlunaMembershipFlow } from '../../servicios/aluna-membership-flow.js';
 
 import { detectCampaignMessage, personalizeCampaignResponse, CAMPAIGN_PROMPTS } from '../../servicios/campaign-prompts.js';
 import { validateWebhookSignature, rateLimitByPhone } from '../middleware/webhook-security.js';
@@ -2028,109 +2029,26 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
-    // 💼 ALUNA - Formulario de membresías  
-    if (profile.activeAgent === 'ALUNA') {
-      // 🔍 DEBUG v981: Testear todas las regex individualmente
-      const test1 = /\b(quiero|me interesa|necesito|busco|solicito|env[ií]ame|m[aá]ndame|cotiz\w*|proforma|informaci[oó]n|detalles|beneficios|planes|tarifas)\b.*\b(plan|membres[ií]a|oficina|espacio|hot\s*desk|coworking)\b/i.test(processedText);
-      const test2 = /\bplan\s*(10|20|diez|veinte|mensual|anual)\b/i.test(processedText);
-      const test3 = /\b(oficina\s*virtual)\b/i.test(processedText);
-      const test4 = /\b(cot[ií]z\w*|env[ií]ame\s+(?:la\s+)?(?:cotizaci[oó]n|proforma|informaci[oó]n|detalles|beneficios)|manda\s*(?:me\s+)?(?:la\s+)?(?:cotizaci[oó]n|proforma))\b/i.test(processedText);
-      const test5 = /\b(por|v[ií]a)\s+(mail|email|correo)\b/i.test(processedText);
-      
-      console.log('[ALUNA-DEBUG v981] 🔍 Testing regex patterns:', {
+    // ═══════════════════════════════════════════════════════════════════════
+    // 💜 ALUNA FLOW: Membresías (PRE-LLM)
+    // CRÍTICO: Debe ejecutarse ANTES del orquestador/LLM para que la detección
+    // de keywords active el formulario en lugar de que el modelo responda
+    // conversacionalmente sin recolectar datos.
+    // ═══════════════════════════════════════════════════════════════════════
+    if (profile.activeAgent === 'ALUNA' && processedText) {
+      const alunaResult = await processAlunaMembershipFlow(
         userId,
-        processedText: processedText?.substring(0, 150),
-        test1_accion_plan: test1,
-        test2_plan_numero: test2,
-        test3_oficina_virtual: test3,
-        test4_cotizacion: test4,
-        test5_por_mail: test5,
-        hasActiveForm
-      });
-      
-      // Detectar si el usuario muestra interés en una membresía (detección amplia)
-      const membershipInterest = test1 || test2 || test3 || test4 || test5;
-      
-      console.log('[ALUNA-DEBUG v981] 📊 Result:', { membershipInterest, willActivateForm: membershipInterest || hasActiveForm });
+        processedText,
+        text,
+        profile,
+        envelope
+      );
 
-      // 🛡️ GUARDS: Excluir del formulario mensajes de queja o afirmaciones vacías
-      const isAlunaComplaint = /\b(no me llega|no lleg[oó]|no funciona|no lo recib[ií]|no recib[ií]|no envió|no envio|nunca lleg[oó]|no llegó|no me llegó|no arrib[oó])\b/i.test(processedText);
-      const isEmptyAffirmation = /^(si|sí|sip|ok|okay|dale|claro|bueno|bien|perfecto|entendido|gracias|de acuerdo)[,!.]*\s*(por favor)?[,!.]*$/i.test(processedText.trim());
-      const formHasNoData = !currentAgentForm?.data?.membershipType && !currentAgentForm?.data?.email;
-
-      if (isAlunaComplaint && hasActiveForm) {
-        // Queja de entrega → limpiar form y dejar que el LLM maneje la situación
-        console.log('[ALUNA-FORM] 🛡️ Queja de entrega detectada — limpiando formulario, redirigiendo a LLM');
-        await clearAgentForm(userId, 'ALUNA');
-        // Fall through to LLM (no activar form)
-      } else if (isEmptyAffirmation && hasActiveForm && formHasNoData) {
-        // "Si por favor" sin datos → afirmación conversacional, no de formulario
-        console.log('[ALUNA-FORM] 🛡️ Afirmación simple sin datos de membresía — limpiando formulario, redirigiendo a LLM');
-        await clearAgentForm(userId, 'ALUNA');
-        // Fall through to LLM
-      } else if (hasActiveForm && ['hot desk', 'day pass', 'reserva', 'reservar', 'sala', 'reunión', 'reunion', 'pagar', 'pago', 'transferencia', 'día gratis', 'dia gratis'].some(k => (processedText || '').toLowerCase().includes(k))) {
-        // Usuario con form de membresía activo menciona keywords de Aurora → limpiar y dejar que el orquestador maneje ALUNA→AURORA
-        console.log('[ALUNA-FORM] 🔄 Aurora keywords detectadas con form activo — limpiando, redirigiendo a AURORA');
-        await clearAgentForm(userId, 'ALUNA');
-        // Fall through to orchestrator (detectar-intencion detectará aluna_aurora_keyword_handoff)
-      } else if (membershipInterest || hasActiveForm) {
-        console.log('[ALUNA-FORM] 💼 Procesando formulario de membresía');
-
-        // 📌 Registrar prospecto Aluna para follow-up automático (24h / 3 días)
-        // No bloqueante: fallo silencioso para no interrumpir el flujo
-        trackAlunaProspect(userId, userName || null, null).catch(() => {});
-        
-        // 🎯 NUEVO: Capturar lead en membership_leads si detecta keywords (dashboard Aluna)
-        captureAlunaLeadFromKeywords(userId, userName, processedText).catch(() => {});
-        
-        try {
-          formResult = await processMembershipForm(userId, processedText, profile);
-          formResult.userMessage = text;
-
-          // 💜 PROFORMA: Enviar email automáticamente en cuanto tengamos plan + email
-          // Fix: usa userName como fallback para fullName si el form no lo tiene
-          if (formResult.form?.data) {
-            const fd = formResult.form.data;
-            const proformaName = fd.fullName || userName || 'Cliente';
-            if (fd.membershipType && fd.email && !fd.proformaSent) {
-              try {
-                const { sendAlunaProforma, saveAlunaLeadFromProforma, normalizePlanKey } = await import('../../servicios/aluna-proforma-email.js');
-                const planKey = normalizePlanKey(fd.membershipType);
-                const proResult = await sendAlunaProforma({ clientName: proformaName, clientEmail: fd.email, planKey, fromAdmin: false });
-                if (proResult.success) {
-                  fd.proformaSent = true;
-                  formResult.form.data.proformaSent = true;
-                  await saveAlunaLeadFromProforma({ userId, clientName: proformaName, clientEmail: fd.email, planKey, phone: fd.phone || null, proformaCode: proResult.proformaCode, fromAdmin: false });
-                  console.log(`[ALUNA-PROFORMA] 💜 Proforma enviada a ${fd.email} (${proResult.planName})`);
-                  
-                  // 🎯 FIX v980: SOFT-CLOSE después de enviar email (no presionar)
-                  // Usuario eligió analizar con calma → confiar en follow-ups automáticos
-                  const softCloseMessage = `📧 ¡Listo, ${proformaName}! Te envié toda la información detallada de *${proResult.planName}* a ${fd.email}.\n\nRevisa tu bandeja de entrada (y la carpeta de spam, por las dudas). 😊\n\nSi después de revisar tienes alguna pregunta o decides activar tu membresía, simplemente escríbeme @aluna y con gusto te ayudo.\n\n¡Que tengas un excelente día! ✨`;
-                  
-                  await enviarWhatsApp(userId, softCloseMessage);
-                  await saveConversationMessage(userId, { role: 'assistant', content: `Proforma de ${proResult.planName} enviada a ${fd.email}. Cliente puede revisar con calma.`, agent: 'ALUNA' });
-                  
-                  // 🧹 LIMPIAR FORMULARIO - No seguir pidiendo datos después del email
-                  await clearAgentForm(userId, 'ALUNA');
-                  console.log('[ALUNA-PROFORMA] 🧹 Formulario limpiado después de enviar email - soft-close activado');
-                  
-                  // ⚠️ CRÍTICO: Return true para evitar que handleFormResult siga procesando
-                  return; // Termina aquí, confía en follow-ups automáticos
-                }
-              } catch (proErr) {
-                console.error('[ALUNA-PROFORMA] ⚠️ Error enviando proforma (no crítico):', proErr.message);
-              }
-            }
-          }
-          
-          // 🎯 Usar función compartida para manejar resultado
-          const handled = await handleFormResult(formResult, userId, 'ALUNA', profile);
-          if (handled) return;
-        } catch (error) {
-          console.error('[ALUNA-FORM] ❌ Error procesando formulario:', error);
-          // Continuar con flujo normal en caso de error
-        }
+      if (alunaResult.handled) {
+        console.log('[ALUNA-FLOW] ✅ Mensaje manejado por flujo de membresías');
+        return;
       }
+      // Si no maneja el mensaje → continúa al LLM
     }
 
     // 🏡 PAULA - Formulario de búsqueda inmobiliaria

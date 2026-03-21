@@ -99,6 +99,12 @@
     .badge-cancelled { background: #F3F4F6; color: #6B7280; }
     .amount { font-weight: 700; color: #1E40AF; font-size: 14px; }
     .date-cell { font-size: 12px; color: #6b7280; }
+    .status-select {
+      font-size: 12px; padding: 4px 8px; border: 1px solid #d1d5db;
+      border-radius: 6px; background: #f9fafb; color: #374151;
+      cursor: pointer; outline: none;
+    }
+    .status-select:focus { border-color: #1E40AF; background: #fff; }
     .loading, .error, .empty { text-align: center; padding: 48px 20px; font-size: 15px; }
     .loading { color: #1E40AF; }
     .error { color: #dc2626; }
@@ -213,6 +219,9 @@
     </div>
 
     <div class="filters-panel">
+      <div class="filter-group">
+        <label>Estado</label>
+        <select id="filter-status">
           <option value="">Todos</option>
           <option value="pending">⏳ Pendiente</option>
           <option value="quoted">📧 Cotizado</option>
@@ -234,6 +243,7 @@
         <label>Buscar</label>
         <input type="text" id="search" placeholder="Nombre, código, vehículo...">
       </div>
+      <button class="btn-refresh" onclick="loadStats();loadLeads();">🔄 Actualizar</button>
     </div>
 
     <div class="table-wrapper">

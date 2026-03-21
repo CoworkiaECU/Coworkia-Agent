@@ -40,6 +40,22 @@ function statusBadge(status) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
+// ── UPDATE STATUS ─────────────────────────────────────────────────────────────
+async function updateStatus(code, newStatus) {
+  try {
+    const res = await fetch(`${API_BASE}/api/adriana/leads/${code}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    const result = await res.json();
+    if (!result.ok) { alert(`Error: ${result.error || 'No se pudo actualizar'}`); return; }
+    await loadLeads();
+  } catch (err) {
+    console.error('[ADRIANA-DASH] updateStatus error:', err);
+  }
+}
+
 // ── STATS ─────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
@@ -91,6 +107,7 @@ async function loadLeads() {
             <th>Prima Cotizada</th>
             <th>Estado</th>
             <th>Fecha</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -111,6 +128,15 @@ async function loadLeads() {
               <td><span class="amount">${formatMoney(l.quoted_premium)}</span></td>
               <td>${statusBadge(l.status)}</td>
               <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
+              <td>
+                <select class="status-select" onchange="updateStatus('${l.quote_code}', this.value)">
+                  <option value="pending"   ${l.status==='pending'   ? 'selected':''}>⏳ Pendiente</option>
+                  <option value="quoted"    ${l.status==='quoted'    ? 'selected':''}>📧 Cotizado</option>
+                  <option value="accepted"  ${l.status==='accepted'  ? 'selected':''}>✅ Aceptado</option>
+                  <option value="rejected"  ${l.status==='rejected'  ? 'selected':''}>❌ Rechazado</option>
+                  <option value="cancelled" ${l.status==='cancelled' ? 'selected':''}>🚫 Cancelado</option>
+                </select>
+              </td>
             </tr>
           `).join('')}
         </tbody>

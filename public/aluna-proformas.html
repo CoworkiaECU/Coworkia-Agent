@@ -425,10 +425,10 @@
 
   <!-- Tabs -->
   <nav class="tab-nav">
-    <button class="tab-btn active" data-tab="proformas" onclick="switchTab('proformas')">
+    <button class="tab-btn active" data-tab="proformas">
       📋 Proformas <span class="tab-count" id="tab-count-proformas"></span>
     </button>
-    <button class="tab-btn" data-tab="pipeline" onclick="switchTab('pipeline')">
+    <button class="tab-btn" data-tab="pipeline">
       🔄 Pipeline de Seguimiento <span class="tab-count" id="tab-count-pipeline"></span>
     </button>
   </nav>
@@ -441,10 +441,8 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Todas las proformas</span>
-        <button onclick="openCampaignModal()" 
-          style="background:#3b82f6;border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;"
-          onmouseover="this.style.background='#2563eb'" 
-          onmouseout="this.style.background='#3b82f6'">
+        <button id="btn-open-campaign"
+          style="background:#3b82f6;border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;">
           <span style="font-size:16px;">+</span> Crear Campaña
         </button>
       </div>
@@ -476,7 +474,7 @@
             <label>Buscar</label>
             <input type="text" id="search" placeholder="Nombre, email, código…">
           </div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:18px;" onclick="resetFilters()">Limpiar</button>
+          <button id="btn-reset-filters" class="btn btn-secondary btn-sm" style="margin-top:18px;">Limpiar</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -518,28 +516,28 @@
 
     <!-- ── EMBUDO VISUAL ─────────────────────────────────────── -->
     <div class="funnel-wrap" id="funnel-visual">
-      <div class="funnel-stage" id="fs-captado" onclick="filterByStage('captado')" title="Prospectos recién captados — aún no recibieron D+1">
+      <div class="funnel-stage" id="fs-captado" title="Prospectos recién captados — aún no recibieron D+1">
         <div class="fs-icon">🎯</div>
         <div class="fs-label">Captado</div>
         <div class="fs-count captado" id="pipe-captado">—</div>
         <div class="fs-desc">Esperando D+1</div>
         <div class="fs-bar"><div class="fs-bar-fill" id="bar-captado" style="background:#64748b;width:0%"></div></div>
       </div>
-      <div class="funnel-stage" id="fs-d1" onclick="filterByStage('d1')" title="D+1 enviado — esperando D+3 (72h después)">
+      <div class="funnel-stage" id="fs-d1" title="D+1 enviado — esperando D+3 (72h después)">
         <div class="fs-icon">📨</div>
         <div class="fs-label">D+1 Enviado</div>
         <div class="fs-count d1" id="pipe-d1">—</div>
         <div class="fs-desc">Esperando D+3</div>
         <div class="fs-bar"><div class="fs-bar-fill" id="bar-d1" style="background:#f97316;width:0%"></div></div>
       </div>
-      <div class="funnel-stage" id="fs-d3" onclick="filterByStage('d3')" title="D+3 enviado — último contacto antes de cerrar expediente">
+      <div class="funnel-stage" id="fs-d3" title="D+3 enviado — último contacto antes de cerrar expediente">
         <div class="fs-icon">⏰</div>
         <div class="fs-label">D+3 Enviado</div>
         <div class="fs-count d3" id="pipe-d3">—</div>
         <div class="fs-desc">Último intento</div>
         <div class="fs-bar"><div class="fs-bar-fill" id="bar-d3" style="background:#facc15;width:0%"></div></div>
       </div>
-      <div class="funnel-stage" id="fs-conv" onclick="filterByStage('converted')" title="Prospecto convertido a miembro">
+      <div class="funnel-stage" id="fs-conv" title="Prospecto convertido a miembro">
         <div class="fs-icon">🏆</div>
         <div class="fs-label">Convertido</div>
         <div class="fs-count converted" id="pipe-converted">—</div>
@@ -552,7 +550,7 @@
     <div class="card" style="margin-bottom:18px;">
       <div class="card-header">
         <span class="card-title">🤖 Secuencia automática por prospecto</span>
-        <button class="btn btn-secondary btn-sm" onclick="toggleSeq(this)">Ver mensajes programados ▶</button>
+        <button id="btn-toggle-seq" class="btn btn-secondary btn-sm">Ver mensajes programados ▶</button>
       </div>
       <div id="seq-body" style="display:none; padding: 20px 24px;">
 
@@ -642,10 +640,10 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
         <span class="card-title">Prospectos en seguimiento</span>
         <div style="display:flex;align-items:center;gap:12px;">
           <span id="stage-filter-label" style="font-size:11px;color:#f97316;font-weight:600;display:none;">
-            ▶ Filtrando por etapa — <button onclick="clearStageFilter()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">Limpiar ✕</button>
+            ▶ Filtrando por etapa — <button id="btn-clear-stage" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">Limpiar ✕</button>
           </span>
           <span class="text-muted" style="font-size:12px;">Auto-refresh 30s</span>
-          <button class="btn btn-primary btn-sm" onclick="openAddProspectModal()">➕ Registrar prospecto</button>
+          <button id="btn-open-prospect" class="btn btn-primary btn-sm">➕ Registrar prospecto</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -673,7 +671,7 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 <!-- Footer removido - logo ahora en header -->
 
 <!-- FAB refresh -->
-<button class="fab" onclick="refreshAll()" title="Actualizar">
+<button id="fab-refresh" class="fab" title="Actualizar">
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
 </button>
 
@@ -721,9 +719,9 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
       </label>
     </div>
     <div style="display:flex;gap:8px;margin-top:20px;">
-      <button onclick="submitAddProspect()"
+      <button id="btn-submit-prospect"
         style="flex:1;background:#3b82f6;border:none;border-radius:8px;padding:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Registrar</button>
-      <button onclick="closeProspectModal()"
+      <button id="btn-close-prospect"
         style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;font-size:14px;cursor:pointer;">Cancelar</button>
     </div>
   </div>
@@ -763,11 +761,11 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
     </div>
 
     <div style="display:flex;gap:8px;margin-top:20px;">
-      <button id="btn-send-followup" onclick="sendFollowupManual()"
+      <button id="btn-send-followup"
         style="flex:1;background:#10b981;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
         📤 Enviar Ahora
       </button>
-      <button onclick="closeFollowupModal()"
+      <button id="btn-close-followup"
         style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">
         Cancelar
       </button>
@@ -801,7 +799,7 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
       <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;font-weight:600;">
         🎯 Filtro de audiencia:
       </label>
-      <select id="campaign-filter" onchange="updateCampaignPreview()"
+      <select id="campaign-filter"
         style="width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#f1f5f9;font-size:13px;">
         <option value="all">Todos los leads</option>
         <option value="pending">Solo "Pendientes"</option>
@@ -848,11 +846,11 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
         📤 Canal de envío:
       </label>
       <div style="display:flex;gap:8px;">
-        <button id="campaign-channel-wa" onclick="selectCampaignChannel('whatsapp')"
+        <button id="campaign-channel-wa"
           style="flex:1;background:#10b981;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
           📱 WhatsApp
         </button>
-        <button id="campaign-channel-email" onclick="selectCampaignChannel('email')"
+        <button id="campaign-channel-email"
           style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;">
           📧 Email
         </button>
@@ -867,11 +865,11 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
     </div>
 
     <div style="display:flex;gap:8px;margin-top:20px;">
-      <button id="btn-create-campaign" onclick="createAndSendCampaign()"
+      <button id="btn-create-campaign"
         style="flex:1;background:#3b82f6;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
         🚀 Crear y Enviar Ahora
       </button>
-      <button onclick="closeCampaignModal()"
+      <button id="btn-close-campaign"
         style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">
         Cancelar
       </button>

@@ -389,10 +389,10 @@ function renderPipelineRows(prospects) {
       <td>${buildStepper(p)}</td>
       <td>${getNextAction(p)}</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-sm btn-convert" onclick="convertProspect('${p.user_phone}', this)" ${converted ? 'disabled' : ''}>
+        <button class="btn btn-sm btn-convert" data-action="convert" data-phone="${p.user_phone}" ${converted ? 'disabled' : ''}>
           ${converted ? '✅ Convertido' : '✅ Convertir'}
         </button>
-        <button class="btn btn-sm btn-wa" onclick="sendWANow('${p.user_phone}', this)" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
+        <button class="btn btn-sm btn-wa" data-action="wanow" data-phone="${p.user_phone}" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
           ${allDone ? '✓ Secuencia OK' : waBtnLabel}
         </button>
       </td>
@@ -538,28 +538,28 @@ function buildActionButtons(p) {
   
   const btnBaseStyle = 'padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px;';
   
-  // Usamos data-lead-id en lugar de pasar el objeto completo (evita problemas con comillas/caracteres especiales)
+  // data-action attrs en vez de onclick (evita CSP + comillas en strings)
   return `
     <div style="display:flex;flex-wrap:wrap;gap:4px;min-width:180px;">
-      <button onclick="openFollowupModalById('${p.id}', 'd1-wa')" 
+      <button data-action="followup" data-lid="${p.id}" data-type="d1-wa"
         style="${btnBaseStyle}${btnStyle(d1Sent)}" 
         ${d1Sent ? 'disabled' : ''} 
         title="${d1Sent ? 'D+1 WhatsApp ya enviado' : 'Enviar D+1 por WhatsApp'}">
         📱 D+1
       </button>
-      <button onclick="openFollowupModalById('${p.id}', 'd1-email')" 
+      <button data-action="followup" data-lid="${p.id}" data-type="d1-email"
         style="${btnBaseStyle}${btnStyle(d1Sent)}" 
         ${d1Sent ? 'disabled' : ''} 
         title="${d1Sent ? 'D+1 Email ya enviado' : 'Enviar D+1 por Email'}">
         📧 D+1
       </button>
-      <button onclick="openFollowupModalById('${p.id}', 'd3-wa')" 
+      <button data-action="followup" data-lid="${p.id}" data-type="d3-wa"
         style="${btnBaseStyle}${btnStyle(d3Sent)}" 
         ${d3Sent ? 'disabled' : ''} 
         title="${d3Sent ? 'D+3 WhatsApp ya enviado' : 'Enviar D+3 por WhatsApp (FOMO)'}">
         📱 D+3
       </button>
-      <button onclick="openFollowupModalById('${p.id}', 'd3-email')" 
+      <button data-action="followup" data-lid="${p.id}" data-type="d3-email"
         style="${btnBaseStyle}${btnStyle(d3Sent)}" 
         ${d3Sent ? 'disabled' : ''} 
         title="${d3Sent ? 'D+3 Email ya enviado' : 'Enviar D+3 por Email (FOMO)'}">
@@ -943,6 +943,59 @@ document.getElementById('search').addEventListener('input', e => {
   clearTimeout(window._searchTimer);
   window._searchTimer = setTimeout(loadProformas, 450);
 });
+
+/* ─── event delegation — botones dinámicos (D+1, D+3, convert, wanow) ─── */
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn || btn.disabled) return;
+  const action = btn.dataset.action;
+  if (action === 'followup') {
+    openFollowupModalById(btn.dataset.lid, btn.dataset.type);
+  } else if (action === 'convert') {
+    convertProspect(btn.dataset.phone, btn);
+  } else if (action === 'wanow') {
+    sendWANow(btn.dataset.phone, btn);
+  }
+});
+
+/* ─── static button listeners (reemplaza onclick en HTML, CSP-safe) ───── */
+(function initButtons() {
+  const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() { switchTab(this.dataset.tab); });
+  });
+
+  // Funnel stages (id: fs-captado, fs-d1, fs-d3, fs-conv)
+  const stageMap = { 'fs-captado': 'captado', 'fs-d1': 'd1', 'fs-d3': 'd3', 'fs-conv': 'converted' };
+  document.querySelectorAll('.funnel-stage').forEach(el => {
+    el.addEventListener('click', function() { const s = stageMap[this.id]; if (s) filterByStage(s); });
+  });
+
+  // Botones de acción
+  bind('btn-open-campaign',   () => openCampaignModal());
+  bind('btn-reset-filters',   () => resetFilters());
+  bind('btn-clear-stage',     () => clearStageFilter());
+  bind('btn-open-prospect',   () => openAddProspectModal());
+  bind('fab-refresh',         () => refreshAll());
+  bind('btn-submit-prospect', () => submitAddProspect());
+  bind('btn-close-prospect',  () => closeProspectModal());
+  bind('btn-send-followup',   () => sendFollowupManual());
+  bind('btn-close-followup',  () => closeFollowupModal());
+  bind('campaign-channel-wa',    () => selectCampaignChannel('whatsapp'));
+  bind('campaign-channel-email', () => selectCampaignChannel('email'));
+  bind('btn-create-campaign', () => createAndSendCampaign());
+  bind('btn-close-campaign',  () => closeCampaignModal());
+
+  // Toggle seq (necesita referencia al botón mismo)
+  const seqBtn = document.getElementById('btn-toggle-seq');
+  if (seqBtn) seqBtn.addEventListener('click', function() { toggleSeq(seqBtn); });
+
+  // Campaign filter change
+  const cf = document.getElementById('campaign-filter');
+  if (cf) cf.addEventListener('change', () => updateCampaignPreview());
+})();
 
 loadProformas();
 loadPipeline();

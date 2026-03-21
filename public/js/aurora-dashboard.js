@@ -232,20 +232,46 @@ async function loadReservations() {
   }
 }
 
+// ─── Stepper visual (progreso reserva) ─────────────────────────────────────
+function buildReservationStepper(r) {
+  let pos = 0;
+  if (r.status === 'completed') pos = 2;
+  else if (r.status === 'confirmed') pos = 1;
+  const steps  = ['Creada', 'Confirmada', '✅ Completa'];
+  const colors = ['#34d399', '#f97316', '#60a5fa'];
+  let html = '<div style="display:flex;align-items:center;gap:2px;margin-top:5px;">';
+  steps.forEach((label, i) => {
+    const isDone    = i < pos;
+    const isCurrent = i === pos;
+    const clr = isDone ? '#34d399' : (isCurrent ? colors[i] : '#475569');
+    html += `<div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:16px;height:16px;border-radius:50%;background:#0f172a;border:2px solid ${clr};display:flex;align-items:center;justify-content:center;font-size:8px;color:${clr};">${isDone ? '✓' : (i + 1)}</div>
+      <div style="font-size:8px;color:${clr};margin-top:1px;white-space:nowrap;">${label}</div>
+    </div>`;
+    if (i < steps.length - 1) {
+      html += `<div style="width:10px;height:2px;background:${isDone ? '#22c55e' : '#1e293b'};margin-bottom:12px;flex-shrink:0;"></div>`;
+    }
+  });
+  return html + '</div>';
+}
+
 // Renderiza la tabla según el tab activo
 function renderReservationsTable(reservations) {
   const tableEl = document.getElementById('reservations-table');
   const emptyEl = document.getElementById('empty-state-reservations');
   const tbody   = document.getElementById('table-body');
-  
-  const filtered = getTabReservations(reservations, _activeTab);
-  
+
+  const tabFiltered = getTabReservations(reservations, _activeTab);
+  const filtered    = _activeServiceFilter
+    ? tabFiltered.filter(r => r.service_type === _activeServiceFilter)
+    : tabFiltered;
+
   if (filtered.length === 0) {
     tableEl.style.display = 'none';
     emptyEl.style.display = 'block';
     return;
   }
-  
+
   emptyEl.style.display = 'none';
   tbody.innerHTML = filtered.map(r => `
     <tr>
@@ -253,6 +279,7 @@ function renderReservationsTable(reservations) {
       <td>
         ${r.user_name || 'Sin nombre'}<br>
         <small class="text-muted">${r.user_phone}</small>
+        ${buildReservationStepper(r)}
       </td>
       <td>${getServiceBadge(r.service_type)}</td>
       <td>${formatSimpleDate(r.date)}</td>
@@ -287,8 +314,27 @@ window.resetFilters = function() {
   document.getElementById('filter-date').value    = '';
   document.getElementById('search').value         = '';
   currentFilters = { serviceType: '', date: '', search: '' };
+  _activeServiceFilter = null;
+  document.querySelectorAll('#service-filter-pills .pill').forEach(b => {
+    b.classList.toggle('active', (b.dataset.service || '') === '');
+  });
   loadReservations();
 }
+
+// ─── Filtro por tipo de servicio (pills) ─────────────────────────────────────
+let _activeServiceFilter = null;
+
+window.filterByService = function(type) {
+  _activeServiceFilter = type || null;
+  document.querySelectorAll('#service-filter-pills .pill').forEach(b => {
+    b.classList.toggle('active', (b.dataset.service || '') === (type || ''));
+  });
+  renderReservationsTable(allReservations);
+};
+
+window.clearServiceFilter = function() {
+  window.filterByService('');
+};
 
 // ─── Inteligencia de prospectos ───────────────────────────────────────────────
 let _allProspects = [];
@@ -678,6 +724,84 @@ window.refreshAll = function() {
   loadConversations();
 }
 
+// ─── Modal follow-up manual (Aurora) ─────────────────────────────────────────
+let _currentAuroraFollowup = null;
+
+window.openFollowupModal = function(type, id) {
+  const reservation = allReservations.find(r => String(r.id) === String(id));
+  if (!reservation) { showToast('⚠️ Reserva no encontrada'); return; }
+  _currentAuroraFollowup = { type, reservation };
+
+  const titles = {
+    '1h': '📲 Follow-up +1h — Confirmación post-reserva',
+    'd7': '🔄 Follow-up D+7 — Re-booking'
+  };
+  const servicio = reservation.service_type === 'meetingRoom' ? 'Sala de Reuniones' : 'Hot Desk';
+  const nombre   = (reservation.user_name || 'Cliente').split(' ')[0];
+  const fecha    = formatSimpleDate(reservation.date);
+  const horario  = `${reservation.start_time} - ${reservation.end_time}`;
+
+  const previewMsg = type === '1h'
+    ? `¡Hola ${nombre}! 👋 Te confirmamos tu reserva en Coworkia 🏢\n\n📅 Fecha: ${fecha}\n⏰ Horario: ${horario}\n🛎️ Servicio: ${servicio}\n\n¿Necesitas algo más? Estamos aquí para ayudarte. ¡Hasta pronto!`
+    : `¡Hola ${nombre}! 🏢\n\nHan pasado 7 días desde tu visita a Coworkia. ¿Qué tal fue tu experiencia? 😊\n\nSi necesitas reservar nuevamente, tenemos disponibilidad esta semana. ¡Será un placer verte de nuevo!\n\n👉 Solo responde este mensaje y te ayudamos a encontrar el horario perfecto.`;
+
+  const modal = document.getElementById('aurora-modal-followup');
+  document.getElementById('aurora-followup-modal-title').textContent = titles[type] || 'Follow-up';
+  document.getElementById('aurora-followup-res-name').textContent    = reservation.user_name || 'Sin nombre';
+  document.getElementById('aurora-followup-res-detail').textContent  = `${servicio} · ${fecha} · ${horario}`;
+  document.getElementById('aurora-followup-preview-msg').textContent = previewMsg;
+  modal.style.display = 'block';
+};
+
+window.closeFollowupModal = function() {
+  document.getElementById('aurora-modal-followup').style.display = 'none';
+  _currentAuroraFollowup = null;
+};
+
+window.sendFollowupManual = async function() {
+  if (!_currentAuroraFollowup) return;
+  const { type, reservation } = _currentAuroraFollowup;
+  const id      = reservation.id;
+  const sendBtn = document.getElementById('btn-send-followup-aurora');
+  const loadDiv = document.getElementById('aurora-followup-sending');
+  sendBtn.disabled      = true;
+  sendBtn.style.opacity = '0.6';
+  loadDiv.style.display = 'block';
+  const endpoint = type === '1h'
+    ? `/api/aurora/reservations/${id}/send-followup-1h`
+    : `/api/aurora/reservations/${id}/send-rebooking`;
+  try {
+    const res  = await fetch(`${API_BASE}${endpoint}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('✅ Follow-up enviado');
+      window.closeFollowupModal();
+      setTimeout(() => loadReservations(), 800);
+    } else { showToast('❌ ' + (data.error || 'Error')); }
+  } catch (err) { showToast('❌ Error de red'); }
+  finally {
+    sendBtn.disabled      = false;
+    sendBtn.style.opacity = '1';
+    loadDiv.style.display = 'none';
+  }
+};
+
+// ─── sendFollowupNow: envío directo sin modal ─────────────────────────────────
+window.sendFollowupNow = async function(id, type, btn) {
+  const origText  = btn.textContent;
+  btn.disabled    = true;
+  btn.textContent = '⏳';
+  const endpoint = type === '1h'
+    ? `/api/aurora/reservations/${id}/send-followup-1h`
+    : `/api/aurora/reservations/${id}/send-rebooking`;
+  try {
+    const res  = await fetch(`${API_BASE}${endpoint}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok)  { showToast('✅ Enviado'); btn.textContent = '✓'; }
+    else { showToast('❌ ' + (data.error || 'Error')); btn.disabled = false; btn.textContent = origText; }
+  } catch (err) { showToast('❌ Error de red'); btn.disabled = false; btn.textContent = origText; }
+};
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
 try {
@@ -743,28 +867,24 @@ try {
     openThread(btn.dataset.phone, btn.dataset.name, btn.dataset.alias);
   });
 
-  // ── Event delegation: botones de follow-up en tabla de reservas ──────────
-  document.getElementById('table-body')?.addEventListener('click', async function(e) {
+  // ── Event delegation: botones de follow-up → abre modal ───────────────────
+  document.getElementById('table-body')?.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-fu-action]');
     if (!btn) return;
     const id     = btn.dataset.fuId;
     const action = btn.dataset.fuAction;
-    const endpoint = action === 'followup-1h'
-      ? `/api/aurora/reservations/${id}/send-followup-1h`
-      : `/api/aurora/reservations/${id}/send-rebooking`;
-    const origText = btn.textContent;
-    btn.disabled    = true;
-    btn.textContent = '⏳';
-    try {
-      const res  = await fetch(`${API_BASE}${endpoint}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) { showToast('✅ Enviado'); btn.textContent = '✓'; }
-      else { showToast('❌ ' + (data.error || 'Error')); btn.disabled = false; btn.textContent = origText; }
-    } catch (err) {
-      showToast('❌ Error de red');
-      btn.disabled    = false;
-      btn.textContent = origText;
-    }
+    window.openFollowupModal(action === 'followup-1h' ? '1h' : 'd7', id);
+  });
+
+  // ── Modal follow-up: botones ─────────────────────────────────────────────
+  document.getElementById('btn-send-followup-aurora')?.addEventListener('click', () => sendFollowupManual());
+  document.getElementById('btn-close-followup-aurora')?.addEventListener('click', () => closeFollowupModal());
+
+  // ── Event delegation: pills de filtro por servicio ───────────────────────
+  document.getElementById('service-filter-pills')?.addEventListener('click', function(e) {
+    const btn = e.target.closest('.pill');
+    if (!btn) return;
+    filterByService(btn.dataset.service);
   });
 
   console.log('[AURORA-DASH] Event listeners configurados');

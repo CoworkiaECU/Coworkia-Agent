@@ -739,4 +739,129 @@ router.get('/seed-demo-contacts', async (req, res) => {
   }
 });
 
+// ============================================================================
+// ESTADÍSTICAS DE FOLLOW-UPS AUTOMATIZADOS
+// ============================================================================
+
+/**
+ * GET /api/aluna/followup-stats
+ * Obtiene métricas de conversión de follow-ups D+1 y D+3
+ * 
+ * Query params:
+ * - days: Período de tiempo (7, 30, 90, default: 30)
+ */
+router.get('/followup-stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    
+    const { days = 30 } = req.query;
+    const daysInt = parseInt(days);
+    
+    // Query: stats de los últimos N días
+    const stats = await databaseService.get(`
+      SELECT 
+        COUNT(*) as total_leads,
+        SUM(CASE WHEN followup_24h_sent_at IS NOT NULL THEN 1 ELSE 0 END) as d1_sent,
+        SUM(CASE WHEN followup_3d_sent_at IS NOT NULL THEN 1 ELSE 0 END) as d3_sent,
+        SUM(CASE WHEN client_response_at IS NOT NULL THEN 1 ELSE 0 END) as responded,
+        SUM(CASE WHEN client_whatsapp_reply = true THEN 1 ELSE 0 END) as whatsapp_replies,
+        SUM(CASE WHEN client_email_reply = true THEN 1 ELSE 0 END) as email_replies,
+        SUM(CASE WHEN status = 'converted' OR status = 'active' THEN 1 ELSE 0 END) as converted,
+        SUM(CASE WHEN status = 'converted' OR status = 'active' THEN monthly_fee ELSE 0 END) as total_revenue
+      FROM membership_leads
+      WHERE created_at >= datetime('now', '-${daysInt} days')
+        AND status != 'lost'
+    `);
+    
+    // Calcular tasas de conversión
+    const totalLeads = stats.total_leads || 0;
+    const d1Sent = stats.d1_sent || 0;
+    const d3Sent = stats.d3_sent || 0;
+    const responded = stats.responded || 0;
+    const converted = stats.converted || 0;
+    
+    const conversionRates = {
+      d1_sent_rate: totalLeads > 0 ? Math.round((d1Sent / totalLeads) * 100) : 0,
+      d3_sent_rate: totalLeads > 0 ? Math.round((d3Sent / totalLeads) * 100) : 0,
+      response_rate: totalLeads > 0 ? Math.round((responded / totalLeads) * 100) : 0,
+      conversion_rate: totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0,
+      whatsapp_effectiveness: d1Sent > 0 ? Math.round((stats.whatsapp_replies / d1Sent) * 100) : 0,
+      email_effectiveness: d1Sent > 0 ? Math.round((stats.email_replies / d1Sent) * 100) : 0
+    };
+    
+    // Distribución por status
+    const statusDist = await databaseService.all(`
+      SELECT 
+        status,
+        COUNT(*) as count,
+        SUM(monthly_fee) as revenue
+      FROM membership_leads
+      WHERE created_at >= datetime('now', '-${daysInt} days')
+      GROUP BY status
+      ORDER BY count DESC
+    `);
+    
+    // Follow-ups pendientes (necesitan ser enviados)
+    const pending = await databaseService.get(`
+      SELECT 
+        COUNT(*) as d1_pending,
+        SUM(CASE 
+          WHEN interest_at < datetime('now', '-3 days') 
+            AND followup_3d_sent_at IS NULL 
+          THEN 1 ELSE 0 
+        END) as d3_pending
+      FROM membership_leads
+      WHERE status NOT IN ('converted', 'active', 'lost')
+        AND interest_at < datetime('now', '-1 day')
+        AND followup_24h_sent_at IS NULL
+    `);
+    
+    // Reply time distribution (cuánto tardan en responder)
+    const replyTimes = await databaseService.all(`
+      SELECT 
+        CASE 
+          WHEN CAST((julianday(client_response_at) - julianday(interest_at)) * 24 AS INTEGER) < 24 THEN '< 24h'
+          WHEN CAST((julianday(client_response_at) - julianday(interest_at)) * 24 AS INTEGER) < 72 THEN '24-72h'
+          WHEN CAST((julianday(client_response_at) - julianday(interest_at)) * 24 AS INTEGER) < 168 THEN '3-7 days'
+          ELSE '> 7 days'
+        END as time_range,
+        COUNT(*) as count
+      FROM membership_leads
+      WHERE client_response_at IS NOT NULL
+        AND created_at >= datetime('now', '-${daysInt} days')
+      GROUP BY time_range
+      ORDER BY count DESC
+    `);
+    
+    return res.json({
+      ok: true,
+      period: `Last ${daysInt} days`,
+      summary: {
+        total_leads: totalLeads,
+        d1_sent,
+        d3_sent,
+        responded,
+        converted,
+        total_revenue: parseFloat(stats.total_revenue || 0),
+        whatsapp_replies: stats.whatsapp_replies,
+        email_replies: stats.email_replies
+      },
+      conversion_rates: conversionRates,
+      status_distribution: statusDist,
+      pending_followups: {
+        d1_pending: pending.d1_pending || 0,
+        d3_pending: pending.d3_pending || 0
+      },
+      reply_time_distribution: replyTimes
+    });
+    
+  } catch (error) {
+    console.error('[ALUNA-API] Error en followup-stats:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 export default router;

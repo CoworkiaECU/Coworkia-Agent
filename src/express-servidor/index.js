@@ -23,7 +23,10 @@ import databaseService from '../database/database.js';
 // 🕐 Scheduler para tareas programadas
 import { initScheduler, stopScheduler, getSchedulerStatus } from '../servicios/cron-scheduler.js';
 
-// 📊 Sistema de monitoreo
+// � Aluna Follow-up Automation
+import { startFollowupCronJobs } from '../servicios/aluna-followup-cron.js';
+
+// �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
 import { circuitBreakerManager } from '../utils/circuit-breaker.js';
@@ -232,6 +235,11 @@ async function startServer() {
     // Iniciar tareas programadas
     console.log('⏰ Iniciando tareas programadas...');
     initScheduler();
+    
+    // Iniciar follow-ups automatizados de Aluna
+    console.log('📧 Iniciando follow-ups automatizados de Aluna...');
+    startFollowupCronJobs();
+    console.log('✅ Aluna follow-ups activos (D+1: 10am, D+3: 11am Ecuador)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

@@ -140,6 +140,30 @@ function getServiceLabel(serviceType) {
   return labels[serviceType] || serviceType || 'espacio';
 }
 
+// ─────────────────────────────────────────────────────────────
+// TRIGGER MANUAL (una reserva específica)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Envía follow-up +1h a una reserva específica (uso manual desde dashboard)
+ */
+export async function sendOneHourFollowup(reservation) {
+  const waMessage = buildOneHourWhatsApp(reservation);
+  await enviarWhatsApp(reservation.user_phone, waMessage);
+  await markFollowup1hSent(reservation.id);
+  logger.info(`[AURORA-FOLLOWUP] ✅ +1h manual enviado: ${reservation.user_phone}`);
+}
+
+/**
+ * Envía recordatorio de re-booking a una reserva específica (uso manual desde dashboard)
+ */
+export async function sendRebookingReminder(reservation) {
+  const waMessage = buildRebookingWhatsApp(reservation);
+  await enviarWhatsApp(reservation.user_phone, waMessage);
+  await markRebookReminderSent(reservation.id);
+  logger.info(`[AURORA-FOLLOWUP] ✅ D+7 manual enviado: ${reservation.user_phone}`);
+}
+
 function buildOneHourWhatsApp(reservation) {
   const servicio = getServiceLabel(reservation.service_type);
   const fecha = reservation.date

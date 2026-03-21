@@ -9,6 +9,7 @@
 
 import express from 'express';
 import databaseService from '../../database/database.js';
+import { sendOneHourFollowup, sendRebookingReminder } from '../../servicios/aurora-followup-service.js';
 
 const router = express.Router();
 
@@ -386,6 +387,56 @@ router.get('/conversations', async (req, res) => {
     return res.json({ ok: true, data: summaries, total: summaries.length });
   } catch (error) {
     console.error('[AURORA-API] Error en conversations:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// FOLLOW-UP MANUALES (desde dashboard)
+// ============================================================================
+
+/**
+ * POST /api/aurora/reservations/:id/send-followup-1h
+ * Trigger manual: envía WhatsApp de confirmación +1h a una reserva específica
+ */
+router.post('/reservations/:id/send-followup-1h', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const reservation = await databaseService.get(
+      `SELECT id, user_phone, service_type, date, start_time, end_time, total_price, status
+       FROM reservations WHERE id = $1`,
+      [req.params.id]
+    );
+    if (!reservation) {
+      return res.status(404).json({ ok: false, error: 'Reserva no encontrada' });
+    }
+    await sendOneHourFollowup(reservation);
+    return res.json({ ok: true, message: 'Follow-up +1h enviado' });
+  } catch (error) {
+    console.error('[AURORA-API] Error send-followup-1h:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/aurora/reservations/:id/send-rebooking
+ * Trigger manual: envía WhatsApp de re-booking D+7 a una reserva específica
+ */
+router.post('/reservations/:id/send-rebooking', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const reservation = await databaseService.get(
+      `SELECT id, user_phone, service_type, date, start_time, end_time, total_price, status
+       FROM reservations WHERE id = $1`,
+      [req.params.id]
+    );
+    if (!reservation) {
+      return res.status(404).json({ ok: false, error: 'Reserva no encontrada' });
+    }
+    await sendRebookingReminder(reservation);
+    return res.json({ ok: true, message: 'Recordatorio re-booking enviado' });
+  } catch (error) {
+    console.error('[AURORA-API] Error send-rebooking:', error);
     return res.status(500).json({ ok: false, error: error.message });
   }
 });

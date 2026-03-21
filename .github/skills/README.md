@@ -98,13 +98,22 @@ Sistema inteligente que gestiona la continuidad entre planes, permite encadenar 
    → Checkpoints cada 3-4 tareas
    → Notifica progreso (opcional)
 
-4. 📱 NOTIFICACIONES (si habilitadas)
+4. �️ GUARDIAN (NUEVO - antes de cada commit)
+   → Activa coworkia-guardian skill
+   → Verifica BD: IF NOT EXISTS en todo
+   → Verifica Dashboard: window.* exports completos
+   → Verifica Endpoints: frontend ↔ backend alineados
+   → Verifica Pre-deploy: node --check, no secrets en logs
+   → Si todo OK: commit con firma "✅ Guardian verificado"
+   → Si falla: corrige antes de commitear
+
+5. 📱 NOTIFICACIONES (si habilitadas)
    → ✅ "Plan completado, ¿deploy?"
    → Diego responde "Si" desde WhatsApp
    → Deploy automático a Heroku
    → Confirmación de éxito
 
-5. 📋 CONTINUIDAD
+6. 📋 CONTINUIDAD
    → Actualiza queue.json (status → completed)
    → Identifica siguiente plan
    → Pregunta si continuar

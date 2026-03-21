@@ -6,9 +6,118 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 
 ---
 
-## 📋 FASES DEL PLAN
+## �️ ESTADO ACTUAL (20 Mar 2026)
 
-### ✅ FASE 1: AUTOMATIZACIONES FOLLOW-UP (2h)
+### ✅ Completado (plan-vuelo-21mar)
+- FASE 1: Skills troubleshooting (4 skills)
+- FASE 2: Tests integración Aurora + Aluna (12 tests)
+- FASE 3A: Botones manuales D+1/D+3 en dashboard Aluna ← COMMITTED
+
+### 🔵 En Progreso (otro chat, Diego probando)
+- FASE 3B: Ventana Creación de Campañas (dashboard Aluna)
+
+### 📬 SIGUIENTE PARA AUTOPILOT (cuando termine FASE 3B)
+Ver sección "PROMPT PARA EL BOT" al final de este archivo.
+
+---
+
+## 🛠️ FASE 0: SKILLS NUEVOS INSTALADOS (HOY, 20 Min) ✅
+**Status**: COMPLETADO
+
+| Skill | Directorio | Instalado |
+|-------|-----------|-----------|
+| `get-shit-done` | `.github/skills/get-shit-done/` | ✅ 20 Mar 2026 |
+| `dont-repeat-yourself` | `.github/skills/dont-repeat-yourself/` | ✅ 20 Mar 2026 |
+| `coworkia-conversations` | `.github/skills/coworkia-conversations/` | ✅ 20 Mar 2026 |
+| `coworkia-guardian` | `.github/skills/coworkia-guardian/` | ✅ 20 Mar 2026 |
+
+**Qué hacen**:
+- **GET SHIT DONE**: Protocolo de ejecución rápida, sin parálisis. Patrones copy-paste del codebase. Tiempos objetivo por tipo de tarea.
+- **DONT REPEAT YOURSELF**: Inventario completo de servicios, queries, patterns existentes. Antes de crear, buscar aquí.
+- **COWORKIA CONVERSATIONS**: Sistema de mejora continua. Aprende de cada sesión y conversación, registra gaps, propone mejoras automáticamente.
+- **COWORKIA GUARDIAN**: Guardián pre-deploy. Verifica BD (IF NOT EXISTS), window.* exports en dashboards, alineación endpoints, conflictos entre chats paralelos. Cero sorpresas en producción.
+
+---
+
+
+---
+
+## 🥇 FASE 1 — PRIMER BLOQUE: NOTIFICACIONES WHATSAPP A DIEGO (1.5h)
+**Prioridad**: 🔴 CRÍTICA — Es la columna vertebral del trabajo autónomo real
+
+> Sin esto Diego tiene que estar frente al computador para saber si el bot terminó, si falló, o para aprobar el siguiente bloque. **Con esto, Diego responde "SI" desde su celular y el bot hace el deploy.**
+
+---
+
+### BLOQUE 1A: notification-service.js (30 min)
+
+**Archivos**:
+- `src/servicios/notification-service.js` → CREAR (reutiliza `wassenger-service.js`)
+
+**Implementación**:
+```javascript
+// Reutiliza wassenger-service.js (ya existe — ver DONT-REPEAT-YOURSELF)
+export async function notifyDiego(type, message) {
+  const phone = process.env.DIEGO_PERSONAL_PHONE;
+  await sendWhatsApp({ phone, message: formatMessage(type, message) });
+}
+```
+
+**Tipos de notificación**:
+- `autopilot_done` → `✅ Bloque [nombre] terminado. ¿Deploy? Responde: SI / NO`
+- `autopilot_blocked` → `🛑 Bot bloqueado en [tarea]. Necesita tu decisión.`
+- `guardian_alert` → `🔒 Guardian detectó problema antes del deploy: [descripción]`
+- `critical_error` → `🚨 Error crítico en producción: [error]`
+- `daily_report` → `📊 Reporte diario: X reservas, Y leads, Z conversiones`
+
+**Variable de entorno** (hacer ANTES del deploy):
+```bash
+heroku config:set DIEGO_PERSONAL_PHONE="+593XXXXXXXXX" --app coworkia-agent
+```
+
+**Entregable**:
+- [ ] `notification-service.js` creado y funcionando
+- [ ] `DIEGO_PERSONAL_PHONE` configurado en Heroku
+- [ ] Test: bot envía `🤖 Sistema de notificaciones activo` al celular de Diego
+
+---
+
+### BLOQUE 1B: Comandos WhatsApp → accionar el bot (45 min)
+
+**Flujo**:
+```
+Bot termina bloque autopilot
+  → WA a Diego: "✅ Dashboard Aurora listo. ¿Deploy? SI / NO / REVIEW"
+  → Diego responde "SI" desde su celular
+  → Bot detecta en webhook Wassenger
+  → Ejecuta deploy
+  → Confirma: "🚀 v999 live. ¿Inicio siguiente bloque?"
+```
+
+**Comandos desde WhatsApp**:
+| Comando | Acción |
+|---------|--------|
+| `SI` / `SÍ` | Ejecuta acción pendiente (deploy o siguiente bloque) |
+| `NO` / `CANCELA` | Cancela, queda en espera |
+| `REVIEW` | Envía resumen de cambios del último bloque |
+| `STATUS` | Estado del sistema en producción ahora mismo |
+| `SIGUIENTE` | Inicia siguiente bloque del plan sin deploy |
+| `PARA` | Detiene autopilot inmediatamente |
+
+**Archivos**:
+- `src/express-servidor/endpoints-api/wassenger.js` → agregar handler Diego al inicio del webhook
+
+**Seguridad**: Solo `DIEGO_PERSONAL_PHONE` puede ejecutar comandos. Cualquier otro número es ignorado silenciosamente.
+
+**Entregable**:
+- [ ] Handler de comandos Diego activo en webhook
+- [ ] Deploy automático desde WhatsApp funcionando end-to-end
+- [ ] Test: Diego envía `SI` → deploy ejecutado → confirmación al celular
+- [ ] Test: número desconocido envía `deploy` → ignorado sin respuesta
+
+## �📋 FASES DEL PLAN
+
+### FASE 2: AUTOMATIZACIONES FOLLOW-UP (2h)
 **Prioridad**: 🟡 MEDIA - Mejora conversión pero no crítico
 
 #### BLOQUE 1A: Aurora +1h Post-Reserva (45 min)
@@ -114,7 +223,7 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 
 ---
 
-### ✅ FASE 2: DASHBOARD AURORA REDISEÑO (2h)
+### FASE 3: DASHBOARD AURORA REDISEÑO (2h)
 **Prioridad**: 🟢 ALTA - Diego lo usa a diario
 
 #### BLOQUE 2A: Análisis del Dashboard Actual (30 min)
@@ -209,7 +318,7 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 
 ---
 
-### ✅ FASE 3: TEMPLATES HTML SISTEMA CENTRALIZADO (1.5h)
+### FASE 4: TEMPLATES HTML SISTEMA CENTRALIZADO (1.5h)
 **Prioridad**: 🔴 CRÍTICA - Afecta a todos los agentes
 
 #### BLOQUE 3A: Template System (1h)
@@ -346,7 +455,7 @@ function buildEmailTemplate(agent, type, data) {
 
 ---
 
-### ✅ FASE 4: ADRIANA - COTIZACIONES AUTOMÁTICAS (5-6h) 🌟
+### FASE 5: ADRIANA - COTIZACIONES AUTOMÁTICAS (5-6h) 🌟
 **Prioridad**: 🔴 CRÍTICA - Feature más demandada
 
 #### BLOQUE 4A: Extracción de Datos con Vision AI (1.5h)
@@ -419,11 +528,15 @@ function buildEmailTemplate(agent, type, data) {
 #### BLOQUE 4B: Sistema de Tasas y Cálculo de Primas (2h)
 **Objetivo**: Con datos extraídos → calcular prima en múltiples aseguradoras
 
+**⚠️ ACLARACIÓN DIEGO (22 Mar)**: Arrancar SOLO con VAZ. Otras aseguradoras llegan la semana siguiente. El sistema debe estar diseñado para agregar aseguradoras fácilmente, pero no inventar tasas de Mapfre o Unidos.
+
 **Aseguradoras a integrar**:
-1. VAZ Seguros (tienes archivo de tasas)
-2. Mapfre (conseguirás tasas)
-3. Seguros Unidos (conseguirás)
-4. Otras...
+1. VAZ Seguros ✅ (archivo de tasas en PDF attachment de sesión anterior)
+2. Mapfre → pendiente, agregamos la semana que viene
+3. Seguros Unidos → pendiente
+4. Otras → pendiente
+
+> 🔑 Diseño: `calculatePremium(vehicleData, personData, coverage, insurer)` debe aceptar `insurer` como parámetro para que agregar Mapfre sea solo agregar un archivo de tasas.
 
 **Archivo de tasas** (formato sugerido):
 ```javascript
@@ -601,12 +714,18 @@ export function calculatePremium(vehicleData, personData, coverage, insurer) {
     </p>
   </div>
   
+  <!-- ⚠️ ACLARACIÓN DIEGO: Aceptación por MAIL Y CHAT (WhatsApp) -->
   <div style="text-align: center; padding: 30px;">
+    <!-- Opción 1: Email -->
     <a href="mailto:diego@coworkia.ec?subject=Acepto cotización VAZ Seguros - {{placa}}&body=Hola Adriana, acepto la cotización de VAZ Seguros para mi vehículo {{marca}} {{modelo}}."
        class="cta-button"
-       style="display: inline-block; text-decoration: none; border-radius: 8px;">
-      ✅ Acepto esta Cotización
+       style="display: inline-block; text-decoration: none; border-radius: 8px; margin-right: 10px;">
+      📧 Acepto por Email
     </a>
+    <!-- Opción 2: WhatsApp (responder al chat de Adriana) -->
+    <span style="display:inline-block; background:#25D366; color:white; padding:15px 30px; border-radius:8px;">
+      💬 O responde "ACEPTO" en WhatsApp
+    </span>
   </div>
   
   <div style="padding: 20px; text-align: center; color: #6b7280; font-size: 13px; border-top: 1px solid #e5e7eb;">
@@ -704,6 +823,10 @@ Si aceptas, responde al email y yo gestiono todo el proceso de emisión 📋
 5. Tipo de cobertura → calcula
 6. Confirmación → envía email
 
+**Canales de aceptación** (⚠️ ACLARACIÓN DIEGO: tanto mail como chat):
+- **Por WhatsApp**: Cliente responde "ACEPTO" o "Acepto" en la misma conversación con Adriana → Adriana confirma y notifica a Diego
+- **Por Email**: Cliente hace click en botón del email comparativo → llega a diego@coworkia.ec
+
 **Emails que se envían**:
 - **Al cliente**: Email comparativo elegante (BLOQUE 4C)
 - **A Diego**: Email resumen con datos para vinculación manual
@@ -732,8 +855,7 @@ Cobertura solicitada: Todo Riesgo Básico
 
 Cotización enviada al cliente:
 - VAZ Seguros: $850/año (recomendada) ⭐
-- Mapfre: $920/año
-- Seguros Unidos: $890/año
+- [Más aseguradoras en próxima semana]
 
 Estado: Esperando aceptación del cliente
 
@@ -900,11 +1022,77 @@ Documenta todo el sistema de Adriana:
 
 ---
 
-## 💬 RESPONDE ESTO PARA ARRANCAR
+## ✅ DECISIONES TOMADAS (20 Mar - Diego)
 
-1. ✅ **Prioridad de sesiones**: ¿Sesión 1 (Dashboard+Templates) o directo a Adriana?
-2. 📷 **Logos**: ¿Los tienes o los busco/genero?
-3. 📊 **Tasas**: ¿Solo VAZ por ahora o esperas conseguir Mapfre pronto?
-4. 🔗 **Aceptación de cotización**: ¿Email reply o form web?
+1. **Tasas seguros**: Solo VAZ por ahora. Mapfre y otras llegan la semana próxima.
+2. **Aceptación de cotización**: Por mail Y por WhatsApp (cliente responde "ACEPTO").
+3. **No inventar datos**: Si no existen las tasas → NO fabricarlas. Arquitectura extensible para agregar después.
+4. **Logos**: Si existen en el repo, usarlos. Si no existen, no inventar → placeholder hasta que Diego los pase.
+5. **Skills nuevos**: GET SHIT DONE + DONT REPEAT YOURSELF + COWORKIA CONVERSATIONS → instalados hoy.
 
-**Cuando respondas, activo autopilot verde nena y arrancamos** 🚀
+---
+
+## 🤖 PROMPT HANDOFF — PARA CUANDO TERMINA FASE 3 DE ALUNA
+
+> **Diego: copia esto cuando el otro chat termine y las pruebas pasen.**
+
+```
+🤖 HANDOFF: Aluna Dashboard COMPLETO - Iniciando Plan 22mar
+
+El dashboard de Aluna (aluna-proformas.html) quedó terminado y probado en producción:
+- BLOQUE 3A ✅ Botones manuales D+1/D+3 (WhatsApp + Email) con modal editor
+- BLOQUE 3B ✅ Ventana de campañas masivas con filtros, preview y envío
+- BD actualizada, endpoints /api/aluna/* funcionales, tests pasando
+
+--- TU PRÓXIMA MISIÓN ---
+
+Lee estos archivos en orden:
+1. .github/skills/coworkia-memory/SKILL.md   ← contexto del proyecto
+2. .github/skills/get-shit-done/SKILL.md     ← protocolo de ejecución rápida
+3. .github/skills/dont-repeat-yourself/SKILL.md ← inventario de código existente
+4. planes-de-vuelo/plan-vuelo-22mar.md       ← plan completo
+
+Ejecuta en orden:
+
+BLOQUE A (1.5h): FASE 1 → Aurora follow-ups automáticos
+  - Aurora +1h post-reserva: nueva columna BD + cron + template WA
+  - Aurora D+7 re-booking: nueva columna BD + cron + template WA
+  - Archivos: src/database/auroraRepository.js, src/express-servidor/index.js
+  - Patrón: copiar de aluna-followup-cron.js y adaptar
+
+BLOQUE B (2h): FASE 2 → Dashboard Aurora rediseño visual
+  - Archivo: public/aurora-reservas.html + public/js/aurora-dashboard.js
+  - Las funciones YA EXISTEN (loadAbandoned, filterProspects, copyCampaignList, closeThread)
+  - Solo necesita: acciones destacadas, paleta limpia, logo Coworkia, UX clara
+  - Colores: #4ECDC4 (turquesa Aurora), fondo dark #0f172a
+  - Logo: buscar en public/images/ si existe, NO inventar URL externa
+
+Checkpoint después de cada BLOQUE.
+Autopilot verde nena.
+```
+
+---
+
+## 🤖 PROMPT SESIÓN 2 — ADRIANA COTIZACIONES (cuando pidas)
+
+```
+🤖 SESIÓN 2: Adriana - Sistema de Cotizaciones Automáticas
+
+Lee: planes-de-vuelo/plan-vuelo-22mar.md → FASE 4 completa
+
+CONTEXTO CLAVE:
+- Adriana ya tiene Vision AI funcionando (insurance-document-analysis.js, 540 líneas, 8 tipos de doc)
+- Solo aseguradora activa: VAZ Seguros (tasas en src/data/ si ya existen, sino crearlas)
+- NO inventar tasas de Mapfre ni Unite → arquitectura extensible solo
+- Aceptación de cotización: por email (botón mailto) Y por WhatsApp (cliente responde "ACEPTO")
+- Email estilo broker: navy #1E3A8A + amarillo #FCD34D + logo SegPopular si existe en public/images/
+
+BLOQUES A EJECUTAR:
+1. BLOQUE 4A: Extender Vision AI → tipos VEHICLE_REGISTRATION, ID_CARD, CAR_APPRAISAL
+2. BLOQUE 4B: src/data/vaz-rates.js + src/servicios/adriana-quote-calculator.js
+3. BLOQUE 4C: Email HTML comparativo elegante (una aseguradora = VAZ, extensible)
+4. BLOQUE 4D: Form conversacional en WhatsApp → BD → email cliente + email Diego
+
+Checkpoint después de cada bloque.
+Autopilot verde nena.
+```

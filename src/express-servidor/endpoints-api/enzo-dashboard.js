@@ -224,15 +224,19 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
     const p = await databaseService.get(
-      `SELECT project_code, client_name, user_phone, project_type, company, proposal_amount
+      `SELECT project_code, client_name, user_phone, phone, project_type, company, proposal_amount
        FROM marketing_leads WHERE project_code = $1`,
       [req.params.code]
     );
-    if (!p || !p.user_phone) return res.status(404).json({ ok: false, error: 'Proyecto no encontrado o sin teléfono' });
+    if (!p) return res.status(404).json({ ok: false, error: 'Proyecto no encontrado' });
+
+    // phone = número real del cliente; user_phone = creador (puede ser ADMIN para boss quotes)
+    const targetPhone = p.phone || p.user_phone;
+    if (!targetPhone) return res.status(404).json({ ok: false, error: 'Lead sin teléfono de cliente' });
 
     const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
-    if (_adminNorm && p.user_phone.replace(/\D/g, '') === _adminNorm) {
-      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'No se envían mensajes del dashboard al teléfono de administrador' });
+    if (_adminNorm && targetPhone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'Lead creado con teléfono de prueba — proporciona el teléfono del cliente en la cotización' });
     }
 
     const name    = (p.client_name || 'Hola').split(' ')[0];
@@ -241,7 +245,7 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
     const propuesta = p.proposal_amount ? `\n\nLa propuesta por *$${parseFloat(p.proposal_amount).toFixed(2)}* sigue en pie.` : '';
     const msg = `Hola ${name} 👋\n\n¿Seguimos adelante con el ${tipo.toLowerCase()}${empresa}?${propuesta}\n\nCuando quieras coordinamos — 20 minutos y definimos los próximos pasos 🚀`;
 
-    await enviarWhatsApp(p.user_phone, msg);
+    await enviarWhatsApp(targetPhone, msg);
     await databaseService.run(
       `UPDATE marketing_leads SET updated_at = CURRENT_TIMESTAMP WHERE project_code = $1`,
       [req.params.code]
@@ -267,13 +271,22 @@ router.post('/leads/:code/send-followup', async (req, res) => {
     }
 
     const lead = await databaseService.get(
-      `SELECT project_code, client_name, user_phone, email, project_type,
+      `SELECT project_code, client_name, user_phone, phone, email, project_type,
               company, proposal_amount, followup_d1_sent_at, followup_d3_sent_at,
               followup_d7_sent_at
        FROM marketing_leads WHERE project_code = $1`,
       [req.params.code]
     );
     if (!lead) return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+
+    // phone = número real del cliente; user_phone = creador de sesión (puede ser ADMIN en boss quotes)
+    const targetPhone = lead.phone || lead.user_phone;
+    if (!targetPhone) return res.status(422).json({ ok: false, error: 'NO_CLIENT_PHONE', message: 'Este lead no tiene teléfono de cliente registrado' });
+
+    const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+    if (_adminNorm && targetPhone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'Lead creado con teléfono de prueba — proporciona el teléfono del cliente en la cotización' });
+    }
 
     const name    = (lead.client_name || 'Hola').split(' ')[0];
     const tipo    = lead.project_type || 'proyecto digital';
@@ -284,10 +297,7 @@ router.post('/leads/:code/send-followup', async (req, res) => {
       d7: `${name}, ¿sabías que una empresa similar a la tuya creció *300% en 3 meses* con nuestra estrategia digital? 📈\n\nMe encantaría contarte cómo lo logramos.\n\n¿Tienes 15 minutos esta semana para una llamada rápida?`,
     };
 
-    if (lead.user_phone) {
-      await enviarWhatsApp(lead.user_phone, waMessages[day]);
-    }
-
+    await enviarWhatsApp(targetPhone, waMessages[day]);
     const col = `followup_${day}_sent_at`;
     await databaseService.run(
       `UPDATE marketing_leads SET ${col} = NOW(), updated_at = NOW() WHERE project_code = $1`,

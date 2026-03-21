@@ -326,3 +326,54 @@ describe('🛡️ Guard: sin ADMIN_PHONE configurado', () => {
     expect(enviarWhatsApp).toHaveBeenCalledTimes(1);
   });
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Boss-quotes: user_phone = admin, phone = cliente real
+// ═════════════════════════════════════════════════════════════════════════════
+describe('👔 Boss-quotes: user_phone=admin pero phone=cliente', () => {
+  test('Axel boss-quote envía al phone del cliente, no al user_phone admin', async () => {
+    const bossLead = {
+      quote_code: 'AXL-BOSS-001', user_phone: ADMIN_PHONE, phone: CLIENT_PHONE,
+      client_name: 'Juan Pablo Parra', vehicle_brand: 'Kia', vehicle_model: 'Picanto', vehicle_year: 2019,
+    };
+    db.get.mockResolvedValueOnce(bossLead);
+    const res = await request(apps.axel)
+      .post('/api/axel/quotes/AXL-BOSS-001/send-reminder');
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(enviarWhatsApp).toHaveBeenCalledTimes(1);
+    const [destPhone] = enviarWhatsApp.mock.calls[0];
+    expect(destPhone).toBe(CLIENT_PHONE);
+  });
+
+  test('Enzo boss-quote envía al phone del cliente, no al user_phone admin', async () => {
+    const bossLead = {
+      project_code: 'ENZ-BOSS-001', user_phone: ADMIN_PHONE, phone: CLIENT_PHONE,
+      client_name: 'Pablo Guerrero', project_type: 'branding', company: 'Guerrero SA',
+    };
+    db.get.mockResolvedValueOnce(bossLead);
+    const res = await request(apps.enzo)
+      .post('/api/enzo/projects/ENZ-BOSS-001/send-reminder');
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(enviarWhatsApp).toHaveBeenCalledTimes(1);
+    const [destPhone] = enviarWhatsApp.mock.calls[0];
+    expect(destPhone).toBe(CLIENT_PHONE);
+  });
+
+  test('Axel boss-quote sin phone → TEST_LEAD guard (user_phone es admin)', async () => {
+    const bossLead = {
+      quote_code: 'AXL-BOSS-NOP', user_phone: ADMIN_PHONE, phone: null,
+      client_name: 'Sin Teléfono',
+    };
+    db.get.mockResolvedValueOnce(bossLead);
+    const res = await request(apps.axel)
+      .post('/api/axel/quotes/AXL-BOSS-NOP/send-reminder');
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('TEST_LEAD');
+    expect(enviarWhatsApp).not.toHaveBeenCalled();
+  });
+});

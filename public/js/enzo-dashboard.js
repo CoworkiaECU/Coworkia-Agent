@@ -3,6 +3,14 @@
  * MarketingLab Proyectos Dashboard
  */
 
+function showToast(msg, type = 'error') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;top:20px;right:20px;background:${type === 'error' ? '#dc2626' : '#16a34a'};color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;max-width:340px;box-shadow:0 4px 12px rgba(0,0,0,.25);line-height:1.4;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
 const API_BASE = window.location.origin;
 
 // ═══ STATE ═══════════════════════════════════════════════════════════════════
@@ -98,7 +106,7 @@ async function updateStatus(code, newStatus) {
       body: JSON.stringify({ status: newStatus }),
     });
     const result = await res.json();
-    if (!result.ok) { alert(`Error: ${result.error || 'No se pudo actualizar'}`); return; }
+    if (!result.ok) { showToast(result.error || 'No se pudo actualizar'); return; }
     const p = allProjects.find(p => p.project_code === code);
     if (p) p.status = newStatus;
     updatePipeline(allProjects);
@@ -116,12 +124,15 @@ async function sendReminder(code, btn) {
       btn.textContent = '✅ Enviado';
       setTimeout(() => { btn.textContent = '📲 Recordatorio'; btn.disabled = false; }, 3000);
     } else {
-      alert(`❌ Error: ${d.error}`);
+      const msg = d.error === 'TEST_LEAD' ? '📵 Lead de prueba — el teléfono del cliente aún no está registrado'
+                : d.error === 'NO_CLIENT_PHONE' ? '📱 Sin teléfono del cliente — no se puede enviar'
+                : `❌ ${d.error}`;
+      showToast(msg);
       btn.textContent = '📲 Recordatorio';
       btn.disabled = false;
     }
   } catch (err) {
-    alert(`❌ Error: ${err.message}`);
+    showToast(`❌ ${err.message}`);
     btn.textContent = '📲 Recordatorio';
     btn.disabled = false;
   }

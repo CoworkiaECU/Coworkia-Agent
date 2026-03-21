@@ -99,22 +99,27 @@ router.post('/quotes/:code/send-reminder', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
     const q = await databaseService.get(
-      `SELECT quote_code, user_phone, client_name, vehicle_brand, vehicle_model, vehicle_year, price_min, price_max
+      `SELECT quote_code, user_phone, phone, client_name, vehicle_brand, vehicle_model, vehicle_year, price_min, price_max
        FROM collision_quotes WHERE quote_code = $1`,
       [req.params.code]
     );
-    if (!q || !q.user_phone) return res.status(404).json({ ok: false, error: 'Cotización no encontrada' });
+    if (!q) return res.status(404).json({ ok: false, error: 'Cotización no encontrada' });
+
+    // phone = número real del cliente (boss quotes lo llenan desde quoteData.telefono)
+    // user_phone = quién inició la sesión WA (puede ser ADMIN para boss quotes)
+    const targetPhone = q.phone || q.user_phone;
+    if (!targetPhone) return res.status(404).json({ ok: false, error: 'Lead sin teléfono de cliente' });
 
     const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
-    if (_adminNorm && q.user_phone.replace(/\D/g, '') === _adminNorm) {
-      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'No se envían mensajes del dashboard al teléfono de administrador' });
+    if (_adminNorm && targetPhone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'Lead creado con teléfono de prueba — proporciona el teléfono del cliente en la cotización' });
     }
 
     const name = (q.client_name || 'Hola').split(' ')[0];
     const vehicle = [q.vehicle_brand, q.vehicle_model, q.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
     const msg = `Hola ${name} 👋\n\n¿Quedó alguna duda sobre la cotización de *${vehicle}*?\n\nCuando quieras seguimos — 20 minutos y cerramos todo 📅`;
 
-    await enviarWhatsApp(q.user_phone, msg);
+    await enviarWhatsApp(targetPhone, msg);
     await databaseService.run(
       `UPDATE collision_quotes SET reminder_1_sent_at = COALESCE(reminder_1_sent_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP WHERE quote_code = $1`,
       [req.params.code]

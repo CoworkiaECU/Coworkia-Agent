@@ -502,8 +502,9 @@ window.copyCampaignList = function() {
   if (colds.length)    text += `\n\n❄️ COLD — ${colds.length}\n`       + colds.map(fmt).join('\n');
 
   navigator.clipboard.writeText(text.trim()).then(() => {
-    const btn = document.getElementById('btn-copy-campaign');
-    if (btn) { const orig = btn.textContent; btn.textContent = '✅ ¡Copiado!'; setTimeout(() => { btn.textContent = orig; }, 2200); }
+    showToast('✅ ¡Lista copiada al portapapeles!');
+    const btn = document.getElementById('qa-copy-list') || document.getElementById('btn-copy-campaign-prospects');
+    if (btn) { const orig = btn.innerHTML; btn.innerHTML = '✅ ¡Copiado!'; setTimeout(() => { btn.innerHTML = orig; }, 2200); }
   }).catch(() => alert('No se pudo copiar al portapapeles.'));
 }
 

@@ -9,5 +9,9 @@
       "path": "/Users/diegovillota/WiFi Coworkia"
     }
   ],
-  "settings": {}
+  "settings": {
+    "chat.tools.terminal.autoApprove": {
+      "heroku": true
+    }
+  }
 }

@@ -1,40 +1,77 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-20T00:00:00Z",
-  "currentPlan": "plan-vuelo-20mar.md",
+  "lastUpdated": "2026-03-21T21:00:00Z",
+  "currentPlan": "plan-vuelo-22mar.md",
   "queue": [
     {
-      "id": "skills-sistema-autonomo",
-      "title": "Skills Sistema Autónomo Coworkia",
-      "status": "in-progress",
-      "plan": "plan-vuelo-20mar.md",
-      "startedAt": "2026-03-20T10:00:00Z",
-      "estimatedTime": "3-4h",
-      "tasksTotal": 8,
+      "id": "fase4-notificaciones",
+      "title": "FASE 4 - Sistema Notificaciones WhatsApp",
+      "status": "completed",
+      "plan": "plan-vuelo-22mar.md",
+      "completedAt": "2026-03-21T21:00:00Z",
+      "commit": "759aaba",
+      "tasksTotal": 6,
       "tasksCompleted": 6,
-      "blockers": [],
-      "priority": "critical",
-      "notes": "Sistema de memoria + autopilot + notificaciones + planning. Reducir intervención 50%."
-    },
-    {
-      "id": "aluna-dashboard-mejoras",
-      "title": "Dashboard Aluna - Mejoras Pausadas",
-      "status": "pending",
-      "plan": null,
-      "estimatedTime": "2-3h",
-      "dependencies": [],
-      "priority": "low",
-      "notes": "Botones manuales D+1/D+3, modal campañas, templates editables. Pausado por campaña al aire."
+      "notes": "notification-service.js + health-monitor.js + daily-report.js. 20 tests verdes. Deploy OK."
     },
     {
       "id": "axel-v2-features",
-      "title": "Axel v2 - CTAs + Calendario + Recordatorios",
+      "title": "Axel v2 - CTAs + Follow-up + Dashboard",
+      "status": "completed",
+      "plan": "plan-vuelo-22mar.md",
+      "completedAt": "2026-03-21T18:00:00Z",
+      "commit": "48ef5f1",
+      "notes": "CTAs persuasivos, axel-followup-cron D+2/D+7, endpoint send-reminder, dashboard dropdown+botón."
+    },
+    {
+      "id": "whatsapp-commander",
+      "title": "BLOQUE 1B - Comandos WhatsApp → Bot",
       "status": "pending",
-      "plan": null,
-      "estimatedTime": "2-3h",
-      "dependencies": [],
+      "plan": "plan-vuelo-22mar.md",
+      "estimatedTime": "45min",
+      "priority": "critical",
+      "chat": "backend",
+      "notes": "Handler Diego en wassenger.js. Comandos: SI/NO/REVIEW/STATUS/SIGUIENTE/PARA. Solo DIEGO_PERSONAL_PHONE."
+    },
+    {
+      "id": "aurora-followups",
+      "title": "FASE 2 - Follow-ups Aurora +1h y D+7",
+      "status": "pending",
+      "plan": "plan-vuelo-22mar.md",
+      "estimatedTime": "1.5h",
       "priority": "medium",
-      "notes": "Mejoras UX: CTAs persuasivos, agendamiento calendario, recordatorios automáticos."
+      "chat": "backend",
+      "notes": "Cron +1h post-reserva (cada 15min) + D+7 re-booking (10am). Columnas followup_1h_sent_at + rebooking_reminder_sent_at."
+    },
+    {
+      "id": "adriana-cotizaciones",
+      "title": "FASE 5 - Adriana Cotizaciones Automáticas",
+      "status": "pending",
+      "plan": "plan-vuelo-22mar.md",
+      "estimatedTime": "5-6h",
+      "priority": "critical",
+      "chat": "backend",
+      "notes": "Vision AI docs + tasas VAZ + email comparativo + form conversacional 6 pasos."
+    },
+    {
+      "id": "aurora-dashboard-redesign",
+      "title": "FASE 3 - Dashboard Aurora Rediseño",
+      "status": "in-progress",
+      "plan": "plan-vuelo-22mar.md",
+      "estimatedTime": "2h",
+      "priority": "high",
+      "chat": "frontend",
+      "notes": "🔄 OTRO CHAT trabajando. Este chat NO toca esta tarea."
+    },
+    {
+      "id": "template-system",
+      "title": "FASE 4 - Templates HTML Sistema Centralizado",
+      "status": "in-progress",
+      "plan": "plan-vuelo-22mar.md",
+      "estimatedTime": "1.5h",
+      "priority": "critical",
+      "chat": "frontend",
+      "notes": "🔄 OTRO CHAT trabajando. Este chat NO toca esta tarea."
     }
   ],
   "metrics": {

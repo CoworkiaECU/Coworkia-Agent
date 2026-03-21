@@ -119,4 +119,54 @@ router.post('/leads/:id/send-wa', async (req, res) => {
   }
 });
 
+// ── GET /api/paula/seed-demo ──────────────────────────────────────────────────
+router.get('/seed-demo', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    console.log('🎭 [PAULA] Iniciando seed de leads demo...');
+
+    const DEMO_LEADS = [
+      { id: 'RE-DEMO-001', phone: '+593980001001', name: 'Fernanda Gavilanez',    email: 'fernanda.gavilanez@gmail.com',    op: 'compra',   type: 'casa',          zone: 'Cumbayá',       budget: '$120,000 - $180,000', status: 'searching',         daysAgo: 5  },
+      { id: 'RE-DEMO-002', phone: '+593980001002', name: 'Paul Gavilanez',         email: 'paul.gavilanez@gmail.com',         op: 'arriendo', type: 'departamento',  zone: 'La Carolina',   budget: '$700 - $1,000/mes',  status: 'viewing_scheduled', daysAgo: 3  },
+      { id: 'RE-DEMO-003', phone: '+593980001003', name: 'Camila Torres',          email: 'camila.torres@hotmail.com',        op: 'compra',   type: 'departamento',  zone: 'González Suárez', budget: '$90,000 - $130,000', status: 'negotiating',       daysAgo: 12 },
+      { id: 'RE-DEMO-004', phone: '+593980001004', name: 'Andrés Méndez',          email: 'andres.mendez@outlook.com',        op: 'compra',   type: 'terreno',       zone: 'Tumbaco',       budget: '$40,000 - $70,000',  status: 'offer_made',        daysAgo: 18 },
+      { id: 'RE-DEMO-005', phone: '+593980001005', name: 'Valeria Ríos',           email: 'valeria.rios@yahoo.com',           op: 'arriendo', type: 'oficina',       zone: 'Iñaquito',      budget: '$800 - $1,200/mes',  status: 'accepted',          daysAgo: 25 },
+      { id: 'RE-DEMO-006', phone: '+593980001006', name: 'Santiago Vargas',        email: 'santiago.vargas@live.com',         op: 'compra',   type: 'casa',          zone: 'Los Chillos',   budget: '$60,000 - $90,000',  status: 'pending',           daysAgo: 1  },
+      { id: 'RE-DEMO-007', phone: '+593980001007', name: 'Isabella Paredes',       email: 'isabella.paredes@gmail.com',       op: 'arriendo', type: 'departamento',  zone: 'Quito Norte',   budget: '$500 - $750/mes',    status: 'searching',         daysAgo: 7  },
+      { id: 'RE-DEMO-008', phone: '+593980001008', name: 'Joaquín Herrera',        email: 'joaquin.herrera@icloud.com',       op: 'compra',   type: 'local comercial', zone: 'Centro Norte', budget: '$200,000 - $400,000', status: 'negotiating',      daysAgo: 9  },
+      { id: 'RE-DEMO-009', phone: '+593980001009', name: 'Mariana Castillo',       email: 'mariana.castillo@gmail.com',       op: 'compra',   type: 'departamento',  zone: 'Quicentro',     budget: '$70,000 - $110,000', status: 'viewing_scheduled', daysAgo: 4  },
+      { id: 'RE-DEMO-010', phone: '+593980001010', name: 'Rodrigo Salazar',        email: 'rodrigo.salazar@hotmail.com',      op: 'arriendo', type: 'casa',          zone: 'Conocoto',      budget: '$400 - $600/mes',    status: 'cancelled',         daysAgo: 30 },
+    ];
+
+    let inserted = 0;
+    for (const l of DEMO_LEADS) {
+      const createdAt = new Date();
+      createdAt.setDate(createdAt.getDate() - l.daysAgo);
+
+      // FK: ensure user exists
+      await databaseService.run(
+        `INSERT INTO users (phone_number, name, email, first_visit, free_trial_used)
+         VALUES ($1, $2, $3, false, false)
+         ON CONFLICT (phone_number) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email`,
+        [l.phone, l.name, l.email]
+      );
+
+      const result = await databaseService.run(
+        `INSERT INTO real_estate_leads
+           (id, user_phone, client_name, email, phone, operation_type, property_type, preferred_zone, budget_range, status, notes, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         ON CONFLICT (id) DO NOTHING`,
+        [l.id, l.phone, l.name, l.email, l.phone, l.op, l.type, l.zone, l.budget, l.status, 'DEMO SEED', createdAt.toISOString()]
+      );
+      if (result?.rowCount > 0 || result?.changes > 0) inserted++;
+    }
+
+    console.log(`✅ [PAULA] ${inserted} leads demo insertados`);
+    return res.json({ ok: true, inserted, total: DEMO_LEADS.length });
+  } catch (err) {
+    console.error('[PAULA-API] Error seed-demo:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;

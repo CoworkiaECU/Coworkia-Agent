@@ -196,3 +196,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) sendWA(btn.dataset.id, btn);
   });
 });
+
+async function seedDemo() {
+  const btn = document.getElementById('btn-seed-demo');
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Cargando...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/paula/seed-demo');
+    const d = await r.json();
+    if (d.ok) {
+      btn.textContent = `✅ ${d.inserted} insertados`;
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+      loadStats(); loadLeads();
+    } else {
+      btn.textContent = '❌ Error';
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+    }
+  } catch(e) {
+    btn.textContent = '❌ Error';
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+  }
+}

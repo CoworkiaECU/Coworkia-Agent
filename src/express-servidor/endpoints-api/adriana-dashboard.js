@@ -121,4 +121,58 @@ router.post('/leads/:code/send-wa', async (req, res) => {
   }
 });
 
+// ── GET /api/adriana/seed-demo ────────────────────────────────────────────────
+router.get('/seed-demo', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    console.log('🎭 [ADRIANA] Iniciando seed de leads demo...');
+
+    const DEMO_LEADS = [
+      { id: 'INS-DEMO-001', code: 'SEG-DEMO-0001', phone: '+593981001001', name: 'Fernanda Gavilanez',  email: 'fernanda.gavilanez@gmail.com',  brand: 'Toyota',    model: 'Corolla',   year: 2020, value: 18000, premium: 380.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 3  },
+      { id: 'INS-DEMO-002', code: 'SEG-DEMO-0002', phone: '+593981001002', name: 'Paul Gavilanez',      email: 'paul.gavilanez@gmail.com',       brand: 'Chevrolet', model: 'Aveo',      year: 2019, value: 12000, premium: 260.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 1  },
+      { id: 'INS-DEMO-003', code: 'SEG-DEMO-0003', phone: '+593981001003', name: 'Carolina Vega',       email: 'carolina.vega@hotmail.com',      brand: 'Hyundai',   model: 'Tucson',    year: 2021, value: 25000, premium: 520.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 15 },
+      { id: 'INS-DEMO-004', code: 'SEG-DEMO-0004', phone: '+593981001004', name: 'Marco Espinoza',      email: 'marco.espinoza@outlook.com',     brand: 'Kia',       model: 'Sportage',  year: 2022, value: 28000, premium: 580.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 5  },
+      { id: 'INS-DEMO-005', code: 'SEG-DEMO-0005', phone: '+593981001005', name: 'Daniela Proaño',      email: 'daniela.proano@yahoo.com',       brand: 'Volkswagen',model: 'Jetta',     year: 2018, value: 14000, premium: 295.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 20 },
+      { id: 'INS-DEMO-006', code: 'SEG-DEMO-0006', phone: '+593981001006', name: 'Luis Andrade',        email: 'luis.andrade@live.com',          brand: 'Mazda',     model: 'CX-5',      year: 2020, value: 22000, premium: 460.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 7  },
+      { id: 'INS-DEMO-007', code: 'SEG-DEMO-0007', phone: '+593981001007', name: 'Verónica Morales',    email: 'veronica.morales@gmail.com',     brand: 'Suzuki',    model: 'Vitara',    year: 2021, value: 20000, premium: 415.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 2  },
+      { id: 'INS-DEMO-008', code: 'SEG-DEMO-0008', phone: '+593981001008', name: 'Patricio Lema',       email: 'patricio.lema@icloud.com',       brand: 'Ford',      model: 'Escape',    year: 2019, value: 16000, premium: 335.00, type: 'Seguro para Vehículos livianos', status: 'rejected',  daysAgo: 25 },
+      { id: 'INS-DEMO-009', code: 'SEG-DEMO-0009', phone: '+593981001009', name: 'Natalia Flores',      email: 'natalia.flores@gmail.com',       brand: 'Renault',   model: 'Duster',    year: 2020, value: 15000, premium: 315.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 10 },
+      { id: 'INS-DEMO-010', code: 'SEG-DEMO-0010', phone: '+593981001010', name: 'Esteban Chiriboga',   email: 'esteban.chiriboga@hotmail.com',  brand: 'Nissan',    model: 'X-Trail',   year: 2023, value: 30000, premium: 620.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 4  },
+    ];
+
+    let inserted = 0;
+    for (const l of DEMO_LEADS) {
+      const createdAt = new Date();
+      createdAt.setDate(createdAt.getDate() - l.daysAgo);
+
+      // FK: ensure user exists
+      await databaseService.run(
+        `INSERT INTO users (phone_number, name, email, first_visit, free_trial_used)
+         VALUES ($1, $2, $3, false, false)
+         ON CONFLICT (phone_number) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email`,
+        [l.phone, l.name, l.email]
+      );
+
+      const result = await databaseService.run(
+        `INSERT INTO insurance_leads
+           (id, quote_code, user_phone, client_name, email, phone, insurance_type,
+            vehicle_brand, vehicle_model, vehicle_year, commercial_value, quoted_premium,
+            status, notes, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         ON CONFLICT (quote_code) DO NOTHING`,
+        [l.id, l.code, l.phone, l.name, l.email, l.phone, l.type,
+         l.brand, l.model, l.year, l.value, l.premium,
+         l.status, 'DEMO SEED', createdAt.toISOString()]
+      );
+      if (result?.rowCount > 0 || result?.changes > 0) inserted++;
+    }
+
+    console.log(`✅ [ADRIANA] ${inserted} leads demo insertados`);
+    return res.json({ ok: true, inserted, total: DEMO_LEADS.length });
+  } catch (err) {
+    console.error('[ADRIANA-API] Error seed-demo:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;

@@ -254,7 +254,10 @@
     <div class="table-wrapper">
       <div class="table-header">
         <h2>🏠 Leads Inmobiliarios</h2>
-        <span class="table-count" id="table-count"></span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span class="table-count" id="table-count"></span>
+          <button id="btn-seed-demo" onclick="seedDemo()" style="padding:6px 12px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:12px;cursor:pointer;" title="Insertar 10 leads demo (Fernanda &amp; Paul Gavilanez incluidos)">🎭 Demo</button>
+        </div>
       </div>
       <div id="leads-container">
         <div class="loading">Cargando leads de Paula...</div>

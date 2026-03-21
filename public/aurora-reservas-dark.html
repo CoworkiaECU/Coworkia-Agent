@@ -295,20 +295,6 @@
     .section-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
     .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
     .section-sub { font-size: 13px; color: #475569; margin-top: 3px; }
-
-    /* ── tooltips ── */
-    [data-tip] { position: relative; }
-    [data-tip]::after {
-      content: attr(data-tip);
-      position: absolute; bottom: calc(100% + 8px); left: 50%;
-      transform: translateX(-50%) scale(.95);
-      background: #1e293b; color: #f1f5f9; border: 1px solid #34d399;
-      padding: 7px 12px; border-radius: 7px; font-size: 11px; font-weight: 500;
-      white-space: nowrap; pointer-events: none;
-      opacity: 0; transition: opacity .18s, transform .18s;
-      z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.5);
-    }
-    [data-tip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
   </style>
 </head>
 <body>
@@ -412,19 +398,19 @@
   <div class="qa-bar">
     <div class="qa-label">⚡ Acciones Rápidas</div>
     <div class="qa-grid">
-      <button id="qa-refresh-all" class="qa-btn" data-tip="Recargar reservas, prospectos y conversaciones">
+      <button id="qa-refresh-all" class="qa-btn">
         <span class="icon">🔄</span>Actualizar Todo
       </button>
-      <button id="qa-load-prospects" class="qa-btn" data-tip="Cargar usuarios que no completaron reserva">
+      <button id="qa-load-prospects" class="qa-btn">
         <span class="icon">🎯</span>Cargar Prospectos
       </button>
-      <button id="qa-copy-list" class="qa-btn" data-tip="Copiar lista de prospectos para campaña WA">
+      <button id="qa-copy-list" class="qa-btn">
         <span class="icon">📋</span>Copiar Lista
       </button>
-      <button id="qa-conversations" class="qa-btn" data-tip="Ver historial de todos los chats con Aurora">
+      <button id="qa-conversations" class="qa-btn">
         <span class="icon">💬</span>Ver Conversaciones
       </button>
-      <button id="qa-campaign-wa" class="qa-btn" data-tip="Enviar WA masivo a reservas completadas">
+      <button id="qa-campaign-wa" class="qa-btn">
         <span class="icon">📣</span>Campaña Completados
       </button>
     </div>
@@ -434,6 +420,9 @@
   <div class="card">
     <div class="card-header">
       <span class="card-title">Pipeline de Reservas</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="btn-copy-campaign" class="btn btn-secondary btn-sm">📋 Copiar lista</button>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -461,19 +450,12 @@
 
     <!-- Tabs -->
     <nav class="tab-nav" style="padding:0 20px;margin-bottom:0;" id="pipeline-tabs">
-      <button class="tab-btn active" data-tab="all" data-tip="Ver todas las reservas">Todas <span class="tab-count" id="tc-all"></span></button>
-      <button class="tab-btn" data-tab="confirmed" data-tip="Reservas confirmadas y próximas">✅ Confirmadas <span class="tab-count" id="tc-confirmed"></span></button>
-      <button class="tab-btn" data-tab="pending" data-tip="Reservas esperando confirmación o pago">⏳ Pendientes <span class="tab-count" id="tc-pending"></span></button>
-      <button class="tab-btn" data-tab="completed" data-tip="Reservas ya realizadas">🏁 Completadas <span class="tab-count" id="tc-completed"></span></button>
-      <button class="tab-btn" data-tab="followup" data-tip="Clientes que completaron hace 7 días — oportunidad de re-reserva">🔁 Follow-ups D+7 <span class="tab-count" id="tc-followup"></span></button>
+      <button class="tab-btn active" data-tab="all">Todas <span class="tab-count" id="tc-all"></span></button>
+      <button class="tab-btn" data-tab="confirmed">✅ Confirmadas <span class="tab-count" id="tc-confirmed"></span></button>
+      <button class="tab-btn" data-tab="pending">⏳ Pendientes <span class="tab-count" id="tc-pending"></span></button>
+      <button class="tab-btn" data-tab="completed">🏁 Completadas <span class="tab-count" id="tc-completed"></span></button>
+      <button class="tab-btn" data-tab="followup">🔁 Follow-ups D+7 <span class="tab-count" id="tc-followup"></span></button>
     </nav>
-
-    <!-- Filter pills: tipo de servicio -->
-    <div class="pill-row" id="service-filter-pills" style="padding:12px 20px 0;">
-      <button class="pill active" data-service="">Todos</button>
-      <button class="pill" data-service="hotDesk">🖥️ Hot Desk</button>
-      <button class="pill" data-service="meetingRoom">🏢 Sala Reuniones</button>
-    </div>
 
     <!-- Table -->
     <div class="table-wrap">
@@ -493,7 +475,6 @@
             <th>Estado</th>
             <th>Pago</th>
             <th>Creada</th>
-            <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -515,8 +496,8 @@
         <div class="section-sub">Usuarios que interactuaron con Aurora pero no reservaron — ordenados por urgencia.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm" data-tip="Copia lista de prospectos para campaña WA">📋 Copiar campaña</button>
-        <button id="btn-refresh-prospects" class="btn btn-primary btn-sm" data-tip="Recargar prospectos desde la base de datos">↺ Actualizar</button>
+        <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm">📋 Copiar campaña</button>
+        <button id="btn-refresh-prospects" class="btn btn-primary btn-sm">↺ Actualizar</button>
       </div>
     </div>
 
@@ -570,7 +551,7 @@
         <div class="section-title">💬 Conversaciones con usuarios</div>
         <div class="section-sub">Todos los usuarios que han hablado con Aurora. Clic en "Ver hilo" para el mensaje completo.</div>
       </div>
-      <button id="btn-refresh-conversations" class="btn btn-primary btn-sm" data-tip="Recargar historial de conversaciones">↺ Actualizar</button>
+      <button id="btn-refresh-conversations" class="btn btn-primary btn-sm">↺ Actualizar</button>
     </div>
 
     <div id="conv-loading" class="empty"><p>Cargando conversaciones…</p></div>
@@ -602,7 +583,7 @@
     <div id="conv-thread" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <h3 id="conv-thread-title" style="font-size:14px;color:#f1f5f9;font-weight:600;">Conversación</h3>
-        <button id="btn-close-thread" class="btn btn-secondary btn-sm" data-tip="Cerrar el hilo de conversación">✕ Cerrar</button>
+        <button id="btn-close-thread" class="btn btn-secondary btn-sm">✕ Cerrar</button>
       </div>
       <div id="conv-thread-body" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px;" class="thread-bubble"></div>
     </div>
@@ -614,32 +595,11 @@
 <div id="toast"></div>
 
 <!-- FAB -->
-<button class="fab" id="btn-fab-refresh" data-tip="Actualizar todo el dashboard">
+<button class="fab" id="btn-fab-refresh" title="Actualizar todo">
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/>
   </svg>
 </button>
-
-<!-- ── Modal: Follow-up manual Aurora ── -->
-<div id="aurora-modal-followup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;">
-  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
-    <h2 id="aurora-followup-modal-title" style="color:#f1f5f9;font-size:18px;margin:0 0 16px 0;font-weight:600;">Enviar Follow-up</h2>
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
-      <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">📋 Reserva:</div>
-      <div id="aurora-followup-res-name" style="color:#f1f5f9;font-size:14px;font-weight:600;"></div>
-      <div id="aurora-followup-res-detail" style="color:#64748b;font-size:13px;"></div>
-    </div>
-    <div style="background:#0c2240;border:1px solid #1e3a5f;border-radius:6px;padding:12px;margin-bottom:16px;">
-      <div style="color:#7dd3fc;font-size:12px;font-weight:600;margin-bottom:6px;">📨 Mensaje que se enviará por WhatsApp:</div>
-      <div id="aurora-followup-preview-msg" style="color:#bae6fd;font-size:12px;font-family:monospace;white-space:pre-wrap;line-height:1.5;"></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:20px;">
-      <button id="btn-send-followup-aurora" style="flex:1;background:#10b981;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">📤 Enviar Ahora</button>
-      <button id="btn-close-followup-aurora" style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">Cancelar</button>
-    </div>
-    <div id="aurora-followup-sending" style="display:none;margin-top:12px;text-align:center;color:#3b82f6;font-size:13px;">⏳ Enviando…</div>
-  </div>
-</div>
 
 <script src="/js/aurora-dashboard.js"></script>
 </body>

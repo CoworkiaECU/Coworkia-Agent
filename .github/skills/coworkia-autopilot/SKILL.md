@@ -488,6 +488,74 @@ git push heroku main
 
 ---
 
+## � NOTIFICACIÓN OBLIGATORIA AL TERMINAR
+
+**SIEMPRE al finalizar un autopilot** (tanto desde VS Code como desde WhatsApp), el agente DEBE enviar notificación a Diego. Es el último paso, sin excepción.
+
+### Cómo enviar (desde VS Code / terminal)
+
+```bash
+node /Users/diegovillota/coworkia-agent/scripts/notify-magic.mjs "mensaje aquí"
+```
+
+Si el script no existe, crearlo primero (ver abajo). Si hay error de red, loggearlo pero NO bloquear el fin del autopilot.
+
+### Script permanente: `scripts/notify-magic.mjs`
+
+```javascript
+// scripts/notify-magic.mjs
+import https from 'https';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, '../.env');
+const envLines = readFileSync(envPath, 'utf8').split('\n');
+const env = {};
+for (const line of envLines) {
+  const m = line.match(/^([A-Z_]+)\s*=\s*(.+)$/);
+  if (m) env[m[1]] = m[2].trim();
+}
+const token = env.WASSENGER_TOKEN || env.WASSENGER_API_KEY;
+const phone = env.DIEGO_PERSONAL_PHONE || '+593987770788';
+const message = process.argv[2] || '✨ Magic: autopilot completado';
+
+const body = JSON.stringify({ phone, message });
+const req = https.request({
+  hostname: 'api.wassenger.com', path: '/v1/messages', method: 'POST',
+  headers: { 'Token': token, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+}, res => {
+  let data = '';
+  res.on('data', d => data += d);
+  res.on('end', () => {
+    const j = JSON.parse(data);
+    console.log(j.id ? '✅ Notificación enviada' : '❌ Error: ' + j.message);
+  });
+});
+req.on('error', e => console.error('notify error:', e.message));
+req.write(body);
+req.end();
+```
+
+### Mensaje estándar de finalización
+
+```
+✨ *Sensei soy Magic* ✨
+🚀 *Autopilot completado — v[NUM] live*
+
+✅ [FASE/BLOQUE]: descripción corta
+✅ [FASE/BLOQUE]: descripción corta
+
+[N] archivos modificados. Listo nena. 🎯
+```
+
+### Si el autopilot corrió desde WhatsApp
+
+Usar `notifyDiego('task_complete', 'Autopilot terminado', {...})` del sistema de notificaciones interno — que ya enviará el mensaje al celular de Diego vía `sendMessage()` del contexto activo.
+
+---
+
 ## 📊 MÉTRICAS DE ÉXITO
 
 Un autopilot exitoso logra:
@@ -497,6 +565,7 @@ Un autopilot exitoso logra:
 - 🔄 **0 rollbacks** por errores
 - 📝 **Commits claros** y bien documentados
 - ✅ **0 errores** al finalizar
+- 📱 **Notificación enviada** al celular de Diego (último paso siempre)
 
 Un autopilot que necesita mejorar:
 

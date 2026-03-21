@@ -9,27 +9,27 @@ let currentFilters = { status: '', origin: '', search: '' };
 let currentTab = 'proformas';
 
 /* ─── toast ─────────────────────────────────────────────────── */
-function toast(msg, dur = 3000) {
+window.toast = function(msg, dur = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), dur);
-}
+};
 
 /* ─── tabs ───────────────────────────────────────────────────── */
-function switchTab(name) {
+window.switchTab = function(name) {
   currentTab = name;
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
   document.getElementById('tab-proformas').style.display = name === 'proformas' ? '' : 'none';
   document.getElementById('tab-pipeline').style.display  = name === 'pipeline'  ? '' : 'none';
-}
+};
 
 /* ─── stage filter ───────────────────────────────────────────── */
 let activeStageFilter = null;
 
-function filterByStage(stage) {
+window.filterByStage = function(stage) {
   if (activeStageFilter === stage) {
     clearStageFilter();
     return;
@@ -45,12 +45,12 @@ function filterByStage(stage) {
   renderPipelineRows(window._lastProspects || []);
 }
 
-function clearStageFilter() {
+window.clearStageFilter = function() {
   activeStageFilter = null;
   document.querySelectorAll('.funnel-stage').forEach(el => el.classList.remove('active'));
   document.getElementById('stage-filter-label').style.display = 'none';
   renderPipelineRows(window._lastProspects || []);
-}
+};
 
 function getProspectStage(p) {
   if (p.converted_at)        return 'converted';
@@ -60,12 +60,12 @@ function getProspectStage(p) {
 }
 
 /* ─── sequence accordion ─────────────────────────────────────── */
-function toggleSeq(btn) {
+window.toggleSeq = function(btn) {
   const body = document.getElementById('seq-body');
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : 'block';
   btn.textContent = open ? 'Ver mensajes programados ▶' : 'Ocultar ▲';
-}
+};
 
 /* ─── stepper builder ────────────────────────────────────────── */
 function buildStepper(p) {
@@ -272,7 +272,7 @@ function initials(name) {
 }
 
 /* ─── pipeline actions ────────────────────────────────────────── */
-async function convertProspect(phone, btn) {
+window.convertProspect = async function(phone, btn) {
   if (!confirm('¿Marcar este prospecto como convertido?')) return;
   btn.disabled = true;
   try {
@@ -291,7 +291,7 @@ async function convertProspect(phone, btn) {
   }
 }
 
-async function sendWANow(phone, btn) {
+window.sendWANow = async function(phone, btn) {
   if (!confirm('¿Enviar WhatsApp de seguimiento ahora?')) return;
   btn.disabled = true;
   btn.textContent = '⏳ Enviando…';
@@ -509,20 +509,20 @@ async function loadProformas() {
 }
 
 /* ─── refresh all ────────────────────────────────────────────── */
-function refreshAll() {
+window.refreshAll = function() {
   loadStats();
   loadProformas();
   loadPipeline();
-}
+};
 
 /* ─── reset filters ──────────────────────────────────────────── */
-function resetFilters() {
+window.resetFilters = function() {
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-origin').value = '';
   document.getElementById('search').value = '';
   currentFilters = { status: '', origin: '', search: '' };
   loadProformas();
-}
+};
 
 /* ─── manual followup actions ────────────────────────────────── */
 let currentFollowupData = null;
@@ -671,7 +671,7 @@ window.closeFollowupModal = function() {
   currentFollowupData = null;
 };
 
-async function sendFollowupManual() {
+window.sendFollowupManual = async function() {
   if (!currentFollowupData) return;
   
   const message = document.getElementById('followup-message').value.trim();
@@ -746,7 +746,8 @@ async function sendFollowupManual() {
 let campaignChannel = 'whatsapp';
 let campaignPreviewLeads = [];
 
-function openCampaignModal() {
+window.openCampaignModal = function() {
+  console.log('🎯 openCampaignModal called');
   const modal = document.getElementById('modal-campaign');
   modal.style.display = 'block';
   
@@ -761,11 +762,11 @@ function openCampaignModal() {
   updateCampaignPreview();
 }
 
-function closeCampaignModal() {
+window.closeCampaignModal = function() {
   document.getElementById('modal-campaign').style.display = 'none';
-}
+};
 
-function selectCampaignChannel(channel) {
+window.selectCampaignChannel = function(channel) {
   campaignChannel = channel;
   const waBtn = document.getElementById('campaign-channel-wa');
   const emailBtn = document.getElementById('campaign-channel-email');
@@ -787,7 +788,7 @@ function selectCampaignChannel(channel) {
   }
 }
 
-async function updateCampaignPreview() {
+window.updateCampaignPreview = async function() {
   const filter = document.getElementById('campaign-filter').value;
   const countEl = document.getElementById('campaign-preview-count');
   const finalCountEl = document.getElementById('campaign-final-count');
@@ -841,7 +842,7 @@ async function updateCampaignPreview() {
   }
 }
 
-async function createAndSendCampaign() {
+window.createAndSendCampaign = async function() {
   const name = document.getElementById('campaign-name').value.trim();
   const filter = document.getElementById('campaign-filter').value;
   const message = document.getElementById('campaign-message').value.trim();
@@ -947,6 +948,73 @@ loadProformas();
 loadPipeline();
 
 setInterval(() => { loadStats(); loadPipeline(); }, 30000);
+
+/* ─── prospect modal (añadir al pipeline) ────────────────────── */
+window.openAddProspectModal = function() {
+  console.log('➕ openAddProspectModal called');
+  const modal = document.getElementById('modal-prospect');
+  if (modal) {
+    modal.style.display = 'flex';
+    // Reset form
+    document.getElementById('mp-phone').value = '';
+    document.getElementById('mp-name').value = '';
+    document.getElementById('mp-plan').value = 'Plan20';
+  } else {
+    toast('⚠️ Modal no encontrado en el DOM');
+  }
+};
+
+window.closeProspectModal = function() {
+  const modal = document.getElementById('modal-prospect');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+};
+
+window.submitAddProspect = async function() {
+  const phone = document.getElementById('mp-phone').value.trim();
+  const name = document.getElementById('mp-name').value.trim();
+  const plan = document.getElementById('mp-plan').value;
+  
+  if (!phone) {
+    toast('⚠️ El teléfono es obligatorio');
+    return;
+  }
+  
+  if (!name) {
+    toast('⚠️ El nombre es obligatorio');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/aluna/prospect/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userPhone: phone,
+        userName: name,
+        membershipType: plan
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.ok) {
+      toast('✅ Prospecto registrado correctamente');
+      closeProspectModal();
+      setTimeout(() => {
+        loadProformas();
+        loadPipeline();
+      }, 500);
+    } else {
+      toast(`❌ Error: ${result.error || 'Desconocido'}`);
+    }
+    
+  } catch (error) {
+    console.error('[PROSPECT] Error:', error);
+    toast(`❌ Error de red: ${error.message}`);
+  }
+};
 
 /* ─── end ───────────────────────────────────────────────────── */
 // Estado de la aplicación -- LEGACY (removed)

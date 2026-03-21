@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>TEST: Funciones Globales - Botones Dashboard</title>
+  <style>
+    body {
+      font-family: -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 40px;
+    }
+    
+    h1 {
+      color: #34d399;
+      margin-bottom: 30px;
+    }
+    
+    .test-section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .test-section h2 {
+      color: #f1f5f9;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    button:hover {
+      background: #059669;
+    }
+    
+    .log {
+      margin-top: 15px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .log-item {
+      margin: 3px 0;
+    }
+    
+    .log-success { color: #34d399; }
+    .log-error { color: #f87171; }
+    .log-info { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>🧪 TEST: Funciones Globales del Dashboard Aluna</h1>
+  
+  <div class="test-section">
+    <h2>Test 1: Funciones de Navegación</h2>
+    <button onclick="testFunction('switchTab', () => window.switchTab('proformas'))">switchTab('proformas')</button>
+    <button onclick="testFunction('refreshAll', () => window.refreshAll && log('info', 'refreshAll existe pero no se ejecuta en test'))">refreshAll()</button>
+    <button onclick="testFunction('resetFilters', () => window.resetFilters && log('info', 'resetFilters existe pero no se ejecuta en test'))">resetFilters()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 2: Funciones de Filtros</h2>
+    <button onclick="testFunction('filterByStage', () => window.filterByStage && log('info', 'filterByStage existe'))">filterByStage()</button>
+    <button onclick="testFunction('clearStageFilter', () => window.clearStageFilter && log('info', 'clearStageFilter existe'))">clearStageFilter()</button>
+    <button onclick="testFunction('toggleSeq', () => window.toggleSeq && log('info', 'toggleSeq existe'))">toggleSeq()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 3: Funciones de Modals (Follow-up)</h2>
+    <button onclick="testFunction('openFollowupModalById', () => typeof window.openFollowupModalById === 'function' ? log('success', 'openFollowupModalById es función global ✓') : log('error', 'openFollowupModalById NO es función'))">openFollowupModalById()</button>
+    <button onclick="testFunction('closeFollowupModal', () => typeof window.closeFollowupModal === 'function' ? log('success', 'closeFollowupModal es función global ✓') : log('error', 'closeFollowupModal NO es función'))">closeFollowupModal()</button>
+    <button onclick="testFunction('sendFollowupManual', () => typeof window.sendFollowupManual === 'function' ? log('success', 'sendFollowupManual es función global ✓') : log('error', 'sendFollowupManual NO es función'))">sendFollowupManual()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 4: Funciones de Modals (Campaña)</h2>
+    <button onclick="testFunction('openCampaignModal', () => typeof window.openCampaignModal === 'function' ? log('success', 'openCampaignModal es función global ✓') : log('error', 'openCampaignModal NO es función'))">openCampaignModal()</button>
+    <button onclick="testFunction('closeCampaignModal', () => typeof window.closeCampaignModal === 'function' ? log('success', 'closeCampaignModal es función global ✓') : log('error', 'closeCampaignModal NO es función'))">closeCampaignModal()</button>
+    <button onclick="testFunction('selectCampaignChannel', () => typeof window.selectCampaignChannel === 'function' ? log('success', 'selectCampaignChannel es función global ✓') : log('error', 'selectCampaignChannel NO es función'))">selectCampaignChannel()</button>
+    <button onclick="testFunction('updateCampaignPreview', () => typeof window.updateCampaignPreview === 'function' ? log('success', 'updateCampaignPreview es función global ✓') : log('error', 'updateCampaignPreview NO es función'))">updateCampaignPreview()</button>
+    <button onclick="testFunction('createAndSendCampaign', () => typeof window.createAndSendCampaign === 'function' ? log('success', 'createAndSendCampaign es función global ✓') : log('error', 'createAndSendCampaign NO es función'))">createAndSendCampaign()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 5: Funciones de Modals (Prospect)</h2>
+    <button onclick="testFunction('openAddProspectModal', () => typeof window.openAddProspectModal === 'function' ? log('success', 'openAddProspectModal es función global ✓') : log('error', 'openAddProspectModal NO es función'))">openAddProspectModal()</button>
+    <button onclick="testFunction('closeProspectModal', () => typeof window.closeProspectModal === 'function' ? log('success', 'closeProspectModal es función global ✓') : log('error', 'closeProspectModal NO es función'))">closeProspectModal()</button>
+    <button onclick="testFunction('submitAddProspect', () => typeof window.submitAddProspect === 'function' ? log('success', 'submitAddProspect es función global ✓') : log('error', 'submitAddProspect NO es función'))">submitAddProspect()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 6: Funciones Pipeline</h2>
+    <button onclick="testFunction('convertProspect', () => typeof window.convertProspect === 'function' ? log('success', 'convertProspect es función global ✓') : log('error', 'convertProspect NO es función'))">convertProspect()</button>
+    <button onclick="testFunction('sendWANow', () => typeof window.sendWANow === 'function' ? log('success', 'sendWANow es función global ✓') : log('error', 'sendWANow NO es función'))">sendWANow()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 7: Función Toast</h2>
+    <button onclick="testFunction('toast', () => { if (typeof window.toast === 'function') { log('success', 'toast es función global ✓'); /* window.toast('✅ Test toast!'); */ } else { log('error', 'toast NO es función'); } })">toast()</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>📊 Console Log</h2>
+    <div class="log" id="test-log"></div>
+    <button onclick="clearLog()" style="background:#ef4444;">Limpiar Log</button>
+  </div>
+  
+  <script>
+    function log(type, message) {
+      const logDiv = document.getElementById('test-log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = `log-${type}`;
+      logDiv.innerHTML += `<div class="log-item ${className}">[${timestamp}] ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+    
+    function clearLog() {
+      document.getElementById('test-log').innerHTML = '';
+      log('info', 'Log limpiado');
+    }
+    
+    function testFunction(name, testFn) {
+      log('info', `🧪 Testing: ${name}...`);
+      try {
+        testFn();
+      } catch (error) {
+        log('error', `❌ Error en ${name}: ${error.message}`);
+      }
+    }
+    
+    // Auto-run all tests on load
+    window.addEventListener('load', () => {
+      log('success', '🚀 Test suite cargado');
+      log('info', 'Clickea los botones para testear cada función');
+      log('info', '==========================================');
+      
+      // Simular que el JS está cargado (en producción se carga con <script src="...">)
+      setTimeout(() => {
+        log('info', 'ℹ️ En producción, las funciones se cargan desde aluna-dashboard.js');
+        log('info', 'ℹ️ Este test verifica que las funciones sean accesibles desde window object');
+        log('info', 'ℹ️ NO ejecuta las funciones completas (requieren DOM del dashboard real)');
+      }, 500);
+    });
+  </script>
+</body>
+</html>

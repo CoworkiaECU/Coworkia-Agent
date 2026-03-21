@@ -9,7 +9,7 @@
  */
 
 import { CronJob }           from 'cron';
-import { notifyDailyReport } from './notification-service.js';
+import { notifyDailyReport } from '../servicios/notification-service.js';
 import databaseService       from '../database/database.js';
 
 // ─── Recolección de stats ─────────────────────────────────────────────────────

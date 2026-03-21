@@ -230,6 +230,11 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
     );
     if (!p || !p.user_phone) return res.status(404).json({ ok: false, error: 'Proyecto no encontrado o sin teléfono' });
 
+    const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+    if (_adminNorm && p.user_phone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'No se envían mensajes del dashboard al teléfono de administrador' });
+    }
+
     const name    = (p.client_name || 'Hola').split(' ')[0];
     const tipo    = p.project_type || 'proyecto de marketing';
     const empresa = p.company ? ` para *${p.company}*` : '';

@@ -105,6 +105,11 @@ router.post('/quotes/:code/send-reminder', async (req, res) => {
     );
     if (!q || !q.user_phone) return res.status(404).json({ ok: false, error: 'Cotización no encontrada' });
 
+    const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+    if (_adminNorm && q.user_phone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'No se envían mensajes del dashboard al teléfono de administrador' });
+    }
+
     const name = (q.client_name || 'Hola').split(' ')[0];
     const vehicle = [q.vehicle_brand, q.vehicle_model, q.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
     const msg = `Hola ${name} 👋\n\n¿Quedó alguna duda sobre la cotización de *${vehicle}*?\n\nCuando quieras seguimos — 20 minutos y cerramos todo 📅`;

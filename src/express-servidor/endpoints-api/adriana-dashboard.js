@@ -103,6 +103,11 @@ router.post('/leads/:code/send-wa', async (req, res) => {
     );
     if (!l || !l.phone) return res.status(404).json({ ok: false, error: 'Lead no encontrado o sin teléfono' });
 
+    const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+    if (_adminNorm && l.phone.replace(/\D/g, '') === _adminNorm) {
+      return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'No se envían mensajes del dashboard al teléfono de administrador' });
+    }
+
     const name    = (l.client_name || 'Hola').split(' ')[0];
     const vehicle = [l.vehicle_brand, l.vehicle_model, l.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
     const tipo    = l.insurance_type || 'seguro';

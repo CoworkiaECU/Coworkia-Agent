@@ -134,7 +134,127 @@ Esto permite:
 - `d14f1fa` - BLOQUE 3/3: High intent detection Aluna
 
 ---
-## �📦 SETUP DEL PROYECTO
+### 🛡️ Sistema Anti-Fallos y Skills de Troubleshooting - 21 Mar 2026
+
+**CONTEXTO**: Campaña fuerte al aire → sistema debe funcionar 24/7 sin supervisión. Necesidad de herramientas de diagnóstico y recuperación automática.
+
+**OBJETIVO**: Estabilización completa con skills especializados, tests automatizados, y mejoras de productividad.
+
+**ESTRATEGIA**: Plan de vuelo masivo de 7.5h dividido en 3 fases, ejecutado con autopilot.
+
+**PLAN DE VUELO**: `plan-vuelo-21mar.md`
+
+---
+
+#### FASE 1: Skills de Troubleshooting (2.5h) ✅ COMPLETADA
+
+**4 Skills Creados**:
+
+1. **aurora-troubleshooting.md**
+   - Diagnóstico de reservas que no se procesan
+   - Webhooks perdidos, confirmaciones fallidas, emails no enviados
+   - Flujo normal documentado con diagramas
+   - Queries de debugging específicas
+   - Comandos de recuperación rápida
+
+2. **aluna-troubleshooting.md**
+   - Diagnóstico de leads no capturados
+   - Proformas que no se envían, follow-ups que fallan
+   - Dashboard que no muestra datos
+   - Keywords que no detectan
+   - Test de high intent detection
+
+3. **heroku-deployment.md**
+   - Deploy standard y rollback rápido
+   - Monitoreo de logs en tiempo real
+   - Restart de dynos, configuración de env vars
+   - Troubleshooting de builds, crashes, timeouts
+   - Checklists pre/post-deploy
+
+4. **database-queries.md**
+   - Queries comunes para debugging y monitoreo
+   - Reportes de reservas, leads, conversiones
+   - Análisis de efectividad de follow-ups
+   - Queries de limpieza y mantenimiento
+   - Detección de datos corruptos
+
+**VALOR AGREGADO**:
+- ✅ Copilot tiene contexto especializado al trabajar en archivos relacionados
+- ✅ Diego puede diagnosticar problemas rápidamente sin memoria humana
+- ✅ Agente puede resolver fallos en producción sin intervención
+- ✅ Documentación viva que evoluciona con el proyecto
+
+**UBICACIÓN**: `.github/skills/[nombre-skill]/SKILL.md`
+
+**INTEGRACIÓN**: Skills aparecen automáticamente en Copilot cuando trabajas en archivos que coinciden con `applyTo` patterns del frontmatter YAML.
+
+---
+
+#### FASE 2: Testing Automatizado (2h) - EN PROGRESO
+
+**Objetivo**: Suite de tests end-to-end para Aurora y Aluna
+
+**Tests planeados**:
+- 6+ tests de integración Aurora (webhook → confirmación → email)
+- 6+ tests de integración Aluna (keywords → proforma → follow-ups)
+- Tests de high intent detection
+- Tests de client response tracking
+
+**Comando**: `npm test`
+
+**Valor**: Cualquier cambio futuro se valida automáticamente antes de deploy.
+
+---
+
+#### FASE 3: Mejoras de Dashboard (3h) - EN PROGRESO
+
+**Funcionalidad nueva**:
+
+1. **Botones de Acción Manual** (1.5h)
+   - 4 botones por lead: 📱 D+1 WA | 📧 D+1 Email | 📱 D+3 WA | 📧 D+3 Email
+   - Modal con template editable antes de enviar
+   - Backup manual si automation falla
+
+2. **Ventana de Creación de Campañas** (1.5h)
+   - Editor de mensajes masivos
+   - Filtros por status (pending, negotiating, etc)
+   - Variables dinámicas: {{nombre}}, {{plan}}, {{email}}
+   - Preview en tiempo real
+   - Tabla `campaigns` en BD
+
+**Valor**: Aumenta productividad de Diego, permite intervención humana rápida.
+
+---
+
+#### FASE 4: Sistema de Notificaciones (2h) - PLANEADA
+
+**Objetivo**: Notificaciones proactivas a WhatsApp personal de Diego
+
+**Casos de uso**:
+- 🚨 High intent detectado → alerta inmediata
+- 📊 Reporte diario 9am → resumen de leads/conversiones
+- ⚠️ Error crítico → circuit breaker abierto, DB down
+- ✅ Autopilot completó → resumen de tareas
+- 🤔 Autopilot bloqueado → necesita decisión
+
+**Implementación**: `notification-service.js` + cron jobs + health monitor
+
+---
+
+**IMPACTO TOTAL ESPERADO**:
+- 🛡️ Sistema robusto 24/7 con auto-diagnóstico y recuperación
+- 📊 Tests automáticos previenen regresiones
+- 🚀 Dashboard más productivo con acciones manuales
+- 📱 Monitoreo proactivo sin necesidad de abrir dashboard
+
+**TIEMPO TOTAL**: ~7.5h (ejecutado con autopilot en sesiones paralelas)
+
+**LECCIONES**:
+- ✅ División de trabajo: Chat Control Tower (planifica) + Chat Autopilot (ejecuta)
+- ✅ Planes masivos son viables con bloques bien definidos
+- ✅ Skills permanentes > soluciones one-off
+
+---## �📦 SETUP DEL PROYECTO
 
 ### Identidad del Sistema
 - **Nombre**: Coworkia Agent (Aurora)

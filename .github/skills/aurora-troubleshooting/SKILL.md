@@ -1,19 +1,189 @@
 ---
 name: aurora-troubleshooting
 description: Diagnóstico y solución de problemas en Aurora (reservas, coworking). Usa este skill cuando necesites debuggear reservas que no se procesan, webhooks perdidos, confirmaciones fallidas, emails no enviados, o cualquier problema con el flujo de Aurora/reservas en WhatsApp.
+applyTo:
+  - "src/**/aurora*.js"
+  - "src/servicios/reservation*.js"
+  - "src/deteccion-intenciones/*"
+  - "src/express-servidor/endpoints-api/wassenger.js"
 ---
 
-# Aurora Troubleshooting Skill
+# Aurora Troubleshooting
 
-## Cuándo Usar Este Skill
-- ❌ Cliente reporta que no recibió confirmación de reserva
-- ❌ Webhook de Wassenger no triggerea Aurora
-- ❌ Formulario de reserva no se activa
-- ❌ Email de confirmación no llega
-- ❌ Pago procesado pero no refleja en sistema
-- ❌ Follow-up automático no se envía
+## ⚙️ FLUJO NORMAL
 
-## Flujo Normal de Aurora
+1. **Mensaje recibido** → Wassenger webhook
+2. **Orquestador detecta** → `reservation_interest`
+3. **Aurora form activa** → recolecta datos (nombre, email, fecha, personas)
+4. **Confirmación creada** → `pending_confirmations` table
+5. **Pago verificado** → consulta en DB
+6. **Email enviado** → confirmación al cliente
+
+## 🚨 PUNTOS DE FALLA COMUNES
+
+### 1. Form no se activa
+**Síntoma**: Cliente interesado pero Aurora no pide datos
+
+**Causas**:
+- Detección de intención falló (keyword no reconocida)
+- Form ya existe activo para ese usuario
+- Error en `getAgentForm(userId, 'AURORA')`
+
+**Debug**:
+```javascript
+// Ver si hay form activo
+SELECT * FROM agent_forms WHERE user_id = '573XXXXXXXXX' AND agent = 'AURORA';
+
+// Ver último mensaje procesado
+SELECT * FROM conversation_history WHERE sender_id = '573XXXXXXXXX' ORDER BY timestamp DESC LIMIT 5;
+```
+
+**Fix**:
+```javascript
+// Eliminar form stuck
+DELETE FROM agent_forms WHERE user_id = '573XXXXXXXXX' AND agent = 'AURORA';
+
+// O manualmente activar form
+INSERT INTO agent_forms (user_id, agent, current_step, created_at) VALUES ('573XXXXXXXXX', 'AURORA', 'nombre', NOW());
+```
+
+### 2. Confirmación no se guarda
+**Síntoma**: Cliente completó form pero no hay confirmación en BD
+
+**Causas**:
+- Error al insertar en `pending_confirmations`
+- Campos requeridos faltantes (email, fecha, hora, personas)
+- Timeout de DB
+
+**Debug**:
+```javascript
+// Ver confirmaciones recientes
+SELECT * FROM pending_confirmations WHERE created_at > NOW() - INTERVAL '1 hour';
+
+// Ver forms completos pero sin confirmación
+SELECT af.* FROM agent_forms af
+LEFT JOIN pending_confirmations pc ON af.user_id = pc.user_phone
+WHERE af.agent = 'AURORA' AND pc.id IS NULL;
+```
+
+**Fix**:
+- Revisar logs: `heroku logs --tail | grep -i "AURORA\|CONFIRMACION"`
+- Verificar que todos los campos del form están llenos
+- Reintentar manualmente si fue timeout
+
+### 3. Email no llega
+**Síntoma**: Confirmación guardada pero cliente no recibe email
+
+**Causas**:
+- `MAILER_PASS` incorrecto o expirado en Heroku
+- Gmail bloqueó login (2FA o "app menos segura")
+- Email del cliente mal formateado
+- Función `sendReservationConfirmationEmail()` falló
+
+**Debug**:
+```bash
+# Ver logs de mailer
+heroku logs --tail --app coworkia-agent | grep -i "MAILER\|EMAIL"
+
+# Verificar variable de entorno
+heroku config:get MAILER_PASS --app coworkia-agent
+```
+
+**Fix**:
+```javascript
+// Reenviar email manualmente
+const { sendReservationConfirmationEmail } = await import('./src/servicios/email.js');
+await sendReservationConfirmationEmail({
+  email: 'cliente@example.com',
+  nombre: 'Juan Pérez',
+  fecha_hora: '2026-03-25 14:00',
+  numero_personas: 2
+});
+```
+
+### 4. Webhook duplicado
+**Síntoma**: Mismo mensaje procesado múltiples veces
+
+**Causas**:
+- Wassenger reintentos (si respuesta > 5s)
+- `isDuplicateMessage()` no funcionando
+- Cache de deduplicación expiró
+
+**Debug**:
+```sql
+-- Ver mensajes duplicados
+SELECT message_id, COUNT(*) FROM conversation_history 
+WHERE created_at > NOW() - INTERVAL '1 hour'
+GROUP BY message_id HAVING COUNT(*) > 1;
+```
+
+**Fix**:
+- Verificar que `isDuplicateMessage()` esté funcionando
+- Aumentar timeout de respuesta (actualizar webhook config)
+- Si es crítico, bloquear temporalmente webhook y procesar manual
+
+## 📊 QUERIES ÚTILES
+
+### Reservas Pendientes Hoy
+```sql
+SELECT * FROM pending_confirmations 
+WHERE fecha_hora::date = CURRENT_DATE
+  AND status = 'pending'
+ORDER BY fecha_hora;
+```
+
+### Reservas Sin Email (necesitan reenvío)
+```sql
+SELECT * FROM pending_confirmations 
+WHERE email_sent = false
+  AND created_at > NOW() - INTERVAL '24 hours';
+```
+
+### Forms Stuck (más de 1 hora sin completar)
+```sql
+SELECT * FROM agent_forms 
+WHERE agent = 'AURORA'
+  AND created_at < NOW() - INTERVAL '1 hour'
+  AND current_step != 'completed';
+```
+
+## 🔧 COMANDOS RÁPIDOS
+
+### Reiniciar Aurora (si está stuck)
+```bash
+heroku restart --app coworkia-agent
+```
+
+### Ver logs en tiempo real
+```bash
+heroku logs --tail --app coworkia-agent | grep -E "AURORA|RESERVATION|ERROR"
+```
+
+### Rollback si deployment rompió algo
+```bash
+heroku releases --app coworkia-agent
+heroku rollback v[número anterior] --app coworkia-agent
+```
+
+## 💡 PREVENCIÓN
+
+### Circuit Breaker
+- OpenAI: máx 3 reintentos, luego fallback a respuesta genérica
+- Database: connection pool con timeout 10s
+- Wassenger: rate limit 20 msg/min
+
+### Logging
+Tags clave para búsqueda:
+- `[AURORA-FORM]` - Activación y pasos de formulario
+- `[RESERVATION]` - Creación de confirmaciones
+- `[MAILER]` - Envío de emails
+- `[DEDUP]` - Deduplicación de mensajes
+
+### Monitoring
+- Dashboard de reservas: `/aurora-reservas.html`
+- Tabla `pending_confirmations` para ver flujo
+
+##Flujo Normal de Aurora
 
 ```mermaid
 graph TD

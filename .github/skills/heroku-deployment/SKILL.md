@@ -1,495 +1,306 @@
 ---
 name: heroku-deployment
 description: Procedimientos de deploy, rollback, monitoreo y troubleshooting en Heroku. Usa este skill cuando necesites deployar cambios, hacer rollback de versión, ver logs en producción, reiniciar dynos, configurar variables de entorno, o resolver problemas de deployment.
+applyTo:
+  - "Procfile"
+  - "package.json"
+  - ".env*"
 ---
 
-# Heroku Deployment Skill
+# Heroku Deployment
 
-## Cuándo Usar Este Skill
-- 🚀 Necesito deployar cambios a producción
-- ⏪ Deploy salió mal, necesito rollback
-- 📊 Ver logs en tiempo real de producción
-- 🔄 App crashed, necesito restart
-- ⚙️ Configurar variables de entorno
-- 💾 Ver uso de recursos (dyno, DB)
+## 🚀 DEPLOY STANDARD
 
-## App Info
-
+### Prerequisitos
 ```bash
-App Name: coworkia-agent
-URL: https://coworkia-agent-e97d15dac56f.herokuapp.com
-Region: US
-Stack: heroku-22
-Dyno: Professional ($50/mes)
-Add-ons: Heroku Postgres (Standard-0, $50/mes)
+# Verificar que estás en branch correcto
+git branch
+
+# Verificar que no hay cambios sin commit
+git status
 ```
 
-## Deploy Standard
-
-### 1. Pre-Deploy Checklist
+### Deploy Flow
 ```bash
-# ANTES de deployar, verificar:
-✓ Tests locales pasan
-✓ Servidor local funciona sin errores
-✓ No hay console.log sensibles (passwords, tokens)
-✓ .gitignore actualizado
-✓ package.json tiene todas las dependencias
-```
-
-### 2. Deploy a Heroku
-```bash
-# Commit cambios:
+# 1. Agregar cambios
 git add .
+
+# 2. Commit descriptivo
 git commit -m "feat: descripción clara del cambio"
 
-# Push a Heroku (triggerea build automático):
+# 3. Push a Heroku (auto-deploy)
 git push heroku main
 
-# Ver build en tiempo real:
+# 4. Verificar deployment exitoso
 heroku logs --tail --app coworkia-agent
 ```
 
-### 3. Post-Deploy Verification
+### Estados de Deploy
+- ✅ **Build succeeded** → versión nueva en producción
+- ❌ **Build failed** → revisa logs, deployment no aplicado
+- ⚠️ **Build succeeded but app crashing** → rollback inmediato
+
+## 🔙 ROLLBACK RÁPIDO
+
+### Caso de Uso
+Deployment nuevo rompió algo en producción → volver a versión estable anterior
+
+### Comandos
 ```bash
-# 1. Verificar app está up:
-curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
-
-# 2. Ver si hay errores:
-heroku logs --tail --app coworkia-agent | grep "ERROR"
-
-# 3. Verificar version deployada:
-heroku releases --app coworkia-agent | head -5
-```
-
-## Rollback Rápido
-
-### Cuando Usar Rollback
-- ❌ Deploy causó errores en producción
-- ❌ App no responde después de deploy
-- ❌ Bug crítico introducido
-- ❌ Usuarios reportan fallas
-
-### Hacer Rollback
-```bash
-# 1. Ver versiones disponibles:
+# 1. Ver últimas releases
 heroku releases --app coworkia-agent
 
 # Output ejemplo:
-# v977  Deploy abc123  2026/03/19 10:30:00
-# v976  Deploy def456  2026/03/18 15:45:00
-# v975  Deploy ghi789  2026/03/17 09:20:00
+# v985  Deploy abc123de  diego@coworkia.ec  2026/03/21 10:45:30 -0500 (~ 5m ago)
+# v984  Deploy xyz789ab  diego@coworkia.ec  2026/03/20 23:10:15 -0500 (~ 11h ago)
 
-# 2. Rollback a versión anterior (v976):
-heroku rollback v976 --app coworkia-agent
+# 2. Rollback a versión anterior
+heroku rollback v984 --app coworkia-agent
 
-# 3. Verificar:
-heroku releases --app coworkia-agent | head -3
+# 3. Confirmar rollback exitoso
+heroku logs --tail --app coworkia-agent | head -20
 ```
 
-### Rollback con Confirmación
+### Testing Post-Rollback
 ```bash
-# Si no estás seguro, hacer rollback gradual:
-
-# 1. Ver qué cambió en último deploy:
-git diff HEAD^ HEAD
-
-# 2. Si confirmas rollback:
-heroku rollback --app coworkia-agent  # Va a versión inmediata anterior
-
-# 3. Monitor logs:
-heroku logs --tail --app coworkia-agent
+# Probar endpoints críticos
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/api/aluna/followup-stats
 ```
 
-## Logs y Monitoreo
+## 📊 MONITOREO Y LOGS
 
 ### Ver Logs en Tiempo Real
 ```bash
-# Todos los logs:
+# Todos los logs
 heroku logs --tail --app coworkia-agent
 
-# Solo errores:
-heroku logs --tail --app coworkia-agent | grep -E "(ERROR|❌|500|fail)"
+# Solo errores
+heroku logs --tail --app coworkia-agent | grep -i "error\|exception\|failed"
 
-# Último deploy:
-heroku logs --tail --app coworkia-agent | grep -A 20 "State changed"
+# Solo Aurora
+heroku logs --tail --app coworkia-agent | grep -i "aurora\|reservation"
 
-# Webhook specific:
-heroku logs --tail --app coworkia-agent | grep WASSENGER
+# Solo Aluna
+heroku logs --tail --app coworkia-agent | grep -i "aluna\|membership"
 
-# Aurora/Aluna specific:
-heroku logs --tail --app coworkia-agent | grep -E "(AURORA|ALUNA)"
+# Solo Cron jobs
+heroku logs --tail --app coworkia-agent | grep -i "cron\|followup"
 ```
 
-### Logs Históricos
+### Ver Logs Históricos
 ```bash
-# Últimos 1000 logs:
-heroku logs -n 1000 --app coworkia-agent
+# Últimos 100 logs
+heroku logs --num 100 --app coworkia-agent
 
-# Guardar logs a archivo:
-heroku logs -n 5000 --app coworkia-agent > production-logs.txt
-
-# Logs de fecha específica:
-# (Heroku solo guarda últimos 1500 líneas, considera Papertrail para historical)
-heroku logs --tail --app coworkia-agent --since="2026-03-18T10:00:00Z"
+# Logs de últimas 2 horas
+heroku logs --tail --app coworkia-agent --since="2 hours ago"
 ```
 
-### Logs por Componente
+## 🔧 RESTART Y TROUBLESHOOTING
+
+### Restart Completo
 ```bash
-# Cron jobs:
-heroku logs --tail --app coworkia-agent | grep CRON
-
-# Database:
-heroku logs --tail --app coworkia-agent | grep POSTGRES
-
-# Mailer:
-heroku logs --tail --app coworkia-agent | grep MAILER
-
-# Circuit breakers:
-heroku logs --tail --app coworkia-agent | grep "Circuit Breaker"
-```
-
-## Restart y Maintenance
-
-### Restart App
-```bash
-# Restart completo (reinicia todos los dynos):
+# Reinicia todos los dynos (web + worker)
 heroku restart --app coworkia-agent
+```
 
-# Ver status:
+**Cuándo usar**:
+- App no responde (timeout)
+- Memory leak sospechoso
+- Cambios de variables de entorno
+
+### Restart Solo Web Dyno
+```bash
+heroku restart web --app coworkia-agent
+```
+
+### Ver Status
+```bash
+# Estado de dynos
 heroku ps --app coworkia-agent
 
-# Output:
-# web.1: up 2026/03/19 10:45:00 (~ 5m ago)
+# Output ejemplo:
+# === web (Professional): node index.js (1)
+# web.1: up 2026/03/21 10:00:00 -0500 (~ 45m ago)
 ```
 
-### Cuando Hacer Restart
-- App no responde (timeout en requests)
-- Memory leak sospechoso
-- Después de cambiar variables de entorno
-- Circuit breaker stuck
-- Websockets/connections colgadas
+## 🔑 VARIABLES DE ENTORNO
 
-### Maintenance Mode
+### Ver Todas
 ```bash
-# Activar (muestra página de mantenimiento):
-heroku maintenance:on --app coworkia-agent
-
-# Hacer cambios/fixes...
-
-# Desactivar:
-heroku maintenance:off --app coworkia-agent
-```
-
-## Variables de Entorno
-
-### Ver Variables
-```bash
-# Todas:
 heroku config --app coworkia-agent
-
-# Variable específica:
-heroku config:get WASSENGER_TOKEN --app coworkia-agent
-heroku config:get DATABASE_URL --app coworkia-agent
 ```
 
-### Setear Variables
+### Ver Una Específica
 ```bash
-# Una variable:
-heroku config:set NODE_ENV=production --app coworkia-agent
+heroku config:get DATABASE_URL --app coworkia-agent
+heroku config:get OPENAI_API_KEY --app coworkia-agent
+```
 
-# Múltiples:
-heroku config:set \
-  MAILER_PASS=nuevo-password \
-  WASSENGER_TOKEN=nuevo-token \
-  --app coworkia-agent
+### Agregar/Actualizar
+```bash
+heroku config:set NUEVA_VARIABLE=valor --app coworkia-agent
+heroku config:set ADMIN_PHONE=+573XXXXXXXXX --app coworkia-agent
+```
 
-# IMPORTANTE: Setear variable reinicia la app automáticamente
+### Eliminar
+```bash
+heroku config:unset VARIABLE_VIEJA --app coworkia-agent
 ```
 
 ### Variables Críticas
 ```bash
-# WhatsApp:
-WASSENGER_TOKEN
-WASSENGER_DEVICE_ID
-WHATSAPP_BOT_NUMBER
-
-# OpenAI:
-OPENAI_API_KEY
-
-# Email:
-MAILER_USER
-MAILER_PASS
-
-# Database:
-DATABASE_URL          # Seteado automáticamente por Heroku Postgres
-
-# App:
-NODE_ENV=production
-PORT                  # Seteado automáticamente por Heroku
-ADMIN_PHONE
+DATABASE_URL          # PostgreSQL (auto-gestionada por Heroku)
+WASSENGER_TOKEN       # WhatsApp API
+WASSENGER_DEVICE      # Device ID de WhatsApp
+OPENAI_API_KEY        # GPT-4
+MAILER_USER           # Gmail para emails
+MAILER_PASS           # Gmail app password
+DIEGO_PERSONAL_PHONE  # Teléfono de Diego para notificaciones
+NODE_ENV              # production
 ```
 
-### Eliminar Variable
-```bash
-heroku config:unset VARIABLE_NAME --app coworkia-agent
-```
+## 💾 BASE DE DATOS
 
-## Database Access
-
-### PostgreSQL Connection
+### Conectar a PostgreSQL
 ```bash
-# Abrir psql directo:
+# Abrir psql
 heroku pg:psql --app coworkia-agent
 
-# Connection info:
-heroku pg:credentials:url --app coworkia-agent
+# Dentro de psql:
+\dt                   # Listar tablas
+\d membership_leads   # Ver estructura de tabla
+SELECT COUNT(*) FROM membership_leads;
 ```
 
-### Database Commands
+### Backup Manual
 ```bash
-# Ver info de DB:
-heroku pg:info --app coworkia-agent
-
-# Backups:
-heroku pg:backups --app coworkia-agent
-
-# Crear backup manual:
+# Descargar backup
 heroku pg:backups:capture --app coworkia-agent
-
-# Descargar último backup:
 heroku pg:backups:download --app coworkia-agent
 ```
 
-### Queries Directas
+### Ver Info de DB
 ```bash
-# Query simple:
-heroku pg:psql --app coworkia-agent --command "SELECT COUNT(*) FROM users;"
-
-# Query desde archivo:
-heroku pg:psql --app coworkia-agent < query.sql
+heroku pg:info --app coworkia-agent
 ```
 
-## Troubleshooting Común
+## 🔍 DEBUGGING COMMON ISSUES
 
-### 1. App Crashed (H10/H14 Error)
-
-**Síntoma**: App no responde, Heroku muestra error page
+### App Crasheando
+**Síntoma**: `heroku ps` muestra web dyno crashed
 
 **Debug**:
 ```bash
-# Ver crashes:
-heroku logs --tail --app coworkia-agent | grep "State changed"
+# Ver últimos logs de crash
+heroku logs --tail --app coworkia-agent | grep -i "error\|crash"
 
-# Buscar error inmediato antes del crash:
-heroku logs -n 500 --app coworkia-agent | grep -B 10 "crashed"
+# Ver estado detallado
+heroku ps --app coworkia-agent
 ```
 
-**Causas Comunes**:
-```
-- Process.exit() sin catch
-- Uncaught promise rejection
-- Memory limit exceeded (512 MB en Professional)
-- Port binding error
-```
+**Fixes comunes**:
+- Error de sintaxis → rollback y corregir
+- Variable faltante → `heroku config:set VARIABLE=valor`
+- Memory limit → escalar dyno (requiere plan pago)
 
-**Fix**:
-```bash
-# 1. Si es código nuevo, rollback:
-heroku rollback --app coworkia-agent
+### Build Failing
+**Síntoma**: `git push heroku main` falla
 
-# 2. Si es resource issue, upgrade dyno:
-heroku ps:scale web=1:professional-1x --app coworkia-agent
-
-# 3. Restart:
-heroku restart --app coworkia-agent
-```
-
-### 2. Build Failed
-
-**Síntoma**: `git push heroku main` falla durante build
+**Causas comunes**:
+- `package.json` con dependencia rota
+- Node version incompatible (ver `engines` en package.json)
+- Script de start incorrecto en `Procfile`
 
 **Debug**:
 ```bash
-# Ver error de build:
-heroku logs --tail --app coworkia-agent | grep "BUILD"
+# Ver output de build
+git push heroku main 2>&1 | tee build.log
+
+# Probar build local
+npm install
+npm start
 ```
 
-**Causas Comunes**:
-```
-- package.json inválido (JSON syntax error)
-- Dependencia no encontrada en npm
-- Node version incompatible
-- Build script falla
-```
+### Timeout en Requests
+**Síntoma**: Requests toman > 30s y fallan
+
+**Causas**:
+- OpenAI lento (GPT-4 puede tardar)
+- DB query pesada
+- Heroku Professional dyno (no duerme)
 
 **Fix**:
 ```bash
-# Verificar package.json localmente:
-npm install --production
+# Verificar health
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
 
-# Si funciona local, problema es Heroku específico
-# Verificar engines en package.json:
-{
-  "engines": {
-    "node": "20.x",
-    "npm": "10.x"
-  }
-}
+# Si persiste, revisar código:
+# - Agregar timeouts a OpenAI calls (30s máx)
+# - Optimizar queries SQL (usar índices)
+# - Implementar circuit breaker
 ```
 
-### 3. Slow Response / Timeout (H12)
+## 📋 CHECKLIST PRE-DEPLOY
 
-**Síntoma**: Requests tardan >30seg, timeout
+Antes de `git push heroku main`:
 
-**Debug**:
+- [ ] Tests passing localmente: `npm test`
+- [ ] Código compila: `npm start` (verificar 30s)
+- [ ] Variables de entorno nuevas agregadas en Heroku
+- [ ] Commit message descriptivo
+- [ ] Plan de rollback (saber versión anterior estable)
+
+## 📋 CHECKLIST POST-DEPLOY
+
+Después de deployment exitoso:
+
+- [ ] App responde: `curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health`
+- [ ] Logs sin errores: `heroku logs --tail --num 50`
+- [ ] Endpoints críticos OK:
+  - `/api/aluna/followup-stats`
+  - `/api/aluna/proformas`
+- [ ] Test manual con WhatsApp (enviar msg de prueba)
+- [ ] Dashboard funciona: abrir `/aluna-proformas.html`
+
+## 🚨 EMERGENCIAS
+
+### App Completamente Rota (Producción Down)
 ```bash
-# Ver requests lentos:
-heroku logs --tail --app coworkia-agent | grep "at=error code=H12"
+# 1. Rollback inmediato (no investigar aún)
+heroku rollback v[última versión estable] --app coworkia-agent
 
-# Ver duración de requests:
-heroku logs --tail --app coworkia-agent | grep "duration="
+# 2. Verificar app vuelve a funcionar
+curl https://coworkia-agent-e97d15dac56f.herokuapp.com/health
+
+# 3. Ahora sí, debuggear en local
+git checkout [branch del deploy roto]
+npm install
+npm start
+# → Ver logs de error y corregir
 ```
 
-**Causas Comunes**:
-```
-- OpenAI API lento (whisper largo)
-- Database query sin index
-- Circuit breaker abierto (retries)
-- Memory leak → GC pausas
-```
-
-**Fix**:
-```javascript
-// Aumentar timeouts en código:
-const TIMEOUT_MS = 25000; // < 30seg de Heroku
-
-// Agregar circuit breakers:
-dispatchHttpRequest({ timeoutMs: 8000, maxRetries: 2 })
-```
-
-### 4. Memory Leak (R14 Error)
-
-**Síntoma**: Dyno usa >512 MB RAM
-
-**Debug**:
+### Database Corrupta o Perdida
 ```bash
-# Ver uso de memoria:
-heroku logs --tail --app coworkia-agent | grep "source=web.1.*sample#memory"
+# 1. Verificar si DB está up
+heroku pg:info --app coworkia-agent
+
+# 2. Si está down, contactar soporte Heroku
+# 3. Si está up pero datos corruptos, restaurar último backup
+heroku pg:backups:restore --app coworkia-agent
 ```
 
-**Fix**:
+### Variables de Entorno Borradas Accidentalmente
 ```bash
-# Restart temporal:
-heroku restart --app coworkia-agent
+# 1. Revisar últimas releases (pueden tener valores)
+heroku releases --app coworkia-agent
 
-# Fix permanente: revisar código
-# Posibles causas:
-- Maps/Sets que crecen sin límite (processedMessages, sentMessages)
-- Listeners no removidos
-- Closures reteniendo objetos grandes
-```
+# 2. Restaurar desde .env local (si tienes)
+heroku config:set DATABASE_URL=[valor] OPENAI_API_KEY=[valor] --app coworkia-agent
 
-## Deployment Best Practices
-
-### 1. Deploy Incremental
-```
-❌ NO: Deploy 50 cambios a la vez
-✅ SÍ: Deploy 1 feature a la vez
-
-Razón: Fácil identificar qué causó un bug
-```
-
-### 2. Test en Localhost Primero
-```bash
-# Antes de push:
-npm run dev
-# Probar manualmente flows críticos
-# Aurora: reserva completa
-# Aluna: captura + proforma
-```
-
-### 3. Deploy en Horario de Bajo Tráfico
-```
-🌙 Mejor: 11 PM - 6 AM (Ecuador)
-🏢 Evitar: 9 AM - 6 PM (horas pico)
-```
-
-### 4. Monitor Post-Deploy (15 min)
-```bash
-# Después de deploy:
-heroku logs --tail --app coworkia-agent
-
-# Verificar:
-✓ No hay errores
-✓ Webhooks procesando
-✓ DB queries OK
-✓ APIs externas responden
-```
-
-### 5. Tag Releases
-```bash
-# Después de deploy exitoso:
-git tag -a v977 -m "feat: Dashboard Aluna + captura keywords"
-git push origin v977
-
-# Ver tags:
-git tag -l | tail -10
-```
-
-## CI/CD (Futuro - Opcional)
-
-### GitHub Actions (Recomendado)
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to Heroku
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "coworkia-agent"
-          heroku_email: ${{secrets.HEROKU_EMAIL}}
-```
-
-## Monitoring URLs
-
-```bash
-# Health check:
-https://coworkia-agent-e97d15dac56f.herokuapp.com/health
-
-# Metrics:
-https://coworkia-agent-e97d15dac56f.herokuapp.com/metrics
-
-# Dashboard Aurora:
-https://coworkia-agent-e97d15dac56f.herokuapp.com/aurora-reservas.html
-
-# Dashboard Aluna:
-https://coworkia-agent-e97d15dac56f.herokuapp.com/aluna-proformas.html
-```
-
-## Emergency Contacts
-
-```
-Heroku Support: https://help.heroku.com
-Status Page: https://status.heroku.com
-Billing: https://dashboard.heroku.com/account/billing
-Add-ons: https://dashboard.heroku.com/apps/coworkia-agent/resources
-```
-
-## Cost Monitor
-
-```bash
-# Ver costos actuales:
-heroku billing --app coworkia-agent
-
-# Breakdown:
-- Professional Dyno: $50/mes
-- Postgres Standard-0: $50/mes
-- Total: ~$100/mes + overages
+# 3. Si no tienes valores, regenerar tokens:
+# - Wassenger: https://wassenger.com/dashboard
+# - OpenAI: https://platform.openai.com/api-keys
+# - Gmail: App password en Google Account Settings
 ```

@@ -63,15 +63,51 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 - `.env` + Heroku: nueva var `BOT_PHONE=593994837117` (separada de `ADMIN_PHONE` que es el celular de Diego)
 - `ADMIN_PHONE` conservado para identificación de comandos Diego en wassenger.js
 
-### 🔵 Pendiente 22 Mar (próximas sesiones)
-- FASE 2 BLOQUE 1A: Aurora +1h post-reserva (cron + template)
-- FASE 2 BLOQUE 1B: Aurora D+7 re-booking (cron + template)
-- FASE 5: Adriana cotizaciones automáticas (BLOQUE 4A→4E) — solo VAZ primero
+### ✅ Completado 22 Mar 2026 (sesión tarde) — v1020 (df701a2) — chat backend
 
-### 🔄 En progreso — OTRO CHAT (front-end)
-- FASE 3: Dashboard Aurora rediseño visual
-- FASE 4: Templates HTML sistema centralizado + logos agentes
-- **PRÓXIMO**: Email templates — cambiar wa.me/59399 links para usar `BOT_PHONE` env var (ya corregido en backend, revisar si hay hardcodes adicionales en HTML templates del front)
+**FASE 2 BLOQUE 1A — Aurora +1h Post-Reserva** ✅
+- `auroraRepository.js` — `findReservationsForOneHourFollowup()` + columna `followup_1h_sent_at`
+- `aurora-followup-service.js` — `sendOneHourFollowup()`: WA + email (AURORA_CONFIRMATION template)
+- `index.js` — cron `*/15 * * * *` wired
+- 16 tests verdes ✅
+
+**FASE 2 BLOQUE 1B — Aurora D+7 Re-booking** ✅
+- `auroraRepository.js` — `findReservationsForRebookingReminder()` + columna `rebook_reminder_sent_at`
+- `aurora-followup-service.js` — `sendRebookingReminder()`: WA + email (AURORA_REBOOKING template)
+- `index.js` — cron `0 10 * * *` (10am Ecuador) wired
+
+**FASE 5 BLOQUE 4A — Adriana: Extracción Docs con Vision AI** ✅
+- `insurance-document-analysis.js` — 4 tipos: VEHICLE_REGISTRATION, ID_CARD, CAR_APPRAISAL, COMPETITOR_QUOTE
+- 31 tests de extracción verdes ✅
+- Deployado Heroku v1020 🟢
+
+### ✅ Completado 22 Mar 2026 (sesión tarde) — v1021 (9ebf29d) — chat frontend
+
+**FASE 3 BLOQUE 2A — Aurora Dashboard Rediseño** ✅
+- `aurora-reservas.html` — CSS turquesa #4ECDC4 (nav, botones, inputs, pills, KPI chips)
+- Header: logo Coworkia SVG + badge 🟢 ACTIVO
+- `aurora-dashboard.js` — 3 bug fixes: `rebook_reminder_sent_at` (col name), `#prospect-filters .pill` scoping, removed filter-service reset en resetFilters()
+
+**FASE 4 BLOQUE 3A — Email Template System** ✅
+- `email-template-system.js` — 5 nuevos builders: `buildAuroraConfirmationHTML`, `buildAuroraRebookingHTML`, `buildEnzoD1HTML`, `buildEnzoD3HTML`, `buildEnzoD7HTML`
+- Dispatcher actualizado: AURORA_CONFIRMATION, AURORA_REBOOKING, ENZO_D1/D3/D7, ALUNA_D1/D3, ADRIANA_COMPARISON
+
+**FASE 4 BLOQUE 3B — Logos y Assets** ✅
+- 8 SVGs en `/public/images/logos/`: coworkia, aurora, aluna, enzo, adriana, axel, paula, gabi
+- `adriana-quote-comparison.html` — template standalone HTML preview
+- Deployado Heroku v1021 🟢
+
+### 🔵 PENDIENTE — próximas sesiones
+
+**FASE 5 BLOQUE 4B** — chat backend
+- `src/data/insurance-rates.js` — tasas VAZ (solo VAZ, Mapfre la semana siguiente)
+- `src/servicios/adriana-quote-calculator.js` — `calculatePremium(vehicleData, personData, coverage, insurer)`
+- Tests con caso real (Hyundai Creta 2022)
+
+**FASE 5 BLOQUE 4D** — chat backend
+- `wassenger.js` handler Adriana — form conversacional: foto matrícula → foto cédula → cobertura → cotización
+- Tabla `adriana_quote_leads` en BD
+- Envío email cotización comparativa (usar `buildEmailTemplate('ADRIANA', 'COMPARISON', data)`)
 
 ---
 

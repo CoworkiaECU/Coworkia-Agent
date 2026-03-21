@@ -24,7 +24,9 @@ DESPUÉS → Mejoras de features (dashboard, notificaciones)
 
 ### ✅ FASE 1: SKILLS DE TROUBLESHOOTING (2.5h) - COMPLETADA ✅
 **Prioridad**: 🔴 CRÍTICO - Sin esto, Diego no puede debuggear fallos rápido  
-**Estado**: ✅ Completado por autopilot - 20 Mar 2026, ~14:30
+**Estado**: ✅ Completado por autopilot - 20 Mar 2026
+**Commit**: `9089568` - FASE 1: Skills troubleshooting (986 líneas)
+**Tiempo real**: ~25 min (estimado: 2.5h) ⚡
 
 #### BLOQUE 1A: aurora-troubleshooting.md (40 min) ✅
 **Objetivo**: Skill especializado para diagnosticar problemas de Aurora (reservas)
@@ -1280,10 +1282,13 @@ npm test -- aluna-integration
 
 ---
 
-### ✅ FASE 3: MEJORAS DE DASHBOARD (3h)
+### ✅ FASE 3: MEJORAS DE DASHBOARD (3h) - COMPLETADA ✅
 **Prioridad**: 🟡 IMPORTANTE - Mejora productividad de Diego
+**Estado**: ✅ Completado por autopilot - 21 Mar 2026
+**Commits**: a3c9f26 (Bloque 3A) + 12f15d5 (Bloque 3B)
+**Deploy**: Heroku v991 ✅
 
-#### BLOQUE 3A: Botones de Acción Manual (1.5h)
+#### BLOQUE 3A: Botones de Acción Manual (1.5h) ✅
 **Objetivo**: Enviar follow-ups manualmente desde dashboard (cuando automation falla o requiere toque personal)
 
 **Funcionalidad**:
@@ -1305,13 +1310,13 @@ npm test -- aluna-integration
 - `POST /api/aluna/send-d3-email`
 
 **Entregable**:
-- [ ] Botones en dashboard funcionales
-- [ ] Modal con preview de mensaje
-- [ ] Endpoints backend implementados
+- [x] Botones en dashboard funcionales ✅
+- [x] Modal con preview de mensaje ✅
+- [x] Endpoints backend implementados ✅
 
 ---
 
-#### BLOQUE 3B: Ventana de Creación de Campañas (1.5h)
+#### BLOQUE 3B: Ventana de Creación de Campañas (1.5h) ✅
 **Objetivo**: Permitir crear mensajes masivos desde dashboard (ej: "envía D+7 a todos los pending")
 
 **Funcionalidad**:
@@ -1335,9 +1340,9 @@ npm test -- aluna-integration
 - `src/database/postgres-adapter.js` - Tabla `campaigns`
 
 **Entregable**:
-- [ ] Modal de campaña funcional
-- [ ] Preview en tiempo real
-- [ ] Envío masivo funcionando
+- [x] Modal de campaña funcional ✅
+- [x] Preview en tiempo real ✅
+- [x] Envío masivo funcionando ✅
 
 ---
 

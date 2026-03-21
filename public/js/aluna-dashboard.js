@@ -538,27 +538,28 @@ function buildActionButtons(p) {
   
   const btnBaseStyle = 'padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px;';
   
+  // Usamos data-lead-id en lugar de pasar el objeto completo (evita problemas con comillas/caracteres especiales)
   return `
     <div style="display:flex;flex-wrap:wrap;gap:4px;min-width:180px;">
-      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d1-wa")' 
+      <button onclick="openFollowupModalById('${p.id}', 'd1-wa')" 
         style="${btnBaseStyle}${btnStyle(d1Sent)}" 
         ${d1Sent ? 'disabled' : ''} 
         title="${d1Sent ? 'D+1 WhatsApp ya enviado' : 'Enviar D+1 por WhatsApp'}">
         📱 D+1
       </button>
-      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d1-email")' 
+      <button onclick="openFollowupModalById('${p.id}', 'd1-email')" 
         style="${btnBaseStyle}${btnStyle(d1Sent)}" 
         ${d1Sent ? 'disabled' : ''} 
         title="${d1Sent ? 'D+1 Email ya enviado' : 'Enviar D+1 por Email'}">
         📧 D+1
       </button>
-      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d3-wa")' 
+      <button onclick="openFollowupModalById('${p.id}', 'd3-wa')" 
         style="${btnBaseStyle}${btnStyle(d3Sent)}" 
         ${d3Sent ? 'disabled' : ''} 
         title="${d3Sent ? 'D+3 WhatsApp ya enviado' : 'Enviar D+3 por WhatsApp (FOMO)'}">
         📱 D+3
       </button>
-      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d3-email")' 
+      <button onclick="openFollowupModalById('${p.id}', 'd3-email')" 
         style="${btnBaseStyle}${btnStyle(d3Sent)}" 
         ${d3Sent ? 'disabled' : ''} 
         title="${d3Sent ? 'D+3 Email ya enviado' : 'Enviar D+3 por Email (FOMO)'}">
@@ -568,7 +569,14 @@ function buildActionButtons(p) {
   `;
 }
 
-function openFollowupModal(leadData, type) {
+function openFollowupModalById(leadId, type) {
+  // Buscar lead en el array global
+  const leadData = allProformas.find(p => p.id === leadId);
+  if (!leadData) {
+    toast('⚠️ Error: Lead no encontrado');
+    return;
+  }
+  
   currentFollowupData = { ...leadData, type };
   
   const modal = document.getElementById('modal-followup');

@@ -48,6 +48,8 @@ function updateTabCounts(reservations) {
     const el = document.getElementById(`tc-${tab}`);
     if (el) el.textContent = count;
   }
+  const mainEl = document.getElementById('tc-main-reservas');
+  if (mainEl) mainEl.textContent = counts.all;
 }
 
 window.switchTab = function(tabName) {
@@ -57,6 +59,23 @@ window.switchTab = function(tabName) {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
   renderReservationsTable(allReservations);
+}
+
+// ── Main tab navigation (Reservas / Prospectos / Conversaciones) ──────────────
+let _conversationsLoaded = false;
+
+window.switchMainTab = function(name) {
+  document.querySelectorAll('.main-tab-content').forEach(el => { el.style.display = 'none'; });
+  const target = document.getElementById('main-tab-' + name);
+  if (target) target.style.display = 'block';
+  document.querySelectorAll('#main-tabs .tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.maintab === name);
+  });
+  localStorage.setItem('aurora_main_tab', name);
+  if (name === 'conversaciones' && !_conversationsLoaded) {
+    _conversationsLoaded = true;
+    loadConversations();
+  }
 }
 
 // Formateo de fecha
@@ -443,6 +462,8 @@ window.loadAbandoned = async function() {
     document.getElementById('kpi-prospects-hot').textContent    = data.stats.hot;
     document.getElementById('kpi-prospects-warm').textContent   = data.stats.warm;
     document.getElementById('kpi-prospects-total').textContent  = data.stats.total;
+    const mainProspEl = document.getElementById('tc-main-prospectos');
+    if (mainProspEl) mainProspEl.textContent = data.stats.total;
 
     _allProspects = data.data;
     _activeFilter = 'all';
@@ -781,18 +802,15 @@ try {
   document.getElementById('btn-close-thread')?.addEventListener('click', () => closeThread());
   document.getElementById('btn-fab-refresh')?.addEventListener('click', () => refreshAll());
 
-  // ── Quick Actions ─────────────────────────────────────────────────────────
-  document.getElementById('qa-refresh-all')?.addEventListener('click', () => refreshAll());
-  document.getElementById('qa-load-prospects')?.addEventListener('click', () => {
-    loadAbandoned();
-    document.getElementById('section-prospects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ── Main tabs ─────────────────────────────────────────────────────────────
+  document.getElementById('main-tabs')?.addEventListener('click', function(e) {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn || !btn.dataset.maintab) return;
+    switchMainTab(btn.dataset.maintab);
   });
-  document.getElementById('qa-copy-list')?.addEventListener('click', () => copyCampaignList());
-  document.getElementById('qa-conversations')?.addEventListener('click', () => {
-    loadConversations();
-    document.getElementById('section-conversations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-  document.getElementById('qa-campaign-wa')?.addEventListener('click', () => sendCampaignWA());
+
+  // ── Campaign D+7 button (tab reservas) ───────────────────────────────────
+  document.getElementById('btn-campaign-wa')?.addEventListener('click', () => sendCampaignWA());
 
   // ── Event delegation: pill filters (prospectos) ───────────────────────────
   document.getElementById('prospect-filters')?.addEventListener('click', function(e) {
@@ -826,15 +844,16 @@ try {
 
   console.log('[AURORA-DASH] Event listeners configurados');
 
-  // Restaurar tab activo desde localStorage
+  // Restaurar tabs desde localStorage
   const savedTab = localStorage.getItem('aurora_active_tab');
   if (savedTab && savedTab !== 'all') {
     _activeTab = savedTab;
     document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === savedTab);
     });
-    console.log('[AURORA-DASH] Tab restaurado desde localStorage:', savedTab);
   }
+  const savedMainTab = localStorage.getItem('aurora_main_tab') || 'reservas';
+  if (savedMainTab !== 'reservas') switchMainTab(savedMainTab);
 
   // Cargar al inicio
   console.log('[AURORA-DASH] Iniciando carga...');
@@ -845,12 +864,11 @@ try {
   // Auto-refresh stats cada 30s
   setInterval(loadStats, 30000);
 
-  // Prospectos: cargar al inicio + refresco cada 60s
+  // Prospectos: cargar al inicio + refresco cada 60s (alimenta el badge del tab)
   loadAbandoned();
   setInterval(loadAbandoned, 60000);
 
-  // Conversaciones al inicio
-  loadConversations();
+  // Conversaciones: se cargan la primera vez que se abre ese tab (lazy-load)
 
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {

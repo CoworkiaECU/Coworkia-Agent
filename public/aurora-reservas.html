@@ -408,198 +408,189 @@
     </div>
   </div>
 
-  <!-- ── Quick Actions ── -->
-  <div class="qa-bar">
-    <div class="qa-label">⚡ Acciones Rápidas</div>
-    <div class="qa-grid">
-      <button id="qa-refresh-all" class="qa-btn" data-tip="Recargar reservas, prospectos y conversaciones">
-        <span class="icon">🔄</span>Actualizar Todo
-      </button>
-      <button id="qa-load-prospects" class="qa-btn" data-tip="Cargar usuarios que no completaron reserva">
-        <span class="icon">🎯</span>Cargar Prospectos
-      </button>
-      <button id="qa-copy-list" class="qa-btn" data-tip="Copiar lista de prospectos para campaña WA">
-        <span class="icon">📋</span>Copiar Lista
-      </button>
-      <button id="qa-conversations" class="qa-btn" data-tip="Ver historial de todos los chats con Aurora">
-        <span class="icon">💬</span>Ver Conversaciones
-      </button>
-      <button id="qa-campaign-wa" class="qa-btn" data-tip="Enviar WA masivo a reservas completadas">
-        <span class="icon">📣</span>Campaña Completados
-      </button>
-    </div>
-  </div>
+  <!-- ── Main Tabs ── -->
+  <nav class="tab-nav" id="main-tabs" style="margin-bottom:0;">
+    <button class="tab-btn active" data-maintab="reservas" data-tip="Pipeline de reservas por estado y tipo de servicio">
+      📋 Reservas <span class="tab-count" id="tc-main-reservas"></span>
+    </button>
+    <button class="tab-btn" data-maintab="prospectos" data-tip="Usuarios que contactaron Aurora pero no completaron reserva">
+      🎯 Prospectos <span class="tab-count" id="tc-main-prospectos"></span>
+    </button>
+    <button class="tab-btn" data-maintab="conversaciones" data-tip="Historial completo de chats con Aurora">
+      💬 Conversaciones
+    </button>
+  </nav>
 
-  <!-- ── Reservas Pipeline ── -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Pipeline de Reservas</span>
-    </div>
+  <!-- ══════════════════════════════════════════
+       TAB: RESERVAS
+  ══════════════════════════════════════════ -->
+  <div id="main-tab-reservas" class="main-tab-content" style="padding-top:18px;">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Pipeline de Reservas</span>
+        <button id="btn-campaign-wa" class="btn btn-secondary btn-sm" data-tip="Copiar lista de completadas este mes para campaña D+7">📣 Campaña D+7</button>
+      </div>
 
-    <!-- Filters -->
-    <div style="padding:14px 20px;border-bottom:1px solid #334155;">
-      <div class="filters-row" style="margin-bottom:0;">
-        <div class="filter-group">
-          <label>Fecha</label>
-          <input type="date" id="filter-date">
+      <div style="padding:14px 20px;border-bottom:1px solid #334155;">
+        <div class="filters-row" style="margin-bottom:0;">
+          <div class="filter-group">
+            <label>Fecha</label>
+            <input type="date" id="filter-date">
+          </div>
+          <div class="filter-group">
+            <label>Buscar</label>
+            <input type="text" id="search" placeholder="Nombre, teléfono, ID…">
+          </div>
+          <button id="btn-reset-filters" class="btn btn-secondary btn-sm" style="margin-top:18px;" data-tip="Limpiar todos los filtros activos">Limpiar</button>
         </div>
-        <div class="filter-group">
-          <label>Buscar</label>
-          <input type="text" id="search" placeholder="Nombre, teléfono, ID…">
+      </div>
+
+      <nav class="tab-nav" style="padding:0 20px;margin-bottom:0;border-bottom:1px solid #334155;" id="pipeline-tabs">
+        <button class="tab-btn active" data-tab="all" data-tip="Ver todas las reservas sin filtro">Todas <span class="tab-count" id="tc-all"></span></button>
+        <button class="tab-btn" data-tab="confirmed" data-tip="Reservas confirmadas y próximas a realizarse">✅ Confirmadas <span class="tab-count" id="tc-confirmed"></span></button>
+        <button class="tab-btn" data-tab="pending" data-tip="Esperando confirmación o pago del cliente">⏳ Pendientes <span class="tab-count" id="tc-pending"></span></button>
+        <button class="tab-btn" data-tab="completed" data-tip="Reservas ya realizadas">🏁 Completadas <span class="tab-count" id="tc-completed"></span></button>
+        <button class="tab-btn" data-tab="followup" data-tip="Completadas en los últimos 30 días — candidatos para re-reserva">🔁 D+7 <span class="tab-count" id="tc-followup"></span></button>
+      </nav>
+
+      <div class="pill-row" id="service-filter-pills" style="padding:12px 20px 0;">
+        <button class="pill active" data-service="" data-tip="Todos los servicios">Todos</button>
+        <button class="pill" data-service="hotDesk" data-tip="Filtrar solo Hot Desk">🖥️ Hot Desk</button>
+        <button class="pill" data-service="meetingRoom" data-tip="Filtrar solo Sala de Reuniones">🏢 Sala Reuniones</button>
+      </div>
+
+      <div class="table-wrap">
+        <div id="loading-reservations" class="empty">
+          <div class="empty-icon">⏳</div>
+          <p>Cargando reservas…</p>
         </div>
-        <button id="btn-reset-filters" class="btn btn-secondary btn-sm" style="margin-top:18px;">Limpiar</button>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <nav class="tab-nav" style="padding:0 20px;margin-bottom:0;" id="pipeline-tabs">
-      <button class="tab-btn active" data-tab="all" data-tip="Ver todas las reservas">Todas <span class="tab-count" id="tc-all"></span></button>
-      <button class="tab-btn" data-tab="confirmed" data-tip="Reservas confirmadas y próximas">✅ Confirmadas <span class="tab-count" id="tc-confirmed"></span></button>
-      <button class="tab-btn" data-tab="pending" data-tip="Reservas esperando confirmación o pago">⏳ Pendientes <span class="tab-count" id="tc-pending"></span></button>
-      <button class="tab-btn" data-tab="completed" data-tip="Reservas ya realizadas">🏁 Completadas <span class="tab-count" id="tc-completed"></span></button>
-      <button class="tab-btn" data-tab="followup" data-tip="Clientes que completaron hace 7 días — oportunidad de re-reserva">🔁 Follow-ups D+7 <span class="tab-count" id="tc-followup"></span></button>
-    </nav>
-
-    <!-- Filter pills: tipo de servicio -->
-    <div class="pill-row" id="service-filter-pills" style="padding:12px 20px 0;">
-      <button class="pill active" data-service="">Todos</button>
-      <button class="pill" data-service="hotDesk">🖥️ Hot Desk</button>
-      <button class="pill" data-service="meetingRoom">🏢 Sala Reuniones</button>
-    </div>
-
-    <!-- Table -->
-    <div class="table-wrap">
-      <div id="loading-reservations" class="empty">
-        <div class="empty-icon">⏳</div>
-        <p>Cargando reservas…</p>
-      </div>
-      <div id="error-reservations" style="display:none;padding:16px;color:#f87171;font-size:13px;"></div>
-      <table id="reservations-table" style="display:none;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Servicio</th>
-            <th>Fecha</th>
-            <th>Horario</th>
-            <th>Monto</th>
-            <th>Estado</th>
-            <th>Pago</th>
-            <th>Creada</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-      <div id="empty-state-reservations" class="empty" style="display:none;">
-        <div class="empty-icon">📭</div>
-        <p>No hay reservas en esta categoría.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       INTELIGENCIA DE PROSPECTOS
-  ════════════════════════════════════════ -->
-  <div class="section" id="section-prospects">
-    <div class="section-header">
-      <div>
-        <div class="section-title">🎯 Inteligencia de Prospectos</div>
-        <div class="section-sub">Usuarios que interactuaron con Aurora pero no reservaron — ordenados por urgencia.</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm" data-tip="Copia lista de prospectos para campaña WA">📋 Copiar campaña</button>
-        <button id="btn-refresh-prospects" class="btn btn-primary btn-sm" data-tip="Recargar prospectos desde la base de datos">↺ Actualizar</button>
-      </div>
-    </div>
-
-    <!-- KPI chips -->
-    <div class="kpi-chips">
-      <div class="kpi-chip urgent">
-        <div class="kpi-lbl">🚨 Urgente</div>
-        <div class="kpi-num red" id="kpi-prospects-urgent">–</div>
-        <div class="kpi-sub">hot + 2+ días</div>
-      </div>
-      <div class="kpi-chip hot">
-        <div class="kpi-lbl">📞 Contactar</div>
-        <div class="kpi-num orange" id="kpi-prospects-hot">–</div>
-        <div class="kpi-sub">hot total</div>
-      </div>
-      <div class="kpi-chip warm">
-        <div class="kpi-lbl">👀 Monitorear</div>
-        <div class="kpi-num amber" id="kpi-prospects-warm">–</div>
-        <div class="kpi-sub">warm</div>
-      </div>
-      <div class="kpi-chip total">
-        <div class="kpi-lbl">📊 Total</div>
-        <div class="kpi-num teal" id="kpi-prospects-total">–</div>
-        <div class="kpi-sub">prospectos</div>
-      </div>
-    </div>
-
-    <!-- Pill filters -->
-    <div class="pill-row" id="prospect-filters">
-      <button class="pill active" data-filter="all">Todos</button>
-      <button class="pill" data-filter="urgent">🚨 Urgentes</button>
-      <button class="pill" data-filter="hot">🔥 Hot</button>
-      <button class="pill" data-filter="warm">🌡 Warm</button>
-      <button class="pill" data-filter="cold">❄️ Cold</button>
-    </div>
-
-    <!-- Grid -->
-    <div class="prospects-grid" id="prospects-grid"></div>
-    <div id="prospects-empty" style="display:none;" class="empty">
-      <div class="empty-icon">✅</div>
-      <p>¡Sin prospectos pendientes!</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       CONVERSACIONES
-  ════════════════════════════════════════ -->
-  <div class="section" id="section-conversations">
-    <div class="section-header">
-      <div>
-        <div class="section-title">💬 Conversaciones con usuarios</div>
-        <div class="section-sub">Todos los usuarios que han hablado con Aurora. Clic en "Ver hilo" para el mensaje completo.</div>
-      </div>
-      <button id="btn-refresh-conversations" class="btn btn-primary btn-sm" data-tip="Recargar historial de conversaciones">↺ Actualizar</button>
-    </div>
-
-    <div id="conv-loading" class="empty"><p>Cargando conversaciones…</p></div>
-    <div id="conv-empty" class="empty" style="display:none;">
-      <div class="empty-icon">💬</div>
-      <p>No hay conversaciones registradas aún.</p>
-    </div>
-    <div id="conv-list" style="display:none;">
-      <div style="overflow-x:auto;">
-        <table class="conv-table" style="width:100%;border-collapse:collapse;">
+        <div id="error-reservations" style="display:none;padding:16px;color:#f87171;font-size:13px;"></div>
+        <table id="reservations-table" style="display:none;">
           <thead>
             <tr>
-              <th>Usuario</th>
-              <th style="text-align:center;">Msgs</th>
-              <th>Último contacto</th>
-              <th>Primer contacto</th>
-              <th>Agentes</th>
-              <th>Temas</th>
-              <th>CRM</th>
-              <th>Acción</th>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Servicio</th>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Pago</th>
+              <th>Creada</th>
+              <th>Acciones</th>
             </tr>
           </thead>
-          <tbody id="conv-body"></tbody>
+          <tbody id="table-body"></tbody>
         </table>
+        <div id="empty-state-reservations" class="empty" style="display:none;">
+          <div class="empty-icon">📭</div>
+          <p>No hay reservas en esta categoría.</p>
+        </div>
       </div>
     </div>
+  </div><!-- /#main-tab-reservas -->
 
-    <!-- Thread panel -->
-    <div id="conv-thread" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h3 id="conv-thread-title" style="font-size:14px;color:#f1f5f9;font-weight:600;">Conversación</h3>
-        <button id="btn-close-thread" class="btn btn-secondary btn-sm" data-tip="Cerrar el hilo de conversación">✕ Cerrar</button>
+  <!-- ══════════════════════════════════════════
+       TAB: PROSPECTOS
+  ══════════════════════════════════════════ -->
+  <div id="main-tab-prospectos" class="main-tab-content" style="display:none;padding-top:18px;">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <span class="card-title">🎯 Inteligencia de Prospectos</span>
+          <div style="font-size:12px;color:#475569;margin-top:3px;">Usuarios que interactuaron con Aurora pero no reservaron — ordenados por urgencia.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm" data-tip="Copia lista de prospectos para campaña WA">📋 Copiar campaña</button>
+          <button id="btn-refresh-prospects" class="btn btn-primary btn-sm" data-tip="Recargar prospectos desde la base de datos">↺ Actualizar</button>
+        </div>
       </div>
-      <div id="conv-thread-body" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px;" class="thread-bubble"></div>
+      <div style="padding:18px 20px;">
+        <div class="kpi-chips">
+          <div class="kpi-chip urgent">
+            <div class="kpi-lbl">🚨 Urgente</div>
+            <div class="kpi-num red" id="kpi-prospects-urgent">–</div>
+            <div class="kpi-sub">hot + 2+ días</div>
+          </div>
+          <div class="kpi-chip hot">
+            <div class="kpi-lbl">📞 Contactar</div>
+            <div class="kpi-num orange" id="kpi-prospects-hot">–</div>
+            <div class="kpi-sub">hot total</div>
+          </div>
+          <div class="kpi-chip warm">
+            <div class="kpi-lbl">👀 Monitorear</div>
+            <div class="kpi-num amber" id="kpi-prospects-warm">–</div>
+            <div class="kpi-sub">warm</div>
+          </div>
+          <div class="kpi-chip total">
+            <div class="kpi-lbl">📊 Total</div>
+            <div class="kpi-num teal" id="kpi-prospects-total">–</div>
+            <div class="kpi-sub">prospectos</div>
+          </div>
+        </div>
+        <div class="pill-row" id="prospect-filters">
+          <button class="pill active" data-filter="all" data-tip="Ver todos los prospectos">Todos</button>
+          <button class="pill" data-filter="urgent" data-tip="Hot + sin contacto hace 2+ días — prioridad máxima">🚨 Urgentes</button>
+          <button class="pill" data-filter="hot" data-tip="Interés alto, contactar hoy">🔥 Hot</button>
+          <button class="pill" data-filter="warm" data-tip="Interés moderado, darle seguimiento esta semana">🌡 Warm</button>
+          <button class="pill" data-filter="cold" data-tip="Bajo interés o tiempo sin actividad">❄️ Cold</button>
+        </div>
+        <div class="prospects-grid" id="prospects-grid"></div>
+        <div id="prospects-empty" style="display:none;" class="empty">
+          <div class="empty-icon">✅</div>
+          <p>¡Sin prospectos pendientes!</p>
+        </div>
+      </div>
     </div>
-  </div>
+  </div><!-- /#main-tab-prospectos -->
+
+  <!-- ══════════════════════════════════════════
+       TAB: CONVERSACIONES
+  ══════════════════════════════════════════ -->
+  <div id="main-tab-conversaciones" class="main-tab-content" style="display:none;padding-top:18px;">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <span class="card-title">💬 Conversaciones con usuarios</span>
+          <div style="font-size:12px;color:#475569;margin-top:3px;">Todos los usuarios que han hablado con Aurora. Clic en "Ver hilo" para el mensaje completo.</div>
+        </div>
+        <button id="btn-refresh-conversations" class="btn btn-primary btn-sm" data-tip="Recargar historial de conversaciones">↺ Actualizar</button>
+      </div>
+      <div style="padding:18px 20px;">
+        <div id="conv-loading" class="empty"><p>Cargando conversaciones…</p></div>
+        <div id="conv-empty" class="empty" style="display:none;">
+          <div class="empty-icon">💬</div>
+          <p>No hay conversaciones registradas aún.</p>
+        </div>
+        <div id="conv-list" style="display:none;">
+          <div style="overflow-x:auto;">
+            <table class="conv-table" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th style="text-align:center;">Msgs</th>
+                  <th>Último contacto</th>
+                  <th>Primer contacto</th>
+                  <th>Agentes</th>
+                  <th>Temas</th>
+                  <th>CRM</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="conv-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="conv-thread" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h3 id="conv-thread-title" style="font-size:14px;color:#f1f5f9;font-weight:600;">Conversación</h3>
+            <button id="btn-close-thread" class="btn btn-secondary btn-sm" data-tip="Cerrar el hilo de conversación">✕ Cerrar</button>
+          </div>
+          <div id="conv-thread-body" style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px;" class="thread-bubble"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /#main-tab-conversaciones -->
 
 </div><!-- .wrap -->
 

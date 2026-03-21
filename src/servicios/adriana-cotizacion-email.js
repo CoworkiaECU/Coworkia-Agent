@@ -13,22 +13,27 @@
 import { complete } from '../servicios-ia/openai.js';
 import { generateAdrianaEmailHTML } from './generic-email-templates.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { calculateVehiclePremium, COVERAGE_TYPES, VEHICLE_CATEGORIES, inferVehicleCategory } from './adriana-quote-calculator.js';
 
 const SEG_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
 
-// ─── TARIFAS (internas, no se muestran al cliente) ────────────────────────────
-const INSURANCE_RATE = 0.0327;   // 3.27% sobre valor comercial
-const IVA_RATE       = 0.15;     // 15% IVA Ecuador
-const EMISSION_COST  = 25;       // Costo emisión
-const OTHER_COSTS    = 15;       // Costos administrativos
-
-function calculatePremium(commercialValue) {
-  const base    = commercialValue * INSURANCE_RATE;
-  const iva     = base * IVA_RATE;
-  const annual  = Math.round(base + iva + EMISSION_COST + OTHER_COSTS);
-  const monthly = Math.round(annual / 10); // 10 cuotas
-  return { annual, monthly };
+// ─── CÁLCULO DE PRIMA (delegado al calculador VAZ con tarifas por antigüedad) ─
+function calculatePremium(commercialValue, vehicleYear) {
+  const category = inferVehicleCategory('');
+  const result = calculateVehiclePremium({
+    commercialValue,
+    vehicleYear: vehicleYear || (new Date().getFullYear() - 2),
+    vehicleCategory: category,
+    coverage: COVERAGE_TYPES.STANDARD
+  });
+  if (result.success) {
+    return { annual: result.annual_total, monthly: result.monthly_installment };
+  }
+  // Fallback: tarifa plana 3.27% + IVA 15% + costos fijos
+  const base   = commercialValue * 0.0327;
+  const annual = Math.round(base * 1.15 + 40);
+  return { annual, monthly: Math.round(annual / 10) };
 }
 
 // ─── DETECCIÓN ────────────────────────────────────────────────────────────────
@@ -105,7 +110,7 @@ export async function sendAdrianaCotizacion(mensajeCompleto, { quoteCode = '' } 
 
   console.log(`[ADRIANA-COTI] 📧 Enviando cotización → ${datos.vehicleBrand} ${datos.vehicleModel} (${datos.email})`);
 
-  const premium  = calculatePremium(datos.commercialValue || 40000);
+  const premium  = calculatePremium(datos.commercialValue || 40000, datos.vehicleYear);
   const html     = generateAdrianaEmailHTML({ ...datos, quoteCode, quotedPremium: premium.annual, quotedMonthly: premium.monthly, waNumber: ADMIN_WA }, { type: 'quote' });
   const codeLabel = quoteCode ? `${quoteCode} — ` : '';
   const subject  = `Cotización 🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | Adriana - SegPopular`;

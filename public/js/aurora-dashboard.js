@@ -52,10 +52,10 @@ function updateTabCounts(reservations) {
 
 function switchTab(tabName) {
   _activeTab = tabName;
+  localStorage.setItem('aurora_active_tab', tabName);
   document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
-  // Re-render with current allReservations using new tab
   renderReservationsTable(allReservations);
 }
 
@@ -671,6 +671,7 @@ function refreshAll() {
 }
 
 // Event listeners
+document.addEventListener('DOMContentLoaded', function() {
 try {
   console.log('[AURORA-DASH] Configurando event listeners...');
 
@@ -736,6 +737,16 @@ try {
 
   console.log('[AURORA-DASH] Event listeners configurados');
 
+  // Restaurar tab activo desde localStorage
+  const savedTab = localStorage.getItem('aurora_active_tab');
+  if (savedTab && savedTab !== 'all') {
+    _activeTab = savedTab;
+    document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === savedTab);
+    });
+    console.log('[AURORA-DASH] Tab restaurado desde localStorage:', savedTab);
+  }
+
   // Cargar al inicio
   console.log('[AURORA-DASH] Iniciando carga...');
   loadReservations().catch(err => {
@@ -757,3 +768,4 @@ try {
   console.error('[AURORA-DASH] ❌ Error en inicialización:', error);
   alert('Error inicializando dashboard: ' + error.message);
 }
+}); // DOMContentLoaded

@@ -942,6 +942,7 @@ router.post('/send-d1-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
+      cc: 'coworkia.ec@gmail.com',
       subject: '📋 Seguimiento - Tu membresía en Coworkia',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -957,7 +958,7 @@ router.post('/send-d1-email', async (req, res) => {
       `
     });
 
-    console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email}`);
+    console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
 
     // Actualizar BD
     const updateQuery = `
@@ -1058,6 +1059,7 @@ router.post('/send-d3-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
+      cc: 'coworkia.ec@gmail.com',
       subject: '🔥 Últimas disponibilidades - Coworkia',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -1073,7 +1075,7 @@ router.post('/send-d3-email', async (req, res) => {
       `
     });
 
-    console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email}`);
+    console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
 
     // Actualizar BD
     const updateQuery = `

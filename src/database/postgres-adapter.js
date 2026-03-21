@@ -1025,6 +1025,23 @@ class PostgresAdapter {
         END $$;
       `);
 
+      // Migration: Aurora follow-up +1h post-reserva
+      await client.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'reservations' AND column_name = 'followup_1h_sent_at'
+          ) THEN
+            ALTER TABLE reservations ADD COLUMN followup_1h_sent_at TIMESTAMP;
+          END IF;
+        END $$;
+      `);
+
+      // Migration: Enzo follow-up columns en marketing_leads
+      await client.query(`ALTER TABLE marketing_leads ADD COLUMN IF NOT EXISTS followup_d1_sent_at TIMESTAMP`).catch(() => {});
+      await client.query(`ALTER TABLE marketing_leads ADD COLUMN IF NOT EXISTS followup_d3_sent_at TIMESTAMP`).catch(() => {});
+      await client.query(`ALTER TABLE marketing_leads ADD COLUMN IF NOT EXISTS followup_d7_sent_at TIMESTAMP`).catch(() => {});
+
       await client.query(` -- resume index block placeholder
         
         -- Índices para tablas de pagos

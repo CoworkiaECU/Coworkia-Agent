@@ -168,3 +168,64 @@ export async function clearPendingConfirmation(userId) {
 
   console.log(`[AURORA-REPO] 🗑️ Confirmación pendiente eliminada: ${userId}`);
 }
+
+/**
+ * 🔔 Follow-up +1h: Reservas confirmadas hace ~1h sin followup enviado
+ */
+export async function findReservationsForOneHourFollowup() {
+  await databaseService.ensureInitialized();
+
+  return await databaseService.all(`
+    SELECT id, user_phone, service_type, date, start_time, end_time,
+           total_price, was_free, guest_count, confirmed_at
+    FROM reservations
+    WHERE status = 'confirmed'
+      AND followup_1h_sent_at IS NULL
+      AND confirmed_at IS NOT NULL
+      AND confirmed_at <= NOW() - INTERVAL '1 hour'
+      AND confirmed_at >= NOW() - INTERVAL '4 hours'
+    ORDER BY confirmed_at ASC
+    LIMIT 50
+  `);
+}
+
+/**
+ * ✅ Marcar followup 1h como enviado
+ */
+export async function markFollowup1hSent(reservationId) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE reservations SET followup_1h_sent_at = NOW() WHERE id = $1`,
+    [reservationId]
+  );
+}
+
+/**
+ * 🔁 Re-booking D+7: Reservas completadas hace 7 días sin recordatorio enviado
+ */
+export async function findReservationsForRebookingReminder() {
+  await databaseService.ensureInitialized();
+
+  return await databaseService.all(`
+    SELECT id, user_phone, service_type, date, start_time, end_time,
+           total_price, was_free, guest_count, confirmed_at
+    FROM reservations
+    WHERE status = 'completed'
+      AND rebook_reminder_sent_at IS NULL
+      AND confirmed_at IS NOT NULL
+      AND DATE(confirmed_at) = CURRENT_DATE - INTERVAL '7 days'
+    ORDER BY confirmed_at ASC
+    LIMIT 50
+  `);
+}
+
+/**
+ * ✅ Marcar rebook reminder como enviado
+ */
+export async function markRebookReminderSent(reservationId) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE reservations SET rebook_reminder_sent_at = NOW() WHERE id = $1`,
+    [reservationId]
+  );
+}

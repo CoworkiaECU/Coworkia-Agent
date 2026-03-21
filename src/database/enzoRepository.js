@@ -130,5 +130,81 @@ export default {
   saveMarketingProposal,
   getMarketingLeadsStats,
   getMarketingLeadsByType,
-  getUrgentMarketingLeads
+  getUrgentMarketingLeads,
+  findLeadsForEnzoD1Followup,
+  findLeadsForEnzoD3Followup,
+  findLeadsForEnzoD7Followup,
+  markEnzoFollowupSent
 };
+
+/**
+ * 📅 D+1 (~24h): Leads con propuesta enviada hace ~24h sin followup D+1
+ */
+export async function findLeadsForEnzoD1Followup() {
+  await databaseService.ensureInitialized();
+  return await databaseService.all(`
+    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+           project_code, proposal_sent_at
+    FROM marketing_leads
+    WHERE status IN ('proposal_sent', 'negotiating')
+      AND followup_d1_sent_at IS NULL
+      AND proposal_sent_at IS NOT NULL
+      AND proposal_sent_at <= NOW() - INTERVAL '24 hours'
+      AND proposal_sent_at >= NOW() - INTERVAL '72 hours'
+    ORDER BY proposal_sent_at ASC
+    LIMIT 30
+  `);
+}
+
+/**
+ * 📅 D+3 (~72h): Leads con propuesta que no respondieron a D+1
+ */
+export async function findLeadsForEnzoD3Followup() {
+  await databaseService.ensureInitialized();
+  return await databaseService.all(`
+    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+           project_code, proposal_sent_at
+    FROM marketing_leads
+    WHERE status IN ('proposal_sent', 'negotiating')
+      AND followup_d1_sent_at IS NOT NULL
+      AND followup_d3_sent_at IS NULL
+      AND proposal_sent_at IS NOT NULL
+      AND proposal_sent_at <= NOW() - INTERVAL '72 hours'
+      AND proposal_sent_at >= NOW() - INTERVAL '168 hours'
+    ORDER BY proposal_sent_at ASC
+    LIMIT 30
+  `);
+}
+
+/**
+ * 📅 D+7 (7 días): Último intento — leads que no respondieron a D+3
+ */
+export async function findLeadsForEnzoD7Followup() {
+  await databaseService.ensureInitialized();
+  return await databaseService.all(`
+    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+           project_code, proposal_sent_at
+    FROM marketing_leads
+    WHERE status IN ('proposal_sent', 'negotiating')
+      AND followup_d3_sent_at IS NOT NULL
+      AND followup_d7_sent_at IS NULL
+      AND proposal_sent_at IS NOT NULL
+      AND DATE(proposal_sent_at) = CURRENT_DATE - INTERVAL '7 days'
+    ORDER BY proposal_sent_at ASC
+    LIMIT 30
+  `);
+}
+
+/**
+ * ✅ Marcar followup Enzo como enviado
+ * @param {string} leadId
+ * @param {'d1'|'d3'|'d7'} day
+ */
+export async function markEnzoFollowupSent(leadId, day) {
+  await databaseService.ensureInitialized();
+  const col = `followup_${day}_sent_at`;
+  await databaseService.run(
+    `UPDATE marketing_leads SET ${col} = NOW() WHERE id = $1`,
+    [leadId]
+  );
+}

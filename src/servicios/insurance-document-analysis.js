@@ -28,7 +28,11 @@ export const DOCUMENT_TYPES = {
   RENEWAL: 'renewal',            // Renovación
   APPLICATION: 'application',     // Solicitud/formulario
   ENDORSEMENT: 'endorsement',    // Endoso/modificación
-  GENERAL: 'general'             // Documento general
+  GENERAL: 'general',            // Documento general
+  // --- Vehículos (cotización automática) ---
+  VEHICLE_REGISTRATION: 'vehicle_registration',  // Matrícula del vehículo
+  ID_CARD: 'id_card',                            // Cédula de identidad
+  CAR_APPRAISAL: 'car_appraisal'                 // Avalúo del vehículo
 };
 
 /**
@@ -57,6 +61,16 @@ export function detectDocumentType(userMessage = '', fileType = '') {
   }
   if (msg.match(/endoso|modificación|modificacion|cambio|actualización/)) {
     return DOCUMENT_TYPES.ENDORSEMENT;
+  }
+  // --- Vehículos ---
+  if (msg.match(/matrícula|matricula|vehicle registration|título de propiedad|placa/)) {
+    return DOCUMENT_TYPES.VEHICLE_REGISTRATION;
+  }
+  if (msg.match(/cédula|cedula|id card|identidad|dni/)) {
+    return DOCUMENT_TYPES.ID_CARD;
+  }
+  if (msg.match(/avalúo|avaluo|appraisal|tasación|valorización vehicular/)) {
+    return DOCUMENT_TYPES.CAR_APPRAISAL;
   }
   
   return DOCUMENT_TYPES.GENERAL;
@@ -337,6 +351,141 @@ TONO: Verificador, preciso, preventivo
 FORMATO: Antes/Después del endoso
 LONGITUD: 200-300 palabras`,
 
+    [DOCUMENT_TYPES.VEHICLE_REGISTRATION]: `${baseIntro}
+
+🚗 EXTRACCIÓN DE DATOS DE MATRÍCULA VEHICULAR:
+
+Extrae TODOS los datos del vehículo de esta matrícula ecuatoriana:
+
+1. **DATOS DEL VEHÍCULO**:
+   - Placa (exacta, ej: ABC-1234)
+   - Marca
+   - Modelo
+   - Año del modelo
+   - Color
+   - Tipo de vehículo (sedan, camioneta, SUV, etc.)
+   - Número de chasis/VIN
+   - Número de motor
+   - Cilindraje
+   - Número de puertas
+   - Número de asientos/pasajeros
+
+2. **DATOS DEL PROPIETARIO**:
+   - Nombre completo
+   - Cédula o RUC
+
+3. **VIGENCIA**:
+   - Fecha de vencimiento de la matrícula
+   - Año al que corresponde la matrícula
+
+4. **ESTADO**:
+   - ✅ Datos completos para cotizar
+   - ⚠️ Campos ilegibles o faltantes
+   - 📋 Datos aún necesarios
+
+FORMATO DE RESPUESTA: JSON estructurado + resumen en texto.
+LONGITUD: Conciso y preciso, priorizar exactitud de datos.
+
+JSON_OUTPUT:
+${'```'}json
+{
+  "plate": "",
+  "brand": "",
+  "model": "",
+  "year": null,
+  "color": "",
+  "type": "",
+  "vin": "",
+  "engine_number": "",
+  "cc": null,
+  "doors": null,
+  "seats": null,
+  "owner_name": "",
+  "owner_id": "",
+  "expiry_date": ""
+}
+${'```'}`,
+
+    [DOCUMENT_TYPES.ID_CARD]: `${baseIntro}
+
+🪪 EXTRACCIÓN DE DATOS DE CÉDULA DE IDENTIDAD ECUATORIANA:
+
+Extrae los datos del asegurado de esta cédula:
+
+1. **DATOS PERSONALES**:
+   - Número de cédula (10 dígitos exactos)
+   - Nombres (primer y segundo nombre)
+   - Apellidos (primer y segundo apellido)
+   - Fecha de nacimiento (DD/MM/YYYY)
+   - Sexo (M/F)
+   - Nacionalidad
+
+2. **CÁLCULO PARA SEGUROS**:
+   - Edad actual (basado en fecha de nacimiento)
+   - Rango de edad para tarifas
+
+3. **ESTADO**:
+   - ✅ Cédula legible y completa
+   - ⚠️ Campos ilegibles o borrosos
+
+FORMATO DE RESPUESTA: JSON estructurado + confirmación en texto.
+
+JSON_OUTPUT:
+${'```'}json
+{
+  "cedula": "",
+  "first_name": "",
+  "last_name": "",
+  "birth_date": "",
+  "age": null,
+  "gender": "",
+  "nationality": ""
+}
+${'```'}`,
+
+    [DOCUMENT_TYPES.CAR_APPRAISAL]: `${baseIntro}
+
+📊 EXTRACCIÓN DE DATOS DE AVALÚO VEHICULAR:
+
+Extrae los datos del avalúo para determinar suma asegurada:
+
+1. **DATOS DEL VEHÍCULO**:
+   - Placa
+   - Marca / Modelo / Año
+   - Estado general (excelente/bueno/regular)
+
+2. **VALORES DEL AVALÚO**:
+   - Valor comercial (mercado actual en USD)
+   - Valor en libros (contable)
+   - Valor de reposición (nuevo)
+   - Depreciación acumulada (%)
+   - Fecha del avalúo
+   - Empresa/perito que realizó el avalúo
+
+3. **RECOMENDACIÓN PARA SEGURO**:
+   - Suma asegurada recomendada (usar valor comercial)
+   - ¿El avalúo está vigente? (máx 6 meses aceptable)
+   - ⚠️ Alertas si el valor parece subvaluado o sobre-valuado
+
+FORMATO: JSON + análisis profesional en texto.
+
+JSON_OUTPUT:
+${'```'}json
+{
+  "plate": "",
+  "brand": "",
+  "model": "",
+  "year": null,
+  "commercial_value": null,
+  "book_value": null,
+  "replacement_value": null,
+  "depreciation_pct": null,
+  "appraisal_date": "",
+  "appraiser": "",
+  "recommended_sum": null
+}
+${'```'}`,
+
     [DOCUMENT_TYPES.GENERAL]: `${baseIntro}
 
 🔍 ANÁLISIS GENERAL DE DOCUMENTO DE SEGUROS:
@@ -377,8 +526,11 @@ LONGITUD: 250-350 palabras`
     prompt += `\n\n📝 CONTEXTO ADICIONAL DEL USUARIO:\n"${userContext}"\n\nConsidera este contexto en tu análisis.`;
   }
   
-  // Recordatorio de mercado ecuatoriano
-  prompt += `\n\n🇪🇨 CONTEXTO ECUADOR:\nAseguradoras principales: BMI, Equinoccial, AIG, Chubb, Seguros Sucre, QBE, Liberty, AIG, Mapfre.\nSegpopular: Broker con 17 años experiencia, 32 licencias, puesto 77 Pichincha.`;
+  // Recordatorio de mercado ecuatoriano (no aplica para cédula/matrícula — son solo extracción)
+  const extractionTypes = [DOCUMENT_TYPES.VEHICLE_REGISTRATION, DOCUMENT_TYPES.ID_CARD, DOCUMENT_TYPES.CAR_APPRAISAL];
+  if (!extractionTypes.includes(documentType)) {
+    prompt += `\n\n🇪🇨 CONTEXTO ECUADOR:\nAseguradoras principales: BMI, Equinoccial, AIG, Chubb, Seguros Sucre, QBE, Liberty, AIG, Mapfre.\nSegpopular: Broker con 17 años experiencia, 32 licencias, puesto 77 Pichincha.`;
+  }
   
   return prompt;
 }
@@ -504,7 +656,43 @@ export function extractClaimData(analysis) {
 }
 
 /**
- * 📊 Calcular score de calidad del documento (0-100)
+ * � Extraer datos vehiculares de matrícula/avalúo (FASE 5A)
+ * Intenta parsear el JSON que Vision AI devuelve en su respuesta
+ */
+export function extractVehicleData(analysis) {
+  // Intentar extraer JSON del bloque de código en la respuesta
+  const jsonMatch = analysis.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
+  if (jsonMatch) {
+    try {
+      return { success: true, data: JSON.parse(jsonMatch[1]) };
+    } catch (_) {
+      // fallthrough a extracción regex
+    }
+  }
+
+  // Extracción regex de respaldo
+  const data = {};
+
+  const plateMatch = analysis.match(/placa[:\s]+([A-Z]{3}-?\d{4})/i);
+  if (plateMatch) data.plate = plateMatch[1];
+
+  const brandMatch = analysis.match(/marca[:\s]+([A-Za-zá-ú\s]+)/i);
+  if (brandMatch) data.brand = brandMatch[1].trim();
+
+  const yearMatch = analysis.match(/año[:\s]+(20\d{2}|19\d{2})/i);
+  if (yearMatch) data.year = parseInt(yearMatch[1]);
+
+  const valueMatch = analysis.match(/valor comercial[:\s]+\$?\s*([\d,.]+)/i);
+  if (valueMatch) data.commercial_value = parseFloat(valueMatch[1].replace(',', ''));
+
+  const cedulaMatch = analysis.match(/c[eé]dula[:\s]+(\d{10})/i);
+  if (cedulaMatch) data.cedula = cedulaMatch[1];
+
+  return { success: Object.keys(data).length > 0, data };
+}
+
+/**
+ * �📊 Calcular score de calidad del documento (0-100)
  */
 export function calculateDocumentQualityScore(analysis) {
   let score = 50; // Base
@@ -530,6 +718,7 @@ export default {
   buildInsurancePrompt,
   extractPolicyData,
   extractClaimData,
+  extractVehicleData,
   calculateDocumentQualityScore,
   DOCUMENT_TYPES
 };

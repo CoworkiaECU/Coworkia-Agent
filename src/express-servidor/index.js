@@ -25,7 +25,8 @@ import { initScheduler, stopScheduler, getSchedulerStatus } from '../servicios/c
 
 // � Aluna Follow-up Automation
 import { startFollowupCronJobs } from '../servicios/aluna-followup-cron.js';
-
+// 🔔 Aurora + Enzo Follow-up Automation
+import { startAuroraEnzoCronJobs } from '../servicios/aurora-enzo-followup-cron.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
@@ -240,6 +241,12 @@ async function startServer() {
     console.log('📧 Iniciando follow-ups automatizados de Aluna...');
     startFollowupCronJobs();
     console.log('✅ Aluna follow-ups activos (D+1: 10am, D+3: 11am Ecuador)');
+
+    // Iniciar follow-ups Aurora + Enzo
+    console.log('🔔 Iniciando follow-ups Aurora + Enzo...');
+    startAuroraEnzoCronJobs();
+    console.log('✅ Aurora follow-ups activos (+1h: cada 15min, D+7: 10am)');
+    console.log('✅ Enzo follow-ups activos (D+1: 11am, D+3: 2pm, D+7: 10:30am)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

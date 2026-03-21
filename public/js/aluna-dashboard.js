@@ -493,6 +493,7 @@ async function loadProformas() {
           <td>${getAutomationStatus(p)}</td>
           <td class="text-muted">${getTimeSinceLastContact(p)}</td>
           <td>${getClientInteraction(p)}</td>
+          <td>${buildActionButtons(p)}</td>
         </tr>`).join('');
       tableEl.style.display = 'table';
     }
@@ -521,6 +522,210 @@ function resetFilters() {
   document.getElementById('search').value = '';
   currentFilters = { status: '', origin: '', search: '' };
   loadProformas();
+}
+
+/* ─── manual followup actions ────────────────────────────────── */
+let currentFollowupData = null;
+
+function buildActionButtons(p) {
+  const d1Sent = p.followup_24h_sent_at || p.automation_d1_sent;
+  const d3Sent = p.followup_3d_sent_at || p.automation_d3_sent;
+  
+  // Botón verde si NO enviado, gris si ya enviado
+  const btnStyle = (sent) => sent 
+    ? 'background:#1e293b;color:#64748b;border:1px solid #334155;opacity:0.6;cursor:not-allowed;' 
+    : 'background:#10b981;color:#fff;border:none;cursor:pointer;';
+  
+  const btnBaseStyle = 'padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px;';
+  
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;min-width:180px;">
+      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d1-wa")' 
+        style="${btnBaseStyle}${btnStyle(d1Sent)}" 
+        ${d1Sent ? 'disabled' : ''} 
+        title="${d1Sent ? 'D+1 WhatsApp ya enviado' : 'Enviar D+1 por WhatsApp'}">
+        📱 D+1
+      </button>
+      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d1-email")' 
+        style="${btnBaseStyle}${btnStyle(d1Sent)}" 
+        ${d1Sent ? 'disabled' : ''} 
+        title="${d1Sent ? 'D+1 Email ya enviado' : 'Enviar D+1 por Email'}">
+        📧 D+1
+      </button>
+      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d3-wa")' 
+        style="${btnBaseStyle}${btnStyle(d3Sent)}" 
+        ${d3Sent ? 'disabled' : ''} 
+        title="${d3Sent ? 'D+3 WhatsApp ya enviado' : 'Enviar D+3 por WhatsApp (FOMO)'}">
+        📱 D+3
+      </button>
+      <button onclick='openFollowupModal(${JSON.stringify(p)}, "d3-email")' 
+        style="${btnBaseStyle}${btnStyle(d3Sent)}" 
+        ${d3Sent ? 'disabled' : ''} 
+        title="${d3Sent ? 'D+3 Email ya enviado' : 'Enviar D+3 por Email (FOMO)'}">
+        📧 D+3
+      </button>
+    </div>
+  `;
+}
+
+function openFollowupModal(leadData, type) {
+  currentFollowupData = { ...leadData, type };
+  
+  const modal = document.getElementById('modal-followup');
+  const title = document.getElementById('followup-modal-title');
+  const leadName = document.getElementById('followup-lead-name');
+  const leadPlan = document.getElementById('followup-lead-plan');
+  const messageBox = document.getElementById('followup-message');
+  
+  // Títulos según tipo
+  const titles = {
+    'd1-wa': '📱 Enviar Follow-up D+1 por WhatsApp',
+    'd1-email': '📧 Enviar Follow-up D+1 por Email',
+    'd3-wa': '📱 Enviar Follow-up D+3 por WhatsApp (FOMO)',
+    'd3-email': '📧 Enviar Follow-up D+3 por Email (FOMO)'
+  };
+  
+  title.textContent = titles[type] || 'Enviar Follow-up';
+  leadName.textContent = leadData.client_name || 'Sin nombre';
+  leadPlan.textContent = `${leadData.membership_type || 'Plan no especificado'} • $${leadData.monthly_fee || 0}/mes`;
+  
+  // Templates de mensajes
+  const templates = {
+    'd1-wa': `Hola {{nombre}} 👋
+
+¿Cómo estás? Te escribo de Coworkia.
+
+Ayer charlamos sobre {{plan}} y quería asegurarme de que recibiste toda la información que necesitas 📋
+
+Aquí te dejo nuevamente tu proforma personalizada: [link]
+
+¿Tienes alguna duda? Estoy para ayudarte 😊
+
+¡Que tengas un gran día!`,
+    'd1-email': `Hola {{nombre}},
+
+Espero que estés muy bien.
+
+Te contacto desde Coworkia para hacer seguimiento a tu interés en {{plan}}.
+
+Adjunto encontrarás tu proforma personalizada con todos los detalles:
+- Precio mensual: {{mensualidad}}
+- Beneficios incluidos
+- Términos y condiciones
+
+¿Podemos agendar una visita a nuestras instalaciones esta semana?
+
+Quedo atento a tus comentarios.
+
+Saludos,
+Equipo Coworkia`,
+    'd3-wa': `{{nombre}}, últimas disponibilidades! 🔥
+
+Este mes tenemos una promoción especial:
+🎁 Primer mes con 20% de descuento
+
+Pero solo nos quedan 2 espacios y ya varios clientes interesados.
+
+¿Hablamos hoy? Te reservo uno antes de que se agoten 👀
+
+Responde "Sí" y coordinamos una visita para esta semana 📅`,
+    'd3-email': `Hola {{nombre}},
+
+**Últimas disponibilidades para {{plan}}**
+
+Te contacto porque nos quedan muy pocos espacios disponibles este mes y recuerdo tu interés.
+
+**Oferta limitada:**
+• 20% de descuento primer mes
+• Sin costo de inscripción
+• Válido solo esta semana
+
+Tenemos 2 clientes más interesados en los últimos espacios.
+
+¿Te gustaría agendar una visita hoy o mañana?
+
+Saludos,
+Equipo Coworkia`
+  };
+  
+  messageBox.value = templates[type] || 'Mensaje no disponible';
+  modal.style.display = 'flex';
+}
+
+function closeFollowupModal() {
+  document.getElementById('modal-followup').style.display = 'none';
+  currentFollowupData = null;
+}
+
+async function sendFollowupManual() {
+  if (!currentFollowupData) return;
+  
+  const message = document.getElementById('followup-message').value.trim();
+  if (!message) {
+    toast('⚠️ El mensaje no puede estar vacío');
+    return;
+  }
+  
+  const sendBtn = document.getElementById('btn-send-followup');
+  const loadingDiv = document.getElementById('followup-sending');
+  
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = '0.6';
+  loadingDiv.style.display = 'block';
+  
+  try {
+    // Reemplazar variables
+    let finalMessage = message
+      .replace(/\{\{nombre\}\}/g, currentFollowupData.client_name || 'Cliente')
+      .replace(/\{\{plan\}\}/g, currentFollowupData.membership_type || 'Plan')
+      .replace(/\{\{mensualidad\}\}/g, `$${currentFollowupData.monthly_fee || 0}`)
+      .replace(/\{\{email\}\}/g, currentFollowupData.email || '')
+      .replace(/\{\{phone\}\}/g, currentFollowupData.user_phone || '');
+    
+    // Determinar endpoint según tipo
+    const endpoints = {
+      'd1-wa': '/api/aluna/send-d1-whatsapp',
+      'd1-email': '/api/aluna/send-d1-email',
+      'd3-wa': '/api/aluna/send-d3-whatsapp',
+      'd3-email': '/api/aluna/send-d3-email'
+    };
+    
+    const endpoint = endpoints[currentFollowupData.type];
+    if (!endpoint) {
+      toast('❌ Tipo de follow-up no válido');
+      return;
+    }
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        leadId: currentFollowupData.id,
+        membershipCode: currentFollowupData.membership_code,
+        userPhone: currentFollowupData.user_phone,
+        email: currentFollowupData.email,
+        message: finalMessage
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success || result.ok) {
+      toast('✅ Follow-up enviado correctamente');
+      closeFollowupModal();
+      setTimeout(() => loadProformas(), 1000); // Recargar tabla
+    } else {
+      toast(`❌ Error: ${result.error || 'Desconocido'}`);
+    }
+    
+  } catch (error) {
+    console.error('[FOLLOWUP] Error:', error);
+    toast(`❌ Error de red: ${error.message}`);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+    loadingDiv.style.display = 'none';
+  }
 }
 
 /* ─── init ───────────────────────────────────────────────────── */

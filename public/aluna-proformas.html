@@ -483,6 +483,7 @@
               <th>Automatizaciones</th>
               <th>Último Contacto</th>
               <th>Interacción Cliente</th>
+              <th>Acciones Manuales</th>
             </tr>
           </thead>
           <tbody id="table-body"></tbody>
@@ -714,6 +715,56 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
         style="flex:1;background:#3b82f6;border:none;border-radius:8px;padding:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Registrar</button>
       <button onclick="closeProspectModal()"
         style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;font-size:14px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ENVIAR FOLLOW-UP MANUAL
+══════════════════════════════════════════ -->
+<div id="modal-followup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
+    <h2 id="followup-modal-title" style="color:#f1f5f9;font-size:18px;margin:0 0 16px 0;font-weight:600;">Enviar Follow-up Manual</h2>
+    
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
+      <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">📋 Lead:</div>
+      <div id="followup-lead-name" style="color:#f1f5f9;font-size:14px;font-weight:600;"></div>
+      <div id="followup-lead-plan" style="color:#64748b;font-size:13px;"></div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">
+        💬 Mensaje (editar antes de enviar):
+      </label>
+      <textarea id="followup-message" 
+        style="width:100%;min-height:200px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#f1f5f9;font-size:13px;font-family:monospace;resize:vertical;"
+        placeholder="El mensaje se cargará aquí..."></textarea>
+    </div>
+
+    <div style="background:#0c4a6e;border:1px solid #075985;border-radius:6px;padding:10px;margin-bottom:16px;">
+      <div style="color:#7dd3fc;font-size:12px;margin-bottom:4px;font-weight:600;">🔤 Variables disponibles:</div>
+      <div style="color:#bae6fd;font-size:11px;">
+        <code>{{nombre}}</code> → Nombre del cliente<br>
+        <code>{{plan}}</code> → Tipo de membresía<br>
+        <code>{{mensualidad}}</code> → Precio mensual<br>
+        <code>{{email}}</code> → Email del lead<br>
+        <code>{{phone}}</code> → Teléfono del lead
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button id="btn-send-followup" onclick="sendFollowupManual()"
+        style="flex:1;background:#10b981;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+        📤 Enviar Ahora
+      </button>
+      <button onclick="closeFollowupModal()"
+        style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">
+        Cancelar
+      </button>
+    </div>
+
+    <div id="followup-sending" style="display:none;margin-top:12px;text-align:center;color:#3b82f6;font-size:13px;">
+      <span>⏳ Enviando...</span>
     </div>
   </div>
 </div>

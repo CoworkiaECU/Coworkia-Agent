@@ -9,6 +9,8 @@
 
 import express from 'express';
 import databaseService from '../../database/database.js';
+import { enviarWhatsApp } from './wassenger.js';
+import { sendEmail } from '../../servicios/email.js';
 
 const router = express.Router();
 
@@ -857,6 +859,242 @@ router.get('/followup-stats', async (req, res) => {
     
   } catch (error) {
     console.error('[ALUNA-API] Error en followup-stats:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================================================
+// MANUAL FOLLOWUP ACTIONS
+// ============================================================================
+
+/**
+ * POST /api/aluna/send-d1-whatsapp
+ * Envía follow-up D+1 manualmente por WhatsApp
+ */
+router.post('/send-d1-whatsapp', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { leadId, membershipCode, userPhone, message } = req.body;
+
+    if (!leadId || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: leadId, message'
+      });
+    }
+
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+1 WhatsApp manual a ${userPhone}`);
+
+    // Enviar WhatsApp
+    if (userPhone) {
+      await enviarWhatsApp(userPhone, message);
+      console.log(`[ALUNA-FOLLOWUP] WhatsApp D+1 enviado a ${userPhone}`);
+    }
+
+    // Actualizar BD
+    const updateQuery = `
+      UPDATE membership_leads 
+      SET 
+        followup_24h_sent_at = datetime('now'),
+        automation_d1_sent = 1,
+        last_activity = datetime('now')
+      WHERE id = ?
+    `;
+    
+    await databaseService.run(updateQuery, [leadId]);
+
+    return res.json({
+      ok: true,
+      success: true,
+      message: 'Follow-up D+1 enviado por WhatsApp'
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-FOLLOWUP] Error en send-d1-whatsapp:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/aluna/send-d1-email
+ * Envía follow-up D+1 manualmente por Email
+ */
+router.post('/send-d1-email', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { leadId, email, message } = req.body;
+
+    if (!leadId || !message || !email) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: leadId, email, message'
+      });
+    }
+
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+1 Email manual a ${email}`);
+
+    // Enviar Email
+    await sendEmail({
+      to: email,
+      subject: '📋 Seguimiento - Tu membresía en Coworkia',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Coworkia</h2>
+          <div style="white-space: pre-wrap; line-height: 1.6;">
+            ${message.replace(/\n/g, '<br>')}
+          </div>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="font-size: 12px; color: #6b7280;">
+            Este email fue enviado desde el Dashboard de Aluna.
+          </p>
+        </div>
+      `
+    });
+
+    console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email}`);
+
+    // Actualizar BD
+    const updateQuery = `
+      UPDATE membership_leads 
+      SET 
+        followup_24h_sent_at = datetime('now'),
+        automation_d1_sent = 1,
+        last_activity = datetime('now')
+      WHERE id = ?
+    `;
+    
+    await databaseService.run(updateQuery, [leadId]);
+
+    return res.json({
+      ok: true,
+      success: true,
+      message: 'Follow-up D+1 enviado por Email'
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-FOLLOWUP] Error en send-d1-email:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/aluna/send-d3-whatsapp
+ * Envía follow-up D+3 (FOMO) manualmente por WhatsApp
+ */
+router.post('/send-d3-whatsapp', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { leadId, membershipCode, userPhone, message } = req.body;
+
+    if (!leadId || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: leadId, message'
+      });
+    }
+
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+3 WhatsApp manual (FOMO) a ${userPhone}`);
+
+    // Enviar WhatsApp
+    if (userPhone) {
+      await enviarWhatsApp(userPhone, message);
+      console.log(`[ALUNA-FOLLOWUP] WhatsApp D+3 enviado a ${userPhone}`);
+    }
+
+    // Actualizar BD
+    const updateQuery = `
+      UPDATE membership_leads 
+      SET 
+        followup_3d_sent_at = datetime('now'),
+        automation_d3_sent = 1,
+        last_activity = datetime('now')
+      WHERE id = ?
+    `;
+    
+    await databaseService.run(updateQuery, [leadId]);
+
+    return res.json({
+      ok: true,
+      success: true,
+      message: 'Follow-up D+3 (FOMO) enviado por WhatsApp'
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-FOLLOWUP] Error en send-d3-whatsapp:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/aluna/send-d3-email
+ * Envía follow-up D+3 (FOMO) manualmente por Email
+ */
+router.post('/send-d3-email', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { leadId, email, message } = req.body;
+
+    if (!leadId || !message || !email) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: leadId, email, message'
+      });
+    }
+
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+3 Email manual (FOMO) a ${email}`);
+
+    // Enviar Email
+    await sendEmail({
+      to: email,
+      subject: '🔥 Últimas disponibilidades - Coworkia',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #dc2626;">⚡ Oferta por tiempo limitado</h2>
+          <div style="white-space: pre-wrap; line-height: 1.6;">
+            ${message.replace(/\n/g, '<br>')}
+          </div>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="font-size: 12px; color: #6b7280;">
+            Este email fue enviado desde el Dashboard de Aluna.
+          </p>
+        </div>
+      `
+    });
+
+    console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email}`);
+
+    // Actualizar BD
+    const updateQuery = `
+      UPDATE membership_leads 
+      SET 
+        followup_3d_sent_at = datetime('now'),
+        automation_d3_sent = 1,
+        last_activity = datetime('now')
+      WHERE id = ?
+    `;
+    
+    await databaseService.run(updateQuery, [leadId]);
+
+    return res.json({
+      ok: true,
+      success: true,
+      message: 'Follow-up D+3 (FOMO) enviado por Email'
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-FOLLOWUP] Error en send-d3-email:', error);
     return res.status(500).json({
       ok: false,
       error: error.message

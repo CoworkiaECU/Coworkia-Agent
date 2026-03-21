@@ -1165,6 +1165,31 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_boss_quotes_quoted_at ON boss_quotes(quoted_at DESC);
       `);
 
+      // =================================================================== 
+      // TABLA: Campañas masivas de Aluna (campaigns)
+      // Permite crear y enviar mensajes personalizados a múltiples leads
+      // con filtros de audiencia (status, fecha, etc.)
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS campaigns (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          message_template TEXT NOT NULL,
+          target_filter TEXT NOT NULL,
+          channel TEXT DEFAULT 'whatsapp' CHECK (channel IN ('whatsapp', 'email')),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          sent_at TIMESTAMP,
+          sent_count INTEGER DEFAULT 0,
+          status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sending', 'sent', 'failed'))
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
+        CREATE INDEX IF NOT EXISTS idx_campaigns_created ON campaigns(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_campaigns_sent ON campaigns(sent_at DESC);
+      `);
+
       // Migration: fix membership_leads status CHECK constraint to include 'quoted' (safe, idempotent)
       await client.query(`
         DO $$ BEGIN

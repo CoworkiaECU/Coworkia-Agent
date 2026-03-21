@@ -436,6 +436,14 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Todas las proformas</span>
+        <button onclick="openCampaignModal()" 
+          style="background:#3b82f6;border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;"
+          onmouseover="this.style.background='#2563eb'" 
+          onmouseout="this.style.background='#3b82f6'">
+          <span style="font-size:16px;">+</span> Crear Campaña
+        </button>
+      </div>
+      <div style="padding:16px 20px;border-bottom:1px solid #334155;">
         <div class="filters-row" style="margin-bottom:0;">
           <div class="filter-group">
             <label>Estado</label>
@@ -765,6 +773,111 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 
     <div id="followup-sending" style="display:none;margin-top:12px;text-align:center;color:#3b82f6;font-size:13px;">
       <span>⏳ Enviando...</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: CREAR CAMPAÑA MASIVA
+══════════════════════════════════════════ -->
+<div id="modal-campaign" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;">
+    <h2 style="color:#f1f5f9;font-size:18px;margin:0 0 16px 0;font-weight:600;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:22px;">📢</span> Nueva Campaña Masiva
+    </h2>
+    
+    <div style="margin-bottom:16px;">
+      <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;font-weight:600;">
+        📋 Nombre de la campaña:
+      </label>
+      <input type="text" id="campaign-name" 
+        placeholder="Ej: Promoción 20% Primer Mes - Marzo 2026"
+        style="width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#f1f5f9;font-size:13px;">
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;font-weight:600;">
+        🎯 Filtro de audiencia:
+      </label>
+      <select id="campaign-filter" onchange="updateCampaignPreview()"
+        style="width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#f1f5f9;font-size:13px;">
+        <option value="all">Todos los leads</option>
+        <option value="pending">Solo "Pendientes"</option>
+        <option value="negotiating">Solo "Negociando"</option>
+        <option value="tour_scheduled">Solo "Tour Agendado"</option>
+        <option value="no_response">Sin respuesta (>3 días)</option>
+        <option value="d1_not_sent">D+1 NO enviados</option>
+        <option value="d3_not_sent">D+3 NO enviados</option>
+      </select>
+      <div id="campaign-preview-count" style="color:#3b82f6;font-size:12px;margin-top:6px;">
+        Calculando audiencia...
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;font-weight:600;">
+        📝 Mensaje de la campaña:
+      </label>
+      <textarea id="campaign-message" 
+        placeholder="Ejemplo:&#10;Hola {{nombre}} 👋&#10;&#10;Tenemos una oferta especial para {{plan}}:&#10;🎁 20% OFF primer mes&#10;💰 Solo {{mensualidad}} (precio regular)&#10;&#10;Válido solo esta semana.&#10;¿Agendamos una visita? 📅"
+        style="width:100%;min-height:180px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#f1f5f9;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+    </div>
+
+    <div style="background:#0c4a6e;border:1px solid #075985;border-radius:6px;padding:10px;margin-bottom:16px;">
+      <div style="color:#7dd3fc;font-size:12px;margin-bottom:4px;font-weight:600;">🔤 Variables disponibles:</div>
+      <div style="color:#bae6fd;font-size:11px;">
+        <code>{{nombre}}</code> → Nombre del cliente<br>
+        <code>{{plan}}</code> → Tipo de membresía<br>
+        <code>{{mensualidad}}</code> → Precio mensual<br>
+        <code>{{email}}</code> → Email del lead<br>
+        <code>{{phone}}</code> → Teléfono del lead
+      </div>
+    </div>
+
+    <div id="campaign-preview-box" style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;display:none;">
+      <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;font-weight:600;">👁️ Vista previa (primer lead):</div>
+      <div id="campaign-preview-message" style="color:#e2e8f0;font-size:12px;white-space:pre-wrap;background:#0f172a;padding:10px;border-radius:6px;border:1px solid #334155;">
+        —
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;font-weight:600;">
+        📤 Canal de envío:
+      </label>
+      <div style="display:flex;gap:8px;">
+        <button id="campaign-channel-wa" onclick="selectCampaignChannel('whatsapp')"
+          style="flex:1;background:#10b981;border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+          📱 WhatsApp
+        </button>
+        <button id="campaign-channel-email" onclick="selectCampaignChannel('email')"
+          style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;">
+          📧 Email
+        </button>
+      </div>
+    </div>
+
+    <div style="background:#422006;border:1px solid #78350f;border-radius:8px;padding:12px;margin-bottom:16px;">
+      <div style="color:#fbbf24;font-size:12px;">
+        ⚠️ <strong>Importante:</strong> Esta acción enviará el mensaje a <span id="campaign-final-count">—</span> leads.
+        Asegúrate de revisar el mensaje antes de enviar.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button id="btn-create-campaign" onclick="createAndSendCampaign()"
+        style="flex:1;background:#3b82f6;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+        🚀 Crear y Enviar Ahora
+      </button>
+      <button onclick="closeCampaignModal()"
+        style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">
+        Cancelar
+      </button>
+    </div>
+
+    <div id="campaign-sending" style="display:none;margin-top:12px;text-align:center;color:#3b82f6;font-size:13px;">
+      <span>⏳ Creando campaña y enviando mensajes...</span>
+      <div id="campaign-progress" style="margin-top:8px;font-size:12px;color:#64748b;"></div>
     </div>
   </div>
 </div>

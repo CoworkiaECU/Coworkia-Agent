@@ -1102,4 +1102,193 @@ router.post('/send-d3-email', async (req, res) => {
   }
 });
 
+// ============================================================================
+// CAMPAIGNS - Envío masivo de mensajes
+// ============================================================================
+
+/**
+ * GET /api/aluna/campaigns/preview
+ * Preview de audiencia para una campaña según filtro
+ */
+router.get('/campaigns/preview', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { filter } = req.query;
+
+    let query = 'SELECT * FROM membership_leads WHERE 1=1';
+    const conditions = [];
+    
+    // Aplicar filtros
+    if (filter === 'pending') {
+      conditions.push("status = 'pending'");
+    } else if (filter === 'negotiating') {
+      conditions.push("status = 'negotiating'");
+    } else if (filter === 'tour_scheduled') {
+      conditions.push("status = 'tour_scheduled'");
+    } else if (filter === 'no_response') {
+      conditions.push("client_response_at IS NULL");
+      conditions.push("datetime(created_at) <= datetime('now', '-3 days')");
+    } else if (filter === 'd1_not_sent') {
+      conditions.push("(followup_24h_sent_at IS NULL OR automation_d1_sent = 0)");
+    } else if (filter === 'd3_not_sent') {
+      conditions.push("(followup_3d_sent_at IS NULL OR automation_d3_sent = 0)");
+    }
+    
+    if (conditions.length > 0) {
+      query += ' AND ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY created_at DESC LIMIT 100';
+    
+    const leads = await databaseService.all(query);
+    
+    return res.json({
+      ok: true,
+      count: leads.length,
+      leads: leads.slice(0, 10) // Solo primeros 10 para preview
+    });
+
+  } catch (error) {
+    console.error('[CAMPAIGN] Error preview:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/aluna/campaigns/create
+ * Crea una nueva campaña
+ */
+router.post('/campaigns/create', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { name, messageTemplate, targetFilter, channel } = req.body;
+
+    if (!name || !messageTemplate || !targetFilter) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: name, messageTemplate, targetFilter'
+      });
+    }
+
+    const campaignId = `campaign-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const insertQuery = `
+      INSERT INTO campaigns (id, name, message_template, target_filter, channel, status)
+      VALUES (?, ?, ?, ?, ?, 'sending')
+    `;
+    
+    await databaseService.run(insertQuery, [
+      campaignId,
+      name,
+      messageTemplate,
+      targetFilter,
+      channel || 'whatsapp'
+    ]);
+
+    console.log(`[CAMPAIGN] Campaña creada: ${campaignId} - ${name}`);
+
+    return res.json({
+      ok: true,
+      campaignId,
+      message: 'Campaña creada correctamente'
+    });
+
+  } catch (error) {
+    console.error('[CAMPAIGN] Error create:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/aluna/campaigns/send
+ * Envía campaña a lista de leads
+ */
+router.post('/campaigns/send', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { campaignId, leads, message, channel } = req.body;
+
+    if (!campaignId || !leads || !message) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Faltan parámetros: campaignId, leads, message'
+      });
+    }
+
+    console.log(`[CAMPAIGN] Enviando campaña ${campaignId} a ${leads.length} leads por ${channel}`);
+
+    let sentCount = 0;
+    let errorCount = 0;
+
+    // Enviar a cada lead
+    for (const lead of leads) {
+      try {
+        // Reemplazar variables
+        const personalizedMessage = message
+          .replace(/\{\{nombre\}\}/g, lead.client_name || 'Cliente')
+          .replace(/\{\{plan\}\}/g, lead.membership_type || 'Plan')
+          .replace(/\{\{mensualidad\}\}/g, `$${lead.monthly_fee || 0}`)
+          .replace(/\{\{email\}\}/g, lead.email || '')
+          .replace(/\{\{phone\}\}/g, lead.user_phone || '');
+
+        // Enviar según canal
+        if (channel === 'whatsapp' && lead.user_phone) {
+          await enviarWhatsApp(lead.user_phone, personalizedMessage);
+          sentCount++;
+        } else if (channel === 'email' && lead.email) {
+          await sendEmail({
+            to: lead.email,
+            subject: `📢 Coworkia - Oferta Especial`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Coworkia</h2>
+                <div style="white-space: pre-wrap; line-height: 1.6;">
+                  ${personalizedMessage.replace(/\n/g, '<br>')}
+                </div>
+              </div>
+            `
+          });
+          sentCount++;
+        }
+
+        // Pequeño delay entre envíos (evitar rate limits)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+      } catch (sendError) {
+        console.error(`[CAMPAIGN] Error enviando a ${lead.client_name}:`, sendError);
+        errorCount++;
+      }
+    }
+
+    // Actualizar campaña
+    await databaseService.run(`
+      UPDATE campaigns 
+      SET sent_at = datetime('now'), sent_count = ?, status = 'sent'
+      WHERE id = ?
+    `, [sentCount, campaignId]);
+
+    console.log(`[CAMPAIGN] Campaña ${campaignId} completada: ${sentCount} enviados, ${errorCount} errores`);
+
+    return res.json({
+      ok: true,
+      sentCount,
+      errorCount,
+      message: `Campaña enviada a ${sentCount} leads correctamente`
+    });
+
+  } catch (error) {
+    console.error('[CAMPAIGN] Error send:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 export default router;

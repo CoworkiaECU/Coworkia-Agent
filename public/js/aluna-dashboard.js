@@ -728,6 +728,192 @@ async function sendFollowupManual() {
   }
 }
 
+/* ─── campaign modal ─────────────────────────────────────────── */
+let campaignChannel = 'whatsapp';
+let campaignPreviewLeads = [];
+
+function openCampaignModal() {
+  const modal = document.getElementById('modal-campaign');
+  modal.style.display = 'flex';
+  
+  // Reset defaults
+  document.getElementById('campaign-name').value = '';
+  document.getElementById('campaign-filter').value = 'pending';
+  document.getElementById('campaign-message').value = '';
+  campaignChannel = 'whatsapp';
+  selectCampaignChannel('whatsApp');
+  
+  // Load preview
+  updateCampaignPreview();
+}
+
+function closeCampaignModal() {
+  document.getElementById('modal-campaign').style.display = 'none';
+}
+
+function selectCampaignChannel(channel) {
+  campaignChannel = channel;
+  const waBtn = document.getElementById('campaign-channel-wa');
+  const emailBtn = document.getElementById('campaign-channel-email');
+  
+  if (channel === 'whatsapp') {
+    waBtn.style.background = '#10b981';
+    waBtn.style.color = '#fff';
+    waBtn.style.border = 'none';
+    emailBtn.style.background = '#1e293b';
+    emailBtn.style.color = '#94a3b8';
+    emailBtn.style.border = '1px solid #334155';
+  } else {
+    emailBtn.style.background = '#10b981';
+    emailBtn.style.color = '#fff';
+    emailBtn.style.border = 'none';
+    waBtn.style.background = '#1e293b';
+    waBtn.style.color = '#94a3b8';
+    waBtn.style.border = '1px solid #334155';
+  }
+}
+
+async function updateCampaignPreview() {
+  const filter = document.getElementById('campaign-filter').value;
+  const countEl = document.getElementById('campaign-preview-count');
+  const finalCountEl = document.getElementById('campaign-final-count');
+  const previewBox = document.getElementById('campaign-preview-box');
+  const previewMsg = document.getElementById('campaign-preview-message');
+  
+  countEl.textContent = 'Calculando audiencia...';
+  countEl.style.color = '#3b82f6';
+  
+  try {
+    const response = await fetch(`/api/aluna/campaigns/preview?filter=${filter}`);
+    const data = await response.json();
+    
+    if (data.ok) {
+      campaignPreviewLeads = data.leads || [];
+      const count = data.count || 0;
+      
+      countEl.textContent = `✅ ${count} lead${count !== 1 ? 's' : ''} recibirán este mensaje`;
+      countEl.style.color = '#10b981';
+      finalCountEl.textContent = count;
+      
+      // Show preview with first lead
+      if (campaignPreviewLeads.length > 0) {
+        const firstLead = campaignPreviewLeads[0];
+        const messageTemplate = document.getElementById('campaign-message').value;
+        
+        if (messageTemplate) {
+          const previewText = messageTemplate
+            .replace(/\{\{nombre\}\}/g, firstLead.client_name || 'Cliente')
+            .replace(/\{\{plan\}\}/g, firstLead.membership_type || 'Plan')
+            .replace(/\{\{mensualidad\}\}/g, `$${firstLead.monthly_fee || 0}`)
+            .replace(/\{\{email\}\}/g, firstLead.email || '')
+            .replace(/\{\{phone\}\}/g, firstLead.user_phone || '');
+          
+          previewMsg.textContent = previewText;
+          previewBox.style.display = 'block';
+        }
+      } else {
+        previewBox.style.display = 'none';
+      }
+      
+    } else {
+      countEl.textContent = '⚠️ Error al calcular audiencia';
+      countEl.style.color = '#f87171';
+    }
+    
+  } catch (error) {
+    console.error('[CAMPAIGN] Error preview:', error);
+    countEl.textContent = '❌ Error de conexión';
+    countEl.style.color = '#f87171';
+  }
+}
+
+async function createAndSendCampaign() {
+  const name = document.getElementById('campaign-name').value.trim();
+  const filter = document.getElementById('campaign-filter').value;
+  const message = document.getElementById('campaign-message').value.trim();
+  
+  if (!name) {
+    toast('⚠️ Por favor ingresa un nombre para la campaña');
+    return;
+  }
+  
+  if (!message) {
+    toast('⚠️ El mensaje no puede estar vacío');
+    return;
+  }
+  
+  if (campaignPreviewLeads.length === 0) {
+    toast('⚠️ No hay leads en la audiencia seleccionada');
+    return;
+  }
+  
+  const confirmMsg = `¿Enviar campaña a ${campaignPreviewLeads.length} leads por ${campaignChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}?`;
+  if (!confirm(confirmMsg)) return;
+  
+  const sendBtn = document.getElementById('btn-create-campaign');
+  const loadingDiv = document.getElementById('campaign-sending');
+  const progressDiv = document.getElementById('campaign-progress');
+  
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = '0.6';
+  loadingDiv.style.display = 'block';
+  progressDiv.textContent = '';
+  
+  try {
+    // 1. Create campaign
+    const createResponse = await fetch('/api/aluna/campaigns/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        messageTemplate: message,
+        targetFilter: filter,
+        channel: campaignChannel
+      })
+    });
+    
+    const createResult = await createResponse.json();
+    
+    if (!createResult.ok) {
+      toast(`❌ Error al crear campaña: ${createResult.error}`);
+      return;
+    }
+    
+    const campaignId = createResult.campaignId;
+    progressDiv.textContent = `Campaña creada. Enviando a ${campaignPreviewLeads.length} leads...`;
+    
+    // 2. Send campaign
+    const sendResponse = await fetch('/api/aluna/campaigns/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaignId,
+        leads: campaignPreviewLeads,
+        message,
+        channel: campaignChannel
+      })
+    });
+    
+    const sendResult = await sendResponse.json();
+    
+    if (sendResult.ok) {
+      toast(`✅ Campaña enviada a ${sendResult.sentCount} leads correctamente`);
+      closeCampaignModal();
+      setTimeout(() => loadProformas(), 1000);
+    } else {
+      toast(`❌ Error al enviar: ${sendResult.error}`);
+    }
+    
+  } catch (error) {
+    console.error('[CAMPAIGN] Error:', error);
+    toast(`❌ Error de red: ${error.message}`);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+    loadingDiv.style.display = 'none';
+  }
+}
+
 /* ─── init ───────────────────────────────────────────────────── */
 document.getElementById('filter-status').addEventListener('change', e => {
   currentFilters.status = e.target.value;

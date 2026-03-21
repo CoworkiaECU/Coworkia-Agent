@@ -50,7 +50,7 @@ function updateTabCounts(reservations) {
   }
 }
 
-function switchTab(tabName) {
+window.switchTab = function(tabName) {
   _activeTab = tabName;
   localStorage.setItem('aurora_active_tab', tabName);
   document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
@@ -267,6 +267,14 @@ function renderReservationsTable(reservations) {
       <td>${getStatusBadge(r.status)}</td>
       <td>${getPaymentBadge(r.payment_status)}</td>
       <td>${formatDate(r.created_at)}</td>
+      <td style="white-space:nowrap;">
+        ${!r.followup_1h_sent_at
+          ? `<button style="background:#4ECDC4;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h">📲 +1h</button>`
+          : '<span style="font-size:10px;color:#6b7280;">✓ +1h</span>'}
+        ${!r.rebooking_reminder_sent_at
+          ? `<button style="background:#8B5CF6;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="rebooking">🔄 D+7</button>`
+          : '<span style="font-size:10px;color:#6b7280;">✓ D+7</span>'}
+      </td>
     </tr>
   `).join('');
   
@@ -274,7 +282,7 @@ function renderReservationsTable(reservations) {
 }
 
 // Resetear filtros
-function resetFilters() {
+window.resetFilters = function() {
   document.getElementById('filter-service').value = '';
   document.getElementById('filter-date').value    = '';
   document.getElementById('search').value         = '';
@@ -373,7 +381,7 @@ function buildProspectCard(p) {
     </div>`;
 }
 
-async function loadAbandoned() {
+window.loadAbandoned = async function() {
   const gridEl  = document.getElementById('prospects-grid');
   const emptyEl = document.getElementById('prospects-empty');
   if (!gridEl) return;
@@ -417,7 +425,7 @@ function renderProspectGrid(prospects) {
   gridEl.innerHTML = prospects.map(buildProspectCard).join('');
 }
 
-function filterProspects(filter) {
+window.filterProspects = function(filter) {
   _activeFilter = filter;
   document.querySelectorAll('.pill').forEach(b => {
     b.classList.toggle('active', b.dataset.filter === filter);
@@ -428,7 +436,7 @@ function filterProspects(filter) {
   renderProspectGrid(filtered);
 }
 
-function copyCampaignList() {
+window.copyCampaignList = function() {
   if (!_allProspects.length) { alert('Primero carga los prospectos.'); return; }
   const date     = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' });
   const urgentes = _allProspects.filter(p => getUrgencyLevel(p) === 'urgent');
@@ -636,12 +644,12 @@ async function openThread(phone, name, alias) {
   }
 }
 
-function closeThread() {
+window.closeThread = function() {
   document.getElementById('conv-thread').style.display = 'none';
-}
+};
 
 // Campaña WA masivo — completos del mes
-function sendCampaignWA() {
+window.sendCampaignWA = function() {
   const cutoff    = new Date();
   cutoff.setDate(1);
   cutoff.setHours(0, 0, 0, 0);
@@ -664,7 +672,7 @@ function sendCampaignWA() {
 }
 
 // Refresca todo el dashboard de una vez
-function refreshAll() {
+window.refreshAll = function() {
   loadReservations();
   loadAbandoned();
   loadConversations();
@@ -688,7 +696,7 @@ try {
   document.getElementById('search').addEventListener('input', (e) => {
     currentFilters.search = e.target.value;
     clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => loadReservations(), 500);
+    window.searchTimeout = setTimeout(() => loadReservations(), 450);
   });
 
   document.getElementById('search').addEventListener('keypress', (e) => {
@@ -733,6 +741,30 @@ try {
     const btn = e.target.closest('[data-action="open-thread"]');
     if (!btn) return;
     openThread(btn.dataset.phone, btn.dataset.name, btn.dataset.alias);
+  });
+
+  // ── Event delegation: botones de follow-up en tabla de reservas ──────────
+  document.getElementById('table-body')?.addEventListener('click', async function(e) {
+    const btn = e.target.closest('[data-fu-action]');
+    if (!btn) return;
+    const id     = btn.dataset.fuId;
+    const action = btn.dataset.fuAction;
+    const endpoint = action === 'followup-1h'
+      ? `/api/aurora/reservations/${id}/send-followup-1h`
+      : `/api/aurora/reservations/${id}/send-rebooking`;
+    const origText = btn.textContent;
+    btn.disabled    = true;
+    btn.textContent = '⏳';
+    try {
+      const res  = await fetch(`${API_BASE}${endpoint}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) { showToast('✅ Enviado'); btn.textContent = '✓'; }
+      else { showToast('❌ ' + (data.error || 'Error')); btn.disabled = false; btn.textContent = origText; }
+    } catch (err) {
+      showToast('❌ Error de red');
+      btn.disabled    = false;
+      btn.textContent = origText;
+    }
   });
 
   console.log('[AURORA-DASH] Event listeners configurados');

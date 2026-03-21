@@ -1931,7 +1931,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
             }
             axelEmailConsent.delete(userId);
             axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
-            await enviarWhatsApp(userId, `🗓️ Perfecto — ahora agendemos tu cita en el taller.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
+            await enviarWhatsApp(userId, `¿Cuándo tienes 20 minutos esta semana para revisarla juntos? 📅\n\nDime el día y hora y te confirmo disponibilidad.\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
           } else {
             await enviarWhatsApp(userId, '✉️ No detecté un email válido. Por favor escribe solo tu dirección de correo (ej: tu@mail.com)');
           }
@@ -1968,7 +1968,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
               }
               axelEmailConsent.delete(userId);
               axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
-              await enviarWhatsApp(userId, `🗓️ Perfecto — ahora agendemos tu cita en el taller.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
+              await enviarWhatsApp(userId, `¿Cuándo tienes 20 minutos esta semana para revisarla juntos? 📅\n\nDime el día y hora y te confirmo disponibilidad.\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
             } else {
               // No tenemos email — pedirlo ahora
               consentData.awaitingEmail = true;
@@ -1978,7 +1978,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           } else {
             axelEmailConsent.delete(userId);
             axelSchedulingPending.set(userId, { quoteCode: consentData.quoteCode, clientName: consentData.customerName });
-            await enviarWhatsApp(userId, `👍 Sin problema.\n\n🗓️ Entonces agendemos tu cita directamente.\n\nEscríbeme el día y hora que prefieres (ej: *"el martes en la mañana"*).\n\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
+            await enviarWhatsApp(userId, `👍 Sin problema — ¿cuándo tienes 20 minutos esta semana para revisar los detalles juntos? 📅\n\nDime el día y hora y te confirmo.\n📍 Lun–Vie 8am–6pm · Sáb 8am–1pm`);
           }
           return;
         } else {
@@ -2679,10 +2679,16 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           // Cambiar status a negotiating
           await alunaRepository.markAlunaLeadAsNegotiating(userId);
           
-          // Notificar a Diego (solo si admin phone configurado)
-          if (ADMIN_PHONE && prospectInfo) {
-            const notification = buildHighIntentNotification(prospectInfo, detection, processedText);
-            await enviarWhatsApp(ADMIN_PHONE, notification);
+          // Notificar a Diego via notification-service
+          if (prospectInfo) {
+            const { notifyHighIntent } = await import('../../servicios/notification-service.js');
+            await notifyHighIntent({
+              nombre:   prospectInfo.clientName   || prospectInfo.nombre,
+              phone:    prospectInfo.userPhone     || prospectInfo.phone,
+              plan:     prospectInfo.planKey       || prospectInfo.plan,
+              keyword:  detection.keyword,
+              category: detection.category,
+            });
             console.log(`[ALUNA-HIGH-INTENT] 📢 Notificación enviada a Diego`);
           }
         }

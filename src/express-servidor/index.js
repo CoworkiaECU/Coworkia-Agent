@@ -27,6 +27,11 @@ import { initScheduler, stopScheduler, getSchedulerStatus } from '../servicios/c
 import { startFollowupCronJobs } from '../servicios/aluna-followup-cron.js';
 // 🔔 Aurora + Enzo Follow-up Automation
 import { startAuroraEnzoCronJobs } from '../servicios/aurora-enzo-followup-cron.js';
+// 🔧 Axel Follow-up Automation
+import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
+// 🔔 FASE 4: Sistema de notificaciones
+import { startHealthMonitor } from '../servicios/health-monitor.js';
+import { startDailyReportCron } from '../cron/daily-report.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
@@ -247,6 +252,17 @@ async function startServer() {
     startAuroraEnzoCronJobs();
     console.log('✅ Aurora follow-ups activos (+1h: cada 15min, D+7: 10am)');
     console.log('✅ Enzo follow-ups activos (D+1: 11am, D+3: 2pm, D+7: 10:30am)');
+
+    // Iniciar follow-ups Axel
+    console.log('🔧 Iniciando follow-ups automatizados de Axel...');
+    startAxelFollowupCronJobs();
+    console.log('✅ Axel follow-ups activos (D+2: 10am, D+7: 11am Ecuador)');
+
+    // FASE 4: Health monitor + reporte diario
+    startHealthMonitor();
+    console.log('✅ Health monitor activo (OpenAI + DB, checks cada 5 min)');
+    startDailyReportCron();
+    console.log('✅ Reporte diario configurado (09:00 AM Ecuador vía WhatsApp)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

@@ -1246,7 +1246,7 @@ Estamos abiertos:
 ¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
 
 📌 Si necesitas un espacio este sábado por un *pedido especial*, escríbele directamente al administrador:
-👉 https://wa.me/593987770788`,
+👉 https://wa.me/593994837117`,
         suggestedDate: nextMondayStr
       };
 
@@ -1269,7 +1269,7 @@ Estamos abiertos:
 ¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
 
 📌 Si necesitas un espacio este domingo por un *pedido especial*, escríbele directamente al administrador:
-👉 https://wa.me/593987770788`,
+👉 https://wa.me/593994837117`,
         suggestedDate: nextMondayStr
       };
 
@@ -1301,7 +1301,7 @@ Estamos abiertos:
 ¿Qué tal si reservas para el ${nextDateStr}? 🗓️
 
 📌 Si necesitas un espacio en este feriado por un *pedido especial*, escríbele directamente al administrador:
-👉 https://wa.me/593987770788`,
+👉 https://wa.me/593994837117`,
             suggestedDate: nextDateStr,
             holidayName: nombreFeriado
           };

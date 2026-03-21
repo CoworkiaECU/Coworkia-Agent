@@ -276,7 +276,7 @@ function buildD1EmailHTML(lead) {
     <p>Podemos coordinar una visita guiada en el horario que mejor te venga 📅</p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://wa.me/593987770788?text=Hola,%20me%20gustaría%20agendar%20una%20visita" 
+      <a href="https://wa.me/593994837117?text=Hola,%20me%20gustaría%20agendar%20una%20visita" 
          style="display: inline-block; padding: 15px 30px; background: #25D366; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
         📱 Agendar Visita por WhatsApp
       </a>
@@ -342,7 +342,7 @@ function buildD3EmailHTML(lead) {
     </div>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://wa.me/593987770788?text=Quiero%20reservar%20una%20oficina%20antes%20de%20que%20se%20agoten" 
+      <a href="https://wa.me/593994837117?text=Quiero%20reservar%20una%20oficina%20antes%20de%20que%20se%20agoten" 
          style="display: inline-block; padding: 18px 35px; background: #f5576c; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; animation: pulse 2s infinite;">
         🔥 RESERVAR AHORA
       </a>

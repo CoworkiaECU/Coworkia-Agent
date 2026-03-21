@@ -148,7 +148,7 @@ router.post('/test-email-design', async (req, res) => {
       totalPrice: req.body.totalPrice || 20,
       reservation: {
         id: 'test-' + Date.now(),
-        whatsapp: '593987770788'
+        whatsapp: '593994837117'
       }
     };
     

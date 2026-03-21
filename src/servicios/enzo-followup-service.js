@@ -270,7 +270,7 @@ function buildD1EmailHTML(lead) {
     <p>Quería hacer un seguimiento sobre tu <strong>${tipo}</strong> con MarketingLab.</p>
     <p>¿Tienes alguna pregunta sobre la propuesta que te enviamos? Estamos disponibles para resolver cualquier duda y adaptar el plan a tus necesidades.</p>
     <p>¿Seguimos adelante?</p>
-    <a href="https://wa.me/593987770788" class="cta-btn">💬 Hablar con Enzo</a>
+    <a href="https://wa.me/593994837117" class="cta-btn">💬 Hablar con Enzo</a>
     <p style="margin-top:24px; color:#6b7280; font-size:14px;">Un saludo,<br><strong>Enzo · MarketingLab</strong></p>
   `);
 }
@@ -285,7 +285,7 @@ function buildD3EmailHTML(lead) {
     <p style="margin-top:16px;">Queremos que tu proyecto despegue, y para ayudarte a dar el primer paso, tenemos una propuesta especial:</p>
     <p style="font-size:20px; font-weight:700; color:#F97316;">15% de descuento${descuento > 0 ? ` (ahorra $${descuento})` : ''} en tu primer proyecto</p>
     <p>Esta oferta vence hoy a las 23:59. No la dejes pasar.</p>
-    <a href="https://wa.me/593987770788" class="cta-btn">🚀 Quiero mi descuento</a>
+    <a href="https://wa.me/593994837117" class="cta-btn">🚀 Quiero mi descuento</a>
     <p style="margin-top:24px; color:#6b7280; font-size:14px;">Un saludo,<br><strong>Enzo · MarketingLab</strong></p>
   `);
 }
@@ -299,7 +299,7 @@ function buildD7EmailHTML(lead) {
     <p>Una empresa del sector <em>${lead.project_type || 'retail'}</em> similar a la tuya contrató nuestra estrategia de marketing digital hace 3 meses.</p>
     <p style="font-size:18px; font-weight:700; color:#F97316;">Resultado: crecimiento del 300% en leads calificados.</p>
     <p>¿Te gustaría ver cómo lo logramos y si este enfoque podría funcionar para tu negocio?</p>
-    <a href="https://wa.me/593987770788" class="cta-btn">📞 Ver caso de éxito</a>
+    <a href="https://wa.me/593994837117" class="cta-btn">📞 Ver caso de éxito</a>
     <p style="margin-top:24px; color:#6b7280; font-size:14px;">Un saludo,<br><strong>Enzo · MarketingLab</strong></p>
   `);
 }

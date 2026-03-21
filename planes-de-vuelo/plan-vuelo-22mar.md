@@ -42,7 +42,7 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 
 ### ✅ Completado 22 Mar 2026
 
-**FASE 1 BLOQUE 1B — Comandos WhatsApp → deploy desde celular** ✅
+**FASE 1 BLOQUE 1B — Comandos WhatsApp → deploy desde celular (v1015, commit `632f94e`)** ✅
 - `wassenger.js` — `handleDiegoAlwaysOnCommands()` intercepta antes del debounce
 - Comandos siempre activos: `STATUS`, `PARA`, `SIGUIENTE`, `CANCELA`
 - Comandos condicionales (ya existían): `SI`/`SÍ`, `NO`, `REVIEW`, `DEPLOY`
@@ -50,14 +50,28 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 - `PARA` → marca señal de pausa en estado autopilot
 - Seguridad: solo `DIEGO_PERSONAL_PHONE`, cualquier otro número ignorado silenciosamente
 
+**Dashboards Paula/Adriana/Gabi/Enzo nivelados a estándar Axel (v1016, commit `76a9303`)** ✅
+- Paula: `POST /api/paula/leads/:id/send-wa` + dropdown status + botón 📲 WA por fila
+- Adriana: `POST /api/adriana/leads/:code/send-wa` + botón 📲 WA por fila
+- Gabi: `PATCH /api/gabi/leads/:code/status` + `POST /api/gabi/leads/:code/send-wa` + acciones por fila
+- Enzo: `PATCH /api/enzo/projects/:code/status` + `POST /api/enzo/projects/:code/send-reminder` + acciones por fila
+- 8 nuevos endpoints backend + 4 frontends actualizados + CSS por agente (purple/navy/green/orange)
+
+**Hotfix WA contact phone — BOT_PHONE env var (v1017)** ✅
+- Todos los `wa.me` links en emails/followups corregidos: `593987770788` → `593994837117`
+- Archivos corregidos: adriana/paula/enzo/gabi-cotizacion-email.js, email-template-system.js, aluna-followup-service.js, enzo-followup-service.js, partial-reservation-form.js, health.js
+- `.env` + Heroku: nueva var `BOT_PHONE=593994837117` (separada de `ADMIN_PHONE` que es el celular de Diego)
+- `ADMIN_PHONE` conservado para identificación de comandos Diego en wassenger.js
+
 ### 🔵 Pendiente 22 Mar (próximas sesiones)
 - FASE 2 BLOQUE 1A: Aurora +1h post-reserva (cron + template)
 - FASE 2 BLOQUE 1B: Aurora D+7 re-booking (cron + template)
-- FASE 5: Adriana cotizaciones automáticas (BLOQUE 4A→4E)
+- FASE 5: Adriana cotizaciones automáticas (BLOQUE 4A→4E) — solo VAZ primero
 
 ### 🔄 En progreso — OTRO CHAT (front-end)
 - FASE 3: Dashboard Aurora rediseño visual
 - FASE 4: Templates HTML sistema centralizado + logos agentes
+- **PRÓXIMO**: Email templates — cambiar wa.me/59399 links para usar `BOT_PHONE` env var (ya corregido en backend, revisar si hay hardcodes adicionales en HTML templates del front)
 
 ---
 

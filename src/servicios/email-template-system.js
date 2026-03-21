@@ -165,7 +165,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
     <!-- CTA -->
     <div style="text-align:center;">
-      <a href="https://wa.me/593987770788?text=Hola%2C%20quiero%20agendar%20mi%20semana%20gratis%20en%20Coworkia"
+      <a href="https://wa.me/593994837117?text=Hola%2C%20quiero%20agendar%20mi%20semana%20gratis%20en%20Coworkia"
          style="display:inline-block;background:${branding.primaryColor};color:white;padding:16px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(139,92,246,0.35);">
         📅 Agendar semana gratis →
       </a>
@@ -236,7 +236,7 @@ export function buildAlunaD3HTML({ name, message }) {
 
     <!-- CTA -->
     <div style="text-align:center;">
-      <a href="https://wa.me/593987770788?text=Quiero%20reservar%20antes%20de%20que%20se%20agoten"
+      <a href="https://wa.me/593994837117?text=Quiero%20reservar%20antes%20de%20que%20se%20agoten"
          style="display:inline-block;background:#dc2626;color:white;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:16px;box-shadow:0 4px 16px rgba(220,38,38,0.4);">
         🔥 RESERVAR AHORA →
       </a>
@@ -274,7 +274,7 @@ export function buildAdrianaComparisonHTML({
   primaAnual,
   primaVAZ,
   message = '',
-  waNumber = '593987770788',
+  waNumber = '593994837117',
   quoteCode = '',
 }) {
   const branding  = AGENT_BRANDING.ADRIANA;

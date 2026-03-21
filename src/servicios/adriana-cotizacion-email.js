@@ -16,7 +16,7 @@ import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { calculateVehiclePremium, COVERAGE_TYPES, VEHICLE_CATEGORIES, inferVehicleCategory } from './adriana-quote-calculator.js';
 
 const SEG_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
-const ADMIN_WA     = (process.env.ADMIN_PHONE || '593987770788').replace('+', '');
+const ADMIN_WA     = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 // ─── CÁLCULO DE PRIMA (delegado al calculador VAZ con tarifas por antigüedad) ─
 function calculatePremium(commercialValue, vehicleYear) {

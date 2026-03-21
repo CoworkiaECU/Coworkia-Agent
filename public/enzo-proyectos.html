@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #00897B 0%, #004D40 100%);
+      background: linear-gradient(145deg, #1A0800 0%, #7C2D12 40%, #EA580C 100%);
       color: #1f2937;
       padding: 20px;
       min-height: 100vh;
@@ -64,13 +64,13 @@
     }
 
     .nav-btn.current {
-      background: #00897B;
+      background: #F97316;
       color: white;
-      border-color: #00897B;
+      border-color: #F97316;
     }
 
     h1 {
-      color: #00897B;
+      color: #F97316;
       font-size: 32px;
       margin-bottom: 10px;
       display: flex;
@@ -96,7 +96,7 @@
       border-radius: 12px;
       padding: 24px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      border-left: 4px solid #00897B;
+      border-left: 4px solid #F97316;
     }
 
     .stat-label {
@@ -109,7 +109,7 @@
     }
 
     .stat-value {
-      color: #00897B;
+      color: #F97316;
       font-size: 36px;
       font-weight: 700;
       line-height: 1;
@@ -157,12 +157,12 @@
 
     select:focus, input:focus {
       outline: none;
-      border-color: #00897B;
+      border-color: #F97316;
       box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1);
     }
 
     button {
-      background: #00897B;
+      background: #F97316;
       color: white;
       border: none;
       padding: 10px 20px;
@@ -173,7 +173,7 @@
       transition: background 0.2s;
     }
 
-    button:hover { background: #004D40; }
+    button:hover { background: #EA580C; }
 
     .table-container {
       background: white;
@@ -213,7 +213,7 @@
     .client-name { font-weight: 600; color: #111827; }
     .client-sub  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
     .code        { font-family: monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-    .amount      { font-weight: 600; color: #00897B; }
+    .amount      { font-weight: 600; color: #F97316; }
     .date-cell   { color: #6b7280; font-size: 13px; }
 
     .loading { text-align: center; padding: 40px; color: #6b7280; font-size: 14px; }
@@ -222,7 +222,7 @@
 
     .refresh-btn {
       position: fixed; bottom: 30px; right: 30px;
-      background: white; color: #00897B; border: 2px solid #00897B;
+      background: white; color: #F97316; border: 2px solid #F97316;
       width: 56px; height: 56px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s;
@@ -346,9 +346,9 @@
         <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
         <div class="stat-sublabel">Enviadas / Negociando</div>
       </div>
-      <div class="stat-card" style="border-left-color: #00897B;">
+      <div class="stat-card" style="border-left-color: #F97316;">
         <div class="stat-label">✅ Aceptados</div>
-        <div class="stat-value" id="pipe-converted" style="color: #00897B;">-</div>
+        <div class="stat-value" id="pipe-converted" style="color: #F97316;">-</div>
         <div class="stat-sublabel">Proyectos ganados</div>
       </div>
     </div>

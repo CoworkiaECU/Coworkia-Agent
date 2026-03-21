@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #D97706 0%, #92400E 100%);
+      background: linear-gradient(145deg, #0A0520 0%, #2E1065 40%, #7C3AED 100%);
       min-height: 100vh;
       padding: 20px;
       color: #1f2937;
@@ -30,9 +30,9 @@
       font-size: 13px; font-weight: 600; transition: all 0.2s;
     }
     .nav-btn:hover { background: #8b5cf6; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
-    .nav-btn.current { background: #D97706; color: white; border-color: #D97706; }
+    .nav-btn.current { background: #7C3AED; color: white; border-color: #7C3AED; }
     .nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-    header h1 { font-size: 28px; color: #D97706; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    header h1 { font-size: 28px; color: #7C3AED; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
     .subtitle { color: #6b7280; font-size: 14px; }
 
     .stats-grid {
@@ -43,10 +43,10 @@
     .stat-card {
       background: white; padding: 22px 24px;
       border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-left: 4px solid #D97706;
+      border-left: 4px solid #7C3AED;
     }
     .stat-label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 34px; font-weight: 800; color: #D97706; }
+    .stat-value { font-size: 34px; font-weight: 800; color: #7C3AED; }
     .stat-sublabel { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 
     .filters-panel {
@@ -60,10 +60,10 @@
       padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px;
       font-size: 14px; color: #1f2937; background: white; outline: none; transition: border-color 0.2s;
     }
-    .filter-group select:focus, .filter-group input:focus { border-color: #D97706; }
+    .filter-group select:focus, .filter-group input:focus { border-color: #7C3AED; }
     .filter-group input { min-width: 200px; }
     .btn-refresh {
-      padding: 10px 20px; background: #D97706; color: white;
+      padding: 10px 20px; background: #7C3AED; color: white;
       border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
       cursor: pointer; transition: background 0.2s; margin-left: auto;
     }
@@ -92,22 +92,22 @@
       display: inline-block; padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700; white-space: nowrap;
     }
-    .badge-pending           { background: #FEF3C7; color: #92400E; }
+    .badge-pending           { background: #FEF3C7; color: #5B21B6; }
     .badge-viewing_scheduled { background: #DBEAFE; color: #1E40AF; }
     .badge-negotiating       { background: #FDE8D8; color: #C2410C; }
     .badge-closed            { background: #D1FAE5; color: #065F46; }
     .badge-cancelled         { background: #F3F4F6; color: #6B7280; }
-    .badge-op-compra  { background: #FEF3C7; color: #92400E; }
+    .badge-op-compra  { background: #FEF3C7; color: #5B21B6; }
     .badge-op-arriendo { background: #DBEAFE; color: #1E40AF; }
-    .amount { font-weight: 700; color: #D97706; font-size: 14px; }
+    .amount { font-weight: 700; color: #7C3AED; font-size: 14px; }
     .date-cell { font-size: 12px; color: #6b7280; }
     .loading, .error, .empty { text-align: center; padding: 48px 20px; font-size: 15px; }
-    .loading { color: #D97706; }
+    .loading { color: #7C3AED; }
     .error { color: #dc2626; }
     .empty { color: #9ca3af; }
     .refresh-btn {
       position: fixed; bottom: 30px; right: 30px;
-      background: white; color: #D97706; border: 2px solid #D97706;
+      background: white; color: #7C3AED; border: 2px solid #7C3AED;
       width: 56px; height: 56px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s;
@@ -221,9 +221,9 @@
         <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
         <div class="stat-sublabel">Oferta en proceso</div>
       </div>
-      <div class="stat-card" style="border-left-color: #D97706;">
+      <div class="stat-card" style="border-left-color: #7C3AED;">
         <div class="stat-label">✅ Cerrados</div>
-        <div class="stat-value" id="pipe-converted" style="color: #D97706;">-</div>
+        <div class="stat-value" id="pipe-converted" style="color: #7C3AED;">-</div>
         <div class="stat-sublabel">Operación exitosa</div>
       </div>
     </div>

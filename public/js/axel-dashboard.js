@@ -121,6 +121,18 @@ function renderCard(q) {
         <span class="date-label">📅 ${formatDate(q.created_at)}</span>
         ${q.photo_urls ? `<span style="font-size:11px;color:#9ca3af;font-weight:600;">📸 Fotos adjuntas</span>` : ''}
       </div>
+      <div class="card-actions">
+        <select class="status-select" data-code="${q.quote_code}">
+          <option value="pending"     ${q.status==='pending'     ?'selected':''}>⏳ Pendiente</option>
+          <option value="inspecting"  ${q.status==='inspecting'  ?'selected':''}>🔍 Inspeccionando</option>
+          <option value="quoted"      ${q.status==='quoted'      ?'selected':''}>📧 Cotizado</option>
+          <option value="accepted"    ${q.status==='accepted'    ?'selected':''}>✅ Aceptado</option>
+          <option value="in_progress" ${q.status==='in_progress' ?'selected':''}>🔧 En Proceso</option>
+          <option value="completed"   ${q.status==='completed'   ?'selected':''}>✅ Completado</option>
+          <option value="cancelled"   ${q.status==='cancelled'   ?'selected':''}>❌ Cancelado</option>
+        </select>
+        <button class="reminder-btn" data-code="${q.quote_code}" data-name="${q.client_name||''}">📲 Recordatorio</button>
+      </div>
     </div>`;
 }
 
@@ -162,10 +174,61 @@ async function loadQuotes() {
 // ── REFRESH ────────────────────────────────────────────────────────────────────
 function refresh() { loadStats(); loadQuotes(); }
 
+// ── STATUS UPDATE ──────────────────────────────────────────────────────────────
+async function updateStatus(code, status) {
+  try {
+    const res = await fetch(`${API_BASE}/api/axel/quotes/${code}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const d = await res.json();
+    if (!d.ok) console.error('[AXEL-DASH] updateStatus error:', d.error);
+    else {
+      const q = allQuotes.find(q => q.quote_code === code);
+      if (q) q.status = status;
+      updatePipeline();
+    }
+  } catch (err) { console.error('[AXEL-DASH] updateStatus error:', err); }
+}
+
+// ── SEND REMINDER ──────────────────────────────────────────────────────────────
+async function sendReminder(code, name, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const res = await fetch(`${API_BASE}/api/axel/quotes/${code}/send-reminder`, { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      btn.textContent = '✅ Enviado';
+      setTimeout(() => { btn.textContent = '📲 Recordatorio'; btn.disabled = false; }, 3000);
+    } else {
+      alert(`❌ Error: ${d.error}`);
+      btn.textContent = '📲 Recordatorio';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+    btn.textContent = '📲 Recordatorio';
+    btn.disabled = false;
+  }
+}
+
 // ── INIT ───────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadQuotes();
+
+  // Event delegation for card actions
+  const container = document.getElementById('quotes-container');
+  container.addEventListener('change', e => {
+    const sel = e.target.closest('.status-select');
+    if (sel) updateStatus(sel.dataset.code, sel.value);
+  });
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.reminder-btn');
+    if (btn) sendReminder(btn.dataset.code, btn.dataset.name, btn);
+  });
 
   // Filter pills
   document.querySelectorAll('.filter-pill').forEach(btn => {

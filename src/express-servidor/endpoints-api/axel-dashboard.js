@@ -5,6 +5,7 @@
 
 import express from 'express';
 import databaseService from '../../database/database.js';
+import { enviarWhatsApp } from './wassenger.js';
 
 const router = express.Router();
 
@@ -89,6 +90,33 @@ router.patch('/quotes/:code/status', async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     console.error('[AXEL-API] Error patch:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/axel/quotes/:code/send-reminder ─────────────────────────────────
+router.post('/quotes/:code/send-reminder', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const q = await databaseService.get(
+      `SELECT quote_code, user_phone, client_name, vehicle_brand, vehicle_model, vehicle_year, price_min, price_max
+       FROM collision_quotes WHERE quote_code = $1`,
+      [req.params.code]
+    );
+    if (!q || !q.user_phone) return res.status(404).json({ ok: false, error: 'Cotización no encontrada' });
+
+    const name = (q.client_name || 'Hola').split(' ')[0];
+    const vehicle = [q.vehicle_brand, q.vehicle_model, q.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
+    const msg = `Hola ${name} 👋\n\n¿Quedó alguna duda sobre la cotización de *${vehicle}*?\n\nCuando quieras seguimos — 20 minutos y cerramos todo 📅`;
+
+    await enviarWhatsApp(q.user_phone, msg);
+    await databaseService.run(
+      `UPDATE collision_quotes SET reminder_1_sent_at = COALESCE(reminder_1_sent_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP WHERE quote_code = $1`,
+      [req.params.code]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[AXEL-API] Error send-reminder:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });

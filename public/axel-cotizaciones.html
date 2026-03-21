@@ -241,6 +241,29 @@
       background: #1f2937; color: white;
     }
 
+    /* Card actions row */
+    .card-actions {
+      padding: 10px 18px 14px;
+      border-top: 1px solid #f3f4f6;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    .status-select {
+      flex: 1; min-width: 130px;
+      padding: 6px 10px; border-radius: 8px;
+      border: 1.5px solid #e5e7eb; background: #f9fafb;
+      font-size: 12px; font-weight: 600; color: #374151;
+      cursor: pointer; outline: none; transition: border-color 0.2s;
+    }
+    .status-select:focus { border-color: #B91C1C; }
+    .reminder-btn {
+      padding: 6px 14px; border-radius: 8px;
+      border: 1.5px solid #B91C1C; background: white;
+      color: #B91C1C; font-size: 12px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    }
+    .reminder-btn:hover { background: #B91C1C; color: white; }
+    .reminder-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* Loading/Error/Empty */
     .state-block { text-align: center; padding: 60px 20px; background: white; border-radius: 14px; }
     .state-block.loading-state { color: #B91C1C; font-size: 15px; }

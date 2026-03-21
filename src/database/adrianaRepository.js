@@ -124,10 +124,99 @@ export async function getInsuranceLeadsStats() {
   return stats || {};
 }
 
+// ─────────────────────────────────────────────────────────────
+// FORMULARIO CONVERSACIONAL — adriana_quote_leads
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 🔍 Obtener estado activo de cotización por teléfono
+ */
+export async function getQuoteLead(phone) {
+  await databaseService.ensureInitialized();
+  return await databaseService.get(
+    `SELECT * FROM adriana_quote_leads WHERE phone = $1`,
+    [phone]
+  );
+}
+
+/**
+ * 💾 Crear o actualizar lead de cotización conversacional
+ */
+export async function upsertQuoteLead(phone, data = {}) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `INSERT INTO adriana_quote_leads
+       (phone, status, client_name, client_email, vehicle_data, id_card_data,
+        selected_coverage, premium_data, quote_code)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (phone) DO UPDATE SET
+       status            = EXCLUDED.status,
+       client_name       = COALESCE(EXCLUDED.client_name,       adriana_quote_leads.client_name),
+       client_email      = COALESCE(EXCLUDED.client_email,      adriana_quote_leads.client_email),
+       vehicle_data      = COALESCE(EXCLUDED.vehicle_data,      adriana_quote_leads.vehicle_data),
+       id_card_data      = COALESCE(EXCLUDED.id_card_data,      adriana_quote_leads.id_card_data),
+       selected_coverage = COALESCE(EXCLUDED.selected_coverage, adriana_quote_leads.selected_coverage),
+       premium_data      = COALESCE(EXCLUDED.premium_data,      adriana_quote_leads.premium_data),
+       quote_code        = COALESCE(EXCLUDED.quote_code,        adriana_quote_leads.quote_code),
+       updated_at        = CURRENT_TIMESTAMP`,
+    [
+      phone,
+      data.status           || 'gathering_vehicle',
+      data.clientName       || null,
+      data.clientEmail      || null,
+      data.vehicleData      ? JSON.stringify(data.vehicleData)  : null,
+      data.idCardData       ? JSON.stringify(data.idCardData)   : null,
+      data.selectedCoverage || null,
+      data.premiumData      ? JSON.stringify(data.premiumData)  : null,
+      data.quoteCode        || null,
+    ]
+  );
+}
+
+/**
+ * ✏️ Actualizar campos específicos de un quote lead
+ */
+export async function updateQuoteLeadData(phone, updates = {}) {
+  await databaseService.ensureInitialized();
+  const set = ['updated_at = CURRENT_TIMESTAMP'];
+  const vals = [phone];
+  let i = 2;
+  const add = (col, val) => { set.push(`${col} = $${i++}`); vals.push(val); };
+
+  if (updates.status           !== undefined) add('status',            updates.status);
+  if (updates.clientName       !== undefined) add('client_name',       updates.clientName);
+  if (updates.clientEmail      !== undefined) add('client_email',      updates.clientEmail);
+  if (updates.vehicleData      !== undefined) add('vehicle_data',      JSON.stringify(updates.vehicleData));
+  if (updates.idCardData       !== undefined) add('id_card_data',      JSON.stringify(updates.idCardData));
+  if (updates.selectedCoverage !== undefined) add('selected_coverage', updates.selectedCoverage);
+  if (updates.premiumData      !== undefined) add('premium_data',      JSON.stringify(updates.premiumData));
+  if (updates.quoteCode        !== undefined) add('quote_code',        updates.quoteCode);
+
+  await databaseService.run(
+    `UPDATE adriana_quote_leads SET ${set.join(', ')} WHERE phone = $1`,
+    vals
+  );
+}
+
+/**
+ * 🗑️ Eliminar lead de cotización (flujo completado o cancelado)
+ */
+export async function deleteQuoteLead(phone) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `DELETE FROM adriana_quote_leads WHERE phone = $1`,
+    [phone]
+  );
+}
+
 export default {
   saveInsuranceLead,
   getInsuranceLead,
   getInsuranceLeadsByUser,
   updateInsuranceLeadStatus,
-  getInsuranceLeadsStats
+  getInsuranceLeadsStats,
+  getQuoteLead,
+  upsertQuoteLead,
+  updateQuoteLeadData,
+  deleteQuoteLead,
 };

@@ -66,13 +66,15 @@ import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } fro
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { analyzeInsuranceDocument, detectDocumentType, extractVehicleData, DOCUMENT_TYPES } from '../../servicios/insurance-document-analysis.js';
-import { calculateAllCoverages, formatPremiumForWhatsApp, inferVehicleCategory, VEHICLE_CATEGORIES } from '../../servicios/adriana-quote-calculator.js';
+import { calculateAllCoverages, formatPremiumForWhatsApp, inferVehicleCategory, VEHICLE_CATEGORIES, COVERAGE_TYPES, calculateVehiclePremium } from '../../servicios/adriana-quote-calculator.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import enzoRepository from '../../database/enzoRepository.js';
 import { saveLegalLead } from '../../database/gabiRepository.js';
 import { saveRealEstateLead } from '../../database/paulaRepository.js';
 import { saveCollisionQuote } from '../../database/axelRepository.js';
-import { saveInsuranceLead } from '../../database/adrianaRepository.js';
+import { saveInsuranceLead, getQuoteLead, upsertQuoteLead, updateQuoteLeadData, deleteQuoteLead } from '../../database/adrianaRepository.js';
+import { buildEmailTemplate } from '../../servicios/email-template-system.js';
+import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 
 const router = Router();
@@ -2534,6 +2536,152 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
+    // 🛡️ ADRIANA FORMULARIO CONVERSACIONAL: Máquina de estados multi-paso
+    // gathering_vehicle → gathering_id → selecting_coverage → quote_sent
+    if (profile.activeAgent === 'ADRIANA') {
+      const quoteLead = await getQuoteLead(userId).catch(() => null);
+
+      // ── Estado: gathering_id — espera foto de cédula ───────────────────────
+      if (quoteLead?.status === 'gathering_id' && mediaUrl && type === 'image') {
+        console.log('[ADRIANA-FORM] 🪪 Cédula recibida — analizando...');
+        try {
+          await enviarWhatsApp(userId, '📸 Recibí tu cédula. Analizando con IA... un momento 🔍');
+          const analysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', { documentType: DOCUMENT_TYPES.ID_CARD });
+          const idData = analysis.success && analysis.analysis
+            ? { raw: analysis.analysis.slice(0, 500), cedula: analysis.analysis.match(/\b\d{10}\b/)?.[0] || null }
+            : {};
+          const vd = quoteLead.vehicle_data || {};
+          const brandModel = [vd.brand, vd.model].filter(Boolean).join(' ') || 'Vehículo';
+          const year   = vd.year   || vd.vehicleYear   || '?';
+          const value  = vd.value  || vd.commercialValue || null;
+          const category = inferVehicleCategory(`${vd.brand || ''} ${vd.model || ''}`);
+
+          if (!value) {
+            await updateQuoteLeadData(userId, { status: 'gathering_vehicle', idCardData: idData });
+            await enviarWhatsApp(userId, '⚠️ Necesito el *valor comercial del vehículo* para cotizar.\n\n¿Cuánto vale tu *' + brandModel + ' ' + year + '*? (ej: $25,000)');
+            return;
+          }
+
+          const quotes = calculateAllCoverages({ commercialValue: parseFloat(value), vehicleYear: parseInt(year) || 2020, vehicleCategory: category });
+          const msgParts = [
+            `✅ *Cédula registrada* 🪪`,
+            ``,
+            `🚗 *${brandModel} ${year}* — $${parseFloat(value).toLocaleString()}`,
+            ``,
+            `🛡️ *Opciones de cobertura SegPopular:*`,
+          ];
+          let optIdx = 1;
+          const coverageOrder = [COVERAGE_TYPES.BASIC, COVERAGE_TYPES.STANDARD, COVERAGE_TYPES.PREMIUM];
+          for (const cov of coverageOrder) {
+            const r = quotes.options[cov];
+            if (r?.success) {
+              msgParts.push('');
+              msgParts.push(`*${optIdx}.* ${formatPremiumForWhatsApp(r, `${brandModel} ${year}`)}`);
+              optIdx++;
+            }
+          }
+          msgParts.push('');
+          msgParts.push('Responde *1* (Básica), *2* (Todo Riesgo) o *3* (Premium) y te envío la propuesta por email 📧');
+
+          await updateQuoteLeadData(userId, { status: 'selecting_coverage', idCardData: idData });
+          const msg = msgParts.join('\n');
+          await enviarWhatsApp(userId, msg);
+          await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'ADRIANA' });
+          return;
+        } catch (err) {
+          console.error('[ADRIANA-FORM] ❌ Error analizando cédula:', err);
+          await enviarWhatsApp(userId, '⚠️ Tuve un problema analizando la cédula.\n\nEnvíame los datos en texto: *Nombre completo y cédula* 🪪');
+          return;
+        }
+      }
+
+      // ── Estado: selecting_coverage — espera "1", "2" o "3" ────────────────
+      if (quoteLead?.status === 'selecting_coverage' && processedText && /^[123]$/.test(processedText.trim())) {
+        const coverageMap = { '1': COVERAGE_TYPES.BASIC, '2': COVERAGE_TYPES.STANDARD, '3': COVERAGE_TYPES.PREMIUM };
+        const selectedCoverage = coverageMap[processedText.trim()];
+        console.log(`[ADRIANA-FORM] 🛡️ Cobertura seleccionada: ${selectedCoverage}`);
+        try {
+          const vd = quoteLead.vehicle_data || {};
+          const brandModel = [vd.brand, vd.model].filter(Boolean).join(' ') || 'Vehículo';
+          const year   = vd.year   || vd.vehicleYear   || 2020;
+          const value  = vd.value  || vd.commercialValue || 20000;
+          const category = inferVehicleCategory(`${vd.brand || ''} ${vd.model || ''}`);
+
+          const premiumResult = calculateVehiclePremium({
+            commercialValue: parseFloat(value),
+            vehicleYear: parseInt(year),
+            vehicleCategory: category,
+            coverage: selectedCoverage,
+          });
+
+          const quoteCode = quoteLead.quote_code || `SEG-${Date.now().toString(36).toUpperCase()}`;
+          const clientName  = quoteLead.client_name  || profile.name || userId;
+          const clientEmail = quoteLead.client_email || '';
+
+          const waMsg = [
+            `✅ *¡Cotización lista!* 🛡️`,
+            ``,
+            `🚗 *${brandModel} ${year}*`,
+            `💵 Valor: $${parseFloat(value).toLocaleString()}`,
+            `📋 Cobertura: *${selectedCoverage.toUpperCase()}*`,
+            premiumResult.success ? `💰 Prima anual: *$${premiumResult.annualPremium?.toFixed(2) || '—'}*` : '',
+            premiumResult.success ? `📊 Deducible: ${premiumResult.deductiblePct}%` : '',
+            ``,
+            `📧 Te envío la propuesta completa por email ahora mismo.`,
+            `Ref: *${quoteCode}*`,
+          ].filter(l => l !== '').join('\n');
+
+          await enviarWhatsApp(userId, waMsg);
+
+          if (clientEmail) {
+            const html = buildEmailTemplate('ADRIANA', 'COMPARISON', {
+              name: clientName,
+              vehiculo: `${brandModel} ${year}`,
+              valorComercial: parseFloat(value),
+              primaAnual: premiumResult.success ? premiumResult.annualPremium : 0,
+              message: `Aquí está tu cotización personalizada de seguro vehicular, cobertura *${selectedCoverage}*.`,
+              quoteCode,
+            });
+            await sendEmail({
+              to: clientEmail,
+              subject: `Cotización de seguro vehicular — ${brandModel} ${year} | Ref. ${quoteCode}`,
+              html,
+            }).catch(err => console.error('[ADRIANA-FORM] ⚠️ Error enviando email:', err));
+          }
+
+          await updateQuoteLeadData(userId, {
+            status: 'quote_sent',
+            selectedCoverage,
+            premiumData: premiumResult.success ? { annualPremium: premiumResult.annualPremium, deductiblePct: premiumResult.deductiblePct } : {},
+            quoteCode,
+          });
+          await saveConversationMessage(userId, { role: 'assistant', content: waMsg, agent: 'ADRIANA' });
+          await saveInsuranceLead({
+            userId,
+            quoteCode,
+            clientName,
+            email: clientEmail,
+            commercialValue: parseFloat(value),
+            vehicleBrand: vd.brand,
+            vehicleModel: vd.model,
+            vehicleYear: parseInt(year),
+            plate: vd.plate,
+            quotedPremium: premiumResult.success ? premiumResult.annualPremium : null,
+            status: 'quoted',
+          }).catch(() => {});
+          return;
+        } catch (err) {
+          console.error('[ADRIANA-FORM] ❌ Error generando cotización:', err);
+          await enviarWhatsApp(userId, '⚠️ Ocurrió un error al generar la cotización. Por favor intenta nuevamente o escríbeme para ayudarte 🛡️');
+          return;
+        }
+      }
+
+      // ── Sin estado activo + imagen → iniciar flujo (gathering_vehicle) ─────
+      // Cae al bloque legacy de vehicle documents que maneja el análisis y
+      // luego establece el estado gathering_id en el DB.
+    }
+
     // 🛡️ ADRIANA VEHICLE DOCUMENTS: Extraer datos vehiculares y cotizar automáticamente
     if (mediaUrl && type === 'image' && profile.activeAgent === 'ADRIANA') {
       console.log('[ADRIANA] 🚗 Imagen recibida — analizando documento vehicular...');
@@ -2566,39 +2714,25 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
             const category = inferVehicleCategory(`${d.brand || ''} ${d.model || ''}`);
 
             if (year && value) {
-              const quotes = calculateAllCoverages({
-                commercialValue: parseFloat(value),
-                vehicleYear: parseInt(year),
-                vehicleCategory: category
-              });
+              // 🛡️ Iniciar flujo conversacional: almacenar vehículo → pedir cédula
+              const vehicleDataStored = { brand: d.brand, model: d.model, year, value, plate: d.plate, category };
+              await upsertQuoteLead(userId, {
+                status: 'gathering_id',
+                vehicleData: vehicleDataStored,
+                clientName: profile.name || null,
+              }).catch(err => console.error('[ADRIANA-FORM] ⚠️ upsert vehicle:', err));
 
-              const msgParts = [
-                `✅ *Datos extraídos:*`,
-                `🚗 ${brandModel} ${year}`,
+              const cotizMsg = [
+                `✅ *Matrícula registrada* 🚗`,
+                ``,
+                `🚗 *${brandModel} ${year}*`,
                 `💵 Valor: $${parseFloat(value).toLocaleString()}`,
                 ``,
-                `🛡️ *Opciones de seguro VAZ:*`,
-              ];
-              for (const result of Object.values(quotes.options)) {
-                if (result.success) {
-                  msgParts.push('');
-                  msgParts.push(formatPremiumForWhatsApp(result, `${brandModel} ${year}`));
-                }
-              }
-              msgParts.push('');
-              msgParts.push('¿Cuál cobertura te interesa? Responde *1* (Básica), *2* (Todo Riesgo), o *3* (Premium) y te envío la propuesta completa por email. 📧');
-
-              const cotizMsg = msgParts.join('\n');
+                `Ahora necesito tu *cédula de identidad* para completar la cotización.`,
+                `Por favor, envía una foto clara de tu cédula 🪪`,
+              ].join('\n');
               await enviarWhatsApp(userId, cotizMsg);
               await saveConversationMessage(userId, { role: 'assistant', content: cotizMsg, agent: 'ADRIANA' });
-              await saveInsuranceLead({
-                userId,
-                clientName: profile.name || userId,
-                vehicleData: JSON.stringify({ brand: d.brand, model: d.model, year, plate: d.plate }),
-                commercialValue: parseFloat(value),
-                source: 'vision_ai_document',
-                status: 'quote_sent'
-              }).catch(() => {});
               await saveInteraction({
                 userId, agent: 'ADRIANA', agentName: 'Adriana - SegPopular',
                 intentReason: 'vehicle_document_quote',

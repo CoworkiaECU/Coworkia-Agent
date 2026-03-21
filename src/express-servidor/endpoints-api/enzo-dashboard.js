@@ -248,4 +248,52 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/enzo/leads/:code/send-followup
+// Disparar manualmente el follow-up D+1, D+3 o D+7 para un lead específico
+// Body: { day: 'd1' | 'd3' | 'd7' }
+// ═══════════════════════════════════════════════════════════════════════════
+router.post('/leads/:code/send-followup', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { day = 'd1' } = req.body;
+    if (!['d1', 'd3', 'd7'].includes(day)) {
+      return res.status(400).json({ ok: false, error: 'day debe ser d1, d3 o d7' });
+    }
+
+    const lead = await databaseService.get(
+      `SELECT project_code, client_name, user_phone, email, project_type,
+              company, proposal_amount, followup_d1_sent_at, followup_d3_sent_at,
+              followup_d7_sent_at
+       FROM marketing_leads WHERE project_code = $1`,
+      [req.params.code]
+    );
+    if (!lead) return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+
+    const name    = (lead.client_name || 'Hola').split(' ')[0];
+    const tipo    = lead.project_type || 'proyecto digital';
+
+    const waMessages = {
+      d1: `Hola ${name} 👋\n\nQuería hacer seguimiento de tu *${tipo}* con MarketingLab.\n\n¿Tienes alguna pregunta sobre la propuesta? Estoy aquí para ayudarte.\n\n_Enzo — MarketingLab_`,
+      d3: `${name}, tenemos una oferta especial *SOLO HOY*:\n\n🎁 *15% de descuento* en tu primer proyecto con MarketingLab.\n\nEsta oferta vence hoy a las 23:59. ¿Te interesa?\n\nResponde *SI* y te mando los detalles al instante 🚀`,
+      d7: `${name}, ¿sabías que una empresa similar a la tuya creció *300% en 3 meses* con nuestra estrategia digital? 📈\n\nMe encantaría contarte cómo lo logramos.\n\n¿Tienes 15 minutos esta semana para una llamada rápida?`,
+    };
+
+    if (lead.user_phone) {
+      await enviarWhatsApp(lead.user_phone, waMessages[day]);
+    }
+
+    const col = `followup_${day}_sent_at`;
+    await databaseService.run(
+      `UPDATE marketing_leads SET ${col} = NOW(), updated_at = NOW() WHERE project_code = $1`,
+      [lead.project_code]
+    );
+
+    return res.json({ ok: true, day, phone: lead.user_phone });
+  } catch (err) {
+    console.error('[ENZO-API] Error send-followup:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;

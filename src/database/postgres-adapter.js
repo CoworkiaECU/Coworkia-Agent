@@ -1042,6 +1042,24 @@ class PostgresAdapter {
       await client.query(`ALTER TABLE marketing_leads ADD COLUMN IF NOT EXISTS followup_d3_sent_at TIMESTAMP`).catch(() => {});
       await client.query(`ALTER TABLE marketing_leads ADD COLUMN IF NOT EXISTS followup_d7_sent_at TIMESTAMP`).catch(() => {});
 
+      // Tabla de cotizaciones Adriana — formulario conversacional WA
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS adriana_quote_leads (
+          id SERIAL PRIMARY KEY,
+          phone VARCHAR(20) NOT NULL UNIQUE,
+          status VARCHAR(50) DEFAULT 'gathering_vehicle',
+          client_name VARCHAR(255),
+          client_email VARCHAR(255),
+          vehicle_data JSONB DEFAULT '{}'::jsonb,
+          id_card_data JSONB DEFAULT '{}'::jsonb,
+          selected_coverage VARCHAR(20),
+          premium_data JSONB DEFAULT '{}'::jsonb,
+          quote_code VARCHAR(50),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       await client.query(` -- resume index block placeholder
         
         -- Índices para tablas de pagos

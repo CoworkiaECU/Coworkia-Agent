@@ -296,11 +296,11 @@ function renderReservationsTable(reservations) {
       <td>${formatDate(r.created_at)}</td>
       <td style="white-space:nowrap;">
         ${!r.followup_1h_sent_at
-          ? `<button style="background:#4ECDC4;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h">📲 +1h</button>`
-          : '<span style="font-size:10px;color:#6b7280;">✓ +1h</span>'}
+          ? `<button style="background:#4ECDC4;color:#0c322c;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h" data-tip="Enviar WA de confirmación 1h después de la reserva">📲 +1h</button>`
+          : '<span style="font-size:10px;color:#4ECDC4;" title="Follow-up +1h ya enviado">✓ +1h</span>'}
         ${!r.rebook_reminder_sent_at
-          ? `<button style="background:#8B5CF6;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="rebooking">🔄 D+7</button>`
-          : '<span style="font-size:10px;color:#6b7280;">✓ D+7</span>'}
+          ? `<button style="background:#8B5CF6;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="rebooking" data-tip="Enviar recordatorio D+7 para volver a reservar">🔄 D+7</button>`
+          : '<span style="font-size:10px;color:#a78bfa;" title="Recordatorio D+7 ya enviado">✓ D+7</span>'}
       </td>
     </tr>
   `).join('');
@@ -345,10 +345,10 @@ function getUrgencyLevel(p) {
 }
 
 const URGENCY_STYLE = {
-  urgent: { border: '#dc2626', bg: '#fef2f2', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
-  hot:    { border: '#ea580c', bg: '#fff7ed', badge: '<span style="background:#fff7ed;color:#ea580c;border:1px solid #fdba74;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🔥 HOT</span>' },
-  warm:   { border: '#d97706', bg: '#fffbeb', badge: '<span style="background:#fffbeb;color:#d97706;border:1px solid #fcd34d;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🌡 WARM</span>' },
-  cold:   { border: '#4ECDC4', bg: '#f0fdfa', badge: '<span style="background:#f0fdfa;color:#0d9488;border:1px solid #5eead4;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
+  urgent: { border: '#dc2626', bg: '#2d0a0a', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
+  hot:    { border: '#ea580c', bg: '#2a1205', badge: '<span style="background:#431407;color:#fb923c;border:1px solid #7c2d12;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🔥 HOT</span>' },
+  warm:   { border: '#d97706', bg: '#221505', badge: '<span style="background:#422006;color:#f59e0b;border:1px solid #92400e;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🌡 WARM</span>' },
+  cold:   { border: '#4ECDC4', bg: '#062525', badge: '<span style="background:#0c3535;color:#4ECDC4;border:1px solid #0d9488;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
 };
 
 function getWaTemplate(rawTopics, name) {
@@ -383,38 +383,38 @@ function buildProspectCard(p) {
   const rawTopics   = Array.isArray(p.topics) ? p.topics : [];
   const topicLabels = formatTopics(rawTopics);
   const topicChips  = topicLabels.length
-    ? topicLabels.map(t => `<span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:99px;font-size:11px;white-space:nowrap;">${t}</span>`).join('')
-    : '<span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:99px;font-size:11px;">Sin categoría</span>';
+    ? topicLabels.map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid #334155;white-space:nowrap;">${t}</span>`).join('')
+    : '<span style="background:#0f172a;color:#475569;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid #1e293b;">Sin categoría</span>';
 
   const waTpl  = getWaTemplate(rawTopics, name);
   const waLink = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
 
   return `
     <div class="prospect-card" data-urgency="${urgency}" data-engagement="${p.engagement}"
-      style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid #f3f4f6;background:white;display:flex;flex-direction:column;">
+      style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.4);border:1px solid #334155;background:#1e293b;display:flex;flex-direction:column;">
       <div style="display:flex;padding:14px 16px;gap:12px;align-items:flex-start;border-left:4px solid ${style.border};background:${style.bg};">
-        <div style="width:40px;height:40px;border-radius:50%;background:#4ECDC4;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:#4ECDC4;color:#0c3535;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;color:#1f2937;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-          <div style="font-size:12px;color:#6b7280;">${phone}</div>
+          <div style="font-weight:700;color:#f1f5f9;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+          <div style="font-size:12px;color:#64748b;">${phone}</div>
         </div>
         ${style.badge}
       </div>
-      <div style="display:flex;border-bottom:1px solid #f3f4f6;">
-        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #f3f4f6;">
-          <div style="font-size:24px;font-weight:800;color:#1f2937;">${msgs}</div>
-          <div style="font-size:11px;color:#6b7280;">mensajes</div>
+      <div style="display:flex;border-bottom:1px solid #334155;">
+        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #334155;">
+          <div style="font-size:24px;font-weight:800;color:#f1f5f9;">${msgs}</div>
+          <div style="font-size:11px;color:#64748b;">mensajes</div>
         </div>
-        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #f3f4f6;">
+        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #334155;">
           <div style="font-size:18px;font-weight:700;color:${daysColor};">${daysLabel}</div>
-          <div style="font-size:11px;color:#6b7280;">último</div>
+          <div style="font-size:11px;color:#64748b;">último</div>
         </div>
         <div style="flex:1;text-align:center;padding:12px 8px;">
-          <div style="font-size:18px;font-weight:700;color:#6b7280;">${score}</div>
-          <div style="font-size:11px;color:#6b7280;">prioridad</div>
+          <div style="font-size:18px;font-weight:700;color:#94a3b8;">${score}</div>
+          <div style="font-size:11px;color:#64748b;">prioridad</div>
         </div>
       </div>
-      <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #f3f4f6;min-height:38px;align-items:center;">
+      <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #334155;min-height:38px;align-items:center;">
         ${topicChips}
       </div>
       <div style="padding:12px 14px;margin-top:auto;">
@@ -482,7 +482,7 @@ window.filterProspects = function(filter) {
 }
 
 window.copyCampaignList = function() {
-  if (!_allProspects.length) { alert('Primero carga los prospectos.'); return; }
+  if (!_allProspects.length) { showToast('⚠️ Primero carga los prospectos'); return; }
   const date     = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' });
   const urgentes = _allProspects.filter(p => getUrgencyLevel(p) === 'urgent');
   const hots     = _allProspects.filter(p => p.engagement === 'hot' && getUrgencyLevel(p) !== 'urgent');
@@ -601,41 +601,41 @@ async function loadConversations() {
       // Topics: filtrar / traducir
       const labeledTopics = formatTopics((c.topics || []).filter(Boolean));
       const topicsHtml = labeledTopics.length
-        ? labeledTopics.map(t => `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;">${t}</span>`).join('')
-        : '<span style="color:#9ca3af;font-size:12px;">—</span>';
+        ? labeledTopics.map(t => `<span style="background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;border:1px solid #1e4a7a;">${t}</span>`).join('')
+        : '<span style="color:#475569;font-size:12px;">—</span>';
       // CRM status badge (multi-agente)
       const crmStatus    = c.crm_status;
       const crmAgent     = c.crm_agent;
       const agentEmojis  = {ALUNA:'💼',GABI:'⚖️',ENZO:'🎯',PAULA:'🏠',AXEL:'🔧',ADRIANA:'🛡️'};
-      const agentColors  = {ALUNA:'#d1fae5',GABI:'#fef3c7',ENZO:'#fef2f2',PAULA:'#fdf4ff',AXEL:'#dbeafe',ADRIANA:'#d1fae5'};
-      const agentText    = {ALUNA:'#065f46',GABI:'#92400e',ENZO:'#991b1b',PAULA:'#6b21a8',AXEL:'#1e40af',ADRIANA:'#065f46'};
-      const bg   = (crmStatus && crmAgent) ? (agentColors[crmAgent] || '#f3f4f6') : '#f3f4f6';
-      const tc   = (crmStatus && crmAgent) ? (agentText[crmAgent]   || '#374151') : '#374151';
+      const agentColors  = {ALUNA:'#022c22',GABI:'#422006',ENZO:'#450a0a',PAULA:'#2e1065',AXEL:'#1e3a5f',ADRIANA:'#022c22'};
+      const agentText    = {ALUNA:'#34d399',GABI:'#f59e0b',ENZO:'#f87171',PAULA:'#c4b5fd',AXEL:'#60a5fa',ADRIANA:'#34d399'};
+      const bg   = (crmStatus && crmAgent) ? (agentColors[crmAgent] || '#1e293b') : '#1e293b';
+      const tc   = (crmStatus && crmAgent) ? (agentText[crmAgent]   || '#94a3b8') : '#94a3b8';
       const em   = crmAgent ? (agentEmojis[crmAgent] || '📋') : '⬜';
       const crmBadge = crmStatus
-        ? `<span style="background:${bg};color:${tc};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">${em} ${crmAgent} · ${crmStatus}</span>`
-        : '<span style="color:#9ca3af;font-size:12px;">Sin CRM</span>';
-      const proforma  = c.proforma_code ? `<small style="color:#6b7280; font-size:11px;display:block;">${c.proforma_code}</small>` : '';
+        ? `<span style="background:${bg};color:${tc};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid ${tc}22;">${em} ${crmAgent} · ${crmStatus}</span>`
+        : '<span style="color:#475569;font-size:12px;">Sin CRM</span>';
+      const proforma  = c.proforma_code ? `<small style="color:#64748b; font-size:11px;display:block;margin-top:4px;">${c.proforma_code}</small>` : '';
       // Alias de cliente (últimos 4 del teléfono, privacidad)
       const alias = 'CLI-' + (phone.replace(/\D/g,'').slice(-4) || '????');
       const waLink = `https://wa.me/${phone.replace(/\D/g,'')}`;
       return `
-        <tr class="conv-row" style="border-bottom:1px solid #f3f4f6;">
+        <tr class="conv-row" style="border-bottom:1px solid #1e293b;">
           <td style="padding:12px 16px;">
-            <strong style="color:#1f2937;">${name}</strong><br>
-            <small style="color:#9ca3af;font-size:11px;">${alias}</small>
+            <strong style="color:#f1f5f9;">${name}</strong><br>
+            <small style="color:#475569;font-size:11px;">${alias}</small>
           </td>
           <td style="padding:12px 16px; text-align:center;">
-            <span style="background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${c.message_count}</span>
+            <span style="background:#1e3a5f; color:#60a5fa; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${c.message_count}</span>
           </td>
-          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${last}</td>
-          <td style="padding:12px 16px; color:#6b7280; font-size:13px;">${first}</td>
-          <td style="padding:12px 16px; font-size:12px; color:#374151;">${agents}</td>
+          <td style="padding:12px 16px; color:#94a3b8; font-size:13px;">${last}</td>
+          <td style="padding:12px 16px; color:#64748b; font-size:13px;">${first}</td>
+          <td style="padding:12px 16px; font-size:12px; color:#94a3b8;">${agents}</td>
           <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
           <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button data-action="open-thread" data-phone="${phone.replace(/"/g,'&quot;')}" data-name="${name.replace(/"/g,'&quot;')}" data-alias="${alias}" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;">💬 Ver hilo</button>
-            <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">WhatsApp</a>
+            <button data-action="open-thread" data-phone="${phone.replace(/"/g,'&quot;')}" data-name="${name.replace(/"/g,'&quot;')}" data-alias="${alias}" style="background:#0d9488;color:#fff;border:none;font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;font-weight:600;" data-tip="Ver historial de mensajes con este usuario">💬 Ver hilo</button>
+            <a href="${waLink}" target="_blank" style="background:#0d3b26; color:#4ade80; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;border:1px solid #15803d;" data-tip="Abrir WhatsApp con este cliente">WhatsApp</a>
           </td>
         </tr>`;
     }).join('');
@@ -676,10 +676,10 @@ async function openThread(phone, name, alias) {
       if (!content.trim()) return '';
       return `
         <div style="display:flex; flex-direction:column; align-items:${isUser ? 'flex-start' : 'flex-end'};">
-          <div style="max-width:75%; background:${isUser ? '#f3f4f6' : '#e0fdf4'}; color:${isUser ? '#1f2937' : '#065f46'}; border-radius:${isUser ? '4px 16px 16px 4px' : '16px 4px 4px 16px'}; padding:10px 14px; font-size:14px; line-height:1.5; white-space:pre-wrap;">
+          <div style="max-width:75%; background:${isUser ? '#1e293b' : '#064e3b'}; color:${isUser ? '#cbd5e1' : '#6ee7b7'}; border-radius:${isUser ? '4px 16px 16px 4px' : '16px 4px 4px 16px'}; padding:10px 14px; font-size:14px; line-height:1.5; white-space:pre-wrap; border:1px solid ${isUser ? '#334155' : '#065f46'};">
             ${content.substring(0, 800)}${content.length > 800 ? '…' : ''}
           </div>
-          <div style="display:flex; gap:6px; margin-top:3px; align-items:center;">${agentBubble}<small style="color:#9ca3af; font-size:11px;">${time}</small></div>
+          <div style="display:flex; gap:6px; margin-top:3px; align-items:center;">${agentBubble}<small style="color:#475569; font-size:11px;">${time}</small></div>
         </div>`;
     }).filter(Boolean).join('');
 
@@ -783,9 +783,15 @@ try {
 
   // ── Quick Actions ─────────────────────────────────────────────────────────
   document.getElementById('qa-refresh-all')?.addEventListener('click', () => refreshAll());
-  document.getElementById('qa-load-prospects')?.addEventListener('click', () => loadAbandoned());
+  document.getElementById('qa-load-prospects')?.addEventListener('click', () => {
+    loadAbandoned();
+    document.getElementById('section-prospects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   document.getElementById('qa-copy-list')?.addEventListener('click', () => copyCampaignList());
-  document.getElementById('qa-conversations')?.addEventListener('click', () => loadConversations());
+  document.getElementById('qa-conversations')?.addEventListener('click', () => {
+    loadConversations();
+    document.getElementById('section-conversations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   document.getElementById('qa-campaign-wa')?.addEventListener('click', () => sendCampaignWA());
 
   // ── Event delegation: pill filters (prospectos) ───────────────────────────
@@ -849,6 +855,6 @@ try {
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {
   console.error('[AURORA-DASH] ❌ Error en inicialización:', error);
-  alert('Error inicializando dashboard: ' + error.message);
+  showToast('❌ Error inicializando dashboard: ' + error.message, 5000);
 }
 }); // DOMContentLoaded

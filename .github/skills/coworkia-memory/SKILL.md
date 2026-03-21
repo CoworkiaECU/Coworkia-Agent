@@ -75,7 +75,65 @@ Esto permite:
 - 📝 Documentar mientras trabajamos
 
 ---
+## 🎉 HITOS IMPORTANTES DEL PROYECTO
 
+### 🚀 Primer Uso Exitoso de Autopilot - 20 Mar 2026
+
+**CONTEXTO**: Primer vez que el agente trabaja 4.5 horas continuas de forma completamente autónoma, ejecutando un plan de vuelo sin intervención humana.
+
+**OBJETIVO**: Completar el 70% faltante de Aluna (membresías) en una sesión
+
+**ACTIVACIÓN**: Diego dijo "autopilot verde nena" después de presentar el plan
+
+**RESULTADOS**:
+- ✅ **3 bloques completados** en 4.5h (vs 7-8h estimado manual)
+- ✅ **3 commits incrementales** (checkpoints cada ~1.5h)
+- ✅ **20/20 tests exitosos** (2 test suites creados)
+- ✅ **0 errores** de compilación o runtime
+- ✅ **Arquitectura respetada** (siguió patrones existentes)
+
+**BLOQUES IMPLEMENTADOS**:
+
+1. **Client Response Tracking** (1h)
+   - Columnas BD: `client_response_at`, `client_whatsapp_reply`
+   - Función: `markAlunaClientResponse(userPhone, channel)`
+   - Auto-tracking en webhook cuando prospecto responde
+   - Test: 5/5 checks ✅
+
+2. **Dashboard de Métricas** (2h)
+   - Endpoint `/api/aluna/stats` ampliado con métricas de efectividad
+   - 4 cards frontend: D+1 sent, D+3 sent, Response rate, Conversion rate
+   - Auto-refresh cada 30s
+   - Permite medir ROI del sistema automatizado
+
+3. **High Intent Detection** (1.5h)
+   - 45 keywords en 4 categorías (pricing, availability, commitment, urgency)
+   - Auto-cambio status → `negotiating`
+   - Notificación WhatsApp a Diego con contexto completo
+   - Test: 15/15 casos ✅ (0 falsos positivos/negativos)
+
+**LECCIONES APRENDIDAS**:
+
+✅ **Lo que funcionó bien**:
+- Plan de vuelo con bloques claros y tiempo estimado
+- Tests antes de cada commit = alta confianza
+- Checkpoints incrementales = fácil rollback
+- Import dinámico con `await import()` evita dependencias circulares
+- Try/catch no crítico = features nuevas no rompen flujo existente
+
+⚠️ **Lo que mejorar**:
+- `replace_string_in_file` falla con emojis corruptos → usar `sed` como backup
+- Agregar notificación WhatsApp a Diego cuando autopilot termina
+- Considerar +10% buffer en estimaciones de tiempo
+
+**IMPACTO**: Aluna pasó de 30% → 100% funcional. Sistema completo end-to-end operativo.
+
+**COMMITS**:
+- `3f416d3` - BLOQUE 1/3: Tracking de respuestas Aluna
+- `7d2eb6c` - BLOQUE 2/3: Dashboard de métricas Aluna
+- `d14f1fa` - BLOQUE 3/3: High intent detection Aluna
+
+---
 ## �📦 SETUP DEL PROYECTO
 
 ### Identidad del Sistema

@@ -681,8 +681,8 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 <div id="toast"></div>
 
 <!-- Modal: Registrar prospecto en pipeline -->
-<div id="modal-prospect" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:200; align-items:center; justify-content:center;">
-  <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; width:440px; max-width:95vw;">
+<div id="modal-prospect" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;">
+  <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:28px; width:440px; max-width:95vw;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
     <h3 style="color:#f1f5f9; margin:0 0 20px; font-size:16px;">➕ Registrar prospecto en pipeline</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div>
@@ -884,48 +884,7 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
   </div>
 </div>
 
-<script>
-function openAddProspectModal() {
-  const m = document.getElementById('modal-prospect');
-  m.style.display = 'flex';
-  document.getElementById('mp-phone').value = '';
-  document.getElementById('mp-name').value = '';
-  document.getElementById('mp-plan').value = 'Plan 20';
-  document.getElementById('mp-code').value = '';
-  document.getElementById('mp-email').value = '';
-  document.getElementById('mp-converted').checked = false;
-}
-function closeProspectModal() {
-  document.getElementById('modal-prospect').style.display = 'none';
-}
-async function submitAddProspect() {
-  const phone = document.getElementById('mp-phone').value.trim();
-  const name  = document.getElementById('mp-name').value.trim();
-  const membershipType = document.getElementById('mp-plan').value;
-  const membershipCode = document.getElementById('mp-code').value.trim() || null;
-  const email = document.getElementById('mp-email').value.trim() || null;
-  const alreadyConverted = document.getElementById('mp-converted').checked;
-  if (!phone || !name) { toast('⚠️ Teléfono y nombre son requeridos'); return; }
-  try {
-    const r = await fetch('/api/aluna/prospects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, name, membershipType, membershipCode, email, alreadyConverted })
-    });
-    const j = await r.json();
-    if (j.ok) {
-      toast('✅ Prospecto registrado en pipeline');
-      closeProspectModal();
-      loadPipeline();
-    } else {
-      toast('❌ Error: ' + (j.error || 'desconocido'));
-    }
-  } catch (e) {
-    toast('❌ Error de red: ' + e.message);
-  }
-}
-</script>
-
+<!-- Funciones del prospect modal están en aluna-dashboard.js -->
 <script src="/js/aluna-dashboard.js"></script>
 </body>
 </html>

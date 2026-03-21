@@ -756,7 +756,7 @@ window.openCampaignModal = function() {
   document.getElementById('campaign-filter').value = 'pending';
   document.getElementById('campaign-message').value = '';
   campaignChannel = 'whatsapp';
-  selectCampaignChannel('whatsApp');
+  selectCampaignChannel('whatsapp');
   
   // Load preview
   updateCampaignPreview();
@@ -953,15 +953,16 @@ setInterval(() => { loadStats(); loadPipeline(); }, 30000);
 window.openAddProspectModal = function() {
   console.log('➕ openAddProspectModal called');
   const modal = document.getElementById('modal-prospect');
-  if (modal) {
-    modal.style.display = 'flex';
-    // Reset form
-    document.getElementById('mp-phone').value = '';
-    document.getElementById('mp-name').value = '';
-    document.getElementById('mp-plan').value = 'Plan20';
-  } else {
-    toast('⚠️ Modal no encontrado en el DOM');
-  }
+  if (!modal) { console.error('modal-prospect not found'); return; }
+  modal.style.display = 'block';
+  // Reset todos los campos del form
+  const p = (id) => document.getElementById(id);
+  if (p('mp-phone')) p('mp-phone').value = '';
+  if (p('mp-name')) p('mp-name').value = '';
+  if (p('mp-plan')) p('mp-plan').value = 'Plan 20';
+  if (p('mp-code')) p('mp-code').value = '';
+  if (p('mp-email')) p('mp-email').value = '';
+  if (p('mp-converted')) p('mp-converted').checked = false;
 };
 
 window.closeProspectModal = function() {

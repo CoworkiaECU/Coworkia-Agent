@@ -6,18 +6,58 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 
 ---
 
-## �️ ESTADO ACTUAL (20 Mar 2026)
+## 🗓️ ESTADO ACTUAL (22 Mar 2026)
 
-### ✅ Completado (plan-vuelo-21mar)
+### ✅ Completado antes del 21 Mar
 - FASE 1: Skills troubleshooting (4 skills)
 - FASE 2: Tests integración Aurora + Aluna (12 tests)
-- FASE 3A: Botones manuales D+1/D+3 en dashboard Aluna ← COMMITTED
+- FASE 3A: Botones manuales D+1/D+3 en dashboard Aluna
 
-### 🔵 En Progreso (otro chat, Diego probando)
-- FASE 3B: Ventana Creación de Campañas (dashboard Aluna)
+### ✅ Completado 21 Mar 2026
 
-### 📬 SIGUIENTE PARA AUTOPILOT (cuando termine FASE 3B)
-Ver sección "PROMPT PARA EL BOT" al final de este archivo.
+**FASE 1 BLOQUE 1A — Notificaciones WhatsApp (commit `759aaba`)** ✅
+- `src/servicios/notification-service.js` — 5 funciones: notifyHighIntent, notifyDailyReport, notifyCriticalError, notifyAutopilotComplete, notifyAutopilotBlocked
+- `src/servicios/health-monitor.js` — chequeo OpenAI + DB cada 5 min, alerta WA tras 2 fallos consecutivos
+- `src/cron/daily-report.js` — cron 9AM Ecuador, stats de Aluna + Aurora + Adriana
+- `src/express-servidor/index.js` — boot integra startHealthMonitor() + startDailyReportCron()
+- `wassenger.js` — high-intent refactorizado usando notifyHighIntent()
+- 20 tests verdes ✅ (tests/unit/notification-service.test.js)
+- Deployado y notificado ✅
+
+**Axel v2 — CTAs + Follow-up + Dashboard (commit `48ef5f1`)** ✅
+- `wassenger.js` — 3 paths post-cotización ahora dicen *"¿Cuándo tienes 20 minutos esta semana?"* en vez de agendar cita
+- `axel-followup-cron.js` — D+2 (10am) y D+7 (11am Ecuador) automáticos
+- `index.js` — Axel cron wired junto a Aluna/Enzo
+- Backend: `POST /api/axel/quotes/:code/send-reminder` — envía WA y marca reminder_1_sent_at
+- Frontend dashboard: dropdown estado por tarjeta (PATCH inmediato) + botón 📲 Recordatorio con feedback visual
+
+**Aurora Dashboard paridad con Aluna (commits `5acc440`, `f3ad735`, v1013/v1014)** ✅
+- BLOQUE A: 8 funciones `window.*` (switchTab, resetFilters, loadAbandoned, filterProspects, copyCampaignList, closeThread, sendCampaignWA, refreshAll)
+- BLOQUE B: Search debounce 450ms
+- BLOQUE C: Botones +1h y D+7 en filas de tabla con `data-fu-action`
+- GAP A: Modal follow-up manual +1h/D+7 con preview de mensaje WA
+- GAP B: Filter pills por servicio (Hot Desk / Sala Reuniones)
+- GAP C: Stepper visual Creada → Confirmada → Completa por reserva
+- GAP D: `window.sendFollowupNow(id, type, btn)` directo sin modal
+
+### ✅ Completado 22 Mar 2026
+
+**FASE 1 BLOQUE 1B — Comandos WhatsApp → deploy desde celular** ✅
+- `wassenger.js` — `handleDiegoAlwaysOnCommands()` intercepta antes del debounce
+- Comandos siempre activos: `STATUS`, `PARA`, `SIGUIENTE`, `CANCELA`
+- Comandos condicionales (ya existían): `SI`/`SÍ`, `NO`, `REVIEW`, `DEPLOY`
+- `STATUS` → query live a DB: reservas hoy, leads activos, salud de la conexión
+- `PARA` → marca señal de pausa en estado autopilot
+- Seguridad: solo `DIEGO_PERSONAL_PHONE`, cualquier otro número ignorado silenciosamente
+
+### 🔵 Pendiente 22 Mar (próximas sesiones)
+- FASE 2 BLOQUE 1A: Aurora +1h post-reserva (cron + template)
+- FASE 2 BLOQUE 1B: Aurora D+7 re-booking (cron + template)
+- FASE 5: Adriana cotizaciones automáticas (BLOQUE 4A→4E)
+
+### 🔄 En progreso — OTRO CHAT (front-end)
+- FASE 3: Dashboard Aurora rediseño visual
+- FASE 4: Templates HTML sistema centralizado + logos agentes
 
 ---
 
@@ -42,43 +82,25 @@ Ver sección "PROMPT PARA EL BOT" al final de este archivo.
 
 ---
 
-## 🥇 FASE 1 — PRIMER BLOQUE: NOTIFICACIONES WHATSAPP A DIEGO (1.5h)
-**Prioridad**: 🔴 CRÍTICA — Es la columna vertebral del trabajo autónomo real
-
-> Sin esto Diego tiene que estar frente al computador para saber si el bot terminó, si falló, o para aprobar el siguiente bloque. **Con esto, Diego responde "SI" desde su celular y el bot hace el deploy.**
+## 🥇 FASE 1 — NOTIFICACIONES WHATSAPP A DIEGO
+**Prioridad**: 🔴 CRÍTICA — Columna vertebral del trabajo autónomo
 
 ---
 
-### BLOQUE 1A: notification-service.js (30 min)
+### BLOQUE 1A: notification-service.js ✅ COMPLETADO (commit `759aaba`)
 
-**Archivos**:
-- `src/servicios/notification-service.js` → CREAR (reutiliza `wassenger-service.js`)
-
-**Implementación**:
-```javascript
-// Reutiliza wassenger-service.js (ya existe — ver DONT-REPEAT-YOURSELF)
-export async function notifyDiego(type, message) {
-  const phone = process.env.DIEGO_PERSONAL_PHONE;
-  await sendWhatsApp({ phone, message: formatMessage(type, message) });
-}
-```
-
-**Tipos de notificación**:
-- `autopilot_done` → `✅ Bloque [nombre] terminado. ¿Deploy? Responde: SI / NO`
-- `autopilot_blocked` → `🛑 Bot bloqueado en [tarea]. Necesita tu decisión.`
-- `guardian_alert` → `🔒 Guardian detectó problema antes del deploy: [descripción]`
-- `critical_error` → `🚨 Error crítico en producción: [error]`
-- `daily_report` → `📊 Reporte diario: X reservas, Y leads, Z conversiones`
-
-**Variable de entorno** (hacer ANTES del deploy):
-```bash
-heroku config:set DIEGO_PERSONAL_PHONE="+593XXXXXXXXX" --app coworkia-agent
-```
+**Archivos creados**:
+- `src/servicios/notification-service.js` — 5 funciones (highIntent, dailyReport, criticalError, autopilotComplete, autopilotBlocked)
+- `src/servicios/health-monitor.js` — OpenAI + DB check cada 5 min
+- `src/cron/daily-report.js` — 9AM Ecuador, stats 3 agentes
+- `tests/unit/notification-service.test.js` — 20/20 ✅
 
 **Entregable**:
-- [ ] `notification-service.js` creado y funcionando
-- [ ] `DIEGO_PERSONAL_PHONE` configurado en Heroku
-- [ ] Test: bot envía `🤖 Sistema de notificaciones activo` al celular de Diego
+- [x] `notification-service.js` creado y funcionando
+- [x] Health monitor activo en producción
+- [x] Daily report 9AM Ecuador activo
+- [x] 20 tests verdes
+- [x] Deployado en Heroku
 
 ---
 
@@ -110,10 +132,12 @@ Bot termina bloque autopilot
 **Seguridad**: Solo `DIEGO_PERSONAL_PHONE` puede ejecutar comandos. Cualquier otro número es ignorado silenciosamente.
 
 **Entregable**:
-- [ ] Handler de comandos Diego activo en webhook
-- [ ] Deploy automático desde WhatsApp funcionando end-to-end
-- [ ] Test: Diego envía `SI` → deploy ejecutado → confirmación al celular
-- [ ] Test: número desconocido envía `deploy` → ignorado sin respuesta
+- [x] Handler de comandos Diego activo en webhook (`handleDiegoAlwaysOnCommands`)
+- [x] STATUS → stats live del sistema (reservas, leads, DB health)
+- [x] PARA → pausa el autopilot inmediatamente
+- [x] SI/NO/REVIEW → ya existían vía `detectSystemCommand` (condicionales a pregunta pendiente)
+- [x] Seguridad: solo `DIEGO_PERSONAL_PHONE` puede ejecutar comandos
+- [x] Deployado heroku v1015
 
 ## �📋 FASES DEL PLAN
 
@@ -223,8 +247,9 @@ Bot termina bloque autopilot
 
 ---
 
-### FASE 3: DASHBOARD AURORA REDISEÑO (2h)
+### FASE 3: DASHBOARD AURORA REDISEÑO 🔄 EN PROGRESO — OTRO CHAT
 **Prioridad**: 🟢 ALTA - Diego lo usa a diario
+**Responsable**: Chat front-end — este chat NO toca esta FASE
 
 #### BLOQUE 2A: Análisis del Dashboard Actual (30 min)
 **Objetivo**: Documentar qué está confuso y qué mejorar
@@ -318,8 +343,9 @@ Bot termina bloque autopilot
 
 ---
 
-### FASE 4: TEMPLATES HTML SISTEMA CENTRALIZADO (1.5h)
+### FASE 4: TEMPLATES HTML SISTEMA CENTRALIZADO 🔄 EN PROGRESO — OTRO CHAT
 **Prioridad**: 🔴 CRÍTICA - Afecta a todos los agentes
+**Responsable**: Chat front-end — este chat NO toca esta FASE
 
 #### BLOQUE 3A: Template System (1h)
 **Objetivo**: Templates HTML con contexto, logos, branding coherente

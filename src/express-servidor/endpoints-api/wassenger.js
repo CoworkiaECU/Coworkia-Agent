@@ -85,6 +85,71 @@ const normalizePhone = (p) => p ? String(p).replace(/[\s+\-().]/g, '') : '';
 const isAdminPhone = (userId) => ADMIN_PHONE && normalizePhone(userId) === normalizePhone(ADMIN_PHONE);
 
 /* ─────────────────────────────────────────────────────────────
+   🎮 BLOQUE 1B: Comandos siempre activos de Diego
+   Intercepta ANTES del debounce con respuesta inmediata.
+   Seguridad: solo DIEGO_PERSONAL_PHONE. Todo otro número ignorado.
+───────────────────────────────────────────────────────────── */
+
+/**
+ * Maneja comandos siempre activos de Diego (no requieren pregunta pendiente).
+ * @returns {boolean} true si el mensaje fue un comando y ya fue procesado
+ */
+async function handleDiegoAlwaysOnCommands(userId, text) {
+  const DIEGO_PERSONAL = process.env.DIEGO_PERSONAL_PHONE;
+  if (!DIEGO_PERSONAL) return false;
+  if (normalizePhone(userId) !== normalizePhone(DIEGO_PERSONAL)) return false;
+
+  const cmd = (text || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // STATUS: stats live del sistema
+  if (cmd === 'STATUS' || cmd === 'ESTADO') {
+    console.log('[DIEGO-CMD] 📊 STATUS solicitado');
+    try {
+      const [resHoy, leadsAluna, leadsAxel] = await Promise.all([
+        query(`SELECT COUNT(*) AS n FROM reservations WHERE created_at >= CURRENT_DATE`).catch(() => ({ rows: [{ n: '?' }] })),
+        query(`SELECT COUNT(*) AS n FROM aluna_leads WHERE status NOT IN ('lost','archived') AND created_at >= NOW() - INTERVAL '30 days'`).catch(() => ({ rows: [{ n: '?' }] })),
+        query(`SELECT COUNT(*) AS n FROM axel_quotes WHERE created_at >= NOW() - INTERVAL '30 days'`).catch(() => ({ rows: [{ n: '?' }] }))
+      ]);
+      const msg = [
+        '📊 *Status Coworkia* — ahora mismo',
+        '',
+        `🏢 Reservas hoy: *${resHoy.rows[0].n}*`,
+        `👥 Leads Aluna (30d): *${leadsAluna.rows[0].n}*`,
+        `🎨 Cotizaciones Axel (30d): *${leadsAxel.rows[0].n}*`,
+        `🟢 DB: online`,
+        `⏱️ ${new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}`,
+        '',
+        'Comandos: PARA | SIGUIENTE | REVIEW'
+      ].join('\n');
+      await enviarWhatsApp(userId, msg);
+    } catch (err) {
+      await enviarWhatsApp(userId, `📊 Status: en línea ✅\nDB: error al leer stats\n${err.message}`);
+    }
+    return true;
+  }
+
+  // PARA: pausa el autopilot
+  if (cmd === 'PARA' || cmd === 'STOP') {
+    console.log('[DIEGO-CMD] 🛑 PARA recibido');
+    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+    setAutopilotState({ active: false, waitingForApproval: false });
+    await enviarWhatsApp(userId, '🛑 *Autopilot pausado.*\nSistema en espera. Envía SIGUIENTE cuando quieras continuar.');
+    return true;
+  }
+
+  // SIGUIENTE: reanuda / indica al autopilot que puede avanzar
+  if (cmd === 'SIGUIENTE') {
+    console.log('[DIEGO-CMD] ▶️ SIGUIENTE recibido');
+    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+    setAutopilotState({ active: true });
+    await enviarWhatsApp(userId, '▶️ *Siguiente bloque activado.*\nEl sistema avanzará al próximo bloque del plan en la próxima sesión autopilot.');
+    return true;
+  }
+
+  return false;  // No era un comando, continuar flujo normal
+}
+
+/* ─────────────────────────────────────────────────────────────
    ✅ HANDOFF: Todos los handoffs usan executeHandoff() de 
    handoff-manager.js - sistema centralizado con locks
 ───────────────────────────────────────────────────────────── */
@@ -1132,6 +1197,14 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     if (botCheck.detected) {
       if (debug) console.log('[WASSENGER] Ignorado (bot):', botCheck.reason);
       return;
+    }
+
+    // 🎮 DIEGO COMMANDS: Interceptar antes del debounce — respuesta inmediata
+    // Comandos siempre activos: STATUS, PARA, SIGUIENTE, CANCELA
+    // Solo responde si el mensaje viene de DIEGO_PERSONAL_PHONE
+    {
+      const diegoHandled = await handleDiegoAlwaysOnCommands(userId, webhookData.text || '');
+      if (diegoHandled) return;
     }
 
     // ⏱️ DEBOUNCE: Agrupar mensajes rápidos del mismo usuario

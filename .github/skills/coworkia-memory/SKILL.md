@@ -190,25 +190,34 @@ Esto permite:
 
 ---
 
-#### FASE 2: Testing Automatizado (2h) - EN PROGRESO
+#### FASE 2: Testing Automatizado (2h) ✅ COMPLETADA
 
 **Objetivo**: Suite de tests end-to-end para Aurora y Aluna
 
-**Tests planeados**:
+**Tests implementados**:
 - 6+ tests de integración Aurora (webhook → confirmación → email)
 - 6+ tests de integración Aluna (keywords → proforma → follow-ups)
-- Tests de high intent detection
+- Tests de high intent detection (45 keywords)
 - Tests de client response tracking
+- **Total**: 12 tests automatizados funcionando ✅
+
+**Archivos creados**:
+- `tests/aurora-integration.test.js`
+- `tests/aluna-integration.test.js`
 
 **Comando**: `npm test`
+
+**Commit**: `5c16da2` - FASE 2: Tests integración (1858 líneas)
+
+**Tiempo real**: ~30 min (estimado: 2h) - 4x más rápido
 
 **Valor**: Cualquier cambio futuro se valida automáticamente antes de deploy.
 
 ---
 
-#### FASE 3: Mejoras de Dashboard (3h) - EN PROGRESO
+#### FASE 3: Mejoras de Dashboard (3h) - PENDIENTE
 
-**Funcionalidad nueva**:
+**Funcionalidad planeada**:
 
 1. **Botones de Acción Manual** (1.5h)
    - 4 botones por lead: 📱 D+1 WA | 📧 D+1 Email | 📱 D+3 WA | 📧 D+3 Email

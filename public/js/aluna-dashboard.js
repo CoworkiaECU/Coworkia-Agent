@@ -569,13 +569,18 @@ function buildActionButtons(p) {
   `;
 }
 
-function openFollowupModalById(leadId, type) {
+// Declarar función como global explícitamente para que onclick funcione
+window.openFollowupModalById = function(leadId, type) {
+  console.log('🔍 openFollowupModalById called:', { leadId, type });
+  
   // Buscar lead en el array global
   const leadData = allProformas.find(p => p.id === leadId);
   if (!leadData) {
+    console.error('❌ Lead not found:', leadId);
     toast('⚠️ Error: Lead no encontrado');
     return;
   }
+  console.log('✅ Lead found:', leadData.client_name);
   
   currentFollowupData = { ...leadData, type };
   
@@ -657,13 +662,14 @@ Equipo Coworkia`
   };
   
   messageBox.value = templates[type] || 'Mensaje no disponible';
+  console.log('✅ Modal opening with display:block');
   modal.style.display = 'block';
-}
+};
 
-function closeFollowupModal() {
+window.closeFollowupModal = function() {
   document.getElementById('modal-followup').style.display = 'none';
   currentFollowupData = null;
-}
+};
 
 async function sendFollowupManual() {
   if (!currentFollowupData) return;

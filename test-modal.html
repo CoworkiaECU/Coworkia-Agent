@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Modal Follow-up</title>
+  <style>
+    body { font-family: Arial; background: #0f172a; color: #fff; padding: 20px; }
+    button { 
+      padding: 8px 12px; 
+      background: #10b981; 
+      color: #fff; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      margin: 5px;
+    }
+    #modal-followup {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-followup.show {
+      display: flex;
+    }
+    .modal-content {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+    }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      background: #0f172a;
+      color: #fff;
+      border: 1px solid #334155;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .lead-info { background: #334155; padding: 10px; border-radius: 6px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Test Modal Follow-up</h1>
+  
+  <h2>Simular tabla de leads:</h2>
+  <div id="test-table"></div>
+  
+  <!-- Modal -->
+  <div id="modal-followup">
+    <div class="modal-content">
+      <h2 id="followup-modal-title">Enviar Follow-up Manual</h2>
+      
+      <div class="lead-info">
+        <div id="followup-lead-name" style="font-weight:600;"></div>
+        <div id="followup-lead-plan" style="color:#64748b;"></div>
+      </div>
+      
+      <label>💬 Mensaje:</label>
+      <textarea id="followup-message" placeholder="El mensaje se cargará aquí..."></textarea>
+      
+      <button onclick="sendTest()">📤 Enviar</button>
+      <button onclick="closeFollowupModal()">Cancelar</button>
+      
+      <div id="followup-sending" style="display:none;">⏳ Enviando...</div>
+    </div>
+  </div>
+  
+  <script>
+    // Datos de prueba
+    let allProformas = [
+      {
+        id: 'test-001',
+        client_name: 'Juan Pablo Parra',
+        membership_type: 'Plan 20',
+        monthly_fee: 250,
+        followup_24h_sent_at: null,
+        automation_d1_sent: false
+      },
+      {
+        id: 'test-002',
+        client_name: 'María José García',
+        membership_type: 'Plan 40',
+        monthly_fee: 400,
+        followup_24h_sent_at: '2026-03-19',
+        automation_d1_sent: true
+      }
+    ];
+    
+    let currentFollowupData = null;
+    
+    // Renderizar botones de prueba
+    function renderTestTable() {
+      const table = document.getElementById('test-table');
+      table.innerHTML = allProformas.map(p => {
+        const d1Sent = p.followup_24h_sent_at || p.automation_d1_sent;
+        const btnStyle = d1Sent 
+          ? 'background:#334155;opacity:0.6;cursor:not-allowed;' 
+          : 'background:#10b981;cursor:pointer;';
+        
+        return `
+          <div style="margin:10px 0; padding:10px; background:#334155; border-radius:6px;">
+            <strong>${p.client_name}</strong> - ${p.membership_type} ($${p.monthly_fee})
+            <div style="margin-top:8px;">
+              <button onclick="openFollowupModalById('${p.id}', 'd1-wa')" 
+                style="${btnStyle}" ${d1Sent ? 'disabled' : ''}>
+                📱 D+1 WA
+              </button>
+              <button onclick="openFollowupModalById('${p.id}', 'd1-email')" 
+                style="${btnStyle}" ${d1Sent ? 'disabled' : ''}>
+                📧 D+1 Email
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Función principal (copiada del código real)
+    function openFollowupModalById(leadId, type) {
+      console.log('🔍 openFollowupModalById called:', { leadId, type });
+      
+      // Buscar lead en el array global
+      const leadData = allProformas.find(p => p.id === leadId);
+      
+      console.log('📊 Lead encontrado:', leadData);
+      
+      if (!leadData) {
+        alert('⚠️ Error: Lead no encontrado');
+        return;
+      }
+      
+      currentFollowupData = { ...leadData, type };
+      
+      const modal = document.getElementById('modal-followup');
+      const title = document.getElementById('followup-modal-title');
+      const leadName = document.getElementById('followup-lead-name');
+      const leadPlan = document.getElementById('followup-lead-plan');
+      const messageBox = document.getElementById('followup-message');
+      
+      console.log('📋 Elements:', { modal, title, leadName, leadPlan, messageBox });
+      
+      // Títulos según tipo
+      const titles = {
+        'd1-wa': '📱 Enviar Follow-up D+1 por WhatsApp',
+        'd1-email': '📧 Enviar Follow-up D+1 por Email',
+        'd3-wa': '📱 Enviar Follow-up D+3 por WhatsApp (FOMO)',
+        'd3-email': '📧 Enviar Follow-up D+3 por Email (FOMO)'
+      };
+      
+      title.textContent = titles[type] || 'Enviar Follow-up';
+      leadName.textContent = leadData.client_name || 'Sin nombre';
+      leadPlan.textContent = `${leadData.membership_type || 'Plan no especificado'} • $${leadData.monthly_fee || 0}/mes`;
+      
+      // Templates de mensajes
+      const templates = {
+        'd1-wa': `Hola {{nombre}} 👋
+
+¿Cómo estás? Te escribo de Coworkia.
+
+Ayer charlamos sobre {{plan}} y quería asegurarme de que recibiste toda la información que necesitas 📋`,
+        'd1-email': `Hola {{nombre}},
+
+Espero que estés muy bien.
+
+Te contacto desde Coworkia para hacer seguimiento a tu interés en {{plan}}.`
+      };
+      
+      messageBox.value = templates[type] || 'Mensaje no disponible';
+      modal.classList.add('show');
+      
+      console.log('✅ Modal abierto correctamente');
+    }
+    
+    function closeFollowupModal() {
+      document.getElementById('modal-followup').classList.remove('show');
+      currentFollowupData = null;
+    }
+    
+    function sendTest() {
+      alert('Mensaje: ' + document.getElementById('followup-message').value);
+      closeFollowupModal();
+    }
+    
+    // Inicializar
+    renderTestTable();
+  </script>
+</body>
+</html>

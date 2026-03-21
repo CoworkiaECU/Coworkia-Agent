@@ -91,7 +91,7 @@ function formatNotificationMessage(type, title, data) {
   };
   
   const emoji = emojis[type] || '📬';
-  let message = `${emoji} *Aurora Agent: ${title}*\n\n`;
+  let message = `✨ *Sensei soy Magic* ✨\n${emoji} *${title}*\n\n`;
   
   switch (type) {
     case 'success':

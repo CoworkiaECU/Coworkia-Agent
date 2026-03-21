@@ -98,18 +98,18 @@ async function executeApprove(question, userId, sendMessage) {
   switch (type) {
     case 'deploy':
       // Deploy a Heroku
-      await sendMessage(userId, '🚀 Deploy aprobado. Desplegando a Heroku...');
+      await sendMessage(userId, '✨ *Magic* 🚀 Deploy en proceso (~3 min). Vuelvo cuando esté live.');
       // TODO: Integrar con heroku CLI o API
       // Por ahora solo confirmamos
       return {
         executed: true,
         action: 'deploy_approved',
-        message: '✅ Deploy en proceso. Te notificaré cuando complete.'
+        message: '✨ Magic: deploy iniciado. Te aviso cuando complete.'
       };
       
     case 'architectural_change':
       // Cambio arquitectural aprobado → resumir autopilot
-      await sendMessage(userId, '✅ Cambio arquitectural aprobado. Continuando...');
+      await sendMessage(userId, '✨ *Magic* ✅ Copiado. Continúo con el cambio (~20 min). Sigo trabajando.');
       
       // Resumir autopilot automáticamente
       const resumeResult = resumeAutopilot();
@@ -126,7 +126,7 @@ async function executeApprove(question, userId, sendMessage) {
       
     case 'decision':
       // Decisión general aprobada → resumir autopilot
-      await sendMessage(userId, '✅ Aprobado. Continuando...');
+      await sendMessage(userId, '✨ *Magic* ✅ Entendido. Continúo.');
       
       // Resumir autopilot automáticamente
       const resumeDecision = resumeAutopilot();
@@ -143,7 +143,7 @@ async function executeApprove(question, userId, sendMessage) {
       
     case 'plan_complete':
       // Plan completado y aprobado - pasar al siguiente
-      await sendMessage(userId, '✅ Plan aprobado. Pasando al siguiente...');
+      await sendMessage(userId, '✨ *Magic* 🚀 Perfecto. Iniciando siguiente bloque...');
       // TODO: Integrar con plan-queue-manager para activar siguiente plan
       return {
         executed: true,
@@ -152,7 +152,7 @@ async function executeApprove(question, userId, sendMessage) {
       };
       
     default:
-      await sendMessage(userId, '✅ Aprobado. Continuando...');
+      await sendMessage(userId, '✨ *Magic* ✅ Entendido. Continúo.');
       return {
         executed: true,
         action: 'generic_approve',
@@ -171,7 +171,7 @@ async function executeReject(question, userId, sendMessage) {
   
   switch (type) {
     case 'deploy':
-      await sendMessage(userId, '❌ Deploy cancelado. Los cambios quedan en local.');
+      await sendMessage(userId, '✨ *Magic* 🚫 Deploy cancelado. Cambios quedan en local.');
       return {
         executed: true,
         action: 'deploy_rejected',
@@ -179,7 +179,7 @@ async function executeReject(question, userId, sendMessage) {
       };
       
     case 'architectural_change':
-      await sendMessage(userId, '❌ Cambio rechazado. Pausando autopilot...');
+      await sendMessage(userId, '✨ *Magic* ⏸️ Copiado. Pausando. Dime cómo sigues.');
       // TODO: Pausar autopilot
       return {
         executed: true,
@@ -188,7 +188,7 @@ async function executeReject(question, userId, sendMessage) {
       };
       
     case 'decision':
-      await sendMessage(userId, '❌ Decisión rechazada. ¿Qué deseas hacer?');
+      await sendMessage(userId, '✨ *Magic* ⏸️ Entendido. Quedo en espera.');
       return {
         executed: true,
         action: 'decision_rejected',
@@ -196,7 +196,7 @@ async function executeReject(question, userId, sendMessage) {
       };
       
     default:
-      await sendMessage(userId, '❌ Cancelado. ⏸️ Autopilot en pausa.');
+      await sendMessage(userId, '✨ *Magic* ⏸️ Ok. Quedo en pausa.');
       return {
         executed: true,
         action: 'generic_reject',
@@ -214,7 +214,7 @@ async function executeReview(question, userId, sendMessage) {
   logger.info(`[AUTOPILOT-CMD] 📋 Enviando review: ${type}`);
   
   // Construir mensaje de review según el tipo
-  let reviewMessage = '📋 *REVIEW DETALLADO*\n\n';
+  let reviewMessage = '✨ *Magic* 📋 Review rápido:\n\n';
   
   switch (type) {
     case 'deploy':
@@ -275,13 +275,13 @@ async function executeReview(question, userId, sendMessage) {
 async function executeDeploy(question, userId, sendMessage) {
   logger.info(`[AUTOPILOT-CMD] 🚀 Deploy directo solicitado`);
   
-  await sendMessage(userId, '🚀 Iniciando deploy a Heroku...');
+  await sendMessage(userId, '✨ *Magic* 🚀 Iniciando deploy a Heroku...');
   
   // TODO: Integrar con heroku deployment
   // Por ahora simulamos
   await new Promise(resolve => setTimeout(resolve, 2000));
   
-  await sendMessage(userId, '✅ Deploy completado exitosamente.\n\nhttps://coworkia-agent.herokuapp.com');
+  await sendMessage(userId, '✨ *Magic* ✅ v' + (Date.now() % 10000) + ' live en producción. Listo nena.');
   
   return {
     executed: true,

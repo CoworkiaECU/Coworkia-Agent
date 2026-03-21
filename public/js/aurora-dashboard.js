@@ -4,12 +4,60 @@ console.log('[AURORA-DASH] API_BASE:', API_BASE);
 
 // Estado de la aplicación
 let allReservations = [];
+let _activeTab = 'all';
 let currentFilters = {
-  status: '',
   serviceType: '',
   date: '',
   search: ''
 };
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Tabs de pipeline ──────────────────────────────────────────────────────────
+function getTabReservations(reservations, tab) {
+  if (tab === 'all') return reservations;
+  if (tab === 'confirmed') return reservations.filter(r => r.status === 'confirmed');
+  if (tab === 'pending') return reservations.filter(r => ['pending', 'pending_payment'].includes(r.status));
+  if (tab === 'completed') return reservations.filter(r => r.status === 'completed');
+  if (tab === 'followup') {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return reservations.filter(r => r.status === 'completed' && new Date(r.updated_at || r.created_at) > cutoff);
+  }
+  return reservations;
+}
+
+function updateTabCounts(reservations) {
+  const counts = {
+    all:       reservations.length,
+    confirmed: reservations.filter(r => r.status === 'confirmed').length,
+    pending:   reservations.filter(r => ['pending', 'pending_payment'].includes(r.status)).length,
+    completed: reservations.filter(r => r.status === 'completed').length,
+    followup:  reservations.filter(r => {
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      return r.status === 'completed' && new Date(r.updated_at || r.created_at) > cutoff;
+    }).length
+  };
+  for (const [tab, count] of Object.entries(counts)) {
+    const el = document.getElementById(`tc-${tab}`);
+    if (el) el.textContent = count;
+  }
+}
+
+function switchTab(tabName) {
+  _activeTab = tabName;
+  document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  // Re-render with current allReservations using new tab
+  renderReservationsTable(allReservations);
+}
 
 // Formateo de fecha
 function formatDate(dateString) {
@@ -80,31 +128,25 @@ function getPaymentBadge(paymentStatus) {
 // Formateo de estado
 function getStatusBadge(status) {
   const statusMap = {
-    'confirmed': 'Confirmada',
-    'pending': 'Pendiente',
+    'confirmed':       'Confirmada',
+    'pending':         'Pendiente',
     'pending_payment': 'Pago Pendiente',
-    'cancelled': 'Cancelada',
-    'completed': 'Completada',
-    'rejected': 'Rechazada'
+    'cancelled':       'Cancelada',
+    'completed':       'Completada',
+    'rejected':        'Rechazada'
   };
-  
   const label = statusMap[status] || status;
-  const className = `status-${status}`;
-  
-  return `<span class="status-badge ${className}">${label}</span>`;
+  return `<span class="badge badge-${status}">${label}</span>`;
 }
 
 // Formateo de tipo de servicio
 function getServiceBadge(serviceType) {
   const serviceMap = {
-    'hotDesk': 'Hot Desk',
-    'meetingRoom': 'Sala de Reuniones'
+    'hotDesk':     { label: 'Hot Desk',            cls: 'svc-hotdesk' },
+    'meetingRoom': { label: 'Sala de Reuniones',   cls: 'svc-meetingroom' }
   };
-  
-  const label = serviceMap[serviceType] || serviceType;
-  const className = `service-${serviceType.toLowerCase()}`;
-  
-  return `<span class="service-badge ${className}">${label}</span>`;
+  const mapped = serviceMap[serviceType] || { label: serviceType, cls: 'svc-hotdesk' };
+  return `<span class="${mapped.cls}">${mapped.label}</span>`;
 }
 
 // Cargar estadísticas
@@ -132,110 +174,111 @@ async function loadStats() {
 
 // Cargar reservas
 async function loadReservations() {
-  const loadingEl = document.getElementById('loading');
-  const errorEl = document.getElementById('error');
-  const tableEl = document.getElementById('reservations-table');
-  const emptyEl = document.getElementById('empty-state');
-  const tbody = document.getElementById('table-body');
+  const loadingEl = document.getElementById('loading-reservations');
+  const errorEl   = document.getElementById('error-reservations');
+  const tableEl   = document.getElementById('reservations-table');
+  const emptyEl   = document.getElementById('empty-state-reservations');
   
   // Mostrar loading
   loadingEl.style.display = 'block';
-  errorEl.style.display = 'none';
-  tableEl.style.display = 'none';
-  emptyEl.style.display = 'none';
+  errorEl.style.display   = 'none';
+  tableEl.style.display   = 'none';
+  emptyEl.style.display   = 'none';
   
   try {
     // Construir URL con filtros
     const params = new URLSearchParams();
-    if (currentFilters.status) params.append('status', currentFilters.status);
     if (currentFilters.serviceType) params.append('serviceType', currentFilters.serviceType);
     if (currentFilters.date) params.append('date', currentFilters.date);
-    params.append('limit', '1000'); // Cargar todas
+    params.append('limit', '1000');
     
     const url = `${API_BASE}/api/aurora/reservations?${params}`;
     console.log('[AURORA-DASH] Cargando reservas desde:', url);
     
     const response = await fetch(url);
-    console.log('[AURORA-DASH] Response status:', response.status);
+    const result   = await response.json();
     
-    const result = await response.json();
-    console.log('[AURORA-DASH] Result:', result);
-    console.log('[AURORA-DASH] Data length:', result.data?.length);
-    
-    if (!result.ok) {
-      throw new Error(result.error || 'Error cargando reservas');
-    }
+    if (!result.ok) throw new Error(result.error || 'Error cargando reservas');
     
     allReservations = result.data || [];
     console.log('[AURORA-DASH] Reservas cargadas:', allReservations.length);
     
-    // Aplicar filtro de búsqueda local
-    let filtered = allReservations;
+    // Aplicar filtro de búsqueda local sobre el array completo
+    let baseFiltered = allReservations;
     if (currentFilters.search) {
       const search = currentFilters.search.toLowerCase();
-      filtered = allReservations.filter(r => 
-        (r.user_name || '').toLowerCase().includes(search) ||
+      baseFiltered = allReservations.filter(r =>
+        (r.user_name  || '').toLowerCase().includes(search) ||
         (r.user_phone || '').toLowerCase().includes(search) ||
-        (r.id || '').toLowerCase().includes(search)
+        (r.id         || '').toLowerCase().includes(search)
       );
     }
     
-    console.log('[AURORA-DASH] Reservas filtradas:', filtered.length);
+    // Actualizar contadores de tabs con el set completo (sin filtro de tab)
+    updateTabCounts(baseFiltered);
     
-    // Renderizar tabla
+    // Renderizar según tab activo
     loadingEl.style.display = 'none';
-    
-    if (filtered.length === 0) {
-      console.log('[AURORA-DASH] No hay reservas para mostrar');
-      emptyEl.style.display = 'block';
-    } else {
-      console.log('[AURORA-DASH] Renderizando tabla...');
-      tbody.innerHTML = filtered.map(r => `
-        <tr>
-          <td><strong>${r.id}</strong></td>
-          <td>
-            ${r.user_name || 'Sin nombre'}<br>
-            <small style="color: #6b7280;">${r.user_phone}</small>
-          </td>
-          <td>${getServiceBadge(r.service_type)}</td>
-          <td>${formatSimpleDate(r.date)}</td>
-          <td>
-            ${r.start_time} - ${r.end_time}<br>
-            <small style="color: #6b7280;">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} invitados` : ''}</small>
-          </td>
-          <td class="money">
-            ${formatPrice(r.total_price)}
-            ${r.was_free ? '<span class="free-badge">GRATIS</span>' : ''}
-          </td>
-          <td>${getStatusBadge(r.status)}</td>
-          <td>${getPaymentBadge(r.payment_status)}</td>
-          <td>${formatDate(r.created_at)}</td>
-        </tr>
-      `).join('');
-      
-      tableEl.style.display = 'table';
-      console.log('[AURORA-DASH] Tabla renderizada');
-    }
+    renderReservationsTable(baseFiltered);
     
     // Actualizar stats
     await loadStats();
     
   } catch (error) {
-    console.error('[AURORA-DASH] Error completo:', error);
-    console.error('[AURORA-DASH] Error stack:', error.stack);
+    console.error('[AURORA-DASH] Error:', error);
     loadingEl.style.display = 'none';
-    errorEl.textContent = `Error: ${error.message}`;
-    errorEl.style.display = 'block';
+    errorEl.textContent    = `Error: ${error.message}`;
+    errorEl.style.display  = 'block';
   }
+}
+
+// Renderiza la tabla según el tab activo
+function renderReservationsTable(reservations) {
+  const tableEl = document.getElementById('reservations-table');
+  const emptyEl = document.getElementById('empty-state-reservations');
+  const tbody   = document.getElementById('table-body');
+  
+  const filtered = getTabReservations(reservations, _activeTab);
+  
+  if (filtered.length === 0) {
+    tableEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>
+        ${r.user_name || 'Sin nombre'}<br>
+        <small class="text-muted">${r.user_phone}</small>
+      </td>
+      <td>${getServiceBadge(r.service_type)}</td>
+      <td>${formatSimpleDate(r.date)}</td>
+      <td>
+        ${r.start_time} - ${r.end_time}<br>
+        <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
+      </td>
+      <td class="money">
+        ${formatPrice(r.total_price)}
+        ${r.was_free ? '<span class="badge badge-completed" style="font-size:10px;">GRATIS</span>' : ''}
+      </td>
+      <td>${getStatusBadge(r.status)}</td>
+      <td>${getPaymentBadge(r.payment_status)}</td>
+      <td>${formatDate(r.created_at)}</td>
+    </tr>
+  `).join('');
+  
+  tableEl.style.display = 'table';
 }
 
 // Resetear filtros
 function resetFilters() {
-  document.getElementById('filter-status').value = '';
   document.getElementById('filter-service').value = '';
-  document.getElementById('filter-date').value = '';
-  document.getElementById('search').value = '';
-  currentFilters = { status: '', serviceType: '', date: '', search: '' };
+  document.getElementById('filter-date').value    = '';
+  document.getElementById('search').value         = '';
+  currentFilters = { serviceType: '', date: '', search: '' };
   loadReservations();
 }
 
@@ -350,10 +393,8 @@ async function loadAbandoned() {
 
     _allProspects = data.data;
     _activeFilter = 'all';
-    document.querySelectorAll('.pill-filter').forEach(b => {
-      const colors = { urgent:'#dc2626', hot:'#ea580c', warm:'#d97706', cold:'#2563eb', all:'white' };
-      b.style.background = b.dataset.filter === 'all' ? '#4ECDC4' : 'white';
-      b.style.color      = b.dataset.filter === 'all' ? 'white' : (colors[b.dataset.filter] || '#374151');
+    document.querySelectorAll('.pill').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === 'all');
     });
 
     renderProspectGrid(_allProspects);
@@ -378,14 +419,10 @@ function renderProspectGrid(prospects) {
 
 function filterProspects(filter) {
   _activeFilter = filter;
-  document.querySelectorAll('.pill-filter').forEach(b => {
-    const active   = b.dataset.filter === filter;
-    const colors   = { urgent:'#dc2626', hot:'#ea580c', warm:'#d97706', cold:'#2563eb', all:'#374151' };
-    b.style.background  = active ? '#4ECDC4' : 'white';
-    b.style.color       = active ? 'white' : (colors[b.dataset.filter] || '#374151');
-    b.style.borderColor = active ? '#4ECDC4' : '';
+  document.querySelectorAll('.pill').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filter);
   });
-  const filtered = filter === 'all'    ? _allProspects
+  const filtered = filter === 'all'     ? _allProspects
     : filter === 'urgent' ? _allProspects.filter(p => getUrgencyLevel(p) === 'urgent')
     : _allProspects.filter(p => p.engagement === filter);
   renderProspectGrid(filtered);
@@ -603,6 +640,29 @@ function closeThread() {
   document.getElementById('conv-thread').style.display = 'none';
 }
 
+// Campaña WA masivo — completos del mes
+function sendCampaignWA() {
+  const cutoff    = new Date();
+  cutoff.setDate(1);
+  cutoff.setHours(0, 0, 0, 0);
+  const completed = allReservations.filter(r => r.status === 'completed' && new Date(r.created_at || r.updated_at) >= cutoff);
+
+  if (!completed.length) {
+    showToast('No hay reservas completadas este mes.');
+    return;
+  }
+
+  const date = new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+  const lines = completed.map(r => `• ${r.user_name || 'Sin nombre'} — ${r.user_phone || ''} — ${formatSimpleDate(r.date)}`);
+  const text  = `📣 Campaña Follow-Up D+7 · ${date}\nTotal: ${completed.length} reservas completadas\n\n${lines.join('\n')}`;
+
+  navigator.clipboard.writeText(text.trim()).then(() => {
+    showToast(`✅ Lista D+7 copiada — ${completed.length} contactos`);
+    const btn = document.getElementById('qa-campaign-wa');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copiado!'; setTimeout(() => { btn.textContent = orig; }, 2200); }
+  }).catch(() => alert('No se pudo copiar al portapapeles.'));
+}
+
 // Refresca todo el dashboard de una vez
 function refreshAll() {
   loadReservations();
@@ -613,11 +673,6 @@ function refreshAll() {
 // Event listeners
 try {
   console.log('[AURORA-DASH] Configurando event listeners...');
-  
-  document.getElementById('filter-status').addEventListener('change', (e) => {
-    currentFilters.status = e.target.value;
-    loadReservations();
-  });
 
   document.getElementById('filter-service').addEventListener('change', (e) => {
     currentFilters.serviceType = e.target.value;
@@ -631,7 +686,6 @@ try {
 
   document.getElementById('search').addEventListener('input', (e) => {
     currentFilters.search = e.target.value;
-    // Debounce: recargar después de 500ms de inactividad
     clearTimeout(window.searchTimeout);
     window.searchTimeout = setTimeout(() => loadReservations(), 500);
   });
@@ -643,13 +697,18 @@ try {
     }
   });
 
-  console.log('[AURORA-DASH] Event listeners configurados');
+  // ── Tabs pipeline ─────────────────────────────────────────────────────────
+  document.getElementById('pipeline-tabs')?.addEventListener('click', function(e) {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    switchTab(btn.dataset.tab);
+  });
 
-  // ── Botones estáticos (sin onclick en HTML) ──────────────────────────────
-  document.getElementById('btn-apply-filters')?.addEventListener('click', () => loadReservations());
+  // ── Botones estáticos ─────────────────────────────────────────────────────
   document.getElementById('btn-reset-filters')?.addEventListener('click', () => resetFilters());
-  document.getElementById('btn-refresh-prospects')?.addEventListener('click', () => loadAbandoned());
   document.getElementById('btn-copy-campaign')?.addEventListener('click', () => copyCampaignList());
+  document.getElementById('btn-copy-campaign-prospects')?.addEventListener('click', () => copyCampaignList());
+  document.getElementById('btn-refresh-prospects')?.addEventListener('click', () => loadAbandoned());
   document.getElementById('btn-refresh-conversations')?.addEventListener('click', () => loadConversations());
   document.getElementById('btn-close-thread')?.addEventListener('click', () => closeThread());
   document.getElementById('btn-fab-refresh')?.addEventListener('click', () => refreshAll());
@@ -657,38 +716,40 @@ try {
   // ── Quick Actions ─────────────────────────────────────────────────────────
   document.getElementById('qa-refresh-all')?.addEventListener('click', () => refreshAll());
   document.getElementById('qa-load-prospects')?.addEventListener('click', () => loadAbandoned());
-  document.getElementById('qa-copy-campaign')?.addEventListener('click', () => copyCampaignList());
+  document.getElementById('qa-copy-list')?.addEventListener('click', () => copyCampaignList());
   document.getElementById('qa-conversations')?.addEventListener('click', () => loadConversations());
+  document.getElementById('qa-campaign-wa')?.addEventListener('click', () => sendCampaignWA());
 
-  // ── Event delegation para pill-filter (prospectos) ────────────────────────
+  // ── Event delegation: pill filters (prospectos) ───────────────────────────
   document.getElementById('prospect-filters')?.addEventListener('click', function(e) {
-    const btn = e.target.closest('.pill-filter');
+    const btn = e.target.closest('.pill');
     if (!btn) return;
     filterProspects(btn.dataset.filter);
   });
 
-  // ── Event delegation para tabla de conversaciones (data-action) ───────────
+  // ── Event delegation: tabla conversaciones (data-action) ─────────────────
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-action="open-thread"]');
     if (!btn) return;
     openThread(btn.dataset.phone, btn.dataset.name, btn.dataset.alias);
   });
 
+  console.log('[AURORA-DASH] Event listeners configurados');
+
   // Cargar al inicio
-  console.log('[AURORA-DASH] Iniciando carga de reservas...');
+  console.log('[AURORA-DASH] Iniciando carga...');
   loadReservations().catch(err => {
     console.error('[AURORA-DASH] Error fatal en carga inicial:', err);
-    alert('Error cargando dashboard: ' + err.message + '\nRevisa el Console (Cmd+Option+J) para más detalles');
   });
 
-  // Auto-refresh cada 30 segundos
+  // Auto-refresh stats cada 30s
   setInterval(loadStats, 30000);
 
-  // Cargar prospectos abandonados al inicio + refresco cada 60s
+  // Prospectos: cargar al inicio + refresco cada 60s
   loadAbandoned();
   setInterval(loadAbandoned, 60000);
 
-  // Cargar conversaciones al inicio
+  // Conversaciones al inicio
   loadConversations();
 
   console.log('[AURORA-DASH] ✅ Inicialización completa');

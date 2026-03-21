@@ -97,17 +97,33 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 - `adriana-quote-comparison.html` — template standalone HTML preview
 - Deployado Heroku v1021 🟢
 
+**FASE 5 BLOQUE 4B — Sistema de Tasas VAZ + Calculadora** ✅ — chat backend
+- `src/data/insurance-rates.js` — tasas VAZ integradas
+- `src/servicios/adriana-quote-calculator.js` — `calculatePremium()` con factores edad/antigüedad
+- 20 tests verdes ✅ (Mapfre la semana siguiente)
+
+**FASE 5 BLOQUE 4C — Email HTML comparativo SegPopular** ✅ — chat frontend
+- `src/servicios/email-templates/adriana-quote-comparison.html` — ya existe desde v1021
+
 ### 🔵 PENDIENTE — próximas sesiones
 
-**FASE 5 BLOQUE 4B** — chat backend
-- `src/data/insurance-rates.js` — tasas VAZ (solo VAZ, Mapfre la semana siguiente)
-- `src/servicios/adriana-quote-calculator.js` — `calculatePremium(vehicleData, personData, coverage, insurer)`
-- Tests con caso real (Hyundai Creta 2022)
+**FASE 2 BLOQUE 1C** — chat backend (~45 min)
+- `src/database/enzoRepository.js` — tabla `marketing_leads` + queries `findEnzoProspectsForD1/D3/D7()`
+- `src/servicios/enzo-followup-service.js` — lógica envío WA + email
+- `src/express-servidor/index.js` — 3 cron jobs: D1 11am, D3 2pm, D7 10am Ecuador
+- Templates email YA ESTÁN: `buildEmailTemplate('ENZO', 'D1'/'D3'/'D7', data)`
 
-**FASE 5 BLOQUE 4D** — chat backend
-- `wassenger.js` handler Adriana — form conversacional: foto matrícula → foto cédula → cobertura → cotización
+**FASE 5 BLOQUE 4D** — chat backend (~1h)
+- `wassenger.js` handler Adriana — form conversacional: foto matrícula → foto cédula → cobertura → `calculatePremium()` → email
 - Tabla `adriana_quote_leads` en BD
-- Envío email cotización comparativa (usar `buildEmailTemplate('ADRIANA', 'COMPARISON', data)`)
+- Vision AI YA EXISTE: `analyzeInsuranceDocument()`
+- Calculator YA EXISTE: `calculatePremium()`
+- Email template YA EXISTE: `buildEmailTemplate('ADRIANA', 'COMPARISON', data)`
+
+**FASE 2 BLOQUE 1C (frontend)** — este chat (~40 min)
+- `public/enzo-leads.html` — dashboard marketing leads: tabla D1/D3/D7 sent, dropdown status, botón 📲
+- CSS naranja #F97316 (Enzo branding)
+- Depende de que el backend haya creado los endpoints primero
 
 ---
 

@@ -19,12 +19,24 @@ import {
   COVERAGE_TYPES,
   VEHICLE_CATEGORIES,
   FIXED_COSTS,
-  COVERAGE_LABELS
+  COVERAGE_LABELS,
+  DEDUCTIBLES_VAZ,
 } from './insurance-rates-vaz.js';
 
 // Mapa de aseguradoras disponibles (extensible)
+// VAZ_RATES = VAZ_RATES_SIERRA_NORTE (backward-compat alias)
+// Estructura: { light: [{min_value, max_value, rate, ...}], pickup: [...], electric: [...] }
 const INSURER_RATES = {
   VAZ: VAZ_RATES,
+};
+
+// Ajuste de tasa por opción de cobertura:
+// BASIC/STANDARD → Taller Designado (deducible 7%) → sin recargo
+// PREMIUM        → Libre Designación (deducible 10%) → +5% sobre prima base
+const COVERAGE_RATE_MULTIPLIER = {
+  [COVERAGE_TYPES.BASIC]:    1.00,
+  [COVERAGE_TYPES.STANDARD]: 1.00,
+  [COVERAGE_TYPES.PREMIUM]:  1.05,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -54,57 +66,47 @@ export function calculateVehiclePremium({
     return { success: false, error: `Aseguradora no disponible: ${insurer}` };
   }
 
-  const categoryRates = rates[vehicleCategory];
-  if (!categoryRates) {
+  // rates[vehicleCategory] es un array de tramos por valor asegurado
+  const categoryBrackets = rates[vehicleCategory];
+  if (!categoryBrackets || !Array.isArray(categoryBrackets)) {
     return { success: false, error: `Categoría no disponible: ${vehicleCategory}` };
   }
 
-  const coverageRates = categoryRates[coverage];
-  if (!coverageRates) {
-    return { success: false, error: `Cobertura ${coverage} no disponible para ${vehicleCategory} en ${insurer}` };
+  // Validar cobertura
+  if (!COVERAGE_RATE_MULTIPLIER.hasOwnProperty(coverage)) {
+    return { success: false, error: `Cobertura ${coverage} no reconocida` };
   }
 
-  // Calcular antigüedad del vehículo
-  const currentYear = new Date().getFullYear();
-  const vehicleAge = currentYear - vehicleYear;
-
-  // Validar antigüedad máxima
-  if (vehicleAge > coverageRates.max_insured_age) {
-    return {
-      success: false,
-      error: `Vehículo con ${vehicleAge} años de antigüedad supera el máximo aceptado (${coverageRates.max_insured_age} años) para cobertura ${coverage}`
-    };
+  // Encontrar tramo por valor comercial
+  const bracket = categoryBrackets.find(
+    b => commercialValue >= b.min_value && commercialValue <= b.max_value
+  );
+  if (!bracket) {
+    return { success: false, error: `Valor comercial $${commercialValue} fuera de rango para ${vehicleCategory}` };
   }
 
-  // Obtener tasa según antigüedad
-  const rateEntry = coverageRates.rate_by_age.find(r => vehicleAge <= r.max_age);
-  const rate = rateEntry?.rate;
+  // Tasa base + multiplicador según opción de cobertura
+  const baseRate = bracket.rate * COVERAGE_RATE_MULTIPLIER[coverage];
 
-  if (!rate) {
-    return { success: false, error: `No hay tasa disponible para vehículo de ${vehicleAge} años con cobertura ${coverage}` };
-  }
+  // Seleccionar opción de deducible según coverage
+  const deductibleOpt = coverage === COVERAGE_TYPES.PREMIUM
+    ? DEDUCTIBLES_VAZ.LIBRE_DESIGNACION
+    : DEDUCTIBLES_VAZ.TALLER_DESIGNADO;
+
+  const deductibleDescription =
+    `${deductibleOpt.label}: ${(deductibleOpt.partial_loss_pct * 100)}% del daño (mín $${deductibleOpt.partial_loss_min_abs})`;
 
   // ─── Cálculo ─────────────────────────────────────────────
-  const basePremium = commercialValue * rate;
-  const premiumBeforeIva = Math.max(basePremium, coverageRates.min_premium || 0);
-  const iva = premiumBeforeIva * FIXED_COSTS.iva_rate;
+  const basePremium = commercialValue * baseRate;
+  const iva = basePremium * FIXED_COSTS.iva_rate;
   const fees = FIXED_COSTS.emission_fee + FIXED_COSTS.super_fee + FIXED_COSTS.administrative;
 
-  const annualTotal = Math.round(premiumBeforeIva + iva + fees);
+  const annualTotal = Math.round(basePremium + iva + fees);
   const monthlyInstallment = Math.round(annualTotal / 10); // 10 cuotas (Ecuador)
 
-  // ─── Deducible ───────────────────────────────────────────
-  let deductibleDescription;
-  if (coverageRates.deductible) {
-    // Deducible fijo
-    deductibleDescription = `$${coverageRates.deductible} fijo por siniestro`;
-  } else if (coverageRates.deductible_pct) {
-    const pct = coverageRates.deductible_pct * 100;
-    const minD = coverageRates.deductible_min;
-    deductibleDescription = `${pct}% del monto del daño (mínimo $${minD})`;
-  } else {
-    deductibleDescription = 'Consultar con Adriana';
-  }
+  // vehicleAge sigue calculándose para datos informativos
+  const currentYear = new Date().getFullYear();
+  const vehicleAge = vehicleYear ? currentYear - vehicleYear : null;
 
   return {
     success: true,
@@ -113,11 +115,12 @@ export function calculateVehiclePremium({
     coverage,
     coverageLabel: COVERAGE_LABELS[coverage]?.name || coverage,
     vehicleAge,
-    rate: (rate * 100).toFixed(2) + '%',
+    rate: (baseRate * 100).toFixed(2) + '%',
+    rate_bracket: bracket.label,
 
     breakdown: {
       commercial_value: commercialValue,
-      base_premium: Math.round(premiumBeforeIva),
+      base_premium: Math.round(basePremium),
       iva: Math.round(iva),
       fees: Math.round(fees),
     },
@@ -126,8 +129,15 @@ export function calculateVehiclePremium({
     monthly_installment: monthlyInstallment,
 
     deductible: deductibleDescription,
+    deductible_option: deductibleOpt.label,
     includes: COVERAGE_LABELS[coverage]?.includes || [],
     excludes: COVERAGE_LABELS[coverage]?.excludes || [],
+
+    liability_limits: {
+      rc:      bracket.rc_limit,
+      medical: bracket.med_limit,
+      death:   bracket.death_limit,
+    },
   };
 }
 

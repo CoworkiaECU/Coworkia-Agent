@@ -13,7 +13,7 @@
 
 import { query } from '../database/database.js';
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
-import { sendEmail } from '../servicios/email-service.js';
+import { sendEmail } from '../servicios/email.js';
 import { loggers } from '../utils/logger.js';
 
 const logger = loggers.aluna || console;

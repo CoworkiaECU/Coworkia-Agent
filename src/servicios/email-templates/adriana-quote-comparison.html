@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotización de Seguros — SegPopular</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 16px; background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
+    .email-wrap { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, #1E3A8A 0%, #1e40af 100%); padding: 36px 32px; text-align: center; }
+    .header img { height: 48px; margin-bottom: 12px; filter: brightness(0) invert(1); }
+    .header h1 { margin: 0; color: #fff; font-size: 22px; font-weight: 700; }
+    .header p { color: rgba(255,255,255,.8); margin: 8px 0 0; font-size: 14px; }
+
+    /* Intro */
+    .intro { padding: 28px 32px 12px; }
+    .intro p { font-size: 15px; color: #374151; line-height: 1.7; margin: 0 0 12px; }
+
+    /* Vehicle box */
+    .vehicle-box { margin: 0 32px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #1E3A8A; border-radius: 8px; padding: 18px 20px; }
+    .vehicle-box .label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .vehicle-box table { width: 100%; border-collapse: collapse; }
+    .vehicle-box td { padding: 5px 0; font-size: 13px; }
+    .vehicle-box td:first-child { color: #64748b; width: 40%; }
+    .vehicle-box td:last-child { color: #1e293b; font-weight: 600; }
+
+    /* Comparison table */
+    .section-title { font-size: 13px; font-weight: 700; color: #1E3A8A; text-transform: uppercase; letter-spacing: 1px; padding: 20px 32px 10px; }
+    .comparison-wrap { padding: 0 32px; overflow-x: auto; }
+    .comparison-table { width: 100%; border-collapse: collapse; }
+    .comparison-table th { background: #1E3A8A; color: #fff; padding: 12px 14px; font-size: 13px; font-weight: 600; text-align: left; }
+    .comparison-table th:not(:first-child) { text-align: center; }
+    .comparison-table td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #374151; vertical-align: top; }
+    .comparison-table td:not(:first-child) { text-align: center; }
+    .comparison-table tr.best { background: #fffbeb; }
+    .comparison-table tr.best td:first-child { font-weight: 700; color: #1E3A8A; }
+    .best-badge { display: inline-block; background: #FCD34D; color: #92400e; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; margin-left: 6px; }
+    .price-big { font-size: 18px; font-weight: 800; color: #1E3A8A; }
+    .price-small { font-size: 11px; color: #6b7280; }
+
+    /* Details box */
+    .details-box { margin: 20px 32px; background: #f8fafc; border-radius: 10px; padding: 22px 24px; }
+    .details-box h3 { margin: 0 0 14px; font-size: 14px; color: #1e293b; }
+    .details-box ul { margin: 0; padding-left: 0; list-style: none; }
+    .details-box li { font-size: 14px; color: #374151; padding: 5px 0; line-height: 1.5; }
+    .price-summary { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+    .price-summary strong { font-size: 16px; color: #1E3A8A; }
+
+    /* CTAs */
+    .cta-section { padding: 24px 32px; text-align: center; }
+    .cta-section p { font-size: 14px; color: #475569; margin-bottom: 18px; }
+    .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-email { display: inline-block; background: #1E3A8A; color: #fff; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .btn-wa { display: inline-block; background: #25D366; color: #fff; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+    /* Footer */
+    .footer { background: linear-gradient(135deg, #1E3A8A 0%, #1e40af 100%); padding: 28px 32px; text-align: center; }
+    .footer .brand { color: #FCD34D; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; }
+    .footer .tagline { color: rgba(255,255,255,.8); font-size: 13px; margin-bottom: 8px; }
+    .footer .contact { color: rgba(255,255,255,.6); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="email-wrap">
+
+    <!-- Header -->
+    <div class="header">
+      <img src="/images/logos/adriana.svg" alt="SegPopular" onerror="this.style.display='none'">
+      <h1>Comparativa de Seguros Vehiculares 🛡️</h1>
+      <p>Preparado especialmente para usted por Adriana · SegPopular</p>
+    </div>
+
+    <!-- Intro -->
+    <div class="intro">
+      <p>Estimado/a <strong>{{nombre}}</strong>,</p>
+      <p>Le presentamos las mejores opciones de seguro para su vehículo.
+         Como broker autorizado, comparamos las principales aseguradoras para ofrecerle
+         la mejor relación precio-cobertura disponible en el mercado ecuatoriano.</p>
+    </div>
+
+    <!-- Vehicle details -->
+    <div class="vehicle-box">
+      <div class="label">🚗 Vehículo Asegurado</div>
+      <table>
+        <tr><td>Vehículo</td><td>{{marca}} {{modelo}} {{año}}</td></tr>
+        <tr><td>Placa</td><td>{{placa}}</td></tr>
+        <tr><td>Valor Asegurado</td><td>{{valorAsegurado}}</td></tr>
+        <tr><td>Cobertura</td><td>{{tipoCobertura}}</td></tr>
+      </table>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="section-title">📊 Comparativa de Aseguradoras</div>
+    <div class="comparison-wrap">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Aseguradora</th>
+            <th>Prima Anual</th>
+            <th>Deducible</th>
+            <th>Coberturas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Mejor opción (destacada) -->
+          <tr class="best">
+            <td>
+              VAZ Seguros <span class="best-badge">⭐ Mejor</span>
+            </td>
+            <td>
+              <div class="price-big">{{vaz_prima}}</div>
+              <div class="price-small">{{vaz_prima_mensual}}/mes</div>
+            </td>
+            <td>{{vaz_deducible}}</td>
+            <td>✅ Todo Riesgo<br>✅ Asistencia Vial 24/7<br>✅ RC hasta $100K</td>
+          </tr>
+          <!-- Agregar más aseguradoras aquí cuando estén disponibles -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Details best option -->
+    <div class="details-box">
+      <h3>📋 Detalle de la Mejor Opción — VAZ Seguros</h3>
+      <ul>
+        <li>✅ <strong>Cobertura Todo Riesgo:</strong> Daños propios y a terceros, robo total y parcial</li>
+        <li>✅ <strong>Asistencia Vial 24/7:</strong> Grúa, mecánico en carretera, taxi, hotel</li>
+        <li>✅ <strong>Responsabilidad Civil:</strong> Hasta $100,000 en daños a terceros</li>
+        <li>✅ <strong>Deducible:</strong> {{vaz_deducible}} — uno de los más bajos del mercado</li>
+        <li>✅ <strong>Emisión:</strong> En 48 horas hábiles tras aprobación</li>
+      </ul>
+      <div class="price-summary">
+        <strong>Prima Anual: {{vaz_prima}}</strong> (pago único) &nbsp;·&nbsp;
+        o en cuotas: <strong>{{vaz_prima_mensual}}/mes</strong>
+      </div>
+    </div>
+
+    <!-- CTAs -->
+    <div class="cta-section">
+      <p>¿Le interesa esta cotización? Puede aceptarla respondiendo a este email o directamente por WhatsApp:</p>
+      <div class="cta-buttons">
+        <a href="mailto:adriana@coworkia.ec?subject=Acepto cotización VAZ Seguros - {{placa}}&body=Hola Adriana, acepto la cotización de VAZ Seguros para mi vehículo {{marca}} {{modelo}}. Por favor proceder con la emisión."
+           class="btn-email">
+          📧 Acepto por Email
+        </a>
+        <a href="https://wa.me/{{bot_phone}}?text=Hola%20Adriana%2C%20acepto%20la%20cotizaci%C3%B3n%20de%20VAZ%20Seguros%20para%20mi%20ve%CC%81culo%20{{placa}}"
+           class="btn-wa">
+          💬 Acepto por WhatsApp
+        </a>
+      </div>
+      <p style="font-size:12px;color:#9ca3af;margin-top:14px;">
+        Al aceptar, Adriana coordinará toda la documentación y emisión de la póliza.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="brand">🛡️ SegPopular Ecuador</div>
+      <div class="tagline">Broker Autorizado de Seguros · Protegemos lo que más importa</div>
+      <div class="contact">Adriana · Asesora de Seguros Vehiculares · +593 99 XXX XXXX · adriana@segpopular.ec</div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -298,7 +298,7 @@ function renderReservationsTable(reservations) {
         ${!r.followup_1h_sent_at
           ? `<button style="background:#4ECDC4;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h">📲 +1h</button>`
           : '<span style="font-size:10px;color:#6b7280;">✓ +1h</span>'}
-        ${!r.rebooking_reminder_sent_at
+        ${!r.rebook_reminder_sent_at
           ? `<button style="background:#8B5CF6;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="rebooking">🔄 D+7</button>`
           : '<span style="font-size:10px;color:#6b7280;">✓ D+7</span>'}
       </td>
@@ -310,7 +310,6 @@ function renderReservationsTable(reservations) {
 
 // Resetear filtros
 window.resetFilters = function() {
-  document.getElementById('filter-service').value = '';
   document.getElementById('filter-date').value    = '';
   document.getElementById('search').value         = '';
   currentFilters = { serviceType: '', date: '', search: '' };
@@ -447,7 +446,7 @@ window.loadAbandoned = async function() {
 
     _allProspects = data.data;
     _activeFilter = 'all';
-    document.querySelectorAll('.pill').forEach(b => {
+    document.querySelectorAll('#prospect-filters .pill').forEach(b => {
       b.classList.toggle('active', b.dataset.filter === 'all');
     });
 
@@ -473,7 +472,7 @@ function renderProspectGrid(prospects) {
 
 window.filterProspects = function(filter) {
   _activeFilter = filter;
-  document.querySelectorAll('.pill').forEach(b => {
+  document.querySelectorAll('#prospect-filters .pill').forEach(b => {
     b.classList.toggle('active', b.dataset.filter === filter);
   });
   const filtered = filter === 'all'     ? _allProspects
@@ -725,67 +724,7 @@ window.refreshAll = function() {
   loadConversations();
 }
 
-// ─── Modal follow-up manual (Aurora) ─────────────────────────────────────────
-let _currentAuroraFollowup = null;
 
-window.openFollowupModal = function(type, id) {
-  const reservation = allReservations.find(r => String(r.id) === String(id));
-  if (!reservation) { showToast('⚠️ Reserva no encontrada'); return; }
-  _currentAuroraFollowup = { type, reservation };
-
-  const titles = {
-    '1h': '📲 Follow-up +1h — Confirmación post-reserva',
-    'd7': '🔄 Follow-up D+7 — Re-booking'
-  };
-  const servicio = reservation.service_type === 'meetingRoom' ? 'Sala de Reuniones' : 'Hot Desk';
-  const nombre   = (reservation.user_name || 'Cliente').split(' ')[0];
-  const fecha    = formatSimpleDate(reservation.date);
-  const horario  = `${reservation.start_time} - ${reservation.end_time}`;
-
-  const previewMsg = type === '1h'
-    ? `¡Hola ${nombre}! 👋 Te confirmamos tu reserva en Coworkia 🏢\n\n📅 Fecha: ${fecha}\n⏰ Horario: ${horario}\n🛎️ Servicio: ${servicio}\n\n¿Necesitas algo más? Estamos aquí para ayudarte. ¡Hasta pronto!`
-    : `¡Hola ${nombre}! 🏢\n\nHan pasado 7 días desde tu visita a Coworkia. ¿Qué tal fue tu experiencia? 😊\n\nSi necesitas reservar nuevamente, tenemos disponibilidad esta semana. ¡Será un placer verte de nuevo!\n\n👉 Solo responde este mensaje y te ayudamos a encontrar el horario perfecto.`;
-
-  const modal = document.getElementById('aurora-modal-followup');
-  document.getElementById('aurora-followup-modal-title').textContent = titles[type] || 'Follow-up';
-  document.getElementById('aurora-followup-res-name').textContent    = reservation.user_name || 'Sin nombre';
-  document.getElementById('aurora-followup-res-detail').textContent  = `${servicio} · ${fecha} · ${horario}`;
-  document.getElementById('aurora-followup-preview-msg').textContent = previewMsg;
-  modal.style.display = 'block';
-};
-
-window.closeFollowupModal = function() {
-  document.getElementById('aurora-modal-followup').style.display = 'none';
-  _currentAuroraFollowup = null;
-};
-
-window.sendFollowupManual = async function() {
-  if (!_currentAuroraFollowup) return;
-  const { type, reservation } = _currentAuroraFollowup;
-  const id      = reservation.id;
-  const sendBtn = document.getElementById('btn-send-followup-aurora');
-  const loadDiv = document.getElementById('aurora-followup-sending');
-  sendBtn.disabled      = true;
-  sendBtn.style.opacity = '0.6';
-  loadDiv.style.display = 'block';
-  const endpoint = type === '1h'
-    ? `/api/aurora/reservations/${id}/send-followup-1h`
-    : `/api/aurora/reservations/${id}/send-rebooking`;
-  try {
-    const res  = await fetch(`${API_BASE}${endpoint}`, { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      showToast('✅ Follow-up enviado');
-      window.closeFollowupModal();
-      setTimeout(() => loadReservations(), 800);
-    } else { showToast('❌ ' + (data.error || 'Error')); }
-  } catch (err) { showToast('❌ Error de red'); }
-  finally {
-    sendBtn.disabled      = false;
-    sendBtn.style.opacity = '1';
-    loadDiv.style.display = 'none';
-  }
-};
 
 // ─── sendFollowupNow: envío directo sin modal ─────────────────────────────────
 window.sendFollowupNow = async function(id, type, btn) {
@@ -807,11 +746,6 @@ window.sendFollowupNow = async function(id, type, btn) {
 document.addEventListener('DOMContentLoaded', function() {
 try {
   console.log('[AURORA-DASH] Configurando event listeners...');
-
-  document.getElementById('filter-service').addEventListener('change', (e) => {
-    currentFilters.serviceType = e.target.value;
-    loadReservations();
-  });
 
   document.getElementById('filter-date').addEventListener('change', (e) => {
     currentFilters.date = e.target.value;
@@ -868,18 +802,14 @@ try {
     openThread(btn.dataset.phone, btn.dataset.name, btn.dataset.alias);
   });
 
-  // ── Event delegation: botones de follow-up → abre modal ───────────────────
+  // ── Event delegation: botones de follow-up → envío directo ─────────────────
   document.getElementById('table-body')?.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-fu-action]');
     if (!btn) return;
     const id     = btn.dataset.fuId;
     const action = btn.dataset.fuAction;
-    window.openFollowupModal(action === 'followup-1h' ? '1h' : 'd7', id);
+    window.sendFollowupNow(id, action === 'followup-1h' ? '1h' : 'd7', btn);
   });
-
-  // ── Modal follow-up: botones ─────────────────────────────────────────────
-  document.getElementById('btn-send-followup-aurora')?.addEventListener('click', () => sendFollowupManual());
-  document.getElementById('btn-close-followup-aurora')?.addEventListener('click', () => closeFollowupModal());
 
   // ── Event delegation: pills de filtro por servicio ───────────────────────
   document.getElementById('service-filter-pills')?.addEventListener('click', function(e) {

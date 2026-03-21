@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="200" height="56">
+  <defs>
+    <linearGradient id="cw-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5DE5DB"/>
+      <stop offset="100%" stop-color="#3B9177"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon circle -->
+  <circle cx="28" cy="28" r="26" fill="url(#cw-grad)"/>
+  <text x="28" y="35" font-family="'Segoe UI',Arial,sans-serif" font-size="22" font-weight="800" fill="white" text-anchor="middle">C</text>
+  <!-- Wordmark -->
+  <text x="118" y="35" font-family="'Segoe UI',Arial,sans-serif" font-size="21" font-weight="700" fill="#4ECDC4" text-anchor="middle">Coworkia</text>
+</svg>

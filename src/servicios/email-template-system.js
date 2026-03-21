@@ -393,13 +393,323 @@ export function buildAdrianaComparisonHTML({
 </html>`;
 }
 
+// ─── TEMPLATE: AURORA CONFIRMATION +1h ─────────────────────────────────────
+
+/**
+ * 🏢 Email de confirmación/agradecimiento +1h post-reserva (Aurora)
+ * @param {string} nombre    — Nombre del cliente
+ * @param {string} servicio  — Hot Desk / Sala de Reuniones
+ * @param {string} dia       — Fecha de la reserva (ej: "lunes 24 de marzo")
+ * @param {string} hora      — Hora de la reserva (ej: "10:00 AM")
+ * @param {string} [precio]  — Precio si aplica
+ */
+export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, precio = '' }) {
+  const b = AGENT_BRANDING.AURORA;
+  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Reserva Confirmada! 🎉</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Tu espacio está listo en Coworkia</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:16px;color:#1e293b;margin:0 0 20px;">Hola <strong>${firstName}</strong> 👋</p>
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 24px;">
+      Confirmamos tu reserva de <strong>${servicio}</strong> para el <strong>${dia}</strong> a las <strong>${hora}</strong>.
+      Estamos felices de verte pronto en Coworkia.
+    </p>
+
+    <!-- Detalles Box -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">📋 Detalles de tu Reserva</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;width:40%;">Servicio</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${servicio}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;">Fecha</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${dia}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;">Hora</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${hora}</td></tr>
+        ${precio ? `<tr><td style="padding:6px 0;font-size:14px;color:#64748b;">Precio</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${precio}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0 0 24px;">
+      ¿Necesitas algo para tu visita? Responde a este mensaje o escríbenos por WhatsApp y con gusto te ayudamos. ☕
+    </p>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Aurora%2C%20tengo%20una%20reserva%20para%20${encodeURIComponent(dia)}"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        💬 Contactar por WhatsApp
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: AURORA REBOOKING D+7 ─────────────────────────────────────────
+
+/**
+ * 🔁 Email D+7 re-booking (Aurora) — Invitar a volver
+ * @param {string} nombre    — Nombre del cliente
+ * @param {string} servicio  — Servicio que usó
+ * @param {string} [descuento] — Código de descuento (opcional)
+ */
+export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
+  const b = AGENT_BRANDING.AURORA;
+  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Te extrañamos, ${firstName}! 👋</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Han pasado 7 días desde tu última visita</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      Esperamos que hayas disfrutado tu ${servicio} en Coworkia. 
+      Tu productividad es nuestra misión y nos encantaría que volvieras pronto. 🚀
+    </p>
+
+    ${descuento ? `
+    <!-- Descuento especial -->
+    <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid ${b.primaryColor};border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:24px;">
+      <div style="font-size:13px;color:#065f46;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🎁 Regalo de Regreso</div>
+      <div style="font-size:28px;font-weight:800;color:#047857;margin:8px 0;">${descuento}</div>
+      <div style="font-size:13px;color:#6b7280;">Usa este código en tu próxima reserva</div>
+    </div>` : ''}
+
+    <div style="background:#f8fafc;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:18px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">
+        ✅ <strong>Hot Desk</strong> disponible todos los días<br>
+        ✅ <strong>Salas de reuniones</strong> para 4-8 personas<br>
+        ✅ WiFi de alta velocidad · Café incluido · Estacionamiento
+      </p>
+    </div>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Aurora%2C%20quiero%20hacer%20una%20nueva%20reserva"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        📅 Reservar de Nuevo
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: ENZO D+1 ─────────────────────────────────────────────────────
+
+/**
+ * 🎯 Email D+1 — Enzo seguimiento suave (sin descuento)
+ * @param {string} nombre   — Nombre del prospecto
+ * @param {string} proyecto — Tipo de proyecto / servicio cotizado
+ * @param {string} message  — Mensaje personalizado
+ */
+export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = '' }) {
+  const b = AGENT_BRANDING.ENZO;
+  const firstName = nombre ? nombre.split(' ')[0] : '';
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/enzo.svg" alt="MarketingLab" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¿Seguimos adelante? 🚀</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">MarketingLab — Proyectos que transforman negocios</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:16px;color:#1e293b;margin:0 0 16px;">Hola ${firstName ? `<strong>${firstName}</strong>` : 'amig@'} 👋</p>
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      ${message || `¿Sigues pensando en avanzar con <strong>${proyecto}</strong>? 
+      Nos encantaría ayudarte a materializar tu visión con una estrategia a medida.`}
+    </p>
+
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:13px;color:#9a3412;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">💡 Lo que podemos hacer por ti</div>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.8;">
+        🎯 Estrategia de marketing personalizada<br>
+        📱 Gestión de redes sociales profesional<br>
+        🎨 Diseño creativo que convierte<br>
+        📊 Reportes de resultados mensuales
+      </p>
+    </div>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20quiero%20agendar%20una%20llamada"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        📞 Agendar Llamada Gratis
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: ENZO D+3 ─────────────────────────────────────────────────────
+
+/**
+ * 🎯 Email D+3 — Enzo FOMO + descuento "Solo hoy" 15% OFF
+ * @param {string} nombre    — Nombre del prospecto
+ * @param {string} proyecto  — Tipo de proyecto / servicio
+ * @param {number} [descuento] — Porcentaje de descuento (default: 15)
+ */
+export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 15 }) {
+  const b = AGENT_BRANDING.ENZO;
+  const firstName = nombre ? nombre.split(' ')[0] : '';
+  const vence = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Urgency banner -->
+  <div style="background:#dc2626;padding:10px;text-align:center;">
+    <span style="color:#fff;font-size:13px;font-weight:700;">⏰ OFERTA ESPECIAL · VENCE ${vence.toUpperCase()}</span>
+  </div>
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:32px 32px;text-align:center;">
+    <img src="/images/logos/enzo.svg" alt="MarketingLab" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">🎁 ${descuento}% OFF — Solo Hoy</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Oferta exclusiva para ${firstName || 'ti'}</p>
+  </div>
+
+  <!-- Descuento destacado -->
+  <div style="background:#fef3c7;border:2px solid #fbbf24;padding:28px 32px;text-align:center;">
+    <div style="font-size:52px;font-weight:900;color:#d97706;line-height:1;">${descuento}<span style="font-size:28px;">%</span></div>
+    <div style="font-size:16px;font-weight:700;color:#92400e;margin:8px 0 4px;">DESCUENTO EN TU PRIMER PROYECTO</div>
+    <div style="font-size:13px;color:#6b7280;">Válido solo para contratar hoy · No acumulable con otras ofertas</div>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:28px 32px;">
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      ${firstName ? `<strong>${firstName}</strong>, t` : 'T'}odavía estamos guardando tu lugar para <strong>${proyecto}</strong>. 
+      Este descuento es nuestra forma de decirte que creemos en tu proyecto y queremos ser parte de él.
+    </p>
+
+    <div style="background:#f8fafc;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:16px 20px;margin-bottom:24px;font-size:14px;color:#374151;line-height:1.6;">
+      ✅ Sin contrato de permanencia<br>
+      ✅ Resultados medibles desde el primer mes<br>
+      ✅ Equipo dedicado a tu proyecto
+    </div>
+
+    <div style="text-align:center;margin:24px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20quiero%20aprovechar%20el%20${descuento}%25%20de%20descuento"
+         style="display:inline-block;background:#dc2626;color:#fff;padding:16px 40px;border-radius:8px;font-size:16px;font-weight:700;text-decoration:none;">
+        🎁 Quiero Mi ${descuento}% OFF
+      </a>
+    </div>
+    <p style="text-align:center;font-size:12px;color:#9ca3af;margin:8px 0 0;">Responde este email o escríbenos por WhatsApp antes de medianoche</p>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: ENZO D+7 ─────────────────────────────────────────────────────
+
+/**
+ * 🎯 Email D+7 — Enzo último intento + caso de éxito
+ * @param {string} nombre     — Nombre del prospecto
+ * @param {string} proyecto   — Tipo de proyecto
+ * @param {string} [caseStudy] — Descripción del caso de éxito (opcional)
+ */
+export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = '' }) {
+  const b = AGENT_BRANDING.ENZO;
+  const firstName = nombre ? nombre.split(' ')[0] : '';
+  const defaultCase = 'Cliente del sector retail aumentó sus ventas online un 300% en 3 meses con nuestra estrategia de contenidos y pauta digital.';
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/enzo.svg" alt="MarketingLab" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">📈 Mira lo que logramos</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Resultados reales para negocios reales</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      ${firstName ? `<strong>${firstName}</strong>, a` : 'A'}ntes de que cerremos tu cotización para <strong>${proyecto}</strong>, 
+      queremos compartir algo que te puede interesar:
+    </p>
+
+    <!-- Caso de éxito -->
+    <div style="background:#fff7ed;border:2px solid ${b.primaryColor};border-radius:12px;padding:24px;margin-bottom:24px;">
+      <div style="font-size:11px;color:#9a3412;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">📊 Caso de Éxito Real</div>
+      <blockquote style="margin:0;font-size:15px;color:#374151;line-height:1.7;font-style:italic;border-left:3px solid ${b.primaryColor};padding-left:16px;">
+        "${caseStudy || defaultCase}"
+      </blockquote>
+      <div style="margin-top:12px;font-size:12px;color:#6b7280;">— Cliente MarketingLab · Resultados verificados</div>
+    </div>
+
+    <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0 0 20px;">
+      ¿Te gustaría un resultado similar? Si en este momento no es el momento correcto, 
+      no hay problema — guarda nuestro contacto para cuando estés listo. 🤝
+    </p>
+
+    <div style="text-align:center;margin:24px 0;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20me%20interesa%20el%20proyecto"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">
+        ✅ Me interesa
+      </a>
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20guardar%20para%20despues"
+         style="display:inline-block;background:#f1f5f9;color:#475569;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">
+        📌 Para después
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
 // ─── DISPATCHER CENTRAL ──────────────────────────────────────────────────────
 
 /**
  * 🚀 buildEmailTemplate — Wrapper central para todos los templates
  *
- * @param {string} agent  — 'ALUNA', 'AURORA', 'ADRIANA', etc.
- * @param {string} type   — 'd1', 'd3', 'comparison', etc.
+ * @param {string} agent  — 'ALUNA', 'AURORA', 'ADRIANA', 'ENZO', etc.
+ * @param {string} type   — 'confirmation', 'rebooking', 'd1', 'd3', 'd7', 'comparison', etc.
  * @param {object} data   — Datos del template
  * @returns {string} HTML del email
  */
@@ -407,9 +717,14 @@ export function buildEmailTemplate(agent, type, data) {
   const key = `${agent.toUpperCase()}_${type.toUpperCase()}`;
 
   const builders = {
-    ALUNA_D1:            () => buildAlunaD1HTML(data),
-    ALUNA_D3:            () => buildAlunaD3HTML(data),
-    ADRIANA_COMPARISON:  () => buildAdrianaComparisonHTML(data),
+    ALUNA_D1:                 () => buildAlunaD1HTML(data),
+    ALUNA_D3:                 () => buildAlunaD3HTML(data),
+    AURORA_CONFIRMATION:      () => buildAuroraConfirmationHTML(data),
+    AURORA_REBOOKING:         () => buildAuroraRebookingHTML(data),
+    ENZO_D1:                  () => buildEnzoD1HTML(data),
+    ENZO_D3:                  () => buildEnzoD3HTML(data),
+    ENZO_D7:                  () => buildEnzoD7HTML(data),
+    ADRIANA_COMPARISON:       () => buildAdrianaComparisonHTML(data),
   };
 
   const builder = builders[key];

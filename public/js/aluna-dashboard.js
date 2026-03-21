@@ -657,7 +657,7 @@ Equipo Coworkia`
   };
   
   messageBox.value = templates[type] || 'Mensaje no disponible';
-  modal.style.display = 'flex';
+  modal.style.display = 'block';
 }
 
 function closeFollowupModal() {
@@ -742,7 +742,7 @@ let campaignPreviewLeads = [];
 
 function openCampaignModal() {
   const modal = document.getElementById('modal-campaign');
-  modal.style.display = 'flex';
+  modal.style.display = 'block';
   
   // Reset defaults
   document.getElementById('campaign-name').value = '';

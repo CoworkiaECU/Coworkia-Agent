@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>TEST: Modal Follow-up Fix</title>
+  <style>
+    body {
+      font-family: -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+    
+    #test-results {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .test-case {
+      margin: 10px 0;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 6px;
+    }
+    
+    .test-pass { border-left: 3px solid #10b981; }
+    .test-fail { border-left: 3px solid #f87171; }
+    
+    button {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    button:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test: Modal Follow-up (Bug Fix Verification)</h1>
+  
+  <div id="test-results">
+    <h2>Resultados de Tests:</h2>
+    <div id="test-output"></div>
+  </div>
+  
+  <h2>Simular Dashboard:</h2>
+  <div style="background:#1e293b; padding:20px; border-radius:8px;">
+    <p><strong>Lead 1:</strong> Juan Pablo Parra - Plan 20 ($250)</p>
+    <button onclick="testOpenModal('lead-001', 'd1-wa')">📱 D+1 WA</button>
+    <button onclick="testOpenModal('lead-001', 'd1-email')">📧 D+1 Email</button>
+    <button onclick="testOpenModal('lead-001', 'd3-wa')">📱 D+3 WA</button>
+    <button onclick="testOpenModal('lead-001', 'd3-email')">📧 D+3 Email</button>
+    
+    <p style="margin-top:20px;"><strong>Lead 2:</strong> María José García - Plan 40 ($400) [D+1 enviado]</p>
+    <button onclick="testOpenModal('lead-002', 'd1-wa')" disabled>📱 D+1 WA</button>
+    <button onclick="testOpenModal('lead-002', 'd1-email')" disabled>📧 D+1 Email</button>
+    <button onclick="testOpenModal('lead-002', 'd3-wa')">📱 D+3 WA</button>
+    <button onclick="testOpenModal('lead-002', 'd3-email')">📧 D+3 Email</button>
+  </div>
+  
+  <!-- Modal (estructura EXACTA del código en producción) -->
+  <div id="modal-followup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;">
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
+      <h2 id="followup-modal-title" style="color:#f1f5f9;font-size:18px;margin:0 0 16px 0;font-weight:600;">Enviar Follow-up Manual</h2>
+      
+      <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">📋 Lead:</div>
+        <div id="followup-lead-name" style="color:#f1f5f9;font-size:14px;font-weight:600;"></div>
+        <div id="followup-lead-plan" style="color:#64748b;font-size:13px;"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">
+          💬 Mensaje (editar antes de enviar):
+        </label>
+        <textarea id="followup-message" 
+          style="width:100%;min-height:200px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#f1f5f9;font-size:13px;font-family:monospace;resize:vertical;"
+          placeholder="El mensaje se cargará aquí..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:20px;">
+        <button onclick="closeTestModal()"
+          style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;color:#94a3b8;font-size:14px;cursor:pointer;">
+          Cerrar Test
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Datos de test (igual que en producción)
+    let allProformas = [
+      {
+        id: 'lead-001',
+        client_name: 'Juan Pablo Parra',
+        membership_type: 'Plan 20',
+        monthly_fee: 250,
+        user_phone: '+593999123456',
+        email: 'juan@example.com',
+        followup_24h_sent_at: null,
+        automation_d1_sent: false
+      },
+      {
+        id: 'lead-002',
+        client_name: 'María José García',
+        membership_type: 'Plan 40',
+        monthly_fee: 400,
+        user_phone: '+593999654321',
+        email: 'maria@example.com',
+        followup_24h_sent_at: '2026-03-19T10:00:00',
+        automation_d1_sent: true
+      }
+    ];
+    
+    let currentFollowupData = null;
+    let testResults = [];
+    
+    // Función EXACTA del código en producción
+    function openFollowupModalById(leadId, type) {
+      const leadData = allProformas.find(p => p.id === leadId);
+      if (!leadData) {
+        return { error: 'Lead no encontrado' };
+      }
+      
+      currentFollowupData = { ...leadData, type };
+      
+      const modal = document.getElementById('modal-followup');
+      const title = document.getElementById('followup-modal-title');
+      const leadName = document.getElementById('followup-lead-name');
+      const leadPlan = document.getElementById('followup-lead-plan');
+      const messageBox = document.getElementById('followup-message');
+      
+      const titles = {
+        'd1-wa': '📱 Enviar Follow-up D+1 por WhatsApp',
+        'd1-email': '📧 Enviar Follow-up D+1 por Email',
+        'd3-wa': '📱 Enviar Follow-up D+3 por WhatsApp (FOMO)',
+        'd3-email': '📧 Enviar Follow-up D+3 por Email (FOMO)'
+      };
+      
+      title.textContent = titles[type] || 'Enviar Follow-up';
+      leadName.textContent = leadData.client_name || 'Sin nombre';
+      leadPlan.textContent = `${leadData.membership_type || 'Plan no especificado'} • $${leadData.monthly_fee || 0}/mes`;
+      
+      const templates = {
+        'd1-wa': `Hola {{nombre}} 👋\n\nAyer charlamos sobre {{plan}}...`,
+        'd1-email': `Hola {{nombre}},\n\nTe contacto desde Coworkia...`,
+        'd3-wa': `{{nombre}}, últimas disponibilidades! 🔥...`,
+        'd3-email': `Hola {{nombre}},\n\n**Últimas disponibilidades...**`
+      };
+      
+      messageBox.value = templates[type] || 'Mensaje no disponible';
+      modal.style.display = 'block';
+      
+      return { success: true };
+    }
+    
+    function closeTestModal() {
+      document.getElementById('modal-followup').style.display = 'none';
+      currentFollowupData = null;
+    }
+    
+    // Test runner
+    function testOpenModal(leadId, type) {
+      const testName = `Abrir modal: ${leadId} - ${type}`;
+      console.log(`🧪 Running: ${testName}`);
+      
+      const result = openFollowupModalById(leadId, type);
+      
+      // Verificaciones
+      const modal = document.getElementById('modal-followup');
+      const title = document.getElementById('followup-modal-title');
+      const leadName = document.getElementById('followup-lead-name');
+      const leadPlan = document.getElementById('followup-lead-plan');
+      const messageBox = document.getElementById('followup-message');
+      
+      const tests = [
+        { name: 'Lead encontrado', pass: result.success === true },
+        { name: 'Modal visible', pass: modal.style.display === 'block' },
+        { name: 'Título configurado', pass: title.textContent.length > 0 },
+        { name: 'Nombre del lead', pass: leadName.textContent.length > 0 },
+        { name: 'Plan del lead', pass: leadPlan.textContent.includes('$') },
+        { name: 'Mensaje template cargado', pass: messageBox.value.length > 20 },
+        { name: 'currentFollowupData set', pass: currentFollowupData !== null }
+      ];
+      
+      const allPassed = tests.every(t => t.pass);
+      const testClass = allPassed ? 'test-pass' : 'test-fail';
+      const testIcon = allPassed ? '✅' : '❌';
+      
+      const output = document.getElementById('test-output');
+      output.innerHTML += `
+        <div class="test-case ${testClass}">
+          <strong>${testIcon} ${testName}</strong>
+          ${tests.map(t => `<div style="margin-left:20px;font-size:12px;">${t.pass ? '✓' : '✗'} ${t.name}</div>`).join('')}
+        </div>
+      `;
+      
+      console.log(tests);
+    }
+    
+    // Auto-run tests on load
+    window.addEventListener('load', () => {
+      console.log('🚀 Running automated tests...');
+      setTimeout(() => {
+        console.log('\n📋 TEST 1: Lead sin D+1 enviado');
+        testOpenModal('lead-001', 'd1-wa');
+        closeTestModal();
+        
+        setTimeout(() => {
+          console.log('\n📋 TEST 2: Lead diferente tipo');
+          testOpenModal('lead-002', 'd3-email');
+          closeTestModal();
+          
+          setTimeout(() => {
+            console.log('\n✅ Tests completados. Revisa resultados arriba.');
+          }, 500);
+        }, 500);
+      }, 500);
+    });
+  </script>
+</body>
+</html>

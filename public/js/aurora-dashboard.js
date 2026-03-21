@@ -529,7 +529,7 @@ async function loadConversations() {
       const alias = 'CLI-' + (phone.replace(/\D/g,'').slice(-4) || '????');
       const waLink = `https://wa.me/${phone.replace(/\D/g,'')}`;
       return `
-        <tr style="border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+        <tr class="conv-row" style="border-bottom:1px solid #f3f4f6;">
           <td style="padding:12px 16px;">
             <strong style="color:#1f2937;">${name}</strong><br>
             <small style="color:#9ca3af;font-size:11px;">${alias}</small>
@@ -543,7 +543,7 @@ async function loadConversations() {
           <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
           <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button onclick="openThread('${phone.replace(/'/g,"\\'")}', '${name.replace(/'/g,"\\'")}', '${alias}')" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px;">💬 Ver hilo</button>
+            <button data-action="open-thread" data-phone="${phone.replace(/"/g,'&quot;')}" data-name="${name.replace(/"/g,'&quot;')}" data-alias="${alias}" style="background:#4ECDC4; font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;">💬 Ver hilo</button>
             <a href="${waLink}" target="_blank" style="background:#25d366; color:white; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">WhatsApp</a>
           </td>
         </tr>`;
@@ -644,7 +644,36 @@ try {
   });
 
   console.log('[AURORA-DASH] Event listeners configurados');
-  
+
+  // ── Botones estáticos (sin onclick en HTML) ──────────────────────────────
+  document.getElementById('btn-apply-filters')?.addEventListener('click', () => loadReservations());
+  document.getElementById('btn-reset-filters')?.addEventListener('click', () => resetFilters());
+  document.getElementById('btn-refresh-prospects')?.addEventListener('click', () => loadAbandoned());
+  document.getElementById('btn-copy-campaign')?.addEventListener('click', () => copyCampaignList());
+  document.getElementById('btn-refresh-conversations')?.addEventListener('click', () => loadConversations());
+  document.getElementById('btn-close-thread')?.addEventListener('click', () => closeThread());
+  document.getElementById('btn-fab-refresh')?.addEventListener('click', () => refreshAll());
+
+  // ── Quick Actions ─────────────────────────────────────────────────────────
+  document.getElementById('qa-refresh-all')?.addEventListener('click', () => refreshAll());
+  document.getElementById('qa-load-prospects')?.addEventListener('click', () => loadAbandoned());
+  document.getElementById('qa-copy-campaign')?.addEventListener('click', () => copyCampaignList());
+  document.getElementById('qa-conversations')?.addEventListener('click', () => loadConversations());
+
+  // ── Event delegation para pill-filter (prospectos) ────────────────────────
+  document.getElementById('prospect-filters')?.addEventListener('click', function(e) {
+    const btn = e.target.closest('.pill-filter');
+    if (!btn) return;
+    filterProspects(btn.dataset.filter);
+  });
+
+  // ── Event delegation para tabla de conversaciones (data-action) ───────────
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="open-thread"]');
+    if (!btn) return;
+    openThread(btn.dataset.phone, btn.dataset.name, btn.dataset.alias);
+  });
+
   // Cargar al inicio
   console.log('[AURORA-DASH] Iniciando carga de reservas...');
   loadReservations().catch(err => {

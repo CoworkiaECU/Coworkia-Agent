@@ -11,6 +11,7 @@ import express from 'express';
 import databaseService from '../../database/database.js';
 import { enviarWhatsApp } from './wassenger.js';
 import { sendEmail } from '../../servicios/email.js';
+import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 
 const router = express.Router();
 
@@ -943,19 +944,8 @@ router.post('/send-d1-email', async (req, res) => {
     await sendEmail({
       to: email,
       cc: 'coworkia.ec@gmail.com',
-      subject: '📋 Seguimiento - Tu membresía en Coworkia',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Coworkia</h2>
-          <div style="white-space: pre-wrap; line-height: 1.6;">
-            ${message.replace(/\n/g, '<br>')}
-          </div>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="font-size: 12px; color: #6b7280;">
-            Este email fue enviado desde el Dashboard de Aluna.
-          </p>
-        </div>
-      `
+      subject: '💼 Tu plan de membresía en Coworkia está listo',
+      html: buildEmailTemplate('ALUNA', 'D1', { name: req.body.name || '', message, plan: req.body.plan || 'Membresía Coworkia' })
     });
 
     console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
@@ -1060,19 +1050,8 @@ router.post('/send-d3-email', async (req, res) => {
     await sendEmail({
       to: email,
       cc: 'coworkia.ec@gmail.com',
-      subject: '🔥 Últimas disponibilidades - Coworkia',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">⚡ Oferta por tiempo limitado</h2>
-          <div style="white-space: pre-wrap; line-height: 1.6;">
-            ${message.replace(/\n/g, '<br>')}
-          </div>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="font-size: 12px; color: #6b7280;">
-            Este email fue enviado desde el Dashboard de Aluna.
-          </p>
-        </div>
-      `
+      subject: '🔥 Últimas disponibilidades — Coworkia (oferta limitada)',
+      html: buildEmailTemplate('ALUNA', 'D3', { name: req.body.name || '', message })
     });
 
     console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: coworkia.ec@gmail.com)`);

@@ -89,7 +89,43 @@ function updatePipeline(projects) {
   document.getElementById('pipe-3d').textContent        = projects.filter(p => ['proposal_sent','negotiating'].includes(p.status)).length;
   document.getElementById('pipe-converted').textContent = projects.filter(p => p.status === 'accepted').length;
 }
+// ═══ UPDATE STATUS ════════════════════════════════════════════════════════════════════════
+async function updateStatus(code, newStatus) {
+  try {
+    const res = await fetch(`${API_BASE}/api/enzo/projects/${code}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    const result = await res.json();
+    if (!result.ok) { alert(`Error: ${result.error || 'No se pudo actualizar'}`); return; }
+    const p = allProjects.find(p => p.project_code === code);
+    if (p) p.status = newStatus;
+    updatePipeline(allProjects);
+  } catch (err) { console.error('[ENZO-DASH] updateStatus error:', err); }
+}
 
+// ═══ SEND REMINDER ════════════════════════════════════════════════════════════════════
+async function sendReminder(code, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const res = await fetch(`${API_BASE}/api/enzo/projects/${code}/send-reminder`, { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      btn.textContent = '✅ Enviado';
+      setTimeout(() => { btn.textContent = '📲 Recordatorio'; btn.disabled = false; }, 3000);
+    } else {
+      alert(`❌ Error: ${d.error}`);
+      btn.textContent = '📲 Recordatorio';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+    btn.textContent = '📲 Recordatorio';
+    btn.disabled = false;
+  }
+}
 // ═══ DATA LOADING ════════════════════════════════════════════════════════════
 
 /**
@@ -128,8 +164,7 @@ async function loadDashboard() {
   } catch (error) {
     console.error('[ENZO-DASH] Error:', error);
     document.getElementById('projects-list').innerHTML = `
-      <tr><td colspan="7" class="error">❌ Error al cargar proyectos: ${error.message}</td></tr>
-    `;
+      <tr><td colspan="8" class="error">❌ Error al cargar proyectos: ${error.message}</td></tr>`;
   }
 }
 
@@ -141,7 +176,7 @@ function renderProjects(projects) {
   document.getElementById('table-count').textContent = `${projects?.length || 0} registro${(projects?.length || 0) !== 1 ? 's' : ''}`;
 
   if (!projects || projects.length === 0) {
-    container.innerHTML = `<tr><td colspan="7" class="empty">No hay proyectos que coincidan con los filtros.</td></tr>`;
+    container.innerHTML = `<tr><td colspan="8" class="empty">No hay proyectos que coincidan con los filtros.</td></tr>`;
     return;
   }
 
@@ -158,6 +193,17 @@ function renderProjects(projects) {
       <td>${getStatusBadge(project.status)}</td>
       <td><span class="amount">${formatPrice(project.proposal_amount)}</span></td>
       <td><span class="date-cell">${formatDate(project.created_at)}</span></td>
+      <td>
+        <select class="status-select" data-code="${project.project_code}">
+          <option value="pending"           ${project.status==='pending'           ?'selected':''}>⏳ Pendiente</option>
+          <option value="meeting_scheduled" ${project.status==='meeting_scheduled' ?'selected':''}>📅 Reunión</option>
+          <option value="proposal_sent"     ${project.status==='proposal_sent'     ?'selected':''}>📧 Propuesta</option>
+          <option value="accepted"          ${project.status==='accepted'          ?'selected':''}>✅ Aceptado</option>
+          <option value="negotiating"       ${project.status==='negotiating'       ?'selected':''}>💬 Negociando</option>
+          <option value="cancelled"         ${project.status==='cancelled'         ?'selected':''}>❌ Cancelado</option>
+        </select>
+        <button class="reminder-btn" data-code="${project.project_code}">📲 Recordatorio</button>
+      </td>
     </tr>
   `).join('');
 }
@@ -231,4 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Auto-refresh cada 60 segundos
   setInterval(loadDashboard, 60000);
+
+  // Event delegation para acciones en tabla
+  const table = document.getElementById('projects-list').closest('table') || document.querySelector('table tbody');
+  document.addEventListener('change', e => {
+    const sel = e.target.closest('.status-select');
+    if (sel) updateStatus(sel.dataset.code, sel.value);
+  });
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.reminder-btn');
+    if (btn) sendReminder(btn.dataset.code, btn);
+  });
 });

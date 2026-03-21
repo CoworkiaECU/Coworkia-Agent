@@ -5,6 +5,7 @@
 
 import express from 'express';
 import databaseService from '../../database/database.js';
+import { enviarWhatsApp } from './wassenger.js';
 
 const router = express.Router();
 
@@ -86,6 +87,34 @@ router.patch('/leads/:id/status', async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     console.error('[PAULA-API] Error patch:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/paula/leads/:id/send-wa ─────────────────────────────────────────
+router.post('/leads/:id/send-wa', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const l = await databaseService.get(
+      `SELECT id, client_name, phone, operation_type, property_type, preferred_zone, budget_range
+       FROM real_estate_leads WHERE id = $1`,
+      [req.params.id]
+    );
+    if (!l || !l.phone) return res.status(404).json({ ok: false, error: 'Lead no encontrado o sin teléfono' });
+
+    const name = (l.client_name || 'Hola').split(' ')[0];
+    const op   = l.operation_type || 'propiedad';
+    const zone = l.preferred_zone || 'tu zona de interés';
+    const msg  = `Hola ${name} 👋\n\n¿Seguimos buscando tu ${op.toLowerCase()} en *${zone}*?\n\nTengo algunas opciones nuevas que podrían interesarte 🏠`;
+
+    await enviarWhatsApp(l.phone, msg);
+    await databaseService.run(
+      `UPDATE real_estate_leads SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [req.params.id]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[PAULA-API] Error send-wa:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });

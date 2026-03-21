@@ -10,6 +10,7 @@
 import express from 'express';
 import gabiSystem from '../../servicios/gabi-financial-system.js';
 import databaseService from '../../database/database.js';
+import { enviarWhatsApp } from './wassenger.js';
 
 const router = express.Router();
 
@@ -250,6 +251,52 @@ router.get('/leads', async (req, res) => {
   } catch (error) {
     console.error('[GABI-API] Error en leads:', error);
     return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ── PATCH /api/gabi/leads/:code/status ────────────────────────────────────
+router.patch('/leads/:code/status', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { code } = req.params;
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
+    await databaseService.run(
+      `UPDATE legal_leads SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE consultation_code = $2`,
+      [status, code]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[GABI-API] Error patch status:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/gabi/leads/:code/send-wa ─────────────────────────────────────
+router.post('/leads/:code/send-wa', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const l = await databaseService.get(
+      `SELECT consultation_code, client_name, phone, consultation_type, urgency, company
+       FROM legal_leads WHERE consultation_code = $1`,
+      [req.params.code]
+    );
+    if (!l || !l.phone) return res.status(404).json({ ok: false, error: 'Lead no encontrado o sin teléfono' });
+
+    const name = (l.client_name || 'Hola').split(' ')[0];
+    const tipo = l.consultation_type || 'consultoría';
+    const empresa = l.company ? ` de *${l.company}*` : '';
+    const msg  = `Hola ${name} 👋\n\nSoy Gabi de GR Consulting. ¿Sigues interesado en la ${tipo.toLowerCase()}${empresa}?\n\nTengo espacio en agenda esta semana para retomar tu caso 📋`;
+
+    await enviarWhatsApp(l.phone, msg);
+    await databaseService.run(
+      `UPDATE legal_leads SET updated_at = CURRENT_TIMESTAMP WHERE consultation_code = $1`,
+      [req.params.code]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[GABI-API] Error send-wa:', err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 

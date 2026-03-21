@@ -55,7 +55,27 @@ async function updateStatus(code, newStatus) {
     console.error('[ADRIANA-DASH] updateStatus error:', err);
   }
 }
-
+// ── SEND WA ────────────────────────────────────────────────────────────────────
+async function sendWA(code, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const res = await fetch(`${API_BASE}/api/adriana/leads/${code}/send-wa`, { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      btn.textContent = '✅ Enviado';
+      setTimeout(() => { btn.textContent = '📲 WA'; btn.disabled = false; }, 3000);
+    } else {
+      alert(`❌ Error: ${d.error}`);
+      btn.textContent = '📲 WA';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+    btn.textContent = '📲 WA';
+    btn.disabled = false;
+  }
+}
 // ── STATS ─────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
@@ -130,12 +150,13 @@ async function loadLeads() {
               <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
               <td>
                 <select class="status-select" onchange="updateStatus('${l.quote_code}', this.value)">
-                  <option value="pending"   ${l.status==='pending'   ? 'selected':''}>⏳ Pendiente</option>
-                  <option value="quoted"    ${l.status==='quoted'    ? 'selected':''}>📧 Cotizado</option>
-                  <option value="accepted"  ${l.status==='accepted'  ? 'selected':''}>✅ Aceptado</option>
-                  <option value="rejected"  ${l.status==='rejected'  ? 'selected':''}>❌ Rechazado</option>
-                  <option value="cancelled" ${l.status==='cancelled' ? 'selected':''}>🚫 Cancelado</option>
+                  <option value="pending"   ${l.status==='pending'   ? 'selected':''}}>⏳ Pendiente</option>
+                  <option value="quoted"    ${l.status==='quoted'    ? 'selected':''}}📧 Cotizado</option>
+                  <option value="accepted"  ${l.status==='accepted'  ? 'selected':''}}>✅ Aceptado</option>
+                  <option value="rejected"  ${l.status==='rejected'  ? 'selected':''}}>❌ Rechazado</option>
+                  <option value="cancelled" ${l.status==='cancelled' ? 'selected':''}}>🚫 Cancelado</option>
                 </select>
+                ${l.phone ? `<button class="reminder-btn" data-code="${l.quote_code}">📲 WA</button>` : ''}
               </td>
             </tr>
           `).join('')}
@@ -162,5 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('search').addEventListener('input', e => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { currentFilters.search = e.target.value; loadLeads(); }, 400);
+  });
+
+  // Event delegation para boton WA
+  const container = document.getElementById('leads-container');
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.reminder-btn');
+    if (btn) sendWA(btn.dataset.code, btn);
   });
 });

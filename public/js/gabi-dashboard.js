@@ -52,7 +52,43 @@ function urgencyBadge(urgency) {
   const [cls, label] = map[urgency] || ['badge-normal-u', urgency || 'Normal'];
   return `<span class="badge ${cls}">${label}</span>`;
 }
+// ═══ UPDATE STATUS ════════════════════════════════════════════════════════════════════════
+async function updateStatus(code, newStatus) {
+  try {
+    const res = await fetch(`${API_BASE}/api/gabi/leads/${code}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    const result = await res.json();
+    if (!result.ok) { alert(`Error: ${result.error || 'No se pudo actualizar'}`); return; }
+    const l = allLeads.find(l => l.consultation_code === code);
+    if (l) l.status = newStatus;
+    updatePipeline();
+  } catch (err) { console.error('[GABI-DASH] updateStatus error:', err); }
+}
 
+// ═══ SEND WA ════════════════════════════════════════════════════════════════════════
+async function sendWA(code, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const res = await fetch(`${API_BASE}/api/gabi/leads/${code}/send-wa`, { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      btn.textContent = '✅ Enviado';
+      setTimeout(() => { btn.textContent = '📲 WA'; btn.disabled = false; }, 3000);
+    } else {
+      alert(`❌ Error: ${d.error}`);
+      btn.textContent = '📲 WA';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+    btn.textContent = '📲 WA';
+    btn.disabled = false;
+  }
+}
 // ═══ STATS ═══════════════════════════════════════════════════════════════════
 async function loadStats() {
   try {
@@ -106,6 +142,7 @@ async function loadLeads() {
             <th>Estado</th>
             <th>Cotización</th>
             <th>Fecha</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -122,6 +159,17 @@ async function loadLeads() {
               <td>${statusBadge(l.status)}</td>
               <td><span class="amount">${formatMoney(l.quote_amount)}</span></td>
               <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
+              <td>
+                <select class="status-select" data-code="${l.consultation_code}">
+                  <option value="pending"              ${l.status==='pending'              ?'selected':''}>⏳ Pendiente</option>
+                  <option value="meeting_scheduled"    ${l.status==='meeting_scheduled'    ?'selected':''}>📅 Reunión</option>
+                  <option value="quote_sent"           ${l.status==='quote_sent'           ?'selected':''}>📧 Cotizada</option>
+                  <option value="service_in_progress"  ${l.status==='service_in_progress'  ?'selected':''}>🔧 En Proceso</option>
+                  <option value="completed"            ${l.status==='completed'            ?'selected':''}>✅ Completado</option>
+                  <option value="cancelled"            ${l.status==='cancelled'            ?'selected':''}>❌ Cancelado</option>
+                </select>
+                ${l.phone ? `<button class="reminder-btn" data-code="${l.consultation_code}">📲 WA</button>` : ''}
+              </td>
             </tr>
           `).join('')}
         </tbody>
@@ -157,4 +205,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-refresh cada 60s
   setInterval(() => { loadStats(); loadLeads(); }, 60000);
+
+  // Event delegation para acciones en tabla
+  const container = document.getElementById('leads-container');
+  container.addEventListener('change', e => {
+    const sel = e.target.closest('.status-select');
+    if (sel) updateStatus(sel.dataset.code, sel.value);
+  });
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.reminder-btn');
+    if (btn) sendWA(btn.dataset.code, btn);
+  });
 });

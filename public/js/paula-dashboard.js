@@ -57,6 +57,44 @@ async function loadStats() {
   } catch (err) { console.error('[PAULA-DASH] stats error:', err); }
 }
 
+// ── UPDATE STATUS ─────────────────────────────────────────────────────────────
+async function updateStatus(id, newStatus) {
+  try {
+    const res = await fetch(`${API_BASE}/api/paula/leads/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    const result = await res.json();
+    if (!result.ok) { alert(`Error: ${result.error || 'No se pudo actualizar'}`); return; }
+    const l = allLeads.find(l => l.id == id);
+    if (l) l.status = newStatus;
+    updatePipeline();
+  } catch (err) { console.error('[PAULA-DASH] updateStatus error:', err); }
+}
+
+// ── SEND WA ────────────────────────────────────────────────────────────────────
+async function sendWA(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const res = await fetch(`${API_BASE}/api/paula/leads/${id}/send-wa`, { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      btn.textContent = '✅ Enviado';
+      setTimeout(() => { btn.textContent = '📲 WhatsApp'; btn.disabled = false; }, 3000);
+    } else {
+      alert(`❌ Error: ${d.error}`);
+      btn.textContent = '📲 WhatsApp';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+    btn.textContent = '📲 WhatsApp';
+    btn.disabled = false;
+  }
+}
+
 // ── LEADS ─────────────────────────────────────────────────────────────────────
 async function loadLeads() {
   const container = document.getElementById('leads-container');
@@ -93,6 +131,7 @@ async function loadLeads() {
             <th>Presupuesto</th>
             <th>Estado</th>
             <th>Fecha</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -109,6 +148,16 @@ async function loadLeads() {
               <td><span class="amount">${l.budget_range || '-'}</span></td>
               <td>${statusBadge(l.status)}</td>
               <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
+              <td>
+                <select class="status-select" data-id="${l.id}">
+                  <option value="pending"           ${l.status==='pending'           ?'selected':''}>⏳ Pendiente</option>
+                  <option value="viewing_scheduled" ${l.status==='viewing_scheduled' ?'selected':''}>🏠 Visita</option>
+                  <option value="negotiating"       ${l.status==='negotiating'       ?'selected':''}>💬 Negociando</option>
+                  <option value="closed"            ${l.status==='closed'            ?'selected':''}>✅ Cerrado</option>
+                  <option value="cancelled"         ${l.status==='cancelled'         ?'selected':''}>❌ Cancelado</option>
+                </select>
+                ${l.phone ? `<button class="reminder-btn" data-id="${l.id}">📲 WhatsApp</button>` : ''}
+              </td>
             </tr>
           `).join('')}
         </tbody>
@@ -134,5 +183,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('search').addEventListener('input', e => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { currentFilters.search = e.target.value; loadLeads(); }, 400);
+  });
+
+  // Event delegation para acciones en tabla
+  const container = document.getElementById('leads-container');
+  container.addEventListener('change', e => {
+    const sel = e.target.closest('.status-select');
+    if (sel) updateStatus(sel.dataset.id, sel.value);
+  });
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.reminder-btn');
+    if (btn) sendWA(btn.dataset.id, btn);
   });
 });

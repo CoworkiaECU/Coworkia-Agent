@@ -6,6 +6,7 @@
 import express from 'express';
 import enzoRepository from '../../database/enzoRepository.js';
 import databaseService from '../../database/database.js';
+import { enviarWhatsApp } from './wassenger.js';
 
 const router = express.Router();
 
@@ -193,6 +194,57 @@ router.get('/stats', async (req, res) => {
       success: false,
       error: 'Error al cargar estadísticas'
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH /api/enzo/projects/:code/status
+// ═══════════════════════════════════════════════════════════════════════════
+router.patch('/projects/:code/status', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { code } = req.params;
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
+    await databaseService.run(
+      `UPDATE marketing_leads SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE project_code = $2`,
+      [status, code]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[ENZO-API] Error patch status:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/enzo/projects/:code/send-reminder
+// ═══════════════════════════════════════════════════════════════════════════
+router.post('/projects/:code/send-reminder', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const p = await databaseService.get(
+      `SELECT project_code, client_name, user_phone, project_type, company, proposal_amount
+       FROM marketing_leads WHERE project_code = $1`,
+      [req.params.code]
+    );
+    if (!p || !p.user_phone) return res.status(404).json({ ok: false, error: 'Proyecto no encontrado o sin teléfono' });
+
+    const name    = (p.client_name || 'Hola').split(' ')[0];
+    const tipo    = p.project_type || 'proyecto de marketing';
+    const empresa = p.company ? ` para *${p.company}*` : '';
+    const propuesta = p.proposal_amount ? `\n\nLa propuesta por *$${parseFloat(p.proposal_amount).toFixed(2)}* sigue en pie.` : '';
+    const msg = `Hola ${name} 👋\n\n¿Seguimos adelante con el ${tipo.toLowerCase()}${empresa}?${propuesta}\n\nCuando quieras coordinamos — 20 minutos y definimos los próximos pasos 🚀`;
+
+    await enviarWhatsApp(p.user_phone, msg);
+    await databaseService.run(
+      `UPDATE marketing_leads SET updated_at = CURRENT_TIMESTAMP WHERE project_code = $1`,
+      [req.params.code]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[ENZO-API] Error send-reminder:', err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 

@@ -1,6 +1,6 @@
 /**
  * 🛡️ Tests de integración — Flujo completo Adriana
- * Caso de referencia: Javier Troya — Hyundai Creta 2022, $42,000, VAZ Ensigna
+ * Caso de referencia: Javier Troya — Hyundai Creta 2022, $16,000, VAZ Ensigna
  *
  * Ejecutar: node --experimental-vm-modules npx jest tests/unit/adriana-flow-integration --no-coverage
  */
@@ -13,8 +13,8 @@ import { buildAdrianaComparisonV2HTML, buildEmailTemplate } from '../../src/serv
 const JAVIER_TROYA_DEMO = {
   nombre: 'Javier Troya',
   marca: 'Hyundai', modelo: 'Creta', anio: 2022, placa: 'PBC-1234',
-  valor_asegurado: '$42,000',
-  vaz_prima_anual: '$1,101', vaz_prima_mensual: '$110', vaz_deducible: '7% (Taller VAZ)',
+  valor_asegurado: '$16,000',
+  vaz_prima_anual: '$830', vaz_prima_mensual: '$83', vaz_deducible: '7% (Taller VAZ)',
   analisis_broker: 'Javier, revisé las cotizaciones que me enviaste y VAZ Seguros tiene la tarifa más competitiva para tu Creta 2022. La diferencia clave frente a los competidores es el Amparo Patrimonial INCLUIDO en el plan Ensigna — sin costo adicional. Además, la asistencia vial 24/7 es ilimitada en grúa por accidente.',
   competitors: [
     {
@@ -38,14 +38,14 @@ const JAVIER_TROYA_DEMO = {
 
 describe('Adriana — Flujo completo Javier Troya', () => {
 
-  test('✅ Caso Javier Troya: $42k → prima $1,101', () => {
+  test('✅ Caso Javier Troya: $16k → prima $830', () => {
     const r = calculateVehiclePremium({
-      commercialValue: 42000,
+      commercialValue: 16000,
       vehicleCategory: 'light',
       coverage: 'standard',
     });
     expect(r.success).toBe(true);
-    expect(r.annual_total).toBe(1101);
+    expect(r.annual_total).toBe(830);
   });
 
   test('✅ buildAdrianaComparisonV2HTML genera HTML con ganador VAZ', () => {
@@ -53,7 +53,7 @@ describe('Adriana — Flujo completo Javier Troya', () => {
     expect(html).toContain('VAZ Seguros');
     expect(html).toContain('badge-best');
     expect(html).toContain('Javier Troya');
-    expect(html).toContain('$1,101');
+    expect(html).toContain('$830');
   });
 
   test('✅ competitor rows aparecen en HTML cuando hay competidores', () => {
@@ -72,7 +72,7 @@ describe('Adriana — Flujo completo Javier Troya', () => {
     const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', JAVIER_TROYA_DEMO);
     expect(html).toContain('VAZ Seguros');
     expect(html).toContain('badge-best');
-    expect(html).toContain('$1,101');
+    expect(html).toContain('$830');
   });
 
   test('✅ analisis_broker aparece en el HTML', () => {
@@ -95,9 +95,9 @@ describe('Adriana — Flujo completo Javier Troya', () => {
     expect(html).toContain('wa.me/593994837117');
   });
 
-  test('✅ valor_asegurado $42,000 aparece en HTML', () => {
+  test('✅ valor_asegurado $16,000 aparece en HTML', () => {
     const html = buildAdrianaComparisonV2HTML(JAVIER_TROYA_DEMO);
-    expect(html).toContain('$42,000');
+    expect(html).toContain('$16,000');
   });
 
 });

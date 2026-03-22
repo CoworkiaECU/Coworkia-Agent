@@ -3667,8 +3667,8 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
             placa: lead.plate, valor_asegurado: `$${Number(value).toLocaleString()}`,
             vaz_prima_anual: `$${premiumResult.annual_total || premiumResult.annualPremium}`,
             vaz_prima_mensual: `$${Math.round((premiumResult.annual_total || premiumResult.annualPremium) / 12)}`,
-            vaz_deducible: `${premiumResult.deductiblePct || 7}% (Taller VAZ)`,
-            analisis_broker: `${clientName.split(' ')[0]}, analicé tu vehículo y VAZ Seguros tiene la tarifa más competitiva del mercado para tu ${brandModel}.`,
+            vaz_deducible: `${premiumResult.deductiblePct || 7}%`,
+            analisis_broker: `${clientName.split(' ')[0]}, analicé el mercado ecuatoriano de seguros para tu ${brandModel} y el Plan Elemental de VAZ Seguros ofrece la mejor relación precio-cobertura. Con asistencia 24/7 y taller propio en Quito, es la opción más sólida. Puedes pagarlo en hasta 12 cuotas.`,
             competitors: competitorQuotes.map(c => ({
               nombre: c.nombre, plan: c.plan || 'Plan estándar',
               prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',

@@ -29,6 +29,8 @@ import { startFollowupCronJobs } from '../servicios/aluna-followup-cron.js';
 import { startAuroraEnzoCronJobs } from '../servicios/aurora-enzo-followup-cron.js';
 // 🔧 Axel Follow-up Automation
 import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
+// 🛡️ Adriana Follow-up Automation
+import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron.js';
 // 🔔 FASE 4: Sistema de notificaciones
 import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { startDailyReportCron } from '../cron/daily-report.js';
@@ -258,7 +260,10 @@ async function startServer() {
     startAxelFollowupCronJobs();
     console.log('✅ Axel follow-ups activos (D+2: 10am, D+7: 11am Ecuador)');
 
-    // FASE 4: Health monitor + reporte diario
+    // Iniciar follow-ups Adriana (seguros vehiculares)
+    console.log('🛡️ Iniciando follow-ups automatizados de Adriana...');
+    startAdrianaFollowupCronJobs();
+    console.log('✅ Adriana follow-ups activos (S1: 10am, S2: 11:30am, S3: 9:30am Ecuador)');
     startHealthMonitor();
     console.log('✅ Health monitor activo (OpenAI + DB, checks cada 5 min)');
     startDailyReportCron();

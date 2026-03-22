@@ -105,6 +105,20 @@ Follow-ups Aurora/Enzo + Dashboard Aurora rediseño + Templates HTML elegantes +
 **FASE 5 BLOQUE 4C — Email HTML comparativo SegPopular** ✅ — chat frontend
 - `src/servicios/email-templates/adriana-quote-comparison.html` — ya existe desde v1021
 
+### ✅ Completado 22 Mar 2026 (sesión noche) — v1022/v1023 — chat Aurora (derecha)
+
+**FIX CRÍTICO: Aurora Dashboard (v1022, commit `f020b6e`)** ✅
+- `aurora-dashboard.js` (backend) — removida columna `r.updated_at` que NO existe en la tabla `reservations` (bug que dejaba la tabla completamente vacía)
+- `aurora-reservas.html` — logo cambiado de Coworkia → MarketingLab (`enzo.svg`)
+
+**Aurora Dash Perfección (v1023, commit `7523732`)** ✅
+- `public/js/aurora-dashboard.js` — cleanup: orphaned `btn-copy-campaign` event listener removido; `updated_at || created_at` → `created_at` directo (col no existe en DB)
+- `public/aurora-reservas.html` — tooltips `data-tip` agregados: 4 stat cards + 4 KPI chips de prospectos (el resto ya los tenía)
+- `public/aluna-proformas.html` — CSS de tooltips instalado + 14 elementos con `data-tip`: 8 stat cards, 2 tabs, 4 botones, FAB
+- `src/servicios/notification-service.js` — nueva función `notifyGitCommit(hash, msg, chat, files)` para notificaciones de VCS
+- `.git/hooks/post-commit` — hook automático instalado: cada commit dispara WA a Diego con hash, mensaje y archivos modificados. Auto-detecta chat (Aurora/Adriana/Aluna/Enzo) por prefijo del mensaje
+- Prompt listo para chat de la izquierda (Adriana dash)
+
 ### 🔵 PENDIENTE — próximas sesiones
 
 **FASE 2 BLOQUE 1C** — chat backend (~45 min)
@@ -1187,4 +1201,54 @@ BLOQUES A EJECUTAR:
 
 Checkpoint después de cada bloque.
 Autopilot verde nena.
+```
+
+---
+
+## 🛡️ SESIÓN TARDE 22MAR — ADRIANA DASHBOARD + EMAIL COMPARATIVO
+
+### ✅ TODO LO QUE SE HIZO EN ESTA SESIÓN
+
+**Dashboard Adriana** (commits `88245ac` → `dd49ff5`):
+- Header limpio: solo MarketingLab logo + "🛡️ Adriana Seguros"
+- Sin botón "Datos demo", sin logos SegPopular/VAZ en header
+- Auto-panel S1/S2/S3 con contadores en vivo (ventanas de seguimiento)
+- Urgency bar aparece si leads pendientes >48h
+- Tooltips (data-tip) en KPIs, tabs, automation cards
+- Auto-refresh cada 5 min, puntos rojos en leads urgentes
+- Javier Troya sembrado en BD producción (ADR-JT-001, $830, Hyundai Creta 2022)
+
+**Email ADRIANA_COMPARISON_V2** (último commit esta sesión):
+- Logo SegPopular real en header y footer del email
+- Branding limpio: "Adriana · Bróker de Seguros Vehiculares" (no VAZ como marca)
+- Tabla comparativa SIEMPRE visible (aunque no haya competidores reales → genera 4 estimados de mercado: Mapfre, Equinoccial, AIG, Latina como % del valor asegurado)
+- Plan: **VAZ Elemental** (corregido desde "Ensigna Plus" que era incorrecto)
+- Pagos: **hasta 12 cuotas** (corregido desde 10)
+- Deducible: **7%** (sin mencionar "Taller VAZ")
+- CTA verde fuerte: "✅ Quiero este seguro — Activar ahora"
+- Footer: solo WhatsApp a Adriana (sin email ni teléfono expuesto)
+- Badge: "★ ADRIANA RECOMIENDA"
+
+**Bug crítico resuelto**: `buildEmailTemplate('adriana', 'ADRIANA_COMPARISON_V2')` → duplicaba el prefijo → usaba fallback. Fix: pasar `'COMPARISON_V2'` como tipo.
+
+### 🚧 PRÓXIMAS TAREAS ADRIANA (en orden de prioridad)
+
+1. **Flujo WA → lead real**: wassenger.js handler Adriana → guardar en insurance_leads → cotizar
+2. **Captura competidores por WA**: si el cliente comparte cotizaciones reales → parsear → guardar en `competitor_quotes` → el email usará datos reales
+3. **Botón 📱 WA del dashboard**: verificar funciona y envía mensaje correcto
+4. **Follow-up automático**: adriana-followup-service.js existe → activar en producción
+5. **Aceptación por WA**: cliente responde "ACEPTO" → status a `accepted` → notificar Diego
+
+### 🔑 REGLAS DE NEGOCIO ADRIANA (no olvidar jamás)
+- VAZ = proveedor (NO socio ni co-brand en comunicaciones al cliente)
+- SegPopular = broker (marca que ve el cliente)
+- Plan: **VAZ Elemental** (no Ensigna, no Ensigna Plus)
+- Pagos: **hasta 12 meses**
+- Adriana solo se contacta por WhatsApp (el sistema) — no exponer email/teléfono directo
+
+### 📝 SCRIPTS DE UTILIDAD
+```bash
+node scripts/test-comparison-jt.mjs    # enviar email de prueba a Javier Troya
+node scripts/check-template.mjs        # verificar template V2 compilaOK
+node scripts/seed-javier-troya.mjs     # reinsertar Javier Troya en BD si borraron
 ```

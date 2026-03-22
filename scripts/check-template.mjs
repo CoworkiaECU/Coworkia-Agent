@@ -15,3 +15,8 @@ console.log('Footer SIN co-brand VAZ:', !html.includes('SegPopular Ecuador \u00b
 console.log('Header SIN co-brand VAZ:', !html.includes('SegPopular S.A. \u00b7 VAZ Seguros'));
 console.log('Badge ADRIANA RECOMIENDA:', html.includes('ADRIANA RECOMIENDA'));
 console.log('Tabla comparativa presente:', html.includes('Comparativa objetiva'));
+console.log('Logo segpopular.png en email:', html.includes('segpopular.png'));
+console.log('VAZ Elemental:', html.includes('Elemental'));
+console.log('12 meses en email:', html.includes('12 meses') || html.includes('12 cuotas'));
+console.log('Sin email @gmail en footer:', !html.includes('@gmail') && !html.includes('@segpopular'));
+console.log('CTA verde activa:', html.includes('Quiero este seguro'));

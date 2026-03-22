@@ -9,7 +9,7 @@ import { buildEmailTemplate } from '../src/servicios/email-template-system.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../src/servicios/email.js';
 
 const primaAnual   = 830;
-const primaMensual = Math.round(primaAnual / 10);
+const primaMensual = Math.round(primaAnual / 12);
 const adminCC      = process.env.COWORKIA_ADMIN_EMAIL || '';
 
 const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
@@ -21,8 +21,8 @@ const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
   valor_asegurado:  '$16,000',
   vaz_prima_anual:  `$${primaAnual}`,
   vaz_prima_mensual:`$${primaMensual}`,
-  vaz_deducible:    '7% (Taller VAZ)',
-  analisis_broker:  'Hola Javier, tras analizar el mercado ecuatoriano para tu Hyundai Creta 2022, VAZ Seguros ofrece la mejor relación cobertura-precio con prima de $830/año y asistencia 24/7.',
+  vaz_deducible:    '7%',
+  analisis_broker:  'Hola Javier, analicé el mercado ecuatoriano para tu Hyundai Creta 2022 y el Plan Elemental de VAZ Seguros ofrece la mejor relación precio-cobertura. Con $830/año cuentas con cobertura amplia, taller propio en Quito y asistencia 24/7. Además puedes pagarlo en hasta 12 cuotas cómodas.',
   competitors:      [],
   fecha_cotizacion: 'marzo 22, 2026',
   bot_phone:        (process.env.BOT_PHONE || '593994837117').replace('+', ''),

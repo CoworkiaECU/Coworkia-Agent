@@ -787,7 +787,7 @@ export function buildAdrianaComparisonV2HTML({
           <tfoot>
             <tr style="background:linear-gradient(135deg,#1E3A8A,#1E40AF);">
               <td style="padding:12px 14px;color:#FCD34D;font-size:13px;font-weight:800;">⭐ VAZ Seguros</td>
-              <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;font-weight:700;">Ensigna Plus</td>
+              <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;font-weight:700;">Elemental</td>
               <td style="padding:12px 14px;color:#4ade80;font-size:15px;font-weight:900;text-align:center;">${vaz_prima_anual}</td>
               <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;font-weight:600;">${vaz_prima_mensual}</td>
               <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;">${vaz_deducible}</td>
@@ -814,6 +814,7 @@ export function buildAdrianaComparisonV2HTML({
     <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.05);border-radius:50%;"></div>
     <div style="position:absolute;bottom:-60px;left:-30px;width:200px;height:200px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
     <div style="position:relative;">
+      <img src="https://coworkia-agent.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:16px;filter:brightness(0) invert(1);opacity:0.95;" />
       <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);padding:5px 18px;border-radius:99px;color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;">🛡️ Adriana · Bróker de Seguros Vehiculares</div>
       <h1 style="color:#FCD34D;margin:0 0 8px;font-size:28px;font-weight:900;line-height:1.2;">Tu seguro está listo, ${firstName} ✅</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0 0 16px;font-size:15px;line-height:1.5;">Cotización personalizada para tu <strong style="color:white;">${vehicleDesc}</strong>${placaLabel}</p>
@@ -843,7 +844,7 @@ export function buildAdrianaComparisonV2HTML({
     <!-- VAZ Winner Card -->
     <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:2px solid #16a34a;border-radius:14px;padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden;">
       <div class="badge-best" style="position:absolute;top:12px;right:16px;background:#16a34a;color:white;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;">★ ADRIANA RECOMIENDA</div>
-      <h2 style="margin:0 0 4px;font-size:19px;font-weight:900;color:#1E3A8A;">VAZ Seguros · Plan Ensigna Plus</h2>
+      <h2 style="margin:0 0 4px;font-size:19px;font-weight:900;color:#1E3A8A;">VAZ Seguros · Plan Elemental</h2>
       <p style="margin:0 0 18px;font-size:13px;color:#6b7280;">Cobertura amplia · Taller propio en Quito · 24/7</p>
       <div style="display:flex;align-items:flex-end;gap:20px;margin-bottom:18px;flex-wrap:wrap;">
         <div>
@@ -852,7 +853,7 @@ export function buildAdrianaComparisonV2HTML({
         </div>
         ${vaz_prima_mensual ? `
         <div style="margin-bottom:6px;">
-          <div style="font-size:11px;color:#6b7280;">ó en 10 cuotas</div>
+          <div style="font-size:11px;color:#6b7280;">ó en hasta 12 meses</div>
           <div style="font-size:22px;font-weight:800;color:#1E3A8A;">${vaz_prima_mensual}<span style="font-size:13px;font-weight:600;color:#6b7280;">/mes</span></div>
         </div>` : ''}
       </div>
@@ -870,16 +871,16 @@ export function buildAdrianaComparisonV2HTML({
     <!-- CTA Principal -->
     <div style="text-align:center;margin:32px 0 24px;">
       <a href="https://wa.me/${bot_phone}?text=${vazEncoded}"
-         style="display:inline-block;background:linear-gradient(135deg,#1E3A8A,#1d4ed8);color:#FCD34D;padding:18px 44px;border-radius:10px;text-decoration:none;font-weight:900;font-size:17px;box-shadow:0 6px 24px rgba(30,58,138,0.4);letter-spacing:0.3px;">
-        🛡️ ACTIVAR MI SEGURO AHORA →
+         style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:20px 48px;border-radius:12px;text-decoration:none;font-weight:900;font-size:18px;box-shadow:0 8px 28px rgba(22,163,74,0.45);letter-spacing:0.3px;">
+        ✅ Quiero este seguro — Activar ahora
       </a>
-      <div style="margin-top:12px;">
-        <a href="https://wa.me/${bot_phone}?text=${encodeURIComponent('Hola Adriana, tengo preguntas sobre mi cotización de seguro')}"
-           style="color:#1d4ed8;font-size:13px;text-decoration:none;font-weight:600;">
-          💬 Tengo preguntas · Hablar con Adriana
+      <p style="margin:10px 0 4px;font-size:12px;color:#6b7280;">Responderé en segundos por WhatsApp · Sin papeleo</p>
+      <div style="margin-top:10px;">
+        <a href="https://wa.me/${bot_phone}?text=${encodeURIComponent('Hola Adriana, tengo dudas sobre mi cotización de seguro vehicular')}"
+           style="color:#1d4ed8;font-size:13px;text-decoration:none;font-weight:700;border-bottom:1px solid #bfdbfe;padding-bottom:1px;">
+          💬 Tengo dudas · Quiero hablar con Adriana
         </a>
       </div>
-      <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;">Responderé en menos de 30 minutos en horario de oficina</p>
     </div>
 
     <!-- Separador -->
@@ -906,9 +907,10 @@ export function buildAdrianaComparisonV2HTML({
 
   <!-- ── FOOTER ── -->
   <div style="background:#1E3A8A;padding:28px 24px;text-align:center;border-radius:0 0 14px 14px;">
-    <div style="color:#FCD34D;font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">🛡️ Adriana · Bróker de Seguros · SegPopular Ecuador</div>
-    <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:8px;">Tu asesora personal: <strong style="color:white;">Adriana</strong></div>
-    <div style="color:rgba(255,255,255,0.5);font-size:11px;">${adriana_email} · ${adriana_phone}</div>
+    <img src="https://coworkia-agent.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:32px;margin-bottom:12px;filter:brightness(0) invert(1);opacity:0.8;display:block;margin-left:auto;margin-right:auto;" />
+    <div style="color:#FCD34D;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;">SegPopular Ecuador · Bróker de Seguros</div>
+    <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:14px;">Tu asesora <strong style="color:white;">Adriana</strong> está disponible por WhatsApp 24/7</div>
+    <a href="https://wa.me/${bot_phone}" style="display:inline-block;background:rgba(255,255,255,0.12);color:white;padding:8px 22px;border-radius:99px;text-decoration:none;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.25);">💬 Escribirle a Adriana</a>
     <div style="margin-top:14px;color:rgba(255,255,255,0.35);font-size:10px;">Si no solicitaste esta cotización puedes ignorar este mensaje.</div>
   </div>
 

@@ -198,7 +198,7 @@ router.post('/leads/:code/send-comparison', async (req, res) => {
     if (!l.email) return res.status(400).json({ ok: false, error: 'Lead sin correo electrónico' });
 
     const primaAnual  = l.quoted_premium ? parseFloat(l.quoted_premium) : 0;
-    const primaMensual = primaAnual ? Math.round(primaAnual / 10) : 0;
+    const primaMensual = primaAnual ? Math.round(primaAnual / 12) : 0;
     let competitors = [];
     try { competitors = l.competitor_quotes ? JSON.parse(l.competitor_quotes) : []; } catch {}
 
@@ -211,8 +211,8 @@ router.post('/leads/:code/send-comparison', async (req, res) => {
       valor_asegurado: l.commercial_value ? `$${parseFloat(l.commercial_value).toLocaleString('es-EC')}` : '-',
       vaz_prima_anual:   `$${primaAnual.toLocaleString('es-EC')}`,
       vaz_prima_mensual: `$${primaMensual}`,
-      vaz_deducible:   '7% (Taller VAZ)',
-      analisis_broker: `Hola ${(l.client_name || 'estimado cliente').split(' ')[0]}, tras analizar el mercado ecuatoriano de seguros para tu ${l.vehicle_brand || 'vehículo'} ${l.vehicle_model || ''}, encontramos que VAZ Seguros ofrece la mejor relación cobertura-precio. Tu prima anual es de $${primaAnual.toLocaleString('es-EC')}, con la tranquilidad de taller propio y asistencia 24/7.`,
+      vaz_deducible:   '7%',
+      analisis_broker: `Hola ${(l.client_name || 'estimado cliente').split(' ')[0]}, analizé el mercado ecuatoriano para tu ${l.vehicle_brand || 'vehículo'} ${l.vehicle_model || ''} y encontré la mejor relación precio-cobertura. El Plan Elemental de VAZ Seguros cubre tu vehículo con asistencia 24/7 y taller propio en Quito. Tu prima anual es de $${primaAnual.toLocaleString('es-EC')}, pagable en hasta 12 cuotas cómodas.`,
       competitors:     competitors,
       fecha_cotizacion: new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }),
       bot_phone:       (process.env.BOT_PHONE || '593994837117').replace('+', ''),

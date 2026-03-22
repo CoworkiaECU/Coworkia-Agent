@@ -133,20 +133,37 @@ function formatPrice(price, allowFree = true) {
 }
 
 // Formateo de estado de pago
-function getPaymentBadge(paymentStatus) {
-  const paymentMap = {
-    'paid': '✅ Pagado',
-    'paid efectivo': '💵 Efectivo',
-    'paid transferencia': '🏦 Transferencia',
-    'paid tarjeta': '💳 Tarjeta',
-    'pending': '⏳ Pendiente',
-    'pending_efectivo': '💵 Pago Pendiente',
-    'waived': '🎁 Cortesía',
-    'free': '🎁 Gratis',
-    'N/A': '-'
-  };
-  
-  return paymentMap[paymentStatus] || paymentStatus || '-';
+function getPaymentBadge(paymentStatus, paymentMethod) {
+  // Normalizar: combinar status + method cuando aplica
+  const key = paymentStatus?.toLowerCase()?.trim() || '';
+  const method = paymentMethod?.toLowerCase()?.trim() || '';
+
+  // Pagado
+  if (key === 'paid' || key.startsWith('paid')) {
+    const label = method === 'transferencia' ? '🏦 Transferencia'
+                : method === 'tarjeta'       ? '💳 Tarjeta'
+                : method === 'efectivo'      ? '💵 Efectivo'
+                : '✅ Pagado';
+    return `<span class="pay-chip pay-paid">${label}</span>`;
+  }
+  // Pendiente de pago en efectivo
+  if (key === 'pending_efectivo') {
+    return `<span class="pay-chip pay-pending">💵 Por cobrar</span>`;
+  }
+  // Pendiente genérico
+  if (key === 'pending' || key === 'pending_payment') {
+    return `<span class="pay-chip pay-pending">⏳ Pendiente</span>`;
+  }
+  // Cortesía / exonerado
+  if (key === 'waived') {
+    return `<span class="pay-chip pay-waived">🎁 Cortesía</span>`;
+  }
+  // Gratis
+  if (key === 'free') {
+    return `<span class="pay-chip pay-free">🎁 Gratis</span>`;
+  }
+  if (key === 'n/a' || !key) return '<span style="color:#475569;font-size:12px;">—</span>';
+  return `<span class="pay-chip pay-pending">${paymentStatus}</span>`;
 }
 
 // Formateo de estado
@@ -312,11 +329,10 @@ function renderReservationsTable(reservations) {
         <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
       </td>
       <td class="money">
-        ${formatPrice(r.total_price)}
-        ${r.was_free ? '<span class="badge badge-completed" style="font-size:10px;">GRATIS</span>' : ''}
+        ${r.was_free ? '<span class="pay-chip pay-free">🎁 Gratis</span>' : formatPrice(r.total_price)}
       </td>
       <td>${getStatusBadge(r.status)}</td>
-      <td>${getPaymentBadge(r.payment_status)}</td>
+      <td>${getPaymentBadge(r.payment_status, r.payment_method)}</td>
       <td>${formatDate(r.created_at)}</td>
       <td style="white-space:nowrap;">
         ${!r.followup_1h_sent_at

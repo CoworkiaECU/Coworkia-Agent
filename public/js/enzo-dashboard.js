@@ -261,7 +261,7 @@ function applyFilters() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Restore last active tab
-  const savedTab = localStorage.getItem('enzo-active-tab') || 'proyectos';
+  const savedTab = localStorage.getItem('enzo-active-tab') || 'followups';
   switchMainTab(savedTab, /* noSave */ true);
 
   // Cargar dashboard inicial (proyectos tab)
@@ -350,12 +350,6 @@ window.switchMainTab = function(tab, noSave) {
     if (btn) btn.classList.toggle('active', t === tab);
     if (content) content.style.display = t === tab ? '' : 'none';
   });
-
-  // Also toggle nav btn highlight
-  const navFollowups = document.getElementById('nav-followups-btn');
-  if (navFollowups) {
-    navFollowups.classList.toggle('current', tab === 'followups');
-  }
 
   if (!noSave) localStorage.setItem('enzo-active-tab', tab);
 

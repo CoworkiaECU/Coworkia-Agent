@@ -764,23 +764,55 @@ Cuando un nuevo agente (o Diego en una nueva sesión) arranca:
 - `was_free=true` → mostrar chip Gratis | `was_free=false` + `total_price=0` → mostrar `$0.00` (nunca "Gratis")
 - Gabi se conecta al flujo de pago manual cuando el cliente tiene email registrado
 
-**Próximos pasos al volver**:
-1. 🔥 Fase 3 Aurora: métricas visuales (`/api/aurora/weekly-metrics`)
-2. Entrenamiento bot Aurora (prompt aurora.js)
-3. Conectar pago efectivo → recibo Gabi email
-4. Adriana: captura cotizaciones competidores por WA
-
-**Estado emocional del proyecto**: 🟢 Verde — sistema estable, features CRM Aurora avanzando
-
 **Archivos clave modificados en sesión**:
 - `public/aurora-reservas.html` — tab Interesados + cards + modal campaña
 - `public/js/aurora-dashboard.js` — `renderMontoCell`, `registerPayment`, grupos interesados, campañas
 - `src/express-servidor/endpoints-api/aurora-dashboard.js` — 3 endpoints nuevos
 - `public/gabi-consultas.html`, `public/axel-cotizaciones.html` — logo fix
-- `planes-de-vuelo/plan-vuelo-22mar.md` — actualizado con todo el estado
+
+---
+
+## 📝 Última Sesión: 22 Mar 2026 (tarde) — Chat Adriana Autopilot (`ab97895`)
+
+**Contexto**: Diego adjuntó PDF "Términos Asistencia Vial Livianos VAZ Seguros" + activó autopilot.
+
+**Trabajo completado**:
+- Verificado: tasas en `insurance-rates-vaz.js` ya eran correctas vs. PPTX oficiales
+- **`adriana-quote-calculator.js`**: prima mensual corregida de `÷10` → `÷12` (12 cuotas Ecuador)
+  - Javier Troya $42k: $92/mes (era $110) · $16k Creta: $69/mes (era $83)
+- **`insurance-rates-vaz.js`**: `VAZ_ASISTENCIA` ampliado con datos reales del PDF:
+  - `auto_sustituto`: compacto (<$40k) o SUV Manual (≥$40k), máx 2 eventos/año, 48h entrega
+  - `hotel`: $75/noche, máx 3 noches, cuando inmovilización a >25km de casa
+- **`email-template-system.js`**: nueva sección visual "🛡️ LO QUE INCLUYE TU PÓLIZA VAZ":
+  - 6 beneficios en grid: grúa ilimitada, auxilio vial, cerrajería, asistencia legal, conductor designado, llave protegida
+  - Auto Sustituto destacado con tier automático: ≥$40k → Kia Sonet SUV; <$40k → Kia Soluto compacto
+- Verificado con 10/10 checks y test de calculadora
+
+**Reglas de negocio Adriana (NO olvidar)**:
+- VAZ = proveedor, NO co-brand en comunicaciones al cliente
+- SegPopular = el bróker, la marca que ven los clientes
+- Plan nombre cliente: **VAZ Elemental** (código interno: "Ensigna")
+- Pagos: **hasta 12 meses**
+- Deducible al cliente: **7%** (no "Taller VAZ")
+- `buildEmailTemplate(agent, type)` → type sin prefijo del agente: `'COMPARISON_V2'` ✅
+
+**Pendiente prioritario Adriana (SIGUIENTE sesión)**:
+1. `adrianaRepository.js` — columnas BD: `competitor_quotes`, `kyc_*`, `accepted_at`, `emitted_at`, `policy_number`
+2. `wassenger.js` handler Adriana — flujo conversacional: matrícula → cédula → competidor → cotización → ACEPTO → KYC
+3. Test end-to-end: mensaje WA → lead → email → "ACEPTO" → notifica Diego
+
+**Archivos clave modificados**:
+- `src/servicios/adriana-quote-calculator.js` — ÷12
+- `src/servicios/insurance-rates-vaz.js` — auto_sustituto + hotel en VAZ_ASISTENCIA
+- `src/servicios/email-template-system.js` — sección beneficios VAZ
 
 ---
 
 **Última actualización**: 22 Mar 2026
-**Versión proyecto**: v1036
+**Versión proyecto**: v1036 (Aurora CRM) + ab97895 (Adriana beneficios)
 **Próxima auditoría sugerida**: 29 Mar 2026
+
+**Próximos pasos al volver**:
+1. 🔥 Adriana: `adrianaRepository.js` + handler WA conversacional (ver plan-vuelo-adriana-autopilot.md BLOQUE 1)
+2. Aurora Fase 3: métricas visuales (`/api/aurora/weekly-metrics`)
+3. Enzo: tabla `marketing_leads` + crons D+1/D+3/D+7

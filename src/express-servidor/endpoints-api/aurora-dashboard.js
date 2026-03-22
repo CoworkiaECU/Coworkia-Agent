@@ -443,4 +443,79 @@ router.post('/reservations/:id/send-rebooking', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/aurora/interested-groups
+ * Tres grupos de personas interesadas que no siguieron adelante.
+ * Usados para campañas de retención desde el dashboard.
+ */
+router.get('/interested-groups', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    // Grupo 1: Se fueron a la mitad (empezaron a reservar, nunca confirmaron)
+    const partial = await databaseService.all(`
+      SELECT
+        apr.user_phone,
+        u.name AS user_name,
+        apr.service_type,
+        apr.date AS wanted_date,
+        apr.form_progress,
+        apr.cancelled_at AS last_seen,
+        EXTRACT(DAY FROM NOW() - COALESCE(apr.cancelled_at, apr.created_at))::int AS days_ago
+      FROM aurora_partial_reservations apr
+      LEFT JOIN users u ON u.phone_number = apr.user_phone
+      ORDER BY COALESCE(apr.cancelled_at, apr.created_at) DESC
+      LIMIT 50
+    `);
+
+    // Grupo 2: Reservaron pero no volvieron (última reserva hace más de 30 días)
+    const inactive = await databaseService.all(`
+      SELECT
+        r.user_phone,
+        u.name AS user_name,
+        (array_agg(r.service_type ORDER BY r.created_at DESC))[1] AS last_service_type,
+        MAX(r.created_at) AS last_reservation,
+        EXTRACT(DAY FROM NOW() - MAX(r.created_at))::int AS days_since
+      FROM reservations r
+      LEFT JOIN users u ON u.phone_number = r.user_phone
+      WHERE r.status IN ('confirmed', 'completed')
+      GROUP BY r.user_phone, u.name
+      HAVING MAX(r.created_at) < NOW() - INTERVAL '30 days'
+      ORDER BY last_reservation DESC
+      LIMIT 50
+    `);
+
+    // Grupo 3: Cancelaron su reserva
+    const cancelled = await databaseService.all(`
+      SELECT
+        r.user_phone,
+        u.name AS user_name,
+        r.service_type,
+        r.date AS reservation_date,
+        r.created_at,
+        EXTRACT(DAY FROM NOW() - r.created_at)::int AS days_ago
+      FROM reservations r
+      LEFT JOIN users u ON u.phone_number = r.user_phone
+      WHERE r.status = 'cancelled'
+      ORDER BY r.created_at DESC
+      LIMIT 50
+    `);
+
+    return res.json({
+      ok: true,
+      data: { partial, inactive, cancelled },
+      counts: {
+        partial: partial.length,
+        inactive: inactive.length,
+        cancelled: cancelled.length,
+        total: partial.length + inactive.length + cancelled.length
+      }
+    });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error en interested-groups:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

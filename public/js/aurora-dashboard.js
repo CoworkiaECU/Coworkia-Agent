@@ -61,8 +61,9 @@ window.switchTab = function(tabName) {
   renderReservationsTable(allReservations);
 }
 
-// ── Main tab navigation (Reservas / Prospectos / Conversaciones) ──────────────
+// ── Main tab navigation (Reservas / Prospectos / Interesados / Conversaciones) ──
 let _conversationsLoaded = false;
+let _interestedLoaded    = false;
 
 window.switchMainTab = function(name) {
   document.querySelectorAll('.main-tab-content').forEach(el => { el.style.display = 'none'; });
@@ -75,6 +76,10 @@ window.switchMainTab = function(name) {
   if (name === 'conversaciones' && !_conversationsLoaded) {
     _conversationsLoaded = true;
     loadConversations();
+  }
+  if (name === 'interesados' && !_interestedLoaded) {
+    _interestedLoaded = true;
+    loadInterestedGroups();
   }
 }
 
@@ -362,6 +367,89 @@ function getUrgencyLevel(p) {
   if (p.engagement === 'hot' && (p.days_since_last ?? 0) >= 2) return 'urgent';
   return p.engagement; // 'hot' | 'warm' | 'cold'
 }
+
+// ─── Grupos de Interesados (Fase 1 Aurora CRM) ────────────────────────────────
+async function loadInterestedGroups() {
+  try {
+    const res  = await fetch(`${API_BASE}/api/aurora/interested-groups`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    const { partial, inactive, cancelled } = json.data;
+    const counts = json.counts;
+
+    // Actualizar contadores header
+    document.getElementById('ig-count-partial').textContent   = counts.partial;
+    document.getElementById('ig-count-inactive').textContent  = counts.inactive;
+    document.getElementById('ig-count-cancelled').textContent = counts.cancelled;
+    document.getElementById('tc-main-interesados').textContent = counts.total > 0 ? counts.total : '';
+
+    // Renderizar cada grupo
+    renderInterestedList('ig-partial-list',   partial,   renderPartialCard);
+    renderInterestedList('ig-inactive-list',  inactive,  renderInactiveCard);
+    renderInterestedList('ig-cancelled-list', cancelled, renderCancelledCard);
+
+  } catch (err) {
+    console.error('[AURORA-DASH] Error cargando grupos interesados:', err);
+    ['ig-partial-list','ig-inactive-list','ig-cancelled-list'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div style="color:#f87171;font-size:13px;">Error cargando datos. Intenta actualizar.</div>';
+    });
+  }
+}
+
+function renderInterestedList(containerId, items, cardFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div style="color:#64748b;font-size:13px;padding:12px 0;">✅ Sin registros en este grupo</div>';
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">${items.map(cardFn).join('')}</div>`;
+}
+
+function serviceLabel(type) {
+  const map = { hotDesk: '🖥️ Hot Desk', meetingRoom: '🏢 Sala de Reuniones', deskIndividual: '🪑 Escritorio Individual' };
+  return map[type] || type || '—';
+}
+
+function renderPartialCard(p) {
+  const name = p.user_name || 'Sin nombre';
+  const days = p.days_ago != null ? `hace ${p.days_ago} días` : '—';
+  const progress = p.form_progress ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">Progreso: ${p.form_progress}</div>` : '';
+  return `<div style="background:#1e293b;border:1px solid #334155;border-left:3px solid #f97316;border-radius:8px;padding:14px;">
+    <div style="font-size:13px;font-weight:600;color:#f1f5f9;">${name}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${p.user_phone}</div>
+    <div style="font-size:12px;color:#fb923c;margin-top:6px;">${serviceLabel(p.service_type)}</div>
+    ${p.wanted_date ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">Quería: ${p.wanted_date}</div>` : ''}
+    ${progress}
+    <div style="font-size:11px;color:#475569;margin-top:8px;">Último contacto: ${days}</div>
+  </div>`;
+}
+
+function renderInactiveCard(p) {
+  const name = p.user_name || 'Sin nombre';
+  const days = p.days_since != null ? `hace ${p.days_since} días` : '—';
+  return `<div style="background:#1e293b;border:1px solid #334155;border-left:3px solid #3b82f6;border-radius:8px;padding:14px;">
+    <div style="font-size:13px;font-weight:600;color:#f1f5f9;">${name}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${p.user_phone}</div>
+    <div style="font-size:12px;color:#60a5fa;margin-top:6px;">Último: ${serviceLabel(p.last_service_type)}</div>
+    <div style="font-size:11px;color:#475569;margin-top:8px;">Sin reservar ${days}</div>
+  </div>`;
+}
+
+function renderCancelledCard(p) {
+  const name = p.user_name || 'Sin nombre';
+  const days = p.days_ago != null ? `hace ${p.days_ago} días` : '—';
+  return `<div style="background:#1e293b;border:1px solid #334155;border-left:3px solid #ef4444;border-radius:8px;padding:14px;">
+    <div style="font-size:13px;font-weight:600;color:#f1f5f9;">${name}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${p.user_phone}</div>
+    <div style="font-size:12px;color:#f87171;margin-top:6px;">${serviceLabel(p.service_type)}</div>
+    ${p.reservation_date ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">Fecha reservada: ${p.reservation_date}</div>` : ''}
+    <div style="font-size:11px;color:#475569;margin-top:8px;">Canceló ${days}</div>
+  </div>`;
+}
+
 
 const URGENCY_STYLE = {
   urgent: { border: '#dc2626', bg: '#2d0a0a', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
@@ -795,6 +883,7 @@ try {
 
   // ── Botones estáticos ─────────────────────────────────────────────────────
   document.getElementById('btn-reset-filters')?.addEventListener('click', () => resetFilters());
+  document.getElementById('btn-refresh-interesados')?.addEventListener('click', () => { _interestedLoaded = false; loadInterestedGroups(); _interestedLoaded = true; });
   document.getElementById('btn-copy-campaign-prospects')?.addEventListener('click', () => copyCampaignList());
   document.getElementById('btn-refresh-prospects')?.addEventListener('click', () => loadAbandoned());
   document.getElementById('btn-refresh-conversations')?.addEventListener('click', () => loadConversations());

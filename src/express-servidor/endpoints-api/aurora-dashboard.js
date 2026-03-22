@@ -13,6 +13,9 @@ import { sendOneHourFollowup, sendRebookingReminder } from '../../servicios/auro
 
 const router = express.Router();
 
+const WASSENGER_TOKEN     = process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_KEY;
+const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
+
 // ============================================================================
 // RESERVAS
 // ============================================================================
@@ -514,6 +517,51 @@ router.get('/interested-groups', async (req, res) => {
 
   } catch (error) {
     console.error('[AURORA-API] Error en interested-groups:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/aurora/send-campaign
+ * Envía un mensaje WhatsApp a una lista de teléfonos (campaña manual).
+ * Body: { phones: string[], message: string, group: string }
+ */
+router.post('/send-campaign', async (req, res) => {
+  try {
+    const { phones, message, group } = req.body;
+
+    if (!phones?.length || !message?.trim()) {
+      return res.status(400).json({ ok: false, error: 'Se requiere phones[] y message' });
+    }
+    if (!WASSENGER_TOKEN) {
+      return res.status(503).json({ ok: false, error: 'WASSENGER_TOKEN no configurado en este entorno' });
+    }
+
+    let sent = 0, failed = 0, errors = [];
+
+    for (const phone of phones) {
+      try {
+        const body = JSON.stringify({ phone, message, device: WASSENGER_DEVICE_ID });
+        const waRes = await fetch('https://api.wassenger.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+          body
+        });
+        const json = await waRes.json();
+        if (json.id) { sent++; } else { failed++; errors.push({ phone, error: json.message }); }
+      } catch (e) {
+        failed++;
+        errors.push({ phone, error: e.message });
+      }
+      // Pequeña pausa para no saturar Wassenger
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    console.log(`[AURORA-CAMPAIGN] Grupo "${group}" → ${sent} enviados, ${failed} fallidos`);
+    return res.json({ ok: true, sent, failed, total: phones.length, errors });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error en send-campaign:', error);
     return res.status(500).json({ ok: false, error: error.message });
   }
 });

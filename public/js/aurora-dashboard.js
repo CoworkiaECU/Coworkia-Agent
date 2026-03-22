@@ -329,7 +329,7 @@ function renderReservationsTable(reservations) {
         <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
       </td>
       <td class="money">
-        ${r.was_free ? '<span class="pay-chip pay-free">🎁 Gratis</span>' : formatPrice(r.total_price)}
+        ${r.was_free ? '<span class="pay-chip pay-free">🎁 Gratis</span>' : formatPrice(r.total_price, false)}
       </td>
       <td>${getStatusBadge(r.status)}</td>
       <td>${getPaymentBadge(r.payment_status, r.payment_method)}</td>
@@ -385,6 +385,8 @@ function getUrgencyLevel(p) {
 }
 
 // ─── Grupos de Interesados (Fase 1 Aurora CRM) ────────────────────────────────
+let _igData = null;
+
 async function loadInterestedGroups() {
   try {
     const res  = await fetch(`${API_BASE}/api/aurora/interested-groups`);
@@ -393,6 +395,9 @@ async function loadInterestedGroups() {
 
     const { partial, inactive, cancelled } = json.data;
     const counts = json.counts;
+
+    // Guardar en memoria para modal de campaña
+    _igData = { partial, inactive, cancelled };
 
     // Actualizar contadores header
     document.getElementById('ig-count-partial').textContent   = counts.partial;
@@ -465,6 +470,77 @@ function renderCancelledCard(p) {
     <div style="font-size:11px;color:#475569;margin-top:8px;">Canceló ${days}</div>
   </div>`;
 }
+
+// ─── Campaña manual a grupo de interesados ────────────────────────────────────
+let _campaignGroup = null;
+let _campaignPhones = [];
+
+window.openCampaignModal = function(group) {
+  const groupData = {
+    partial:   { label: '⏸️ Se fueron a la mitad',   listId: 'ig-partial-list'   },
+    inactive:  { label: '🌙 No volvieron',             listId: 'ig-inactive-list'  },
+    cancelled: { label: '❌ Cancelaron su reserva',    listId: 'ig-cancelled-list' },
+  };
+  const meta = groupData[group];
+  if (!meta) return;
+
+  // Extraer teléfonos del grupo cargado en memoria
+  const groupMap = { partial: _igData?.partial, inactive: _igData?.inactive, cancelled: _igData?.cancelled };
+  const items = groupMap[group] || [];
+  _campaignPhones = items.map(p => p.user_phone).filter(Boolean);
+  _campaignGroup  = group;
+
+  document.getElementById('campaign-modal-title').textContent = `📣 Campaña — ${meta.label}`;
+  document.getElementById('campaign-modal-info').innerHTML =
+    `<strong style="color:#f1f5f9;">${_campaignPhones.length} personas</strong> recibirán este mensaje por WhatsApp.` +
+    (_campaignPhones.length === 0 ? '<br><span style="color:#f87171;">Este grupo no tiene contactos cargados.</span>' : '');
+  document.getElementById('campaign-message').value = '';
+  document.getElementById('campaign-result').style.display = 'none';
+  document.getElementById('campaign-send-btn').disabled  = false;
+  document.getElementById('campaign-send-btn').textContent = '📤 Enviar a todos';
+
+  const modal = document.getElementById('campaign-modal');
+  modal.style.display = 'flex';
+};
+
+window.closeCampaignModal = function() {
+  document.getElementById('campaign-modal').style.display = 'none';
+};
+
+window.sendCampaign = async function() {
+  const message = document.getElementById('campaign-message').value.trim();
+  if (!message) { showToast('⚠️ Escribe el mensaje antes de enviar'); return; }
+  if (!_campaignPhones.length) { showToast('⚠️ Sin contactos en este grupo'); return; }
+
+  const btn = document.getElementById('campaign-send-btn');
+  btn.disabled = true;
+  btn.textContent = `⏳ Enviando a ${_campaignPhones.length}…`;
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/aurora/send-campaign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phones: _campaignPhones, message, group: _campaignGroup })
+    });
+    const json = await res.json();
+    const resultEl = document.getElementById('campaign-result');
+    if (json.ok) {
+      resultEl.style.cssText = 'display:block;background:#022c22;color:#6ee7b7;border:1px solid #065f46;';
+      resultEl.textContent = `✅ Enviados: ${json.sent} · Fallidos: ${json.failed} · Total: ${json.total}`;
+      btn.textContent = '✅ Enviado';
+      showToast(`✅ Campaña enviada: ${json.sent} mensajes`);
+    } else {
+      resultEl.style.cssText = 'display:block;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;';
+      resultEl.textContent = `❌ Error: ${json.error}`;
+      btn.disabled = false;
+      btn.textContent = '📤 Enviar a todos';
+    }
+  } catch (err) {
+    showToast('❌ Error de red. Intenta de nuevo.');
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar a todos';
+  }
+};
 
 
 const URGENCY_STYLE = {

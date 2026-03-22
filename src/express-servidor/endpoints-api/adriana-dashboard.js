@@ -143,6 +143,7 @@ router.get('/seed-demo', async (req, res) => {
       { id: 'INS-DEMO-008', code: 'SEG-DEMO-0008', phone: '+593981001008', name: 'Patricio Lema',       email: 'patricio.lema@icloud.com',       brand: 'Ford',      model: 'Escape',    year: 2019, value: 16000, premium: 335.00, type: 'Seguro para Vehículos livianos', status: 'rejected',  daysAgo: 25 },
       { id: 'INS-DEMO-009', code: 'SEG-DEMO-0009', phone: '+593981001009', name: 'Natalia Flores',      email: 'natalia.flores@gmail.com',       brand: 'Renault',   model: 'Duster',    year: 2020, value: 15000, premium: 315.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 10 },
       { id: 'INS-DEMO-010', code: 'SEG-DEMO-0010', phone: '+593981001010', name: 'Esteban Chiriboga',   email: 'esteban.chiriboga@hotmail.com',  brand: 'Nissan',    model: 'X-Trail',   year: 2023, value: 30000, premium: 620.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 4  },
+      { id: 'INS-DEMO-011', code: 'SEG-DEMO-0011', phone: '+593981001011', name: 'Javier Troya',        email: 'javier.troya@gmail.com',         brand: 'Hyundai',   model: 'Creta',     year: 2022, value: 42000, premium: 1101.00, type: 'Seguro para Vehículos livianos', status: 'quoted',   daysAgo: 1  },
     ];
 
     let inserted = 0;

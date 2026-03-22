@@ -14,6 +14,7 @@
 import { CronJob } from 'cron';
 import { sendOneHourFollowups, sendRebookingReminders } from './aurora-followup-service.js';
 import { sendEnzoD1Followups, sendEnzoD3Followups, sendEnzoD7Followups } from './enzo-followup-service.js';
+import { sendAdrianaS1Followups, sendAdrianaS2Followups, sendAdrianaS3Followups } from './adriana-followup-service.js';
 import { loggers } from '../utils/logger.js';
 
 const logger = loggers.aurora || console;
@@ -124,7 +125,56 @@ export function startAuroraEnzoCronJobs() {
   );
 
   logger.info('[CRON] ✅ Enzo D+7 configurado (10:30 AM Ecuador)');
-  logger.info('[CRON] 🚀 Aurora + Enzo follow-up crons activos (5 jobs)');
 
-  return { aurora1hJob, auroraRebookJob, enzoD1Job, enzoD3Job, enzoD7Job };
+  // ─── ADRIANA: S1 D+1 (10:00 AM Ecuador = 15:00 UTC) ──────────
+  const adrianaS1Job = new CronJob(
+    '0 15 * * *',
+    async function () {
+      logger.info('[CRON-ADRIANA] 📅 Ejecutando S1 D+1 follow-up...');
+      try {
+        const result = await sendAdrianaS1Followups();
+        logger.info(`[CRON-ADRIANA] ✅ S1: ${result.sent} enviados`);
+      } catch (err) {
+        logger.error('[CRON-ADRIANA] ❌ Error S1:', err);
+      }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Adriana S1 configurado (10:00 AM Ecuador)');
+
+  // ─── ADRIANA: S2 D+3 (11:30 AM Ecuador = 16:30 UTC) ──────────
+  const adrianaS2Job = new CronJob(
+    '30 16 * * *',
+    async function () {
+      logger.info('[CRON-ADRIANA] ⏰ Ejecutando S2 D+3 FOMO...');
+      try {
+        const result = await sendAdrianaS2Followups();
+        logger.info(`[CRON-ADRIANA] ✅ S2: ${result.sent} enviados`);
+      } catch (err) {
+        logger.error('[CRON-ADRIANA] ❌ Error S2:', err);
+      }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Adriana S2 configurado (11:30 AM Ecuador)');
+
+  // ─── ADRIANA: S3 D+7 (09:30 AM Ecuador = 14:30 UTC) ──────────
+  const adrianaS3Job = new CronJob(
+    '30 14 * * *',
+    async function () {
+      logger.info('[CRON-ADRIANA] 🤝 Ejecutando S3 D+7 reconexión...');
+      try {
+        const result = await sendAdrianaS3Followups();
+        logger.info(`[CRON-ADRIANA] ✅ S3: ${result.sent} enviados`);
+      } catch (err) {
+        logger.error('[CRON-ADRIANA] ❌ Error S3:', err);
+      }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Adriana S3 configurado (09:30 AM Ecuador)');
+
+  logger.info('[CRON] 🚀 Aurora + Enzo + Adriana follow-up crons activos (8 jobs)');
+
+  return { aurora1hJob, auroraRebookJob, enzoD1Job, enzoD3Job, enzoD7Job, adrianaS1Job, adrianaS2Job, adrianaS3Job };
 }

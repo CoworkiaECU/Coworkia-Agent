@@ -2620,7 +2620,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
             coverage: selectedCoverage,
           });
 
-          const quoteCode = quoteLead.quote_code || `SEG-${Date.now().toString(36).toUpperCase()}`;
+          const quoteCode = quoteLead.quote_code || `ADR-${Date.now().toString(36).toUpperCase()}`;
           const clientName  = quoteLead.client_name  || profile.name || userId;
           const clientEmail = quoteLead.client_email || '';
 
@@ -3555,7 +3555,7 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
     if (!lead || !NEW_STATES.includes(lead?.status)) {
       // Solo iniciar si es imagen (matrícula) o texto que inicia el flujo
       if (mediaUrl && type === 'image') {
-        const quoteCode = `SEG-${Date.now().toString(36).toUpperCase()}`;
+        const quoteCode = `ADR-${Date.now().toString(36).toUpperCase()}`;
         await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_matricula' });
         lead = await findLeadByPhone(userId).catch(() => null);
         if (!lead) return false;

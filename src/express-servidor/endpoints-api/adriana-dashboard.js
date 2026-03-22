@@ -6,6 +6,8 @@
 import express from 'express';
 import databaseService from '../../database/database.js';
 import { enviarWhatsApp } from './wassenger.js';
+import { buildEmailTemplate } from '../../servicios/email-template-system.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../../servicios/email.js';
 
 const router = express.Router();
 
@@ -133,17 +135,17 @@ router.get('/seed-demo', async (req, res) => {
     console.log('🎭 [ADRIANA] Iniciando seed de leads demo...');
 
     const DEMO_LEADS = [
-      { id: 'INS-DEMO-001', code: 'SEG-DEMO-0001', phone: '+593981001001', name: 'Fernanda Gavilanez',  email: 'fernanda.gavilanez@gmail.com',  brand: 'Toyota',    model: 'Corolla',   year: 2020, value: 18000, premium: 380.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 3  },
-      { id: 'INS-DEMO-002', code: 'SEG-DEMO-0002', phone: '+593981001002', name: 'Paul Gavilanez',      email: 'paul.gavilanez@gmail.com',       brand: 'Chevrolet', model: 'Aveo',      year: 2019, value: 12000, premium: 260.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 1  },
-      { id: 'INS-DEMO-003', code: 'SEG-DEMO-0003', phone: '+593981001003', name: 'Carolina Vega',       email: 'carolina.vega@hotmail.com',      brand: 'Hyundai',   model: 'Tucson',    year: 2021, value: 25000, premium: 520.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 15 },
-      { id: 'INS-DEMO-004', code: 'SEG-DEMO-0004', phone: '+593981001004', name: 'Marco Espinoza',      email: 'marco.espinoza@outlook.com',     brand: 'Kia',       model: 'Sportage',  year: 2022, value: 28000, premium: 580.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 5  },
-      { id: 'INS-DEMO-005', code: 'SEG-DEMO-0005', phone: '+593981001005', name: 'Daniela Proaño',      email: 'daniela.proano@yahoo.com',       brand: 'Volkswagen',model: 'Jetta',     year: 2018, value: 14000, premium: 295.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 20 },
-      { id: 'INS-DEMO-006', code: 'SEG-DEMO-0006', phone: '+593981001006', name: 'Luis Andrade',        email: 'luis.andrade@live.com',          brand: 'Mazda',     model: 'CX-5',      year: 2020, value: 22000, premium: 460.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 7  },
-      { id: 'INS-DEMO-007', code: 'SEG-DEMO-0007', phone: '+593981001007', name: 'Verónica Morales',    email: 'veronica.morales@gmail.com',     brand: 'Suzuki',    model: 'Vitara',    year: 2021, value: 20000, premium: 415.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 2  },
-      { id: 'INS-DEMO-008', code: 'SEG-DEMO-0008', phone: '+593981001008', name: 'Patricio Lema',       email: 'patricio.lema@icloud.com',       brand: 'Ford',      model: 'Escape',    year: 2019, value: 16000, premium: 335.00, type: 'Seguro para Vehículos livianos', status: 'rejected',  daysAgo: 25 },
-      { id: 'INS-DEMO-009', code: 'SEG-DEMO-0009', phone: '+593981001009', name: 'Natalia Flores',      email: 'natalia.flores@gmail.com',       brand: 'Renault',   model: 'Duster',    year: 2020, value: 15000, premium: 315.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 10 },
-      { id: 'INS-DEMO-010', code: 'SEG-DEMO-0010', phone: '+593981001010', name: 'Esteban Chiriboga',   email: 'esteban.chiriboga@hotmail.com',  brand: 'Nissan',    model: 'X-Trail',   year: 2023, value: 30000, premium: 620.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 4  },
-      { id: 'INS-DEMO-011', code: 'SEG-DEMO-0011', phone: '+593981001011', name: 'Javier Troya',        email: 'javier.troya@gmail.com',         brand: 'Hyundai',   model: 'Creta',     year: 2022, value: 16000, premium: 830.00,  type: 'Seguro para Vehículos livianos', status: 'quoted',   daysAgo: 1  },
+      { id: 'INS-DEMO-001', code: 'ADR-DEMO-001', phone: '+593981001001', name: 'Fernanda Gavilanez',  email: 'fernanda.gavilanez@gmail.com',  brand: 'Toyota',    model: 'Corolla',   year: 2020, value: 18000, premium: 380.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 3  },
+      { id: 'INS-DEMO-002', code: 'ADR-DEMO-002', phone: '+593981001002', name: 'Paul Gavilanez',      email: 'paul.gavilanez@gmail.com',       brand: 'Chevrolet', model: 'Aveo',      year: 2019, value: 12000, premium: 260.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 1  },
+      { id: 'INS-DEMO-003', code: 'ADR-DEMO-003', phone: '+593981001003', name: 'Carolina Vega',       email: 'carolina.vega@hotmail.com',      brand: 'Hyundai',   model: 'Tucson',    year: 2021, value: 25000, premium: 520.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 15 },
+      { id: 'INS-DEMO-004', code: 'ADR-DEMO-004', phone: '+593981001004', name: 'Marco Espinoza',      email: 'marco.espinoza@outlook.com',     brand: 'Kia',       model: 'Sportage',  year: 2022, value: 28000, premium: 580.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 5  },
+      { id: 'INS-DEMO-005', code: 'ADR-DEMO-005', phone: '+593981001005', name: 'Daniela Proaño',      email: 'daniela.proano@yahoo.com',       brand: 'Volkswagen',model: 'Jetta',     year: 2018, value: 14000, premium: 295.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 20 },
+      { id: 'INS-DEMO-006', code: 'ADR-DEMO-006', phone: '+593981001006', name: 'Luis Andrade',        email: 'luis.andrade@live.com',          brand: 'Mazda',     model: 'CX-5',      year: 2020, value: 22000, premium: 460.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 7  },
+      { id: 'INS-DEMO-007', code: 'ADR-DEMO-007', phone: '+593981001007', name: 'Verónica Morales',    email: 'veronica.morales@gmail.com',     brand: 'Suzuki',    model: 'Vitara',    year: 2021, value: 20000, premium: 415.00, type: 'Seguro para Vehículos livianos', status: 'pending',   daysAgo: 2  },
+      { id: 'INS-DEMO-008', code: 'ADR-DEMO-008', phone: '+593981001008', name: 'Patricio Lema',       email: 'patricio.lema@icloud.com',       brand: 'Ford',      model: 'Escape',    year: 2019, value: 16000, premium: 335.00, type: 'Seguro para Vehículos livianos', status: 'rejected',  daysAgo: 25 },
+      { id: 'INS-DEMO-009', code: 'ADR-DEMO-009', phone: '+593981001009', name: 'Natalia Flores',      email: 'natalia.flores@gmail.com',       brand: 'Renault',   model: 'Duster',    year: 2020, value: 15000, premium: 315.00, type: 'Seguro para Vehículos livianos', status: 'accepted',  daysAgo: 10 },
+      { id: 'INS-DEMO-010', code: 'ADR-DEMO-010', phone: '+593981001010', name: 'Esteban Chiriboga',   email: 'esteban.chiriboga@hotmail.com',  brand: 'Nissan',    model: 'X-Trail',   year: 2023, value: 30000, premium: 620.00, type: 'Seguro para Vehículos livianos', status: 'quoted',    daysAgo: 4  },
+      { id: 'INS-DEMO-011', code: 'ADR-DEMO-011', phone: '+593981001011', name: 'Javier Troya',        email: 'javier.troya@gmail.com',         brand: 'Hyundai',   model: 'Creta',     year: 2022, value: 16000, premium: 830.00,  type: 'Seguro para Vehículos livianos', status: 'quoted',   daysAgo: 1  },
     ];
 
     let inserted = 0;
@@ -177,6 +179,70 @@ router.get('/seed-demo', async (req, res) => {
     return res.json({ ok: true, inserted, total: DEMO_LEADS.length });
   } catch (err) {
     console.error('[ADRIANA-API] Error seed-demo:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/adriana/leads/:code/send-comparison ────────────────────────────
+router.post('/leads/:code/send-comparison', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const l = await databaseService.get(
+      `SELECT quote_code, client_name, email, phone, insurance_type,
+              vehicle_brand, vehicle_model, vehicle_year, commercial_value,
+              quoted_premium, competitor_quotes, city
+       FROM insurance_leads WHERE quote_code = $1`,
+      [req.params.code]
+    );
+    if (!l) return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+    if (!l.email) return res.status(400).json({ ok: false, error: 'Lead sin correo electrónico' });
+
+    const primaAnual  = l.quoted_premium ? parseFloat(l.quoted_premium) : 0;
+    const primaMensual = primaAnual ? Math.round(primaAnual / 10) : 0;
+    let competitors = [];
+    try { competitors = l.competitor_quotes ? JSON.parse(l.competitor_quotes) : []; } catch {}
+
+    const html = buildEmailTemplate('adriana', 'ADRIANA_COMPARISON_V2', {
+      nombre:          l.client_name || 'Cliente',
+      marca:           l.vehicle_brand || '',
+      modelo:          l.vehicle_model || '',
+      anio:            l.vehicle_year || '',
+      placa:           '-',
+      valor_asegurado: l.commercial_value ? `$${parseFloat(l.commercial_value).toLocaleString('es-EC')}` : '-',
+      vaz_prima_anual:   `$${primaAnual.toLocaleString('es-EC')}`,
+      vaz_prima_mensual: `$${primaMensual}`,
+      vaz_deducible:   '7% (Taller VAZ)',
+      analisis_broker: `Hola ${(l.client_name || 'estimado cliente').split(' ')[0]}, tras analizar el mercado ecuatoriano de seguros para tu ${l.vehicle_brand || 'vehículo'} ${l.vehicle_model || ''}, encontramos que VAZ Seguros ofrece la mejor relación cobertura-precio. Tu prima anual es de $${primaAnual.toLocaleString('es-EC')}, con la tranquilidad de taller propio y asistencia 24/7.`,
+      competitors:     competitors,
+      fecha_cotizacion: new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }),
+      bot_phone:       (process.env.BOT_PHONE || '593994837117').replace('+', ''),
+      adriana_email:   process.env.COWORKIA_ADMIN_EMAIL || 'adriana@segpopular.com.ec',
+      adriana_phone:   process.env.ADRIANA_PHONE || process.env.BOT_PHONE || '',
+    });
+
+    const vehicle  = [l.vehicle_brand, l.vehicle_model, l.vehicle_year].filter(Boolean).join(' ');
+    const subject  = `🛡️ Tu cotización de seguro · ${vehicle} · ${l.quote_code}`;
+    const adminCC  = process.env.COWORKIA_ADMIN_EMAIL || '';
+
+    await sendEmail({
+      to: l.email,
+      cc: adminCC || undefined,
+      subject,
+      html,
+      from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: DEFAULT_FROM_EMAIL },
+    });
+
+    await databaseService.run(
+      `UPDATE insurance_leads SET status = CASE WHEN status = 'pending' THEN 'quoted' ELSE status END,
+       quote_sent_at = COALESCE(quote_sent_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
+       WHERE quote_code = $1`,
+      [req.params.code]
+    );
+
+    console.log(`[ADRIANA-API] 📧 Comparación enviada → ${l.email} (${req.params.code})`);
+    return res.json({ ok: true, email: l.email });
+  } catch (err) {
+    console.error('[ADRIANA-API] Error send-comparison:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });

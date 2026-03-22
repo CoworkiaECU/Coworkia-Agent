@@ -743,131 +743,166 @@ export function buildAdrianaComparisonV2HTML({
 } = {}) {
   const b           = AGENT_BRANDING.ADRIANA;
   const firstName   = nombre ? nombre.split(' ')[0] : 'Cliente';
-  const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'Tu vehículo';
-  const placaLabel  = placa ? ` · Placa: ${placa}` : '';
-  const vazEncoded  = encodeURIComponent(`Hola Adriana, acepto la cotización VAZ para mi ${vehicleDesc}`);
+  const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'tu vehículo';
+  const placaLabel  = placa && placa !== '-' ? ` · Placa ${placa}` : '';
+  const vazEncoded  = encodeURIComponent(`Hola Adriana 👋 Acepto la cotización VAZ Seguros para mi ${vehicleDesc}. ¿Qué sigue?`);
+  const consultaEncoded = encodeURIComponent(`Hola Adriana, quisiera usar mi cupón de asesoría gratuita en seguros corporativos 🎁`);
 
   const competitorRows = competitors.length
     ? competitors.map((c, i) => `
-      <tr class="comp${i}-row" style="background:${i % 2 === 0 ? '#f8fafc' : 'white'}">
-        <td style="padding:12px 16px;font-size:13px;color:#374151;font-weight:600;">${c.nombre || `Competidor ${i + 1}`}</td>
-        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.plan || '—'}</td>
-        <td style="padding:12px 16px;font-size:14px;font-weight:700;color:#dc2626;text-align:center;">${c.prima_anual || '—'}</td>
-        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.prima_mensual || '—'}</td>
-        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.deducible || '—'}</td>
-        <td style="padding:12px 16px;font-size:12px;text-align:center;">${c.asistencia || '—'}</td>
-        <td style="padding:12px 16px;font-size:12px;text-align:center;">${c.amparo || '—'}</td>
+      <tr style="background:${i % 2 === 0 ? '#fafafa' : 'white'};border-bottom:1px solid #f0f0f0;">
+        <td style="padding:11px 14px;font-size:13px;color:#374151;font-weight:600;">${c.nombre || `Competidor ${i + 1}`}</td>
+        <td style="padding:11px 14px;font-size:13px;color:#9ca3af;text-align:center;">${c.plan || 'Estándar'}</td>
+        <td style="padding:11px 14px;font-size:14px;font-weight:700;color:#dc2626;text-align:center;">${c.prima_anual || '—'}</td>
+        <td style="padding:11px 14px;font-size:13px;color:#6b7280;text-align:center;">${c.prima_mensual || '—'}</td>
+        <td style="padding:11px 14px;font-size:12px;text-align:center;color:#6b7280;">${c.deducible || '—'}</td>
+        <td style="padding:11px 14px;font-size:12px;text-align:center;">${c.asistencia || '—'}</td>
       </tr>`).join('')
     : '';
 
-  const competitorSection = competitors.length
-    ? `
-    <!-- Tabla competidores -->
-    <div style="margin:24px 0;">
-      <h3 style="font-size:15px;color:#1E3A8A;margin:0 0 12px;font-weight:700;">📊 Comparativa con la Competencia</h3>
-      <div style="border-radius:10px;overflow:auto;border:1.5px solid #e5e7eb;">
-        <table style="width:100%;border-collapse:collapse;min-width:560px;">
+  const competitorSection = competitors.length ? `
+    <div style="margin:28px 0 24px;">
+      <h3 style="font-size:14px;font-weight:800;color:#1E3A8A;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">📊 Comparativa objetiva del mercado</h3>
+      <p style="margin:0 0 14px;font-size:13px;color:#6b7280;">Analizamos las principales aseguradoras para que tomes la mejor decisión:</p>
+      <div style="border-radius:10px;overflow:auto;border:1px solid #e5e7eb;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <table style="width:100%;border-collapse:collapse;min-width:520px;">
           <thead>
             <tr style="background:#1E3A8A;">
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:left;">Aseguradora</th>
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Plan</th>
-              <th style="padding:10px 16px;color:#FCD34D;font-size:12px;text-align:center;">Prima Anual</th>
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Mensual</th>
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Deducible</th>
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Asistencia</th>
-              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Amparo</th>
+              <th style="padding:10px 14px;color:white;font-size:11px;text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Aseguradora</th>
+              <th style="padding:10px 14px;color:white;font-size:11px;text-align:center;font-weight:700;">Plan</th>
+              <th style="padding:10px 14px;color:#FCD34D;font-size:11px;text-align:center;font-weight:700;text-transform:uppercase;">Prima Anual</th>
+              <th style="padding:10px 14px;color:white;font-size:11px;text-align:center;font-weight:700;">Mensual</th>
+              <th style="padding:10px 14px;color:white;font-size:11px;text-align:center;font-weight:700;">Deducible</th>
+              <th style="padding:10px 14px;color:white;font-size:11px;text-align:center;font-weight:700;">Asistencia</th>
             </tr>
           </thead>
           <tbody>${competitorRows}</tbody>
+          <tfoot>
+            <tr style="background:linear-gradient(135deg,#1E3A8A,#1E40AF);">
+              <td style="padding:12px 14px;color:#FCD34D;font-size:13px;font-weight:800;">⭐ VAZ Seguros</td>
+              <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;font-weight:700;">Ensigna Plus</td>
+              <td style="padding:12px 14px;color:#4ade80;font-size:15px;font-weight:900;text-align:center;">${vaz_prima_anual}</td>
+              <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;font-weight:600;">${vaz_prima_mensual}</td>
+              <td style="padding:12px 14px;color:white;font-size:12px;text-align:center;">${vaz_deducible}</td>
+              <td style="padding:12px 14px;color:#4ade80;font-size:12px;text-align:center;font-weight:700;">✅ 24/7</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
-    </div>`
-    : '';
+      <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;text-align:center;">* Datos cotizados a ${fecha_cotizacion}. Precios referenciales sujetos a verificación.</p>
+    </div>` : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cotización VAZ Seguros — ${firstName}</title>
+  <title>Cotización de Seguro — ${firstName} — VAZ Seguros</title>
 </head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+<div style="max-width:620px;margin:0 auto;padding:20px 12px 40px;">
 
-  <!-- Header -->
-  <div style="background:${b.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
-    <div style="color:rgba(255,255,255,0.8);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:14px;">${b.emoji} SEGPOPULAR · SEGUROS VAZ</div>
-    <h1 style="color:#FCD34D;margin:0;font-size:26px;font-weight:900;line-height:1.2;">Hola ${firstName} 👋</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:15px;">Tu cotización personalizada está lista</p>
-    <div style="margin-top:14px;background:rgba(255,255,255,0.15);display:inline-block;padding:5px 18px;border-radius:99px;color:rgba(255,255,255,0.9);font-size:12px;">${vehicleDesc}${placaLabel}</div>
+  <!-- ── HEADER ── -->
+  <div style="background:linear-gradient(135deg,#1E3A8A 0%,#1d4ed8 100%);padding:44px 32px 36px;border-radius:14px 14px 0 0;text-align:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.05);border-radius:50%;"></div>
+    <div style="position:absolute;bottom:-60px;left:-30px;width:200px;height:200px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+    <div style="position:relative;">
+      <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);padding:5px 18px;border-radius:99px;color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;">🛡️ SegPopular S.A. · VAZ Seguros</div>
+      <h1 style="color:#FCD34D;margin:0 0 8px;font-size:28px;font-weight:900;line-height:1.2;">Tu seguro está listo, ${firstName} ✅</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0 0 16px;font-size:15px;line-height:1.5;">Cotización personalizada para tu <strong style="color:white;">${vehicleDesc}</strong>${placaLabel}</p>
+      <div style="display:inline-block;background:rgba(252,211,77,0.2);border:1px solid rgba(252,211,77,0.4);padding:6px 20px;border-radius:99px;color:#FCD34D;font-size:12px;font-weight:600;">⏰ Válido por 72 horas · ${fecha_cotizacion}</div>
+    </div>
   </div>
 
-  <!-- Body -->
-  <div style="background:white;padding:36px 32px;">
+  <!-- ── BODY ── -->
+  <div style="background:white;padding:36px 32px 28px;">
 
     <!-- Análisis del broker -->
     ${analisis_broker ? `
-    <div style="background:#eff6ff;border-left:4px solid ${b.primaryColor};border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:24px;">
-      <div style="font-size:12px;color:#1E3A8A;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">💬 Análisis de Adriana</div>
-      <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${analisis_broker}</p>
+    <div style="background:#eff6ff;border-left:4px solid #1d4ed8;border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:28px;">
+      <div style="font-size:11px;color:#1E3A8A;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">💬 Tu asesora Adriana dice:</div>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.75;font-style:italic;">"${analisis_broker}"</p>
     </div>` : ''}
 
-    <!-- VAZ — ganador -->
-    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:12px;padding:24px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- Urgencia -->
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:24px;">⚠️</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#c2410c;">Cada día sin seguro es un riesgo real</div>
+        <div style="font-size:12px;color:#9a3412;margin-top:2px;">Un solo accidente puede costarte más que 10 años de prima. Esta cotización vence en 72 horas.</div>
+      </div>
+    </div>
+
+    <!-- VAZ Winner Card -->
+    <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:2px solid #16a34a;border-radius:14px;padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden;">
+      <div class="badge-best" style="position:absolute;top:12px;right:16px;background:#16a34a;color:white;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;">✅ MEJOR OPCIÓN</div>
+      <h2 style="margin:0 0 4px;font-size:19px;font-weight:900;color:#1E3A8A;">VAZ Seguros · Plan Ensigna Plus</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#6b7280;">Cobertura amplia · Taller propio en Quito · 24/7</p>
+      <div style="display:flex;align-items:flex-end;gap:20px;margin-bottom:18px;flex-wrap:wrap;">
         <div>
-          <span class="badge-best" style="display:inline-block;background:#16a34a;color:white;padding:4px 14px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">✅ MEJOR OPCIÓN</span>
-          <h2 style="margin:8px 0 0;font-size:20px;font-weight:800;color:#1E3A8A;">VAZ Seguros · Plan Ensigna</h2>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Prima Anual</div>
+          <div style="font-size:36px;font-weight:900;color:#16a34a;line-height:1;">${vaz_prima_anual || '—'}</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Prima Anual</div>
-          <div style="font-size:32px;font-weight:900;color:#16a34a;line-height:1;">${vaz_prima_anual || '—'}</div>
-          ${vaz_prima_mensual ? `<div style="font-size:13px;color:#6b7280;">${vaz_prima_mensual}/mes</div>` : ''}
-        </div>
+        ${vaz_prima_mensual ? `
+        <div style="margin-bottom:6px;">
+          <div style="font-size:11px;color:#6b7280;">ó en 10 cuotas</div>
+          <div style="font-size:22px;font-weight:800;color:#1E3A8A;">${vaz_prima_mensual}<span style="font-size:13px;font-weight:600;color:#6b7280;">/mes</span></div>
+        </div>` : ''}
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">
-        <tr>
-          <td style="padding:6px 0;width:50%;">🔧 Deducible</td>
-          <td style="padding:6px 0;font-weight:600;">${vaz_deducible}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 0;">🚐 Asistencia vial 24/7</td>
-          <td style="padding:6px 0;font-weight:600;">✅ Ilimitada (grúa accidente)</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 0;">🏠 Amparo Patrimonial</td>
-          <td style="padding:6px 0;font-weight:600;">✅ Incluido sin costo</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 0;">📋 Valor asegurado</td>
-          <td style="padding:6px 0;font-weight:600;">${valor_asegurado}</td>
-        </tr>
+        <tr><td style="padding:6px 0;width:55%;">🔧 Deducible</td><td style="padding:6px 0;font-weight:700;">${vaz_deducible}</td></tr>
+        <tr><td style="padding:6px 0;">🚐 Asistencia vial 24/7</td><td style="padding:6px 0;font-weight:700;color:#16a34a;">✅ Grúa ilimitada (accidente)</td></tr>
+        <tr><td style="padding:6px 0;">🏠 Amparo Patrimonial</td><td style="padding:6px 0;font-weight:700;color:#16a34a;">✅ Incluido sin costo adicional</td></tr>
+        <tr><td style="padding:6px 0;">🔑 Pérdida total / robo</td><td style="padding:6px 0;font-weight:700;color:#16a34a;">✅ Cubierto según póliza</td></tr>
+        ${valor_asegurado ? `<tr><td style="padding:6px 0;">💰 Valor asegurado</td><td style="padding:6px 0;font-weight:700;">${valor_asegurado}</td></tr>` : ''}
       </table>
     </div>
 
     ${competitorSection}
 
-    <!-- CTA aceptar -->
-    <div style="text-align:center;margin:28px 0 20px;">
+    <!-- CTA Principal -->
+    <div style="text-align:center;margin:32px 0 24px;">
       <a href="https://wa.me/${bot_phone}?text=${vazEncoded}"
-         style="display:inline-block;background:#1E3A8A;color:#FCD34D;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;box-shadow:0 4px 18px rgba(30,58,138,0.35);">
-        ✅ ACEPTO — Quiero este seguro →
+         style="display:inline-block;background:linear-gradient(135deg,#1E3A8A,#1d4ed8);color:#FCD34D;padding:18px 44px;border-radius:10px;text-decoration:none;font-weight:900;font-size:17px;box-shadow:0 6px 24px rgba(30,58,138,0.4);letter-spacing:0.3px;">
+        🛡️ ACTIVAR MI SEGURO AHORA →
       </a>
-      <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;">Responderé tu WhatsApp en minutos para coordinar la emisión</p>
+      <div style="margin-top:12px;">
+        <a href="https://wa.me/${bot_phone}?text=${encodeURIComponent('Hola Adriana, tengo preguntas sobre mi cotización de seguro')}"
+           style="color:#1d4ed8;font-size:13px;text-decoration:none;font-weight:600;">
+          💬 Tengo preguntas · Hablar con Adriana
+        </a>
+      </div>
+      <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;">Responderé en menos de 30 minutos en horario de oficina</p>
     </div>
 
-    <!-- Info footer -->
-    <div style="background:#f9fafb;border-radius:10px;padding:14px 20px;font-size:12px;color:#6b7280;text-align:center;">
-      ${valor_asegurado ? `Vehículo asegurado: <strong style="color:#374151;">${vehicleDesc}</strong> · Valor: <strong style="color:#374151;">${valor_asegurado}</strong><br>` : ''}
-      ${nombre ? `Cliente: <strong style="color:#374151;">${nombre}</strong><br>` : ''}
-      Cotización del ${fecha_cotizacion} · ${adriana_email} · ${adriana_phone}
+    <!-- Separador -->
+    <div style="border-top:1px solid #f3f4f6;margin:0 0 20px;"></div>
+
+    <!-- CUPÓN Seguros Corporativos -->
+    <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1.5px dashed #a855f7;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:11px;color:#7e22ce;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🎁 CUPÓN EXCLUSIVO — Solo para ti</div>
+      <h3 style="margin:0 0 6px;font-size:16px;font-weight:800;color:#581c87;">Asesoría GRATUITA en Seguros Corporativos</h3>
+      <p style="margin:0 0 14px;font-size:13px;color:#6b7280;line-height:1.6;">¿Tu empresa tiene vehículos, equipos o activos que proteger? Como cliente VAZ, tienes derecho a una sesión de análisis gratuita para optimizar tus coberturas corporativas y ahorrar hasta 30%.</p>
+      <a href="https://wa.me/${bot_phone}?text=${consultaEncoded}"
+         style="display:inline-block;background:#7c3aed;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">
+        🎁 Usar mi cupón gratuito →
+      </a>
+    </div>
+
+    <!-- Info del cliente -->
+    <div style="background:#f9fafb;border-radius:10px;padding:14px 18px;font-size:12px;color:#6b7280;">
+      <div style="margin-bottom:4px;"><strong style="color:#374151;">Cliente:</strong> ${nombre}</div>
+      ${valor_asegurado ? `<div style="margin-bottom:4px;"><strong style="color:#374151;">Vehículo:</strong> ${vehicleDesc}${placaLabel}</div>` : ''}
+      <div><strong style="color:#374151;">Cotización:</strong> ${fecha_cotizacion} · Válida 72 horas</div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <div style="background:#1E3A8A;padding:28px 24px;text-align:center;border-radius:0 0 12px 12px;">
-    <div style="color:#FCD34D;font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">🛡️ SegPopular Ecuador</div>
-    <div style="color:rgba(255,255,255,0.75);font-size:12px;">Protegemos lo que más importa · Tu asesora: Adriana</div>
+  <!-- ── FOOTER ── -->
+  <div style="background:#1E3A8A;padding:28px 24px;text-align:center;border-radius:0 0 14px 14px;">
+    <div style="color:#FCD34D;font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">🛡️ SegPopular Ecuador · VAZ Seguros</div>
+    <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:8px;">Tu asesora personal: <strong style="color:white;">Adriana</strong></div>
+    <div style="color:rgba(255,255,255,0.5);font-size:11px;">${adriana_email} · ${adriana_phone}</div>
+    <div style="margin-top:14px;color:rgba(255,255,255,0.35);font-size:10px;">Si no solicitaste esta cotización puedes ignorar este mensaje.</div>
   </div>
 
 </div>

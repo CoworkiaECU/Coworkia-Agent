@@ -249,7 +249,7 @@ export async function createOrUpdateInsuranceLead(data) {
   await databaseService.ensureInitialized();
   
   const {
-    quoteCode = `SEG-${Date.now()}`,
+    quoteCode = `ADR-${Date.now().toString(36).toUpperCase()}`,
     userPhone,
     insuranceType = 'vehicle',
     status = 'waiting_matricula',

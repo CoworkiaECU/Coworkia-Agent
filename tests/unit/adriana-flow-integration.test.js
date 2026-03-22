@@ -77,17 +77,17 @@ describe('Adriana — Flujo completo Javier Troya', () => {
 
   test('✅ analisis_broker aparece en el HTML', () => {
     const html = buildAdrianaComparisonV2HTML(JAVIER_TROYA_DEMO);
-    expect(html).toContain('Amparo Patrimonial INCLUIDO');
+    expect(html).toContain('Amparo Patrimonial');
   });
 
   test('✅ HTML sin competitors no tiene tabla de competidores', () => {
     const html = buildAdrianaComparisonV2HTML({ ...JAVIER_TROYA_DEMO, competitors: [] });
-    expect(html).not.toContain('Comparativa con la Competencia');
+    expect(html).not.toContain('Comparativa objetiva del mercado');
   });
 
   test('✅ HTML con competitors tiene tabla de competidores', () => {
     const html = buildAdrianaComparisonV2HTML(JAVIER_TROYA_DEMO);
-    expect(html).toContain('Comparativa con la Competencia');
+    expect(html).toContain('Comparativa objetiva del mercado');
   });
 
   test('✅ CTA link apunta al número WA correcto', () => {

@@ -323,6 +323,20 @@
     .na-pending { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
     .na-waiting { background: #1e293b; color: #64748b; border: 1px solid #334155; }
     .na-done    { background: #022c22; color: #34d399; border: 1px solid #065f46; }
+
+    /* ── tooltips ── */
+    [data-tip] { position: relative; }
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%) scale(.95);
+      background: #1e293b; color: #f1f5f9; border: 1px solid #34d399;
+      padding: 7px 12px; border-radius: 7px; font-size: 11px; font-weight: 500;
+      white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity .18s, transform .18s;
+      z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.5);
+    }
+    [data-tip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
   </style>
 </head>
 <body>
@@ -377,22 +391,21 @@
 
   <!-- Stats globales -->
   <div class="stats-row" id="global-stats">
-    <div class="stat-card green">
-      <div class="stat-label">Total Proformas</div>
+    <div class="stat-card green" data-tip="Total de proformas generadas desde el inicio">
       <div class="stat-value" id="stat-total">—</div>
       <div class="stat-sub">Todas las cotizaciones</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" data-tip="Proformas generadas en el mes en curso">
       <div class="stat-label">Este Mes</div>
       <div class="stat-value" id="stat-month">—</div>
       <div class="stat-sub">Mes en curso</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" data-tip="Proformas de los últimos 7 días">
       <div class="stat-label">Últimos 7 días</div>
       <div class="stat-value" id="stat-week">—</div>
       <div class="stat-sub">Semana actual</div>
     </div>
-    <div class="stat-card green">
+    <div class="stat-card green" data-tip="Suma de cuotas mensuales de todos los prospectos en pipeline">
       <div class="stat-label">Revenue Potencial</div>
       <div class="stat-value money" id="stat-revenue">$0</div>
       <div class="stat-sub">Mensual estimado</div>
@@ -401,22 +414,20 @@
 
   <!-- Stats de efectividad de follow-ups automáticos -->
   <div class="stats-row" id="followup-stats">
-    <div class="stat-card blue">
-      <div class="stat-label">📨 D+1 Enviados</div>
+    <div class="stat-card blue" data-tip="Porcentaje de prospectos que recibieron el follow-up del día siguiente (D+1)">
       <div class="stat-value" id="stat-d1-pct">—</div>
       <div class="stat-sub" id="stat-d1-sub">— prospectos</div>
     </div>
-    <div class="stat-card orange">
-      <div class="stat-label">⏰ D+3 Enviados</div>
+    <div class="stat-card orange" data-tip="Porcentaje de prospectos que recibieron el recordatorio al tercer día (D+3)">
       <div class="stat-value" id="stat-d3-pct">—</div>
       <div class="stat-sub" id="stat-d3-sub">— prospectos</div>
     </div>
-    <div class="stat-card green">
+    <div class="stat-card green" data-tip="Porcentaje de prospectos que respondieron a los follow-ups automáticos">
       <div class="stat-label">💬 Respuestas</div>
       <div class="stat-value" id="stat-response-pct">—</div>
       <div class="stat-sub" id="stat-response-sub">— respondieron</div>
     </div>
-    <div class="stat-card green">
+    <div class="stat-card green" data-tip="Porcentaje de prospectos que se convirtieron en miembros activos">
       <div class="stat-label">🏆 Conversión</div>
       <div class="stat-value" id="stat-conv-pct">—</div>
       <div class="stat-sub" id="stat-conv-sub">— convertidos</div>
@@ -425,10 +436,10 @@
 
   <!-- Tabs -->
   <nav class="tab-nav">
-    <button class="tab-btn active" data-tab="proformas">
+    <button class="tab-btn active" data-tab="proformas" data-tip="Tabla de todas las proformas enviadas y su estado">
       📋 Proformas <span class="tab-count" id="tab-count-proformas"></span>
     </button>
-    <button class="tab-btn" data-tab="pipeline">
+    <button class="tab-btn" data-tab="pipeline" data-tip="Embudo de seguimiento automático D+1 / D+3 / Convertido">
       🔄 Pipeline de Seguimiento <span class="tab-count" id="tab-count-pipeline"></span>
     </button>
   </nav>
@@ -442,6 +453,7 @@
       <div class="card-header">
         <span class="card-title">Todas las proformas</span>
         <button id="btn-open-campaign"
+          data-tip="Crear un mensaje masivo para enviar a prospectos filtrados"
           style="background:#3b82f6;border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;">
           <span style="font-size:16px;">+</span> Crear Campaña
         </button>
@@ -474,7 +486,7 @@
             <label>Buscar</label>
             <input type="text" id="search" placeholder="Nombre, email, código…">
           </div>
-          <button id="btn-reset-filters" class="btn btn-secondary btn-sm" style="margin-top:18px;">Limpiar</button>
+          <button id="btn-reset-filters" class="btn btn-secondary btn-sm" style="margin-top:18px;" data-tip="Limpiar todos los filtros activos">Limpiar</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -550,7 +562,7 @@
     <div class="card" style="margin-bottom:18px;">
       <div class="card-header">
         <span class="card-title">🤖 Secuencia automática por prospecto</span>
-        <button id="btn-toggle-seq" class="btn btn-secondary btn-sm">Ver mensajes programados ▶</button>
+        <button id="btn-toggle-seq" class="btn btn-secondary btn-sm" data-tip="Ver los mensajes automáticos programados por Aluna">Ver mensajes programados ▶</button>
       </div>
       <div id="seq-body" style="display:none; padding: 20px 24px;">
 
@@ -671,7 +683,7 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 <!-- Footer removido - logo ahora en header -->
 
 <!-- FAB refresh -->
-<button id="fab-refresh" class="fab" title="Actualizar">
+<button id="fab-refresh" class="fab" data-tip="Actualizar todo el dashboard">
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
 </button>
 

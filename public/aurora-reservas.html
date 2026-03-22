@@ -366,7 +366,7 @@
 
   <!-- ── Stats row ── -->
   <div class="stats-row">
-    <div class="stat-card teal">
+    <div class="stat-card teal" data-tip="Número total de reservas registradas en el sistema">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div>
           <div class="stat-label">Total Reservas</div>
@@ -376,7 +376,7 @@
         <div style="font-size:22px;opacity:.6;">📋</div>
       </div>
     </div>
-    <div class="stat-card blue">
+    <div class="stat-card blue" data-tip="Reservas creadas en los últimos 30 días">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div>
           <div class="stat-label">Este Mes</div>
@@ -386,7 +386,7 @@
         <div style="font-size:22px;opacity:.6;">📅</div>
       </div>
     </div>
-    <div class="stat-card orange">
+    <div class="stat-card orange" data-tip="Reservas confirmadas con fecha futura pendiente de realizarse">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div>
           <div class="stat-label">Próximas</div>
@@ -396,7 +396,7 @@
         <div style="font-size:22px;opacity:.6;">🔜</div>
       </div>
     </div>
-    <div class="stat-card green">
+    <div class="stat-card green" data-tip="Suma de ingresos de reservas pagadas y confirmadas">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div>
           <div class="stat-label">Ingresos Total</div>
@@ -507,22 +507,22 @@
       </div>
       <div style="padding:18px 20px;">
         <div class="kpi-chips">
-          <div class="kpi-chip urgent">
+          <div class="kpi-chip urgent" data-tip="Hot + sin seguimiento hace 2 días o más — llamar ahora">
             <div class="kpi-lbl">🚨 Urgente</div>
             <div class="kpi-num red" id="kpi-prospects-urgent">–</div>
             <div class="kpi-sub">hot + 2+ días</div>
           </div>
-          <div class="kpi-chip hot">
+          <div class="kpi-chip hot" data-tip="Alta intención de reservar — contactar hoy">
             <div class="kpi-lbl">📞 Contactar</div>
             <div class="kpi-num orange" id="kpi-prospects-hot">–</div>
             <div class="kpi-sub">hot total</div>
           </div>
-          <div class="kpi-chip warm">
+          <div class="kpi-chip warm" data-tip="Interés moderado — hacer seguimiento esta semana">
             <div class="kpi-lbl">👀 Monitorear</div>
             <div class="kpi-num amber" id="kpi-prospects-warm">–</div>
             <div class="kpi-sub">warm</div>
           </div>
-          <div class="kpi-chip total">
+          <div class="kpi-chip total" data-tip="Total de usuarios en pipeline de prospectos Aurora">
             <div class="kpi-lbl">📊 Total</div>
             <div class="kpi-num teal" id="kpi-prospects-total">–</div>
             <div class="kpi-sub">prospectos</div>

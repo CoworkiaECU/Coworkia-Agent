@@ -230,3 +230,34 @@ export async function notifyAutopilotBlocked(reason) {
     console.warn('[NOTIFY] notifyAutopilotBlocked error:', err.message);
   }
 }
+
+/**
+ * 📦 Commit de código — notifica a Diego qué se commiteó.
+ * Llamado por el git hook post-commit automáticamente.
+ * @param {string} hash   - Short commit hash (e.g. "f020b6e")
+ * @param {string} msg    - Mensaje del commit
+ * @param {string} chat   - Identificador del chat que hizo el commit ("Aurora" | "Adriana" | etc.)
+ * @param {string[]} files - Lista de archivos modificados
+ */
+export async function notifyGitCommit(hash = '', msg = '', chat = 'Copilot', files = []) {
+  try {
+    const filesLine = files.length
+      ? `📁 Archivos:\n${files.slice(0, 8).map(f => `  • ${f}`).join('\n')}${files.length > 8 ? `\n  … +${files.length - 8} más` : ''}`
+      : '';
+
+    const text = [
+      `📦 *Commit nuevo — ${chat}*`,
+      ``,
+      `🔖 \`${hash}\``,
+      `💬 ${msg}`,
+      ``,
+      filesLine,
+      ``,
+      `_(usa STATUS para ver estado del sistema)_`,
+    ].filter(Boolean).join('\n');
+
+    await _send(text);
+  } catch (err) {
+    console.warn('[NOTIFY] notifyGitCommit error:', err.message);
+  }
+}

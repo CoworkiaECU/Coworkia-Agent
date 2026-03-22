@@ -23,7 +23,7 @@ let autopilotState = {
   lastNotification: null
 };
 
-const APPROVAL_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+const APPROVAL_TIMEOUT = 24 * 60 * 60 * 1000; // 24 horas — Diego responde cuando puede
 
 /**
  * 🔍 Verifica si un mensaje es un comando del sistema

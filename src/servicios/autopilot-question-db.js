@@ -30,7 +30,7 @@ export async function savePendingQuestion(userId, questionType, questionText, da
     const result = await query(
       `INSERT INTO autopilot_pending_questions 
        (user_id, question_type, question_text, question_data, asked_at, expires_at, status)
-       VALUES ($1, $2, $3, $4, NOW(), NOW() + INTERVAL '5 minutes', 'pending')
+       VALUES ($1, $2, $3, $4, NOW(), NOW() + INTERVAL '24 hours', 'pending')
        RETURNING id`,
       [userId, questionType, questionText, JSON.stringify(data)]
     );

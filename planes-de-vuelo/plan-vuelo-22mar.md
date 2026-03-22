@@ -1252,3 +1252,73 @@ node scripts/test-comparison-jt.mjs    # enviar email de prueba a Javier Troya
 node scripts/check-template.mjs        # verificar template V2 compilaOK
 node scripts/seed-javier-troya.mjs     # reinsertar Javier Troya en BD si borraron
 ```
+
+---
+
+## ✅ SESIÓN NOCHE 22 MAR — AURORA CRM AUTOPILOT (Chat Aurora)
+
+### Versión al finalizar: v1036
+
+### Lo que se hizo en esta sesión
+
+| # | Tarea | Versión | Estado |
+|---|-------|---------|--------|
+| 1 | Fix Gabi+Axel logos (fondo blanco invisible) → CSS filter trick `brightness(0) opacity(0.45)` | v1028 | ✅ |
+| 2 | Badge "INGRESOS EN PROCESO" Axel → full-width bar entre KPIs y pipeline | v1029 | ✅ |
+| 3 | **Fase 1 Aurora CRM**: Tab 🔥 Interesados + endpoint `GET /api/aurora/interested-groups` (3 grupos: partial/inactive/cancelled) + JS renderizado | v1032 | ✅ |
+| 4 | Fix columnas MONTO/PAGO: pay-chip CSS classes + `formatPrice(r.total_price, false)` evita "Gratis" en no-gratuitos | v1033 | ✅ |
+| 5 | **Fase 2 Aurora CRM**: Botones 📣 Campaña por grupo + modal envío + `POST /api/aurora/send-campaign` (WA masivo con delay 300ms) | v1034 | ✅ |
+| 6 | **Casillero pago efectivo inline** en columna MONTO para `pending_efectivo`: input + ✓ btn + `PATCH /api/aurora/reservations/:id/register-payment` + WA confirmación al cliente | v1035 | ✅ |
+| 7 | Fix input: `type="text" inputmode="decimal"` (sin flechas spinner) + acepta coma y punto como decimal | v1036 | ✅ |
+
+### Pendiente de esta sesión (Fase 3 del CRM autopilot)
+
+- [ ] **A1**: Tarjeta "esta semana vs semana pasada" — endpoint `GET /api/aurora/weekly-metrics`, UI con flecha ↑↓
+- [ ] **A2**: Badges espacio más pedido este mes (Hot Desk / Sala / Escritorio con conteo)
+- [ ] **A3**: Alerta naranja si >5 personas en grupo "Se fueron a la mitad"
+- [ ] **A4**: Nuevos interesados esta semana en chip del tab 🔥
+- [ ] **B**: Entrenamiento Aurora — mejorar prompt, validar conflictos horario, mejorar "no disponible"
+- [ ] **C**: Conectar `register-payment` con Gabi `sendPaymentReceipt()` para email de recibo formal
+- [ ] **D1**: Botón "📲 Recordar pago" en filas `pending_efectivo` (WA recordatorio al cliente)
+
+### Archivos modificados en esta sesión
+
+| Archivo | Qué cambió |
+|---------|-----------|
+| `public/gabi-consultas.html` | Logo CSS filter trick |
+| `public/axel-cotizaciones.html` | Logo CSS filter + badge movido debajo KPIs |
+| `public/aurora-reservas.html` | Tab 🔥 Interesados + cards grupos + modal campaña |
+| `public/js/aurora-dashboard.js` | `renderMontoCell()`, `getPaymentBadge()` reescrito, `window.registerPayment()`, `loadInterestedGroups()`, `renderPartialCard/InactiveCard/CancelledCard()`, `openCampaignModal()`, `sendCampaign()`, `_igData` |
+| `src/express-servidor/endpoints-api/aurora-dashboard.js` | WASSENGER constants + `GET /interested-groups` + `POST /send-campaign` + `PATCH /reservations/:id/register-payment` |
+
+### Patrones clave establecidos
+
+```js
+// Input de monto sin flechas (type text + inputmode decimal)
+<input type="text" inputmode="decimal" placeholder="0.00" ...>
+// Parse aceptando coma como decimal:
+const amount = parseFloat(value.trim().replace(',', '.'));
+
+// CSS filter para logos blancos en fondos claros
+filter: brightness(0) opacity(0.45)
+
+// Botón ✓ confirmar pago (verde)
+background:#16a34a; color:#fff; border:none; padding:3px 9px; border-radius:5px;
+
+// Endpoint de pago manual
+PATCH /api/aurora/reservations/:id/register-payment
+Body: { amount: number }
+Response: { ok, waSent, amount }
+// Actualiza: payment_status='paid', payment_method='efectivo', total_price=amount
+// Envía WA al cliente si WASSENGER_TOKEN presente
+```
+
+### Estado sistema al cierre
+
+```
+Dashboard Aurora:   ✅ v1036 LIVE
+Tab 🔥 Interesados: ✅ 3 grupos con botones campaña
+Registro efectivo:  ✅ casillero inline en columna MONTO
+Bot WhatsApp:       ✅ Aurora + Aluna + Axel + Adriana operativos
+Heroku:             ✅ RUNNING
+```

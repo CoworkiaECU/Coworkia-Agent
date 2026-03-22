@@ -142,10 +142,11 @@ function renderMontoCell(r) {
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
         <span style="color:#94a3b8;font-size:12px;">${price}</span>
         <div style="display:flex;gap:4px;align-items:center;">
-          <input id="pay-amt-${r.id}" type="number" value="${preVal}" min="0" step="0.01"
+          <input id="pay-amt-${r.id}" type="text" inputmode="decimal" value="${preVal}"
             placeholder="0.00"
             style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
-                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
+                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;
+                   -moz-appearance:textfield;"
             onkeydown="if(event.key==='Enter') registerPayment(${r.id})">
           <button onclick="registerPayment(${r.id})"
             style="background:#16a34a;color:#fff;border:none;padding:3px 9px;border-radius:5px;
@@ -374,7 +375,9 @@ function renderReservationsTable(reservations) {
 // ─── Registro de pago manual en efectivo ─────────────────────────────────────
 window.registerPayment = async function(id) {
   const input = document.getElementById(`pay-amt-${id}`);
-  const amount = parseFloat(input?.value);
+  // Aceptar coma o punto como separador decimal
+  const rawVal = input?.value?.trim().replace(',', '.');
+  const amount = parseFloat(rawVal);
   if (!input || isNaN(amount) || amount <= 0) {
     showToast('⚠️ Ingresa un monto válido para registrar el pago.');
     return;

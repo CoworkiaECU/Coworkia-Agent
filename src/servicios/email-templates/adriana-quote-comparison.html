@@ -3,164 +3,317 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cotización de Seguros — SegPopular</title>
+  <title>Análisis Comparativo de Seguros — SegPopular</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 32px 16px; background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
-    .email-wrap { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+    body { margin: 0; padding: 32px 16px; background: #eef2f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .email-wrap { max-width: 620px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 40px rgba(30,58,95,.15); }
 
-    /* Header */
-    .header { background: linear-gradient(135deg, #1E3A8A 0%, #1e40af 100%); padding: 36px 32px; text-align: center; }
-    .header img { height: 48px; margin-bottom: 12px; filter: brightness(0) invert(1); }
-    .header h1 { margin: 0; color: #fff; font-size: 22px; font-weight: 700; }
-    .header p { color: rgba(255,255,255,.8); margin: 8px 0 0; font-size: 14px; }
+    /* ── Header ─────────────────────────────────────────────── */
+    .header { background: linear-gradient(150deg, #1E3A5F 0%, #1a3a80 60%, #0f2b6e 100%); padding: 36px 32px 28px; text-align: center; position: relative; }
+    .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #F5A623 0%, #f7c05a 50%, #F5A623 100%); }
+    .header-logo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 16px; }
+    .header-logo-row img { height: 44px; filter: brightness(0) invert(1); }
+    .header-logo-text { color: #F5A623; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; }
+    .header h1 { margin: 0; color: #fff; font-size: 20px; font-weight: 700; line-height: 1.3; }
+    .header p { color: rgba(255,255,255,.75); margin: 8px 0 0; font-size: 13px; }
+    .header-badge { display: inline-block; background: rgba(245,166,35,.18); border: 1px solid rgba(245,166,35,.5); color: #F5A623; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; margin-top: 12px; letter-spacing: 1px; }
 
-    /* Intro */
-    .intro { padding: 28px 32px 12px; }
-    .intro p { font-size: 15px; color: #374151; line-height: 1.7; margin: 0 0 12px; }
+    /* ── Intro ───────────────────────────────────────────────── */
+    .intro { padding: 26px 32px 8px; }
+    .intro p { font-size: 15px; color: #374151; line-height: 1.75; margin: 0 0 12px; }
 
-    /* Vehicle box */
-    .vehicle-box { margin: 0 32px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #1E3A8A; border-radius: 8px; padding: 18px 20px; }
-    .vehicle-box .label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .vehicle-box table { width: 100%; border-collapse: collapse; }
-    .vehicle-box td { padding: 5px 0; font-size: 13px; }
-    .vehicle-box td:first-child { color: #64748b; width: 40%; }
-    .vehicle-box td:last-child { color: #1e293b; font-weight: 600; }
+    /* ── Vehicle card ────────────────────────────────────────── */
+    .vehicle-card { margin: 4px 32px 22px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-left: 4px solid #1E3A5F; border-radius: 10px; padding: 18px 22px; }
+    .card-label { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+    .vehicle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+    .vg-item .vk { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+    .vg-item .vv { font-size: 14px; color: #1e293b; font-weight: 700; margin-top: 2px; }
 
-    /* Comparison table */
-    .section-title { font-size: 13px; font-weight: 700; color: #1E3A8A; text-transform: uppercase; letter-spacing: 1px; padding: 20px 32px 10px; }
+    /* ── Section title ───────────────────────────────────────── */
+    .section-title { font-size: 11px; font-weight: 800; color: #1E3A5F; text-transform: uppercase; letter-spacing: 1.5px; padding: 22px 32px 8px; }
+    .section-sub { padding: 0 32px 14px; font-size: 13px; color: #64748b; line-height: 1.6; }
+
+    /* ── Comparison table ────────────────────────────────────── */
     .comparison-wrap { padding: 0 32px; overflow-x: auto; }
-    .comparison-table { width: 100%; border-collapse: collapse; }
-    .comparison-table th { background: #1E3A8A; color: #fff; padding: 12px 14px; font-size: 13px; font-weight: 600; text-align: left; }
-    .comparison-table th:not(:first-child) { text-align: center; }
-    .comparison-table td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #374151; vertical-align: top; }
-    .comparison-table td:not(:first-child) { text-align: center; }
-    .comparison-table tr.best { background: #fffbeb; }
-    .comparison-table tr.best td:first-child { font-weight: 700; color: #1E3A8A; }
-    .best-badge { display: inline-block; background: #FCD34D; color: #92400e; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; margin-left: 6px; }
-    .price-big { font-size: 18px; font-weight: 800; color: #1E3A8A; }
-    .price-small { font-size: 11px; color: #6b7280; }
+    .ctable { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ctable thead tr { background: #1E3A5F; }
+    .ctable th { color: #fff; padding: 11px 13px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; text-align: left; }
+    .ctable th:not(:first-child) { text-align: center; }
+    .ctable td { padding: 13px 13px; border-bottom: 1px solid #f1f5f9; color: #374151; vertical-align: middle; }
+    .ctable td:not(:first-child) { text-align: center; }
+    .ctable tr:last-child td { border-bottom: none; }
 
-    /* Details box */
-    .details-box { margin: 20px 32px; background: #f8fafc; border-radius: 10px; padding: 22px 24px; }
-    .details-box h3 { margin: 0 0 14px; font-size: 14px; color: #1e293b; }
-    .details-box ul { margin: 0; padding-left: 0; list-style: none; }
-    .details-box li { font-size: 14px; color: #374151; padding: 5px 0; line-height: 1.5; }
-    .price-summary { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
-    .price-summary strong { font-size: 16px; color: #1E3A8A; }
+    /* Winner row */
+    .ctable tr.winner { background: linear-gradient(90deg, #fffbeb 0%, #fefce8 100%); }
+    .ctable tr.winner td { font-weight: 600; }
+    .ctable tr.winner td:first-child { color: #1E3A5F; font-weight: 800; }
 
-    /* CTAs */
-    .cta-section { padding: 24px 32px; text-align: center; }
-    .cta-section p { font-size: 14px; color: #475569; margin-bottom: 18px; }
-    .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-    .btn-email { display: inline-block; background: #1E3A8A; color: #fff; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
-    .btn-wa { display: inline-block; background: #25D366; color: #fff; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+    /* Competitor row */
+    .ctable tr.competitor { background: #fafafa; opacity: .9; }
+    .ctable tr.competitor td { font-size: 12px; color: #64748b; }
 
-    /* Footer */
-    .footer { background: linear-gradient(135deg, #1E3A8A 0%, #1e40af 100%); padding: 28px 32px; text-align: center; }
-    .footer .brand { color: #FCD34D; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; }
-    .footer .tagline { color: rgba(255,255,255,.8); font-size: 13px; margin-bottom: 8px; }
-    .footer .contact { color: rgba(255,255,255,.6); font-size: 12px; }
+    /* Price cells */
+    .price-main { font-size: 17px; font-weight: 800; color: #1E3A5F; }
+    .price-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .price-comp { font-size: 14px; font-weight: 700; color: #64748b; }
+
+    /* Badges */
+    .badge-best { display: inline-block; background: #F5A623; color: #fff; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: .5px; margin-left: 6px; vertical-align: middle; }
+    .badge-ok  { display: inline-block; background: #dcfce7; color: #16a34a; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+    .badge-no  { display: inline-block; background: #fee2e2; color: #dc2626; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+    .badge-mid { display: inline-block; background: #fef3c7; color: #d97706; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+
+    /* ── Why VAZ block ───────────────────────────────────────── */
+    .why-box { margin: 18px 32px; background: linear-gradient(135deg, #1E3A5F 0%, #1a3a80 100%); border-radius: 12px; padding: 22px 24px; color: #fff; }
+    .why-box h3 { margin: 0 0 14px; font-size: 14px; font-weight: 800; color: #F5A623; text-transform: uppercase; letter-spacing: 1px; }
+    .why-items { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .why-item { background: rgba(255,255,255,.08); border-radius: 8px; padding: 12px 14px; }
+    .why-item .wi-icon { font-size: 20px; margin-bottom: 6px; }
+    .why-item .wi-title { font-size: 12px; font-weight: 700; color: #F5A623; margin-bottom: 3px; }
+    .why-item .wi-desc { font-size: 11px; color: rgba(255,255,255,.75); line-height: 1.5; }
+
+    /* ── VAZ details box ─────────────────────────────────────── */
+    .details-box { margin: 18px 32px; background: #f8fafc; border-radius: 10px; padding: 22px 24px; border: 1px solid #e2e8f0; }
+    .details-box h3 { margin: 0 0 14px; font-size: 13px; font-weight: 800; color: #1E3A5F; text-transform: uppercase; letter-spacing: 1px; }
+    .details-list { list-style: none; margin: 0; padding: 0; }
+    .details-list li { font-size: 13px; color: #374151; padding: 6px 0; border-bottom: 1px solid #f1f5f9; line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
+    .details-list li:last-child { border-bottom: none; }
+    .details-list li .ic { flex-shrink: 0; }
+    .price-summary-row { margin-top: 16px; padding-top: 16px; border-top: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .psr-annual { font-size: 22px; font-weight: 900; color: #1E3A5F; }
+    .psr-monthly { font-size: 14px; color: #64748b; }
+    .psr-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+
+    /* ── Broker analysis ─────────────────────────────────────── */
+    .broker-box { margin: 18px 32px; border: 1px solid #e2e8f0; border-left: 4px solid #F5A623; border-radius: 10px; padding: 20px 22px; background: #fffbf5; }
+    .broker-box .broker-name { font-size: 11px; font-weight: 800; color: #d97706; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .broker-box .broker-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+    .broker-box p { font-size: 13px; color: #374151; line-height: 1.7; margin: 0 0 8px; }
+    .broker-box p:last-child { margin-bottom: 0; }
+    .broker-box strong { color: #1E3A5F; }
+
+    /* ── CTAs ────────────────────────────────────────────────── */
+    .cta-section { padding: 22px 32px 28px; text-align: center; }
+    .cta-section p { font-size: 14px; color: #475569; margin-bottom: 18px; line-height: 1.6; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { display: inline-block; background: linear-gradient(135deg, #1E3A5F, #1a3a80); color: #fff; padding: 14px 28px; border-radius: 9px; font-size: 14px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 12px rgba(30,58,95,.3); }
+    .btn-wa { display: inline-block; background: #25D366; color: #fff; padding: 14px 28px; border-radius: 9px; font-size: 14px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 12px rgba(37,211,102,.3); }
+    .cta-legal { font-size: 11px; color: #9ca3af; margin-top: 16px; line-height: 1.5; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .footer { background: linear-gradient(150deg, #1E3A5F 0%, #0f2b6e 100%); padding: 26px 32px; text-align: center; }
+    .footer .fp-logo { color: #F5A623; font-size: 12px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+    .footer .fp-tagline { color: rgba(255,255,255,.75); font-size: 13px; margin-bottom: 6px; }
+    .footer .fp-contact { color: rgba(255,255,255,.5); font-size: 11px; }
+    .footer .fp-disclaimer { color: rgba(255,255,255,.35); font-size: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); line-height: 1.5; }
   </style>
 </head>
 <body>
   <div class="email-wrap">
 
-    <!-- Header -->
+    <!-- ── Header ─────────────────────────────────────────── -->
     <div class="header">
-      <img src="/images/logos/adriana.svg" alt="SegPopular" onerror="this.style.display='none'">
-      <h1>Comparativa de Seguros Vehiculares 🛡️</h1>
-      <p>Preparado especialmente para usted por Adriana · SegPopular</p>
+      <div class="header-logo-row">
+        <img src="/images/logos/adriana.svg" alt="SegPopular" onerror="this.style.display='none'">
+        <span class="header-logo-text">SegPopular</span>
+      </div>
+      <h1>Análisis Comparativo de Seguros Vehiculares 🛡️</h1>
+      <p>Preparado personalmente por Adriana · Broker Autorizado de Seguros</p>
+      <span class="header-badge">📊 Análisis de Mercado · {{fecha_cotizacion}}</span>
     </div>
 
-    <!-- Intro -->
+    <!-- ── Intro ───────────────────────────────────────────── -->
     <div class="intro">
       <p>Estimado/a <strong>{{nombre}}</strong>,</p>
-      <p>Le presentamos las mejores opciones de seguro para su vehículo.
-         Como broker autorizado, comparamos las principales aseguradoras para ofrecerle
-         la mejor relación precio-cobertura disponible en el mercado ecuatoriano.</p>
+      <p>He revisado detalladamente las cotizaciones que me compartiste y comparé las condiciones objetivas de cada aseguradora. A continuación encontrarás el análisis completo del mercado para tu vehículo.</p>
     </div>
 
-    <!-- Vehicle details -->
-    <div class="vehicle-box">
-      <div class="label">🚗 Vehículo Asegurado</div>
-      <table>
-        <tr><td>Vehículo</td><td>{{marca}} {{modelo}} {{año}}</td></tr>
-        <tr><td>Placa</td><td>{{placa}}</td></tr>
-        <tr><td>Valor Asegurado</td><td>{{valorAsegurado}}</td></tr>
-        <tr><td>Cobertura</td><td>{{tipoCobertura}}</td></tr>
-      </table>
+    <!-- ── Vehicle card ────────────────────────────────────── -->
+    <div class="vehicle-card">
+      <div class="card-label">🚗 Vehículo Analizado</div>
+      <div class="vehicle-grid">
+        <div class="vg-item">
+          <div class="vk">Vehículo</div>
+          <div class="vv">{{marca}} {{modelo}} {{anio}}</div>
+        </div>
+        <div class="vg-item">
+          <div class="vk">Placa</div>
+          <div class="vv">{{placa}}</div>
+        </div>
+        <div class="vg-item">
+          <div class="vk">Valor Asegurado</div>
+          <div class="vv">{{valor_asegurado}}</div>
+        </div>
+        <div class="vg-item">
+          <div class="vk">Cobertura</div>
+          <div class="vv">Todo Riesgo</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Comparison table -->
+    <!-- ── Comparison table ────────────────────────────────── -->
     <div class="section-title">📊 Comparativa de Aseguradoras</div>
+    <div class="section-sub">
+      He analizado las cotizaciones que presentaste y las contraté con las condiciones reales de cada póliza. Los precios menores no siempre implican mejor cobertura.
+    </div>
     <div class="comparison-wrap">
-      <table class="comparison-table">
+      <table class="ctable">
         <thead>
           <tr>
             <th>Aseguradora</th>
             <th>Prima Anual</th>
             <th>Deducible</th>
-            <th>Coberturas</th>
+            <th>Asistencia Vial</th>
+            <th>Amparo Patrimonial</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Mejor opción (destacada) -->
-          <tr class="best">
+
+          <!-- ⭐ GANADORA: VAZ Seguros -->
+          <tr class="winner">
             <td>
-              VAZ Seguros <span class="best-badge">⭐ Mejor</span>
+              VAZ Seguros
+              <span class="badge-best">⭐ Recomendada</span><br>
+              <span style="font-size:11px;color:#64748b;font-weight:400">Ensigna · Sierra Norte</span>
             </td>
             <td>
-              <div class="price-big">{{vaz_prima}}</div>
-              <div class="price-small">{{vaz_prima_mensual}}/mes</div>
+              <div class="price-main">{{vaz_prima_anual}}</div>
+              <div class="price-sub">{{vaz_prima_mensual}} · 10 cuotas</div>
             </td>
-            <td>{{vaz_deducible}}</td>
-            <td>✅ Todo Riesgo<br>✅ Asistencia Vial 24/7<br>✅ RC hasta $100K</td>
+            <td>
+              <span class="badge-ok">7% daño</span><br>
+              <span style="font-size:11px;color:#64748b">Taller VAZ o libre (+3%)</span>
+            </td>
+            <td><span class="badge-ok">✅ Incluida</span></td>
+            <td><span class="badge-ok">✅ Incluido</span></td>
           </tr>
-          <!-- Agregar más aseguradoras aquí cuando estén disponibles -->
+
+          <!-- Competidor 1 -->
+          <tr class="competitor">
+            <td>
+              {{comp1_nombre}}<br>
+              <span style="font-size:11px;color:#94a3b8">{{comp1_plan}}</span>
+            </td>
+            <td>
+              <div class="price-comp">{{comp1_prima_anual}}</div>
+              <div class="price-sub">{{comp1_prima_mensual}}</div>
+            </td>
+            <td><span class="badge-mid">{{comp1_deducible}}</span></td>
+            <td>{{comp1_asistencia}}</td>
+            <td>{{comp1_amparo}}</td>
+          </tr>
+
+          <!-- Competidor 2 (opcional, puede estar en blanco si solo hay 1) -->
+          <tr class="competitor" id="comp2-row" style="{{comp2_display}}">
+            <td>
+              {{comp2_nombre}}<br>
+              <span style="font-size:11px;color:#94a3b8">{{comp2_plan}}</span>
+            </td>
+            <td>
+              <div class="price-comp">{{comp2_prima_anual}}</div>
+              <div class="price-sub">{{comp2_prima_mensual}}</div>
+            </td>
+            <td><span class="badge-no">{{comp2_deducible}}</span></td>
+            <td>{{comp2_asistencia}}</td>
+            <td>{{comp2_amparo}}</td>
+          </tr>
+
         </tbody>
       </table>
     </div>
 
-    <!-- Details best option -->
-    <div class="details-box">
-      <h3>📋 Detalle de la Mejor Opción — VAZ Seguros</h3>
-      <ul>
-        <li>✅ <strong>Cobertura Todo Riesgo:</strong> Daños propios y a terceros, robo total y parcial</li>
-        <li>✅ <strong>Asistencia Vial 24/7:</strong> Grúa, mecánico en carretera, taxi, hotel</li>
-        <li>✅ <strong>Responsabilidad Civil:</strong> Hasta $100,000 en daños a terceros</li>
-        <li>✅ <strong>Deducible:</strong> {{vaz_deducible}} — uno de los más bajos del mercado</li>
-        <li>✅ <strong>Emisión:</strong> En 48 horas hábiles tras aprobación</li>
-      </ul>
-      <div class="price-summary">
-        <strong>Prima Anual: {{vaz_prima}}</strong> (pago único) &nbsp;·&nbsp;
-        o en cuotas: <strong>{{vaz_prima_mensual}}/mes</strong>
+    <!-- ── Por qué VAZ ─────────────────────────────────────── -->
+    <div class="why-box">
+      <h3>🎯 ¿Por qué recomendamos VAZ?</h3>
+      <div class="why-items">
+        <div class="why-item">
+          <div class="wi-icon">💰</div>
+          <div class="wi-title">Mejor Precio</div>
+          <div class="wi-desc">Tasa 2.20% para tu tramo de valor — la más competitiva del segmento Ensigna en Sierra Norte.</div>
+        </div>
+        <div class="why-item">
+          <div class="wi-icon">🏥</div>
+          <div class="wi-title">Amparo Patrimonial</div>
+          <div class="wi-desc">Incluido en Ensigna sin costo extra. Competidores lo cobran aparte o no lo ofrecen.</div>
+        </div>
+        <div class="why-item">
+          <div class="wi-icon">🚗</div>
+          <div class="wi-title">Asistencia Vial</div>
+          <div class="wi-desc">Grúa accidente ilimitada ($300), auxilio vial 3×/año, conductor elegido, llave protegida.</div>
+        </div>
+        <div class="why-item">
+          <div class="wi-icon">⚡</div>
+          <div class="wi-title">Deducible Flexible</div>
+          <div class="wi-desc">Taller VAZ 7% o Libre Designación 10%. Tú eliges según tu preferencia.</div>
+        </div>
       </div>
     </div>
 
-    <!-- CTAs -->
+    <!-- ── VAZ Details ─────────────────────────────────────── -->
+    <div class="section-title">📋 Detalle de la Cobertura VAZ Seguros</div>
+    <div class="details-box">
+      <ul class="details-list">
+        <li><span class="ic">✅</span> <div><strong>Todo Riesgo</strong> — Daños propios y a terceros, robo total/parcial, vandalismo, fenómenos naturales, rotura de vidrios.</div></li>
+        <li><span class="ic">✅</span> <div><strong>Responsabilidad Civil</strong> — Hasta $40,000 en daños a terceros (personas y bienes).</div></li>
+        <li><span class="ic">✅</span> <div><strong>Gastos Médicos</strong> — Hasta $6,000 para ocupantes del vehículo en caso de accidente.</div></li>
+        <li><span class="ic">✅</span> <div><strong>Muerte Accidental</strong> — Hasta $3,000 — indemnización directa a beneficiarios.</div></li>
+        <li><span class="ic">✅</span> <div><strong>Amparo Patrimonial</strong> — Incluido en Ensigna · Protege bienes en el interior del vehículo.</div></li>
+        <li><span class="ic">✅</span> <div><strong>Asistencia Vial 24/7</strong> — Grúa por accidente ilimitada ($300) + 3 eventos/año por avería + conductor elegido si toma licor.</div></li>
+      </ul>
+
+      <div class="price-summary-row">
+        <div>
+          <div class="psr-label">Prima Anual</div>
+          <div class="psr-annual">{{vaz_prima_anual}}</div>
+        </div>
+        <div>
+          <div class="psr-label">Pago mensual (10 cuotas)</div>
+          <div class="psr-monthly">{{vaz_prima_mensual}} / mes</div>
+        </div>
+        <div>
+          <div class="psr-label">Deducible</div>
+          <div style="font-size:14px;font-weight:700;color:#1E3A5F">{{vaz_deducible}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Broker analysis ────────────────────────────────── -->
+    <div class="broker-box">
+      <div class="broker-name">💼 Adriana · Asesora de Seguros</div>
+      <div class="broker-title">Análisis Personalizado para {{nombre}}</div>
+      <p>{{analisis_broker}}</p>
+      <p>Como broker autorizado, mi función es encontrarte la solución que combine <strong>precio justo + cobertura real + respaldo sólido</strong>. En este caso, VAZ Seguros cumple los tres criterios para tu {{marca}} {{modelo}}.</p>
+    </div>
+
+    <!-- ── CTA ────────────────────────────────────────────── -->
     <div class="cta-section">
-      <p>¿Le interesa esta cotización? Puede aceptarla respondiendo a este email o directamente por WhatsApp:</p>
+      <p>¿Procedemos con VAZ Seguros? Puedes aceptar respondiendo a este email o directamente por WhatsApp. En 48h hábiles tenemos tu póliza activa. 🎉</p>
       <div class="cta-buttons">
-        <a href="mailto:adriana@coworkia.ec?subject=Acepto cotización VAZ Seguros - {{placa}}&body=Hola Adriana, acepto la cotización de VAZ Seguros para mi vehículo {{marca}} {{modelo}}. Por favor proceder con la emisión."
-           class="btn-email">
+        <a href="mailto:{{adriana_email}}?subject=Acepto cotización VAZ — {{placa}}&body=Hola Adriana, acepto la cotización de VAZ Seguros para mi {{marca}} {{modelo}} ({{placa}}). Por favor coordina la documentación para emisión."
+           class="btn-primary">
           📧 Acepto por Email
         </a>
-        <a href="https://wa.me/{{bot_phone}}?text=Hola%20Adriana%2C%20acepto%20la%20cotizaci%C3%B3n%20de%20VAZ%20Seguros%20para%20mi%20ve%CC%81culo%20{{placa}}"
+        <a href="https://wa.me/{{bot_phone}}?text=Hola%20Adriana%2C%20acepto%20la%20cotizaci%C3%B3n%20VAZ%20para%20mi%20{{marca}}%20{{modelo}}%20({{placa}})"
            class="btn-wa">
           💬 Acepto por WhatsApp
         </a>
       </div>
-      <p style="font-size:12px;color:#9ca3af;margin-top:14px;">
-        Al aceptar, Adriana coordinará toda la documentación y emisión de la póliza.
+      <p class="cta-legal">
+        Al aceptar, coordinaremos la documentación requerida para la emisión de la póliza.<br>
+        Cotización válida por 30 días · Sujeta a aceptación de VAZ Seguros.
       </p>
     </div>
 
-    <!-- Footer -->
+    <!-- ── Footer ─────────────────────────────────────────── -->
     <div class="footer">
-      <div class="brand">🛡️ SegPopular Ecuador</div>
-      <div class="tagline">Broker Autorizado de Seguros · Protegemos lo que más importa</div>
-      <div class="contact">Adriana · Asesora de Seguros Vehiculares · +593 99 XXX XXXX · adriana@segpopular.ec</div>
+      <div class="fp-logo">🛡️ SegPopular Ecuador</div>
+      <div class="fp-tagline">Broker Autorizado de Seguros · Tu tranquilidad, nuestra misión</div>
+      <div class="fp-contact">Adriana · Asesora de Seguros Vehiculares · {{adriana_phone}} · {{adriana_email}}</div>
+      <div class="fp-disclaimer">
+        Este análisis es elaborado por SegPopular como broker autorizado. Los datos de aseguradoras competidoras
+        provienen de cotizaciones presentadas por el cliente y pueden variar. SegPopular no representa a los competidores mencionados.
+      </div>
     </div>
 
   </div>

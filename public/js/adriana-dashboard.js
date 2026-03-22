@@ -140,7 +140,7 @@ function renderLeads() {
 
   if (leads.length === 0) {
     const isAll = activeTab === 'all';
-    container.innerHTML = `<div class="empty">Sin cotizaciones en este segmento.<br><small style="opacity:.6">${isAll ? 'Presiona <strong>Datos demo</strong> (arriba a la derecha) para cargar cotizaciones de prueba' : 'No hay leads en esta etapa del pipeline'}</small></div>`;
+    container.innerHTML = `<div class="empty">Sin cotizaciones en este segmento.<br><small style="opacity:.6">${isAll ? 'Las cotizaciones aparecerán aquí cuando Adriana procese solicitudes por WhatsApp' : 'No hay leads en esta etapa del pipeline'}</small></div>`;
     return;
   }
 

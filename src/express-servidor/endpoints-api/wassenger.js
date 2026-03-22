@@ -72,7 +72,7 @@ import enzoRepository from '../../database/enzoRepository.js';
 import { saveLegalLead } from '../../database/gabiRepository.js';
 import { saveRealEstateLead } from '../../database/paulaRepository.js';
 import { saveCollisionQuote } from '../../database/axelRepository.js';
-import { saveInsuranceLead, getQuoteLead, upsertQuoteLead, updateQuoteLeadData, deleteQuoteLead } from '../../database/adrianaRepository.js';
+import { saveInsuranceLead, getQuoteLead, upsertQuoteLead, updateQuoteLeadData, deleteQuoteLead, findLeadByPhone, createOrUpdateInsuranceLead, updateLeadStatus, saveCompetitorQuotes } from '../../database/adrianaRepository.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
@@ -2536,6 +2536,12 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
+    // 🛡️ ADRIANA FLUJO COMPLETO (V2): Estados insurance_leads — waiting_matricula…accepted
+    if (profile.activeAgent === 'ADRIANA') {
+      const handled = await handleAdrianaFlow({ userId, profile, processedText, mediaUrl, type, envelope });
+      if (handled) return;
+    }
+
     // 🛡️ ADRIANA FORMULARIO CONVERSACIONAL: Máquina de estados multi-paso
     // gathering_vehicle → gathering_id → selecting_coverage → quote_sent
     if (profile.activeAgent === 'ADRIANA') {
@@ -3530,6 +3536,242 @@ router.post('/webhooks/wassenger/control', (req, res) => {
     }
   });
 });
+
+/* ─────────────────────────────────────────────────────────────
+   🛡️ ADRIANA FLUJO COMPLETO V2 — handleAdrianaFlow
+   Estados en insurance_leads:
+     waiting_matricula → waiting_cedula → waiting_competitor → quoted
+     → waiting_kyc → accepted
+───────────────────────────────────────────────────────────── */
+
+async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, type, envelope }) {
+  try {
+    // 1. Buscar lead activo en insurance_leads por teléfono
+    let lead = await findLeadByPhone(userId).catch(() => null);
+
+    const NEW_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'quoted', 'waiting_kyc', 'accepted'];
+
+    // Si no existe lead con estado nuevo, crear al recibir matrícula o al iniciar con imagen
+    if (!lead || !NEW_STATES.includes(lead?.status)) {
+      // Solo iniciar si es imagen (matrícula) o texto que inicia el flujo
+      if (mediaUrl && type === 'image') {
+        const quoteCode = `SEG-${Date.now().toString(36).toUpperCase()}`;
+        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_matricula' });
+        lead = await findLeadByPhone(userId).catch(() => null);
+        if (!lead) return false;
+      } else {
+        return false; // Sin lead activo, dejar caer al flujo legacy
+      }
+    }
+
+    const status = lead.status;
+    const quoteCode = lead.quote_code;
+
+    // ── waiting_matricula — espera foto de matrícula ───────────────────────
+    if (status === 'waiting_matricula' && mediaUrl && type === 'image') {
+      await enviarWhatsApp(userId, '📸 Recibí tu matrícula. Analizando con IA... un momento 🔍');
+      const analysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', { documentType: DOCUMENT_TYPES.VEHICLE_REGISTRATION });
+      if (!analysis.success) {
+        await enviarWhatsApp(userId, '⚠️ No pude leer la matrícula.\n\nEnvíame los datos en texto:\n📋 *Marca, modelo, año y valor del vehículo*');
+        return true;
+      }
+      const vd = extractVehicleData(analysis.analysis);
+      const vData = vd.success ? vd.data : {};
+      await createOrUpdateInsuranceLead({
+        quoteCode,
+        userPhone: userId,
+        status: 'waiting_cedula',
+        vehicleBrand: vData.brand,
+        vehicleModel: vData.model,
+        vehicleYear: vData.year,
+        commercialValue: vData.commercial_value || vData.recommended_sum,
+        plate: vData.plate,
+        motor: vData.motor,
+        chasis: vData.chasis,
+      });
+      const msg = [
+        `✅ *Matrícula registrada* 🚗`,
+        ``,
+        vData.brand ? `🚗 *${[vData.brand, vData.model].filter(Boolean).join(' ')} ${vData.year || ''}*` : '',
+        vData.commercial_value ? `💵 Valor: $${Number(vData.commercial_value).toLocaleString()}` : '',
+        ``,
+        `Ahora necesito tu *cédula de identidad* (NO licencia).`,
+        `Envía una foto clara de tu cédula 🪪`,
+      ].filter(l => l !== '').join('\n');
+      await enviarWhatsApp(userId, msg);
+      await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'ADRIANA' });
+      return true;
+    }
+
+    // ── waiting_cedula — espera foto de cédula (NO licencia) ──────────────
+    if (status === 'waiting_cedula' && mediaUrl && type === 'image') {
+      await enviarWhatsApp(userId, '📸 Recibí tu cédula. Verificando identidad... 🔍');
+      const analysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', { documentType: DOCUMENT_TYPES.ID_CARD });
+      const cedula = analysis.success ? (analysis.analysis?.match(/\b\d{10}\b/)?.[0] || null) : null;
+      const clientName = analysis.success ? (analysis.analysis?.match(/(?:nombre|name)[:\s]+([A-ZÁÉÍÓÚÑ ]+)/i)?.[1]?.trim() || profile.name || null) : (profile.name || null);
+
+      await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_competitor', cedula, clientName });
+      const msg = [
+        `✅ *Cédula registrada* 🪪`,
+        cedula ? `📋 Cédula: ${cedula}` : '',
+        ``,
+        `¿Tienes cotizaciones de otras aseguradoras?`,
+        `Envía las fotos (puedes enviar varias) o escribe *OMITIR* para continuar 📊`,
+      ].filter(l => l !== '').join('\n');
+      await enviarWhatsApp(userId, msg);
+      await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'ADRIANA' });
+      return true;
+    }
+
+    // ── waiting_competitor — acepta fotos competencia o texto OMITIR ──────
+    if (status === 'waiting_competitor') {
+      const isOmit = processedText && /omitir|saltar|skip|no tengo|ninguna/i.test(processedText);
+      const isCompetitorImage = mediaUrl && type === 'image';
+
+      if (isOmit || isCompetitorImage) {
+        let competitorQuotes = lead.competitor_quotes || [];
+
+        if (isCompetitorImage) {
+          await enviarWhatsApp(userId, '📸 Analizando cotización de la competencia... 🔍');
+          const analysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', { documentType: DOCUMENT_TYPES.COMPETITOR_QUOTE || 'competitor_quote' });
+          if (analysis.success && analysis.analysis) {
+            const priceMatch = analysis.analysis.match(/\$[\d,]+(?:\.\d{2})?/);
+            const nameMatch  = analysis.analysis.match(/(?:aseguradora|empresa|compañía)[:\s]+([^\n,]+)/i);
+            competitorQuotes.push({
+              nombre: nameMatch?.[1]?.trim() || 'Competidor',
+              prima_anual: priceMatch?.[0] || 'N/A',
+              raw: analysis.analysis.slice(0, 300),
+            });
+          }
+          await saveCompetitorQuotes(quoteCode, competitorQuotes);
+          // Ask for more or continue
+          const msg = `✅ Cotización de competencia registrada.\n\n¿Tienes más cotizaciones para comparar? Envía otra foto o escribe *OMITIR* para continuar.`;
+          await enviarWhatsApp(userId, msg);
+          return true;
+        }
+
+        // Calcular prima y enviar cotización comparativa
+        const value = lead.commercial_value || 0;
+        const year  = lead.vehicle_year || 2020;
+        const cat   = inferVehicleCategory(`${lead.vehicle_brand || ''} ${lead.vehicle_model || ''}`);
+        const premiumResult = calculateVehiclePremium({ commercialValue: Number(value), vehicleYear: Number(year), vehicleCategory: cat, coverage: 'standard' });
+
+        const clientEmail = lead.email || '';
+        const clientName  = lead.client_name || profile.name || userId;
+        const brandModel  = [lead.vehicle_brand, lead.vehicle_model].filter(Boolean).join(' ') || 'Vehículo';
+
+        if (premiumResult.success && clientEmail) {
+          const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
+            nombre: clientName,
+            marca: lead.vehicle_brand, modelo: lead.vehicle_model, anio: lead.vehicle_year,
+            placa: lead.plate, valor_asegurado: `$${Number(value).toLocaleString()}`,
+            vaz_prima_anual: `$${premiumResult.annual_total || premiumResult.annualPremium}`,
+            vaz_prima_mensual: `$${Math.round((premiumResult.annual_total || premiumResult.annualPremium) / 12)}`,
+            vaz_deducible: `${premiumResult.deductiblePct || 7}% (Taller VAZ)`,
+            analisis_broker: `${clientName.split(' ')[0]}, analicé tu vehículo y VAZ Seguros tiene la tarifa más competitiva del mercado para tu ${brandModel}.`,
+            competitors: competitorQuotes.map(c => ({
+              nombre: c.nombre, plan: c.plan || 'Plan estándar',
+              prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',
+              deducible: c.deducible || 'N/A', asistencia: c.asistencia || '', amparo: c.amparo || '',
+            })),
+            fecha_cotizacion: new Date().toLocaleDateString('es-EC'),
+            bot_phone: process.env.BOT_PHONE || '593994837117',
+            adriana_email: process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
+            adriana_phone: process.env.ADRIANA_PHONE || '+593 987 770 788',
+          });
+          await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html })
+            .catch(err => console.error('[ADRIANA-V2] ⚠️ Email error:', err));
+        }
+
+        const waMsg = [
+          `✅ *¡Cotización lista!* 🛡️`,
+          ``,
+          `🚗 *${brandModel} ${lead.vehicle_year || ''}*`,
+          `💵 Valor: $${Number(value).toLocaleString()}`,
+          premiumResult.success ? `💰 Prima VAZ anual: *$${premiumResult.annual_total || premiumResult.annualPremium}*` : '',
+          premiumResult.success ? `📊 Deducible: ${premiumResult.deductiblePct || 7}%` : '',
+          ``,
+          clientEmail ? `📧 Te envié la comparativa detallada por email.` : '',
+          ``,
+          `Para aceptar, responde *ACEPTO* 🤝`,
+          `Ref: *${quoteCode}*`,
+        ].filter(l => l !== '').join('\n');
+
+        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'quoted', quotedPremium: premiumResult.annual_total || premiumResult.annualPremium });
+        await enviarWhatsApp(userId, waMsg);
+        await saveConversationMessage(userId, { role: 'assistant', content: waMsg, agent: 'ADRIANA' });
+        return true;
+      }
+    }
+
+    // ── quoted — espera "ACEPTO" o "QUIERO CAMBIAR" ────────────────────────
+    if (status === 'quoted' && processedText) {
+      if (/acepto|acepta|acepta|de acuerdo|ok|sí quiero|si quiero/i.test(processedText)) {
+        await updateLeadStatus(quoteCode, 'accepted', {
+          client_name: lead.client_name || profile.name,
+        });
+
+        // Notificar a Diego
+        try {
+          const { notifyAdrianaAccepted } = await import('../../servicios/notification-service.js');
+          await notifyAdrianaAccepted({
+            clientName: lead.client_name || profile.name || userId,
+            marca: lead.vehicle_brand, modelo: lead.vehicle_model, anio: lead.vehicle_year,
+            primaAnual: lead.quoted_premium, quoteCode,
+          });
+        } catch {}
+
+        const msg = [
+          `🎉 *¡Excelente decisión!* Tu seguro está en proceso.`,
+          ``,
+          `Ref: *${quoteCode}*`,
+          ``,
+          `Para completar la emisión necesito algunos datos adicionales.`,
+          `¿Cuál es tu *estado civil*? (Soltero/Casado/Divorciado/Viudo)`,
+        ].join('\n');
+        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_kyc' });
+        await enviarWhatsApp(userId, msg);
+        await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'ADRIANA' });
+        return true;
+      }
+    }
+
+    // ── waiting_kyc — recopilación KYC conversacional ─────────────────────
+    if (status === 'waiting_kyc' && processedText) {
+      const kycData = {};
+      // Estado civil
+      if (!lead.kyc_estado_civil && /soltero|casado|divorciado|viudo/i.test(processedText)) {
+        kycData.estadoCivil = processedText.match(/soltero|casado|divorciado|viudo/i)[0].toUpperCase();
+        const msg = `✅ Estado civil registrado.\n\n¿Cuál es tu *dirección de domicilio*? (ej: Av. República del Salvador N34-183, Quito)`;
+        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, ...kycData.estadoCivil ? { status: 'waiting_kyc' } : {} });
+        const { saveKYCData } = await import('../../database/adrianaRepository.js');
+        await saveKYCData(quoteCode, kycData);
+        await enviarWhatsApp(userId, msg);
+        return true;
+      }
+      // Dirección
+      if (lead.kyc_estado_civil && !lead.kyc_direccion && processedText.length > 10) {
+        const { saveKYCData } = await import('../../database/adrianaRepository.js');
+        await saveKYCData(quoteCode, { direccion: processedText });
+        const msg = [
+          `✅ Datos KYC registrados. Adriana coordinará la emisión con VAZ Seguros.`,
+          ``,
+          `📋 Ref: *${quoteCode}*`,
+          `⏱️ Recibirás confirmación en 24-48h laborables.`,
+        ].join('\n');
+        await updateLeadStatus(quoteCode, 'accepted');
+        await enviarWhatsApp(userId, msg);
+        await saveConversationMessage(userId, { role: 'assistant', content: msg, agent: 'ADRIANA' });
+        return true;
+      }
+    }
+
+    return false;
+  } catch (err) {
+    console.error('[ADRIANA-V2] ❌ Error en handleAdrianaFlow:', err);
+    return false;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────
    Exports

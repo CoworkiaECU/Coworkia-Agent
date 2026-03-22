@@ -703,6 +703,178 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
 </html>`;
 }
 
+// ─── TEMPLATE: ADRIANA COMPARISON V2 ─────────────────────────────────────────
+
+/**
+ * 🛡️ Email comparativo VAZ Seguros V2 — con tabla de competidores dinámica
+ *
+ * Compatible con el caso real Javier Troya (SEG-DEMO-0011).
+ *
+ * @param {object} data
+ * @param {string}   data.nombre             — Nombre completo del cliente
+ * @param {string}   [data.marca]            — Marca del vehículo
+ * @param {string}   [data.modelo]           — Modelo del vehículo
+ * @param {number|string} [data.anio]        — Año
+ * @param {string}   [data.placa]            — Placa
+ * @param {string}   [data.valor_asegurado]  — Ej: "$42,000"
+ * @param {string}   [data.vaz_prima_anual]  — Ej: "$1,101"
+ * @param {string}   [data.vaz_prima_mensual]— Ej: "$110"
+ * @param {string}   [data.vaz_deducible]    — Ej: "7% (Taller VAZ)"
+ * @param {string}   [data.analisis_broker]  — Párrafo análisis personalizado
+ * @param {Array}    [data.competitors]      — Filas de competidores (puede ser [])
+ * @param {string}   [data.fecha_cotizacion] — Fecha formatted
+ * @param {string}   [data.bot_phone]        — Número WA bot
+ * @param {string}   [data.adriana_email]    — Email de Adriana
+ * @param {string}   [data.adriana_phone]    — Teléfono de Adriana
+ */
+export function buildAdrianaComparisonV2HTML({
+  nombre = '',
+  marca = '', modelo = '', anio = '', placa = '',
+  valor_asegurado = '',
+  vaz_prima_anual = '',
+  vaz_prima_mensual = '',
+  vaz_deducible = '7% (Taller VAZ)',
+  analisis_broker = '',
+  competitors = [],
+  fecha_cotizacion = new Date().toLocaleDateString('es-EC'),
+  bot_phone = process.env.BOT_PHONE || '593994837117',
+  adriana_email = process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
+  adriana_phone = process.env.ADRIANA_PHONE || '+593 987 770 788',
+} = {}) {
+  const b           = AGENT_BRANDING.ADRIANA;
+  const firstName   = nombre ? nombre.split(' ')[0] : 'Cliente';
+  const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'Tu vehículo';
+  const placaLabel  = placa ? ` · Placa: ${placa}` : '';
+  const vazEncoded  = encodeURIComponent(`Hola Adriana, acepto la cotización VAZ para mi ${vehicleDesc}`);
+
+  const competitorRows = competitors.length
+    ? competitors.map((c, i) => `
+      <tr class="comp${i}-row" style="background:${i % 2 === 0 ? '#f8fafc' : 'white'}">
+        <td style="padding:12px 16px;font-size:13px;color:#374151;font-weight:600;">${c.nombre || `Competidor ${i + 1}`}</td>
+        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.plan || '—'}</td>
+        <td style="padding:12px 16px;font-size:14px;font-weight:700;color:#dc2626;text-align:center;">${c.prima_anual || '—'}</td>
+        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.prima_mensual || '—'}</td>
+        <td style="padding:12px 16px;font-size:13px;color:#6b7280;text-align:center;">${c.deducible || '—'}</td>
+        <td style="padding:12px 16px;font-size:12px;text-align:center;">${c.asistencia || '—'}</td>
+        <td style="padding:12px 16px;font-size:12px;text-align:center;">${c.amparo || '—'}</td>
+      </tr>`).join('')
+    : '';
+
+  const competitorSection = competitors.length
+    ? `
+    <!-- Tabla competidores -->
+    <div style="margin:24px 0;">
+      <h3 style="font-size:15px;color:#1E3A8A;margin:0 0 12px;font-weight:700;">📊 Comparativa con la Competencia</h3>
+      <div style="border-radius:10px;overflow:auto;border:1.5px solid #e5e7eb;">
+        <table style="width:100%;border-collapse:collapse;min-width:560px;">
+          <thead>
+            <tr style="background:#1E3A8A;">
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:left;">Aseguradora</th>
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Plan</th>
+              <th style="padding:10px 16px;color:#FCD34D;font-size:12px;text-align:center;">Prima Anual</th>
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Mensual</th>
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Deducible</th>
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Asistencia</th>
+              <th style="padding:10px 16px;color:white;font-size:12px;text-align:center;">Amparo</th>
+            </tr>
+          </thead>
+          <tbody>${competitorRows}</tbody>
+        </table>
+      </div>
+    </div>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotización VAZ Seguros — ${firstName}</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="color:rgba(255,255,255,0.8);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:14px;">${b.emoji} SEGPOPULAR · SEGUROS VAZ</div>
+    <h1 style="color:#FCD34D;margin:0;font-size:26px;font-weight:900;line-height:1.2;">Hola ${firstName} 👋</h1>
+    <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:15px;">Tu cotización personalizada está lista</p>
+    <div style="margin-top:14px;background:rgba(255,255,255,0.15);display:inline-block;padding:5px 18px;border-radius:99px;color:rgba(255,255,255,0.9);font-size:12px;">${vehicleDesc}${placaLabel}</div>
+  </div>
+
+  <!-- Body -->
+  <div style="background:white;padding:36px 32px;">
+
+    <!-- Análisis del broker -->
+    ${analisis_broker ? `
+    <div style="background:#eff6ff;border-left:4px solid ${b.primaryColor};border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:24px;">
+      <div style="font-size:12px;color:#1E3A8A;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">💬 Análisis de Adriana</div>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${analisis_broker}</p>
+    </div>` : ''}
+
+    <!-- VAZ — ganador -->
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:12px;padding:24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <span class="badge-best" style="display:inline-block;background:#16a34a;color:white;padding:4px 14px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">✅ MEJOR OPCIÓN</span>
+          <h2 style="margin:8px 0 0;font-size:20px;font-weight:800;color:#1E3A8A;">VAZ Seguros · Plan Ensigna</h2>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Prima Anual</div>
+          <div style="font-size:32px;font-weight:900;color:#16a34a;line-height:1;">${vaz_prima_anual || '—'}</div>
+          ${vaz_prima_mensual ? `<div style="font-size:13px;color:#6b7280;">${vaz_prima_mensual}/mes</div>` : ''}
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">
+        <tr>
+          <td style="padding:6px 0;width:50%;">🔧 Deducible</td>
+          <td style="padding:6px 0;font-weight:600;">${vaz_deducible}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;">🚐 Asistencia vial 24/7</td>
+          <td style="padding:6px 0;font-weight:600;">✅ Ilimitada (grúa accidente)</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;">🏠 Amparo Patrimonial</td>
+          <td style="padding:6px 0;font-weight:600;">✅ Incluido sin costo</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;">📋 Valor asegurado</td>
+          <td style="padding:6px 0;font-weight:600;">${valor_asegurado}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${competitorSection}
+
+    <!-- CTA aceptar -->
+    <div style="text-align:center;margin:28px 0 20px;">
+      <a href="https://wa.me/${bot_phone}?text=${vazEncoded}"
+         style="display:inline-block;background:#1E3A8A;color:#FCD34D;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;box-shadow:0 4px 18px rgba(30,58,138,0.35);">
+        ✅ ACEPTO — Quiero este seguro →
+      </a>
+      <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;">Responderé tu WhatsApp en minutos para coordinar la emisión</p>
+    </div>
+
+    <!-- Info footer -->
+    <div style="background:#f9fafb;border-radius:10px;padding:14px 20px;font-size:12px;color:#6b7280;text-align:center;">
+      ${valor_asegurado ? `Vehículo asegurado: <strong style="color:#374151;">${vehicleDesc}</strong> · Valor: <strong style="color:#374151;">${valor_asegurado}</strong><br>` : ''}
+      ${nombre ? `Cliente: <strong style="color:#374151;">${nombre}</strong><br>` : ''}
+      Cotización del ${fecha_cotizacion} · ${adriana_email} · ${adriana_phone}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#1E3A8A;padding:28px 24px;text-align:center;border-radius:0 0 12px 12px;">
+    <div style="color:#FCD34D;font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">🛡️ SegPopular Ecuador</div>
+    <div style="color:rgba(255,255,255,0.75);font-size:12px;">Protegemos lo que más importa · Tu asesora: Adriana</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
 // ─── DISPATCHER CENTRAL ──────────────────────────────────────────────────────
 
 /**
@@ -725,6 +897,7 @@ export function buildEmailTemplate(agent, type, data) {
     ENZO_D3:                  () => buildEnzoD3HTML(data),
     ENZO_D7:                  () => buildEnzoD7HTML(data),
     ADRIANA_COMPARISON:       () => buildAdrianaComparisonHTML(data),
+    ADRIANA_COMPARISON_V2:    () => buildAdrianaComparisonV2HTML(data),
   };
 
   const builder = builders[key];

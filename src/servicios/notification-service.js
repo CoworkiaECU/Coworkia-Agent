@@ -16,8 +16,9 @@
 import https from 'https';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const PHONE  = process.env.DIEGO_PERSONAL_PHONE || '+593987770788';
-const TOKEN  = process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_KEY;
+// Leemos en runtime (no en import-time) para que dotenv ya esté cargado
+const getPhone = () => process.env.DIEGO_PERSONAL_PHONE || '+593987770788';
+const getToken = () => process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_KEY;
 
 // ─── Transport ────────────────────────────────────────────────────────────────
 /**
@@ -26,6 +27,9 @@ const TOKEN  = process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_KEY;
  * @returns {Promise<{ok: boolean, id?: string, error?: string}>}
  */
 async function _send(message) {
+  const TOKEN = getToken();
+  const PHONE = getPhone();
+
   if (!TOKEN) {
     console.warn('[NOTIFY] ⚠️ WASSENGER_TOKEN no configurado — notificación omitida');
     return { ok: false, error: 'NO_TOKEN' };
@@ -152,6 +156,34 @@ export async function notifyCriticalError(context, error) {
     await _send(msg);
   } catch (err) {
     console.warn('[NOTIFY] notifyCriticalError error:', err.message);
+  }
+}
+
+/**
+ * 🛡️ Adriana — Lead aceptó la cotización de seguro.
+ * Diego recibe aviso inmediato para coordinar KYC + emisión con VAZ.
+ * @param {{ clientName?: string, marca?: string, modelo?: string, anio?: string|number, primaAnual?: number|string, quoteCode?: string }} data
+ */
+export async function notifyAdrianaAccepted({ clientName = 'Cliente', marca = '', modelo = '', anio = '', primaAnual = '', quoteCode = '' } = {}) {
+  try {
+    const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'Vehículo';
+    const prima = primaAnual ? `$${Number(primaAnual).toLocaleString()}` : '—';
+    const msg = [
+      `🛡️ *ADRIANA — Nuevo Seguro Aceptado!*`,
+      ``,
+      `👤 Cliente: *${clientName}*`,
+      `🚗 Vehículo: ${vehicleDesc}`,
+      `💰 Prima anual: *${prima}*`,
+      `🏢 Aseguradora: VAZ Seguros`,
+      quoteCode ? `📋 Ref: ${quoteCode}` : '',
+      ``,
+      `Siguiente paso: coordinar KYC y emisión`,
+      `Dashboard: https://coworkia-agent.herokuapp.com/adriana-seguros.html`,
+    ].filter(l => l !== '').join('\n');
+
+    await _send(msg);
+  } catch (err) {
+    console.warn('[NOTIFY] notifyAdrianaAccepted error:', err.message);
   }
 }
 

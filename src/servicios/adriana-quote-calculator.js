@@ -102,7 +102,7 @@ export function calculateVehiclePremium({
   const fees = FIXED_COSTS.emission_fee + FIXED_COSTS.super_fee + FIXED_COSTS.administrative;
 
   const annualTotal = Math.round(basePremium + iva + fees);
-  const monthlyInstallment = Math.round(annualTotal / 10); // 10 cuotas (Ecuador)
+  const monthlyInstallment = Math.round(annualTotal / 12); // hasta 12 cuotas (Ecuador)
 
   // vehicleAge sigue calculándose para datos informativos
   const currentYear = new Date().getFullYear();

@@ -868,6 +868,24 @@ export function buildAdrianaComparisonV2HTML({
 
     ${competitorSection}
 
+    <!-- Beneficios VAZ Asistencia -->
+    <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:20px 24px;margin-bottom:22px;">
+      <div style="font-size:11px;color:#0369a1;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;">🛡️ LO QUE INCLUYE TU PÓLIZA VAZ — Sin costo adicional</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;color:#374151;">
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Grúa ilimitada</strong> en accidente ($300/evento)</span></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Auxilio vial</strong> · Llanta, corriente, gasolina</span></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Cerrajería</strong> · Te quedaste sin llaves</span></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Asistencia legal</strong> en accidentes</span></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Conductor designado</strong> (si toma licor)</span></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-weight:900;">✓</span> <span><strong>Llave protegida</strong> en caso de robo</span></div>
+      </div>
+      <!-- Auto sustituto — beneficio destacado -->
+      <div style="margin-top:14px;background:white;border-radius:8px;padding:12px 16px;border-left:4px solid #0369a1;">
+        <div style="font-size:12px;font-weight:800;color:#0369a1;margin-bottom:4px;">🚗 AUTO SUSTITUTO — Hasta 2 veces al año</div>
+        <div style="font-size:12px;color:#374151;">Si tu vehículo está más de 3 días en el taller, <strong>te damos un auto de reemplazo</strong> en las principales ciudades del Ecuador. ${valorNum >= 40000 ? 'Con tu vehículo (<strong>$' + valorNum.toLocaleString('es-EC') + '</strong>) te corresponds un <strong>SUV compacto manual</strong> (Kia Sonet o similar).' : 'Te corresponde un <strong>compacto</strong> (Kia Soluto o similar).'}</div>
+      </div>
+    </div>
+
     <!-- CTA Principal -->
     <div style="text-align:center;margin:32px 0 24px;">
       <a href="https://wa.me/${bot_phone}?text=${vazEncoded}"

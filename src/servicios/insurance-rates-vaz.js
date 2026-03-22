@@ -244,6 +244,28 @@ export const VAZ_ASISTENCIA = {
     limit: 'sin límite',
     events_per_year: 'sin límite',
   },
+  // --- Servicios en viaje (a más de 25 km de residencia) ---
+  hotel: {
+    label: 'Alojamiento por Inmovilización del Vehículo',
+    description: 'Si tu vehículo no puede repararse el mismo día y estás a más de 25 km de casa',
+    limit_per_night_usd: 75,
+    max_nights: 3,
+    max_occupants: 5,
+    events_per_year: 3,
+  },
+  auto_sustituto: {
+    label: 'Auto Sustituto',
+    description: 'Vehículo de reemplazo mientras tu auto está en el taller',
+    tiers: [
+      { max_value_usd: 39999, category: 'Compacto (Kia Soluto o similar)' },
+      { min_value_usd: 40000, category: 'Compacto SUV Manual (Kia Sonet, Chevrolet S-Cross o similar)' },
+    ],
+    min_siniestro_usd: 1200,    // siniestro mínimo para activar
+    min_repair_days: 3,          // reparación debe superar 3 días laborables
+    events_per_year: 2,
+    delivery_hours: 48,          // entrega en máx 48h tras reporte
+    cities: ['Guayaquil', 'Quito', 'Cuenca', 'Manta', 'Santo Domingo', 'Ambato', 'Loja', 'Machala'],
+  },
 };
 
 // ─────────────────────────────────────────────────────────────

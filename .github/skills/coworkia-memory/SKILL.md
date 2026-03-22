@@ -13,66 +13,51 @@ Este skill contiene la memoria completa del proyecto Coworkia Agent: arquitectur
 
 ---
 
-## � PROTOCOLO DE INICIO DE SESIÓN
+## 🚀 PROTOCOLO DE INICIO DE SESIÓN
 
 **Cada vez que Diego inicia una sesión de trabajo, el agente DEBE:**
 
-### 1. Configurar Workspace en Dos Ventanas
-```
-┌─────────────────────┬─────────────────────┐
-│  PLAN DE VUELO      │   CHAT ACTIVO       │
-│  (archivo .md)      │   (conversación)    │
-│                     │                     │
-│  - Plan del día     │   - Work in         │
-│  - Tareas           │     progress        │
-│  - Checkpoints      │   - Requests        │
-│                     │   - Updates         │
-└─────────────────────┴─────────────────────┘
-```
-
-### 2. Abrir Automáticamente Estos Archivos:
-
-**Panel Izquierdo** (Archivo de contexto):
-- **Prioridad 1**: `planes-de-vuelo/plan-vuelo-[fecha actual].md`
-- **Prioridad 2** (si no existe plan del día): `planes-de-vuelo/plan-vuelo-[último disponible].md`
-- **Prioridad 3** (si trabaja en skills): `.github/skills/coworkia-memory/SKILL.md`
-
-**Panel Derecho**: 
-- **Chat activo** (siempre visible)
-
-### 3. Saludo de Inicio de Sesión
-
-Al abrir, el agente debe decir:
+### 1. Cargar contexto automáticamente (NO esperar que Diego explique nada)
 
 ```
-¡Hola Diego! 👋
-
-📋 Plan de vuelo cargado: [nombre del archivo]
-🧠 Memoria del proyecto cargada
-🎯 Listo para trabajar
-
-¿Continuamos donde lo dejamos o hay algo nuevo? 🚀
+PASO 1 → Este skill ya está cargado → leer sección "Última Sesión" al final
+PASO 2 → Leer planes-de-vuelo/plan-vuelo-22mar.md (último plan con pendientes)
+PASO 3 → Presentar saludo con resumen de estado
 ```
+
+### 2. Saludo de inicio obligatorio
+
+Al abrir, el agente dice:
+
+```
+¡Hola Diego! 🤖
+
+📋 Última sesión: 22 Mar 2026 — Aurora CRM Autopilot v1036
+✅ Completado: Tab Interesados + Campañas WA + Casillero pago efectivo
+
+🎯 Próxima tarea inmediata:
+   → Fase 3 Aurora: métricas visuales (esta semana vs. semana pasada)
+   → Entrenamiento bot Aurora (mejora de respuestas)
+
+¿Continuamos con Fase 3 o hay algo nuevo? 🚀
+```
+
+### 3. Regla de contexto total
+
+**NUNCA** preguntar a Diego cosas como:
+- "¿En qué estamos trabajando?"
+- "¿Cuál es el proyecto?"
+- "¿Qué hace Aurora?"
+
+Si no sabes algo, **busca en este skill o en los archivos del proyecto** antes de preguntar.
 
 ### 4. Verificación de Continuidad
 
 Antes de empezar trabajo nuevo:
-- ✅ Leer plan de vuelo actual
-- ✅ Verificar últimos checkpoints
-- ✅ Revisar pendientes del día anterior
-- ✅ Preguntar si hay cambios de prioridad
-
-### 5. Regla de Dos Archivos Siempre Visibles
-
-**NUNCA** trabajar solo con el chat. **SIEMPRE** tener:
-1. **Contexto escrito** (plan de vuelo o skill)
-2. **Chat activo** para interacción
-
-Esto permite:
-- 📊 Ver progreso en tiempo real
-- ✅ Marcar tareas completadas
-- 🔄 Mantener contexto compartido
-- 📝 Documentar mientras trabajamos
+- ✅ Leer sección "Última Sesión" al final de este skill
+- ✅ Leer plan de vuelo 22mar (sección pendientes)
+- ✅ Verificar si Diego tiene nuevas prioridades
+- ✅ Proponer siguiente bloque según pendientes
 
 ---
 ## 🎉 HITOS IMPORTANTES DEL PROYECTO
@@ -497,8 +482,16 @@ ADD COLUMN IF NOT EXISTS damage_analysis JSONB;
 - ✅ Confirmaciones con timeout (30 min)
 - ✅ Emails de confirmación con QR
 - ✅ Procesamiento de pagos
-- ✅ Follow-ups automáticos (día anterior, 5pm)
+- ✅ Follow-ups automáticos +1h y D+7 (cron cada 15 min / 10am Ecuador)
 - ✅ Códigos con prefijo `AUR-`
+- ✅ **Dashboard Aurora completo** (`/aurora-reservas.html`) con 4 tabs:
+  - Historial (tabla con filtros, stepper, follow-up manual +1h/D+7)
+  - Prospectos (inteligencia de prospectos, copiar lista campaña)
+  - Conversaciones (historial WA por usuario)
+  - 🔥 Interesados (3 grupos: parciales, inactivos 30d, cancelados)
+- ✅ **Registro pago efectivo inline** (casillero en col MONTO para `pending_efectivo`)
+- ✅ **Campañas WA masivas** por grupo (modal + send endpoint)
+- ✅ Pay-chips CSS (paid/pending/waived/free) en columna PAGO
 
 #### Aluna (Membresías)
 - ✅ Captura automática por keywords (`plan`, `membresía`, `mensual`, `oficina`, `cowork`)
@@ -515,55 +508,78 @@ ADD COLUMN IF NOT EXISTS damage_analysis JSONB;
 - ✅ Cotizaciones automáticas
 - ✅ System message handling
 - ✅ Emails con fotos embebidas (CID)
-- ✅ Footer correcto en emails
+- ✅ CTAs persuasivos post-cotización
+- ✅ Follow-ups D+2 (10am) y D+7 (11am Ecuador) automáticos
+- ✅ Dashboard `/axel-cotizaciones.html` con dropdown status + botón 📲 WA
+
+#### Adriana (Seguros)
+- ✅ Cotizaciones seguros vehiculares con calculator VAZ
+- ✅ Vision AI: extrae datos de matrícula, cédula, peritaje, cotización competidor
+- ✅ Email comparativo HTML (`/adriana-cotizacion.html`)
+- ✅ Dashboard `/adriana-dashboard.html`
+- ✅ Follow-ups S1 D+1 (10am), S2 D+3 (11:30am), S3 D+7 (9:30am Ecuador)
+- ✅ Regla: VAZ = proveedor (nunca nombrar al cliente), SegPopular = broker visible
 
 #### Otros Agentes
-- ✅ ENZO: Boss commands con OpenAI parser, emails con logo real
-- ✅ ADRIANA: Cotizaciones de seguros estructuradas
-- ✅ GABI: Consultoría legal/financiera
-- ✅ PAULA: Bienes raíces con handoff automático por keywords
+- ✅ ENZO: Boss commands con OpenAI parser, emails con logo real, follow-ups D+1/D+3/D+7
+- ✅ GABI: Consultoría legal/financiera, recibos de pago por email (`sendPaymentReceipt`)
+- ✅ PAULA: Bienes raíces con handoff automático por keywords, dashboard + botón WA
 - ✅ ANGELA: Salud y bienestar
 
 #### Infraestructura
 - ✅ Orquestador con handoffs bidireccionales
 - ✅ Sistema de formularios persistentes
 - ✅ Memoria conversacional (15 msgs coworking / 8 msgs externos)
-- ✅ Rate limiting
-- ✅ Deduplicación de mensajes
+- ✅ Rate limiting, deduplicación de mensajes
 - ✅ Circuit breakers para OpenAI y Wassenger
 - ✅ Manejo de idiomas (español, inglés, portugués)
-- ✅ Boss commands para todos los agentes
+- ✅ Boss commands para todos los agentes (parser NLP OpenAI)
 - ✅ BaseRepository para código DRY
 - ✅ date-time-parser.js centralizado (timezone Ecuador)
 - ✅ code-generator.js con prefijos por agente
+- ✅ notification-service.js (highIntent, dailyReport, criticalError, autopilotComplete)
+- ✅ health-monitor.js (check OpenAI + DB cada 5 min, alerta WA tras 2 fallos)
+- ✅ daily-report.js (cron 9AM Ecuador)
+- ✅ post-commit hook → WA a Diego con hash + archivos en cada commit
+- ✅ email-template-system.js centralizado (5 builders: Aurora confirm/rebooking, Enzo D1/D3/D7, Adriana comparison)
+- ✅ Comandos WhatsApp desde celular: STATUS, PARA, SIGUIENTE, CANCELA (solo número de Diego)
 
 ### Features Pendientes (🔵 BACKLOG)
 
-#### Dashboard Aluna (Pausado - Campaña al Aire)
-- 🔵 Botones de acción manual (enviar D+1, D+3 on-demand)
-- 🔵 Modal de campañas con templates editables
-- 🔵 Filtros avanzados por status
-- 🔵 Exportación a CSV
+#### Aurora Dashboard — Fase 3 CRM (PRÓXIMO al volver)
+- 🔵 **A1**: Métricas esta semana vs. semana pasada (endpoint `GET /api/aurora/weekly-metrics` + tarjeta ↑↓)
+- 🔵 **A2**: Badges espacio más pedido este mes (Hot Desk / Sala / Escritorio + conteo)
+- 🔵 **A3**: Alerta naranja si >5 en grupo "Se fueron a la mitad" sin seguimiento
+- 🔵 **A4**: Chip de nuevos interesados esta semana en tab 🔥
+- 🔵 **D1**: Botón "📲 Recordar pago" en filas `pending_efectivo`
 
-#### Axel v2 (En Diseño)
-- 🔵 CTAs persuasivos en emails
-- 🔵 Agendamiento de calendario Coworkia
-- 🔵 Recordatorios automáticos de citas
+#### Aurora — Entrenamiento Bot
+- 🔵 Mejorar prompt aurora.js: tono más cálido, confirmaciones más claras
+- 🔵 Validar conflictos de horario mismo cliente
+- 🔵 Mejor respuesta cuando no hay disponibilidad (sugerir alternativas)
 
-#### Mejoras Generales (Ideas)
-- 🔵 Webhooks de pago (confirmación automática sin mensaje)
+#### Aurora + Gabi — Recibo Email
+- 🔵 Conectar `PATCH /register-payment` con `sendPaymentReceipt()` de Gabi para envío de recibo formal por email
+- 🔵 Adaptar template de recibo para reservas (actualmente está hecho para membresías Aluna)
+
+#### Enzo — Follow-ups
+- 🔵 Frontend dashboard `/enzo-leads.html` (backend ya está)
+
+#### Adriana — Captura por WA
+- 🔵 Handler wassenger.js Adriana: flujo conversacional foto matrícula → cédula → cobertura → cotizar
+- 🔵 Captura cotizaciones competidores por WA
+
+#### Mejoras Generales
+- 🔵 Exportar tabla Aurora/Aluna a CSV
 - 🔵 Integración con calendario Google
-- 🔵 Sistema de campañas programadas
-- 🔵 Analytics dashboard (métricas de conversión)
 
 ### Versión Actual
-**v930** (14 Mar 2026)
+**v1036** (22 Mar 2026)
 
-**Último trabajo completado**:
-- F5: BaseRepository.js refactoring (-236 líneas)
-- F4: date-time-parser.js centralizado
-- F3: code-generator.js con prefijos AUR/ALU/AXL/etc
-- DEV1: Fixes Axel (system message, secuencial, footer)
+**Último trabajo completado (22 Mar — sesión noche Aurora CRM)**:
+- Aurora Dashboard CRM Autopilot completo (v1032–v1036)
+- Fix input pago efectivo sin flechas spinner
+- Plan de vuelo 22 Mar actualizado con pendientes claros
 
 ---
 
@@ -729,6 +745,42 @@ Cuando un nuevo agente (o Diego en una nueva sesión) arranca:
 
 ---
 
-**Última actualización**: 20 Mar 2026
-**Versión proyecto**: v930
-**Próxima auditoría sugerida**: 27 Mar 2026 (1 semana)
+---
+
+## 📝 Última Sesión: 22 Mar 2026 (noche) — Chat Aurora CRM
+
+**Trabajo completado**:
+- Logos Gabi + Axel: CSS filter trick `brightness(0) opacity(0.45)` para blancos en fondo claro
+- Axel: badge "INGRESOS EN PROCESO" movido de header a barra entre KPIs y pipeline
+- **Aurora CRM Autopilot Fase 1** (v1032): Tab 🔥 Interesados + endpoint `GET /api/aurora/interested-groups` (3 grupos: parciales/inactivos/cancelados)
+- Fix columnas MONTO/PAGO (v1033): pay-chip CSS classes + `formatPrice(false)` evita "Gratis" en no-gratuitos
+- **Aurora CRM Autopilot Fase 2** (v1034): Botones 📣 Campaña por grupo + modal + `POST /api/aurora/send-campaign`
+- **Casillero pago efectivo** (v1035): input inline en col MONTO + `PATCH /register-payment` + WA confirmación al cliente
+- Fix input: `type="text" inputmode="decimal"` sin flechas spinner + acepta coma y punto (v1036)
+
+**Decisiones tomadas**:
+- Input de montos: siempre `type="text" inputmode="decimal"` — nunca `type="number"` (evita flechas spinner inútiles)
+- Parse de montos acepta coma como decimal: `parseFloat(value.replace(',', '.'))`
+- `was_free=true` → mostrar chip Gratis | `was_free=false` + `total_price=0` → mostrar `$0.00` (nunca "Gratis")
+- Gabi se conecta al flujo de pago manual cuando el cliente tiene email registrado
+
+**Próximos pasos al volver**:
+1. 🔥 Fase 3 Aurora: métricas visuales (`/api/aurora/weekly-metrics`)
+2. Entrenamiento bot Aurora (prompt aurora.js)
+3. Conectar pago efectivo → recibo Gabi email
+4. Adriana: captura cotizaciones competidores por WA
+
+**Estado emocional del proyecto**: 🟢 Verde — sistema estable, features CRM Aurora avanzando
+
+**Archivos clave modificados en sesión**:
+- `public/aurora-reservas.html` — tab Interesados + cards + modal campaña
+- `public/js/aurora-dashboard.js` — `renderMontoCell`, `registerPayment`, grupos interesados, campañas
+- `src/express-servidor/endpoints-api/aurora-dashboard.js` — 3 endpoints nuevos
+- `public/gabi-consultas.html`, `public/axel-cotizaciones.html` — logo fix
+- `planes-de-vuelo/plan-vuelo-22mar.md` — actualizado con todo el estado
+
+---
+
+**Última actualización**: 22 Mar 2026
+**Versión proyecto**: v1036
+**Próxima auditoría sugerida**: 29 Mar 2026

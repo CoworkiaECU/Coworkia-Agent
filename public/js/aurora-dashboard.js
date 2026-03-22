@@ -315,8 +315,8 @@ function renderReservationsTable(reservations) {
       <td>${formatDate(r.created_at)}</td>
       <td style="white-space:nowrap;">
         ${!r.followup_1h_sent_at
-          ? `<button style="background:#4ECDC4;color:#0c322c;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h" data-tip="Enviar WA de confirmación 1h después de la reserva">📲 +1h</button>`
-          : '<span style="font-size:10px;color:#4ECDC4;" title="Follow-up +1h ya enviado">✓ +1h</span>'}
+          ? `<button style="background:#2563eb;color:#fff;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="followup-1h" data-tip="Enviar WA de confirmación 1h después de la reserva">📲 +1h</button>`
+          : '<span style="font-size:10px;color:#60a5fa;" title="Follow-up +1h ya enviado">✓ +1h</span>'}
         ${!r.rebook_reminder_sent_at
           ? `<button style="background:#8B5CF6;color:white;border:none;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin:2px;" data-fu-id="${r.id}" data-fu-action="rebooking" data-tip="Enviar recordatorio D+7 para volver a reservar">🔄 D+7</button>`
           : '<span style="font-size:10px;color:#a78bfa;" title="Recordatorio D+7 ya enviado">✓ D+7</span>'}
@@ -367,7 +367,7 @@ const URGENCY_STYLE = {
   urgent: { border: '#dc2626', bg: '#2d0a0a', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
   hot:    { border: '#ea580c', bg: '#2a1205', badge: '<span style="background:#431407;color:#fb923c;border:1px solid #7c2d12;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🔥 HOT</span>' },
   warm:   { border: '#d97706', bg: '#221505', badge: '<span style="background:#422006;color:#f59e0b;border:1px solid #92400e;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🌡 WARM</span>' },
-  cold:   { border: '#4ECDC4', bg: '#062525', badge: '<span style="background:#0c3535;color:#4ECDC4;border:1px solid #0d9488;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
+  cold:   { border: '#60a5fa', bg: '#0a1628', badge: '<span style="background:#0f2040;color:#60a5fa;border:1px solid #2563eb;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
 };
 
 function getWaTemplate(rawTopics, name) {
@@ -412,7 +412,7 @@ function buildProspectCard(p) {
     <div class="prospect-card" data-urgency="${urgency}" data-engagement="${p.engagement}"
       style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.4);border:1px solid #334155;background:#1e293b;display:flex;flex-direction:column;">
       <div style="display:flex;padding:14px 16px;gap:12px;align-items:flex-start;border-left:4px solid ${style.border};background:${style.bg};">
-        <div style="width:40px;height:40px;border-radius:50%;background:#4ECDC4;color:#0c3535;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;color:#f1f5f9;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
           <div style="font-size:12px;color:#64748b;">${phone}</div>
@@ -655,7 +655,7 @@ async function loadConversations() {
           <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
           <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button data-action="open-thread" data-phone="${phone.replace(/"/g,'&quot;')}" data-name="${name.replace(/"/g,'&quot;')}" data-alias="${alias}" style="background:#0d9488;color:#fff;border:none;font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;font-weight:600;" data-tip="Ver historial de mensajes con este usuario">💬 Ver hilo</button>
+            <button data-action="open-thread" data-phone="${phone.replace(/"/g,'&quot;')}" data-name="${name.replace(/"/g,'&quot;')}" data-alias="${alias}" style="background:#1d4ed8;color:#fff;border:none;font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;font-weight:600;" data-tip="Ver historial de mensajes con este usuario">💬 Ver hilo</button>
             <a href="${waLink}" target="_blank" style="background:#0d3b26; color:#4ade80; padding:5px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;border:1px solid #15803d;" data-tip="Abrir WhatsApp con este cliente">WhatsApp</a>
           </td>
         </tr>`;
@@ -692,7 +692,7 @@ async function openThread(phone, name, alias) {
       const isUser = m.role === 'user';
       const time   = m.timestamp ? new Date(m.timestamp).toLocaleString('es-EC', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
       const agentLabel = m.agent || m.intent_reason || null;
-      const agentBubble = agentLabel ? `<small style="color:${isUser ? '#6b7280' : '#4ECDC4'}; font-size:11px;">${agentLabel}</small>` : '';
+      const agentBubble = agentLabel ? `<small style="color:${isUser ? '#6b7280' : '#60a5fa'}; font-size:11px;">${agentLabel}</small>` : '';
       const content = m.content || '';
       if (!content.trim()) return '';
       return `

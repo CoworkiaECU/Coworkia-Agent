@@ -176,43 +176,33 @@
     <!-- HEADER -->
     <div class="dash-header">
       <div class="dash-title">
-        <h1>
-          <img src="/images/logos/adriana.svg" style="height:30px;vertical-align:middle;margin-right:8px;" alt="Adriana SegPopular">
-          Adriana Seguros
-        </h1>
-        <p>Pipeline de cotizaciones · SegPopular S.A. · VAZ Seguros</p>
+        <h1>🛡️ Adriana Seguros</h1>
+        <p>Pipeline de cotizaciones · Broker de seguros vehiculares</p>
       </div>
-      <div class="dash-brands">
-        <img src="/assets/logos/segpopular.png" alt="SegPopular" style="height:26px;opacity:.65;" title="SegPopular S.A.">
-        <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" style="height:26px;opacity:.6;" title="MarketingLab">
-        <button class="btn-demo" id="btn-seed-demo" onclick="seedDemo()" title="Insertar 11 cotizaciones demo para desarrollo y pruebas">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
-          Datos demo
-        </button>
-      </div>
+      <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" style="height:28px;opacity:.6;" data-tip="Powered by MarketingLab">
     </div>
 
     <!-- KPI CARDS -->
     <div class="kpi-grid">
-      <div class="kpi-card">
+      <div class="kpi-card" data-tip="Total de cotizaciones registradas en el sistema">
         <div class="kpi-icon">📋</div>
         <div class="kpi-label">Total Leads</div>
         <div class="kpi-value" id="stat-total">—</div>
         <div class="kpi-sub">Historial completo</div>
       </div>
-      <div class="kpi-card info">
+      <div class="kpi-card info" data-tip="Cotizaciones ingresadas en el mes en curso">
         <div class="kpi-icon">📅</div>
         <div class="kpi-label">Este Mes</div>
         <div class="kpi-value" id="stat-month">—</div>
         <div class="kpi-sub">Mes actual</div>
       </div>
-      <div class="kpi-card success">
+      <div class="kpi-card success" data-tip="Leads que aceptaron la póliza y están activos">
         <div class="kpi-icon">✅</div>
         <div class="kpi-label">Aceptados</div>
         <div class="kpi-value" id="stat-accepted">—</div>
         <div class="kpi-sub" id="stat-conversion">Tasa de conversión</div>
       </div>
-      <div class="kpi-card warning">
+      <div class="kpi-card warning" data-tip="Suma de primas anuales de pólizas aceptadas">
         <div class="kpi-icon">💰</div>
         <div class="kpi-label">Prima Total</div>
         <div class="kpi-value" id="stat-total-premium" style="font-size:22px;">—</div>
@@ -230,21 +220,21 @@
         <span class="auto-badge">3 secuencias · WA + Email · diario</span>
       </div>
       <div class="auto-grid">
-        <div class="auto-card s1">
+        <div class="auto-card s1" data-tip="Día siguiente al envío: WA + email cálido recordando la cotización">
           <div class="auto-seq">S1 — D+1</div>
           <div class="auto-name">Recordatorio cálido</div>
           <div class="auto-time">🕙 10:00 AM · cada día</div>
           <div class="auto-count-val s1" id="auto-count-s1">0</div>
           <div class="auto-desc">leads en ventana actual (20-28h)</div>
         </div>
-        <div class="auto-card s2">
+        <div class="auto-card s2" data-tip="Tercer día: WA urgente + email FOMO 'tu cotización vence HOY'">
           <div class="auto-seq">S2 — D+3</div>
           <div class="auto-name">Urgencia + FOMO</div>
           <div class="auto-time">🕦 11:30 AM · cada día</div>
           <div class="auto-count-val s2" id="auto-count-s2">0</div>
           <div class="auto-desc">leads en ventana actual (68-76h)</div>
         </div>
-        <div class="auto-card s3">
+        <div class="auto-card s3" data-tip="Séptimo día: mensaje final de reconexión + cupón corporativo">
           <div class="auto-seq">S3 — D+7</div>
           <div class="auto-name">Reconexión + Cupón</div>
           <div class="auto-time">🕤 09:30 AM · cada día</div>
@@ -256,12 +246,12 @@
 
     <!-- PIPELINE TABS -->
     <div class="pipeline-tabs">
-      <button class="tab-btn active" data-tab="all"      onclick="setTab('all')">Todos <span class="tab-count" id="tab-count-all">0</span></button>
-      <button class="tab-btn"        data-tab="new"      onclick="setTab('new')">🔵 Nuevos <span class="tab-count" id="tab-count-new">0</span></button>
-      <button class="tab-btn"        data-tab="process"  onclick="setTab('process')">🟡 En proceso <span class="tab-count" id="tab-count-process">0</span></button>
-      <button class="tab-btn"        data-tab="quoted"   onclick="setTab('quoted')">📧 Cotizados <span class="tab-count" id="tab-count-quoted">0</span></button>
-      <button class="tab-btn"        data-tab="accepted" onclick="setTab('accepted')">✅ Aceptados <span class="tab-count" id="tab-count-accepted">0</span></button>
-      <button class="tab-btn"        data-tab="lost"     onclick="setTab('lost')">❌ Perdidos <span class="tab-count" id="tab-count-lost">0</span></button>
+      <button class="tab-btn active" data-tab="all"      onclick="setTab('all')"      data-tip="Todas las cotizaciones">Todos <span class="tab-count" id="tab-count-all">0</span></button>
+      <button class="tab-btn"        data-tab="new"      onclick="setTab('new')"      data-tip="Ingresados recientemente, sin cotización enviada aún">🔵 Nuevos <span class="tab-count" id="tab-count-new">0</span></button>
+      <button class="tab-btn"        data-tab="process"  onclick="setTab('process')"  data-tip="Esperando matrícula, cédula, KYC u otro requisito">🟡 En proceso <span class="tab-count" id="tab-count-process">0</span></button>
+      <button class="tab-btn"        data-tab="quoted"   onclick="setTab('quoted')"   data-tip="Comparación de seguros ya enviada al cliente">📧 Cotizados <span class="tab-count" id="tab-count-quoted">0</span></button>
+      <button class="tab-btn"        data-tab="accepted" onclick="setTab('accepted')" data-tip="Póliza aceptada, cliente asegurado">✅ Aceptados <span class="tab-count" id="tab-count-accepted">0</span></button>
+      <button class="tab-btn"        data-tab="lost"     onclick="setTab('lost')"     data-tip="Lead rechazado o cancelado">❌ Perdidos <span class="tab-count" id="tab-count-lost">0</span></button>
     </div>
 
     <!-- URGENCY ALERT BAR -->

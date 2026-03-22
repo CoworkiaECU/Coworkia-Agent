@@ -132,6 +132,31 @@ function formatPrice(price, allowFree = true) {
   return `$${parseFloat(price).toFixed(2)}`;
 }
 
+// ─── Celda MONTO: muestra precio + formulario inline para pagos pendientes en efectivo
+function renderMontoCell(r) {
+  if (r.was_free) return '<span class="pay-chip pay-free">🎁 Gratis</span>';
+  const price = formatPrice(r.total_price, false);
+  if (r.payment_status === 'pending_efectivo') {
+    const preVal = parseFloat(r.total_price) > 0 ? parseFloat(r.total_price).toFixed(2) : '';
+    return `
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
+        <span style="color:#94a3b8;font-size:12px;">${price}</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <input id="pay-amt-${r.id}" type="number" value="${preVal}" min="0" step="0.01"
+            placeholder="0.00"
+            style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
+                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
+            onkeydown="if(event.key==='Enter') registerPayment(${r.id})">
+          <button onclick="registerPayment(${r.id})"
+            style="background:#16a34a;color:#fff;border:none;padding:3px 9px;border-radius:5px;
+                   font-size:13px;font-weight:700;cursor:pointer;line-height:1.4;"
+            title="Confirmar pago en efectivo">✓</button>
+        </div>
+      </div>`;
+  }
+  return price;
+}
+
 // Formateo de estado de pago
 function getPaymentBadge(paymentStatus, paymentMethod) {
   // Normalizar: combinar status + method cuando aplica
@@ -328,9 +353,7 @@ function renderReservationsTable(reservations) {
         ${r.start_time} - ${r.end_time}<br>
         <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
       </td>
-      <td class="money">
-        ${r.was_free ? '<span class="pay-chip pay-free">🎁 Gratis</span>' : formatPrice(r.total_price, false)}
-      </td>
+      <td class="money">${renderMontoCell(r)}</td>
       <td>${getStatusBadge(r.status)}</td>
       <td>${getPaymentBadge(r.payment_status, r.payment_method)}</td>
       <td>${formatDate(r.created_at)}</td>
@@ -347,6 +370,36 @@ function renderReservationsTable(reservations) {
   
   tableEl.style.display = 'table';
 }
+
+// ─── Registro de pago manual en efectivo ─────────────────────────────────────
+window.registerPayment = async function(id) {
+  const input = document.getElementById(`pay-amt-${id}`);
+  const amount = parseFloat(input?.value);
+  if (!input || isNaN(amount) || amount <= 0) {
+    showToast('⚠️ Ingresa un monto válido para registrar el pago.');
+    return;
+  }
+  const btn = input.nextElementSibling;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await fetch(`/api/aurora/reservations/${id}/register-payment`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      await loadReservations();
+      showToast(`💰 Pago de $${amount.toFixed(2)} registrado${data.waSent ? ' · ✅ WA enviado al cliente' : ''}`);
+    } else {
+      showToast('❌ ' + (data.error || 'No se pudo registrar el pago'));
+      if (btn) { btn.disabled = false; btn.textContent = '✓'; }
+    }
+  } catch (e) {
+    showToast('❌ Error de red al registrar pago');
+    if (btn) { btn.disabled = false; btn.textContent = '✓'; }
+  }
+};
 
 // Resetear filtros
 window.resetFilters = function() {

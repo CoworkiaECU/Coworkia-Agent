@@ -566,4 +566,81 @@ router.post('/send-campaign', async (req, res) => {
   }
 });
 
+// ============================================================================
+// REGISTRO DE PAGO MANUAL (EFECTIVO)
+// ============================================================================
+
+/**
+ * PATCH /api/aurora/reservations/:id/register-payment
+ * Registra pago manual en efectivo: actualiza total_price, payment_status y
+ * envía WA de confirmación al cliente (flujo Gabi).
+ * Body: { amount: number }
+ */
+router.patch('/reservations/:id/register-payment', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+    const parsedAmount = parseFloat(req.body?.amount);
+
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      return res.status(400).json({ ok: false, error: 'Monto inválido' });
+    }
+
+    // Obtener reserva + datos del usuario
+    const reservation = await databaseService.get(`
+      SELECT r.*, u.name AS user_name, u.email AS user_email
+      FROM reservations r
+      LEFT JOIN users u ON u.phone_number = r.user_phone
+      WHERE r.id = $1
+    `, [id]);
+
+    if (!reservation) {
+      return res.status(404).json({ ok: false, error: 'Reserva no encontrada' });
+    }
+    if (reservation.payment_status === 'paid') {
+      return res.status(409).json({ ok: false, error: 'Esta reserva ya fue marcada como pagada' });
+    }
+
+    // Actualizar pago en DB
+    await databaseService.run(`
+      UPDATE reservations
+      SET payment_status = 'paid',
+          total_price    = $1,
+          payment_method = 'efectivo'
+      WHERE id = $2
+    `, [parsedAmount, id]);
+
+    // Enviar WA de confirmación al cliente
+    let waSent = false;
+    if (WASSENGER_TOKEN && reservation.user_phone) {
+      try {
+        const serviceNames = {
+          hotDesk: 'Hot Desk',
+          meetingRoom: 'Sala de Reuniones',
+          deskIndividual: 'Escritorio Individual'
+        };
+        const svcName = serviceNames[reservation.service_type] || reservation.service_type;
+        const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
+        const waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waRes = await fetch('https://api.wassenger.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
+          body: JSON.stringify({ phone: reservation.user_phone, message: waMsg, device: WASSENGER_DEVICE_ID })
+        });
+        const waJson = await waRes.json();
+        waSent = !!waJson.id;
+      } catch (e) {
+        console.warn('[AURORA-API] WA confirmación pago failed:', e.message);
+      }
+    }
+
+    console.log(`[AURORA-API] 💰 Pago registrado: reserva #${id} → $${parsedAmount} efectivo | WA: ${waSent}`);
+    return res.json({ ok: true, message: 'Pago registrado', waSent, amount: parsedAmount });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error en register-payment:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

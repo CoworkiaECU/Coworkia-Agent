@@ -53,7 +53,6 @@ router.get('/reservations', async (req, res) => {
         r.hot_desk_number,
         r.created_at,
         r.confirmed_at,
-        r.updated_at,
         r.followup_1h_sent_at,
         r.rebook_reminder_sent_at
       FROM reservations r

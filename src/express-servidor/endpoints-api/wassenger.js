@@ -1669,7 +1669,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               company: result.empresa || null,
               clientName: result.contacto || 'Cliente',
               email: result.email,
-              phone: null,
+              phone: result.telefono || null, // número del cliente extraído por OpenAI
               budgetRange: result.precio ? `$${result.precio}` : 'Por definir',
               urgency: 'Normal',
               description: `Cotización generada por Big Boss - ${result.nivel || 'Agente IA'}`

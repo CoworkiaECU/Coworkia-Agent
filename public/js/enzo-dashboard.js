@@ -260,12 +260,9 @@ function applyFilters() {
 // ═══ EVENT LISTENERS ═════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore last active tab
+  // Restore last active tab — this also triggers lazy-load for the active tab
   const savedTab = localStorage.getItem('enzo-active-tab') || 'followups';
   switchMainTab(savedTab, /* noSave */ true);
-
-  // Cargar dashboard inicial (proyectos tab)
-  loadDashboard();
   
   // Filtro de estado
   document.getElementById('filter-status').addEventListener('change', (e) => {
@@ -342,21 +339,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ═══ MAIN TAB SWITCHING ═══════════════════════════════════════════════════════
 
+let _proyectosLoaded = false;
+
 window.switchMainTab = function(tab, noSave) {
   const tabs = ['proyectos', 'followups'];
   tabs.forEach(t => {
     const btn = document.getElementById(`etab-${t}`);
     const content = document.getElementById(`tab-${t}`);
     if (btn) btn.classList.toggle('active', t === tab);
-    if (content) content.style.display = t === tab ? '' : 'none';
+    if (content) content.style.display = t === tab ? 'block' : 'none';
   });
 
   if (!noSave) localStorage.setItem('enzo-active-tab', tab);
 
-  // Lazy-load follow-ups on first activation
+  // Lazy-load on first activation of each tab
   if (tab === 'followups' && !_leadsLoaded) {
     _leadsLoaded = true;
     loadLeads();
+  }
+  if (tab === 'proyectos' && !_proyectosLoaded) {
+    _proyectosLoaded = true;
+    loadDashboard();
   }
 };
 

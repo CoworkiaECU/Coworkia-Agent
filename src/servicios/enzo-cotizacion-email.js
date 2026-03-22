@@ -257,10 +257,12 @@ export async function sendEnzoCotizacion(mensajeCompleto, { quoteCode = '' } = {
 
   return {
     ...result,
-    empresa:  datos.empresa,
-    contacto: datos.contacto,
-    email:    datos.email,
-    precio:   datos.precio_desarrollo,
+    empresa:   datos.empresa,
+    contacto:  datos.contacto,
+    email:     datos.email,
+    telefono:  datos.telefono || '',
+    precio:    datos.precio_desarrollo,
+    nivel:     datos.project_title || null,
     quoteCode,
   };
 }

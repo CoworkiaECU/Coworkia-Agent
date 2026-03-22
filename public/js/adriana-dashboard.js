@@ -76,6 +76,32 @@ function updateTabCounts() {
   }
 }
 
+// ── AUTOMATION PANEL ─────────────────────────────────────────────────────────
+function renderAutoPanel() {
+  const now = Date.now();
+  const quotedLeads = allLeads.filter(l => l.status === 'quoted' && l.quote_sent_at);
+  const s1 = quotedLeads.filter(l => { const h=(now-new Date(l.quote_sent_at).getTime())/3600000; return h>=20&&h<=28; });
+  const s2 = quotedLeads.filter(l => { const h=(now-new Date(l.quote_sent_at).getTime())/3600000; return h>=68&&h<=76; });
+  const s3 = quotedLeads.filter(l => { const h=(now-new Date(l.quote_sent_at).getTime())/3600000; return h>=164&&h<=172; });
+
+  [['s1',s1],['s2',s2],['s3',s3]].forEach(([key,arr]) => {
+    const el = document.getElementById(`auto-count-${key}`);
+    if (!el) return;
+    el.textContent = arr.length;
+    el.classList.toggle('has-leads', arr.length > 0);
+  });
+
+  // Urgency: pending leads without followup > 48h
+  const urgentLeads = allLeads.filter(l => {
+    if (!['pending','waiting_matricula','waiting_cedula'].includes(l.status)) return false;
+    return (now - new Date(l.created_at).getTime()) / 3600000 > 48;
+  });
+  const urgencyBar  = document.getElementById('urgency-bar');
+  const urgencyCount= document.getElementById('urgency-count');
+  if (urgencyBar) urgencyBar.style.display = urgentLeads.length > 0 ? 'flex' : 'none';
+  if (urgencyCount) urgencyCount.textContent = urgentLeads.length;
+}
+
 // ── SET TAB ───────────────────────────────────────────────────────────────────
 function setTab(tab) {
   activeTab = tab;
@@ -113,7 +139,8 @@ function renderLeads() {
   document.getElementById('table-count').textContent = `${leads.length} registro${leads.length !== 1 ? 's' : ''}`;
 
   if (leads.length === 0) {
-    container.innerHTML = '<div class="empty">Sin cotizaciones en este segmento.<br><small style="opacity:.5">Usa el botón 🎭 Demo para cargar datos de prueba</small></div>';
+    const isAll = activeTab === 'all';
+    container.innerHTML = `<div class="empty">Sin cotizaciones en este segmento.<br><small style="opacity:.6">${isAll ? 'Presiona <strong>Datos demo</strong> (arriba a la derecha) para cargar cotizaciones de prueba' : 'No hay leads en esta etapa del pipeline'}</small></div>`;
     return;
   }
 
@@ -131,12 +158,14 @@ function renderLeads() {
       </tr></thead>
       <tbody>
         ${leads.map(l => {
-          const vehicle = [l.vehicle_brand, l.vehicle_model].filter(Boolean).join(' ') || '—';
+          const vehicle  = [l.vehicle_brand, l.vehicle_model].filter(Boolean).join(' ') || '—';
+          const isPending = ['pending','waiting_matricula','waiting_cedula'].includes(l.status);
+          const isUrgent  = isPending && (Date.now()-new Date(l.created_at).getTime())/3600000 > 48;
           return `
           <tr>
             <td><span class="code">${l.quote_code || '—'}</span></td>
             <td>
-              <div class="client-name">${l.client_name || '—'}</div>
+              <div class="client-name">${isUrgent?'<span class="urgency-dot" title="⚡ Sin seguimiento más de 48h"></span>':''}${l.client_name || '—'}</div>
               ${l.email ? `<div class="client-sub">✉️ ${l.email}</div>` : ''}
               ${l.phone ? `<div class="client-sub">📱 ${l.phone}</div>` : ''}
             </td>
@@ -248,6 +277,7 @@ async function loadLeads() {
     allLeads = result.data || [];
     updateTabCounts();
     renderLeads();
+    renderAutoPanel();
   } catch (err) {
     console.error('[ADRIANA-DASH] leads error:', err);
     container.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
@@ -302,4 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (action === 'wa')    sendWA(code, btn);
     if (action === 'email') sendComparison(code, btn);
   });
+
+  // Auto-refresh every 5 minutes
+  setInterval(() => refreshAll(), 5 * 60 * 1000);
 });

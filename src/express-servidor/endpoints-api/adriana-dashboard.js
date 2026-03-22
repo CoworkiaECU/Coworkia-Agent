@@ -202,7 +202,7 @@ router.post('/leads/:code/send-comparison', async (req, res) => {
     let competitors = [];
     try { competitors = l.competitor_quotes ? JSON.parse(l.competitor_quotes) : []; } catch {}
 
-    const html = buildEmailTemplate('adriana', 'ADRIANA_COMPARISON_V2', {
+    const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
       nombre:          l.client_name || 'Cliente',
       marca:           l.vehicle_brand || '',
       modelo:          l.vehicle_model || '',

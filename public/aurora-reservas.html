@@ -319,6 +319,34 @@
       z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.5);
     }
     [data-tip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+
+    /* ── stats skeleton loader ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .stat-loading {
+      background: linear-gradient(90deg, #1e293b 25%, #2d3f57 50%, #1e293b 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      color: transparent !important;
+      min-height: 36px;
+      min-width: 60px;
+      display: inline-block;
+    }
+
+    /* ── urgency pulse for urgent prospects ── */
+    @keyframes urgency-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.6); }
+      50%       { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+    }
+    .prospect-badge-urgent {
+      animation: urgency-pulse 1.8s ease-in-out infinite;
+    }
+
+    /* ── last refreshed timestamp ── */
+    #last-refreshed { font-size: 11px; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -369,6 +397,7 @@
           <span style="background:#0f2040;color:#60a5fa;border:1px solid #2563eb;padding:3px 12px;border-radius:99px;font-size:12px;font-weight:700;vertical-align:middle;">🟢 ACTIVO</span>
         </h1>
         <p>Pipeline de reservas · Inteligencia de prospectos · Conversaciones</p>
+        <div id="last-refreshed">Cargando...</div>
       </div>
       <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" style="height:32px;opacity:0.7;">
     </div>
@@ -719,6 +748,6 @@
   </svg>
 </button>
 
-<script src="/js/aurora-dashboard.js?v=20260323d"></script>
+<script src="/js/aurora-dashboard.js?v=20260323e"></script>
 </body>
 </html>

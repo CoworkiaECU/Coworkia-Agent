@@ -28,7 +28,7 @@ function getTabReservations(reservations, tab) {
   if (tab === 'completed') return reservations.filter(r => r.status === 'completed');
   if (tab === 'followup') {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return reservations.filter(r => r.status === 'completed' && new Date(r.created_at) > cutoff);
+    return reservations.filter(r => r.status === 'completed' && new Date(r.date || r.created_at) > cutoff);
   }
   return reservations;
 }
@@ -41,7 +41,7 @@ function updateTabCounts(reservations) {
     completed: reservations.filter(r => r.status === 'completed').length,
     followup:  reservations.filter(r => {
       const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      return r.status === 'completed' && new Date(r.created_at) > cutoff;
+      return r.status === 'completed' && new Date(r.date || r.created_at) > cutoff;
     }).length
   };
   for (const [tab, count] of Object.entries(counts)) {
@@ -216,8 +216,20 @@ function getServiceBadge(serviceType) {
   return `<span class="${mapped.cls}">${mapped.label}</span>`;
 }
 
+// ─── Helpers de estado de carga de stats ─────────────────────────────────────
+const STAT_IDS = ['stat-total', 'stat-month', 'stat-upcoming', 'stat-revenue'];
+function setStatsLoading(on) {
+  STAT_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (on) { el.classList.add('stat-loading'); el.setAttribute('data-orig', el.textContent); el.textContent = ''; }
+    else      { el.classList.remove('stat-loading'); }
+  });
+}
+
 // Cargar estadísticas
 async function loadStats() {
+  setStatsLoading(true);
   try {
     console.log('[AURORA-DASH] Cargando stats desde:', `${API_BASE}/api/aurora/stats`);
     const response = await fetch(`${API_BASE}/api/aurora/stats`);
@@ -227,15 +239,26 @@ async function loadStats() {
     
     if (result.ok) {
       const { data } = result;
-      document.getElementById('stat-total').textContent = data.total || 0;
-      document.getElementById('stat-month').textContent = data.recent?.thisMonth || 0;
-      document.getElementById('stat-upcoming').textContent = data.recent?.upcoming || 0;
-      document.getElementById('stat-revenue').textContent = formatPrice(data.revenue?.total || 0, false);
+      document.getElementById('stat-total').textContent     = data.total || 0;
+      document.getElementById('stat-month').textContent     = data.recent?.thisMonth || 0;
+      document.getElementById('stat-upcoming').textContent  = data.recent?.upcoming || 0;
+      document.getElementById('stat-revenue').textContent   = formatPrice(data.revenue?.total || 0, false);
     } else {
       console.error('[AURORA-DASH] Stats failed:', result.error);
+      STAT_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = el.getAttribute('data-orig') || '—';
+      });
     }
   } catch (error) {
     console.error('[AURORA-DASH] Error cargando stats:', error);
+    STAT_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = el.getAttribute('data-orig') || '—';
+    });
+  } finally {
+    setStatsLoading(false);
+    updateLastRefreshed();
   }
 }
 
@@ -601,7 +624,7 @@ window.sendCampaign = async function() {
 
 
 const URGENCY_STYLE = {
-  urgent: { border: '#dc2626', bg: '#2d0a0a', badge: '<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
+  urgent: { border: '#dc2626', bg: '#2d0a0a', badge: '<span class="prospect-badge-urgent" style="background:#dc2626;color:white;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🚨 URGENTE</span>' },
   hot:    { border: '#ea580c', bg: '#2a1205', badge: '<span style="background:#431407;color:#fb923c;border:1px solid #7c2d12;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🔥 HOT</span>' },
   warm:   { border: '#d97706', bg: '#221505', badge: '<span style="background:#422006;color:#f59e0b;border:1px solid #92400e;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">🌡 WARM</span>' },
   cold:   { border: '#60a5fa', bg: '#0a1628', badge: '<span style="background:#0f2040;color:#60a5fa;border:1px solid #2563eb;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">❄️ COLD</span>' },
@@ -653,6 +676,9 @@ function buildProspectRow(p) {
       <td style="padding:10px 14px;">
         <div style="font-weight:600;color:#f1f5f9;font-size:13px;white-space:nowrap;">${name}</div>
         <div style="font-size:11px;color:#475569;">${alias}</div>
+      </td>
+      <td style="padding:10px 14px;">
+        <button onclick="copyToClipboard('${phone.replace(/\D/g,'')}', this)" style="background:none;border:1px solid #334155;cursor:pointer;color:#64748b;font-size:11px;font-family:monospace;padding:3px 8px;border-radius:5px;" data-tip="Click para copiar número completo">${maskPhone(phone)}</button>
       </td>
       <td style="padding:10px 14px;max-width:200px;">${topicChips}</td>
       <td style="padding:10px 14px;font-size:13px;color:${daysColor};font-weight:600;white-space:nowrap;">${daysLabel}</td>
@@ -716,6 +742,7 @@ function renderProspectGrid(prospects) {
           <tr>
             <th style="${thStyle}">Urgencia</th>
             <th style="${thStyle}">Cliente</th>
+            <th style="${thStyle}">Teléfono</th>
             <th style="${thStyle}">Temas</th>
             <th style="${thStyle}">Último</th>
             <th style="${thStyle};text-align:center;">Msgs</th>
@@ -887,7 +914,7 @@ async function loadConversations() {
         <tr class="conv-row" style="border-bottom:1px solid #1e293b;">
           <td style="padding:12px 16px;">
             <strong style="color:#f1f5f9;">${name}</strong><br>
-            <small style="color:#475569;font-size:11px;">${alias}</small>
+            <small style="color:#475569;font-size:11px;">${alias} · <button onclick="copyToClipboard('${phone.replace(/\D/g,'').replace(/\\/g,'')}', this)" style="background:none;border:none;cursor:pointer;color:#64748b;font-size:11px;font-family:monospace;padding:0;" data-tip="Copiar teléfono">${maskPhone(phone)}</button></small>
           </td>
           <td style="padding:12px 16px; text-align:center;">
             <span style="background:#1e3a5f; color:#60a5fa; padding:4px 12px; border-radius:99px; font-weight:700; font-size:14px;">${c.message_count}</span>
@@ -979,6 +1006,21 @@ window.sendCampaignWA = function() {
     const btn = document.getElementById('qa-campaign-wa');
     if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copiado!'; setTimeout(() => { btn.textContent = orig; }, 2200); }
   }).catch(() => alert('No se pudo copiar al portapapeles.'));
+}
+
+// ─── Click-to-copy teléfono ───────────────────────────────────────────────────
+window.copyToClipboard = function(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ Teléfono copiado');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = orig; }, 1500); }
+  }).catch(() => showToast('⚠️ No se pudo copiar'));
+};
+
+// ─── Timestamp "Actualizado: HH:MM:SS" ───────────────────────────────────────
+function updateLastRefreshed() {
+  const el = document.getElementById('last-refreshed');
+  if (!el) return;
+  el.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 // Refresca todo el dashboard de una vez
@@ -1083,6 +1125,16 @@ try {
     const btn = e.target.closest('.pill');
     if (!btn) return;
     filterByService(btn.dataset.service);
+  });
+
+  // ── Keyboard shortcuts 1/2/3/4/R ─────────────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+    if (e.key === '1') switchMainTab('reservas');
+    else if (e.key === '2') switchMainTab('prospectos');
+    else if (e.key === '3') switchMainTab('interesados');
+    else if (e.key === '4') switchMainTab('conversaciones');
+    else if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); refreshAll(); showToast('🔄 Actualizando...'); }
   });
 
   console.log('[AURORA-DASH] Event listeners configurados');

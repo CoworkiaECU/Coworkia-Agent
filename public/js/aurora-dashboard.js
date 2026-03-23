@@ -457,6 +457,13 @@ window.clearServiceFilter = function() {
 // ─── Inteligencia de prospectos ───────────────────────────────────────────────
 let _allProspects = [];
 let _activeFilter = 'all';
+let _selectedProspects = new Set();
+
+function getVisibleProspects() {
+  if (_activeFilter === 'all') return _allProspects;
+  if (_activeFilter === 'urgent') return _allProspects.filter(p => getUrgencyLevel(p) === 'urgent');
+  return _allProspects.filter(p => p.engagement === _activeFilter);
+}
 
 function getUrgencyLevel(p) {
   if (p.engagement === 'hot' && (p.days_since_last ?? 0) >= 2) return 'urgent';
@@ -637,47 +644,39 @@ function getWaTemplate(rawTopics, name) {
 }
 
 function buildProspectRow(p) {
-  const urgency    = getUrgencyLevel(p);
-  const style      = URGENCY_STYLE[urgency] || URGENCY_STYLE.cold;
-  const name       = p.user_name  || 'Sin nombre';
-  const phone      = p.user_phone || '';
-  const days       = p.days_since_last ?? 0;
-  const msgs       = p.interaction_count || 0;
-  const score      = p.priority_score || 0;
-  const daysColor  = days <= 1 ? '#16a34a' : days <= 3 ? '#d97706' : '#dc2626';
-  const daysLabel  = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
-  const alias      = 'CLI-' + (phone.replace(/\D/g,'').slice(-4) || '????');
+  const urgency   = getUrgencyLevel(p);
+  const style     = URGENCY_STYLE[urgency] || URGENCY_STYLE.cold;
+  const name      = p.user_name  || 'Sin nombre';
+  const phone     = p.user_phone || '';
+  const days      = p.days_since_last ?? 0;
+  const daysColor = days <= 1 ? '#16a34a' : days <= 3 ? '#d97706' : '#dc2626';
+  const daysLabel = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
 
-  const rawTopics     = Array.isArray(p.topics) ? p.topics : [];
-  const topicLabels   = formatTopics(rawTopics);
-  const visibleTopics = topicLabels.slice(0, 2);
-  const extraTopics   = topicLabels.length - visibleTopics.length;
-  const topicChips    = visibleTopics.length
-    ? visibleTopics.map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 7px;border-radius:99px;font-size:11px;border:1px solid #334155;">${t}</span>`).join(' ')
-      + (extraTopics > 0 ? ` <span style="background:#334155;color:#94a3b8;padding:2px 7px;border-radius:99px;font-size:11px;" title="${topicLabels.slice(2).join(', ')}">+${extraTopics}</span>` : '')
-    : '<span style="color:#475569;font-size:12px;">—</span>';
+  const rawTopics   = Array.isArray(p.topics) ? p.topics : [];
+  const topicLabels = formatTopics(rawTopics);
+  const topicChips  = topicLabels.slice(0, 2)
+    .map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 6px;border-radius:99px;font-size:10px;border:1px solid #334155;white-space:nowrap;">${t}</span>`)
+    .join(' ') || '<span style="color:#475569;font-size:11px;">—</span>';
 
-  const waTpl  = getWaTemplate(rawTopics, name);
-  const waLink = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
+  const waTpl    = getWaTemplate(rawTopics, name);
+  const waLink   = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
+  const phoneEnc = phone.replace(/"/g, '&quot;');
+  const isChecked = _selectedProspects.has(phone);
 
   return `
-    <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:10px 14px;">${style.badge}</td>
-      <td style="padding:10px 14px;">
+    <tr style="border-bottom:1px solid #1e293b;${isChecked ? 'background:#0f2040;' : ''}" data-phone="${phoneEnc}">
+      <td style="padding:8px 12px;width:36px;text-align:center;">
+        <input type="checkbox" class="prospect-check" data-phone="${phoneEnc}" ${isChecked ? 'checked' : ''}
+          style="cursor:pointer;width:14px;height:14px;accent-color:#3b82f6;">
+      </td>
+      <td style="padding:8px 12px;">${style.badge}</td>
+      <td style="padding:8px 12px;">
         <div style="font-weight:600;color:#f1f5f9;font-size:13px;white-space:nowrap;">${name}</div>
-        <div style="font-size:11px;color:#475569;">${alias}</div>
+        <div style="font-size:11px;color:${daysColor};margin-top:1px;font-weight:600;">${daysLabel}</div>
       </td>
-      <td style="padding:10px 14px;">
-        <button onclick="copyToClipboard('${phone.replace(/\D/g,'')}', this)" style="background:none;border:1px solid #334155;cursor:pointer;color:#64748b;font-size:11px;font-family:monospace;padding:3px 8px;border-radius:5px;" data-tip="Click para copiar número completo">${maskPhone(phone)}</button>
-      </td>
-      <td style="padding:10px 14px;max-width:200px;">${topicChips}</td>
-      <td style="padding:10px 14px;font-size:13px;color:${daysColor};font-weight:600;white-space:nowrap;">${daysLabel}</td>
-      <td style="padding:10px 14px;text-align:center;">
-        <span style="background:#1e3a5f;color:#60a5fa;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:700;">${msgs}</span>
-      </td>
-      <td style="padding:10px 14px;text-align:center;color:#64748b;font-size:13px;">${score}</td>
-      <td style="padding:10px 14px;">
-        <a href="${waLink}" target="_blank" style="background:#0d3b26;color:#4ade80;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid #15803d;white-space:nowrap;">💬 WhatsApp</a>
+      <td style="padding:8px 12px;max-width:220px;">${topicChips}</td>
+      <td style="padding:8px 12px;white-space:nowrap;">
+        <a href="${waLink}" target="_blank" style="background:#0d3b26;color:#4ade80;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid #15803d;">💬 WA</a>
       </td>
     </tr>`;}
 
@@ -724,20 +723,30 @@ function renderProspectGrid(prospects) {
     return;
   }
   emptyEl.style.display = 'none';
-  const thStyle = 'text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #334155;white-space:nowrap;';
+  const selCount    = _selectedProspects.size;
+  const isAllChecked = prospects.length > 0 && prospects.every(p => _selectedProspects.has(p.user_phone || ''));
+  const thStyle = 'text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #334155;white-space:nowrap;';
   gridEl.innerHTML = `
+    <div id="prospect-selection-bar" style="display:${selCount > 0 ? 'flex' : 'none'};align-items:center;justify-content:space-between;background:#0f2040;border:1px solid #2563eb;border-radius:8px;padding:10px 16px;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
+      <span style="color:#93c5fd;font-size:13px;font-weight:600;">${selCount} seleccionado${selCount !== 1 ? 's' : ''}</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="sendCampaignToSelected()" style="background:#1d4ed8;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">📣 Campaña a seleccionados</button>
+        <button onclick="clearProspectSelection()" style="background:none;border:1px solid #334155;color:#94a3b8;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Limpiar</button>
+      </div>
+    </div>
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead style="background:#0f172a;">
           <tr>
+            <th style="${thStyle}width:36px;text-align:center;">
+              <input type="checkbox" id="prospect-check-all" ${isAllChecked ? 'checked' : ''}
+                style="cursor:pointer;width:14px;height:14px;accent-color:#3b82f6;"
+                title="Seleccionar todos los visibles">
+            </th>
             <th style="${thStyle}">Urgencia</th>
-            <th style="${thStyle}">Cliente</th>
-            <th style="${thStyle}">Teléfono</th>
+            <th style="${thStyle}">Cliente · Último</th>
             <th style="${thStyle}">Temas</th>
-            <th style="${thStyle}">Último</th>
-            <th style="${thStyle};text-align:center;">Msgs</th>
-            <th style="${thStyle};text-align:center;">Score</th>
-            <th style="${thStyle}">Acción</th>
+            <th style="${thStyle}">WA</th>
           </tr>
         </thead>
         <tbody>${prospects.map(buildProspectRow).join('')}</tbody>
@@ -747,14 +756,27 @@ function renderProspectGrid(prospects) {
 
 window.filterProspects = function(filter) {
   _activeFilter = filter;
+  _selectedProspects.clear();
   document.querySelectorAll('#prospect-filters .pill').forEach(b => {
     b.classList.toggle('active', b.dataset.filter === filter);
   });
-  const filtered = filter === 'all'     ? _allProspects
-    : filter === 'urgent' ? _allProspects.filter(p => getUrgencyLevel(p) === 'urgent')
-    : _allProspects.filter(p => p.engagement === filter);
-  renderProspectGrid(filtered);
+  renderProspectGrid(getVisibleProspects());
 }
+
+window.sendCampaignToSelected = function() {
+  const phones = Array.from(_selectedProspects);
+  if (!phones.length) { showToast('⚠️ Selecciona al menos un prospecto primero'); return; }
+  openCampaignModalWithPhones(
+    `📣 Campaña — ${phones.length} seleccionado${phones.length !== 1 ? 's' : ''}`,
+    phones,
+    'prospectos_seleccion'
+  );
+};
+
+window.clearProspectSelection = function() {
+  _selectedProspects.clear();
+  renderProspectGrid(getVisibleProspects());
+};
 
 window.copyCampaignList = function() {
   if (!_allProspects.length) { showToast('⚠️ Primero carga los prospectos'); return; }
@@ -1154,6 +1176,37 @@ try {
     const btn = e.target.closest('.pill');
     if (!btn) return;
     filterByService(btn.dataset.service);
+  });
+
+  // ── Event delegation: checkboxes de prospectos (select + select all) ──────
+  document.getElementById('prospects-grid')?.addEventListener('change', function(e) {
+    const visible = getVisibleProspects();
+    // "Select all" checkbox
+    if (e.target.id === 'prospect-check-all') {
+      if (e.target.checked) visible.forEach(p => { if (p.user_phone) _selectedProspects.add(p.user_phone); });
+      else visible.forEach(p => { if (p.user_phone) _selectedProspects.delete(p.user_phone); });
+      renderProspectGrid(visible);
+      return;
+    }
+    // Individual checkbox
+    const cb = e.target.closest('.prospect-check');
+    if (!cb) return;
+    const phone = cb.dataset.phone;
+    if (!phone) return;
+    if (cb.checked) _selectedProspects.add(phone);
+    else _selectedProspects.delete(phone);
+    // Update selection bar without full re-render
+    const bar = document.getElementById('prospect-selection-bar');
+    if (bar) {
+      bar.style.display = _selectedProspects.size > 0 ? 'flex' : 'none';
+      const countEl = bar.querySelector('span');
+      if (countEl) countEl.textContent = `${_selectedProspects.size} seleccionado${_selectedProspects.size !== 1 ? 's' : ''}`;
+    }
+    const row = cb.closest('tr');
+    if (row) row.style.background = cb.checked ? '#0f2040' : '';
+    // Sync "select all" checkbox
+    const allCb = document.getElementById('prospect-check-all');
+    if (allCb) allCb.checked = visible.length > 0 && visible.every(p => _selectedProspects.has(p.user_phone || ''));
   });
 
   // ── Keyboard shortcuts 1/2/3/4/R ─────────────────────────────────────────

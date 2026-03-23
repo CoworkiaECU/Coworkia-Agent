@@ -278,16 +278,19 @@ export async function createOrUpdateInsuranceLead(data) {
   // Migración: asegurar que columnas existan
   await databaseService.run(`
     ALTER TABLE insurance_leads
-      ADD COLUMN IF NOT EXISTS competitor_quotes   JSONB,
-      ADD COLUMN IF NOT EXISTS kyc_cedula          TEXT,
-      ADD COLUMN IF NOT EXISTS kyc_fecha_nacimiento DATE,
-      ADD COLUMN IF NOT EXISTS kyc_estado_civil    TEXT,
-      ADD COLUMN IF NOT EXISTS kyc_direccion       TEXT,
-      ADD COLUMN IF NOT EXISTS kyc_ciudad          TEXT,
-      ADD COLUMN IF NOT EXISTS quote_sent_at       TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS accepted_at         TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS emitted_at          TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS policy_number       TEXT
+      ADD COLUMN IF NOT EXISTS competitor_quotes        JSONB,
+      ADD COLUMN IF NOT EXISTS kyc_cedula               TEXT,
+      ADD COLUMN IF NOT EXISTS kyc_fecha_nacimiento      DATE,
+      ADD COLUMN IF NOT EXISTS kyc_estado_civil          TEXT,
+      ADD COLUMN IF NOT EXISTS kyc_direccion             TEXT,
+      ADD COLUMN IF NOT EXISTS kyc_ciudad                TEXT,
+      ADD COLUMN IF NOT EXISTS kyc_matricula             TEXT,
+      ADD COLUMN IF NOT EXISTS competitor_quote_amount   NUMERIC(10,2),
+      ADD COLUMN IF NOT EXISTS competitor_insurer        TEXT,
+      ADD COLUMN IF NOT EXISTS quote_sent_at             TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS accepted_at               TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS emitted_at                TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS policy_number             TEXT
   `);
   
   await databaseService.run(
@@ -366,6 +369,7 @@ export async function saveKYCData(quoteCode, kycData) {
   if (kycData.estadoCivil)      { updates.push(`kyc_estado_civil = $${idx++}`);    values.push(kycData.estadoCivil); }
   if (kycData.direccion)        { updates.push(`kyc_direccion = $${idx++}`);       values.push(kycData.direccion); }
   if (kycData.ciudad)           { updates.push(`kyc_ciudad = $${idx++}`);          values.push(kycData.ciudad); }
+  if (kycData.matricula)        { updates.push(`kyc_matricula = $${idx++}`);       values.push(kycData.matricula); }
   
   if (updates.length > 0) {
     updates.push(`updated_at = $${idx++}`);
@@ -418,7 +422,8 @@ export async function updateLeadStatus(quoteCode, status, extra = {}) {
   if (status === 'emitted')  { sets.push(`emitted_at  = COALESCE(emitted_at,  CURRENT_TIMESTAMP)`); }
 
   const allowedExtra = ['client_name', 'email', 'phone', 'plate', 'cedula', 'policy_number',
-    'kyc_cedula', 'kyc_estado_civil', 'kyc_direccion', 'kyc_ciudad', 'kyc_fecha_nacimiento'];
+    'kyc_cedula', 'kyc_estado_civil', 'kyc_direccion', 'kyc_ciudad', 'kyc_fecha_nacimiento',
+    'kyc_matricula', 'competitor_quote_amount', 'competitor_insurer'];
   for (const key of allowedExtra) {
     if (extra[key] !== undefined) {
       sets.push(`${key} = $${idx++}`);
@@ -433,8 +438,31 @@ export async function updateLeadStatus(quoteCode, status, extra = {}) {
   console.log(`[ADRIANA-REPO] ✅ Lead status → ${status}: ${quoteCode}`);
 }
 
+/** * 💾 updateKYC — alias moderno de saveKYCData con soporte matrícula
+ * @param {string} quoteCode
+ * @param {{ cedula?, fechaNacimiento?, estadoCivil?, direccion?, ciudad?, matricula? }} kycData
+ */
+export const updateKYC = saveKYCData;
+
 /**
- * �📊 Leads para daily report
+ * 💾 Guardar cotización de competidor (campos individuales)
+ * @param {string} quoteCode
+ * @param {{ amount: number, insurer: string }} competitorData
+ */
+export async function saveCompetitorQuote(quoteCode, { amount, insurer } = {}) {
+  await databaseService.ensureInitialized();
+  await databaseService.run(
+    `UPDATE insurance_leads
+        SET competitor_quote_amount = $1,
+            competitor_insurer      = $2,
+            updated_at              = CURRENT_TIMESTAMP
+      WHERE quote_code = $3`,
+    [amount ?? null, insurer ?? null, quoteCode]
+  );
+  console.log(`[ADRIANA-REPO] ✅ Competitor quote saved for ${quoteCode}: ${insurer} $${amount}`);
+}
+
+/** * �📊 Leads para daily report
  */
 export async function findLeadsForDailyReport() {
   await databaseService.ensureInitialized();
@@ -469,5 +497,7 @@ export default {
   updateLeadStatus,
   saveCompetitorQuotes,
   saveKYCData,
+  updateKYC,
+  saveCompetitorQuote,
   findLeadsForDailyReport,
 };

@@ -479,6 +479,42 @@ router.post('/prospects', async (req, res) => {
 });
 
 /**
+ * POST /api/aluna/prospect/manual
+ * Registra un prospecto manualmente desde el botón "Agregar Prospecto" del dashboard
+ * Body: { userPhone, userName, membershipType }
+ */
+router.post('/prospect/manual', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    let { userPhone, userName, membershipType } = req.body;
+
+    if (!userPhone) return res.status(400).json({ ok: false, error: 'userPhone es requerido' });
+    if (!userName)  return res.status(400).json({ ok: false, error: 'userName es requerido' });
+
+    // Normalizar teléfono ecuatoriano
+    let phone = String(userPhone).trim().replace(/\s/g, '');
+    if (/^09\d{8}$/.test(phone))  phone = '+593' + phone.slice(1);
+    else if (/^9\d{8}$/.test(phone)) phone = '+593' + phone;
+
+    await databaseService.run(
+      `INSERT INTO aluna_prospect_followups
+         (user_phone, user_name, membership_type, interest_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_phone) DO UPDATE SET
+         user_name       = COALESCE($2, aluna_prospect_followups.user_name),
+         membership_type = COALESCE($3, aluna_prospect_followups.membership_type),
+         updated_at      = CURRENT_TIMESTAMP`,
+      [phone, userName, membershipType || null]
+    );
+
+    return res.json({ ok: true, prospect: { phone, userName, membershipType: membershipType || null } });
+  } catch (error) {
+    console.error('[ALUNA-API] Error en prospect/manual:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
  * POST /api/aluna/prospect/:phone/convert
  * Marca un prospecto como convertido manualmente desde el dashboard
  */

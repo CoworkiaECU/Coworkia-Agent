@@ -3630,6 +3630,23 @@ router.get('/webhooks/wassenger/status', (req, res) => {
 
 router.get('/webhooks/wassenger', (req, res) => res.send('ok'));
 
+// ─── Magic Notify — endpoint interno para notificaciones desde autopilot ─────
+// Protegido con INTERNAL_API_KEY. El agente lo llama con curl durante autopilot.
+router.post('/api/magic/notify', async (req, res) => {
+  const { notifyDiego } = await import('./internal-notifications.js');
+  const secret = req.headers['x-magic-key'] || req.body?.key;
+  if (secret !== process.env.INTERNAL_API_KEY) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  const { type = 'success', title = 'Autopilot', data = {} } = req.body || {};
+  try {
+    const result = await notifyDiego(type, title, data);
+    return res.json({ ok: result.success, result });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 router.post('/webhooks/wassenger/control', (req, res) => {
   return res.json({
     ok: false,

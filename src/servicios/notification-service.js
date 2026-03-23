@@ -29,6 +29,7 @@ const getToken = () => process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_
 async function _send(message) {
   const TOKEN = getToken();
   const PHONE = getPhone();
+  const DEVICE = process.env.WASSENGER_DEVICE || process.env.WASSENGER_DEVICE_ID;
 
   if (!TOKEN) {
     console.warn('[NOTIFY] ⚠️ WASSENGER_TOKEN no configurado — notificación omitida');
@@ -36,7 +37,9 @@ async function _send(message) {
   }
 
   return new Promise((resolve) => {
-    const body = JSON.stringify({ phone: PHONE, message });
+    const payload = { phone: PHONE, message };
+    if (DEVICE) payload.device = DEVICE;
+    const body = JSON.stringify(payload);
     const req = https.request({
       hostname: 'api.wassenger.com',
       path: '/v1/messages',

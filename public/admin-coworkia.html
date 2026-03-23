@@ -20,8 +20,31 @@
 
     .container { max-width: 1160px; margin: 0 auto; }
 
-    /* ── HEADER ── */
-    .site-header {
+    /* ── NAV BAR ── */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-decoration: none;
+      transition: background 0.18s, color 0.18s;
+      cursor: pointer;
+    }
+    .nav-back:hover { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+    .nav-version { font-size: 11px; color: #334155; letter-spacing: 0.4px; }
+
       text-align: center;
       margin-bottom: 56px;
     }
@@ -205,6 +228,12 @@
 </head>
 <body>
 <div class="container">
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <a class="nav-back" onclick="history.back()" href="#">← Volver</a>
+    <span class="nav-version">CRM Magic ✨ OneMind</span>
+  </nav>
 
   <!-- HEADER -->
   <header class="site-header">

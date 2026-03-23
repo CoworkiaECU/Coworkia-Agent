@@ -858,10 +858,13 @@ async function loadConversations() {
       const agents = agentsFull.length > 3
         ? agentsFull.slice(0,3).join(', ') + ` +${agentsFull.length - 3} más`
         : agentsFull.join(', ') || '-';
-      // Topics: filtrar / traducir
+      // Topics: filtrar / traducir — máx 3 visibles
       const labeledTopics = formatTopics((c.topics || []).filter(Boolean));
+      const visibleTopics = labeledTopics.slice(0, 3);
+      const extraTopics   = labeledTopics.length - visibleTopics.length;
       const topicsHtml = labeledTopics.length
-        ? labeledTopics.map(t => `<span style="background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;border:1px solid #1e4a7a;">${t}</span>`).join('')
+        ? visibleTopics.map(t => `<span style="background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;border:1px solid #1e4a7a;">${t}</span>`).join('')
+          + (extraTopics > 0 ? `<span style="background:#334155;color:#94a3b8;padding:2px 8px;border-radius:99px;font-size:11px;margin:2px;display:inline-block;" title="${labeledTopics.slice(3).join(', ')}">+${extraTopics} más</span>` : '')
         : '<span style="color:#475569;font-size:12px;">—</span>';
       // CRM status badge (multi-agente)
       const crmStatus    = c.crm_status;

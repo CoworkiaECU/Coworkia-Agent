@@ -197,7 +197,15 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     console.log('[DIEGO-CMD] 🛑 PARA recibido');
     const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
     setAutopilotState({ active: false, waitingForApproval: false });
-    await enviarWhatsApp(userId, '🛑 *Autopilot pausado.*\nSistema en espera. Envía SIGUIENTE cuando quieras continuar.');
+    // Escribir respuesta en tabla de checkpoints para que Copilot lo lea
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'PARA', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '🛑 *Autopilot pausado.*\nEl agente detendrá la ejecución al final del bloque actual.');
     return true;
   }
 
@@ -206,11 +214,47 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     console.log('[DIEGO-CMD] ▶️ SIGUIENTE recibido');
     const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
     setAutopilotState({ active: true });
-    await enviarWhatsApp(userId, '▶️ *Siguiente bloque activado.*\nEl sistema avanzará al próximo bloque del plan en la próxima sesión autopilot.');
+    // Escribir respuesta en tabla de checkpoints para que Copilot lo lea
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'SIGUIENTE', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '▶️ *Siguiente bloque activado.*\nEl agente continuará con el próximo bloque.');
     return true;
   }
 
-  return false;  // No era un comando, continuar flujo normal
+  // DEPLOY: deployar a Heroku y continuar
+  if (cmd === 'DEPLOY') {
+    console.log('[DIEGO-CMD] 🚀 DEPLOY recibido');
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'DEPLOY', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '🚀 *Deploy activado.*\nEl agente hará git push heroku main antes de continuar.');
+    return true;
+  }
+
+  // SKIP: saltar el bloque actual
+  if (cmd === 'SKIP') {
+    console.log('[DIEGO-CMD] ⏭️ SKIP recibido');
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'SKIP', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '⏭️ *Bloque saltado.*\nEl agente pasará al siguiente bloque.');
+    return true;
+  }
+
+  return false; // No era un comando conocido, continuar flujo normal
 }
 
 /* ─────────────────────────────────────────────────────────────

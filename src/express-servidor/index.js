@@ -66,6 +66,7 @@ import axelDashboardRouter from './endpoints-api/axel-dashboard.js';
 import adrianaDashboardRouter from './endpoints-api/adriana-dashboard.js';
 import todosDashboardRouter from './endpoints-api/todos-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
+import autopilotApiRouter from './endpoints-api/autopilot-api.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -224,6 +225,7 @@ app.use('/api/axel', axelDashboardRouter);
 app.use('/api/adriana', adrianaDashboardRouter);
 app.use('/api/todos', todosDashboardRouter);
 app.use('/api/admin', adminSeedRouter);
+app.use('/', autopilotApiRouter);
 app.use('/', wifiCodesRouter);
 
 // 404 final

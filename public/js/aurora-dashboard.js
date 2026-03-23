@@ -547,13 +547,14 @@ window.openCampaignModal = function(group) {
   _campaignGroup  = group;
 
   document.getElementById('campaign-modal-title').textContent = `📣 Campaña — ${meta.label}`;
-  document.getElementById('campaign-modal-info').innerHTML =
-    `<strong style="color:#f1f5f9;">${_campaignPhones.length} personas</strong> recibirán este mensaje por WhatsApp.` +
-    (_campaignPhones.length === 0 ? '<br><span style="color:#f87171;">Este grupo no tiene contactos cargados.</span>' : '');
+  const hasContacts = _campaignPhones.length > 0;
+  document.getElementById('campaign-modal-info').innerHTML = hasContacts
+    ? `<strong style="color:#f1f5f9;">${_campaignPhones.length} personas</strong> recibirán este mensaje por WhatsApp.`
+    : `<span style="color:#f59e0b;">⚠️ Este grupo no tiene contactos actualmente.</span><br><span style="color:#64748b;font-size:12px;">Los grupos se llenan cuando hay actividad: reservas a la mitad, clientes inactivos o cancelaciones.</span>`;
   document.getElementById('campaign-message').value = '';
   document.getElementById('campaign-result').style.display = 'none';
-  document.getElementById('campaign-send-btn').disabled  = false;
-  document.getElementById('campaign-send-btn').textContent = '📤 Enviar a todos';
+  document.getElementById('campaign-send-btn').disabled  = !hasContacts;
+  document.getElementById('campaign-send-btn').textContent = hasContacts ? '📤 Enviar a todos' : '⚫ Sin contactos';
 
   const modal = document.getElementById('campaign-modal');
   modal.style.display = 'flex';
@@ -622,63 +623,47 @@ function getWaTemplate(rawTopics, name) {
   return encodeURIComponent(`${greeting}👋 Soy Aurora de Coworkia. ¿En qué puedo ayudarte hoy?`);
 }
 
-function buildProspectCard(p) {
-  const urgency  = getUrgencyLevel(p);
-  const style    = URGENCY_STYLE[urgency] || URGENCY_STYLE.cold;
-  const name     = p.user_name  || 'Sin nombre';
-  const phone    = p.user_phone || '';
-  const days     = p.days_since_last ?? 0;
-  const msgs     = p.interaction_count || 0;
-  const score    = p.priority_score || 0;
-
-  const initials   = name.split(' ').slice(0,2).map(w => w[0] || '?').join('').toUpperCase();
+function buildProspectRow(p) {
+  const urgency    = getUrgencyLevel(p);
+  const style      = URGENCY_STYLE[urgency] || URGENCY_STYLE.cold;
+  const name       = p.user_name  || 'Sin nombre';
+  const phone      = p.user_phone || '';
+  const days       = p.days_since_last ?? 0;
+  const msgs       = p.interaction_count || 0;
+  const score      = p.priority_score || 0;
   const daysColor  = days <= 1 ? '#16a34a' : days <= 3 ? '#d97706' : '#dc2626';
   const daysLabel  = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
+  const alias      = 'CLI-' + (phone.replace(/\D/g,'').slice(-4) || '????');
 
-  const rawTopics   = Array.isArray(p.topics) ? p.topics : [];
-  const topicLabels = formatTopics(rawTopics);
-  const topicChips  = topicLabels.length
-    ? topicLabels.map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid #334155;white-space:nowrap;">${t}</span>`).join('')
-    : '<span style="background:#0f172a;color:#475569;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid #1e293b;">Sin categoría</span>';
+  const rawTopics     = Array.isArray(p.topics) ? p.topics : [];
+  const topicLabels   = formatTopics(rawTopics);
+  const visibleTopics = topicLabels.slice(0, 2);
+  const extraTopics   = topicLabels.length - visibleTopics.length;
+  const topicChips    = visibleTopics.length
+    ? visibleTopics.map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 7px;border-radius:99px;font-size:11px;border:1px solid #334155;">${t}</span>`).join(' ')
+      + (extraTopics > 0 ? ` <span style="background:#334155;color:#94a3b8;padding:2px 7px;border-radius:99px;font-size:11px;" title="${topicLabels.slice(2).join(', ')}">+${extraTopics}</span>` : '')
+    : '<span style="color:#475569;font-size:12px;">—</span>';
 
   const waTpl  = getWaTemplate(rawTopics, name);
   const waLink = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
 
   return `
-    <div class="prospect-card" data-urgency="${urgency}" data-engagement="${p.engagement}"
-      style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.4);border:1px solid #334155;background:#1e293b;display:flex;flex-direction:column;">
-      <div style="display:flex;padding:14px 16px;gap:12px;align-items:flex-start;border-left:4px solid ${style.border};background:${style.bg};">
-        <div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${initials}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;color:#f1f5f9;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-          <div style="font-size:12px;color:#64748b;">${phone}</div>
-        </div>
-        ${style.badge}
-      </div>
-      <div style="display:flex;border-bottom:1px solid #334155;">
-        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #334155;">
-          <div style="font-size:24px;font-weight:800;color:#f1f5f9;">${msgs}</div>
-          <div style="font-size:11px;color:#64748b;">mensajes</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 8px;border-right:1px solid #334155;">
-          <div style="font-size:18px;font-weight:700;color:${daysColor};">${daysLabel}</div>
-          <div style="font-size:11px;color:#64748b;">último</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 8px;">
-          <div style="font-size:18px;font-weight:700;color:#94a3b8;">${score}</div>
-          <div style="font-size:11px;color:#64748b;">prioridad</div>
-        </div>
-      </div>
-      <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #334155;min-height:38px;align-items:center;">
-        ${topicChips}
-      </div>
-      <div style="padding:12px 14px;margin-top:auto;">
-        <a href="${waLink}" target="_blank"
-          style="display:block;text-align:center;background:#25d366;color:white;padding:8px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
-          💬 WhatsApp →
-        </a>
-      </div>
-    </div>`;
+    <tr style="border-bottom:1px solid #1e293b;">
+      <td style="padding:10px 14px;">${style.badge}</td>
+      <td style="padding:10px 14px;">
+        <div style="font-weight:600;color:#f1f5f9;font-size:13px;white-space:nowrap;">${name}</div>
+        <div style="font-size:11px;color:#475569;">${alias}</div>
+      </td>
+      <td style="padding:10px 14px;max-width:200px;">${topicChips}</td>
+      <td style="padding:10px 14px;font-size:13px;color:${daysColor};font-weight:600;white-space:nowrap;">${daysLabel}</td>
+      <td style="padding:10px 14px;text-align:center;">
+        <span style="background:#1e3a5f;color:#60a5fa;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:700;">${msgs}</span>
+      </td>
+      <td style="padding:10px 14px;text-align:center;color:#64748b;font-size:13px;">${score}</td>
+      <td style="padding:10px 14px;">
+        <a href="${waLink}" target="_blank" style="background:#0d3b26;color:#4ade80;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid #15803d;white-space:nowrap;">💬 WhatsApp</a>
+      </td>
+    </tr>`;}
 }
 
 window.loadAbandoned = async function() {
@@ -724,7 +709,24 @@ function renderProspectGrid(prospects) {
     return;
   }
   emptyEl.style.display = 'none';
-  gridEl.innerHTML = prospects.map(buildProspectCard).join('');
+  const thStyle = 'text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #334155;white-space:nowrap;';
+  gridEl.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead style="background:#0f172a;">
+          <tr>
+            <th style="${thStyle}">Urgencia</th>
+            <th style="${thStyle}">Cliente</th>
+            <th style="${thStyle}">Temas</th>
+            <th style="${thStyle}">Último</th>
+            <th style="${thStyle};text-align:center;">Msgs</th>
+            <th style="${thStyle};text-align:center;">Score</th>
+            <th style="${thStyle}">Acción</th>
+          </tr>
+        </thead>
+        <tbody>${prospects.map(buildProspectRow).join('')}</tbody>
+      </table>
+    </div>`;
 }
 
 window.filterProspects = function(filter) {

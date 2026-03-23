@@ -622,7 +622,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
         };
         const svcName = serviceNames[reservation.service_type] || reservation.service_type;
         const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
-        const waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waMsg = `@aurora\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },

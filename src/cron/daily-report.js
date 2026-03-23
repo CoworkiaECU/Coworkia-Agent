@@ -9,8 +9,9 @@
  */
 
 import { CronJob }           from 'cron';
-import { notifyDailyReport } from '../servicios/notification-service.js';
+import { notifyDailyReport, notifyRaw } from '../servicios/notification-service.js';
 import databaseService       from '../database/database.js';
+import { metricsCollector }  from '../utils/observability.js';
 
 // ─── Recolección de stats ─────────────────────────────────────────────────────
 
@@ -137,3 +138,54 @@ export function startDailyReportCron() {
 
 // Exportar también la función para testing / ejecución manual
 export { sendDailyReport };
+
+// ─── Reporte semanal de performance ──────────────────────────────────────────
+
+async function sendWeeklyPerfReport() {
+  try {
+    const snap = metricsCollector.getMetrics ? metricsCollector.getMetrics() : null;
+    if (!snap) {
+      console.log('[WEEKLY-PERF] metricsCollector sin snapshot disponible');
+      return;
+    }
+
+    const lines = [
+      '📊 *Reporte Semanal de Performance*',
+      '',
+      `🔢 Requests totales: ${snap.requests?.total ?? 'N/A'}`,
+      `✅ Exitosos: ${snap.requests?.success ?? 'N/A'}`,
+      `❌ Fallidos: ${snap.requests?.failed ?? 'N/A'}`,
+      `⏱️ Avg response time: ${snap.requests?.avgResponseTime ? snap.requests.avgResponseTime.toFixed(0) + 'ms' : 'N/A'}`,
+      '',
+      `🗄️ Queries totales: ${snap.database?.queriesTotal ?? 'N/A'}`,
+      `🐢 Queries lentas (+500ms): ${snap.database?.slowQueries ?? 'N/A'}`,
+      `⏱️ Avg query time: ${snap.database?.avgQueryTime ? snap.database.avgQueryTime.toFixed(0) + 'ms' : 'N/A'}`,
+      '',
+      `💾 RAM actual: ${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`,
+      `🕐 Período: últimos 7 días`
+    ];
+
+    await notifyRaw(lines.join('\n'));
+    console.log('[WEEKLY-PERF] ✅ Reporte semanal enviado');
+  } catch (err) {
+    console.error('[WEEKLY-PERF] ❌ Error:', err.message);
+  }
+}
+
+/**
+ * Inicia el cron de reporte semanal de performance.
+ * Ejecuta los lunes a las 09:00 hora Ecuador.
+ */
+export function startWeeklyPerfReportCron() {
+  const job = new CronJob(
+    '0 0 9 * * 1',   // Lunes 09:00
+    sendWeeklyPerfReport,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+  console.log('[WEEKLY-PERF] ✅ Cron de reporte semanal configurado (lunes 09:00 Ecuador)');
+  return job;
+}
+
+export { sendWeeklyPerfReport };

@@ -261,3 +261,11 @@ export async function notifyGitCommit(hash = '', msg = '', chat = 'Copilot', fil
     console.warn('[NOTIFY] notifyGitCommit error:', err.message);
   }
 }
+
+/**
+ * Envía un mensaje de texto libre a Diego por WhatsApp.
+ * @param {string} message
+ */
+export async function notifyRaw(message) {
+  await _send(message);
+}

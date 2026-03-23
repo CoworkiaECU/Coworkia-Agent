@@ -5,6 +5,7 @@
 
 import pkg from 'pg';
 const { Pool } = pkg;
+import { metricsCollector } from '../utils/observability.js';
 
 class PostgresAdapter {
   constructor() {
@@ -1307,7 +1308,12 @@ class PostgresAdapter {
       if (process.env.DEBUG_MODE === 'true') {
         console.log('[POSTGRES DEBUG] run() SQL:', pgSql, 'Params:', params);
       }
+      const _t0 = Date.now();
       const result = await this.pool.query(pgSql, params);
+      const _dur = Date.now() - _t0;
+      const _slow = _dur > 500;
+      metricsCollector.recordQuery(true, _dur, _slow);
+      if (_slow) console.warn(`[POSTGRES SLOW] run() ${_dur}ms — ${sql.slice(0, 80)}`);
       return {
         changes: result.rowCount || 0,
         lastID: result.rows[0]?.id || null
@@ -1343,6 +1349,9 @@ class PostgresAdapter {
       const startTime = Date.now();
       const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
+      const isSlow = duration > 500;
+      metricsCollector.recordQuery(true, duration, isSlow);
+      if (isSlow) console.warn(`[POSTGRES SLOW] get() ${duration}ms — ${sql.slice(0, 80)}`);
       if (process.env.DEBUG_MODE === 'true') {
         console.log(`[POSTGRES DEBUG] get() completado en ${duration}ms, rows:`, result.rows.length);
       }
@@ -1368,6 +1377,9 @@ class PostgresAdapter {
       const startTime = Date.now();
       const result = await this.pool.query(pgSql, params);
       const duration = Date.now() - startTime;
+      const isSlow = duration > 500;
+      metricsCollector.recordQuery(true, duration, isSlow);
+      if (isSlow) console.warn(`[POSTGRES SLOW] all() ${duration}ms — ${sql.slice(0, 80)}`);
       if (process.env.DEBUG_MODE === 'true') {
         console.log(`[POSTGRES DEBUG] all() completado en ${duration}ms, rows:`, result.rows.length);
       }

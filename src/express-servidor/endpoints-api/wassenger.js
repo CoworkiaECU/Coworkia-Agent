@@ -171,7 +171,7 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     console.log('[DIEGO-CMD] 📈 /perf solicitado');
     try {
       const { metricsCollector } = await import('../../utils/observability.js');
-      const snap = metricsCollector.getSnapshot ? metricsCollector.getSnapshot() : null;
+      const snap = metricsCollector.getMetrics ? metricsCollector.getMetrics() : null;
       if (!snap) {
         await enviarWhatsApp(userId, '📈 Métricas no disponibles aún (reinicia el servidor para activarlas)');
         return true;

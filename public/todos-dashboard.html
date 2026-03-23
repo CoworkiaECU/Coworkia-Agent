@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todos — Coworkia Agent</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0d0d0d;
+      --surface:   #161616;
+      --surface2:  #1e1e1e;
+      --border:    #262626;
+      --text:      #e5e5e5;
+      --muted:     #737373;
+      --urgent:    #ef4444;
+      --high:      #f97316;
+      --medium:    #eab308;
+      --low:       #22c55e;
+      --pending:   #737373;
+      --progress:  #3b82f6;
+      --done:      #22c55e;
+      --blocked:   #ef4444;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 20px;
+    }
+
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* ── HEADER ─────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.4px;
+    }
+    .header-left p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 999px; font-size: 11px;
+      color: var(--muted); font-weight: 600;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--done); animation: pulse 2s infinite;
+    }
+    .live-dot.offline { background: var(--muted); animation: none; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.3; }
+    }
+
+    /* ── ADD FORM ────────────────────────────────── */
+    .add-form {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .add-form input, .add-form select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px;
+      padding: 9px 13px; font-size: 13px;
+      outline: none; transition: border-color .15s;
+    }
+    .add-form input { flex: 1; min-width: 200px; }
+    .add-form input::placeholder { color: var(--muted); }
+    .add-form input:focus, .add-form select:focus { border-color: #3b82f6; }
+    .add-form select option { background: #1e1e1e; }
+    .btn-add {
+      background: #3b82f6; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 9px 18px; font-size: 13px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: background .15s;
+    }
+    .btn-add:hover { background: #2563eb; }
+
+    /* ── FILTERS ─────────────────────────────────── */
+    .filters {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .filter-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px;
+      padding: 5px 12px; font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: all .15s; letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .filter-btn:hover { border-color: #444; color: var(--text); }
+    .filter-btn.active { background: #fff; color: #000; border-color: #fff; }
+
+    /* ── TODO LIST ───────────────────────────────── */
+    #todos-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .todo-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      transition: border-color .15s, transform .1s;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .todo-item:hover { border-color: #333; }
+    .todo-item[data-priority="urgent"] { border-left-color: var(--urgent); }
+    .todo-item[data-priority="high"]   { border-left-color: var(--high); }
+    .todo-item[data-priority="medium"] { border-left-color: var(--medium); }
+    .todo-item[data-priority="low"]    { border-left-color: var(--low); }
+    .todo-item[data-status="done"]     { opacity: .5; }
+
+    /* status checkbox */
+    .todo-check {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .15s;
+    }
+    .todo-check:hover { border-color: var(--progress); }
+    .todo-check.in_progress { border-color: var(--progress); background: rgba(59,130,246,.15); }
+    .todo-check.done { border-color: var(--done); background: var(--done); }
+    .todo-check.blocked { border-color: var(--blocked); background: rgba(239,68,68,.15); }
+    .todo-check svg { display: none; width: 10px; height: 10px; }
+    .todo-check.done svg { display: block; color: #fff; }
+
+    /* body */
+    .todo-body { min-width: 0; }
+    .todo-title {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .todo-item[data-status="done"] .todo-title { text-decoration: line-through; }
+    .todo-meta {
+      display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;
+    }
+
+    /* pills */
+    .pill {
+      font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
+    }
+    .pill.status-pending    { background: rgba(115,115,115,.15); color: var(--muted); }
+    .pill.status-in_progress{ background: rgba(59,130,246,.15);  color: #60a5fa; }
+    .pill.status-done       { background: rgba(34,197,94,.12);   color: #4ade80; }
+    .pill.status-blocked    { background: rgba(239,68,68,.15);   color: #f87171; }
+    .pill.priority-urgent   { background: rgba(239,68,68,.15);   color: #f87171; }
+    .pill.priority-high     { background: rgba(249,115,22,.15);  color: #fb923c; }
+    .pill.priority-medium   { background: rgba(234,179,8,.12);   color: #facc15; }
+    .pill.priority-low      { background: rgba(34,197,94,.12);   color: #4ade80; }
+    .pill.agent             { background: rgba(255,255,255,.05); color: #a3a3a3; }
+    .pill.time              { background: transparent; color: var(--muted); padding: 0; }
+
+    /* actions */
+    .todo-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .action-btn {
+      background: none; border: 1px solid transparent;
+      color: var(--muted); border-radius: 6px;
+      padding: 4px 7px; font-size: 11px; cursor: pointer;
+      transition: all .15s; white-space: nowrap;
+    }
+    .action-btn:hover { border-color: var(--border); color: var(--text); background: var(--surface2); }
+    .action-btn.danger:hover { border-color: var(--urgent); color: var(--urgent); background: rgba(239,68,68,.08); }
+
+    /* ── STATUS CYCLE MENU ───────────────────────── */
+    .status-menu {
+      display: none; position: absolute; z-index: 100;
+      background: #1e1e1e; border: 1px solid #333;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      min-width: 140px;
+    }
+    .status-menu.open { display: block; }
+    .status-opt {
+      padding: 9px 14px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background .1s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .status-opt:hover { background: #2a2a2a; }
+
+    /* ── EMPTY STATE ─────────────────────────────── */
+    .empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted); font-size: 13px;
+    }
+    .empty span { font-size: 36px; display: block; margin-bottom: 12px; }
+
+    /* ── FLASH ───────────────────────────────────── */
+    .flash-overlay {
+      position: fixed; inset: 0; pointer-events: none;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 32px; z-index: 200;
+    }
+    .flash {
+      background: #1e1e1e; border: 1px solid #333;
+      color: var(--text); padding: 10px 20px;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      opacity: 0; transform: translateY(12px);
+      transition: all .25s;
+    }
+    .flash.show { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-left">
+      <h1>📋 Todos · Coworkia Agent</h1>
+      <p>Dashboard en tiempo real — los agentes actualizan al completar</p>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="live-label">Conectando…</span>
+    </div>
+  </header>
+
+  <!-- Add form -->
+  <form class="add-form" id="add-form">
+    <input  id="inp-title"  type="text"   placeholder="Nueva tarea…" autocomplete="off" required />
+    <select id="inp-priority">
+      <option value="medium">🟡 Medium</option>
+      <option value="urgent">🔴 Urgent</option>
+      <option value="high">🟠 High</option>
+      <option value="low">🟢 Low</option>
+    </select>
+    <select id="inp-agent">
+      <option value="">— agente —</option>
+      <option value="aurora">Aurora</option>
+      <option value="aluna">Aluna</option>
+      <option value="adriana">Adriana</option>
+      <option value="axel">Axel</option>
+      <option value="enzo">Enzo</option>
+      <option value="gabi">Gabi</option>
+      <option value="paula">Paula</option>
+    </select>
+    <button type="submit" class="btn-add">+ Agregar</button>
+  </form>
+
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="pending">Pendientes</button>
+    <button class="filter-btn" data-filter="in_progress">En progreso</button>
+    <button class="filter-btn" data-filter="blocked">Bloqueados</button>
+    <button class="filter-btn" data-filter="done">Completados</button>
+  </div>
+
+  <!-- List -->
+  <div id="todos-list"></div>
+
+  <!-- Empty state -->
+  <div class="empty" id="empty-state" style="display:none">
+    <span>✓</span>Todo limpio por aquí
+  </div>
+
+</div>
+
+<!-- Status menu (shared) -->
+<div class="status-menu" id="status-menu">
+  <div class="status-opt" data-s="pending">⬜ Pendiente</div>
+  <div class="status-opt" data-s="in_progress">🔵 En progreso</div>
+  <div class="status-opt" data-s="done">✅ Hecho</div>
+  <div class="status-opt" data-s="blocked">🔴 Bloqueado</div>
+</div>
+
+<!-- Flash toast -->
+<div class="flash-overlay"><div class="flash" id="flash"></div></div>
+
+<script>
+const API = '/api/todos';
+let todos = [];
+let activeFilter = 'all';
+let menuTodoId = null;
+
+// ── UTILS ────────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60)   return 'hace un momento';
+  if (diff < 3600) return `hace ${Math.floor(diff/60)}m`;
+  if (diff < 86400)return `hace ${Math.floor(diff/3600)}h`;
+  return `hace ${Math.floor(diff/86400)}d`;
+}
+
+const PRIORITY_LABEL = { urgent:'🔴 Urgent', high:'🟠 High', medium:'🟡 Medium', low:'🟢 Low' };
+const STATUS_LABEL   = { pending:'Pendiente', in_progress:'En progreso', done:'Hecho', blocked:'Bloqueado' };
+
+function flash(msg) {
+  const el = document.getElementById('flash');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── RENDER ───────────────────────────────────────
+function render() {
+  const list = document.getElementById('todos-list');
+  const empty = document.getElementById('empty-state');
+
+  const filtered = activeFilter === 'all'
+    ? todos
+    : todos.filter(t => t.status === activeFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(t => `
+    <div class="todo-item" data-id="${t.id}" data-priority="${t.priority}" data-status="${t.status}">
+      <div class="todo-check ${t.status}" data-id="${t.id}" title="Cambiar estado">
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1.5,5.5 4,8 8.5,2"/>
+        </svg>
+      </div>
+      <div class="todo-body">
+        <div class="todo-title">${escHtml(t.title)}</div>
+        <div class="todo-meta">
+          <span class="pill status-${t.status}">${STATUS_LABEL[t.status] ?? t.status}</span>
+          <span class="pill priority-${t.priority}">${PRIORITY_LABEL[t.priority] ?? t.priority}</span>
+          ${t.assigned_agent ? `<span class="pill agent">@${t.assigned_agent}</span>` : ''}
+          <span class="pill time">${timeAgo(t.updated_at)}</span>
+        </div>
+      </div>
+      <div class="todo-actions">
+        <button class="action-btn danger" data-del="${t.id}" title="Eliminar">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── STATUS MENU ──────────────────────────────────
+const menu = document.getElementById('status-menu');
+
+function openMenu(id, anchorEl) {
+  menuTodoId = id;
+  const rect = anchorEl.getBoundingClientRect();
+  menu.style.top  = `${rect.bottom + window.scrollY + 4}px`;
+  menu.style.left = `${rect.left  + window.scrollX}px`;
+  menu.style.position = 'absolute';
+  menu.classList.add('open');
+}
+
+document.addEventListener('click', e => {
+  // Check → open status menu
+  const check = e.target.closest('.todo-check');
+  if (check) { openMenu(check.dataset.id, check); return; }
+
+  // Status option selected
+  const opt = e.target.closest('.status-opt');
+  if (opt && menuTodoId) {
+    setStatus(menuTodoId, opt.dataset.s);
+    menu.classList.remove('open');
+    menuTodoId = null;
+    return;
+  }
+
+  // Delete button
+  const del = e.target.closest('[data-del]');
+  if (del) { deleteTodo(del.dataset.del); return; }
+
+  // Close menu
+  menu.classList.remove('open');
+  menuTodoId = null;
+});
+
+// ── API CALLS ────────────────────────────────────
+async function loadTodos() {
+  const r = await fetch(API);
+  const d = await r.json();
+  if (d.ok) { todos = d.todos; render(); }
+}
+
+async function setStatus(id, status) {
+  const r = await fetch(`${API}/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    todos = todos.map(t => t.id == id ? d.todo : t);
+    render();
+    flash(`Estado → ${STATUS_LABEL[status]}`);
+  }
+}
+
+async function deleteTodo(id) {
+  await fetch(`${API}/${id}`, { method: 'DELETE' });
+  todos = todos.filter(t => t.id != id);
+  render();
+  flash('Tarea eliminada');
+}
+
+// ── ADD FORM ─────────────────────────────────────
+document.getElementById('add-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const title    = document.getElementById('inp-title').value.trim();
+  const priority = document.getElementById('inp-priority').value;
+  const agent    = document.getElementById('inp-agent').value || null;
+  if (!title) return;
+
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, priority, assigned_agent: agent })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    todos.unshift(d.todo);
+    document.getElementById('inp-title').value = '';
+    render();
+    flash('Tarea agregada ✓');
+  }
+});
+
+// ── FILTERS ──────────────────────────────────────
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = btn.dataset.filter;
+  render();
+});
+
+// ── SSE — REAL-TIME ──────────────────────────────
+function connectSSE() {
+  const dot   = document.getElementById('live-dot');
+  const label = document.getElementById('live-label');
+  const es = new EventSource(`${API}/stream`);
+
+  es.onopen = () => {
+    dot.classList.remove('offline');
+    label.textContent = 'En vivo';
+  };
+
+  es.onmessage = e => {
+    const { event, todo, id } = JSON.parse(e.data);
+    if (event === 'created') {
+      if (!todos.find(t => t.id === todo.id)) todos.unshift(todo);
+    } else if (event === 'updated') {
+      todos = todos.map(t => t.id === todo.id ? todo : t);
+    } else if (event === 'deleted') {
+      todos = todos.filter(t => t.id !== id);
+    }
+    render();
+  };
+
+  es.onerror = () => {
+    dot.classList.add('offline');
+    label.textContent = 'Reconectando…';
+    es.close();
+    setTimeout(connectSSE, 4000);
+  };
+}
+
+// ── INIT ─────────────────────────────────────────
+loadTodos();
+connectSSE();
+</script>
+</body>
+</html>

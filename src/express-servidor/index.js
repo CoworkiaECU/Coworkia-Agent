@@ -63,6 +63,7 @@ import adminSeedRouter from './endpoints-api/admin-seed.js';
 import paulaDashboardRouter from './endpoints-api/paula-dashboard.js';
 import axelDashboardRouter from './endpoints-api/axel-dashboard.js';
 import adrianaDashboardRouter from './endpoints-api/adriana-dashboard.js';
+import todosDashboardRouter from './endpoints-api/todos-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
 
 const app = express();
@@ -220,6 +221,7 @@ app.use('/api/enzo', enzoDashboardRouter);
 app.use('/api/paula', paulaDashboardRouter);
 app.use('/api/axel', axelDashboardRouter);
 app.use('/api/adriana', adrianaDashboardRouter);
+app.use('/api/todos', todosDashboardRouter);
 app.use('/api/admin', adminSeedRouter);
 app.use('/', wifiCodesRouter);
 

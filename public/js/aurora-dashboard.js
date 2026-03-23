@@ -742,8 +742,7 @@ function renderProspectGrid(prospects) {
         <button onclick="clearProspectSelection()" style="background:none;border:1px solid #334155;color:#94a3b8;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Limpiar</button>
       </div>
     </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;min-width:520px;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;min-width:560px;">
         <colgroup>
           <col style="width:38px;">
           <col style="width:100px;">
@@ -765,8 +764,7 @@ function renderProspectGrid(prospects) {
           </tr>
         </thead>
         <tbody>${prospects.map(buildProspectRow).join('')}</tbody>
-      </table>
-    </div>`;
+      </table>`;
 }
 
 window.filterProspects = function(filter) {

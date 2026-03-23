@@ -70,6 +70,12 @@ Los skills se cargan bajo demanda según la tarea. La lista completa está en el
 - Notificar a Diego por WA al terminar un bloque con `notifyAutopilotComplete()`
 - Verificar logs tras deploy: `heroku logs --app coworkia-agent --num 20`
 
+### Magic ✨Todos — Actualización Obligatoria
+- **Al finalizar cualquier bloque de trabajo** (commit, deploy, feature, fix), el agente DEBE actualizar el estado de los todos correspondientes vía `PATCH /api/todos/:id/status`
+- Estados válidos: `pending` → `in_progress` → `done` | `blocked`
+- Si no existe un todo para la tarea ejecutada, **crearlo** vía `POST /api/todos` antes de marcarlo como `done`
+- Dashboard: `/todos-dashboard.html` — visible en producción en tiempo real
+
 ### Seguridad  
 - Solo `DIEGO_PERSONAL_PHONE` puede ejecutar comandos del bot
 - Nunca hardcodear tokens/keys — siempre `process.env.*`

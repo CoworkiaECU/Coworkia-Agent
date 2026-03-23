@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todos — Coworkia Agent</title>
+  <title>Magic✨Todos · OneMind</title>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -29,7 +29,8 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 24px 20px;
+      padding: 28px 24px;
+      font-size: 15px;
     }
 
     .container { max-width: 960px; margin: 0 auto; }
@@ -44,17 +45,20 @@
       margin-bottom: 28px;
     }
     .header-left h1 {
-      font-size: 22px;
-      font-weight: 800;
+      font-size: 28px;
+      font-weight: 900;
       color: #fff;
-      letter-spacing: -0.4px;
+      letter-spacing: -0.6px;
     }
-    .header-left p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .header-left p { font-size: 14px; color: var(--muted); margin-top: 5px; }
+
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .ml-logo { height: 28px; opacity: 0.85; }
 
     .live-badge {
       display: flex; align-items: center; gap: 6px;
       background: var(--surface); border: 1px solid var(--border);
-      padding: 6px 12px; border-radius: 999px; font-size: 11px;
+      padding: 6px 14px; border-radius: 999px; font-size: 12px;
       color: var(--muted); font-weight: 600;
     }
     .live-dot {
@@ -75,7 +79,7 @@
     .add-form input, .add-form select {
       background: var(--surface); border: 1px solid var(--border);
       color: var(--text); border-radius: 8px;
-      padding: 9px 13px; font-size: 13px;
+      padding: 11px 14px; font-size: 14px;
       outline: none; transition: border-color .15s;
     }
     .add-form input { flex: 1; min-width: 200px; }
@@ -85,7 +89,7 @@
     .btn-add {
       background: #3b82f6; color: #fff;
       border: none; border-radius: 8px;
-      padding: 9px 18px; font-size: 13px; font-weight: 700;
+      padding: 11px 20px; font-size: 14px; font-weight: 700;
       cursor: pointer; white-space: nowrap; transition: background .15s;
     }
     .btn-add:hover { background: #2563eb; }
@@ -97,7 +101,7 @@
     .filter-btn {
       background: var(--surface); border: 1px solid var(--border);
       color: var(--muted); border-radius: 6px;
-      padding: 5px 12px; font-size: 11px; font-weight: 700;
+      padding: 6px 14px; font-size: 12px; font-weight: 700;
       cursor: pointer; transition: all .15s; letter-spacing: .03em;
       text-transform: uppercase;
     }
@@ -145,7 +149,7 @@
     /* body */
     .todo-body { min-width: 0; }
     .todo-title {
-      font-size: 13px; font-weight: 500; color: var(--text);
+      font-size: 15px; font-weight: 600; color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .todo-item[data-status="done"] .todo-title { text-decoration: line-through; }
@@ -155,8 +159,8 @@
 
     /* pills */
     .pill {
-      font-size: 10px; font-weight: 700; letter-spacing: .04em;
-      padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: .04em;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
     }
     .pill.status-pending    { background: rgba(115,115,115,.15); color: var(--muted); }
     .pill.status-in_progress{ background: rgba(59,130,246,.15);  color: #60a5fa; }
@@ -224,12 +228,15 @@
 
   <header>
     <div class="header-left">
-      <h1>📋 Todos · Coworkia Agent</h1>
+      <h1>Magic✨Todos · OneMind</h1>
       <p>Dashboard en tiempo real — los agentes actualizan al completar</p>
     </div>
-    <div class="live-badge">
-      <div class="live-dot" id="live-dot"></div>
-      <span id="live-label">Conectando…</span>
+    <div class="header-right">
+      <img src="/assets/logos/marketinglab-white.png" alt="MarketingLab" class="ml-logo">
+      <div class="live-badge">
+        <div class="live-dot" id="live-dot"></div>
+        <span id="live-label">Conectando…</span>
+      </div>
     </div>
   </header>
 

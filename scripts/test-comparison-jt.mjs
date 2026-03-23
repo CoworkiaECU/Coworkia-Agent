@@ -1,5 +1,5 @@
 /**
- * Test: enviar email de comparación a Javier Troya (ADR-JT-001)
+ * Test: enviar email de comparación a Javier Andrade (ADR-DEMO-011)
  * Simula exactamente lo que hace el botón "📧 Comparación" del dashboard
  */
 import dotenv from 'dotenv';
@@ -13,7 +13,7 @@ const primaMensual = Math.round(primaAnual / 12);
 const adminCC      = process.env.COWORKIA_ADMIN_EMAIL || '';
 
 const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
-  nombre:           'Javier Troya',
+  nombre:           'Javier Andrade',
   marca:            'Hyundai',
   modelo:           'Creta',
   anio:             2022,
@@ -31,13 +31,13 @@ const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
 });
 
 const result = await sendEmail({
-  to:      'javier.troya@gmail.com',
+  to:      'jota@nube.ec',
   cc:      adminCC || undefined,
   subject: '🛡️ Tu cotización de seguro · Hyundai Creta 2022 · ADR-JT-001',
   html,
   from:    { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: DEFAULT_FROM_EMAIL },
 });
 
-console.log('✅ Email enviado a: javier.troya@gmail.com');
+console.log('✅ Email enviado a: jota@nube.ec');
 if (adminCC) console.log('📋 CC a admin:', adminCC);
 console.log('Result:', JSON.stringify(result));

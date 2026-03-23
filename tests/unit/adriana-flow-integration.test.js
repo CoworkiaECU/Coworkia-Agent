@@ -1,6 +1,6 @@
 /**
  * 🛡️ Tests de integración — Flujo completo Adriana
- * Caso de referencia: Javier Troya — Hyundai Creta 2022, $16,000, VAZ Ensigna
+ * Caso de referencia: Javier Andrade — Hyundai Creta 2022, $16,000, VAZ Ensigna
  *
  * Ejecutar: node --experimental-vm-modules npx jest tests/unit/adriana-flow-integration --no-coverage
  */
@@ -8,10 +8,10 @@
 import { calculateVehiclePremium } from '../../src/servicios/adriana-quote-calculator.js';
 import { buildAdrianaComparisonV2HTML, buildEmailTemplate } from '../../src/servicios/email-template-system.js';
 
-// ─── Demo data — caso Javier Troya (canónico) ────────────────────────────────
+// ─── Demo data — caso Javier Andrade (canónico) ────────────────────────────────
 
 const JAVIER_TROYA_DEMO = {
-  nombre: 'Javier Troya',
+  nombre: 'Javier Andrade',
   marca: 'Hyundai', modelo: 'Creta', anio: 2022, placa: 'PBC-1234',
   valor_asegurado: '$16,000',
   vaz_prima_anual: '$830', vaz_prima_mensual: '$83', vaz_deducible: '7% (Taller VAZ)',
@@ -36,9 +36,9 @@ const JAVIER_TROYA_DEMO = {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('Adriana — Flujo completo Javier Troya', () => {
+describe('Adriana — Flujo completo Javier Andrade', () => {
 
-  test('✅ Caso Javier Troya: $16k → prima $830', () => {
+  test('✅ Caso Javier Andrade: $16k → prima $830', () => {
     const r = calculateVehiclePremium({
       commercialValue: 16000,
       vehicleCategory: 'light',
@@ -52,7 +52,7 @@ describe('Adriana — Flujo completo Javier Troya', () => {
     const html = buildAdrianaComparisonV2HTML(JAVIER_TROYA_DEMO);
     expect(html).toContain('VAZ Seguros');
     expect(html).toContain('badge-best');
-    expect(html).toContain('Javier Troya');
+    expect(html).toContain('Javier Andrade');
     expect(html).toContain('$830');
   });
 

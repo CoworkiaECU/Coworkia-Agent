@@ -18,7 +18,7 @@ import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import databaseService from '../database/database.js';
 
-const ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
+const ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || '';
 const BOT_PHONE = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ function buildEmailS1HTML(l) {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
   <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
-    <div style="color:rgba(255,255,255,0.7);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;">🛡️ SEGPOPULAR · VAZ SEGUROS</div>
+    <div style="color:rgba(255,255,255,0.7);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;">🛡️ ADRIANA · SEGPOPULAR ECUADOR</div>
     <h1 style="color:#FCD34D;margin:0;font-size:24px;font-weight:900;">¿Tuviste la oportunidad de revisar tu cotización, ${fn}?</h1>
   </div>
   <div style="background:white;padding:32px 28px;border-radius:0 0 12px 12px;">
@@ -122,7 +122,7 @@ function buildEmailS1HTML(l) {
     <div style="text-align:center;margin:24px 0;">
       <a href="https://wa.me/${BOT_PHONE}?text=${cta}" style="display:inline-block;background:#1E3A8A;color:#FCD34D;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:15px;">💬 Hablar con Adriana →</a>
     </div>
-    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Código: ${l.quote_code} · SegPopular Ecuador</p>
+    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Ref. ${l.quote_code} · SegPopular Ecuador</p>
   </div>
 </div></body></html>`;
 }
@@ -135,7 +135,7 @@ function buildEmailS2HTML(l) {
   return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
-  <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
     <div style="color:rgba(255,255,255,0.8);font-size:28px;margin-bottom:8px;">⏰</div>
     <h1 style="color:white;margin:0;font-size:22px;font-weight:900;">ÚLTIMA OPORTUNIDAD, ${fn}</h1>
     <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Tu cotización vence HOY · Código ${l.quote_code}</p>

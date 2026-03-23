@@ -708,7 +708,7 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
 /**
  * 🛡️ Email comparativo VAZ Seguros V2 — con tabla de competidores dinámica
  *
- * Compatible con el caso real Javier Troya (SEG-DEMO-0011).
+ * Compatible con el caso demo jota@nube.ec (ADR-DEMO-011).
  *
  * @param {object} data
  * @param {string}   data.nombre             — Nombre completo del cliente

@@ -3,7 +3,7 @@ dotenv.config();
 import { buildEmailTemplate } from '../src/servicios/email-template-system.js';
 
 const html = buildEmailTemplate('adriana', 'COMPARISON_V2', {
-  nombre: 'Javier Troya', marca: 'Hyundai', modelo: 'Creta', anio: 2022,
+  nombre: 'Javier Andrade', marca: 'Hyundai', modelo: 'Creta', anio: 2022,
   valor_asegurado: '$16,000', vaz_prima_anual: '$830', vaz_prima_mensual: '$83',
 });
 

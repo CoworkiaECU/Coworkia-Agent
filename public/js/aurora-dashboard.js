@@ -854,7 +854,10 @@ async function loadConversations() {
       const phone   = c.user_phone || '';
       const last    = c.last_message ? new Date(c.last_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
       const first   = c.first_message ? new Date(c.first_message).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric' }) : '-';
-      const agents  = (c.agents || []).filter(Boolean).join(', ') || '-';
+      const agentsFull = (c.agents || []).filter(Boolean);
+      const agents = agentsFull.length > 3
+        ? agentsFull.slice(0,3).join(', ') + ` +${agentsFull.length - 3} más`
+        : agentsFull.join(', ') || '-';
       // Topics: filtrar / traducir
       const labeledTopics = formatTopics((c.topics || []).filter(Boolean));
       const topicsHtml = labeledTopics.length
@@ -887,7 +890,7 @@ async function loadConversations() {
           </td>
           <td style="padding:12px 16px; color:#94a3b8; font-size:13px;">${last}</td>
           <td style="padding:12px 16px; color:#64748b; font-size:13px;">${first}</td>
-          <td style="padding:12px 16px; font-size:12px; color:#94a3b8;">${agents}</td>
+          <td style="padding:12px 16px; font-size:12px; color:#94a3b8; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${agentsFull.join(', ')}">${agents}</td>
           <td style="padding:12px 16px; max-width:180px;">${topicsHtml}</td>
           <td style="padding:12px 16px;">${crmBadge}${proforma}</td>
           <td style="padding:12px 16px; display:flex; gap:8px; flex-wrap:wrap;">

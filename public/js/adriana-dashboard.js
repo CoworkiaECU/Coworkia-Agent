@@ -186,7 +186,7 @@ function renderLeads() {
                   <option value="rejected"  ${l.status==='rejected'  ?'selected':''}>❌ Rechazado</option>
                   <option value="cancelled" ${l.status==='cancelled' ?'selected':''}>🚫 Cancelado</option>
                 </select>
-                ${l.email ? `<button class="btn-sm btn-email" data-code="${l.quote_code}" data-action="email" title="Enviar comparación de seguros por correo electrónico">📧 Comparación</button>` : ''}
+                ${l.email ? `<button class="btn-sm btn-email" data-code="${l.quote_code}" data-action="email" title="Enviar comparación de seguros por correo electrónico">� Comparación</button>` : ''}
                 ${l.phone ? `<button class="btn-sm btn-wa" data-code="${l.quote_code}" data-action="wa" title="Enviar recordatorio de cotización por WhatsApp">📲 WA</button>` : ''}
               </div>
             </td>

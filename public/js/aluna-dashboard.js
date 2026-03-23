@@ -308,8 +308,67 @@ window.sendWANow = async function(phone, btn) {
     }
   } catch (e) {
     toast('❌ Error de red');
+
     btn.disabled = false;
     btn.textContent = '📱 WA ahora';
+  }
+}
+
+window.sendD1WA = async function(leadId, phone, name, plan, btn) {
+  if (!confirm(`¿Enviar WhatsApp D+1 a ${name || phone}?`)) return;
+  btn.disabled = true;
+  btn.textContent = '⏳…';
+  const firstName = (name || '').split(' ')[0] || 'Hola';
+  const planLabel = plan ? `*${plan}*` : 'los planes de membresía';
+  const message = `Hola ${firstName} 🌙\n\nQuería hacer seguimiento sobre ${planLabel} que estuviste revisando 😊\n\n¿Tienes alguna duda o necesitas más detalles?\n\nY si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina 🏢✨\n\nSin compromiso. ¿Cuándo te quedaría bien?`;
+  try {
+    const r = await fetch(`${API_BASE}/api/aluna/send-d1-whatsapp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leadId, userPhone: phone, message })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      toast('📱 D+1 WA enviado');
+      await loadPipeline();
+    } else {
+      toast('⚠️ ' + (j.error || 'Error enviando D+1'));
+      btn.disabled = false;
+      btn.textContent = '📱 D+1';
+    }
+  } catch (e) {
+    toast('❌ Error de red');
+    btn.disabled = false;
+    btn.textContent = '📱 D+1';
+  }
+}
+
+window.sendD3WA = async function(leadId, phone, name, plan, btn) {
+  if (!confirm(`¿Enviar WhatsApp D+3 a ${name || phone}?`)) return;
+  btn.disabled = true;
+  btn.textContent = '⏳…';
+  const firstName = (name || '').split(' ')[0] || 'Hola';
+  const planLabel = plan ? `*${plan}*` : 'los planes de membresía';
+  const message = `Hola ${firstName} 👋\n\n¿Cómo estás? Hace unos días charlamos sobre ${planLabel} y quería hacer un último acercamiento 😊\n\n*Mi propuesta:* ven a Coworkia un día completo, completamente gratis.\n\n📍 Sin costo, de *8am a 7pm* — WiFi, café, hot desk, sala de reuniones.\nSolo di en recepción que eres invitada/o de Aluna 🏢\n\n¿Qué día de esta semana te queda bien? 🗓️`;
+  try {
+    const r = await fetch(`${API_BASE}/api/aluna/send-d3-whatsapp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leadId, userPhone: phone, message })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      toast('📱 D+3 WA enviado');
+      await loadPipeline();
+    } else {
+      toast('⚠️ ' + (j.error || 'Error enviando D+3'));
+      btn.disabled = false;
+      btn.textContent = '📱 D+3';
+    }
+  } catch (e) {
+    toast('❌ Error de red');
+    btn.disabled = false;
+    btn.textContent = '📱 D+3';
   }
 }
 
@@ -369,8 +428,10 @@ function renderPipelineRows(prospects) {
     const converted = !!p.converted_at;
     const wa24Done  = !!p.followup_24h_sent_at;
     const wa3dDone  = !!p.followup_3d_sent_at;
-    const allDone   = converted || (wa24Done && wa3dDone);
-    let waBtnLabel  = wa24Done && !wa3dDone ? '📱 WA D+3' : '📱 WA D+1';
+    const leadId    = p.id;
+    const phone     = p.user_phone;
+    const name      = p.user_name;
+    const plan      = p.membership_type;
 
     return `
     <tr>
@@ -389,11 +450,14 @@ function renderPipelineRows(prospects) {
       <td>${buildStepper(p)}</td>
       <td>${getNextAction(p)}</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-sm btn-convert" data-action="convert" data-phone="${p.user_phone}" ${converted ? 'disabled' : ''}>
+        <button class="btn btn-sm btn-convert" data-action="convert" data-phone="${phone}" ${converted ? 'disabled' : ''}>
           ${converted ? '✅ Convertido' : '✅ Convertir'}
         </button>
-        <button class="btn btn-sm btn-wa" data-action="wanow" data-phone="${p.user_phone}" ${allDone ? 'disabled' : ''} style="margin-top:4px;">
-          ${allDone ? '✓ Secuencia OK' : waBtnLabel}
+        <button class="btn btn-sm btn-wa" data-action="pipeline-d1-wa" data-lid="${leadId || ''}" data-phone="${phone}" data-name="${(name||'').replace(/"/g,'&quot;')}" data-plan="${(plan||'').replace(/"/g,'&quot;')}" ${wa24Done ? 'disabled' : ''} style="margin-top:4px;" title="${wa24Done ? 'D+1 ya enviado' : 'Enviar WhatsApp D+1'}">
+          ${wa24Done ? '✓ D+1' : '📱 D+1'}
+        </button>
+        <button class="btn btn-sm btn-wa" data-action="pipeline-d3-wa" data-lid="${leadId || ''}" data-phone="${phone}" data-name="${(name||'').replace(/"/g,'&quot;')}" data-plan="${(plan||'').replace(/"/g,'&quot;')}" ${wa3dDone || !wa24Done ? 'disabled' : ''} style="margin-top:4px;" title="${!wa24Done && !wa3dDone ? 'Enviar D+1 primero' : wa3dDone ? 'D+3 ya enviado' : 'Enviar WhatsApp D+3'}">
+          ${wa3dDone ? '✓ D+3' : '📱 D+3'}
         </button>
       </td>
     </tr>`;
@@ -955,6 +1019,10 @@ document.addEventListener('click', function(e) {
     convertProspect(btn.dataset.phone, btn);
   } else if (action === 'wanow') {
     sendWANow(btn.dataset.phone, btn);
+  } else if (action === 'pipeline-d1-wa') {
+    sendD1WA(btn.dataset.lid, btn.dataset.phone, btn.dataset.name, btn.dataset.plan, btn);
+  } else if (action === 'pipeline-d3-wa') {
+    sendD3WA(btn.dataset.lid, btn.dataset.phone, btn.dataset.name, btn.dataset.plan, btn);
   }
 });
 

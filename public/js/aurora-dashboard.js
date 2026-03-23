@@ -649,33 +649,39 @@ function buildProspectRow(p) {
   const name      = p.user_name  || 'Sin nombre';
   const phone     = p.user_phone || '';
   const days      = p.days_since_last ?? 0;
+  const msgs      = p.interaction_count || 0;
   const daysColor = days <= 1 ? '#16a34a' : days <= 3 ? '#d97706' : '#dc2626';
   const daysLabel = days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days}d`;
 
   const rawTopics   = Array.isArray(p.topics) ? p.topics : [];
   const topicLabels = formatTopics(rawTopics);
-  const topicChips  = topicLabels.slice(0, 2)
-    .map(t => `<span style="background:#0f172a;color:#64748b;padding:2px 6px;border-radius:99px;font-size:10px;border:1px solid #334155;white-space:nowrap;">${t}</span>`)
-    .join(' ') || '<span style="color:#475569;font-size:11px;">—</span>';
+  const topicChips  = topicLabels.slice(0, 3)
+    .map(t => `<span style="background:#0f172a;color:#94a3b8;padding:2px 6px;border-radius:99px;font-size:10px;border:1px solid #334155;display:inline-block;margin:1px;">${t}</span>`)
+    .join('') || '<span style="color:#475569;font-size:11px;">—</span>';
 
-  const waTpl    = getWaTemplate(rawTopics, name);
-  const waLink   = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
-  const phoneEnc = phone.replace(/"/g, '&quot;');
-  const isChecked = _selectedProspects.has(phone);
+  const waTpl       = getWaTemplate(rawTopics, name);
+  const waLink      = `https://wa.me/${phone.replace(/\D/g,'')}?text=${waTpl}`;
+  const phoneEnc    = phone.replace(/"/g, '&quot;');
+  const phoneDigits = phone.replace(/\D/g, '');
+  const isChecked   = _selectedProspects.has(phone);
 
   return `
     <tr style="border-bottom:1px solid #1e293b;${isChecked ? 'background:#0f2040;' : ''}" data-phone="${phoneEnc}">
-      <td style="padding:8px 12px;width:36px;text-align:center;">
+      <td style="padding:8px 10px;text-align:center;">
         <input type="checkbox" class="prospect-check" data-phone="${phoneEnc}" ${isChecked ? 'checked' : ''}
           style="cursor:pointer;width:14px;height:14px;accent-color:#3b82f6;">
       </td>
-      <td style="padding:8px 12px;">${style.badge}</td>
-      <td style="padding:8px 12px;">
-        <div style="font-weight:600;color:#f1f5f9;font-size:13px;white-space:nowrap;">${name}</div>
-        <div style="font-size:11px;color:${daysColor};margin-top:1px;font-weight:600;">${daysLabel}</div>
+      <td style="padding:8px 10px;">
+        <div style="margin-bottom:2px;">${style.badge}</div>
+        <div style="font-size:10px;color:#475569;text-align:center;margin-top:3px;">${msgs} msgs</div>
       </td>
-      <td style="padding:8px 12px;overflow:hidden;">
-        <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${topicChips}</div>
+      <td style="padding:8px 10px;overflow:hidden;">
+        <div style="font-weight:600;color:#f1f5f9;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${name}">${name}</div>
+        <button onclick="copyToClipboard('${phoneDigits}', this)" style="background:none;border:none;cursor:pointer;color:#475569;font-size:10px;font-family:monospace;padding:0;display:block;margin-top:1px;" data-tip="Copiar teléfono">${maskPhone(phone)}</button>
+        <div style="font-size:11px;color:${daysColor};font-weight:600;margin-top:1px;">${daysLabel}</div>
+      </td>
+      <td style="padding:8px 10px;">
+        <div style="display:flex;flex-wrap:wrap;gap:2px;">${topicChips}</div>
       </td>
       <td style="padding:8px 8px;text-align:center;">
         <a href="${waLink}" target="_blank" title="WhatsApp" style="display:inline-flex;align-items:center;justify-content:center;background:#0d3b26;color:#4ade80;width:36px;height:28px;border-radius:6px;text-decoration:none;font-size:15px;border:1px solid #15803d;">💬</a>
@@ -727,7 +733,7 @@ function renderProspectGrid(prospects) {
   emptyEl.style.display = 'none';
   const selCount    = _selectedProspects.size;
   const isAllChecked = prospects.length > 0 && prospects.every(p => _selectedProspects.has(p.user_phone || ''));
-  const thStyle = 'text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #334155;white-space:nowrap;';
+  const thStyle = 'text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #334155;white-space:nowrap;';
   gridEl.innerHTML = `
     <div id="prospect-selection-bar" style="display:${selCount > 0 ? 'flex' : 'none'};align-items:center;justify-content:space-between;background:#0f2040;border:1px solid #2563eb;border-radius:8px;padding:10px 16px;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
       <span style="color:#93c5fd;font-size:13px;font-weight:600;">${selCount} seleccionado${selCount !== 1 ? 's' : ''}</span>
@@ -737,13 +743,13 @@ function renderProspectGrid(prospects) {
       </div>
     </div>
     <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;min-width:520px;">
         <colgroup>
-          <col style="width:36px;">
-          <col style="width:110px;">
-          <col style="width:160px;">
-          <col style="width:auto;">
-          <col style="width:62px;">
+          <col style="width:38px;">
+          <col style="width:100px;">
+          <col style="width:175px;">
+          <col>
+          <col style="width:50px;">
         </colgroup>
         <thead style="background:#0f172a;">
           <tr>
@@ -753,8 +759,8 @@ function renderProspectGrid(prospects) {
                 title="Seleccionar todos los visibles">
             </th>
             <th style="${thStyle}">Urgencia</th>
-            <th style="${thStyle}">Cliente · Último</th>
-            <th style="${thStyle}">Temas</th>
+            <th style="${thStyle}">Cliente</th>
+            <th style="${thStyle}">Interés detectado</th>
             <th style="${thStyle}text-align:center;">WA</th>
           </tr>
         </thead>

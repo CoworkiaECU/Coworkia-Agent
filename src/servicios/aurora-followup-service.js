@@ -172,7 +172,7 @@ function buildOneHourWhatsApp(reservation) {
   const hora = reservation.start_time || '';
 
   return (
-    `✅ Tu reserva en Coworkia está confirmada.\n\n` +
+    `@aurora\n✅ Tu reserva en Coworkia está confirmada.\n\n` +
     `📍 *${servicio}*\n` +
     `📅 ${fecha}${hora ? ` a las ${hora}` : ''}\n` +
     (reservation.total_price > 0 ? `💵 $${reservation.total_price}\n` : '') +
@@ -185,7 +185,7 @@ function buildRebookingWhatsApp(reservation) {
   const servicio = getServiceLabel(reservation.service_type);
 
   return (
-    `¡Hola! 👋 Han pasado 7 días desde tu visita a Coworkia.\n\n` +
+    `@aurora\n¡Hola! 👋 Han pasado 7 días desde tu visita a Coworkia.\n\n` +
     `Esperamos que tu experiencia con la *${servicio}* haya sido excelente.\n\n` +
     `¿Tienes un próximo proyecto o reunión? Reservar es fácil:\n` +
     `👉 Escríbeme "quiero reservar" y te ayudo al instante 🚀\n\n` +

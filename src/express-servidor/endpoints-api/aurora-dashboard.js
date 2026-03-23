@@ -541,7 +541,8 @@ router.post('/send-campaign', async (req, res) => {
 
     for (const phone of phones) {
       try {
-        const body = JSON.stringify({ phone, message, device: WASSENGER_DEVICE_ID });
+        const auroraMsg = message.startsWith('@aurora') ? message : `@aurora\n${message}`;
+        const body = JSON.stringify({ phone, message: auroraMsg, device: WASSENGER_DEVICE_ID });
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },

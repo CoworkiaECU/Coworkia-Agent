@@ -11,7 +11,11 @@
   ],
   "settings": {
     "chat.tools.terminal.autoApprove": {
-      "heroku": true
+      "heroku": true,
+      "/^node --check src/database/migrations/migration-runner\\.js && node --check src/database/migrations/001_initial\\.js && node --check src/database/migrations/template\\.js && echo \"✅ B4 migrations OK\"$/": {
+        "approve": true,
+        "matchCommandLine": true
+      }
     }
   }
 }

@@ -103,29 +103,91 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
 
   const cmd = (text || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  // STATUS: stats live del sistema
-  if (cmd === 'STATUS' || cmd === 'ESTADO') {
+  // /STATUS o STATUS: estado del sistema (health + stats)
+  if (cmd === '/STATUS' || cmd === 'STATUS' || cmd === 'ESTADO') {
     console.log('[DIEGO-CMD] 📊 STATUS solicitado');
     try {
+      const { getLastStatus } = await import('../../servicios/health-monitor.js');
+      const health = getLastStatus();
+
       const [resHoy, leadsAluna, leadsAxel] = await Promise.all([
         query(`SELECT COUNT(*) AS n FROM reservations WHERE created_at >= CURRENT_DATE`).catch(() => ({ rows: [{ n: '?' }] })),
         query(`SELECT COUNT(*) AS n FROM aluna_leads WHERE status NOT IN ('lost','archived') AND created_at >= NOW() - INTERVAL '30 days'`).catch(() => ({ rows: [{ n: '?' }] })),
         query(`SELECT COUNT(*) AS n FROM axel_quotes WHERE created_at >= NOW() - INTERVAL '30 days'`).catch(() => ({ rows: [{ n: '?' }] }))
       ]);
+
+      const icon = s => s === 'ok' ? '✅' : s === 'unknown' ? '⏳' : '❌';
+      const ramLabel = health.ramMB > 0 ? `${health.ramMB}MB` : '⏳';
+      const uptime = Math.floor(process.uptime());
+      const uptimeFmt = uptime < 3600 ? `${Math.floor(uptime/60)}m` : `${Math.floor(uptime/3600)}h ${Math.floor((uptime%3600)/60)}m`;
+
       const msg = [
-        '📊 *Status Coworkia* — ahora mismo',
+        '🖥️ *Status del Sistema*',
         '',
+        `${icon(health.openai)} OpenAI: ${health.openai}`,
+        `${icon(health.db)} DB: ${health.db}`,
+        `${icon(health.wassenger)} Wassenger: ${health.wassenger}`,
+        `💾 RAM: ${ramLabel} / uptime: ${uptimeFmt}`,
+        health.checkedAt ? `🕐 Último check: ${new Date(health.checkedAt).toLocaleTimeString('es-EC', { timeZone: 'America/Guayaquil' })}` : '🕐 Check pendiente',
+        '',
+        '📊 *Stats*',
         `🏢 Reservas hoy: *${resHoy.rows[0].n}*`,
         `👥 Leads Aluna (30d): *${leadsAluna.rows[0].n}*`,
         `🎨 Cotizaciones Axel (30d): *${leadsAxel.rows[0].n}*`,
-        `🟢 DB: online`,
-        `⏱️ ${new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}`,
         '',
-        'Comandos: PARA | SIGUIENTE | REVIEW'
+        'Comandos: /status · /migrate status · /perf'
       ].join('\n');
       await enviarWhatsApp(userId, msg);
     } catch (err) {
-      await enviarWhatsApp(userId, `📊 Status: en línea ✅\nDB: error al leer stats\n${err.message}`);
+      await enviarWhatsApp(userId, `📊 Sistema en línea ✅\nError detallando stats: ${err.message}`);
+    }
+    return true;
+  }
+
+  // /MIGRATE STATUS: estado de migraciones de BD
+  if (cmd === '/MIGRATE STATUS' || cmd === '/MIGRATE') {
+    console.log('[DIEGO-CMD] 🗄️ /migrate status solicitado');
+    try {
+      const { getMigrationStatus } = await import('../../database/migrations/migration-runner.js');
+      const status = await getMigrationStatus();
+      const lines = [
+        '🗄️ *Migraciones BD*',
+        '',
+        `✅ Aplicadas: ${status.applied.length}`,
+        ...status.applied.map(m => `  · ${m}`),
+        status.pending.length > 0 ? `\n⏳ Pendientes: ${status.pending.length}` : '\n✨ Todo al día',
+        ...status.pending.map(m => `  · ${m}`),
+        `\nDB: ${status.dbOk ? '✅ online' : '❌ error'}`,
+      ];
+      await enviarWhatsApp(userId, lines.join('\n'));
+    } catch (err) {
+      await enviarWhatsApp(userId, `🗄️ Migraciones: error al leer estado\n${err.message}`);
+    }
+    return true;
+  }
+
+  // /PERF: snapshot de métricas de performance
+  if (cmd === '/PERF') {
+    console.log('[DIEGO-CMD] 📈 /perf solicitado');
+    try {
+      const { metricsCollector } = await import('../../utils/observability.js');
+      const snap = metricsCollector.getSnapshot ? metricsCollector.getSnapshot() : null;
+      if (!snap) {
+        await enviarWhatsApp(userId, '📈 Métricas no disponibles aún (reinicia el servidor para activarlas)');
+        return true;
+      }
+      const msg = [
+        '📈 *Performance Snapshot*',
+        '',
+        `📥 Requests: ${snap.requests?.total ?? 0} total | ${snap.requests?.failed ?? 0} fallidos`,
+        `⏱️ Avg response: ${snap.requests?.avgResponseTime ?? 0}ms`,
+        `🗄️ Queries: ${snap.database?.queriesTotal ?? 0} | Lentas: ${snap.database?.slowQueries ?? 0}`,
+        `💾 RAM heap: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+        `🕐 Ahora: ${new Date().toLocaleTimeString('es-EC', { timeZone: 'America/Guayaquil' })}`,
+      ].join('\n');
+      await enviarWhatsApp(userId, msg);
+    } catch (err) {
+      await enviarWhatsApp(userId, `📈 Performance: error al leer métricas\n${err.message}`);
     }
     return true;
   }

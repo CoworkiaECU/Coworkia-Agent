@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificado de Supresión de Datos Personales</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #1e293b; padding: 40px 20px; }
+    .page { max-width: 720px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 32px rgba(0,0,0,0.08); }
+
+    .header { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); padding: 40px 48px 36px; text-align: center; }
+    .header .shield { font-size: 48px; margin-bottom: 12px; }
+    .header h1 { color: #FCD34D; font-size: 22px; font-weight: 900; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .header p { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500; }
+
+    .body { padding: 40px 48px; }
+
+    .cert-title { text-align: center; margin-bottom: 32px; }
+    .cert-title h2 { font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .cert-title p { font-size: 13px; color: #64748b; }
+
+    .statement { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 20px 24px; margin-bottom: 28px; font-size: 14px; line-height: 1.7; color: #0c4a6e; }
+    .statement strong { color: #0f172a; }
+
+    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 13px; }
+    .data-table tr { border-bottom: 1px solid #e2e8f0; }
+    .data-table tr:last-child { border-bottom: none; }
+    .data-table td { padding: 11px 0; vertical-align: top; }
+    .data-table td:first-child { color: #64748b; font-weight: 600; width: 220px; }
+    .data-table td:last-child { color: #1e293b; font-weight: 500; font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; }
+    .data-table td.normal { font-family: inherit; font-size: 13px; }
+
+    .proof-box { background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+    .proof-box h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 10px; }
+    .proof-item { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+    .proof-item:last-child { margin-bottom: 0; }
+    .proof-label { color: #64748b; min-width: 120px; flex-shrink: 0; }
+    .proof-value { color: #1e293b; font-family: 'SF Mono', 'Menlo', monospace; font-size: 11px; word-break: break-all; }
+    .proof-value.green { color: #16a34a; font-family: inherit; font-size: 12px; font-weight: 700; }
+
+    .rights { background: #f8fafc; border-radius: 8px; padding: 16px 20px; margin-bottom: 32px; font-size: 12px; color: #64748b; line-height: 1.6; }
+    .rights strong { color: #475569; }
+
+    .signature { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 24px; border-top: 1px solid #e2e8f0; }
+    .sig-block { text-align: center; }
+    .sig-line { width: 180px; height: 1px; background: #94a3b8; margin-bottom: 8px; }
+    .sig-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+    .sig-role { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    .footer { background: #f1f5f9; padding: 18px 48px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="header">
+      <div class="shield">🛡️</div>
+      <h1>Coworkia Agent · SegPopular Ecuador</h1>
+      <p>Sistema Multi-Agente de Gestión Comercial · coworkia-agent.herokuapp.com</p>
+    </div>
+
+    <div class="body">
+
+      <div class="cert-title">
+        <h2>Certificado de Supresión de Datos Personales</h2>
+        <p>Emitido en cumplimiento del derecho de supresión (Art. 17 RGPD / Derecho al Olvido)</p>
+      </div>
+
+      <div class="statement">
+        Por medio del presente documento, <strong>Coworkia / SegPopular Ecuador</strong> certifica que,
+        en respuesta a la solicitud recibida, se ha procedido a la <strong>eliminación completa e
+        irrecuperable</strong> de todos los datos personales asociados al ciudadano identificado a
+        continuación, de todos los sistemas de tratamiento, bases de datos activas, y repositorios
+        de código fuente gestionados por esta organización.
+      </div>
+
+      <table class="data-table">
+        <tr>
+          <td>Titular de los datos</td>
+          <td class="normal">Javier Troya</td>
+        </tr>
+        <tr>
+          <td>Correo electrónico</td>
+          <td>javier.troya@gmail.com</td>
+        </tr>
+        <tr>
+          <td>Referencia interna</td>
+          <td>ADR-JT-001</td>
+        </tr>
+        <tr>
+          <td>Agente tratante</td>
+          <td class="normal">Adriana (Pipeline de Seguros Vehiculares)</td>
+        </tr>
+        <tr>
+          <td>Fecha de supresión</td>
+          <td class="normal">23 de marzo de 2026 — 10:20 ECT (15:20 UTC)</td>
+        </tr>
+        <tr>
+          <td>Datos eliminados</td>
+          <td class="normal">Nombre, correo electrónico, teléfono, vehículo, cotización de seguro, historial de acciones</td>
+        </tr>
+        <tr>
+          <td>Estado actual</td>
+          <td class="normal" style="color:#16a34a;font-weight:700;">✅ ELIMINADO — No existe registro alguno</td>
+        </tr>
+      </table>
+
+      <div class="proof-box">
+        <h3>Evidencia Técnica</h3>
+        <div class="proof-item">
+          <span class="proof-label">Commit de eliminación</span>
+          <span class="proof-value">c8fb68ffb9e6ce58dfbad23ff03296f8b03199e7</span>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Mensaje de commit</span>
+          <span class="proof-value">purge javier.troya@gmail.com from codebase</span>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Repositorio</span>
+          <span class="proof-value">coworkia-agent (heroku/main)</span>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Verificación BD</span>
+          <span class="proof-value green">0 registros encontrados · DELETE ejecutado en producción</span>
+        </div>
+        <div class="proof-item">
+          <span class="proof-label">Timestamp UTC</span>
+          <span class="proof-value">2026-03-23T15:20:32Z</span>
+        </div>
+      </div>
+
+      <div class="rights">
+        <strong>Base legal de la supresión:</strong> Derecho de supresión conforme al Artículo 17 del Reglamento General de
+        Protección de Datos (RGPD / GDPR) de la Unión Europea, así como conforme a la Ley Orgánica de
+        Protección de Datos Personales del Ecuador (LOPDP). Los datos han sido eliminados de forma
+        definitiva y no serán utilizados para ningún fin de contacto, marketing, ni cesión a terceros.
+        Para cualquier consulta adicional: <strong>coworkia.ec@gmail.com</strong>
+      </div>
+
+      <div class="signature">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-name">Diego Villota</div>
+          <div class="sig-role">Responsable del Tratamiento</div>
+          <div class="sig-role">Coworkia / SegPopular Ecuador</div>
+        </div>
+        <div class="sig-block" style="text-align:right;">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">Fecha de emisión del certificado</div>
+          <div style="font-size:13px;font-weight:700;color:#1e293b;">23 de marzo de 2026</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">Quito, Ecuador</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      Este certificado ha sido generado por el sistema automatizado Coworkia Agent ·
+      Ref. técnica: c8fb68f · 2026-03-23T15:20:32Z ·
+      Para verificar la autenticidad contacte a coworkia.ec@gmail.com
+    </div>
+
+  </div>
+</body>
+</html>

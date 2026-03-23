@@ -33,6 +33,7 @@ import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
 import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron.js';
 // 🔔 FASE 4: Sistema de notificaciones
 import { startHealthMonitor } from '../servicios/health-monitor.js';
+import { runMigrations } from '../database/migrations/migration-runner.js';
 import { startDailyReportCron } from '../cron/daily-report.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
@@ -266,6 +267,12 @@ async function startServer() {
     console.log('🛡️ Iniciando follow-ups automatizados de Adriana...');
     startAdrianaFollowupCronJobs();
     console.log('✅ Adriana follow-ups activos (S1: 10am, S2: 11:30am, S3: 9:30am Ecuador)');
+
+    // Ejecutar migraciones de base de datos
+    console.log('🗃️ Ejecutando migraciones de base de datos...');
+    await runMigrations();
+    console.log('✅ Migraciones completadas');
+
     startHealthMonitor();
     console.log('✅ Health monitor activo (OpenAI + DB, checks cada 5 min)');
     startDailyReportCron();

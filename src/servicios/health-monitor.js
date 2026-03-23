@@ -1,23 +1,26 @@
 /**
  * 🏥 health-monitor.js — Monitor de salud del sistema
  *
- * Revisa OpenAI y PostgreSQL cada 5 minutos.
+ * Revisa OpenAI, PostgreSQL, Wassenger y RAM cada 10 minutos.
  * Solo notifica si el problema persiste en 2 checks consecutivos
  * para evitar spam por fallos transitorios.
  *
  * Uso: llamar startHealthMonitor() en el boot del servidor.
+ * API:  getLastStatus() → snapshot del último check (para /status WA)
  */
 
 import { notifyCriticalError } from './notification-service.js';
 import { query }               from '../database/database.js';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const CHECK_INTERVAL_MS  = 5 * 60 * 1000;  // 5 minutos
+const CHECK_INTERVAL_MS  = 10 * 60 * 1000; // 10 minutos (ahorra llamadas en eco dyno)
 const FAIL_THRESHOLD     = 2;              // Notificar solo tras N fallos seguidos
+const RAM_WARN_MB        = 450;            // Alerta si RSS supera este umbral
 
 // ─── Estado interno ───────────────────────────────────────────────────────────
-const failCounters = { openai: 0, db: 0 };
+const failCounters = { openai: 0, db: 0, wassenger: 0 };
 let intervalId = null;
+let _lastStatus = { checkedAt: null, openai: 'unknown', db: 'unknown', wassenger: 'unknown', ramMB: 0 };
 
 // ─── Checks individuales ──────────────────────────────────────────────────────
 
@@ -75,13 +78,62 @@ async function checkDatabase() {
   }
 }
 
+async function checkWassenger() {
+  const token = process.env.WASSENGER_TOKEN || process.env.WASSENGER_API_KEY;
+  if (!token) {
+    failCounters.wassenger = 0; // Sin token = no monitorear
+    return true;
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch('https://api.wassenger.com/v1/account', {
+      headers: { Token: token },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    // 401/403 = token inválido (servicio UP), 5xx = servicio caído
+    if (res.status < 500) {
+      failCounters.wassenger = 0;
+      return true;
+    }
+    throw new Error(`HTTP ${res.status}`);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      failCounters.wassenger++;
+      console.warn(`[HEALTH] ❌ Wassenger timeout (${failCounters.wassenger}/${FAIL_THRESHOLD})`);
+    } else {
+      failCounters.wassenger++;
+      console.warn(`[HEALTH] ❌ Wassenger check failed (${failCounters.wassenger}/${FAIL_THRESHOLD}):`, err.message);
+    }
+    if (failCounters.wassenger >= FAIL_THRESHOLD) {
+      await notifyCriticalError('Health Monitor — Wassenger', err);
+      failCounters.wassenger = 0;
+    }
+    return false;
+  }
+}
+
+function checkRAM() {
+  const rss = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  if (rss > RAM_WARN_MB) {
+    console.warn(`[HEALTH] ⚠️ RAM alta: ${rss}MB (umbral: ${RAM_WARN_MB}MB)`);
+    notifyCriticalError('Health Monitor — RAM Alta', new Error(`RSS: ${rss}MB`)).catch(() => {});
+  }
+  return rss;
+}
+
 // ─── Runner ───────────────────────────────────────────────────────────────────
 
 async function runChecks() {
   console.log('[HEALTH] 🔍 Ejecutando checks...');
-  const [openaiOk, dbOk] = await Promise.all([checkOpenAI(), checkDatabase()]);
+  const [openaiOk, dbOk, wassengerOk] = await Promise.all([
+    checkOpenAI(), checkDatabase(), checkWassenger()
+  ]);
+  const ramMB = checkRAM();
   const status = openaiOk && dbOk ? '✅' : '⚠️';
-  console.log(`[HEALTH] ${status} OpenAI: ${openaiOk ? 'OK' : 'FAIL'} | DB: ${dbOk ? 'OK' : 'FAIL'}`);
+  console.log(`[HEALTH] ${status} OpenAI: ${openaiOk ? 'OK' : 'FAIL'} | DB: ${dbOk ? 'OK' : 'FAIL'} | Wassenger: ${wassengerOk ? 'OK' : 'FAIL'} | RAM: ${ramMB}MB`);
+  _lastStatus = { checkedAt: new Date().toISOString(), openai: openaiOk ? 'ok' : 'fail', db: dbOk ? 'ok' : 'fail', wassenger: wassengerOk ? 'ok' : 'fail', ramMB };
 }
 
 // ─── API pública ──────────────────────────────────────────────────────────────
@@ -112,4 +164,11 @@ export function stopHealthMonitor() {
     intervalId = null;
     console.log('[HEALTH] 🛑 Health monitor detenido');
   }
+}
+
+/**
+ * Devuelve el snapshot del último check (para el comando /status desde WA).
+ */
+export function getLastStatus() {
+  return { ..._lastStatus };
 }

@@ -20,6 +20,7 @@ router.get('/leads', async (req, res) => {
     let query = `SELECT id, quote_code, insurance_type, client_name, email, phone,
                         vehicle_brand, vehicle_model, vehicle_year,
                         city, quoted_premium, status,
+                        kyc_cedula, kyc_matricula, competitor_quote_amount, competitor_insurer,
                         quote_sent_at, created_at
                  FROM insurance_leads WHERE 1=1`;
     const params = [];

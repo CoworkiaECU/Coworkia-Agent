@@ -168,13 +168,18 @@ function renderLeads() {
               <div class="client-name">${isUrgent?'<span class="urgency-dot" title="⚡ Sin seguimiento más de 48h"></span>':''}${l.client_name || '—'}</div>
               ${l.email ? `<div class="client-sub">✉️ ${l.email}</div>` : ''}
               ${l.phone ? `<div class="client-sub">📱 ${l.phone}</div>` : ''}
+              ${l.kyc_cedula ? `<div class="client-sub">🪪 ${l.kyc_cedula}</div>` : ''}
             </td>
             <td>
               <div class="vehicle-main">${vehicle}</div>
               ${l.vehicle_year ? `<div class="vehicle-year">Año ${l.vehicle_year}</div>` : ''}
+              ${l.kyc_matricula ? `<div class="vehicle-year">🚗 ${l.kyc_matricula}</div>` : ''}
             </td>
             <td>${l.insurance_type || '—'}</td>
-            <td><span class="amount">${formatMoney(l.quoted_premium)}</span></td>
+            <td>
+              <span class="amount">${formatMoney(l.quoted_premium)}</span>
+              ${l.competitor_insurer || l.competitor_quote_amount ? `<div class="client-sub" title="Cotización competidor">🏢 ${l.competitor_insurer || '?'} ${l.competitor_quote_amount ? formatMoney(l.competitor_quote_amount) : ''}</div>` : ''}
+            </td>
             <td>${statusBadge(l.status)}</td>
             <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
             <td>

@@ -674,9 +674,11 @@ function buildProspectRow(p) {
         <div style="font-weight:600;color:#f1f5f9;font-size:13px;white-space:nowrap;">${name}</div>
         <div style="font-size:11px;color:${daysColor};margin-top:1px;font-weight:600;">${daysLabel}</div>
       </td>
-      <td style="padding:8px 12px;max-width:220px;">${topicChips}</td>
-      <td style="padding:8px 12px;white-space:nowrap;">
-        <a href="${waLink}" target="_blank" style="background:#0d3b26;color:#4ade80;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid #15803d;">💬 WA</a>
+      <td style="padding:8px 12px;overflow:hidden;">
+        <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${topicChips}</div>
+      </td>
+      <td style="padding:8px 8px;text-align:center;">
+        <a href="${waLink}" target="_blank" title="WhatsApp" style="display:inline-flex;align-items:center;justify-content:center;background:#0d3b26;color:#4ade80;width:36px;height:28px;border-radius:6px;text-decoration:none;font-size:15px;border:1px solid #15803d;">💬</a>
       </td>
     </tr>`;}
 
@@ -735,10 +737,17 @@ function renderProspectGrid(prospects) {
       </div>
     </div>
     <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
+        <colgroup>
+          <col style="width:36px;">
+          <col style="width:110px;">
+          <col style="width:160px;">
+          <col style="width:auto;">
+          <col style="width:62px;">
+        </colgroup>
         <thead style="background:#0f172a;">
           <tr>
-            <th style="${thStyle}width:36px;text-align:center;">
+            <th style="${thStyle}text-align:center;">
               <input type="checkbox" id="prospect-check-all" ${isAllChecked ? 'checked' : ''}
                 style="cursor:pointer;width:14px;height:14px;accent-color:#3b82f6;"
                 title="Seleccionar todos los visibles">
@@ -746,7 +755,7 @@ function renderProspectGrid(prospects) {
             <th style="${thStyle}">Urgencia</th>
             <th style="${thStyle}">Cliente · Último</th>
             <th style="${thStyle}">Temas</th>
-            <th style="${thStyle}">WA</th>
+            <th style="${thStyle}text-align:center;">WA</th>
           </tr>
         </thead>
         <tbody>${prospects.map(buildProspectRow).join('')}</tbody>

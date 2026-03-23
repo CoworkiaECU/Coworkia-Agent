@@ -1258,7 +1258,8 @@ router.post('/campaigns/send', async (req, res) => {
 
         // Enviar según canal
         if (channel === 'whatsapp' && lead.user_phone) {
-          await enviarWhatsApp(lead.user_phone, personalizedMessage);
+          const alunaMsg = personalizedMessage.startsWith('@aluna') ? personalizedMessage : `@aluna\n${personalizedMessage}`;
+          await enviarWhatsApp(lead.user_phone, alunaMsg);
           sentCount++;
         } else if (channel === 'email' && lead.email) {
           await sendEmail({

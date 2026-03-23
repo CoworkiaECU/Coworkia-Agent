@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      background: linear-gradient(160deg, #030912 0%, #06112a 35%, #0b1d45 65%, #12275e 100%);
       color: #1f2937;
       padding: 40px 20px;
       min-height: 100vh;
@@ -29,8 +29,19 @@
       border-radius: 16px;
       padding: 40px;
       margin-bottom: 40px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       text-align: center;
+    }
+
+    .logo-bar {
+      background: #050d1e;
+      border-radius: 12px;
+      padding: 14px 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.07);
     }
 
     h1 {
@@ -199,12 +210,12 @@
 <body>
   <div class="container">
     <header>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <h1>🎯 Coworkia Admin Panel</h1>
-          <p class="subtitle">Panel de administración y dashboards de agentes</p>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="logo-bar">
+          <img src="/assets/logos/marketinglab.png" alt="MarketingLab" style="height:38px;">
         </div>
-        <img src="/assets/logos/marketinglab.png" alt="MarketingLab" style="height:32px;filter:grayscale(1);opacity:0.35;">
+        <h1>CRM Magic ✨ — OneMind</h1>
+        <p class="subtitle">Panel de administración y dashboards de agentes</p>
       </div>
     </header>
 
@@ -243,7 +254,7 @@
 
       <a href="/enzo-proyectos.html" class="dashboard-card">
         <div class="dashboard-icon" style="background: linear-gradient(135deg, #00C2A0, #00E5C0);">🎯</div>
-        <h3 class="dashboard-title">Enzo</h3>
+        <h3 class="dashboard-title">Enzo — Proyectos</h3>
         <p class="dashboard-description">
           Proyectos de marketing digital e IA de MarketingLab.
           Propuestas, estados, urgencias y revenue potencial.
@@ -253,7 +264,7 @@
 
       <a href="/enzo-leads.html" class="dashboard-card">
         <div class="dashboard-icon" style="background: linear-gradient(135deg, #0369a1, #38bdf8);">📲</div>
-        <h3 class="dashboard-title">Enzo · Leads</h3>
+        <h3 class="dashboard-title">Enzo — Leads ML</h3>
         <p class="dashboard-description">
           Follow-ups D+1 / D+3 / D+7 de leads de MarketingLab.
           Disparar mensajes WA manualmente por lead.

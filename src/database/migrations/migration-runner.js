@@ -13,6 +13,7 @@
 import { fileURLToPath } from 'url';
 import path              from 'path';
 import fs                from 'fs';
+import { execSync }      from 'child_process';
 import databaseService   from '../database.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,85 @@ function getMigrationFiles() {
     .sort();
 }
 
+// ─── Backup pre-migración ─────────────────────────────────────────────────────
+
+/**
+ * Intenta hacer un backup de la base de datos antes de aplicar migraciones.
+ * - Local: pg_dump --schema-only → /tmp/coworkia_pre_migration_NNN.sql
+ * - Heroku: llama a la API de Heroku Postgres (si HEROKU_API_KEY está disponible)
+ *           Si no, loguea el comando manual equivalente.
+ * Nunca bloquea la migración — solo advierte si falla.
+ */
+async function captureBackupBeforeMigration(pendingCount) {
+  if (pendingCount === 0) return;
+
+  const isHeroku  = !!process.env.DYNO;
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
+  if (!isHeroku) {
+    // ── Local: pg_dump ──────────────────────────────────────────────────────
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      console.log('[MIGRATIONS] ⚠️ DATABASE_URL no definido — backup local omitido');
+      return;
+    }
+    const outFile = `/tmp/coworkia_pre_migration_${timestamp}.sql`;
+    try {
+      execSync(`pg_dump --schema-only "${dbUrl}" -f "${outFile}"`, { timeout: 30000 });
+      console.log(`[MIGRATIONS] 💾 Backup schema guardado en ${outFile}`);
+    } catch (err) {
+      // pg_dump puede no estar disponible en el ambiente — no bloqueamos
+      console.warn('[MIGRATIONS] ⚠️ pg_dump no disponible — backup local omitido:', err.message.split('\n')[0]);
+    }
+    return;
+  }
+
+  // ── Heroku: API backup capture ────────────────────────────────────────────
+  const apiKey  = process.env.HEROKU_API_KEY;
+  const appName = process.env.HEROKU_APP_NAME || 'coworkia-agent';
+
+  if (!apiKey) {
+    console.log(`[MIGRATIONS] 💡 Backup manual recomendado antes de migrar:`);
+    console.log(`[MIGRATIONS]    heroku pg:backups:capture --app ${appName}`);
+    return;
+  }
+
+  try {
+    // 1. Obtener el addon de postgres
+    const addonsRes = await fetch(`https://api.heroku.com/apps/${appName}/addons`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/vnd.heroku+json; version=3'
+      }
+    });
+    if (!addonsRes.ok) throw new Error(`addons API ${addonsRes.status}`);
+    const addons  = await addonsRes.json();
+    const pgAddon = addons.find(a => a.addon_service?.name?.startsWith('heroku-postgresql'));
+    if (!pgAddon) throw new Error('Addon heroku-postgresql no encontrado');
+
+    // 2. Trigger backup en postgres-api.heroku.com
+    const resourceName = pgAddon.name;
+    const token64      = Buffer.from(`:${apiKey}`).toString('base64');
+    const backupRes    = await fetch(
+      `https://postgres-api.heroku.com/client/v11/databases/${resourceName}/backups`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${token64}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    if (!backupRes.ok) throw new Error(`backup API ${backupRes.status}`);
+    const backup = await backupRes.json();
+    console.log(`[MIGRATIONS] 💾 Backup Heroku iniciado — ID: ${backup.num ?? 'N/A'}`);
+  } catch (err) {
+    // No bloqueamos la migración aunque falle el backup
+    console.warn(`[MIGRATIONS] ⚠️ Backup automático falló: ${err.message}`);
+    console.log(`[MIGRATIONS] 💡 Backup manual: heroku pg:backups:capture --app ${appName}`);
+  }
+}
+
 // ─── Runner principal ─────────────────────────────────────────────────────────
 export async function runMigrations() {
   await ensureTable();
@@ -56,6 +136,9 @@ export async function runMigrations() {
     console.log('[MIGRATIONS] ✅ Base de datos al día — no hay migraciones pendientes');
     return { applied: applied.length, run: 0 };
   }
+
+  // Backup antes de aplicar cualquier cambio
+  await captureBackupBeforeMigration(pending.length);
 
   console.log(`[MIGRATIONS] 🔄 Ejecutando ${pending.length} migración(es) pendiente(s)...`);
   let ran = 0;

@@ -28,7 +28,7 @@ function getTabReservations(reservations, tab) {
   if (tab === 'completed') return reservations.filter(r => r.status === 'completed');
   if (tab === 'followup') {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return reservations.filter(r => r.status === 'completed' && new Date(r.date || r.created_at) > cutoff);
+    return reservations.filter(r => r.status === 'completed' && r.date && new Date(r.date) > cutoff);
   }
   return reservations;
 }
@@ -41,7 +41,7 @@ function updateTabCounts(reservations) {
     completed: reservations.filter(r => r.status === 'completed').length,
     followup:  reservations.filter(r => {
       const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      return r.status === 'completed' && new Date(r.date || r.created_at) > cutoff;
+      return r.status === 'completed' && r.date && new Date(r.date) > cutoff;
     }).length
   };
   for (const [tab, count] of Object.entries(counts)) {

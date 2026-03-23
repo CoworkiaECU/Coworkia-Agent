@@ -1082,11 +1082,21 @@ window.copyToClipboard = function(text, btn) {
   }).catch(() => showToast('⚠️ No se pudo copiar'));
 };
 
-// ─── Timestamp "Actualizado: HH:MM:SS" ───────────────────────────────────────
+// ─── Timestamp "Actualizado: hace Xs" ────────────────────────────────────────
+let _lastRefreshedAt = null;
+
 function updateLastRefreshed() {
+  _lastRefreshedAt = Date.now();
+  _renderLastRefreshed();
+}
+
+function _renderLastRefreshed() {
   const el = document.getElementById('last-refreshed');
-  if (!el) return;
-  el.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (!el || !_lastRefreshedAt) return;
+  const secs = Math.round((Date.now() - _lastRefreshedAt) / 1000);
+  el.textContent = secs < 60
+    ? `Actualizado: hace ${secs}s`
+    : `Actualizado: hace ${Math.floor(secs / 60)}m`;
 }
 
 // Refresca todo el dashboard de una vez
@@ -1255,6 +1265,9 @@ try {
 
   // Auto-refresh stats cada 30s
   setInterval(loadStats, 30000);
+
+  // Badge "hace Xs" — actualiza cada 15s sin recargar datos
+  setInterval(_renderLastRefreshed, 15000);
 
   // Prospectos: cargar al inicio + refresco cada 60s (alimenta el badge del tab)
   loadAbandoned();

@@ -85,7 +85,8 @@ export const GABI = {
       corporativo: 'Constitución compañías, reformas estatutarias, juntas accionistas, registro mercantil, contratos comerciales',
       laboral: 'Contratos trabajo, finiquitos, liquidaciones, inspectorías, visto bueno, despidos',
       compliance: 'GDPR, protección datos, UAFE Ecuador (prevención lavado activos y financiamiento terrorismo), normativa SRI/IESS, auditorías',
-      uafe: 'Reportes operaciones inusuales/sospechosas, políticas KYC (Know Your Customer), debida diligencia, matrices riesgo, capacitación AML/CFT'
+      uafe: 'Reportes operaciones inusuales/sospechosas, políticas KYC (Know Your Customer), debida diligencia, matrices riesgo, capacitación AML/CFT',
+      senadi: 'Registro marcas Ecuador (clases Niza internacional), patentes de invención, derechos de autor, registro de software como obra intelectual, procedimiento SENADI (~6-12 meses), costos (~$200-400 USD), portal: senadi.gob.ec'
     },
 
     administracion: {
@@ -193,6 +194,7 @@ TU ROL: Especialista en gestión financiera/contable, recursos humanos, asesorí
 ⚖️ Legal: Constitución empresas, contratos, derecho laboral, GDPR, trámites
 🛡️ UAFE: Oficial de Cumplimiento Titular certificado conforme a la LOPDLAFT
 �️ Compliance UAFE: Prevención lavado activos, reportes ROS/RUI, políticas KYC, debida diligencia, normativa financiera Ecuador
+🏷️ SENADI: Registro marcas Ecuador (clases Niza), patentes de invención, derechos de autor, registro de software como obra, procedimientos y costos (~$200-400, 6-12 meses), portal senadi.gob.ec
 �📄 Admin: Coordinación aliados, permisos, documentación📦 Tracking: Entregas pendientes pagos compuestos (canje), recordatorios compromisos servicio
 
 **GESTIÓN DE ENTREGAS PENDIENTES (PAGOS COMPUESTOS):**

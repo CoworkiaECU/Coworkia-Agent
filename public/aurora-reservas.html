@@ -470,7 +470,7 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Pipeline de Reservas</span>
-        <button id="btn-campaign-wa" class="btn btn-secondary btn-sm" data-tip="Copiar lista de completadas este mes para campaña D+7">📣 Campaña D+7</button>
+        <button id="btn-campaign-wa" class="btn btn-secondary btn-sm" data-tip="Enviar campaña WA a todas las reservas completadas este mes (follow-up D+7)">📣 Campaña D+7</button>
       </div>
 
       <div style="padding:14px 20px;border-bottom:1px solid #334155;">
@@ -543,7 +543,9 @@
           <div style="font-size:12px;color:#475569;margin-top:3px;">Usuarios que interactuaron con Aurora pero no reservaron — ordenados por urgencia.</div>
         </div>
         <div style="display:flex;gap:8px;">
-          <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm" data-tip="Copia lista de prospectos para campaña WA">📋 Copiar campaña</button>
+          <button onclick="sendCampaignToProspects('urgent')" class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;" data-tip="Enviar campaña WA a prospectos urgentes (hot + 2+ días sin respuesta)">🚨 Campaña urgentes</button>
+          <button onclick="sendCampaignToProspects('all')" class="btn btn-primary btn-sm" data-tip="Enviar campaña WA a todos los prospectos activos">📣 Campaña todos</button>
+          <button id="btn-copy-campaign-prospects" class="btn btn-secondary btn-sm" data-tip="Copia lista de prospectos para campaña WA">📋 Copiar lista</button>
           <button id="btn-refresh-prospects" class="btn btn-primary btn-sm" data-tip="Recargar prospectos desde la base de datos">↺ Actualizar</button>
         </div>
       </div>

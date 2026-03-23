@@ -502,7 +502,10 @@ function renderInterestedList(containerId, items, cardFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
   if (!items.length) {
-    el.innerHTML = '<div style="color:#64748b;font-size:13px;padding:12px 0;">✅ Sin registros en este grupo</div>';
+    el.innerHTML = `<div style="color:#475569;font-size:13px;padding:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <span>✅ Sin registros en este grupo · <span style="color:#64748b;font-size:12px;">Los datos aparecen cuando hay actividad real (reservas parciales, clientes inactivos o canceladas).</span></span>
+      <button onclick="sendCampaignToProspects('all')" class="btn btn-sm" style="background:#064e3b;color:#34d399;border:1px solid #065f46;font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;">📣 Usar prospectos activos</button>
+    </div>`;
     return;
   }
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">${items.map(cardFn).join('')}</div>`;
@@ -563,24 +566,11 @@ window.openCampaignModal = function(group) {
   const meta = groupData[group];
   if (!meta) return;
 
-  // Extraer teléfonos del grupo cargado en memoria
   const groupMap = { partial: _igData?.partial, inactive: _igData?.inactive, cancelled: _igData?.cancelled };
-  const items = groupMap[group] || [];
-  _campaignPhones = items.map(p => p.user_phone).filter(Boolean);
-  _campaignGroup  = group;
+  const items    = groupMap[group] || [];
+  const phones   = items.map(p => p.user_phone).filter(Boolean);
 
-  document.getElementById('campaign-modal-title').textContent = `📣 Campaña — ${meta.label}`;
-  const hasContacts = _campaignPhones.length > 0;
-  document.getElementById('campaign-modal-info').innerHTML = hasContacts
-    ? `<strong style="color:#f1f5f9;">${_campaignPhones.length} personas</strong> recibirán este mensaje por WhatsApp.`
-    : `<span style="color:#f59e0b;">⚠️ Este grupo no tiene contactos actualmente.</span><br><span style="color:#64748b;font-size:12px;">Los grupos se llenan cuando hay actividad: reservas a la mitad, clientes inactivos o cancelaciones.</span>`;
-  document.getElementById('campaign-message').value = '';
-  document.getElementById('campaign-result').style.display = 'none';
-  document.getElementById('campaign-send-btn').disabled  = !hasContacts;
-  document.getElementById('campaign-send-btn').textContent = hasContacts ? '📤 Enviar a todos' : '⚫ Sin contactos';
-
-  const modal = document.getElementById('campaign-modal');
-  modal.style.display = 'flex';
+  openCampaignModalWithPhones(`📣 Campaña — ${meta.label}`, phones, group);
 };
 
 window.closeCampaignModal = function() {
@@ -985,27 +975,66 @@ window.closeThread = function() {
   document.getElementById('conv-thread').style.display = 'none';
 };
 
-// Campaña WA masivo — completos del mes
+// Campaña WA masivo — abre modal con reservas completadas este mes
 window.sendCampaignWA = function() {
-  const cutoff    = new Date();
+  const cutoff = new Date();
   cutoff.setDate(1);
   cutoff.setHours(0, 0, 0, 0);
   const completed = allReservations.filter(r => r.status === 'completed' && new Date(r.created_at || r.updated_at) >= cutoff);
 
   if (!completed.length) {
-    showToast('No hay reservas completadas este mes.');
+    showToast('No hay reservas completadas este mes para campaña D+7.');
     return;
   }
 
-  const date = new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
-  const lines = completed.map(r => `• ${r.user_name || 'Sin nombre'} — ${r.user_phone || ''} — ${formatSimpleDate(r.date)}`);
-  const text  = `📣 Campaña Follow-Up D+7 · ${date}\nTotal: ${completed.length} reservas completadas\n\n${lines.join('\n')}`;
+  const phones = completed.map(r => r.user_phone).filter(Boolean);
+  openCampaignModalWithPhones(
+    '🔄 Seguimiento D+7 — Completaron este mes',
+    phones,
+    'reservas_mes',
+    `Hola {{nombre}}! 👋 Soy Aurora de Coworkia. ¿Cómo te fue en tu reserva? Recuerda que tienes tarifa preferencial para volver a reservar esta semana. ¿Te agendamos? 🏢`
+  );
+}
 
-  navigator.clipboard.writeText(text.trim()).then(() => {
-    showToast(`✅ Lista D+7 copiada — ${completed.length} contactos`);
-    const btn = document.getElementById('qa-campaign-wa');
-    if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copiado!'; setTimeout(() => { btn.textContent = orig; }, 2200); }
-  }).catch(() => alert('No se pudo copiar al portapapeles.'));
+// Campaña WA desde prospectos — abre modal con subset de prospectos
+window.sendCampaignToProspects = function(filter) {
+  if (!_allProspects.length) { showToast('⚠️ Primero carga los prospectos (tab Prospectos)'); return; }
+
+  let subset;
+  let label;
+  if (filter === 'urgent') {
+    subset = _allProspects.filter(p => getUrgencyLevel(p) === 'urgent');
+    label  = '🚨 Campaña — Urgentes';
+  } else if (filter === 'hot') {
+    subset = _allProspects.filter(p => p.engagement === 'hot');
+    label  = '🔥 Campaña — HOT';
+  } else {
+    subset = _allProspects;
+    label  = '📣 Campaña — Todos los prospectos';
+  }
+
+  if (!subset.length) { showToast(`No hay prospectos en este segmento.`); return; }
+
+  const phones = subset.map(p => p.user_phone).filter(Boolean);
+  openCampaignModalWithPhones(label, phones, 'prospectos_' + filter);
+}
+
+// Helper centralizado que puebla el modal de campaña con cualquier lista de phones
+window.openCampaignModalWithPhones = function(title, phones, group, defaultMessage) {
+  _campaignPhones = phones;
+  _campaignGroup  = group;
+
+  document.getElementById('campaign-modal-title').textContent = title;
+  const hasContacts = phones.length > 0;
+  document.getElementById('campaign-modal-info').innerHTML = hasContacts
+    ? `<strong style="color:#f1f5f9;">${phones.length} personas</strong> recibirán este mensaje por WhatsApp.`
+    : `<span style="color:#f59e0b;">⚠️ Este segmento no tiene contactos actualmente.</span>`;
+  document.getElementById('campaign-message').value = defaultMessage || '';
+  document.getElementById('campaign-result').style.display = 'none';
+  document.getElementById('campaign-send-btn').disabled  = !hasContacts;
+  document.getElementById('campaign-send-btn').textContent = hasContacts ? '📤 Enviar a todos' : '⚫ Sin contactos';
+
+  document.getElementById('campaign-modal').style.display = 'flex';
 }
 
 // ─── Click-to-copy teléfono ───────────────────────────────────────────────────

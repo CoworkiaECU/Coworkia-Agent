@@ -5,8 +5,12 @@
 Al abrir cualquier conversación con Diego, el agente DEBE hacer esto **antes de responder cualquier pregunta**:
 
 ### PASO 1 — Cargar memoria del proyecto
-Lee el skill `coworkia-memory` completo:
-`/Users/diegovillota/coworkia-agent/.github/skills/coworkia-memory/SKILL.md`
+Lee en este orden (todos antes de responder):
+1. `/Users/diegovillota/coworkia-agent/.github/memory/user.md` — quién es Diego y cómo trabaja
+2. `/Users/diegovillota/coworkia-agent/.github/memory/decisions.md` — decisiones técnicas permanentes
+3. `/Users/diegovillota/coworkia-agent/.github/memory/preferences.md` — estilo UX y coding
+4. `/Users/diegovillota/coworkia-agent/.github/memory/people.md` — personas y agentes
+5. Skill completo: `/Users/diegovillota/coworkia-agent/.github/skills/coworkia-memory/SKILL.md`
 
 ### PASO 2 — Identificar el chat actual
 Mira el contexto del editor y archivos abiertos para detectar en qué agente/módulo está trabajando Diego:

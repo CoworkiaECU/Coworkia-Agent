@@ -114,7 +114,7 @@ router.post('/leads/:code/send-wa', async (req, res) => {
     const vehicle = [l.vehicle_brand, l.vehicle_model, l.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
     const tipo    = l.insurance_type || 'seguro';
     const premium = l.quoted_premium ? ` La cotización por *$${parseFloat(l.quoted_premium).toFixed(2)}* sigue vigente.` : '';
-    const msg     = `Hola ${name} 👋\n\nTe escribo de SegPopular sobre el ${tipo.toLowerCase()} para *${vehicle}*.${premium}\n\n¿Puedo ayudarte con algo más o aclarar alguna duda? 📋`;
+    const msg     = `@adriana\nHola ${name} 👋\n\nTe escribo de SegPopular sobre el ${tipo.toLowerCase()} para *${vehicle}*.${premium}\n\n¿Puedo ayudarte con algo más o aclarar alguna duda? 📋`;
 
     await enviarWhatsApp(l.phone, msg);
     await databaseService.run(

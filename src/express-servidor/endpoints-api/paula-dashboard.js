@@ -110,7 +110,7 @@ router.post('/leads/:id/send-wa', async (req, res) => {
     const name = (l.client_name || 'Hola').split(' ')[0];
     const op   = l.operation_type || 'propiedad';
     const zone = l.preferred_zone || 'tu zona de interés';
-    const msg  = `Hola ${name} 👋\n\n¿Seguimos buscando tu ${op.toLowerCase()} en *${zone}*?\n\nTengo algunas opciones nuevas que podrían interesarte 🏠`;
+    const msg  = `@paula\nHola ${name} 👋\n\n¿Seguimos buscando tu ${op.toLowerCase()} en *${zone}*?\n\nTengo algunas opciones nuevas que podrían interesarte 🏠`;
 
     await enviarWhatsApp(l.phone, msg);
     await databaseService.run(

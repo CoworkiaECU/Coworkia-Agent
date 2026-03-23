@@ -291,7 +291,7 @@ router.post('/leads/:code/send-wa', async (req, res) => {
     const name = (l.client_name || 'Hola').split(' ')[0];
     const tipo = l.consultation_type || 'consultoría';
     const empresa = l.company ? ` de *${l.company}*` : '';
-    const msg  = `Hola ${name} 👋\n\nSoy Gabi de GR Consulting. ¿Sigues interesado en la ${tipo.toLowerCase()}${empresa}?\n\nTengo espacio en agenda esta semana para retomar tu caso 📋`;
+    const msg  = `@gabi\nHola ${name} 👋\n\nSoy Gabi de GR Consulting. ¿Sigues interesado en la ${tipo.toLowerCase()}${empresa}?\n\nTengo espacio en agenda esta semana para retomar tu caso 📋`;
 
     await enviarWhatsApp(l.phone, msg);
     await databaseService.run(

@@ -529,10 +529,10 @@ router.post('/prospect/:phone/sendwa', async (req, res) => {
     let message, followUpType;
     if (!prospect.followup_24h_sent_at) {
       followUpType = '24h_manual';
-      message = `Hola ${name} 🌙\n\nQuería hacer seguimiento sobre ${plan} que estuviste revisando 😊\n\n¿Tienes alguna duda o necesitas más detalles?\n\nY si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina 🏢✨\n\nSin compromiso. ¿Cuándo te quedaría bien?`;
+      message = `@aluna\nHola ${name} 🌙\n\nQuería hacer seguimiento sobre ${plan} que estuviste revisando 😊\n\n¿Tienes alguna duda o necesitas más detalles?\n\nY si quieres conocer el espacio antes de decidir, *te invito a venir un día completo sin ningún costo* — de *8am a 7pm*, usas todo como si ya fuera tu oficina 🏢✨\n\nSin compromiso. ¿Cuándo te quedaría bien?`;
     } else {
       followUpType = '3d_manual';
-      message = `Hola ${name} 👋\n\n¿Cómo estás? Hace unos días charlamos sobre ${plan} y quería hacer un último acercamiento 😊\n\n*Mi propuesta:* ven a Coworkia un día completo, completamente gratis.\n\n📍 Sin costo, de *8am a 7pm* — WiFi, café, hot desk, sala de reuniones.\nSolo di en recepción que eres invitada/o de Aluna 🏢\n\n¿Qué día de esta semana te queda bien? 🗓️`;
+      message = `@aluna\nHola ${name} 👋\n\n¿Cómo estás? Hace unos días charlamos sobre ${plan} y quería hacer un último acercamiento 😊\n\n*Mi propuesta:* ven a Coworkia un día completo, completamente gratis.\n\n📍 Sin costo, de *8am a 7pm* — WiFi, café, hot desk, sala de reuniones.\nSolo di en recepción que eres invitada/o de Aluna 🏢\n\n¿Qué día de esta semana te queda bien? 🗓️`;
     }
 
     const waResponse = await fetch('https://api.wassenger.com/v1/messages', {
@@ -891,7 +891,8 @@ router.post('/send-d1-whatsapp', async (req, res) => {
 
     // Enviar WhatsApp
     if (userPhone) {
-      await enviarWhatsApp(userPhone, message);
+      const alunaMsg = message.startsWith('@aluna') ? message : `@aluna\n${message}`;
+      await enviarWhatsApp(userPhone, alunaMsg);
       console.log(`[ALUNA-FOLLOWUP] WhatsApp D+1 enviado a ${userPhone}`);
     }
 
@@ -997,7 +998,8 @@ router.post('/send-d3-whatsapp', async (req, res) => {
 
     // Enviar WhatsApp
     if (userPhone) {
-      await enviarWhatsApp(userPhone, message);
+      const alunaMsg = message.startsWith('@aluna') ? message : `@aluna\n${message}`;
+      await enviarWhatsApp(userPhone, alunaMsg);
       console.log(`[ALUNA-FOLLOWUP] WhatsApp D+3 enviado a ${userPhone}`);
     }
 

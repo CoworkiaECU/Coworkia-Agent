@@ -508,7 +508,11 @@ async function sendLeadReminder(code, btn) {
   const orig = btn.textContent;
   btn.textContent = '⏳';
   try {
-    const res = await fetch(`/api/enzo/projects/${code}/send-reminder`, { method: 'POST' });
+    const res = await fetch(`/api/enzo/leads/${code}/send-followup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
     const d = await res.json();
     if (d.ok) {
       btn.textContent = '✅';

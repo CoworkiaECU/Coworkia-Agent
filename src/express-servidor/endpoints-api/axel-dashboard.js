@@ -117,7 +117,7 @@ router.post('/quotes/:code/send-reminder', async (req, res) => {
 
     const name = (q.client_name || 'Hola').split(' ')[0];
     const vehicle = [q.vehicle_brand, q.vehicle_model, q.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
-    const msg = `Hola ${name} 👋\n\n¿Quedó alguna duda sobre la cotización de *${vehicle}*?\n\nCuando quieras seguimos — 20 minutos y cerramos todo 📅`;
+    const msg = `@axel\nHola ${name} 👋\n\n¿Quedó alguna duda sobre la cotización de *${vehicle}*?\n\nCuando quieras seguimos — 20 minutos y cerramos todo 📅`;
 
     await enviarWhatsApp(targetPhone, msg);
     await databaseService.run(

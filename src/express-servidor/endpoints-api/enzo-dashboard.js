@@ -243,7 +243,7 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
     const tipo    = p.project_type || 'proyecto de marketing';
     const empresa = p.company ? ` para *${p.company}*` : '';
     const propuesta = p.proposal_amount ? `\n\nLa propuesta por *$${parseFloat(p.proposal_amount).toFixed(2)}* sigue en pie.` : '';
-    const msg = `Hola ${name} 👋\n\n¿Seguimos adelante con el ${tipo.toLowerCase()}${empresa}?${propuesta}\n\nCuando quieras coordinamos — 20 minutos y definimos los próximos pasos 🚀`;
+    const msg = `@enzo\nHola ${name} 👋\n\n¿Seguimos adelante con el ${tipo.toLowerCase()}${empresa}?${propuesta}\n\nCuando quieras coordinamos — 20 minutos y definimos los próximos pasos 🚀`;
 
     await enviarWhatsApp(targetPhone, msg);
     await databaseService.run(
@@ -265,7 +265,12 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
 router.post('/leads/:code/send-followup', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
-    const { day = 'd1' } = req.body;
+    const { day: dayParam } = req.body;
+    const leadForDay = await databaseService.get(
+      `SELECT followup_d1_sent_at, followup_d3_sent_at, followup_d7_sent_at FROM marketing_leads WHERE project_code = $1`,
+      [req.params.code]
+    );
+    const day = dayParam || (!leadForDay?.followup_d1_sent_at ? 'd1' : !leadForDay?.followup_d3_sent_at ? 'd3' : 'd7');
     if (!['d1', 'd3', 'd7'].includes(day)) {
       return res.status(400).json({ ok: false, error: 'day debe ser d1, d3 o d7' });
     }
@@ -292,9 +297,9 @@ router.post('/leads/:code/send-followup', async (req, res) => {
     const tipo    = lead.project_type || 'proyecto digital';
 
     const waMessages = {
-      d1: `Hola ${name} 👋\n\nQuería hacer seguimiento de tu *${tipo}* con MarketingLab.\n\n¿Tienes alguna pregunta sobre la propuesta? Estoy aquí para ayudarte.\n\n_Enzo — MarketingLab_`,
-      d3: `${name}, tenemos una oferta especial *SOLO HOY*:\n\n🎁 *15% de descuento* en tu primer proyecto con MarketingLab.\n\nEsta oferta vence hoy a las 23:59. ¿Te interesa?\n\nResponde *SI* y te mando los detalles al instante 🚀`,
-      d7: `${name}, ¿sabías que una empresa similar a la tuya creció *300% en 3 meses* con nuestra estrategia digital? 📈\n\nMe encantaría contarte cómo lo logramos.\n\n¿Tienes 15 minutos esta semana para una llamada rápida?`,
+      d1: `@enzo\nHola ${name} 👋\n\nQuería hacer seguimiento de tu *${tipo}* con MarketingLab.\n\n¿Tienes alguna pregunta sobre la propuesta? Estoy aquí para ayudarte.\n\n_Enzo — MarketingLab_`,
+      d3: `@enzo\n${name}, tenemos una oferta especial *SOLO HOY*:\n\n🎁 *15% de descuento* en tu primer proyecto con MarketingLab.\n\nEsta oferta vence hoy a las 23:59. ¿Te interesa?\n\nResponde *SI* y te mando los detalles al instante 🚀`,
+      d7: `@enzo\n${name}, ¿sabías que una empresa similar a la tuya creció *300% en 3 meses* con nuestra estrategia digital? 📈\n\nMe encantaría contarte cómo lo logramos.\n\n¿Tienes 15 minutos esta semana para una llamada rápida?`,
     };
 
     await enviarWhatsApp(targetPhone, waMessages[day]);

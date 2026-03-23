@@ -664,7 +664,6 @@ function buildProspectRow(p) {
         <a href="${waLink}" target="_blank" style="background:#0d3b26;color:#4ade80;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid #15803d;white-space:nowrap;">💬 WhatsApp</a>
       </td>
     </tr>`;}
-}
 
 window.loadAbandoned = async function() {
   const gridEl  = document.getElementById('prospects-grid');

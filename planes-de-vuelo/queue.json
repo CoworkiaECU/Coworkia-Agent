@@ -77,14 +77,16 @@
     {
       "id": "email-antispam",
       "title": "Todo #39 — Sistema Anti-Spam Emails HTML",
-      "status": "in-progress",
+      "status": "completed",
       "plan": "plan-vuelo-email-antispam-24mar.md",
       "startedAt": "2026-03-24T18:00:00Z",
-      "estimatedTime": "2-2.5h",
-      "priority": "high",
+      "completedAt": "2026-03-24T22:50:00Z",
+      "duration": "~1h",
+      "commits": ["aa43967", "c387a53"],
+      "heroku": "v1115",
       "tasksTotal": 19,
-      "tasksCompleted": 0,
-      "notes": "text/plain auto, minify HTML, eliminar SVGs inline, headers anti-spam, TLS fix, doc SPF/DKIM"
+      "tasksCompleted": 19,
+      "notes": "text/plain auto, minify HTML, SVGs→emojis, TLS fix, headers anti-spam, doc SPF/DKIM"
     }
   ],
   "metrics": {

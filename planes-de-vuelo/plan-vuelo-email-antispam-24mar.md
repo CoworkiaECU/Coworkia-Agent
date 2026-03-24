@@ -2,7 +2,7 @@
 **Fecha**: 24 Mar 2026  
 **Magic Todo**: #39 — "Crear un sistema para que los mails NUNCA caigan en spam por cargar archivos HTML"  
 **Estimado**: 2 - 2.5h  
-**Estado**: 🟡 EN PROGRESO
+**Estado**: ✅ COMPLETADO — Heroku v1115 (commits: aa43967, c387a53)
 
 ---
 

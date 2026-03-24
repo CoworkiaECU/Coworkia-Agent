@@ -10,7 +10,7 @@
 import express from 'express';
 import databaseService from '../../database/database.js';
 import { enviarWhatsApp } from './wassenger.js';
-import { sendEmail } from '../../servicios/email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 
 const router = express.Router();
@@ -986,8 +986,8 @@ router.post('/send-d1-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
-      from: 'Aluna • Membresías Coworkia Business Center <secretaria.coworkia@gmail.com>',
       cc: 'coworkia.ec@gmail.com',
+      from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL },
       subject: '💼 Tu plan de membresía en Coworkia está listo',
       html: buildEmailTemplate('ALUNA', 'D1', { name: clientName, message, plan: req.body.plan || 'Membresía Coworkia' })
     });
@@ -1081,8 +1081,7 @@ router.post('/send-d3-email', async (req, res) => {
       });
     }
 
-    console.log(`[ALUNA-FOLLOWUP] Enviando D+3 Email manual (FOMO) a ${email}`);
-
+    // Si no viene name en body, recuperarlo de BD
     let clientName = req.body.name || '';
     if (!clientName) {
       const lead = await databaseService.get(
@@ -1092,11 +1091,13 @@ router.post('/send-d3-email', async (req, res) => {
       clientName = lead?.client_name || '';
     }
 
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+3 Email manual (FOMO) a ${email} (nombre: ${clientName || 'sin nombre'})`);
+
     // Enviar Email
     await sendEmail({
       to: email,
-      from: 'Aluna • Membresías Coworkia Business Center <secretaria.coworkia@gmail.com>',
       cc: 'coworkia.ec@gmail.com',
+      from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL },
       subject: '🔥 Últimas disponibilidades — Coworkia (oferta limitada)',
       html: buildEmailTemplate('ALUNA', 'D3', { name: clientName, message })
     });

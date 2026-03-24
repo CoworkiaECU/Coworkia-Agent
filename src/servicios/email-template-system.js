@@ -124,7 +124,6 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero agendar mi visita gratuita a Coworkia`);
-  const ecosistemaItems = ecosistemaTable({ aliados: ['aurora','enzo','angela','axel','adriana','gabi','paula','custom'], theme: 'dark' });
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -181,27 +180,27 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
     <!-- CTA — mismo estilo que la proforma -->
     <div style="text-align:center;margin-bottom:28px;">
-      <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Hay espacios disponibles — pero no por mucho tiempo</p>
+      <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Tu espacio ideal te está esperando</p>
       <a href="https://wa.me/593994837117?text=${waText}"
-         style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:16px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">
-        🏢 Quiero Ver Mi Espacio y Empezar Esta Semana →
+         style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">
+        🏢 Sí, quiero conocer Coworkia esta semana →
       </a>
       <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta en menos de 5 minutos · WhatsApp</p>
     </div>
 
   </div>
 
-  <!-- ECOSISTEMA 8 AGENTES + FOOTER — idéntico a proforma aprobada -->
+  <!-- ECOSISTEMA + FOOTER OSCURO — igual que proforma aprobada -->
   <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
-    <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">El ecosistema Coworkia</div>
-    <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">Contamos con 8 agentes especializados para cubrir cada necesidad de tu negocio</div>
-    <div style="margin-bottom:22px;">${ecosistemaItems}</div>
-    <div style="margin-bottom:28px;padding:0 8px;">
+    <div style="color:#4ECDC4;font-size:20px;font-weight:800;margin-bottom:10px;line-height:1.3;">Un ecosistema completo de agentes IA</div>
+    <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 22px;">Coworkia es más que un espacio. Es un sistema inteligente que trabaja por ti.</div>
+    <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora','adriana','angela','axel','aluna','gabi','paula','custom'], theme: 'dark' })}</div>
+    <div style="margin-bottom:22px;padding:0 8px;">
       <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Tu espacio ideal en Quito</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
       <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
@@ -227,8 +226,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 export function buildAlunaD3HTML({ name, message }) {
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
-  const waText = encodeURIComponent(`¡Hola @aluna!, quiero reservar mi espacio antes de que se agoten`);
-  const ecosistemaItems = ecosistemaTable({ aliados: ['aurora','enzo','angela','axel','adriana','gabi','paula','custom'], theme: 'dark' });
+  const waText = encodeURIComponent(`¡Hola @aluna!, quiero reservar mi espacio en Coworkia antes de que se agoten`);
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -295,17 +293,17 @@ export function buildAlunaD3HTML({ name, message }) {
 
   </div>
 
-  <!-- ECOSISTEMA 8 AGENTES + FOOTER — idéntico a proforma aprobada -->
+  <!-- ECOSISTEMA + FOOTER OSCURO — igual que proforma aprobada -->
   <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
-    <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">El ecosistema Coworkia</div>
-    <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">Contamos con 8 agentes especializados para cubrir cada necesidad de tu negocio</div>
-    <div style="margin-bottom:22px;">${ecosistemaItems}</div>
-    <div style="margin-bottom:28px;padding:0 8px;">
+    <div style="color:#4ECDC4;font-size:20px;font-weight:800;margin-bottom:10px;line-height:1.3;">Un ecosistema completo de agentes IA</div>
+    <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 22px;">Coworkia es más que un espacio. Es un sistema inteligente que trabaja por ti.</div>
+    <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora','adriana','angela','axel','aluna','gabi','paula','custom'], theme: 'dark' })}</div>
+    <div style="margin-bottom:22px;padding:0 8px;">
       <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Tu espacio ideal en Quito</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
       <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         Whymper 403, Edificio Finistere, Planta Baja, Quito<br>

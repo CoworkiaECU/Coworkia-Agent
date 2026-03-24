@@ -2642,6 +2642,46 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
+    // 🛡️ ADRIANA AUTO-TRIGGER: Detectar foto de matrícula aunque el agente activo no sea ADRIANA
+    // Solo aplica cuando el agente activo NO tiene su propio handler de imágenes
+    if (mediaUrl && type === 'image' && !['AXEL', 'ALUNA', 'ANGELA'].includes(profile.activeAgent)) {
+      const existingInsuranceLead = await findLeadByPhone(userId).catch(() => null);
+      const ADRIANA_ACTIVE_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'quoted', 'waiting_kyc', 'accepted'];
+      const hasActiveAdrianaLead = existingInsuranceLead && ADRIANA_ACTIVE_STATES.includes(existingInsuranceLead.status);
+
+      if (!hasActiveAdrianaLead) {
+        // 1. Detección barata: keywords en el texto del usuario
+        const docType = detectDocumentType(processedText || '', '');
+        const isMatriculaByText = docType === DOCUMENT_TYPES.VEHICLE_REGISTRATION;
+
+        // 2. Detección por Vision AI: solo si el agente es AURORA (punto de entrada natural)
+        //    y el texto no ayudó a identificarlo
+        let isMatriculaByVision = false;
+        if (!isMatriculaByText && (profile.activeAgent === 'AURORA' || !profile.activeAgent)) {
+          try {
+            console.log('[ADRIANA-AUTO] 🔍 Analizando imagen sin contexto de texto — verificando si es matrícula');
+            const quickAnalysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', {
+              documentType: DOCUMENT_TYPES.VEHICLE_REGISTRATION,
+            });
+            isMatriculaByVision = quickAnalysis.success && quickAnalysis.analysis;
+            if (isMatriculaByVision) {
+              console.log('[ADRIANA-AUTO] ✅ Matrícula detectada por Vision AI');
+            }
+          } catch (_err) {
+            console.warn('[ADRIANA-AUTO] ⚠️ Error en detección rápida de matrícula:', _err.message);
+          }
+        }
+
+        if (isMatriculaByText || isMatriculaByVision) {
+          console.log('[ADRIANA-AUTO] 🚗 Matrícula detectada — activando flujo Adriana');
+          profile.activeAgent = 'ADRIANA';
+          await updateProfile(userId, { activeAgent: 'ADRIANA' }, { reason: 'auto_matricula_detection' }).catch(() => {});
+          const handled = await handleAdrianaFlow({ userId, profile, processedText, mediaUrl, type, envelope });
+          if (handled) return;
+        }
+      }
+    }
+
     // 🛡️ ADRIANA FLUJO COMPLETO (V2): Estados insurance_leads — waiting_matricula…accepted
     if (profile.activeAgent === 'ADRIANA') {
       const handled = await handleAdrianaFlow({ userId, profile, processedText, mediaUrl, type, envelope });

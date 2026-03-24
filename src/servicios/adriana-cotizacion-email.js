@@ -11,9 +11,10 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
-import { generateAdrianaEmailHTML } from './generic-email-templates.js';
+import { buildEmailTemplate } from './email-template-system.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { calculateVehiclePremium, COVERAGE_TYPES, VEHICLE_CATEGORIES, inferVehicleCategory } from './adriana-quote-calculator.js';
+import { createOrUpdateInsuranceLead } from '../database/adrianaRepository.js';
 
 const SEG_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
 const ADMIN_WA     = (process.env.BOT_PHONE || '593994837117').replace('+', '');
@@ -33,7 +34,7 @@ function calculatePremium(commercialValue, vehicleYear) {
   // Fallback: tarifa plana 3.27% + IVA 15% + costos fijos
   const base   = commercialValue * 0.0327;
   const annual = Math.round(base * 1.15 + 40);
-  return { annual, monthly: Math.round(annual / 10) };
+  return { annual, monthly: Math.round(annual / 12) };
 }
 
 // ─── DETECCIÓN ────────────────────────────────────────────────────────────────
@@ -110,27 +111,62 @@ export async function sendAdrianaCotizacion(mensajeCompleto, { quoteCode = '' } 
 
   console.log(`[ADRIANA-COTI] 📧 Enviando cotización → ${datos.vehicleBrand} ${datos.vehicleModel} (${datos.email})`);
 
-  const premium  = calculatePremium(datos.commercialValue || 40000, datos.vehicleYear);
-  const html     = generateAdrianaEmailHTML({ ...datos, quoteCode, quotedPremium: premium.annual, quotedMonthly: premium.monthly, waNumber: ADMIN_WA }, { type: 'quote' });
-  const codeLabel = quoteCode ? `${quoteCode} — ` : '';
-  const subject  = `Cotización 🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | Adriana - SegPopular`;
+  const premium   = calculatePremium(datos.commercialValue || 40000, datos.vehicleYear);
+  const code      = quoteCode || `ADR-BOSS-${Date.now().toString(36).toUpperCase()}`;
+  const codeLabel = `${code} — `;
+  const subject   = `Cotización 🛡️ ${codeLabel}${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear} · ${datos.nombre} | Adriana - SegPopular`;
 
-  const result = await sendEmail({ 
-    to: datos.email, 
-    cc: SEG_ADMIN_CC, 
-    subject, 
-    html,
-    from: { name: AGENT_FROM_NAMES.adriana, address: DEFAULT_FROM_EMAIL }
+  // Usar template V2 (comparativo profesional)
+  const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
+    nombre:            datos.nombre,
+    marca:             datos.vehicleBrand,
+    modelo:            datos.vehicleModel,
+    anio:              datos.vehicleYear,
+    valor_asegurado:   datos.commercialValue ? `$${Number(datos.commercialValue).toLocaleString()}` : '',
+    vaz_prima_anual:   `$${premium.annual.toLocaleString()}`,
+    vaz_prima_mensual: `$${premium.monthly.toLocaleString()}`,
+    vaz_deducible:     '7%',
+    analisis_broker:   datos.intro_personalizada || `${datos.nombre?.split(' ')[0] || 'Cliente'}, analicé el mercado ecuatoriano y el Plan Elemental de VAZ Seguros es la mejor opción para tu ${[datos.vehicleBrand, datos.vehicleModel].filter(Boolean).join(' ')}. Asistencia 24/7, taller propio en Quito y hasta 12 meses para pagar.`,
+    competitors:       [],
+    fecha_cotizacion:  new Date().toLocaleDateString('es-EC'),
+    bot_phone:         ADMIN_WA,
+    adriana_email:     process.env.ADRIANA_EMAIL || '',
+    adriana_phone:     process.env.ADRIANA_PHONE || '',
   });
+
+  const result = await sendEmail({
+    to:   datos.email,
+    cc:   SEG_ADMIN_CC,
+    subject,
+    html,
+    from: { name: AGENT_FROM_NAMES.adriana, address: DEFAULT_FROM_EMAIL },
+  });
+
+  // Guardar lead en BD para tracking en dashboard
+  await createOrUpdateInsuranceLead({
+    quoteCode:      code,
+    userPhone:      datos.telefono ? datos.telefono.replace(/\D/g, '') : null,
+    status:         'quoted',
+    clientName:     datos.nombre,
+    email:          datos.email,
+    phone:          datos.telefono,
+    vehicleBrand:   datos.vehicleBrand,
+    vehicleModel:   datos.vehicleModel,
+    vehicleYear:    datos.vehicleYear,
+    commercialValue: datos.commercialValue,
+    city:           datos.city,
+    insuranceType:  datos.insuranceType || 'Vehículo Liviano',
+    quotedPremium:  premium.annual,
+  }).catch(err => console.warn('[ADRIANA-COTI] ⚠️ No se pudo guardar lead en BD:', err.message));
 
   return {
     ...result,
-    nombre:         datos.nombre,
-    email:          datos.email,
-    telefono:       datos.telefono || null,
-    vehiculo:       `${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear}`,
+    nombre:          datos.nombre,
+    email:           datos.email,
+    telefono:        datos.telefono || null,
+    vehiculo:        `${datos.vehicleBrand} ${datos.vehicleModel} ${datos.vehicleYear}`,
     commercialValue: datos.commercialValue,
-    primaAnual:     premium.annual,
-    quoteCode,
+    primaAnual:      premium.annual,
+    quoteCode:       code,
   };
 }

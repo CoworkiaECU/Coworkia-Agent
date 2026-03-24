@@ -211,7 +211,7 @@ export function formatPremiumForWhatsApp(result, vehicleName = 'tu vehículo') {
     `🚗 ${vehicleName}\n` +
     `💵 Valor asegurado: $${result.breakdown.commercial_value.toLocaleString()}\n\n` +
     `💰 *Prima anual: $${result.annual_total.toLocaleString()}*\n` +
-    `📆 En 10 cuotas: $${result.monthly_installment} /mes\n\n` +
+    `📆 En hasta 12 meses: $${result.monthly_installment} /mes\n\n` +
     `🔒 Deducible: ${result.deductible}`
   );
 }

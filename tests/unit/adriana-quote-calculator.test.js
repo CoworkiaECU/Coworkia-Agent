@@ -230,7 +230,7 @@ describe('💬 formatPremiumForWhatsApp', () => {
     const msg = formatPremiumForWhatsApp(r, 'Toyota Corolla 2024');
     expect(msg).toContain('Toyota Corolla 2024');
     expect(msg).toMatch(/prima anual/i);
-    expect(msg).toMatch(/cuotas/i);
+    expect(msg).toMatch(/meses|cuotas/i);
     expect(msg).toMatch(/deducible/i);
   });
 

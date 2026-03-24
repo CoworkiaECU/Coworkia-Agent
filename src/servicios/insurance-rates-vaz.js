@@ -348,7 +348,7 @@ export function calculateVazPremiumOfficial(commercialValue, vehicleType = 'ligh
   const iva = basePremium * FIXED_COSTS.iva_rate;
   const fees = FIXED_COSTS.emission_fee + FIXED_COSTS.super_fee + FIXED_COSTS.administrative;
   const annualTotal = Math.round(basePremium + iva + fees);
-  const monthly = Math.round(annualTotal / 10); // 10 cuotas Ecuador
+  const monthly = Math.round(annualTotal / 12); // hasta 12 meses Ecuador
 
   const deductible = DEDUCTIBLES_VAZ[deductibleOpt];
 

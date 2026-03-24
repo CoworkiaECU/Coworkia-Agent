@@ -438,7 +438,7 @@ document.getElementById('add-form').addEventListener('submit', async e => {
   });
   const d = await r.json();
   if (d.ok) {
-    todos.unshift(d.todo);
+    if (!todos.find(t => t.id === d.todo.id)) todos.unshift(d.todo);
     document.getElementById('inp-title').value = '';
     render();
     flash('Tarea agregada ✓');

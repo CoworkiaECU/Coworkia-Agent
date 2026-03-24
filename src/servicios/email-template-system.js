@@ -24,13 +24,13 @@ export const AGENT_BRANDING = {
   },
   ALUNA: {
     name: 'Aluna',
-    fullName: 'Aluna · MarketingLab',
+    fullName: 'Aluna · Coworkia Membresías',
     primaryColor: '#8B5CF6',
     secondaryColor: '#6D28D9',
     gradient: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
-    emoji: '💼',
-    companyName: 'MarketingLab',
-    tagline: 'Soluciones de marketing que transforman negocios',
+    emoji: '🏢',
+    companyName: 'Coworkia',
+    tagline: 'Tu espacio de trabajo ideal en Quito',
   },
   ENZO: {
     name: 'Enzo',
@@ -119,7 +119,7 @@ function buildCoworkiaFooter(branding) {
  */
 export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }) {
   const branding  = AGENT_BRANDING.ALUNA;
-  const firstName = name ? name.split(' ')[0] : 'allí';
+  const firstName = name ? name.split(' ')[0] : 'amig@';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -133,7 +133,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
   <!-- Header -->
   <div style="background:${branding.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
-    <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:16px;">💼 MARKETINGLAB · MEMBRESÍAS</div>
+    <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:16px;">${branding.emoji} ${branding.companyName.toUpperCase()} · MEMBRESÍAS</div>
     <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">Hola ${firstName} 👋</h1>
     <p style="color:rgba(255,255,255,0.9);margin:12px 0 0;font-size:15px;">Te quería dar seguimiento a tu consulta</p>
   </div>
@@ -191,7 +191,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
  */
 export function buildAlunaD3HTML({ name, message }) {
   const branding  = AGENT_BRANDING.ALUNA;
-  const firstName = name ? name.split(' ')[0] : 'allí';
+  const firstName = name ? name.split(' ')[0] : 'amig@';
 
   return `<!DOCTYPE html>
 <html lang="es">

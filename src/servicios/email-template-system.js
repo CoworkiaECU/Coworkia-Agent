@@ -165,7 +165,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
     <!-- CTA -->
     <div style="text-align:center;">
-      <a href="https://wa.me/593994837117?text=Hola%2C%20quiero%20agendar%20mi%20semana%20gratis%20en%20Coworkia"
+      <a href="https://wa.me/593994837117?text=%40aluna%0AHola%2C%20quiero%20agendar%20mi%20semana%20gratis%20en%20Coworkia"
          style="display:inline-block;background:${branding.primaryColor};color:white;padding:16px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(139,92,246,0.35);">
         📅 Agendar semana gratis →
       </a>
@@ -236,7 +236,7 @@ export function buildAlunaD3HTML({ name, message }) {
 
     <!-- CTA -->
     <div style="text-align:center;">
-      <a href="https://wa.me/593994837117?text=Quiero%20reservar%20antes%20de%20que%20se%20agoten"
+      <a href="https://wa.me/593994837117?text=%40aluna%0AQuiero%20reservar%20antes%20de%20que%20se%20agoten"
          style="display:inline-block;background:#dc2626;color:white;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:16px;box-shadow:0 4px 16px rgba(220,38,38,0.4);">
         🔥 RESERVAR AHORA →
       </a>
@@ -373,7 +373,7 @@ export function buildAdrianaComparisonHTML({
 
     <!-- CTA -->
     <div style="text-align:center;">
-      <a href="https://wa.me/${waNumber}?text=Hola%20Adriana%2C%20acepto%20la%20cotizaci%C3%B3n%20de%20seguro%20para%20${vehiculoEncoded}"
+      <a href="https://wa.me/${waNumber}?text=%40adriana%0AHola%20Adriana%2C%20acepto%20la%20cotizaci%C3%B3n%20de%20seguro%20para%20${vehiculoEncoded}"
          style="display:inline-block;background:#1E3A8A;color:#FCD34D;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:16px;box-shadow:0 4px 16px rgba(30,58,138,0.3);">
         ✅ Acepto esta cotización →
       </a>
@@ -444,7 +444,7 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
 
     <!-- CTA -->
     <div style="text-align:center;margin:28px 0;">
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Aurora%2C%20tengo%20una%20reserva%20para%20${encodeURIComponent(dia)}"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40aurora%0AHola%20Aurora%2C%20tengo%20una%20reserva%20para%20${encodeURIComponent(dia)}"
          style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
         💬 Contactar por WhatsApp
       </a>
@@ -505,7 +505,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
     </div>
 
     <div style="text-align:center;margin:28px 0;">
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Aurora%2C%20quiero%20hacer%20una%20nueva%20reserva"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40aurora%0AHola%20Aurora%2C%20quiero%20hacer%20una%20nueva%20reserva"
          style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
         📅 Reservar de Nuevo
       </a>
@@ -561,7 +561,7 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
     </div>
 
     <div style="text-align:center;margin:28px 0;">
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20quiero%20agendar%20una%20llamada"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40enzo%0AHola%20Enzo%2C%20quiero%20agendar%20una%20llamada"
          style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
         📞 Agendar Llamada Gratis
       </a>
@@ -625,7 +625,7 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
     </div>
 
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20quiero%20aprovechar%20el%20${descuento}%25%20de%20descuento"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40enzo%0AHola%20Enzo%2C%20quiero%20aprovechar%20el%20${descuento}%25%20de%20descuento"
          style="display:inline-block;background:#dc2626;color:#fff;padding:16px 40px;border-radius:8px;font-size:16px;font-weight:700;text-decoration:none;">
         🎁 Quiero Mi ${descuento}% OFF
       </a>
@@ -686,11 +686,11 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
     </p>
 
     <div style="text-align:center;margin:24px 0;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20me%20interesa%20el%20proyecto"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40enzo%0AHola%20Enzo%2C%20me%20interesa%20el%20proyecto"
          style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">
         ✅ Me interesa
       </a>
-      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=Hola%20Enzo%2C%20guardar%20para%20despues"
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40enzo%0AHola%20Enzo%2C%20guardar%20para%20despues"
          style="display:inline-block;background:#f1f5f9;color:#475569;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">
         📌 Para después
       </a>
@@ -745,8 +745,8 @@ export function buildAdrianaComparisonV2HTML({
   const firstName   = nombre ? nombre.split(' ')[0] : 'Cliente';
   const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'tu vehículo';
   const placaLabel  = placa && placa !== '-' ? ` · Placa ${placa}` : '';
-  const vazEncoded  = encodeURIComponent(`Hola Adriana 👋 Acepto la cotización VAZ Seguros para mi ${vehicleDesc}. ¿Qué sigue?`);
-  const consultaEncoded = encodeURIComponent(`Hola Adriana, quisiera usar mi cupón de asesoría gratuita en seguros corporativos 🎁`);
+  const vazEncoded  = encodeURIComponent(`@adriana\nHola Adriana 👋 Acepto la cotización VAZ Seguros para mi ${vehicleDesc}. ¿Qué sigue?`);
+  const consultaEncoded = encodeURIComponent(`@adriana\nHola Adriana, quisiera usar mi cupón de asesoría gratuita en seguros corporativos 🎁`);
 
   // Precios de referencia del mercado ecuatoriano para cuando no se capturan cotizaciones reales
   const valorNum = parseInt((valor_asegurado || '').replace(/[^0-9]/g, '')) || 0;
@@ -894,7 +894,7 @@ export function buildAdrianaComparisonV2HTML({
       </a>
       <p style="margin:10px 0 4px;font-size:12px;color:#6b7280;">Responderé en segundos por WhatsApp · Sin papeleo</p>
       <div style="margin-top:10px;">
-        <a href="https://wa.me/${bot_phone}?text=${encodeURIComponent('Hola Adriana, tengo dudas sobre mi cotización de seguro vehicular')}"
+        <a href="https://wa.me/${bot_phone}?text=${encodeURIComponent('@adriana\nHola Adriana, tengo dudas sobre mi cotización de seguro vehicular')}"
            style="color:#1d4ed8;font-size:13px;text-decoration:none;font-weight:700;border-bottom:1px solid #bfdbfe;padding-bottom:1px;">
           💬 Tengo dudas · Quiero hablar con Adriana
         </a>

@@ -2646,7 +2646,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // Solo aplica cuando el agente activo NO tiene su propio handler de imágenes
     if (mediaUrl && type === 'image' && !['AXEL', 'ALUNA', 'ANGELA'].includes(profile.activeAgent)) {
       const existingInsuranceLead = await findLeadByPhone(userId).catch(() => null);
-      const ADRIANA_ACTIVE_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'quoted', 'waiting_kyc', 'accepted'];
+      const ADRIANA_ACTIVE_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'waiting_coverage', 'quoted', 'waiting_kyc', 'accepted'];
       const hasActiveAdrianaLead = existingInsuranceLead && ADRIANA_ACTIVE_STATES.includes(existingInsuranceLead.status);
 
       if (!hasActiveAdrianaLead) {
@@ -3712,7 +3712,7 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
     // 1. Buscar lead activo en insurance_leads por teléfono
     let lead = await findLeadByPhone(userId).catch(() => null);
 
-    const NEW_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'quoted', 'waiting_kyc', 'accepted'];
+    const NEW_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'waiting_coverage', 'quoted', 'waiting_kyc', 'accepted'];
 
     // Si no existe lead con estado nuevo, crear al recibir matrícula o al iniciar con imagen
     if (!lead || !NEW_STATES.includes(lead?.status)) {
@@ -3813,58 +3813,92 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
           return true;
         }
 
-        // Calcular prima y enviar cotización comparativa
-        const value = lead.commercial_value || 0;
-        const year  = lead.vehicle_year || 2020;
-        const cat   = inferVehicleCategory(`${lead.vehicle_brand || ''} ${lead.vehicle_model || ''}`);
-        const premiumResult = calculateVehiclePremium({ commercialValue: Number(value), vehicleYear: Number(year), vehicleCategory: cat, coverage: 'standard' });
-
-        const clientEmail = lead.email || '';
-        const clientName  = lead.client_name || profile.name || userId;
-        const brandModel  = [lead.vehicle_brand, lead.vehicle_model].filter(Boolean).join(' ') || 'Vehículo';
-
-        if (premiumResult.success && clientEmail) {
-          const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
-            nombre: clientName,
-            marca: lead.vehicle_brand, modelo: lead.vehicle_model, anio: lead.vehicle_year,
-            placa: lead.plate, valor_asegurado: `$${Number(value).toLocaleString()}`,
-            vaz_prima_anual: `$${premiumResult.annual_total || premiumResult.annualPremium}`,
-            vaz_prima_mensual: `$${Math.round((premiumResult.annual_total || premiumResult.annualPremium) / 12)}`,
-            vaz_deducible: `${premiumResult.deductiblePct || 7}%`,
-            analisis_broker: `${clientName.split(' ')[0]}, analicé el mercado ecuatoriano de seguros para tu ${brandModel} y el Plan Elemental de VAZ Seguros ofrece la mejor relación precio-cobertura. Con asistencia 24/7 y taller propio en Quito, es la opción más sólida. Puedes pagarlo en hasta 12 cuotas.`,
-            competitors: competitorQuotes.map(c => ({
-              nombre: c.nombre, plan: c.plan || 'Plan estándar',
-              prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',
-              deducible: c.deducible || 'N/A', asistencia: c.asistencia || '', amparo: c.amparo || '',
-            })),
-            fecha_cotizacion: new Date().toLocaleDateString('es-EC'),
-            bot_phone: process.env.BOT_PHONE || '593994837117',
-            adriana_email: process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
-            adriana_phone: process.env.ADRIANA_PHONE || '+593 987 770 788',
-          });
-          await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html })
-            .catch(err => console.error('[ADRIANA-V2] ⚠️ Email error:', err));
-        }
-
-        const waMsg = [
-          `✅ *¡Cotización lista!* 🛡️`,
+        // A3: Pedir selección de cobertura (deducible) antes de cotizar
+        const coverageMsg = [
+          `🎯 ¡Casi listo! Elige tu *plan de deducible*:`,
           ``,
-          `🚗 *${brandModel} ${lead.vehicle_year || ''}*`,
-          `💵 Valor: $${Number(value).toLocaleString()}`,
-          premiumResult.success ? `💰 Prima VAZ anual: *$${premiumResult.annual_total || premiumResult.annualPremium}*` : '',
-          premiumResult.success ? `📊 Deducible: ${premiumResult.deductiblePct || 7}%` : '',
+          `1️⃣ *Plan Básico — Deducible 7%*`,
+          `   • Taller asignado por VAZ`,
+          `   • Repuestos de calidad equivalente`,
+          `   • Prima más económica 💰`,
           ``,
-          clientEmail ? `📧 Te envié la comparativa detallada por email.` : '',
+          `2️⃣ *Plan Premium — Deducible 10%*`,
+          `   • Elige tu propio taller`,
+          `   • Repuestos originales de fábrica`,
+          `   • Mayor flexibilidad ✨`,
           ``,
-          `Para aceptar, responde *ACEPTO* 🤝`,
-          `Ref: *${quoteCode}*`,
-        ].filter(l => l !== '').join('\n');
-
-        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'quoted', quotedPremium: premiumResult.annual_total || premiumResult.annualPremium });
-        await enviarWhatsApp(userId, waMsg);
-        await saveConversationMessage(userId, { role: 'assistant', content: waMsg, agent: 'ADRIANA' });
+          `Responde *1* o *2* para continuar`,
+        ].join('\n');
+        await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_coverage' });
+        await enviarWhatsApp(userId, coverageMsg);
+        await saveConversationMessage(userId, { role: 'assistant', content: coverageMsg, agent: 'ADRIANA' });
         return true;
       }
+    }
+
+    // ── waiting_coverage — espera "1" (básico) o "2" (premium) ───────────
+    if (status === 'waiting_coverage' && processedText && /^[12]$/.test(processedText.trim())) {
+      const selectedCoverage = processedText.trim() === '2' ? 'premium' : 'standard';
+      const deduciblePct = selectedCoverage === 'premium' ? 10 : 7;
+
+      const value = lead.commercial_value || 0;
+      const year  = lead.vehicle_year || 2020;
+      const cat   = inferVehicleCategory(`${lead.vehicle_brand || ''} ${lead.vehicle_model || ''}`);
+      const premiumResult = calculateVehiclePremium({ commercialValue: Number(value), vehicleYear: Number(year), vehicleCategory: cat, coverage: selectedCoverage });
+
+      const clientEmail = lead.email || '';
+      const clientName  = lead.client_name || profile.name || userId;
+      const brandModel  = [lead.vehicle_brand, lead.vehicle_model].filter(Boolean).join(' ') || 'Vehículo';
+      const competitorQuotes = lead.competitor_quotes || [];
+
+      if (premiumResult.success && clientEmail) {
+        const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
+          nombre: clientName,
+          marca: lead.vehicle_brand, modelo: lead.vehicle_model, anio: lead.vehicle_year,
+          placa: lead.plate, valor_asegurado: `$${Number(value).toLocaleString()}`,
+          vaz_prima_anual: `$${premiumResult.annual_total}`,
+          vaz_prima_mensual: `$${Math.round(premiumResult.annual_total / 12)}`,
+          vaz_deducible: `${deduciblePct}%`,
+          analisis_broker: `${clientName.split(' ')[0]}, analicé el mercado ecuatoriano de seguros para tu ${brandModel} y el Plan Elemental de VAZ Seguros ofrece la mejor relación precio-cobertura. Con asistencia 24/7 y taller propio en Quito, es la opción más sólida. Puedes pagarlo en hasta 12 cuotas.`,
+          competitors: competitorQuotes.map(c => ({
+            nombre: c.nombre, plan: c.plan || 'Plan estándar',
+            prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',
+            deducible: c.deducible || 'N/A', asistencia: c.asistencia || '', amparo: c.amparo || '',
+          })),
+          fecha_cotizacion: new Date().toLocaleDateString('es-EC'),
+          bot_phone: process.env.BOT_PHONE || '593994837117',
+          adriana_email: process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
+          adriana_phone: process.env.ADRIANA_PHONE || '+593 987 770 788',
+        });
+        await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html })
+          .catch(err => console.error('[ADRIANA-V2] ⚠️ Email error:', err));
+      }
+
+      const waMsg = [
+        `✅ *¡Cotización lista!* 🛡️`,
+        ``,
+        `🚗 *${brandModel} ${lead.vehicle_year || ''}*`,
+        `💵 Valor: $${Number(value).toLocaleString()}`,
+        premiumResult.success ? `💰 Prima VAZ anual: *$${premiumResult.annual_total}*` : '',
+        premiumResult.success ? `📅 Prima mensual: $${Math.round(premiumResult.annual_total / 12)} (hasta 12 cuotas)` : '',
+        `📊 Deducible: ${deduciblePct}%`,
+        ``,
+        clientEmail ? `📧 Te envié la comparativa detallada por email.` : '',
+        ``,
+        `Para aceptar, responde *ACEPTO* 🤝`,
+        `Ref: *${quoteCode}*`,
+      ].filter(l => l !== '').join('\n');
+
+      await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'quoted', quotedPremium: premiumResult.annual_total, selectedCoverage });
+      await enviarWhatsApp(userId, waMsg);
+      await saveConversationMessage(userId, { role: 'assistant', content: waMsg, agent: 'ADRIANA' });
+      return true;
+    }
+
+    // Si está en waiting_coverage pero el usuario mandó algo distinto a 1/2
+    if (status === 'waiting_coverage' && processedText) {
+      await enviarWhatsApp(userId, `Por favor responde *1* (Plan Básico, 7%) o *2* (Plan Premium, 10%) para continuar 😊`);
+      return true;
     }
 
     // ── quoted — espera "ACEPTO" o "QUIERO CAMBIAR" ────────────────────────

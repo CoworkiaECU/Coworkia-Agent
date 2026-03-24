@@ -782,6 +782,8 @@ window.sendFollowupManual = async function() {
         membershipCode: currentFollowupData.membership_code,
         userPhone: currentFollowupData.user_phone,
         email: currentFollowupData.email,
+        name: currentFollowupData.client_name || '',
+        plan: currentFollowupData.membership_type || '',
         message: finalMessage
       })
     });

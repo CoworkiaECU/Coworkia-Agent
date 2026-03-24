@@ -975,14 +975,24 @@ router.post('/send-d1-email', async (req, res) => {
       });
     }
 
-    console.log(`[ALUNA-FOLLOWUP] Enviando D+1 Email manual a ${email}`);
+    // Si no viene name en body, recuperarlo de BD para asegurar saludo personalizado
+    let clientName = req.body.name || '';
+    if (!clientName) {
+      const lead = await databaseService.get(
+        'SELECT client_name FROM membership_leads WHERE id = ?',
+        [leadId]
+      );
+      clientName = lead?.client_name || '';
+    }
+
+    console.log(`[ALUNA-FOLLOWUP] Enviando D+1 Email manual a ${email} (nombre: ${clientName || 'sin nombre'})`);
 
     // Enviar Email
     await sendEmail({
       to: email,
       cc: 'coworkia.ec@gmail.com',
       subject: '💼 Tu plan de membresía en Coworkia está listo',
-      html: buildEmailTemplate('ALUNA', 'D1', { name: req.body.name || '', message, plan: req.body.plan || 'Membresía Coworkia' })
+      html: buildEmailTemplate('ALUNA', 'D1', { name: clientName, message, plan: req.body.plan || 'Membresía Coworkia' })
     });
 
     console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: coworkia.ec@gmail.com)`);

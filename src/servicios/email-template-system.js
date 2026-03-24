@@ -119,7 +119,7 @@ function buildCoworkiaFooter(branding) {
  */
 export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }) {
   const branding  = AGENT_BRANDING.ALUNA;
-  const firstName = name ? name.split(' ')[0] : 'amig@';
+  const firstName = name ? name.trim().split(' ')[0] : null;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -134,8 +134,8 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   <!-- Header -->
   <div style="background:${branding.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
     <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:16px;">${branding.emoji} ${branding.companyName.toUpperCase()} · MEMBRESÍAS</div>
-    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">Hola ${firstName} 👋</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:12px 0 0;font-size:15px;">Te quería dar seguimiento a tu consulta</p>
+    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">${firstName ? `Hola ${firstName} 👋` : '¡Hola! 👋'}</h1>
+    <p style="color:rgba(255,255,255,0.9);margin:12px 0 0;font-size:15px;">Te quería dar seguimiento a tu consulta sobre membresías</p>
   </div>
 
   <!-- Body -->
@@ -191,7 +191,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
  */
 export function buildAlunaD3HTML({ name, message }) {
   const branding  = AGENT_BRANDING.ALUNA;
-  const firstName = name ? name.split(' ')[0] : 'amig@';
+  const firstName = name ? name.trim().split(' ')[0] : null;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -206,7 +206,7 @@ export function buildAlunaD3HTML({ name, message }) {
   <!-- Header urgencia -->
   <div style="background:linear-gradient(135deg, #dc2626 0%, #9f1239 100%);padding:36px 32px;border-radius:12px 12px 0 0;text-align:center;">
     <div style="background:rgba(255,255,255,0.2);display:inline-block;padding:5px 16px;border-radius:99px;color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">⚠️ ÚLTIMA OPORTUNIDAD</div>
-    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">${firstName}, ¡quedan pocos espacios!</h1>
+    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">${firstName ? `${firstName}, ¡quedan pocos espacios!` : '¡Quedan muy pocos espacios!'}</h1>
     <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:14px;">📅 Esta oferta vence pronto</p>
   </div>
 

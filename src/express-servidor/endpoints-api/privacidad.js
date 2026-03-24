@@ -18,6 +18,11 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// ── GET /links ───────────────────────────────────────────────────────────────
+router.get('/links', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../../../public/links.html'));
+});
+
 // ── GET /privacidad ─────────────────────────────────────────────────────────
 router.get('/privacidad', (_req, res) => {
   res.sendFile(path.join(__dirname, '../../../public/privacidad.html'));

@@ -3436,7 +3436,14 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     });
 
-    // 📨 Dividir mensaje automáticamente si es largo/estructurado
+    // � LOPDP — Aviso silencioso de privacidad (solo primer contacto histórico con Aurora)
+    // El aviso se añade UNA sola vez: cuando Aurora responde al usuario por primera vez.
+    // Todos los contactos entran por Aurora, así que esto cubre el 100% de los usuarios.
+    if (resultado.agenteKey === 'AURORA' && profile.firstVisit === true) {
+      finalReply += '\n\n_Coworkia trata tus datos con confidencialidad según la LOPDP. Más info: https://coworkia-agent-e97d15dac56f.herokuapp.com/privacidad_';
+    }
+
+    // �📨 Dividir mensaje automáticamente si es largo/estructurado
     const messageProcessed = splitLongMessage(finalReply);
     const shouldSplit = resultado.agenteKey !== 'AXEL' && messageProcessed.shouldDelay && messageProcessed.parts.length > 1;
     

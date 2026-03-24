@@ -986,6 +986,7 @@ router.post('/send-d1-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
+      from: 'Aluna • Membresías Coworkia Business Center <secretaria.coworkia@gmail.com>',
       cc: 'coworkia.ec@gmail.com',
       subject: '💼 Tu plan de membresía en Coworkia está listo',
       html: buildEmailTemplate('ALUNA', 'D1', { name: clientName, message, plan: req.body.plan || 'Membresía Coworkia' })
@@ -1082,12 +1083,22 @@ router.post('/send-d3-email', async (req, res) => {
 
     console.log(`[ALUNA-FOLLOWUP] Enviando D+3 Email manual (FOMO) a ${email}`);
 
+    let clientName = req.body.name || '';
+    if (!clientName) {
+      const lead = await databaseService.get(
+        'SELECT client_name FROM membership_leads WHERE id = $1',
+        [leadId]
+      );
+      clientName = lead?.client_name || '';
+    }
+
     // Enviar Email
     await sendEmail({
       to: email,
+      from: 'Aluna • Membresías Coworkia Business Center <secretaria.coworkia@gmail.com>',
       cc: 'coworkia.ec@gmail.com',
       subject: '🔥 Últimas disponibilidades — Coworkia (oferta limitada)',
-      html: buildEmailTemplate('ALUNA', 'D3', { name: req.body.name || '', message })
+      html: buildEmailTemplate('ALUNA', 'D3', { name: clientName, message })
     });
 
     console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: coworkia.ec@gmail.com)`);

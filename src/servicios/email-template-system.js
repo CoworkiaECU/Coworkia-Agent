@@ -110,70 +110,90 @@ function buildCoworkiaFooter(branding) {
 // ─── TEMPLATE: ALUNA D+1 ─────────────────────────────────────────────────────
 
 /**
- * 💼 Email D+1 — Aluna Seguimiento de Membresía
- * Branding: morado #8B5CF6, profesional y cálido
+ * 🏢 Email D+1 — Aluna Seguimiento de Membresía
+ * Misma identidad visual que el template de proformas aprobado:
+ * fondo verde #047857, "Coworkia / BUSINESS CENTER", card blanca con nombre.
  *
  * @param {string} name    — Nombre del prospecto
  * @param {string} message — Cuerpo del mensaje (texto del operador)
  * @param {string} [plan]  — Nombre del plan (default: Membresía Coworkia)
  */
 export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }) {
-  const branding  = AGENT_BRANDING.ALUNA;
   const firstName = name ? name.trim().split(' ')[0] : null;
+  const displayName = name || '';
+  const waText = encodeURIComponent(`@aluna\nHola, quiero agendar mi visita gratuita a Coworkia`);
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Tu membresía en Coworkia te espera</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
-  <!-- Header -->
-  <div style="background:${branding.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
-    <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:16px;">${branding.emoji} ${branding.companyName.toUpperCase()} · MEMBRESÍAS</div>
-    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">${firstName ? `Hola ${firstName} 👋` : '¡Hola! 👋'}</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:12px 0 0;font-size:15px;">Te quería dar seguimiento a tu consulta sobre membresías</p>
+  <!-- Header — idéntico al template de proformas aprobado -->
+  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+    <div style="color:white;font-size:52px;font-weight:700;margin-bottom:6px;line-height:1;">Coworkia</div>
+    <div style="color:rgba(255,255,255,0.9);font-size:11px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:28px;">BUSINESS CENTER</div>
+
+    <!-- Card blanca con nombre del cliente -->
+    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+      <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;text-align:center;">· SEGUIMIENTO DE MEMBRESÍA ·</div>
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:12px;text-align:center;">${displayName}</div>` : ''}
+      <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:10px 0;margin-bottom:10px;text-align:center;">
+        <span style="font-size:16px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:15px;font-weight:700;vertical-align:middle;">${plan}</strong>
+      </div>
+      <div style="color:#047857;font-size:12px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
+    </div>
   </div>
 
   <!-- Body -->
-  <div style="background:white;padding:36px 32px;">
+  <div style="padding:30px 30px 10px;">
+
+    <!-- Saludo personalizado -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName ? `¡Hola ${firstName}! 👋` : '¡Hola! 👋'}</h2>
+      <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">Te damos seguimiento a tu interés en Coworkia</p>
+    </div>
 
     <!-- Mensaje del operador -->
     <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:28px;">${message}</div>
 
-    <!-- Plan card -->
-    <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:24px;margin-bottom:28px;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="width:40px;height:40px;background:${branding.primaryColor};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">💼</div>
-        <div>
-          <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Plan</div>
-          <div style="font-size:16px;font-weight:700;color:#1f2937;">${plan}</div>
-        </div>
+    <!-- Card de beneficios — misma paleta verde -->
+    <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px;margin-bottom:28px;">
+      <div style="color:#047857;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">🌟 Lo que incluye tu membresía</div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Espacio totalmente equipado</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Café y snacks ilimitados</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi 300 Mbps de alta velocidad</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Salas de reuniones incluidas</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Acceso en horario de oficina</span></div>
+      <div style="margin:10px 0 0;background:white;border-radius:8px;padding:10px 14px;border:1px solid rgba(4,120,87,0.2);">
+        <span style="font-size:16px;">🎁</span>&nbsp;&nbsp;<strong style="color:#047857;font-size:14px;">Primera semana de prueba GRATIS</strong>
       </div>
-      <ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:2.2;">
-        <li>✅ Espacio totalmente equipado</li>
-        <li>✅ Café y snacks ilimitados</li>
-        <li>✅ WiFi 200 Mbps de alta velocidad</li>
-        <li>✅ Salas de reuniones incluidas</li>
-        <li>✅ Acceso 24/7</li>
-        <li>🎁 <strong>1 semana de prueba gratis</strong></li>
-      </ul>
     </div>
 
-    <!-- CTA -->
-    <div style="text-align:center;">
-      <a href="https://wa.me/593994837117?text=%40aluna%0AHola%2C%20quiero%20agendar%20mi%20semana%20gratis%20en%20Coworkia"
-         style="display:inline-block;background:${branding.primaryColor};color:white;padding:16px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(139,92,246,0.35);">
-        📅 Agendar semana gratis →
+    <!-- CTA — mismo estilo que la proforma -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Tu espacio ideal te está esperando</p>
+      <a href="https://wa.me/593994837117?text=${waText}"
+         style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">
+        🏢 Quiero Agendar Mi Visita Gratuita
       </a>
+      <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta en menos de 5 minutos · WhatsApp</p>
     </div>
+
   </div>
 
-  <!-- Footer -->
-  ${buildCoworkiaFooter(branding)}
+  <!-- Footer — mismo que la proforma -->
+  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);padding:28px 20px;text-align:center;border-radius:0 0 16px 16px;">
+    <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:10px;">🏢 COWORKIA</div>
+    <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;">Tu espacio de trabajo ideal en Quito</div>
+    <div style="color:rgba(255,255,255,0.65);font-size:12px;">📍 Av. República del Salvador N34-183 · Quito, Ecuador · 📞 +593 98 777 0788</div>
+  </div>
 
 </div>
 </body>
@@ -184,68 +204,87 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
 /**
  * 🔥 Email D+3 — Aluna FOMO (urgencia)
- * Branding: morado profundo + rojo urgencia
+ * Misma identidad verde Coworkia Business Center + badge rojo de urgencia.
  *
  * @param {string} name    — Nombre del prospecto
  * @param {string} message — Cuerpo del mensaje (texto del operador)
  */
 export function buildAlunaD3HTML({ name, message }) {
-  const branding  = AGENT_BRANDING.ALUNA;
   const firstName = name ? name.trim().split(' ')[0] : null;
+  const displayName = name || '';
+  const waText = encodeURIComponent(`@aluna\nQuiero reservar mi espacio antes de que se agoten`);
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>⚠️ Últimas disponibilidades — Coworkia</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
-  <!-- Header urgencia -->
-  <div style="background:linear-gradient(135deg, #dc2626 0%, #9f1239 100%);padding:36px 32px;border-radius:12px 12px 0 0;text-align:center;">
-    <div style="background:rgba(255,255,255,0.2);display:inline-block;padding:5px 16px;border-radius:99px;color:white;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">⚠️ ÚLTIMA OPORTUNIDAD</div>
-    <h1 style="color:white;margin:0;font-size:26px;font-weight:800;line-height:1.2;">${firstName ? `${firstName}, ¡quedan pocos espacios!` : '¡Quedan muy pocos espacios!'}</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:14px;">📅 Esta oferta vence pronto</p>
+  <!-- Header — fondo verde con badge de urgencia -->
+  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+    <div style="color:white;font-size:52px;font-weight:700;margin-bottom:6px;line-height:1;">Coworkia</div>
+    <div style="color:rgba(255,255,255,0.9);font-size:11px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:28px;">BUSINESS CENTER</div>
+
+    <!-- Card blanca con urgencia -->
+    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+      <div style="background:#DC2626;color:white;display:inline-block;padding:4px 14px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⚠️ ÚLTIMA OPORTUNIDAD</div>
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${displayName}</div>` : ''}
+      <div style="color:#DC2626;font-size:14px;font-weight:700;margin-bottom:8px;">Solo quedan 2–3 espacios este mes</div>
+      <div style="color:#047857;font-size:12px;font-weight:600;">Aluna · Especialista en Membresías</div>
+    </div>
   </div>
 
   <!-- Body -->
-  <div style="background:white;padding:36px 32px;">
+  <div style="padding:30px 30px 10px;">
+
+    <!-- Saludo -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName ? `${firstName}, ¡no dejes pasar esta oportunidad! 🔥` : '¡No dejes pasar esta oportunidad! 🔥'}</h2>
+      <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">📅 Esta oferta tiene fecha límite</p>
+    </div>
 
     <!-- Mensaje del operador -->
     <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:24px;">${message}</div>
 
     <!-- Urgencia card -->
-    <div style="background:#fff5f5;border:1.5px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:20px;">
-      <h3 style="margin:0 0 12px;color:#dc2626;font-size:15px;font-weight:700;">🚨 ¿Por qué decidir hoy?</h3>
-      <ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:2.2;">
-        <li>⏰ Solo quedan 2–3 espacios disponibles este mes</li>
-        <li>📈 Ya tenemos 3 interesados más esta semana</li>
-        <li>🎁 La semana gratis aplica solo este mes</li>
-      </ul>
+    <div style="background:#FFF5F5;border:1.5px solid #FECACA;border-radius:12px;padding:20px;margin-bottom:20px;">
+      <div style="color:#DC2626;font-size:14px;font-weight:700;margin-bottom:12px;">🚨 ¿Por qué decidir hoy?</div>
+      <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">⏰</span><span style="color:#374151;font-size:14px;">Solo quedan 2–3 espacios disponibles este mes</span></div>
+      <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">📈</span><span style="color:#374151;font-size:14px;">Ya tenemos 3 interesados más esta semana</span></div>
+      <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">🎁</span><span style="color:#374151;font-size:14px;">La semana gratis aplica solo este mes</span></div>
     </div>
 
-    <!-- Testimonio -->
-    <div style="background:#faf5ff;border-left:4px solid ${branding.primaryColor};border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
+    <!-- Testimonio — con border verde Coworkia -->
+    <div style="background:#F0FDF4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
       <p style="margin:0;color:#374151;font-size:14px;font-style:italic;line-height:1.7;">
-        "Esperé demasiado y cuando quise reservar ya no había espacio. No cometas el mismo error."<br>
-        <strong style="color:#1f2937;">— Juan M., cliente anterior</strong>
+        "Esperé demasiado y cuando quise reservar ya no había espacio. No cometas el mismo error."
       </p>
+      <p style="margin:8px 0 0;color:#047857;font-size:13px;font-weight:700;">— Juan M., miembro desde 2025</p>
     </div>
 
-    <!-- CTA -->
-    <div style="text-align:center;">
-      <a href="https://wa.me/593994837117?text=%40aluna%0AQuiero%20reservar%20antes%20de%20que%20se%20agoten"
-         style="display:inline-block;background:#dc2626;color:white;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:16px;box-shadow:0 4px 16px rgba(220,38,38,0.4);">
-        🔥 RESERVAR AHORA →
+    <!-- CTA urgente -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="https://wa.me/593994837117?text=${waText}"
+         style="background:linear-gradient(135deg,#DC2626,#9F1239);color:white;padding:16px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 16px rgba(220,38,38,0.4);font-size:16px;">
+        🔥 RESERVAR MI ESPACIO AHORA →
       </a>
-      <p style="margin:12px 0 0;font-size:12px;color:#9ca3af;">Respuesta garantizada en menos de 5 minutos</p>
+      <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta garantizada en menos de 5 minutos</p>
     </div>
+
   </div>
 
-  <!-- Footer -->
-  ${buildCoworkiaFooter(branding)}
+  <!-- Footer verde Coworkia -->
+  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);padding:28px 20px;text-align:center;border-radius:0 0 16px 16px;">
+    <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:10px;">🏢 COWORKIA</div>
+    <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;">Tu espacio de trabajo ideal en Quito</div>
+    <div style="color:rgba(255,255,255,0.65);font-size:12px;">📍 Av. República del Salvador N34-183 · Quito, Ecuador · 📞 +593 98 777 0788</div>
+  </div>
 
 </div>
 </body>

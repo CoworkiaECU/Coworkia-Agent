@@ -129,6 +129,25 @@ router.post('/leads/:code/send-wa', async (req, res) => {
   }
 });
 
+// ── DELETE /api/adriana/leads/:code — Borrado LOPDP (derecho al olvido) ──────
+router.delete('/leads/:code', async (req, res) => {
+  const { code } = req.params;
+  try {
+    await databaseService.ensureInitialized();
+    const existing = await databaseService.get(
+      'SELECT id, client_name FROM insurance_leads WHERE id = $1',
+      [code]
+    );
+    if (!existing) return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+    await databaseService.run('DELETE FROM insurance_leads WHERE id = $1', [code]);
+    console.log(`[ADRIANA-ARCO] 🗑️ Lead ${code} (${existing.client_name}) eliminado por solicitud ARCO`);
+    return res.json({ ok: true, deleted: code, name: existing.client_name });
+  } catch (err) {
+    console.error('[ADRIANA-API] Error delete lead:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ── GET /api/adriana/seed-demo ────────────────────────────────────────────────
 router.get('/seed-demo', async (req, res) => {
   try {

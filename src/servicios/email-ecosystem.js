@@ -8,22 +8,22 @@
  * Cada tarjeta incluye copy persuasivo por agente (BBDO brief).
  */
 
-// SVG path data per agent — COLOR placeholder replaced at render time
-const AGENT_SVGS = {
-  gabi:    `<rect x="5" y="3" width="22" height="26" rx="2" stroke="COLOR" stroke-width="1.5" fill="none"/><line x1="9" y1="10" x2="23" y2="10" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="15" x2="23" y2="15" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="20" x2="17" y2="20" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/>`,
-  enzo:    `<polygon points="16,3 29,10 29,22 16,29 3,22 3,10" stroke="COLOR" stroke-width="1.5" fill="none"/><polygon points="16,10 22,13.5 22,20.5 16,24 10,20.5 10,13.5" fill="COLOR" opacity="0.2" stroke="COLOR" stroke-width="1"/><circle cx="16" cy="16" r="2" fill="COLOR"/>`,
-  angela:  `<path d="M16 5C11.03 5 7 9.03 7 14C7 18.97 11.03 23 16 23C20.97 23 25 18.97 25 14C25 9.03 20.97 5 16 5Z" stroke="COLOR" stroke-width="1.5" fill="none"/><line x1="16" y1="10" x2="16" y2="18" stroke="COLOR" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="14" x2="20" y2="14" stroke="COLOR" stroke-width="2" stroke-linecap="round"/><path d="M10 23L7 28H25L22 23" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
-  adriana: `<path d="M16 4L28 10V18C28 23 22.5 27.5 16 29C9.5 27.5 4 23 4 18V10L16 4Z" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M11 16L14 19L21 12" stroke="COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
-  axel:    `<circle cx="16" cy="16" r="12" stroke="COLOR" stroke-width="1.5" fill="none"/><circle cx="16" cy="16" r="6" stroke="COLOR" stroke-width="1.5" fill="none"/><line x1="16" y1="4" x2="16" y2="10" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><line x1="16" y1="22" x2="16" y2="28" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="16" x2="10" y2="16" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><line x1="22" y1="16" x2="28" y2="16" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="16" r="2" fill="COLOR"/>`,
-  paula:   `<path d="M4 28V16L16 6L28 16V28H20V21H12V28H4Z" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round" fill="none"/>`,
-  aurora:  `<circle cx="16" cy="16" r="13" stroke="COLOR" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/><circle cx="16" cy="16" r="7" stroke="COLOR" stroke-width="1.5" fill="none"/><circle cx="16" cy="16" r="2.5" fill="COLOR"/><circle cx="16" cy="4" r="1.5" fill="COLOR" opacity="0.6"/><circle cx="16" cy="28" r="1.5" fill="COLOR" opacity="0.6"/><circle cx="4" cy="16" r="1.5" fill="COLOR" opacity="0.6"/><circle cx="28" cy="16" r="1.5" fill="COLOR" opacity="0.6"/>`,
-  aluna:   `<path d="M16 3L20 12H29L22 18L25 27L16 21L7 27L10 18L3 12H12L16 3Z" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M16 9L18 14H23L19 17L21 22L16 19L11 22L13 17L9 14H14L16 9Z" fill="COLOR" opacity="0.3"/>`,
-  custom:  `<circle cx="16" cy="16" r="12" stroke="COLOR" stroke-width="2" stroke-dasharray="2 2" fill="none"/><path d="M16 8V16L20 20" stroke="COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="16" r="3" fill="COLOR"/><path d="M8 8L12 12M20 8L16 12M8 24L12 20M24 24L20 20" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>`,
+// Emojis por agente — reemplaza SVGs inline que pueden activar filtros de spam
+const AGENT_EMOJIS = {
+  gabi:    '⚖️',
+  enzo:    '📈',
+  angela:  '❤️',
+  adriana: '🛡️',
+  axel:    '🔧',
+  paula:   '🏡',
+  aurora:  '📅',
+  aluna:   '⭐',
+  custom:  '🤖',
 };
 
-function iconSVG(key, color) {
-  const paths = AGENT_SVGS[key].replaceAll('COLOR', color);
-  return `<svg width="36" height="36" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+function iconSVG(key) {
+  const emoji = AGENT_EMOJIS[key] || '🤖';
+  return `<span style="font-size:32px;line-height:1;display:block;margin-bottom:4px;">${emoji}</span>`;
 }
 
 // Brand accent color per agent — matches the website card colors

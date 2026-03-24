@@ -408,7 +408,47 @@ function generateConfirmationEmailHTML(reservationData) {
  * 📧 Función genérica para enviar emails HTML
  * Útil para cotizaciones de Axel y otros casos personalizados
  */
-export async function sendEmail({ to, subject, html, from, cc, bcc, attachments }) {
+
+// ─── Anti-spam helpers ────────────────────────────────────────────────────────
+/**
+ * Convierte HTML de email a texto plano (text/plain fallback).
+ * Los filtros de spam penalizan emails sin versión text/plain.
+ */
+function htmlToPlainText(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<a[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
+ * Minifica HTML de email — elimina comentarios y colapsa whitespace entre tags.
+ * Reduce el tamaño del email y mejora el score anti-spam (HTML muy pesado es flag).
+ */
+function minifyEmailHTML(html) {
+  return html
+    // Eliminar comentarios HTML (excepto condicionales de Outlook <!--[if ...]-->)
+    .replace(/<!--(?!\[if)[\s\S]*?-->/g, '')
+    // Colapsar whitespace entre tags
+    .replace(/>\s{2,}</g, '><')
+    .trim();
+}
+
+export async function sendEmail({ to, subject, html, text, from, cc, bcc, attachments }) {
   try {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
@@ -422,14 +462,22 @@ export async function sendEmail({ to, subject, html, from, cc, bcc, attachments 
     
     const fromAddress = from || `"Coworkia Agent" <${DEFAULT_FROM_EMAIL}>`;
     
+    const processedHtml = html ? minifyEmailHTML(html) : html;
+
     const mailOptions = {
       from: fromAddress,
       to: to,
       cc,
       bcc,
       subject: subject,
-      html: html,
-      attachments
+      html: processedHtml,
+      text: text || (html ? htmlToPlainText(html) : undefined),
+      attachments,
+      headers: {
+        'X-Mailer': 'Coworkia Agent v2.0',
+        'X-Priority': '3',
+        'X-Auto-Response-Suppress': 'All',
+      }
     };
     
     const info = await transporter.sendMail(mailOptions);

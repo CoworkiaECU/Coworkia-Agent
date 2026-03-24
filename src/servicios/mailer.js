@@ -32,7 +32,7 @@ async function createTransporter() {
         pass: EMAIL_PASS
       },
       tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: true
       },
       debug: DEBUG_EMAIL,
       logger: DEBUG_EMAIL

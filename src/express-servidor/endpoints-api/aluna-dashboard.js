@@ -933,16 +933,12 @@ router.post('/send-d1-whatsapp', async (req, res) => {
     }
 
     // Actualizar BD
-    const updateQuery = `
-      UPDATE membership_leads 
-      SET 
-        followup_24h_sent_at = datetime('now'),
-        automation_d1_sent = 1,
-        last_activity = datetime('now')
-      WHERE id = ?
-    `;
-    
-    await databaseService.run(updateQuery, [leadId]);
+    await databaseService.run(
+      `UPDATE membership_leads 
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = 1, last_activity = NOW()
+       WHERE id = $1`,
+      [leadId]
+    );
 
     return res.json({
       ok: true,
@@ -979,7 +975,7 @@ router.post('/send-d1-email', async (req, res) => {
     let clientName = req.body.name || '';
     if (!clientName) {
       const lead = await databaseService.get(
-        'SELECT client_name FROM membership_leads WHERE id = ?',
+        'SELECT client_name FROM membership_leads WHERE id = $1',
         [leadId]
       );
       clientName = lead?.client_name || '';
@@ -998,16 +994,12 @@ router.post('/send-d1-email', async (req, res) => {
     console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
 
     // Actualizar BD
-    const updateQuery = `
-      UPDATE membership_leads 
-      SET 
-        followup_24h_sent_at = datetime('now'),
-        automation_d1_sent = 1,
-        last_activity = datetime('now')
-      WHERE id = ?
-    `;
-    
-    await databaseService.run(updateQuery, [leadId]);
+    await databaseService.run(
+      `UPDATE membership_leads 
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = 1, last_activity = NOW()
+       WHERE id = $1`,
+      [leadId]
+    );
 
     return res.json({
       ok: true,
@@ -1050,16 +1042,12 @@ router.post('/send-d3-whatsapp', async (req, res) => {
     }
 
     // Actualizar BD
-    const updateQuery = `
-      UPDATE membership_leads 
-      SET 
-        followup_3d_sent_at = datetime('now'),
-        automation_d3_sent = 1,
-        last_activity = datetime('now')
-      WHERE id = ?
-    `;
-    
-    await databaseService.run(updateQuery, [leadId]);
+    await databaseService.run(
+      `UPDATE membership_leads 
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = 1, last_activity = NOW()
+       WHERE id = $1`,
+      [leadId]
+    );
 
     return res.json({
       ok: true,
@@ -1105,16 +1093,12 @@ router.post('/send-d3-email', async (req, res) => {
     console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
 
     // Actualizar BD
-    const updateQuery = `
-      UPDATE membership_leads 
-      SET 
-        followup_3d_sent_at = datetime('now'),
-        automation_d3_sent = 1,
-        last_activity = datetime('now')
-      WHERE id = ?
-    `;
-    
-    await databaseService.run(updateQuery, [leadId]);
+    await databaseService.run(
+      `UPDATE membership_leads 
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = 1, last_activity = NOW()
+       WHERE id = $1`,
+      [leadId]
+    );
 
     return res.json({
       ok: true,
@@ -1297,11 +1281,10 @@ router.post('/campaigns/send', async (req, res) => {
     }
 
     // Actualizar campaña
-    await databaseService.run(`
-      UPDATE campaigns 
-      SET sent_at = datetime('now'), sent_count = ?, status = 'sent'
-      WHERE id = ?
-    `, [sentCount, campaignId]);
+    await databaseService.run(
+      `UPDATE campaigns SET sent_at = NOW(), sent_count = $1, status = 'sent' WHERE id = $2`,
+      [sentCount, campaignId]
+    );
 
     console.log(`[CAMPAIGN] Campaña ${campaignId} completada: ${sentCount} enviados, ${errorCount} errores`);
 

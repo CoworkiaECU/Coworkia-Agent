@@ -74,6 +74,19 @@
       "notes": "🔄 OTRO CHAT trabajando. Este chat NO toca esta tarea."
     }
   ],
+    {
+      "id": "email-antispam",
+      "title": "Todo #39 — Sistema Anti-Spam Emails HTML",
+      "status": "in-progress",
+      "plan": "plan-vuelo-email-antispam-24mar.md",
+      "startedAt": "2026-03-24T18:00:00Z",
+      "estimatedTime": "2-2.5h",
+      "priority": "high",
+      "tasksTotal": 19,
+      "tasksCompleted": 0,
+      "notes": "text/plain auto, minify HTML, eliminar SVGs inline, headers anti-spam, TLS fix, doc SPF/DKIM"
+    }
+  ],
   "metrics": {
     "avgTaskTime": "12min",
     "avgPlanTime": "2.5h",

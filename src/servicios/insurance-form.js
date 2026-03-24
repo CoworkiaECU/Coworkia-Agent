@@ -137,34 +137,32 @@ Responde SOLO con el JSON, sin texto adicional.`;
 }
 
 /**
- * 🪪 Analiza licencia de conducir con AI Vision
- * Extrae: nombre, cédula, tipo licencia, fecha expiración
+ * 🪪 Analiza cédula de ciudadanía con AI Vision
+ * Extrae: nombre completo, número de cédula, fecha de expiración
  */
 async function analyzeLicenciaImages(imageUrls) {
   if (!imageUrls || imageUrls.length === 0) {
     return null;
   }
 
-  const prompt = `Analiza esta licencia de conducir ecuatoriana y extrae EXACTAMENTE estos datos en formato JSON:
+  const prompt = `Analiza esta cédula de ciudadanía ecuatoriana y extrae EXACTAMENTE estos datos en formato JSON:
 
 {
   "fullName": "JUAN PÉREZ GARCÍA",
   "cedula": "1234567890",
-  "licenseType": "C",
   "licenseExpiry": "2026-09-15"
 }
 
 IMPORTANTE:
-- fullName: Nombre completo en MAYÚSCULAS
-- cedula: Solo dígitos, sin guiones ni espacios
-- licenseType: Tipo de licencia (A, B, C, D, E, etc.)
-- licenseExpiry: Fecha en formato YYYY-MM-DD
+- fullName: Nombre completo en MAYÚSCULAS tal como aparece en la cédula
+- cedula: Solo dígitos del número de cédula, sin guiones ni espacios (10 dígitos)
+- licenseExpiry: Fecha de caducidad de la cédula en formato YYYY-MM-DD
 
 Si no encuentras un campo, déjalo como null.
 Responde SOLO con el JSON, sin texto adicional.`;
 
   try {
-    console.log('[INSURANCE-FORM] 🔍 Analizando licencia con AI Vision...');
+    console.log('[INSURANCE-FORM] 🔍 Analizando cédula con AI Vision...');
     
     // Usar la primera imagen (o todas si quieres analizar múltiples)
     const imageUrl = Array.isArray(imageUrls) ? imageUrls[0] : imageUrls;
@@ -185,19 +183,19 @@ Responde SOLO con el JSON, sin texto adicional.`;
     }
 
     const data = JSON.parse(jsonMatch[0]);
-    console.log('[INSURANCE-FORM] ✅ Licencia analizada:', data);
+    console.log('[INSURANCE-FORM] ✅ Cédula analizada:', data);
     return data;
   } catch (error) {
-    console.error('[INSURANCE-FORM] ❌ Error analizando licencia:', error);
+    console.error('[INSURANCE-FORM] ❌ Error analizando cédula:', error);
     return null;
   }
 }
 
 /**
- * ⏰ Valida que la licencia tenga mínimo 60 días de vigencia
+ * ⏰ Valida que la cédula tenga mínimo 60 días de vigencia
  */
 function validateLicenseExpiry(expiryDate) {
-  if (!expiryDate) return { valid: false, message: 'No se pudo leer la fecha de expiración' };
+  if (!expiryDate) return { valid: true, message: 'Vigente' }; // Cédulas sin fecha de caducidad son permanentes
   
   const today = new Date();
   const expiry = new Date(expiryDate);
@@ -206,7 +204,7 @@ function validateLicenseExpiry(expiryDate) {
   if (diffDays < 60) {
     return {
       valid: false,
-      message: `Tu licencia expira en ${diffDays} días. Necesitamos mínimo 60 días de vigencia. Por favor renueva tu licencia primero.`
+      message: `Tu cédula expira en ${diffDays} días. Necesitamos mínimo 60 días de vigencia. Por favor renuévala primero.`
     };
   }
   
@@ -256,8 +254,7 @@ Chasis: ${formData.chasis || 'N/A'}
 ━━━━━━━━━━━━━━━
 Nombre: ${formData.fullName}
 🆔 Cédula: ${formData.cedula}
-🪪 Licencia: Tipo ${formData.licenseType}
-⏰ Vigente hasta: ${formData.licenseExpiry} ✅
+⏰ Cédula vigente hasta: ${formData.licenseExpiry || 'Indefinida'} ✅
 ${licenseValidation.message}
 📱 Teléfono: ${formData.phone}`
   });
@@ -339,7 +336,7 @@ export async function processInsuranceForm(userId, message, userProfile) {
       if (imageCount === 1) {
         result.updates = { message: `📸 Recibida! Ahora envía el otro lado por favor` };
       } else if (imageCount === 2) {
-        result.updates = { message: `¡Genial! 📄✅\n\nAhora necesito tu 🪪 Licencia de conducir (ambos lados)` };
+        result.updates = { message: `¡Genial! 📄✅\n\nAhora necesito tu 🪪 Cédula de ciudadanía (ambos lados)` };
       }
     }
 
@@ -362,7 +359,7 @@ export async function processInsuranceForm(userId, message, userProfile) {
           timestamp: Date.now()
         });
       } else if (licCount === 1) {
-        result.updates = { message: `📸 Recibida! Envía el otro lado de la licencia por favor` };
+        result.updates = { message: `📸 Recibida! Envía el otro lado de la cédula por favor` };
       }
     }
 
@@ -388,11 +385,11 @@ export async function processInsuranceForm(userId, message, userProfile) {
       if (!licenciaData) {
         return {
           success: false,
-          message: '❌ No pude analizar la licencia correctamente. ¿Puedes enviar fotos más claras?'
+          message: '❌ No pude analizar la cédula correctamente. ¿Puedes enviar fotos más claras?'
         };
       }
 
-      // Validar vigencia de licencia
+      // Validar vigencia de cédula
       const licenseValidation = validateLicenseExpiry(licenciaData.licenseExpiry);
       if (!licenseValidation.valid) {
         return {

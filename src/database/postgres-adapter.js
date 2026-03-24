@@ -393,6 +393,11 @@ class PostgresAdapter {
           licencia_images JSONB DEFAULT '[]'::jsonb,
           quoted_premium DECIMAL(10,2),
           premium_breakdown JSONB DEFAULT '{}'::jsonb,
+          competitor_quotes JSONB DEFAULT '[]'::jsonb,
+          competitor_quote_amount DECIMAL(10,2),
+          competitor_insurer TEXT,
+          kyc_cedula TEXT,
+          kyc_matricula TEXT,
           status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'quoted', 'accepted', 'rejected', 'cancelled')),
           assigned_to TEXT,
           notes TEXT,
@@ -1225,6 +1230,13 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_campaigns_created ON campaigns(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_campaigns_sent ON campaigns(sent_at DESC);
       `);
+
+      // Migration: Adriana KYC + competitor_quotes columns (safe, idempotent)
+      await client.query(`ALTER TABLE insurance_leads ADD COLUMN IF NOT EXISTS competitor_quotes JSONB DEFAULT '[]'::jsonb`).catch(()=>{});
+      await client.query(`ALTER TABLE insurance_leads ADD COLUMN IF NOT EXISTS competitor_quote_amount DECIMAL(10,2)`).catch(()=>{});
+      await client.query(`ALTER TABLE insurance_leads ADD COLUMN IF NOT EXISTS competitor_insurer TEXT`).catch(()=>{});
+      await client.query(`ALTER TABLE insurance_leads ADD COLUMN IF NOT EXISTS kyc_cedula TEXT`).catch(()=>{});
+      await client.query(`ALTER TABLE insurance_leads ADD COLUMN IF NOT EXISTS kyc_matricula TEXT`).catch(()=>{});
 
       // Migration: fix membership_leads status CHECK constraint to include 'quoted' (safe, idempotent)
       await client.query(`

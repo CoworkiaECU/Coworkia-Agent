@@ -935,7 +935,7 @@ router.post('/send-d1-whatsapp', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, last_activity = NOW()
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, updated_at = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -996,7 +996,7 @@ router.post('/send-d1-email', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, last_activity = NOW()
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, updated_at = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -1044,7 +1044,7 @@ router.post('/send-d3-whatsapp', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, last_activity = NOW()
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, updated_at = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -1095,7 +1095,7 @@ router.post('/send-d3-email', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, last_activity = NOW()
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, updated_at = NOW()
        WHERE id = $1`,
       [leadId]
     );

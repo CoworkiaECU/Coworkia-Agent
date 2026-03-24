@@ -935,7 +935,7 @@ router.post('/send-d1-whatsapp', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_24h_sent_at = NOW(), automation_d1_sent = 1, last_activity = NOW()
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, last_activity = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -996,7 +996,7 @@ router.post('/send-d1-email', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_24h_sent_at = NOW(), automation_d1_sent = 1, last_activity = NOW()
+       SET followup_24h_sent_at = NOW(), automation_d1_sent = true, last_activity = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -1044,7 +1044,7 @@ router.post('/send-d3-whatsapp', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_3d_sent_at = NOW(), automation_d3_sent = 1, last_activity = NOW()
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, last_activity = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -1095,7 +1095,7 @@ router.post('/send-d3-email', async (req, res) => {
     // Actualizar BD
     await databaseService.run(
       `UPDATE membership_leads 
-       SET followup_3d_sent_at = NOW(), automation_d3_sent = 1, last_activity = NOW()
+       SET followup_3d_sent_at = NOW(), automation_d3_sent = true, last_activity = NOW()
        WHERE id = $1`,
       [leadId]
     );
@@ -1142,9 +1142,9 @@ router.get('/campaigns/preview', async (req, res) => {
       conditions.push("client_response_at IS NULL");
       conditions.push("datetime(created_at) <= datetime('now', '-3 days')");
     } else if (filter === 'd1_not_sent') {
-      conditions.push("(followup_24h_sent_at IS NULL OR automation_d1_sent = 0)");
+      conditions.push("(followup_24h_sent_at IS NULL OR automation_d1_sent = false)");
     } else if (filter === 'd3_not_sent') {
-      conditions.push("(followup_3d_sent_at IS NULL OR automation_d3_sent = 0)");
+      conditions.push("(followup_3d_sent_at IS NULL OR automation_d3_sent = false)");
     }
     
     if (conditions.length > 0) {

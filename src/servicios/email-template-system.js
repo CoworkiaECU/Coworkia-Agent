@@ -126,12 +126,13 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero agendar mi visita gratuita a Coworkia`);
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="color-scheme:light !important;">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
   <title>Tu membresía en Coworkia te espera</title>
 </head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -229,12 +230,13 @@ export function buildAlunaD3HTML({ name, message }) {
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero reservar mi espacio en Coworkia antes de que se agoten`);
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="color-scheme:light !important;">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
   <title>⚠️ Últimas disponibilidades — Coworkia</title>
 </head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -349,10 +351,13 @@ export function buildAdrianaComparisonHTML({
   const vehiculoEncoded = encodeURIComponent(vehiculo || 'mi vehículo');
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="color-scheme:light !important;">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
   <title>Comparativo de Seguros — SegPopular${codeSuffix}</title>
 </head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
@@ -394,7 +399,7 @@ export function buildAdrianaComparisonHTML({
           </tr>
           <tr>
             <td style="padding:13px 16px;font-size:13px;color:#374151;">Pago en cuotas</td>
-            <td style="padding:13px 16px;text-align:center;font-size:13px;color:#374151;">✅ Hasta 10 cuotas</td>
+            <td style="padding:13px 16px;text-align:center;font-size:13px;color:#374151;">✅ Hasta 12 meses</td>
             <td style="padding:13px 16px;text-align:center;font-size:13px;color:#6b7280;">Varía</td>
           </tr>
           <tr style="background:#f8fafc;">
@@ -472,8 +477,14 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
   const b = AGENT_BRANDING.AURORA;
   const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
+</head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
@@ -534,8 +545,14 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
   const b = AGENT_BRANDING.AURORA;
   const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
+</head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
@@ -595,8 +612,14 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
   const b = AGENT_BRANDING.ENZO;
   const firstName = nombre ? nombre.split(' ')[0] : '';
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
+</head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
@@ -652,8 +675,14 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
   const firstName = nombre ? nombre.split(' ')[0] : '';
   const vence = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
+</head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
@@ -717,8 +746,14 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
   const firstName = nombre ? nombre.split(' ')[0] : '';
   const defaultCase = 'Cliente del sector retail aumentó sus ventas online un 300% en 3 meses con nuestra estrategia de contenidos y pauta digital.';
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
+</head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
@@ -860,10 +895,13 @@ export function buildAdrianaComparisonV2HTML({
     </div>` : '';
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="color-scheme:light !important;">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}</style>
   <title>Análisis de Seguros — ${firstName} — Adriana Bróker</title>
 </head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">

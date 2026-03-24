@@ -225,6 +225,73 @@ router.get('/stats', async (req, res) => {
 });
 
 /**
+ * GET /api/aurora/stats/weekly
+ * Métricas semanales: reservas + revenue de las últimas 8 semanas
+ */
+router.get('/stats/weekly', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    // Reservas + revenue por semana (últimas 8 semanas)
+    const weeklyRows = await databaseService.all(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('week', created_at), 'YYYY-MM-DD') AS week_start,
+        COUNT(*)::int                                           AS total,
+        SUM(CASE WHEN status IN ('confirmed','completed') THEN 1 ELSE 0 END)::int AS confirmed,
+        SUM(CASE WHEN was_free = false AND status IN ('confirmed','completed')
+                 THEN COALESCE(total_price, 0) ELSE 0 END)::numeric          AS revenue
+      FROM reservations
+      WHERE created_at >= NOW() - INTERVAL '8 weeks'
+      GROUP BY DATE_TRUNC('week', created_at)
+      ORDER BY DATE_TRUNC('week', created_at) ASC
+    `);
+
+    // Por tipo de servicio en las últimas 4 semanas
+    const byTypeRows = await databaseService.all(`
+      SELECT
+        service_type,
+        COUNT(*)::int AS count
+      FROM reservations
+      WHERE created_at >= NOW() - INTERVAL '4 weeks'
+        AND status IN ('confirmed','completed')
+      GROUP BY service_type
+      ORDER BY count DESC
+    `);
+
+    // Tasa de conversión total (confirmed+completed / total)
+    const convRate = await databaseService.get(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN status IN ('confirmed','completed') THEN 1 ELSE 0 END) AS converted
+      FROM reservations
+      WHERE created_at >= NOW() - INTERVAL '8 weeks'
+    `);
+
+    const totalN = parseInt(convRate?.total || 0);
+    const convN  = parseInt(convRate?.converted || 0);
+    const conversionRate = totalN > 0 ? Math.round((convN / totalN) * 100) : 0;
+
+    return res.json({
+      ok: true,
+      data: {
+        weeks: weeklyRows.map(r => ({
+          weekStart: r.week_start,
+          total: r.total,
+          confirmed: r.confirmed,
+          revenue: parseFloat(r.revenue || 0)
+        })),
+        byType: byTypeRows,
+        conversionRate,
+      }
+    });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error en stats/weekly:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/aurora/prospects/abandoned
  * Usuarios que interactuaron con Aurora pero nunca concretaron una reserva.
  * Ordenados por cantidad de mensajes (más interacción = mayor prioridad de seguimiento).

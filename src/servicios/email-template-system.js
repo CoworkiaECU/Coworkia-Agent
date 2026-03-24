@@ -90,6 +90,24 @@ export const AGENT_BRANDING = {
 // ─── UTILIDADES ───────────────────────────────────────────────────────────────
 
 /**
+ * CSS compartido para dark mode, mobile responsiveness y accesibilidad.
+ * Se inyecta en el <style> de cada template via ${getEmailMediaStyles()}.
+ */
+function getEmailMediaStyles() {
+  return `
+    img{max-width:100%;height:auto;}
+    @media (prefers-color-scheme:dark){
+      body{background-color:#f3f4f6 !important;}
+      .em-wrap{background-color:#ffffff !important;color:#1f2937 !important;}
+    }
+    @media screen and (max-width:600px){
+      .em-wrap{border-radius:0 !important;}
+      .em-body{padding:20px 18px !important;}
+    }
+  `;
+}
+
+/**
  * Reemplaza {{variable}} en un string template.
  * Soporta: {{nombre}}, {{plan}}, {{precio}}, {{empresa}}, etc.
  */
@@ -132,10 +150,10 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
   <title>Tu membresía en Coworkia te espera</title>
 </head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
   <!-- Header — idéntico al template de proformas aprobado -->
@@ -197,12 +215,12 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
     <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 22px;">Coworkia es más que un espacio. Es un sistema inteligente que trabaja por ti.</div>
     <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora','adriana','angela','axel','aluna','gabi','paula','custom'], theme: 'dark' })}</div>
     <div style="margin-bottom:22px;padding:0 8px;">
-      <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
+      <p style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
-      <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
+      <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
+      <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
         coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
@@ -236,10 +254,10 @@ export function buildAlunaD3HTML({ name, message }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
   <title>⚠️ Últimas disponibilidades — Coworkia</title>
 </head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
   <!-- Header — fondo verde con badge de urgencia -->
@@ -301,12 +319,12 @@ export function buildAlunaD3HTML({ name, message }) {
     <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 22px;">Coworkia es más que un espacio. Es un sistema inteligente que trabaja por ti.</div>
     <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora','adriana','angela','axel','aluna','gabi','paula','custom'], theme: 'dark' })}</div>
     <div style="margin-bottom:22px;padding:0 8px;">
-      <p style="color:rgba(255,255,255,0.45);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
+      <p style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
-      <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
-      <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
+      <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
+      <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
         coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
@@ -357,10 +375,10 @@ export function buildAdrianaComparisonHTML({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
   <title>Comparativo de Seguros — SegPopular${codeSuffix}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
 
   <!-- Header -->
@@ -483,9 +501,9 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
@@ -551,9 +569,9 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
@@ -618,9 +636,9 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
 </head>
-<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
@@ -681,9 +699,9 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
 </head>
-<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Urgency banner -->
@@ -752,9 +770,9 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
 </head>
-<body style="margin:0;padding:0;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
@@ -901,10 +919,10 @@ export function buildAdrianaComparisonV2HTML({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}</style>
+  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
   <title>Análisis de Seguros — ${firstName} — Adriana Bróker</title>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:620px;margin:0 auto;padding:20px 12px 40px;">
 
   <!-- ── HEADER ── -->
@@ -1027,7 +1045,7 @@ export function buildAdrianaComparisonV2HTML({
     <div style="color:#FCD34D;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;">SegPopular Ecuador · Bróker de Seguros</div>
     <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:14px;">Tu asesora <strong style="color:white;">Adriana</strong> está disponible por WhatsApp 24/7</div>
     <a href="https://wa.me/${bot_phone}" style="display:inline-block;background:rgba(255,255,255,0.12);color:white;padding:8px 22px;border-radius:99px;text-decoration:none;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.25);">💬 Escribirle a Adriana</a>
-    <div style="margin-top:14px;color:rgba(255,255,255,0.35);font-size:10px;">Si no solicitaste esta cotización puedes ignorar este mensaje.</div>
+    <div style="margin-top:14px;color:rgba(255,255,255,0.55);font-size:10px;">Si no solicitaste esta cotización puedes ignorar este mensaje.</div>
   </div>
 
 </div>

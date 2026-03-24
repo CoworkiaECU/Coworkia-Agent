@@ -461,6 +461,9 @@
     <button class="tab-btn" data-maintab="conversaciones" data-tip="Historial completo de chats con Aurora">
       💬 Conversaciones
     </button>
+    <button class="tab-btn" data-maintab="metricas" data-tip="Tendencia semanal de reservas, ingresos y tipos de servicio">
+      📊 Métricas
+    </button>
   </nav>
 
   <!-- ══════════════════════════════════════════
@@ -738,6 +741,90 @@
     </div>
   </div><!-- /#main-tab-conversaciones -->
 
+  <!-- ══════════════════════════════════════════
+       TAB: MÉTRICAS SEMANALES
+  ══════════════════════════════════════════ -->
+  <div id="main-tab-metricas" class="main-tab-content" style="display:none;padding-top:18px;">
+
+    <!-- KPIs semanales rápidos -->
+    <div class="stats-row" style="margin-bottom:18px;">
+      <div class="stat-card teal">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="stat-label">Esta semana</div>
+            <div class="stat-value" id="met-week-total">—</div>
+            <div class="stat-sub">Reservas nuevas</div>
+          </div>
+          <div style="font-size:22px;opacity:.6;">📅</div>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="stat-label">Ingreso semanal</div>
+            <div class="stat-value money" id="met-week-revenue">$0</div>
+            <div class="stat-sub">Solo pagadas</div>
+          </div>
+          <div style="font-size:22px;opacity:.6;">💰</div>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="stat-label">Conversión</div>
+            <div class="stat-value" id="met-conversion">—</div>
+            <div class="stat-sub">Últimas 8 semanas</div>
+          </div>
+          <div style="font-size:22px;opacity:.6;">🎯</div>
+        </div>
+      </div>
+      <div class="stat-card orange">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="stat-label">Top servicio</div>
+            <div class="stat-value" id="met-top-type" style="font-size:14px;line-height:1.3;">—</div>
+            <div class="stat-sub">Últimas 4 semanas</div>
+          </div>
+          <div style="font-size:22px;opacity:.6;">🏆</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla tendencia semanal -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Tendencia — Últimas 8 semanas</span>
+        <button id="btn-refresh-metricas" class="btn btn-primary btn-sm" data-tip="Recargar métricas semanales">↺ Actualizar</button>
+      </div>
+      <div id="met-loading" class="empty"><p>Cargando métricas…</p></div>
+      <div id="met-table-wrap" style="display:none;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="border-bottom:2px solid #334155;">
+              <th style="padding:10px 14px;text-align:left;color:#94a3b8;font-weight:600;">Semana</th>
+              <th style="padding:10px 14px;text-align:right;color:#94a3b8;font-weight:600;">Total</th>
+              <th style="padding:10px 14px;text-align:right;color:#94a3b8;font-weight:600;">Confirmadas</th>
+              <th style="padding:10px 14px;text-align:right;color:#94a3b8;font-weight:600;">Ingreso</th>
+              <th style="padding:10px 14px;text-align:right;color:#94a3b8;font-weight:600;">Conversión</th>
+            </tr>
+          </thead>
+          <tbody id="met-tbody"></tbody>
+        </table>
+      </div>
+      <div id="met-empty" class="empty" style="display:none;"><p>Sin datos para mostrar.</p></div>
+    </div>
+
+    <!-- Top servicios -->
+    <div class="card" style="margin-top:18px;">
+      <div class="card-header"><span class="card-title">Servicios más populares — últimas 4 sem.</span></div>
+      <div id="met-bytype-wrap" style="padding:16px 20px;display:none;">
+        <div id="met-bytype-bars"></div>
+      </div>
+      <div id="met-bytype-empty" class="empty"><p>Sin datos de servicios.</p></div>
+    </div>
+
+  </div><!-- /#main-tab-metricas -->
+
 </div><!-- .wrap -->
 
 <!-- Toast -->
@@ -750,6 +837,6 @@
   </svg>
 </button>
 
-<script src="/js/aurora-dashboard.js?v=20260323e"></script>
+<script src="/js/aurora-dashboard.js?v=20260324f"></script>
 </body>
 </html>

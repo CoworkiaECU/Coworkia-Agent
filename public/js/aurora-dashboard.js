@@ -63,6 +63,7 @@ window.switchTab = function(tabName) {
 // ── Main tab navigation (Reservas / Prospectos / Interesados / Conversaciones) ──
 let _conversationsLoaded = false;
 let _interestedLoaded    = false;
+let _metricasLoaded      = false;
 
 window.switchMainTab = function(name) {
   document.querySelectorAll('.main-tab-content').forEach(el => { el.style.display = 'none'; });
@@ -79,6 +80,10 @@ window.switchMainTab = function(name) {
   if (name === 'interesados' && !_interestedLoaded) {
     _interestedLoaded = true;
     loadInterestedGroups();
+  }
+  if (name === 'metricas' && !_metricasLoaded) {
+    _metricasLoaded = true;
+    loadMetricas();
   }
 }
 
@@ -877,6 +882,92 @@ function maskPhone(phone) {
   return '••• ••• ' + digits.slice(-4);
 }
 
+// ─── Métricas semanales ────────────────────────────────────────────────────────
+async function loadMetricas() {
+  const loadingEl  = document.getElementById('met-loading');
+  const tableWrap  = document.getElementById('met-table-wrap');
+  const emptyEl    = document.getElementById('met-empty');
+  const btypeWrap  = document.getElementById('met-bytype-wrap');
+  const btypeEmpty = document.getElementById('met-bytype-empty');
+  const el = id => document.getElementById(id);
+  if (loadingEl) loadingEl.style.display = 'block';
+  if (tableWrap) tableWrap.style.display = 'none';
+  if (emptyEl)   emptyEl.style.display   = 'none';
+  if (btypeWrap) btypeWrap.style.display = 'none';
+  try {
+    const res = await fetch('/api/aurora/stats/weekly');
+    const d   = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Error al cargar métricas');
+    const { weeks, byType, conversionRate } = d.data;
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    // ── KPI cards ─────────────────────────────────────────────────────────
+    const lastWeek = weeks[weeks.length - 1] || {};
+    if (el('met-week-total'))   el('met-week-total').textContent   = lastWeek.total   ?? '0';
+    if (el('met-week-revenue')) el('met-week-revenue').textContent = '$' + (+(lastWeek.revenue ?? 0)).toFixed(0);
+    if (el('met-conversion'))   el('met-conversion').textContent   = conversionRate + '%';
+    const typeLabels = {
+      sala_reunion:'Sala Reunión', oficina_privada:'Oficina Privada',
+      hot_desk:'Hot Desk', evento:'Evento', coworking:'Coworking'
+    };
+    if (el('met-top-type') && byType.length) {
+      el('met-top-type').textContent = typeLabels[byType[0].service_type] || byType[0].service_type;
+    }
+
+    // ── Tabla semanal ─────────────────────────────────────────────────────
+    if (!weeks.length) { if (emptyEl) emptyEl.style.display = 'block'; return; }
+    const tbody = document.getElementById('met-tbody');
+    if (tbody) {
+      tbody.innerHTML = weeks.map(w => {
+        const rate = w.total > 0 ? Math.round((w.confirmed / w.total) * 100) : 0;
+        const dt   = new Date(w.weekStart + 'T12:00:00Z');
+        const lbl  = dt.toLocaleDateString('es-EC', { day: '2-digit', month: 'short' });
+        const rateColor = rate >= 50 ? '#4ade80' : '#f59e0b';
+        return `<tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px 14px;color:#e2e8f0;">Sem&nbsp;${lbl}</td>
+          <td style="padding:10px 14px;text-align:right;color:#94a3b8;">${w.total}</td>
+          <td style="padding:10px 14px;text-align:right;color:#60a5fa;">${w.confirmed}</td>
+          <td style="padding:10px 14px;text-align:right;color:#4ade80;">$${(+w.revenue).toFixed(0)}</td>
+          <td style="padding:10px 14px;text-align:right;color:${rateColor};">${rate}%</td>
+        </tr>`;
+      }).join('');
+    }
+    if (tableWrap) tableWrap.style.display = 'block';
+
+    // ── Barras por tipo ────────────────────────────────────────────────────
+    if (byType.length) {
+      const maxCount = byType[0].count;
+      const barsEl   = document.getElementById('met-bytype-bars');
+      if (barsEl) {
+        barsEl.innerHTML = byType.map(t => {
+          const pct = Math.round((t.count / maxCount) * 100);
+          const lbl = typeLabels[t.service_type] || t.service_type;
+          return `<div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#94a3b8;margin-bottom:4px;">
+              <span>${lbl}</span><span>${t.count}</span>
+            </div>
+            <div style="background:#1e293b;border-radius:4px;height:8px;">
+              <div style="width:${pct}%;background:#60a5fa;border-radius:4px;height:8px;transition:width .4s;"></div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      if (btypeWrap)  btypeWrap.style.display  = 'block';
+      if (btypeEmpty) btypeEmpty.style.display = 'none';
+    } else {
+      if (btypeEmpty) btypeEmpty.style.display = 'block';
+    }
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (emptyEl) {
+      emptyEl.style.display = 'block';
+      const p = emptyEl.querySelector('p');
+      if (p) p.textContent = 'Error: ' + err.message;
+    }
+    console.error('[AURORA-MÉTRICAS]', err);
+  }
+}
+
 // ─── Conversaciones ───────────────────────────────────────────────────────────
 async function loadConversations() {
   const loadingEl = document.getElementById('conv-loading');
@@ -1157,6 +1248,7 @@ try {
   document.getElementById('btn-copy-campaign-prospects')?.addEventListener('click', () => copyCampaignList());
   document.getElementById('btn-refresh-prospects')?.addEventListener('click', () => loadAbandoned());
   document.getElementById('btn-refresh-conversations')?.addEventListener('click', () => loadConversations());
+  document.getElementById('btn-refresh-metricas')?.addEventListener('click', () => { _metricasLoaded = false; loadMetricas(); _metricasLoaded = true; });
   document.getElementById('btn-close-thread')?.addEventListener('click', () => closeThread());
   document.getElementById('btn-fab-refresh')?.addEventListener('click', () => refreshAll());
 
@@ -1238,6 +1330,7 @@ try {
     else if (e.key === '2') switchMainTab('prospectos');
     else if (e.key === '3') switchMainTab('interesados');
     else if (e.key === '4') switchMainTab('conversaciones');
+    else if (e.key === '5') switchMainTab('metricas');
     else if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); refreshAll(); showToast('🔄 Actualizando...'); }
   });
 
@@ -1265,6 +1358,8 @@ try {
   setInterval(loadAbandoned, 60000);
 
   // Conversaciones: se cargan la primera vez que se abre ese tab (lazy-load)
+
+  // Métricas: se cargan la primera vez que se abre ese tab (lazy-load)
 
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {

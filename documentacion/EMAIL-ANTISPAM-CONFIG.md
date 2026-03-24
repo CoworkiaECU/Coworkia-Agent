@@ -1,15 +1,50 @@
-# 📧 Guía Anti-Spam — Configuración DNS para Emails Coworkia
+# 📧 Guía Anti-Spam — Emails Coworkia (Gmail)
 
 **Fecha**: 24 Mar 2026  
-**Estado**: Pendiente configuración DNS  
-**Prioridad**: Alta — sin SPF+DKIM los emails pueden caer en spam incluso con HTML perfecto
+**Setup actual**: Gmail SMTP (`secretaria.coworkia@gmail.com`)
 
 ---
 
-## Resumen del Problema
+## Setup actual
 
-El sistema envía emails desde Gmail SMTP con dominio `noreply@coworkia.com`.  
-Si el registro SPF/DKIM del dominio `coworkia.com` no está configurado en DNS, **los servidores receptores (Gmail, Outlook, Yahoo) pueden marcar los emails como spam automáticamente**, sin importar el contenido.
+- **Proveedor**: Gmail SMTP via Nodemailer
+- **Cuenta**: `secretaria.coworkia@gmail.com`
+- **Autenticación**: App Password (2FA)
+
+**SPF/DKIM con Gmail**: Google los maneja automáticamente para cuentas `@gmail.com`. No hay nada que configurar en DNS.
+
+---
+
+## ✅ Cambios implementados en código (24 Mar 2026)
+
+| Cambio | Archivo | Efecto |
+|--------|---------|--------|
+| `text/plain` auto-generado | `email.js` | Ausencia de text/plain es flag rojo para spam |
+| HTML minificado | `email.js` | Reduce tamaño ~30-50%, emails más livianos |
+| SVGs inline eliminados | `email-ecosystem.js` | SVGs inline pueden activar filtros de phishing |
+| `X-Mailer` + `X-Priority: 3` | `email.js` | Headers que identifican sender legítimo |
+| TLS `rejectUnauthorized: true` | `mailer.js` | Conexión SMTP segura |
+
+---
+
+## Verificar deliverability
+
+1. Ir a [mail-tester.com](https://www.mail-tester.com/)
+2. Copiar el email de test que dan (ej: `test-abc@mail-tester.com`)
+3. Pedir una cotización/proforma al bot para ese email
+4. Ver el análisis → **objetivo: 7+/10** (con Gmail sin dominio propio, 10/10 no es alcanzable)
+
+---
+
+## Nota para cuando tengas dominio propio
+
+Cuando tengas `coworkia.com` en DNS, agregar:
+- SPF: `v=spf1 include:_spf.google.com ~all`
+- DKIM: generar desde Google Workspace Admin
+- DMARC: `v=DMARC1; p=none; rua=mailto:...`
+
+Eso puede subir el score de ~7 a ~9/10.
+
 
 ---
 

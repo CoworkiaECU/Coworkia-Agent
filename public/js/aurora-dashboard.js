@@ -54,7 +54,6 @@ function updateTabCounts(reservations) {
 
 window.switchTab = function(tabName) {
   _activeTab = tabName;
-  localStorage.setItem('aurora_active_tab', tabName);
   document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
@@ -1244,14 +1243,8 @@ try {
 
   console.log('[AURORA-DASH] Event listeners configurados');
 
-  // Restaurar tabs desde localStorage
-  const savedTab = localStorage.getItem('aurora_active_tab');
-  if (savedTab && savedTab !== 'all') {
-    _activeTab = savedTab;
-    document.querySelectorAll('#pipeline-tabs .tab-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === savedTab);
-    });
-  }
+  // Siempre arrancar en tab 'all' para evitar quedar atrapado en D+7=0
+  localStorage.removeItem('aurora_active_tab');
   const savedMainTab = localStorage.getItem('aurora_main_tab') || 'reservas';
   if (savedMainTab !== 'reservas') switchMainTab(savedMainTab);
 

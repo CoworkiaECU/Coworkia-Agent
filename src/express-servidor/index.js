@@ -34,7 +34,7 @@ import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron
 // 🔔 FASE 4: Sistema de notificaciones
 import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { runMigrations } from '../database/migrations/migration-runner.js';
-import { startDailyReportCron, startWeeklyPerfReportCron } from '../cron/daily-report.js';
+import { startDailyReportCron, startWeeklyPerfReportCron, startAuroraWeeklyMetricsCron } from '../cron/daily-report.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
@@ -281,6 +281,8 @@ async function startServer() {
     console.log('✅ Reporte diario configurado (09:00 AM Ecuador vía WhatsApp)');
     startWeeklyPerfReportCron();
     console.log('✅ Reporte semanal performance configurado (lunes 09:00 Ecuador)');
+    startAuroraWeeklyMetricsCron();
+    console.log('✅ Métricas semanales Aurora configuradas (viernes 18:00 Ecuador)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

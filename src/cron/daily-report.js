@@ -139,6 +139,130 @@ export function startDailyReportCron() {
 // Exportar también la función para testing / ejecución manual
 export { sendDailyReport };
 
+// ─── Reporte semanal de métricas Aurora (negocio) ────────────────────────────
+
+async function collectAuroraWeeklyStats() {
+  try {
+    await databaseService.ensureInitialized();
+
+    const [
+      totalWeek,
+      confirmedWeek,
+      byService,
+      revenue,
+      topDays,
+    ] = await Promise.all([
+      // Total reservas creadas esta semana
+      databaseService.get(
+        `SELECT COUNT(*) as count FROM reservations
+         WHERE created_at >= NOW() - INTERVAL '7 days'`
+      ),
+      // Confirmadas (pagadas)
+      databaseService.get(
+        `SELECT COUNT(*) as count FROM reservations
+         WHERE status IN ('confirmed','completed')
+           AND created_at >= NOW() - INTERVAL '7 days'`
+      ),
+      // Por tipo de servicio
+      databaseService.all(
+        `SELECT service_type, COUNT(*) as count
+         FROM reservations
+         WHERE status IN ('confirmed','completed')
+           AND created_at >= NOW() - INTERVAL '7 days'
+         GROUP BY service_type ORDER BY count DESC`
+      ),
+      // Ingresos (total_price pagados)
+      databaseService.get(
+        `SELECT COALESCE(SUM(total_price),0) as total FROM reservations
+         WHERE payment_status = 'paid'
+           AND created_at >= NOW() - INTERVAL '7 days'`
+      ),
+      // Días con más reservas
+      databaseService.all(
+        `SELECT TO_CHAR(date::date, 'Dy DD/MM') as dia, COUNT(*) as count
+         FROM reservations
+         WHERE status IN ('confirmed','completed')
+           AND created_at >= NOW() - INTERVAL '7 days'
+         GROUP BY date ORDER BY count DESC LIMIT 3`
+      ),
+    ]);
+
+    const serviceLabels = {
+      hotDesk: 'Hot Desk',
+      meetingRoom: 'Sala Reuniones',
+      deskIndividual: 'Escritorio Indiv.',
+    };
+
+    return {
+      total:     parseInt(totalWeek?.count     || 0),
+      confirmed: parseInt(confirmedWeek?.count || 0),
+      revenue:   parseFloat(revenue?.total     || 0),
+      byService: (byService || []).map(r => ({
+        name:  serviceLabels[r.service_type] || r.service_type,
+        count: parseInt(r.count),
+      })),
+      topDays: (topDays || []).map(r => ({ dia: r.dia, count: parseInt(r.count) })),
+    };
+  } catch (err) {
+    console.warn('[AURORA-WEEKLY] ⚠️ Error stats:', err.message);
+    return { total: 0, confirmed: 0, revenue: 0, byService: [], topDays: [] };
+  }
+}
+
+async function sendAuroraWeeklyMetrics() {
+  console.log('[AURORA-WEEKLY] 📊 Generando métricas semanales Aurora...');
+  try {
+    const s = await collectAuroraWeeklyStats();
+    const convRate = s.total > 0 ? Math.round((s.confirmed / s.total) * 100) : 0;
+
+    const serviceLines = s.byService.length
+      ? s.byService.map(b => `  · ${b.name}: *${b.count}*`).join('\n')
+      : '  · Sin reservas confirmadas';
+
+    const topDayLines = s.topDays.length
+      ? s.topDays.map(d => `  · ${d.dia} — ${d.count} reserva${d.count !== 1 ? 's' : ''}`).join('\n')
+      : '  · Sin datos';
+
+    const msg = [
+      '🏢 *Métricas Semanales Aurora*',
+      `📅 Últimos 7 días`,
+      '',
+      `📥 Nuevas reservas: *${s.total}*`,
+      `✅ Confirmadas/pagadas: *${s.confirmed}* (${convRate}%)`,
+      `💰 Ingresos: *$${s.revenue.toFixed(2)}*`,
+      '',
+      '📊 *Por servicio:*',
+      serviceLines,
+      '',
+      '📆 *Días más ocupados:*',
+      topDayLines,
+    ].join('\n');
+
+    await notifyRaw(msg);
+    console.log('[AURORA-WEEKLY] ✅ Métricas semanales enviadas');
+  } catch (err) {
+    console.error('[AURORA-WEEKLY] ❌ Error:', err.message);
+  }
+}
+
+/**
+ * Inicia el cron de métricas semanales de negocio de Aurora.
+ * Ejecuta los viernes a las 18:00 hora Ecuador.
+ */
+export function startAuroraWeeklyMetricsCron() {
+  const job = new CronJob(
+    '0 0 18 * * 5',   // Viernes 18:00 Ecuador
+    sendAuroraWeeklyMetrics,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+  console.log('[AURORA-WEEKLY] ✅ Cron métricas semanales Aurora configurado (viernes 18:00)');
+  return job;
+}
+
+export { sendAuroraWeeklyMetrics };
+
 // ─── Reporte semanal de performance ──────────────────────────────────────────
 
 async function sendWeeklyPerfReport() {

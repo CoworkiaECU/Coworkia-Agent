@@ -10,6 +10,8 @@
 import express from 'express';
 import databaseService from '../../database/database.js';
 import { sendOneHourFollowup, sendRebookingReminder } from '../../servicios/aurora-followup-service.js';
+import { sendEmail } from '../../servicios/email.js';
+import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 
 const router = express.Router();
 
@@ -635,8 +637,42 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
       }
     }
 
-    console.log(`[AURORA-API] 💰 Pago registrado: reserva #${id} → $${parsedAmount} efectivo | WA: ${waSent}`);
-    return res.json({ ok: true, message: 'Pago registrado', waSent, amount: parsedAmount });
+    // 📧 Email recibo de pago al cliente
+    let emailSent = false;
+    const clientEmail = reservation.user_email || reservation.email;
+    if (clientEmail) {
+      try {
+        const serviceNames = {
+          hotDesk: 'Hot Desk',
+          meetingRoom: 'Sala de Reuniones',
+          deskIndividual: 'Escritorio Individual'
+        };
+        const svcName = serviceNames[reservation.service_type] || reservation.service_type;
+        const fechaFmt = new Date(reservation.date + 'T12:00:00').toLocaleDateString('es-EC', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        const horaFmt = reservation.time ? reservation.time.slice(0, 5) : '';
+        const html = buildEmailTemplate('AURORA', 'AURORA_CONFIRMATION', {
+          nombre: reservation.user_name || '',
+          servicio: svcName,
+          dia: fechaFmt,
+          hora: horaFmt,
+          precio: `$${parsedAmount.toFixed(2)}`,
+        });
+        await sendEmail({
+          to: clientEmail,
+          subject: `✅ Recibo de reserva — ${svcName} | Coworkia`,
+          html,
+        });
+        emailSent = true;
+        console.log(`[AURORA-API] 📧 Recibo enviado a ${clientEmail}`);
+      } catch (e) {
+        console.warn('[AURORA-API] Email recibo failed:', e.message);
+      }
+    }
+
+    console.log(`[AURORA-API] 💰 Pago registrado: reserva #${id} → $${parsedAmount} efectivo | WA: ${waSent} | Email: ${emailSent}`);
+    return res.json({ ok: true, message: 'Pago registrado', waSent, emailSent, amount: parsedAmount });
 
   } catch (error) {
     console.error('[AURORA-API] Error en register-payment:', error);

@@ -813,14 +813,9 @@ export function buildAdrianaComparisonV2HTML({
   const vazEncoded  = encodeURIComponent(`@adriana\nHola Adriana 👋 Acepto la cotización VAZ Seguros para mi ${vehicleDesc}. ¿Qué sigue?`);
   const consultaEncoded = encodeURIComponent(`@adriana\nHola Adriana, quisiera usar mi cupón de asesoría gratuita en seguros corporativos 🎁`);
 
-  // Precios de referencia del mercado ecuatoriano para cuando no se capturan cotizaciones reales
+  // Solo mostrar sección comparativa si hay competidores reales (no usar fallback de mercado)
   const valorNum = parseInt((valor_asegurado || '').replace(/[^0-9]/g, '')) || 0;
-  const effectiveCompetitors = competitors.length ? competitors : (valorNum > 0 ? [
-    { nombre: 'Mapfre Atlas',        plan: 'Todo Riesgo',  prima_anual: `$${Math.round(valorNum * 0.065)}`,  prima_mensual: `$${Math.round(valorNum * 0.0065)}`,  deducible: '10%', asistencia: '✅ 24/7' },
-    { nombre: 'Equinoccial',         plan: 'Amplia Plus',  prima_anual: `$${Math.round(valorNum * 0.062)}`,  prima_mensual: `$${Math.round(valorNum * 0.0062)}`,  deducible: '8%',  asistencia: '✅ 24/7' },
-    { nombre: 'AIG Metropolitana',   plan: 'Premier Auto', prima_anual: `$${Math.round(valorNum * 0.058)}`,  prima_mensual: `$${Math.round(valorNum * 0.0058)}`,  deducible: '10%', asistencia: '✅ 24/7' },
-    { nombre: 'Latina Seguros',      plan: 'Total Plus',   prima_anual: `$${Math.round(valorNum * 0.060)}`,  prima_mensual: `$${Math.round(valorNum * 0.006)}`,   deducible: '7%',  asistencia: '✅ 24/7' },
-  ] : []);
+  const effectiveCompetitors = competitors.length ? competitors : [];
 
   const competitorRows = effectiveCompetitors.map((c, i) => `
       <tr style="background:${i % 2 === 0 ? '#fafafa' : 'white'};border-bottom:1px solid #f0f0f0;">
@@ -832,7 +827,7 @@ export function buildAdrianaComparisonV2HTML({
         <td style="padding:11px 14px;font-size:12px;text-align:center;">${c.asistencia || '—'}</td>
       </tr>`).join('');
 
-  const competitorSection = `
+  const competitorSection = effectiveCompetitors.length > 0 ? `
     <div style="margin:28px 0 24px;">
       <h3 style="font-size:14px;font-weight:800;color:#1E3A8A;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">📊 Comparativa objetiva del mercado</h3>
       <p style="margin:0 0 14px;font-size:13px;color:#6b7280;">Analizamos las principales aseguradoras para que tomes la mejor decisión:</p>
@@ -862,7 +857,7 @@ export function buildAdrianaComparisonV2HTML({
         </table>
       </div>
       <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;text-align:center;">* Cotización VAZ verificada. Valores de otras aseguradoras son de referencia del mercado ecuatoriano a ${fecha_cotizacion}.</p>
-    </div>`;
+    </div>` : '';
 
   return `<!DOCTYPE html>
 <html lang="es">

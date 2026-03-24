@@ -53,9 +53,9 @@ window.clearStageFilter = function() {
 };
 
 function getProspectStage(p) {
-  if (p.converted_at)        return 'converted';
-  if (p.followup_3d_sent_at)  return 'd3';
-  if (p.followup_24h_sent_at) return 'd1';
+  if (p.membership_activated || p.converted_at) return 'converted';
+  if (p.followup_3d_sent_at  || p.automation_d3_sent)  return 'd3';
+  if (p.followup_24h_sent_at || p.automation_d1_sent)  return 'd1';
   return 'captado';
 }
 

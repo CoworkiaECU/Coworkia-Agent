@@ -156,68 +156,67 @@ router.get('/stats', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
     
-    // ── MÉTRICAS DE FOLLOW-UPS (nuevas - BLOQUE 2) ──────────────────────────
-    
-    // Total leads en pipeline de follow-ups (últimos 7 y 30 días)
+    // ── MÉTRICAS DE FOLLOW-UPS — todas desde membership_leads ───────────────
+
     const leadsLast7d = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
-       WHERE interest_at >= NOW() - INTERVAL '7 days'`
+      `SELECT COUNT(*) as count FROM membership_leads
+       WHERE created_at >= NOW() - INTERVAL '7 days'`
     );
-    
+
     const leadsLast30d = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
-       WHERE interest_at >= NOW() - INTERVAL '30 days'`
+      `SELECT COUNT(*) as count FROM membership_leads
+       WHERE created_at >= NOW() - INTERVAL '30 days'`
     );
-    
+
     // Total prospectos en pipeline (no convertidos)
     const totalProspectsResult = await databaseService.get(
-      `SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NULL`
+      `SELECT COUNT(*) as total FROM membership_leads WHERE membership_activated IS NOT TRUE`
     );
     const totalProspects = parseInt(totalProspectsResult?.total || 0);
-    
+
     // D+1 enviados (WhatsApp o Email)
     const d1SentResult = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
-       WHERE (followup_24h_sent_at IS NOT NULL OR followup_24h_email_sent_at IS NOT NULL)
-         AND converted_at IS NULL`
+      `SELECT COUNT(*) as count FROM membership_leads
+       WHERE (followup_24h_sent_at IS NOT NULL OR automation_d1_sent = true)
+         AND membership_activated IS NOT TRUE`
     );
     const d1Sent = parseInt(d1SentResult?.count || 0);
-    
+
     // D+3 enviados (WhatsApp o Email)
     const d3SentResult = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
-       WHERE (followup_3d_sent_at IS NOT NULL OR followup_3d_email_sent_at IS NOT NULL)
-         AND converted_at IS NULL`
+      `SELECT COUNT(*) as count FROM membership_leads
+       WHERE (followup_3d_sent_at IS NOT NULL OR automation_d3_sent = true)
+         AND membership_activated IS NOT TRUE`
     );
     const d3Sent = parseInt(d3SentResult?.count || 0);
-    
+
     // Clientes que respondieron después de recibir follow-ups
     const respondedResult = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
-       WHERE client_response_at IS NOT NULL AND converted_at IS NULL`
+      `SELECT COUNT(*) as count FROM membership_leads
+       WHERE client_response_at IS NOT NULL AND membership_activated IS NOT TRUE`
     );
     const responded = parseInt(respondedResult?.count || 0);
-    
+
     // Prospectos con follow-ups enviados (base para calcular % respuesta)
     const withFollowupsResult = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups 
+      `SELECT COUNT(*) as count FROM membership_leads
        WHERE (followup_24h_sent_at IS NOT NULL OR followup_3d_sent_at IS NOT NULL)
-         AND converted_at IS NULL`
+         AND membership_activated IS NOT TRUE`
     );
     const withFollowups = parseInt(withFollowupsResult?.count || 0);
-    
+
     // Conversiones
     const convertedResult = await databaseService.get(
-      `SELECT COUNT(*) as count FROM aluna_prospect_followups WHERE converted_at IS NOT NULL`
+      `SELECT COUNT(*) as count FROM membership_leads WHERE membership_activated = true`
     );
     const converted = parseInt(convertedResult?.count || 0);
-    
+
     // Total histórico (incluyendo convertidos)
     const totalHistoricalResult = await databaseService.get(
-      `SELECT COUNT(*) as total FROM aluna_prospect_followups`
+      `SELECT COUNT(*) as total FROM membership_leads`
     );
     const totalHistorical = parseInt(totalHistoricalResult?.total || 0);
-    
+
     // Calcular porcentajes
     const d1Percentage = totalProspects > 0 ? ((d1Sent / totalProspects) * 100).toFixed(1) : '0.0';
     const d3Percentage = totalProspects > 0 ? ((d3Sent / totalProspects) * 100).toFixed(1) : '0.0';
@@ -379,40 +378,54 @@ router.get('/dashboard', async (req, res) => {
 
 /**
  * GET /api/aluna/pipeline
- * Pipeline de seguimiento de prospectos (24h, 3d, convertidos)
+ * Pipeline de seguimiento de prospectos — lee desde membership_leads (tabla real de seguimientos)
  */
 router.get('/pipeline', async (req, res) => {
   try {
     await databaseService.ensureInitialized();
 
     const [total, pending24h, pending3d, converted, recent] = await Promise.all([
-      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NULL`),
-      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups
-        WHERE followup_24h_sent_at IS NULL AND converted_at IS NULL
-          AND interest_at <= NOW() - INTERVAL '24 hours'`),
-      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups
-        WHERE followup_24h_sent_at IS NOT NULL AND followup_3d_sent_at IS NULL AND converted_at IS NULL
+      databaseService.get(`SELECT COUNT(*) as total FROM membership_leads WHERE membership_activated IS NOT TRUE`),
+      databaseService.get(`
+        SELECT COUNT(*) as total FROM membership_leads
+        WHERE followup_24h_sent_at IS NULL AND membership_activated IS NOT TRUE
+          AND created_at <= NOW() - INTERVAL '24 hours'`),
+      databaseService.get(`
+        SELECT COUNT(*) as total FROM membership_leads
+        WHERE followup_24h_sent_at IS NOT NULL AND followup_3d_sent_at IS NULL AND membership_activated IS NOT TRUE
           AND followup_24h_sent_at <= NOW() - INTERVAL '72 hours'`),
-      databaseService.get(`SELECT COUNT(*) as total FROM aluna_prospect_followups WHERE converted_at IS NOT NULL`),
+      databaseService.get(`SELECT COUNT(*) as total FROM membership_leads WHERE membership_activated = true`),
       databaseService.all(`
-        SELECT id, user_phone, user_name, membership_type, membership_code, email,
-               interest_at, followup_24h_sent_at, followup_3d_sent_at,
-               followup_24h_email_sent_at, followup_3d_email_sent_at, converted_at
-        FROM aluna_prospect_followups
-        ORDER BY interest_at DESC LIMIT 50
+        SELECT
+          id,
+          user_phone,
+          client_name       AS user_name,
+          membership_type,
+          membership_code,
+          email,
+          created_at        AS interest_at,
+          followup_24h_sent_at,
+          followup_3d_sent_at,
+          automation_d1_sent,
+          automation_d3_sent,
+          client_response_at,
+          activation_date   AS converted_at,
+          membership_activated
+        FROM membership_leads
+        ORDER BY created_at DESC LIMIT 50
       `)
     ]);
 
     // Classify each prospect by temperature
     const classified = (recent || []).map(p => {
       let temperature = 'cold';
-      if (p.converted_at) {
+      if (p.membership_activated || p.converted_at) {
         temperature = 'hot';
-      } else if (p.followup_3d_sent_at && !p.converted_at) {
+      } else if ((p.followup_3d_sent_at || p.automation_d3_sent) && !p.membership_activated) {
         temperature = 'cold';
-      } else if (p.followup_24h_sent_at && !p.followup_3d_sent_at) {
+      } else if ((p.followup_24h_sent_at || p.automation_d1_sent) && !p.followup_3d_sent_at) {
         temperature = 'warm';
-      } else if (!p.followup_24h_sent_at) {
+      } else if (!p.followup_24h_sent_at && !p.automation_d1_sent) {
         const hoursSince = (Date.now() - new Date(p.interest_at).getTime()) / (1000 * 3600);
         temperature = hoursSince < 24 ? 'hot' : 'warm';
       }

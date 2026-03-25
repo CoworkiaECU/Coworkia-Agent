@@ -254,6 +254,68 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     return true;
   }
 
+  // SI: aprobar acción del autopilot (sinónimo de SIGUIENTE)
+  if (cmd === 'SI' || cmd === 'SÍ' || cmd === 'YES' || cmd === 'OK') {
+    console.log('[DIEGO-CMD]  SI recibido (aprobación)');
+    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+    setAutopilotState({ active: true, waitingForApproval: false });
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'SI', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '✅ *Acción aprobada.*\nEl agente continuará con la tarea.');
+    return true;
+  }
+
+  // NO: rechazar acción del autopilot
+  if (cmd === 'NO' || cmd === 'NOPE' || cmd === 'CANCELAR') {
+    console.log('[DIEGO-CMD] ❌ NO recibido (rechazo)');
+    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+    setAutopilotState({ active: false, waitingForApproval: false });
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'NO', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '❌ *Acción rechazada.*\nEl agente saltará esta tarea y continuará con la siguiente.');
+    return true;
+  }
+
+  // REVIEW: solicitar revisión detallada antes de continuar
+  if (cmd === 'REVIEW' || cmd === 'REVISAR' || cmd === 'VER') {
+    console.log('[DIEGO-CMD] 🔍 REVIEW recibido');
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'REVIEW', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '🔍 *Revisión solicitada.*\nEl agente mostrará detalles del cambio antes de aplicarlo.\nResponde SI para aprobar o NO para rechazar.');
+    return true;
+  }
+
+  // CANCELA: detener completamente el autopilot (más fuerte que PARA)
+  if (cmd === 'CANCELA' || cmd === 'CANCEL' || cmd === 'ABORTAR' || cmd === 'ABORT') {
+    console.log('[DIEGO-CMD] 🚫 CANCELA recibido');
+    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+    setAutopilotState({ active: false, waitingForApproval: false, cancelled: true });
+    try {
+      const { query } = await import('../../database/database.js');
+      await query(
+        `UPDATE _autopilot_checkpoints SET command = 'CANCELA', answered_at = NOW()
+         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      );
+    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
+    await enviarWhatsApp(userId, '🚫 *Autopilot cancelado.*\nTodas las tareas pendientes se detendrán inmediatamente.');
+    return true;
+  }
+
   return false; // No era un comando conocido, continuar flujo normal
 }
 

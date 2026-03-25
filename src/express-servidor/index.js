@@ -31,7 +31,9 @@ import { startAuroraEnzoCronJobs } from '../servicios/aurora-enzo-followup-cron.
 import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
 // 🛡️ Adriana Follow-up Automation
 import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron.js';
-// 🔔 FASE 4: Sistema de notificaciones
+// � Aurora Follow-up Automation 
+import { startAuroraFollowupCrons } from '../cron/aurora-followup-cron.js';
+// �🔔 FASE 4: Sistema de notificaciones
 import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { runMigrations } from '../database/migrations/migration-runner.js';
 import { startDailyReportCron, startWeeklyPerfReportCron, startAuroraWeeklyMetricsCron } from '../cron/daily-report.js';
@@ -65,6 +67,7 @@ import adminSeedRouter from './endpoints-api/admin-seed.js';
 import paulaDashboardRouter from './endpoints-api/paula-dashboard.js';
 import axelDashboardRouter from './endpoints-api/axel-dashboard.js';
 import adrianaDashboardRouter from './endpoints-api/adriana-dashboard.js';
+import adrianaApiRouter from './endpoints-api/adriana.js'; // Cotizaciones automáticas VAZ
 import todosDashboardRouter from './endpoints-api/todos-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
 import autopilotApiRouter from './endpoints-api/autopilot-api.js';
@@ -224,7 +227,8 @@ app.use('/api/aurora', auroraDashboardRouter);
 app.use('/api/enzo', enzoDashboardRouter);
 app.use('/api/paula', paulaDashboardRouter);
 app.use('/api/axel', axelDashboardRouter);
-app.use('/api/adriana', adrianaDashboardRouter);
+app.use('/api/adriana/dashboard', adrianaDashboardRouter); // Dashboard interno
+app.use('/api/adriana', adrianaApiRouter); // API cotizaciones automáticas (debe ir después)
 app.use('/api/todos', todosDashboardRouter);
 app.use('/api/admin', adminSeedRouter);
 app.use('/', autopilotApiRouter);
@@ -307,6 +311,9 @@ async function startServer() {
     console.log('🛡️ Iniciando follow-ups automatizados de Adriana...');
     startAdrianaFollowupCronJobs();
     console.log('✅ Adriana follow-ups activos (S1: 10am, S2: 11:30am, S3: 9:30am Ecuador)');
+
+    startAuroraFollowupCrons();
+    console.log('✅ Aurora follow-ups activos (+1h cada 15min, D+7 re-booking 10am Ecuador)');
 
     // Ejecutar migraciones de base de datos
     console.log('🗃️ Ejecutando migraciones de base de datos...');

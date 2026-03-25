@@ -1,8 +1,54 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-24T23:00:00Z",
+  "lastUpdated": "2026-03-24T23:59:00Z",
   "currentPlan": "plan-vuelo-self-healing-25mar.md",
   "queue": [
+    {
+      "id": "aurora-dashboard-redesign",
+      "title": "Dashboard Aurora — UX Flows Críticos",
+      "status": "completed",
+      "plan": "plan-vuelo-22mar.md",
+      "completedAt": "2026-03-24T23:55:00Z",
+      "commit": "d448fd1",
+      "heroku": "v1118",
+      "tasksTotal": 5,
+      "tasksCompleted": 5,
+      "notes": "attended toggle (Sí/No), fix registerPayment ID bug, tab Pendientes = confirmed sin pago, eliminar teléfono+stepper, WA recibos via @gabi, migración BD attended column"
+    },
+    {
+      "id": "self-healing-system",
+      "title": "Sistema Self-Healing — Auto-diagnóstico y plan de reparación diario",
+      "status": "pending",
+      "plan": "plan-vuelo-self-healing-25mar.md",
+      "estimatedTime": "3-4h",
+      "priority": "high",
+      "chat": "backend",
+      "notes": "Cron 02AM: lee errores + conversaciones fallidas → OpenAI → genera plan-vuelo-repair-fecha.md → avisa 9AM. Tablas: error_events + self_healing_reports."
+    },
+    {
+      "id": "email-antispam",
+      "title": "Todo #39 — Sistema Anti-Spam Emails HTML",
+      "status": "completed",
+      "plan": "plan-vuelo-email-antispam-24mar.md",
+      "completedAt": "2026-03-24T22:50:00Z",
+      "commit": "c387a53",
+      "heroku": "v1115",
+      "notes": "text/plain auto, minify HTML, SVGs→emojis, TLS fix, headers anti-spam, doc SPF/DKIM"
+    }
+  ],
+  "metrics": {
+    "avgTaskTime": "12min",
+    "avgPlanTime": "2.5h",
+    "successRate": 0.87,
+    "blockerRate": 0.13,
+    "totalPlansCompleted": 19,
+    "mostCommonBlockers": [
+      "Decisión arquitectónica",
+      "Testing complejo",
+      "Dependencia externa"
+    ]
+  }
+}
     {
       "id": "fase4-notificaciones",
       "title": "FASE 4 - Sistema Notificaciones WhatsApp",

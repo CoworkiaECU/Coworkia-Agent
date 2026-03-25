@@ -11,7 +11,7 @@
 import { CronJob } from 'cron';
 import databaseService from '../database/database.js';
 import { notifyRaw } from '../servicios/notification-service.js';
-import { generateChatCompletion } from '../servicios-ia/openai-service.js';
+import { complete as generateChatCompletion } from '../servicios-ia/openai.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -232,14 +232,11 @@ Formato JSON esperado:
 
 Si no hay problemas críticos, retorna {"issues": []}.`;
 
-    const response = await generateChatCompletion(
-      [{ role: 'user', content: prompt }],
-      { 
-        model: 'gpt-4o',
-        temperature: 0.3,
-        max_tokens: 1500
-      }
-    );
+    const response = await generateChatCompletion(prompt, { 
+      model: 'gpt-4o',
+      temperature: 0.3,
+      max_tokens: 1500
+    });
 
     const analysisResult = JSON.parse(response);
     return analysisResult.issues || [];

@@ -16,12 +16,18 @@
     {
       "id": "ux-storytelling-agentes",
       "title": "Todos #49, #50, #48, #47 — Fix Bugs UX + Storytelling Vendedor",
-      "status": "pending",
+      "status": "completed",
       "plan": "plan-vuelo-ux-agentes-25mar.md",
       "estimatedTime": "2.5h",
+      "realTime": "1.9h",
+      "completedAt": "2026-03-25T19:15:00Z",
+      "commit": "3fae224",
+      "heroku": "v1120",
+      "tasksTotal": 4,
+      "tasksCompleted": 4,
       "priority": "high",
       "chat": "chat-derecho",
-      "notes": "Enzo botones wiring, Kia Picanto layout fix, Enzo prompt vendedor + casos éxito, Gabi prompt consultivo + paquetes pricing. SEGURO para paralelo — no toca BD ni cron."
+      "notes": "Enzo botones D+1/D+3/D+7 wired, Kia Picanto object-fit fix, Enzo casos éxito ROI 300-600%, Gabi paquetes consultoría $80/$150/$350. Ahorro -35min vs estimado."
     },
     {
       "id": "aurora-dashboard-redesign",

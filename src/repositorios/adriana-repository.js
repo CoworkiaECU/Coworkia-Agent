@@ -2,7 +2,7 @@
  * 📋 Adriana Repository — insurance_leads CRUD helpers
  * Encapsula queries de BD para KYC y competitor quotes.
  */
-import databaseService from '../database-service.js';
+import databaseService from '../database/database.js';
 
 /**
  * Actualiza los datos KYC de un lead de seguro.

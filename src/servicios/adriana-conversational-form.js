@@ -12,7 +12,7 @@
  * Estados guardados en tabla adriana_conversations
  */
 
-import databaseService from '../database/database-service.js';
+import databaseService from '../database/database.js';
 import { analyzeImage } from '../servicios-ia/openai.js';
 import { generateAndSendComparisonQuote } from './adriana-quote-generator.js';
 import { loggers } from '../utils/logger.js';

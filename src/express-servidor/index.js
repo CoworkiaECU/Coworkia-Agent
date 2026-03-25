@@ -35,6 +35,7 @@ import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron
 import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { runMigrations } from '../database/migrations/migration-runner.js';
 import { startDailyReportCron, startWeeklyPerfReportCron, startAuroraWeeklyMetricsCron } from '../cron/daily-report.js';
+import { startSelfHealingCron } from '../cron/self-healing-cron.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
@@ -320,6 +321,8 @@ async function startServer() {
     console.log('✅ Reporte semanal performance configurado (lunes 09:00 Ecuador)');
     startAuroraWeeklyMetricsCron();
     console.log('✅ Métricas semanales Aurora configuradas (viernes 18:00 Ecuador)');
+    startSelfHealingCron();
+    console.log('✅ Self-Healing System activo (análisis nocturno 02:00 AM Ecuador)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

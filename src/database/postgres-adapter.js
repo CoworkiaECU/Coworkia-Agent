@@ -1257,6 +1257,53 @@ class PostgresAdapter {
         END $$;
       `);
 
+      // ===================================================================
+      // TABLA: error_events — Self-Healing System
+      // Captura automática de errores en runtime para análisis nocturno
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS error_events (
+          id SERIAL PRIMARY KEY,
+          source TEXT NOT NULL,
+          agent TEXT,
+          error_type TEXT NOT NULL,
+          message TEXT NOT NULL,
+          stack TEXT,
+          user_phone TEXT,
+          metadata JSONB DEFAULT '{}'::jsonb,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_error_events_created ON error_events(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_error_events_source ON error_events(source);
+        CREATE INDEX IF NOT EXISTS idx_error_events_agent ON error_events(agent);
+        CREATE INDEX IF NOT EXISTS idx_error_events_type ON error_events(error_type);
+      `);
+
+      // ===================================================================
+      // TABLA: self_healing_reports — Self-Healing System
+      // Reportes diarios generados automáticamente por el sistema
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS self_healing_reports (
+          id SERIAL PRIMARY KEY,
+          report_date DATE NOT NULL UNIQUE,
+          errors_found INTEGER DEFAULT 0,
+          conversations_failed INTEGER DEFAULT 0,
+          plan_file TEXT,
+          summary TEXT,
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'applied')),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);
+      `);
+
       await client.query('COMMIT');
       console.log('[POSTGRES] ✅ Esquema de tablas creado/actualizado');
     } catch (error) {

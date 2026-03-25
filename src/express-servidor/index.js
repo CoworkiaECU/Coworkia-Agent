@@ -230,6 +230,41 @@ app.use('/', autopilotApiRouter);
 app.use('/', wifiCodesRouter);
 app.use('/', privacidadRouter);
 
+// 🛡️ Middleware de captura de errores para Self-Healing System
+app.use(async (err, req, res, next) => {
+  try {
+    // Log completo del error
+    console.error('[ERROR MIDDLEWARE]', err.message);
+    console.error('[ERROR STACK]', err.stack);
+
+    // Capturar en error_events table para análisis nocturno
+    await databaseService.run(
+      `INSERT INTO error_events (source, error_type, message, stack, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        'api',
+        err.name || 'UNHANDLED_EXCEPTION',
+        err.message,
+        err.stack || '',
+        JSON.stringify({ path: req.path, method: req.method, ip: req.ip })
+      ]
+    ).catch(dbErr => {
+      // Si falla el insert, no crashear - solo log
+      console.error('[ERROR MIDDLEWARE] Failed to log to DB:', dbErr.message);
+    });
+  } catch (captureError) {
+    console.error('[ERROR MIDDLEWARE] Failed to capture error:', captureError.message);
+  }
+
+  // Responder al cliente
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    ok: false,
+    error: err.name || 'INTERNAL_SERVER_ERROR',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
+
 // 404 final
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: 'Not Found' });

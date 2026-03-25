@@ -5,12 +5,60 @@
 
 /**
  * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
- * Remueve emojis, keywords empresariales, números de teléfono
+ * Remueve emojis, keywords empresariales, números de teléfono, apodos sospechosos
  */
 export function cleanWhatsAppName(whatsappName) {
   if (!whatsappName || typeof whatsappName !== 'string') return null;
   
   let cleaned = whatsappName.trim();
+  
+  // 🚫 FILTRO DE APODOS/NOMBRES SOSPECHOSOS
+  // Rechazar nombres que son claramente apodos, insultos, o no son nombres reales
+  const suspiciousPatterns = [
+    /maldito/i,
+    /vakita/i,
+    /vaquita/i,
+    /bebe/i,
+    /bebé/i,
+    /amor/i,
+    /corazón/i,
+    /papi/i, 
+    /mami/i,
+    /gordo/i,
+    /flaco/i,
+    /negro/i,
+    /chino/i,
+    /rey/i,
+    /reina/i,
+    /hermano/i,
+    /hermana/i,
+    /primo/i,
+    /compa/i,
+    /pana/i,
+    /brother/i,
+    /sis/i,
+    /bro\b/i,
+    /tío/i,
+    /tía/i,
+    /wey/i,
+    /güey/i,
+    /loco/i,
+    /bb\b/i,
+    /ñaño/i,
+    /ñaña/i,
+    /daddy/i,
+    /mommy/i,
+    /💀/,
+    /💩/,
+    /🖕/
+  ];
+  
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(cleaned)) {
+      console.log(`[NAME-DETECTION] 🚫 Nombre sospechoso rechazado: "${cleaned}"`);
+      return null; // Rechazar este nombre, forzará fallback a mensaje o BD
+    }
+  }
   
   // Remover emojis comunes
   cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆☎️]/g, '');

@@ -178,11 +178,10 @@ Ejemplo:
       hotDesk: {
         nombre: 'Hot Desk',
         precio: 'Consultar disponibilidad',
-        descripcion: 'Espacio de trabajo compartido, flexible'
+        descripcion: 'Escritorios XL compartidos en espacio exclusivo. Pocas personas, máxima concentración. NO son oficinas privadas cerradas.'
       },
       salas: {
-        reunion: 'Sala de reuniones (por hora)',
-        privadas: 'Oficinas privadas (según disponibilidad)'
+        reunion: 'Sala de reuniones (por hora)'
       },
       prueba: {
         nombre: '2 Horas Gratis',

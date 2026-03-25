@@ -20,14 +20,14 @@
       "plan": "plan-vuelo-ux-agentes-25mar.md",
       "estimatedTime": "2.5h",
       "realTime": "1.9h",
-      "completedAt": "2026-03-25T19:15:00Z",
-      "commit": "3fae224",
-      "heroku": "v1120",
+      "completedAt": "2026-03-25T19:45:00Z",
+      "commit": "b851ddf",
+      "heroku": "v1122",
       "tasksTotal": 4,
       "tasksCompleted": 4,
       "priority": "high",
       "chat": "chat-derecho",
-      "notes": "Enzo botones D+1/D+3/D+7 wired, Kia Picanto object-fit fix, Enzo casos éxito ROI 300-600%, Gabi paquetes consultoría $80/$150/$350. Ahorro -35min vs estimado."
+      "notes": "Enzo botones D+1/D+3/D+7 wired, Kia Picanto object-fit fix, Enzo casos éxito ROI 300-600%, Gabi paquetes consultoría $80/$150/$350. Ahorro -35min vs estimado. + Docs: Copilot Spaces Security Protocol + Magic CLI Reference + 8 comandos magic-* activos + Git template branding."
     },
     {
       "id": "aurora-dashboard-redesign",

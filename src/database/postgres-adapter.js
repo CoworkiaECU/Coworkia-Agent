@@ -1299,6 +1299,57 @@ class PostgresAdapter {
         )
       `);
 
+      // ===================================================================
+      // TABLA: vaz_rates — Adriana VAZ Cotizaciones Automáticas
+      // Cache de tasas VAZ con vigencia 24h
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS vaz_rates (
+          id SERIAL PRIMARY KEY,
+          cache_key TEXT NOT NULL,
+          vehicle_type TEXT NOT NULL,
+          vehicle_year INTEGER NOT NULL,
+          province TEXT NOT NULL,
+          rates_data JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_vaz_rates_cache_key ON vaz_rates(cache_key, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_vaz_rates_created ON vaz_rates(created_at DESC);
+      `);
+
+      // ===================================================================
+      // TABLA: adriana_conversations — Adriana Form Conversacional
+      // Estados del flujo de cotización automática paso a paso
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS adriana_conversations (
+          id SERIAL PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          step INTEGER DEFAULT 1,
+          vehicle_type TEXT,
+          vehicle_brand TEXT,
+          vehicle_model TEXT,
+          vehicle_year INTEGER,
+          cedula_image_url TEXT,
+          extracted_data JSONB,
+          selected_coverage TEXT,
+          email TEXT,
+          quote_code TEXT,
+          status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned')),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_adriana_conversations_phone ON adriana_conversations(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_adriana_conversations_status ON adriana_conversations(status);
+        CREATE INDEX IF NOT EXISTS idx_adriana_conversations_updated ON adriana_conversations(updated_at DESC);
+      `);
+
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);

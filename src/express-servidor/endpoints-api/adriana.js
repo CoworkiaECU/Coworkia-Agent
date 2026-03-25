@@ -332,7 +332,7 @@ router.get('/leads', async (req, res) => {
     query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1);
     params.push(parseInt(limit));
 
-    const leads = await databaseService.query(query, params);
+    const leads = await databaseService.all(query, params);
 
     loggers.adriana.info('Leads fetched for dashboard', { count: leads.length, status });
 

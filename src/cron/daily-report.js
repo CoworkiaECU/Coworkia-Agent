@@ -102,16 +102,51 @@ async function collectAdrianaStats() {
 async function sendDailyReport() {
   console.log('[DAILY-REPORT] 📊 Generando reporte diario...');
   try {
-    const [aluna, aurora, adriana] = await Promise.all([
+    const [aluna, aurora, adriana, selfHealing] = await Promise.all([
       collectAlunaStats(),
       collectAuroraStats(),
       collectAdrianaStats(),
+      collectSelfHealingReport(),
     ]);
 
-    await notifyDailyReport({ aluna, aurora, adriana });
+    await notifyDailyReport({ aluna, aurora, adriana, selfHealing });
     console.log('[DAILY-REPORT] ✅ Reporte enviado');
   } catch (err) {
     console.error('[DAILY-REPORT] ❌ Error enviando reporte:', err.message);
+  }
+}
+
+async function collectSelfHealingReport() {
+  try {
+    await databaseService.ensureInitialized();
+
+    // Obtener el reporte más reciente (de anoche)
+    const latestReport = await databaseService.get(
+      `SELECT report_date, errors_found, conversations_failed, plan_file, summary, status
+       FROM self_healing_reports
+       ORDER BY report_date DESC
+       LIMIT 1`
+    );
+
+    if (!latestReport) {
+      return { hasReport: false };
+    }
+
+    // Solo incluir en el reporte si hay errores pendientes de revisión
+    if (latestReport.status === 'pending' && (latestReport.errors_found > 0 || latestReport.conversations_failed > 0)) {
+      return {
+        hasReport: true,
+        errorsFound: parseInt(latestReport.errors_found || 0),
+        conversationsFailed: parseInt(latestReport.conversations_failed || 0),
+        planFile: latestReport.plan_file || '',
+        summary: latestReport.summary || ''
+      };
+    }
+
+    return { hasReport: false };
+  } catch (err) {
+    console.warn('[DAILY-REPORT] ⚠️ Error obteniendo self-healing report:', err.message);
+    return { hasReport: false };
   }
 }
 

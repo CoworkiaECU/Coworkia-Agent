@@ -112,13 +112,14 @@ export async function notifyHighIntent(lead) {
 
 /**
  * 📊 Reporte diario matutino.
- * @param {{ aluna?: object, aurora?: object, adriana?: object }} stats
+ * @param {{ aluna?: object, aurora?: object, adriana?: object, selfHealing?: object }} stats
  */
 export async function notifyDailyReport(stats = {}) {
   try {
     const a  = stats.aluna   || {};
     const au = stats.aurora  || {};
     const ad = stats.adriana || {};
+    const sh = stats.selfHealing || {};
 
     const totalActive = (a.newToday || 0) + (au.todayReservations || 0) + (ad.newToday || 0);
 
@@ -130,8 +131,21 @@ export async function notifyDailyReport(stats = {}) {
       `🛡️ *Adriana:* ${ad.newToday || 0} cotizaciones nuevas · ${ad.accepted || 0} aceptadas`,
       ``,
       `📈 Total activos: *${totalActive}*`,
-      new Date().toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }),
     ];
+
+    // Agregar sección de Self-Healing si hay errores detectados
+    if (sh.hasReport && (sh.errorsFound > 0 || sh.conversationsFailed > 0)) {
+      lines.push(``);
+      lines.push(`🔧 *Auto-Diagnóstico:*`);
+      lines.push(`⚠️ ${sh.errorsFound} errores + ${sh.conversationsFailed} conversaciones fallidas detectadas anoche`);
+      if (sh.planFile) {
+        lines.push(`📋 Plan de reparación listo: \`${sh.planFile}\``);
+      }
+      lines.push(`💬 Escribe _"repair"_ para ver detalles`);
+    }
+
+    lines.push(``);
+    lines.push(new Date().toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }));
 
     await _send(lines.join('\n'));
   } catch (err) {

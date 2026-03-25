@@ -10,7 +10,7 @@
 
 import express from 'express';
 import { analyzeImage } from '../../servicios-ia/openai.js';
-import databaseService from '../../database/database-service.js';
+import databaseService from '../../database/database.js';
 import { loggers } from '../../utils/logger.js';
 
 const router = express.Router();

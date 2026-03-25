@@ -59,7 +59,8 @@ router.get('/reservations', async (req, res) => {
         r.created_at,
         r.confirmed_at,
         r.followup_1h_sent_at,
-        r.rebook_reminder_sent_at
+        r.rebook_reminder_sent_at,
+        r.attended
       FROM reservations r
       LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE 1=1
@@ -691,7 +692,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
         };
         const svcName = serviceNames[reservation.service_type] || reservation.service_type;
         const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
-        const waMsg = `@aurora\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
@@ -743,6 +744,53 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
 
   } catch (error) {
     console.error('[AURORA-API] Error en register-payment:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// MARCAR ASISTENCIA
+// ============================================================================
+
+/**
+ * PATCH /api/aurora/reservations/:id/attended
+ * Marca si el cliente asistió (true) o no asistió (false).
+ * No asistió → cambia status a 'cancelled'.
+ * Body: { attended: boolean }
+ */
+router.patch('/reservations/:id/attended', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+    const { attended } = req.body;
+
+    if (typeof attended !== 'boolean') {
+      return res.status(400).json({ ok: false, error: 'attended debe ser boolean' });
+    }
+
+    const reservation = await databaseService.get(
+      'SELECT id, status FROM reservations WHERE id = $1', [id]
+    );
+    if (!reservation) {
+      return res.status(404).json({ ok: false, error: 'Reserva no encontrada' });
+    }
+
+    if (attended) {
+      await databaseService.run(
+        'UPDATE reservations SET attended = TRUE WHERE id = $1', [id]
+      );
+    } else {
+      // No asistió → cancelar y marcar
+      await databaseService.run(
+        `UPDATE reservations SET attended = FALSE, status = 'cancelled' WHERE id = $1`, [id]
+      );
+    }
+
+    console.log(`[AURORA-API] 👤 Asistencia reserva #${id}: ${attended ? 'Sí asistió' : 'No asistió'}`);
+    return res.json({ ok: true, attended });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error en attended:', error);
     return res.status(500).json({ ok: false, error: error.message });
   }
 });

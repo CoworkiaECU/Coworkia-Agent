@@ -23,8 +23,15 @@ function showToast(msg, duration = 2500) {
 // ── Tabs de pipeline ──────────────────────────────────────────────────────────
 function getTabReservations(reservations, tab) {
   if (tab === 'all') return reservations;
-  if (tab === 'confirmed') return reservations.filter(r => r.status === 'confirmed');
-  if (tab === 'pending') return reservations.filter(r => ['pending', 'pending_payment'].includes(r.status));
+  // Confirmadas = confirmadas Y (ya pagaron O ya asistieron)
+  if (tab === 'confirmed') return reservations.filter(r =>
+    r.status === 'confirmed' && (r.payment_status === 'paid' || r.attended === true)
+  );
+  // Pendientes = pending/pending_payment + confirmed sin pago y sin asistencia confirmada
+  if (tab === 'pending') return reservations.filter(r =>
+    ['pending', 'pending_payment'].includes(r.status) ||
+    (r.status === 'confirmed' && r.payment_status !== 'paid' && r.attended !== true)
+  );
   if (tab === 'completed') return reservations.filter(r => r.status === 'completed');
   if (tab === 'followup') {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -36,8 +43,13 @@ function getTabReservations(reservations, tab) {
 function updateTabCounts(reservations) {
   const counts = {
     all:       reservations.length,
-    confirmed: reservations.filter(r => r.status === 'confirmed').length,
-    pending:   reservations.filter(r => ['pending', 'pending_payment'].includes(r.status)).length,
+    confirmed: reservations.filter(r =>
+      r.status === 'confirmed' && (r.payment_status === 'paid' || r.attended === true)
+    ).length,
+    pending:   reservations.filter(r =>
+      ['pending', 'pending_payment'].includes(r.status) ||
+      (r.status === 'confirmed' && r.payment_status !== 'paid' && r.attended !== true)
+    ).length,
     completed: reservations.filter(r => r.status === 'completed').length,
     followup:  reservations.filter(r => {
       const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -136,6 +148,52 @@ function formatPrice(price, allowFree = true) {
   return `$${parseFloat(price).toFixed(2)}`;
 }
 
+// ─── Toggle "Asistió Sí/No" (reemplaza badge de estado en tabla) ─────────────
+function renderAttendedToggle(r) {
+  // Solo aplica a reservas confirmadas; resto sigue usando el badge original
+  if (r.status !== 'confirmed') return getStatusBadge(r.status);
+
+  const paid      = r.payment_status === 'paid';
+  const attended  = r.attended === true || paid;
+  const noShow    = r.attended === false && !paid;
+
+  if (attended) {
+    return `<span style="background:#022c22;color:#6ee7b7;border:1px solid #065f46;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">✅ Asistió</span>`;
+  }
+  if (noShow) {
+    return `<span style="background:#450a0a;color:#f87171;border:1px solid #7f1d1d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">❌ No asistió</span>`;
+  }
+  // Aún sin marcar → mostrar toggle de dos botones
+  return `<div style="display:flex;gap:4px;flex-wrap:nowrap;">
+    <button onclick="markAttended('${r.id}', true)"
+      style="background:#022c22;color:#4ade80;border:1px solid #15803d;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;"
+      title="Marcar que el cliente asistió">✓ Sí</button>
+    <button onclick="markAttended('${r.id}', false)"
+      style="background:#450a0a;color:#f87171;border:1px solid #7f1d1d;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;"
+      title="Marcar que el cliente no asistió — cancela la reserva">✗ No</button>
+  </div>`;
+}
+
+// Registrar asistencia vía API
+window.markAttended = async function(id, attended) {
+  try {
+    const res = await fetch(`/api/aurora/reservations/${id}/attended`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attended })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      await loadReservations();
+      showToast(attended ? '✅ Marcado como asistió' : '❌ Marcado como no asistió — reserva cancelada');
+    } else {
+      showToast('❌ ' + (data.error || 'Error'));
+    }
+  } catch (e) {
+    showToast('❌ Error de red al marcar asistencia');
+  }
+};
+
 // ─── Celda MONTO: muestra precio + formulario inline para pagos pendientes en efectivo
 function renderMontoCell(r) {
   if (r.was_free) return '<span class="pay-chip pay-free">🎁 Gratis</span>';
@@ -149,10 +207,9 @@ function renderMontoCell(r) {
           <input id="pay-amt-${r.id}" type="text" inputmode="decimal" value="${preVal}"
             placeholder="0.00"
             style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
-                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;
-                   -moz-appearance:textfield;"
-            onkeydown="if(event.key==='Enter') registerPayment(${r.id})">
-          <button onclick="registerPayment(${r.id})"
+                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
+            onkeydown="if(event.key==='Enter') registerPayment('${r.id}')">
+          <button onclick="registerPayment('${r.id}')"
             style="background:#16a34a;color:#fff;border:none;padding:3px 9px;border-radius:5px;
                    font-size:13px;font-weight:700;cursor:pointer;line-height:1.4;"
             title="Confirmar pago en efectivo">✓</button>
@@ -371,9 +428,7 @@ function renderReservationsTable(reservations) {
     <tr>
       <td><strong>${r.id}</strong></td>
       <td>
-        ${r.user_name || 'Sin nombre'}<br>
-        <small class="text-muted">${r.user_phone}</small>
-        ${buildReservationStepper(r)}
+        <div class="name-main">${r.user_name || 'Sin nombre'}</div>
       </td>
       <td>${getServiceBadge(r.service_type)}</td>
       <td>${formatSimpleDate(r.date)}</td>
@@ -382,7 +437,7 @@ function renderReservationsTable(reservations) {
         <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
       </td>
       <td class="money">${renderMontoCell(r)}</td>
-      <td>${getStatusBadge(r.status)}</td>
+      <td>${renderAttendedToggle(r)}</td>
       <td>${getPaymentBadge(r.payment_status, r.payment_method)}</td>
       <td>${formatDate(r.created_at)}</td>
       <td style="white-space:nowrap;">

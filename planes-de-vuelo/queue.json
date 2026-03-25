@@ -14,6 +14,21 @@
       "notes": "Cron 02AM: lee errores + conversaciones fallidas → OpenAI → genera plan-vuelo-repair-fecha.md → avisa 9AM. Tablas: error_events + self_healing_reports."
     },
     {
+      "id": "whatsapp-commander-aurora-followups",
+      "title": "WhatsApp Commander + Aurora Follow-ups — Control remoto + Retención automática",
+      "status": "completed",
+      "estimatedTime": "2h",
+      "realTime": "2h",
+      "completedAt": "2026-03-25T22:11:00Z",
+      "commit": "5a6ea74",
+      "heroku": "v1130",
+      "tasksTotal": 7,
+      "tasksCompleted": 7,
+      "priority": "high",
+      "chat": "chat-central",
+      "notes": "Comandos WhatsApp: SI/NO/REVIEW/CANCELA para control autopilot desde celular Diego. Crons Aurora: +1h follow-up (cada 15min) + D+7 re-booking (10am diario). 3 deploys fallidos (imports), autocorregidos → v1130 exitoso. 6 crons activos en producción."
+    },
+    {
       "id": "ux-storytelling-agentes",
       "title": "Todos #49, #50, #48, #47 — Fix Bugs UX + Storytelling Vendedor",
       "status": "completed",

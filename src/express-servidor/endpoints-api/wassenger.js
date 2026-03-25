@@ -67,6 +67,7 @@ import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesR
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { analyzeInsuranceDocument, detectDocumentType, extractVehicleData, DOCUMENT_TYPES } from '../../servicios/insurance-document-analysis.js';
 import { calculateAllCoverages, formatPremiumForWhatsApp, inferVehicleCategory, VEHICLE_CATEGORIES, COVERAGE_TYPES, calculateVehiclePremium } from '../../servicios/adriana-quote-calculator.js';
+import { processFormMessage, getOrCreateConversation, resetForm } from '../../servicios/adriana-conversational-form.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import enzoRepository from '../../database/enzoRepository.js';
 import { saveLegalLead } from '../../database/gabiRepository.js';
@@ -3778,6 +3779,58 @@ router.post('/webhooks/wassenger/control', (req, res) => {
 
 async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, type, envelope }) {
   try {
+    // ───────────────────────────────────────────────────────────────────────
+    // 🆕 NUEVO FLUJO CONVERSACIONAL 6 PASOS (adriana_conversations)
+    // Prioridad sobre flujo legacy. Maneja cotizaciones automáticas VAZ.
+    // ───────────────────────────────────────────────────────────────────────
+    
+    // Verificar si existe conversación activa en nuevo sistema
+    let activeConversation = null;
+    try {
+      activeConversation = await databaseService.get(
+        `SELECT * FROM adriana_conversations 
+         WHERE user_phone = $1 AND status = 'active'
+         ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
+    } catch (err) {
+      loggers.adriana.warn('[ADRIANA-FORM] Error verificando conversación activa:', err.message);
+    }
+
+    // Keywords para iniciar nuevo flujo conversacional
+    const isQuoteRequest = processedText && /cotizar|cotizaci[oó]n|seguro.*auto|seguro.*carro|seguro.*veh[ií]culo|quiero.*seguro|necesito.*seguro/i.test(processedText);
+
+    // Si hay conversación activa O user solicita cotización, usar nuevo flujo
+    if (activeConversation || isQuoteRequest) {
+      loggers.adriana.info(`[ADRIANA-FORM] Usando nuevo flujo conversacional para ${userId}`);
+      
+      try {
+        const result = await processFormMessage(userId, processedText || '', mediaUrl);
+        
+        if (result.success && result.message) {
+          await enviarWhatsApp(userId, result.message);
+          await saveConversationMessage(userId, { 
+            role: 'assistant', 
+            content: result.message, 
+            agent: 'ADRIANA' 
+          });
+          return true;
+        }
+        
+        // Si el form no pudo procesar, caer al flujo legacy
+        if (!result.success) {
+          loggers.adriana.warn('[ADRIANA-FORM] Form no pudo procesar, fallback a legacy:', result.message);
+        }
+      } catch (formError) {
+        loggers.adriana.error('[ADRIANA-FORM] Error en form conversacional:', formError);
+        // En caso de error, caer al flujo legacy
+      }
+    }
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // ⚠️ FLUJO LEGACY (insurance_leads) — mantener como fallback
+    // ───────────────────────────────────────────────────────────────────────
+    
     // 1. Buscar lead activo en insurance_leads por teléfono
     let lead = await findLeadByPhone(userId).catch(() => null);
 

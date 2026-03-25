@@ -1,0 +1,21 @@
+{
+  "vehicleData": {
+    "brand": "Chevrolet",
+    "model": "Tracker",
+    "year": 2023,
+    "type": "suv",
+    "commercialValue": 45000
+  },
+  "customerData": {
+    "nombres": "Diego Villota",
+    "email": "mktlab.ec@gmail.com",
+    "telefono": "+593994837117",
+    "cedula": "1234567890",
+    "edad": 32,
+    "provincia": "Pichincha"
+  },
+  "options": {
+    "quoteCode": "VAZ-TEST-DEMO001",
+    "includeCompetitors": true
+  }
+}

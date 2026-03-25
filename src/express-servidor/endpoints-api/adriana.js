@@ -255,6 +255,7 @@ router.post('/send-quote', async (req, res) => {
 
     // 4. Guardar en insurance_leads (tracking)
     try {
+      const leadId = `IL-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       await databaseService.run(
         `INSERT INTO insurance_leads (
           id, quote_code, user_phone, agent_name, insurance_type,
@@ -265,7 +266,7 @@ router.post('/send-quote', async (req, res) => {
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )`,
         [
-          quoteCode,
+          leadId,
           quoteCode,
           customerData.telefono || '',
           'ADRIANA',

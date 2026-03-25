@@ -5,65 +5,18 @@
 
 /**
  * 🧹 Limpia nombres de WhatsApp Business para extraer nombre real
- * Remueve emojis, keywords empresariales, números de teléfono, apodos sospechosos
+ * Remueve SOLO basura técnica: emojis, keywords empresariales, números de teléfono
+ * NO filtra apodos ni estilos personales - respeta la identidad elegida por el usuario
  */
 export function cleanWhatsAppName(whatsappName) {
   if (!whatsappName || typeof whatsappName !== 'string') return null;
   
   let cleaned = whatsappName.trim();
   
-  // 🚫 FILTRO DE APODOS/NOMBRES SOSPECHOSOS
-  // Rechazar nombres que son claramente apodos, insultos, o no son nombres reales
-  const suspiciousPatterns = [
-    /maldito/i,
-    /vakita/i,
-    /vaquita/i,
-    /bebe/i,
-    /bebé/i,
-    /amor/i,
-    /corazón/i,
-    /papi/i, 
-    /mami/i,
-    /gordo/i,
-    /flaco/i,
-    /negro/i,
-    /chino/i,
-    /rey/i,
-    /reina/i,
-    /hermano/i,
-    /hermana/i,
-    /primo/i,
-    /compa/i,
-    /pana/i,
-    /brother/i,
-    /sis/i,
-    /bro\b/i,
-    /tío/i,
-    /tía/i,
-    /wey/i,
-    /güey/i,
-    /loco/i,
-    /bb\b/i,
-    /ñaño/i,
-    /ñaña/i,
-    /daddy/i,
-    /mommy/i,
-    /💀/,
-    /💩/,
-    /🖕/
-  ];
+  // Remover emojis comunes (basura visual técnica)
+  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆☎️💀💩🖕]/g, '');
   
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(cleaned)) {
-      console.log(`[NAME-DETECTION] 🚫 Nombre sospechoso rechazado: "${cleaned}"`);
-      return null; // Rechazar este nombre, forzará fallback a mensaje o BD
-    }
-  }
-  
-  // Remover emojis comunes
-  cleaned = cleaned.replace(/[🏠🏢💼🔥⭐🎯💪👑🚀💯😊😎🤝🌟❤️🎉💻📱🏆☎️]/g, '');
-  
-  // Remover texto común de WhatsApp Business
+  // Remover texto común de WhatsApp Business (basura técnica)
   const businessKeywords = [
     'whatsapp business', 'business', 'empresa', 'company', 
     'servicio', 'service', 'oficial', 'official', '\\+593', '\\+1',
@@ -76,24 +29,19 @@ export function cleanWhatsAppName(whatsappName) {
     cleaned = cleaned.replace(regex, '');
   }
   
-  // Remover números de teléfono
+  // Remover números de teléfono (basura técnica)
   cleaned = cleaned.replace(/\+?\d{1,4}[\s-]?\d{6,}/g, '');
   
-  // Limpiar espacios y caracteres especiales (mantener acentos españoles)
-  cleaned = cleaned.replace(/[^\w\sñáéíóúüÑÁÉÍÓÚÜ]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Limpiar espacios múltiples
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
   
-  // Solo tomar el primer nombre si es muy largo
+  // Solo tomar el primer nombre si es muy largo (+ de 20 caracteres es sospechoso de ser texto corporativo)
   if (cleaned.length > 20) {
     cleaned = cleaned.split(' ')[0];
   }
   
-  // Capitalizar cada palabra (Title Case)
-  if (cleaned.length > 0) {
-    cleaned = cleaned
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  }
+  // ✅ IMPORTANTE: NO capitalizamos - respetamos capitalización original del usuario
+  // Las personas eligen cómo quieren ser escritas: "MALDITO", "Vakita", "dievil", "JJ", etc.
   
   return cleaned.length > 1 ? cleaned : null;
 }

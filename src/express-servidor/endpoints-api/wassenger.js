@@ -317,6 +317,55 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     return true;
   }
 
+  // REPAIR: ver último reporte de self-healing y plan de reparación
+  if (cmd === 'REPAIR' || cmd === 'REPARAR') {
+    console.log('[DIEGO-CMD] 🔧 REPAIR solicitado');
+    try {
+      const latestReport = await databaseService.get(
+        `SELECT report_date, errors_found, conversations_failed, plan_file, summary, status
+         FROM self_healing_reports
+         ORDER BY report_date DESC
+         LIMIT 1`
+      );
+
+      if (!latestReport) {
+        await enviarWhatsApp(userId, '✨ *Sistema saludable*\n\nNo hay reportes de self-healing. El sistema no ha detectado problemas en las últimas 24h.');
+        return true;
+      }
+
+      const { errors_found, conversations_failed, plan_file, summary, status, report_date } = latestReport;
+      const totalIssues = (errors_found || 0) + (conversations_failed || 0);
+
+      if (totalIssues === 0) {
+        await enviarWhatsApp(userId, `✨ *Sistema saludable*\n\nÚltimo análisis: ${report_date}\nNo se detectaron problemas.`);
+        return true;
+      }
+
+      const statusEmoji = status === 'pending' ? '⚠️' : status === 'reviewed' ? '👀' : '✅';
+      const msg = [
+        '🔧 *Self-Healing Report*',
+        '',
+        `${statusEmoji} Estado: ${status}`,
+        `📅 Fecha: ${report_date}`,
+        '',
+        `🔴 Errores detectados: ${errors_found}`,
+        `💬 Conversaciones fallidas: ${conversations_failed}`,
+        '',
+        plan_file ? `📋 Plan: \`${plan_file}\`` : '📋 Plan no generado',
+        '',
+        `📝 Resumen:\n${summary}`,
+        '',
+        '💡 Para aplicar reparaciones, abre VS Code y activa autopilot sobre el plan de repair.'
+      ].join('\n');
+
+      await enviarWhatsApp(userId, msg);
+    } catch (err) {
+      console.error('[DIEGO-CMD] ❌ Error obteniendo repair report:', err);
+      await enviarWhatsApp(userId, `🔧 Error al consultar self-healing reports:\n${err.message}`);
+    }
+    return true;
+  }
+
   return false; // No era un comando conocido, continuar flujo normal
 }
 

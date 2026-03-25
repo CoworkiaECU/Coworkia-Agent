@@ -30,20 +30,19 @@ export async function sendD1Followups() {
     const leads = await query(`
       SELECT 
         id,
-        user_id,
-        name,
+        user_phone,
+        client_name as name,
         email,
-        interest_type,
-        mensualidad,
+        membership_type as interest_type,
+        monthly_fee as mensualidad,
         created_at,
-        interest_at
+        created_at as interest_at
       FROM membership_leads
-      WHERE interest_at >= NOW() - INTERVAL '25 hours'
-        AND interest_at < NOW() - INTERVAL '23 hours'
+      WHERE created_at >= NOW() - INTERVAL '25 hours'
+        AND created_at < NOW() - INTERVAL '23 hours'
         AND followup_24h_sent_at IS NULL
-        AND status != 'converted'
-        AND status != 'lost'
-      ORDER BY interest_at DESC
+        AND status NOT IN ('active', 'cancelled', 'expired')
+      ORDER BY created_at DESC
     `);
     
     if (leads.rows.length === 0) {
@@ -60,7 +59,7 @@ export async function sendD1Followups() {
       try {
         // Enviar WhatsApp
         const whatsappMessage = buildD1WhatsAppMessage(lead);
-        await enviarWhatsApp(lead.user_id, whatsappMessage);
+        await enviarWhatsApp(lead.user_phone, whatsappMessage);
         
         // Enviar Email (si tiene)
         if (lead.email) {
@@ -83,14 +82,14 @@ export async function sendD1Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado a ${lead.name} (${lead.user_id})`);
+        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado a ${lead.name} (${lead.user_phone})`);
         
         // Delay entre envíos para no saturar API
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 a ${lead.user_id}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 a ${lead.user_phone}:`, error);
       }
     }
     
@@ -116,23 +115,22 @@ export async function sendD3Followups() {
     const leads = await query(`
       SELECT 
         id,
-        user_id,
-        name,
+        user_phone,
+        client_name as name,
         email,
-        interest_type,
-        mensualidad,
+        membership_type as interest_type,
+        monthly_fee as mensualidad,
         created_at,
-        interest_at,
-        client_response_at
+        created_at as interest_at,
+        updated_at as client_response_at
       FROM membership_leads
-      WHERE interest_at >= NOW() - INTERVAL '73 hours'
-        AND interest_at < NOW() - INTERVAL '71 hours'
+      WHERE created_at >= NOW() - INTERVAL '73 hours'
+        AND created_at < NOW() - INTERVAL '71 hours'
         AND followup_24h_sent_at IS NOT NULL
         AND followup_3d_sent_at IS NULL
-        AND client_response_at IS NULL
-        AND status != 'converted'
-        AND status != 'lost'
-      ORDER BY interest_at DESC
+        AND updated_at = created_at
+        AND status NOT IN ('active', 'cancelled', 'expired')
+      ORDER BY created_at DESC
     `);
     
     if (leads.rows.length === 0) {
@@ -149,7 +147,7 @@ export async function sendD3Followups() {
       try {
         // Enviar WhatsApp con FOMO
         const whatsappMessage = buildD3WhatsAppMessage(lead);
-        await enviarWhatsApp(lead.user_id, whatsappMessage);
+        await enviarWhatsApp(lead.user_phone, whatsappMessage);
         
         // Enviar Email con urgencia (si tiene)
         if (lead.email) {
@@ -172,14 +170,14 @@ export async function sendD3Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado a ${lead.name} (${lead.user_id})`);
+        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado a ${lead.name} (${lead.user_phone})`);
         
         // Delay entre envíos
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 a ${lead.user_id}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 a ${lead.user_phone}:`, error);
       }
     }
     

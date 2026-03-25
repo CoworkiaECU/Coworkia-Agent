@@ -162,6 +162,7 @@ export const loggers = {
   database: createLogger('DATABASE'),
   axel: createLogger('AXEL'),
   aurora: createLogger('AURORA'),
+  adriana: createLogger('ADRIANA'),
   wassenger: createLogger('WASSENGER')
 };
 

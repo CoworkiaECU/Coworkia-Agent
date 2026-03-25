@@ -10,7 +10,8 @@
 
 import express from 'express';
 import { analyzeImage } from '../../servicios-ia/openai.js';
-import databaseService from '../../database/database.js';
+import { generateAndSendComparisonQuote } from '../../servicios/adriana-quote-generator.js';
+import databaseService from '../../database/database-service.js';
 import { loggers } from '../../utils/logger.js';
 
 const router = express.Router();
@@ -170,12 +171,153 @@ router.get('/get-vaz-rates', async (req, res) => {
 });
 
 /**
+ * POST /api/adriana/send-quote
+ * Genera y envía cotización comparativa completa
+ * Body: { vehicleData, customerData, options }
+ */
+router.post('/send-quote', async (req, res) => {
+  try {
+    const { vehicleData, customerData, options = {} } = req.body;
+
+    // Validaciones
+    if (!vehicleData || !customerData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Faltan vehicleData o customerData'
+      });
+    }
+
+    if (!customerData.email || !customerData.nombres) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email y nombres del cliente son obligatorios'
+      });
+    }
+
+    if (!vehicleData.brand || !vehicleData.model || !vehicleData.year) {
+      return res.status(400).json({
+        success: false,
+        error: 'Marca, modelo y año del vehículo son obligatorios'
+      });
+    }
+
+    // 1. Obtener tasas VAZ
+    const cacheKey = `${vehicleData.type || 'sedan'}_${vehicleData.year}_${customerData.provincia || 'Pichincha'}`;
+    
+    let vazRates;
+    const cached = await databaseService.get(
+      `SELECT * FROM vaz_rates 
+       WHERE cache_key = $1 
+       AND created_at > NOW() - INTERVAL '24 hours'
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [cacheKey]
+    );
+
+    if (cached) {
+      vazRates = cached.rates_data;
+    } else {
+      // Generar tasas si no hay cache
+      vazRates = generateVAZRates(
+        vehicleData.type || 'sedan',
+        vehicleData.year,
+        customerData.provincia || 'Pichincha'
+      );
+      
+      // Guardar en cache
+      await databaseService.run(
+        `INSERT INTO vaz_rates (cache_key, vehicle_type, vehicle_year, province, rates_data, created_at)
+         VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+        [
+          cacheKey,
+          vehicleData.type || 'sedan',
+          vehicleData.year,
+          customerData.provincia || 'Pichincha',
+          JSON.stringify(vazRates)
+        ]
+      );
+    }
+
+    // 2. Generar código de cotización
+    const quoteCode = options.quoteCode || `VAZ-AUTO-${Date.now().toString(36).toUpperCase()}`;
+
+    // 3. Generar y enviar cotización
+    const result = await generateAndSendComparisonQuote(
+      vehicleData,
+      customerData,
+      vazRates,
+      { ...options, quoteCode }
+    );
+
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    // 4. Guardar en insurance_leads (tracking)
+    try {
+      await databaseService.run(
+        `INSERT INTO insurance_leads (
+          id, quote_code, user_phone, agent_name, insurance_type,
+          client_name, email, phone, cedula,
+          vehicle_brand, vehicle_model, vehicle_year, commercial_value,
+          city, quoted_premium, status, quote_sent_at, created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        )`,
+        [
+          quoteCode,
+          quoteCode,
+          customerData.telefono || '',
+          'ADRIANA',
+          'Vehículo Liviano',
+          customerData.nombres,
+          customerData.email,
+          customerData.telefono || '',
+          customerData.cedula || '',
+          vehicleData.brand,
+          vehicleData.model,
+          vehicleData.year,
+          vehicleData.commercialValue || 40000,
+          customerData.provincia || '',
+          result.annualPremium,
+          'quoted',
+        ]
+      );
+    } catch (dbError) {
+      loggers.adriana.warn('Error guardando lead (no crítico)', {}, dbError);
+    }
+
+    loggers.adriana.info('Cotización automática enviada', {
+      quoteCode,
+      email: customerData.email,
+      vehicle: `${vehicleData.brand} ${vehicleData.model}`
+    });
+
+    res.json({
+      success: true,
+      quoteCode,
+      emailSent: result.emailSent,
+      annualPremium: result.annualPremium,
+      monthlyPremium: result.monthlyPremium
+    });
+
+  } catch (error) {
+    loggers.adriana.error('Error en send-quote', {}, error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al generar cotización',
+      message: error.message
+    });
+  }
+});
+
+/**
  * Genera tasas VAZ hardcoded (fallback hasta tener API real)
  * En producción, esto se reemplaza con fetch a API VAZ
  */
 function generateVAZRates(vehicleType, year, province) {
-  const baseRate = 1200; // Base anual
-  const yearFactor = Math.max(0.5, 1 - ((2026 - year) * 0.05)); // Deprecia 5% por año
+  const baseRate = 1200;
+  const yearFactor = Math.max(0.5, 1 - ((2026 - year) * 0.05));
   const provinceFactor = province === 'Pichincha' || province === 'Guayas' ? 1.2 : 1.0;
 
   const annualPremium = Math.round(baseRate * yearFactor * provinceFactor);
@@ -184,15 +326,15 @@ function generateVAZRates(vehicleType, year, province) {
   return {
     plans: [
       {
-        code: 'ENSIGNA', // Código interno: Ensigna = Plan VAZ Elemental
+        code: 'ENSIGNA',
         name: 'VAZ Elemental',
         coverage: 'Cobertura completa con deducible 7%',
         annualPremium,
         monthlyPremium,
         maxInstallments: 12,
         deductible: { 
-          client: '7%', // Lo que se le dice al cliente
-          internal: 'Taller VAZ' // Lo que sabemos internamente (no mostrar)
+          client: '7%',
+          internal: 'Taller VAZ'
         },
         includes: [
           'Daños propios hasta valor comercial',

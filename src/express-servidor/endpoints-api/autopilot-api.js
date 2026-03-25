@@ -186,4 +186,43 @@ router.delete('/api/autopilot/checkpoint', requireCheckpointSecret, async (req, 
   }
 });
 
+// ─── GET /api/self-healing/latest ─────────────────────────────────────────────
+
+/**
+ * Obtiene el último reporte de Self-Healing System.
+ * Usado por Copilot al inicio de sesión para verificar si hay errores pendientes.
+ *
+ * Respuesta: { ok: true, report: {...} | null }
+ */
+router.get('/api/self-healing/latest', async (req, res) => {
+  try {
+    const report = await query(
+      `SELECT report_date, errors_found, conversations_failed, plan_file, summary, status
+       FROM self_healing_reports
+       ORDER BY report_date DESC
+       LIMIT 1`
+    );
+
+    if (!report.rows || report.rows.length === 0) {
+      return res.json({ ok: true, report: null });
+    }
+
+    const r = report.rows[0];
+    res.json({
+      ok: true,
+      report: {
+        date: r.report_date,
+        errorsFound: parseInt(r.errors_found || 0),
+        conversationsFailed: parseInt(r.conversations_failed || 0),
+        planFile: r.plan_file || '',
+        summary: r.summary || '',
+        status: r.status || 'pending'
+      }
+    });
+  } catch (err) {
+    console.error('[SELF-HEALING-API] ❌ Error obteniendo reporte:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;

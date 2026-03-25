@@ -19,6 +19,32 @@ Mira el contexto del editor y archivos abiertos para detectar en qué agente/mó
 - Si hay archivos de `aluna` o `membership` → es el chat de Aluna
 - Si no está claro → revisar el plan de vuelo activo
 
+### PASO 2b — Revisar plan de reparación Self-Healing (si existe)
+Después de cargar la memoria, busca si existe un archivo `planes-de-vuelo/plan-vuelo-repair-[YYYY-MM-DD].md` con la fecha de hoy.
+
+**Si existe Y su estado es pendiente:**
+1. Leer el contenido del plan
+2. Verificar en BD el estado del reporte:
+   ```javascript
+   const report = await fetch('https://coworkia-agent-e97d15dac56f.herokuapp.com/api/self-healing/latest');
+   // Si status === 'pending' y errorsFound > 0 → incluir en saludo
+   ```
+3. Mencionarlo en el saludo con **prioridad alta**:
+   ```
+   ⚠️ PLAN DE REPARACIÓN PENDIENTE:
+      → N issues detectados anoche por Self-Healing System
+      → [N críticos / N altos / N medios]
+      → Plan: plan-vuelo-repair-[fecha].md
+   
+   ¿Lo revisamos primero o seguimos con [plan normal]?
+   ```
+
+**Comando "repair" desde WhatsApp:**
+- Si Diego escribe "repair" desde su celular (en wassenger.js), responder con:
+  - Resumen del último reporte de self_healing_reports
+  - Top 3 issues priorizados
+  - Ofrecer "autopilot para reparar" si Diego lo aprueba
+
 ### PASO 3 — Saludar con resumen específico del chat actual
 El saludo SIEMPRE debe incluir:
 1. **En qué nos quedamos en ESTE chat** (basado en archivos abiertos + última sesión de memoria)

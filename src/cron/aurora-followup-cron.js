@@ -12,7 +12,40 @@
 
 import { CronJob } from 'cron';
 import databaseService from '../database/database.js';
-import { sendWhatsApp } from '../servicios/wassenger-service.js';
+import axios from 'axios';
+
+const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
+const WASSENGER_DEVICE = process.env.WASSENGER_DEVICE || process.env.WASSENGER_DEVICE_ID;
+
+// Helper para enviar mensajes de WhatsApp
+async function sendWhatsApp(phone, message) {
+  if (!WASSENGER_TOKEN || !WASSENGER_DEVICE) {
+    console.warn('[AURORA-FOLLOWUP] Token o Device no configurado');
+    return { ok: false, error: 'NO_WASSENGER_CONFIG' };
+  }
+
+  try {
+    await axios.post(
+      'https://api.wassenger.com/v1/messages',
+      {
+        phone,
+        message,
+        device: WASSENGER_DEVICE
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Token': WASSENGER_TOKEN
+        },
+        timeout: 8000
+      }
+    );
+    return { ok: true };
+  } catch (error) {
+    console.error('[AURORA-FOLLOWUP] Error enviando WhatsApp:', error.message);
+    return { ok: false, error: error.message };
+  }
+}
 
 // ─── Follow-up +1h post-reserva ───────────────────────────────────────────────
 

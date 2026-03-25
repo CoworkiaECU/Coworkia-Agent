@@ -1,8 +1,28 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-24T23:59:00Z",
+  "lastUpdated": "2026-03-25T03:00:00Z",
   "currentPlan": "plan-vuelo-self-healing-25mar.md",
   "queue": [
+    {
+      "id": "self-healing-system",
+      "title": "Sistema Self-Healing — Auto-diagnóstico y plan de reparación diario",
+      "status": "in-progress",
+      "plan": "plan-vuelo-self-healing-25mar.md",
+      "estimatedTime": "3-4h",
+      "priority": "high",
+      "chat": "chat-izquierdo",
+      "notes": "Cron 02AM: lee errores + conversaciones fallidas → OpenAI → genera plan-vuelo-repair-fecha.md → avisa 9AM. Tablas: error_events + self_healing_reports."
+    },
+    {
+      "id": "ux-storytelling-agentes",
+      "title": "Todos #49, #50, #48, #47 — Fix Bugs UX + Storytelling Vendedor",
+      "status": "pending",
+      "plan": "plan-vuelo-ux-agentes-25mar.md",
+      "estimatedTime": "2.5h",
+      "priority": "high",
+      "chat": "chat-derecho",
+      "notes": "Enzo botones wiring, Kia Picanto layout fix, Enzo prompt vendedor + casos éxito, Gabi prompt consultivo + paquetes pricing. SEGURO para paralelo — no toca BD ni cron."
+    },
     {
       "id": "aurora-dashboard-redesign",
       "title": "Dashboard Aurora — UX Flows Críticos",
@@ -16,16 +36,6 @@
       "notes": "attended toggle (Sí/No), fix registerPayment ID bug, tab Pendientes = confirmed sin pago, eliminar teléfono+stepper, WA recibos via @gabi, migración BD attended column"
     },
     {
-      "id": "self-healing-system",
-      "title": "Sistema Self-Healing — Auto-diagnóstico y plan de reparación diario",
-      "status": "pending",
-      "plan": "plan-vuelo-self-healing-25mar.md",
-      "estimatedTime": "3-4h",
-      "priority": "high",
-      "chat": "backend",
-      "notes": "Cron 02AM: lee errores + conversaciones fallidas → OpenAI → genera plan-vuelo-repair-fecha.md → avisa 9AM. Tablas: error_events + self_healing_reports."
-    },
-    {
       "id": "email-antispam",
       "title": "Todo #39 — Sistema Anti-Spam Emails HTML",
       "status": "completed",
@@ -34,21 +44,7 @@
       "commit": "c387a53",
       "heroku": "v1115",
       "notes": "text/plain auto, minify HTML, SVGs→emojis, TLS fix, headers anti-spam, doc SPF/DKIM"
-    }
-  ],
-  "metrics": {
-    "avgTaskTime": "12min",
-    "avgPlanTime": "2.5h",
-    "successRate": 0.87,
-    "blockerRate": 0.13,
-    "totalPlansCompleted": 19,
-    "mostCommonBlockers": [
-      "Decisión arquitectónica",
-      "Testing complejo",
-      "Dependencia externa"
-    ]
-  }
-}
+    },
     {
       "id": "fase4-notificaciones",
       "title": "FASE 4 - Sistema Notificaciones WhatsApp",
@@ -98,59 +94,14 @@
       "priority": "critical",
       "chat": "backend",
       "notes": "Vision AI docs + tasas VAZ + email comparativo + form conversacional 6 pasos."
-    },
-    {
-      "id": "aurora-dashboard-redesign",
-      "title": "FASE 3 - Dashboard Aurora Rediseño",
-      "status": "in-progress",
-      "plan": "plan-vuelo-22mar.md",
-      "estimatedTime": "2h",
-      "priority": "high",
-      "chat": "frontend",
-      "notes": "🔄 OTRO CHAT trabajando. Este chat NO toca esta tarea."
-    },
-    {
-      "id": "template-system",
-      "title": "FASE 4 - Templates HTML Sistema Centralizado",
-      "status": "in-progress",
-      "plan": "plan-vuelo-22mar.md",
-      "estimatedTime": "1.5h",
-      "priority": "critical",
-      "chat": "frontend",
-      "notes": "🔄 OTRO CHAT trabajando. Este chat NO toca esta tarea."
-    }
-  ],
-    {
-      "id": "self-healing-system",
-      "title": "Sistema Self-Healing — Auto-diagnóstico y plan de reparación diario",
-      "status": "pending",
-      "plan": "plan-vuelo-self-healing-25mar.md",
-      "estimatedTime": "3-4h",
-      "priority": "high",
-      "chat": "backend",
-      "notes": "Cron 02AM: lee errores + conversaciones fallidas → OpenAI → genera plan-vuelo-repair-fecha.md → avisa 9AM. Tablas: error_events + self_healing_reports."
-    },
-    {
-      "id": "email-antispam",
-      "title": "Todo #39 — Sistema Anti-Spam Emails HTML",
-      "status": "completed",
-      "plan": "plan-vuelo-email-antispam-24mar.md",
-      "startedAt": "2026-03-24T18:00:00Z",
-      "completedAt": "2026-03-24T22:50:00Z",
-      "duration": "~1h",
-      "commits": ["aa43967", "c387a53"],
-      "heroku": "v1115",
-      "tasksTotal": 19,
-      "tasksCompleted": 19,
-      "notes": "text/plain auto, minify HTML, SVGs→emojis, TLS fix, headers anti-spam, doc SPF/DKIM"
     }
   ],
   "metrics": {
     "avgTaskTime": "12min",
     "avgPlanTime": "2.5h",
-    "successRate": 0.85,
-    "blockerRate": 0.15,
-    "totalPlansCompleted": 18,
+    "successRate": 0.87,
+    "blockerRate": 0.13,
+    "totalPlansCompleted": 21,
     "mostCommonBlockers": [
       "Decisión arquitectónica",
       "Testing complejo",

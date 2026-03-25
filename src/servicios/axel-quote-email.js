@@ -100,7 +100,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     ? `<div style="margin-bottom:28px;">
         <div style="color:#6B7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📸 Fotos del siniestro</div>
         <div style="display:grid;grid-template-columns:repeat(${Math.min(photoAssets.length, 4)},1fr);gap:6px;">
-          ${photoAssets.map((_, i) => `<img src="cid:foto-${i+1}@paintbull" alt="Foto ${i+1}" width="100%" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid #E5E7EB;display:block;" />`).join('')}
+          ${photoAssets.map((_, i) => `<img src="cid:foto-${i+1}@paintbull" alt="Foto ${i+1}" style="width:100%;height:110px;object-fit:contain;background:#FAFAFA;border-radius:6px;border:1px solid #E5E7EB;display:block;" />`).join('')}
         </div>
       </div>`
     : '';

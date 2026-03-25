@@ -12,7 +12,7 @@
 
 import { CronJob } from 'cron';
 import databaseService from '../database/database.js';
-import axios from 'axios';
+import { dispatchHttpRequest } from '../servicios/external-dispatcher.js';
 
 const WASSENGER_TOKEN = process.env.WASSENGER_TOKEN;
 const WASSENGER_DEVICE = process.env.WASSENGER_DEVICE || process.env.WASSENGER_DEVICE_ID;
@@ -25,21 +25,22 @@ async function sendWhatsApp(phone, message) {
   }
 
   try {
-    await axios.post(
-      'https://api.wassenger.com/v1/messages',
-      {
+    await dispatchHttpRequest({
+      url: 'https://api.wassenger.com/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Token': WASSENGER_TOKEN
+      },
+      body: JSON.stringify({
         phone,
         message,
         device: WASSENGER_DEVICE
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Token': WASSENGER_TOKEN
-        },
-        timeout: 8000
-      }
-    );
+      }),
+      circuitId: 'wassenger:messages',
+      timeoutMs: 8000,
+      maxRetries: 2
+    });
     return { ok: true };
   } catch (error) {
     console.error('[AURORA-FOLLOWUP] Error enviando WhatsApp:', error.message);

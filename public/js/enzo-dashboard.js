@@ -332,8 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sel) updateLeadStatus(sel.dataset.code, sel.value, sel);
   });
   document.addEventListener('click', e => {
-    const btn = e.target.closest('.fu-reminder-btn');
-    if (btn) sendLeadReminder(btn.dataset.code, btn);
+    const btn = e.target.closest('.fu-btn-pending');
+    if (btn) sendLeadReminder(btn.dataset.code, btn.dataset.day, btn);
   });
 });
 
@@ -435,9 +435,9 @@ function renderLeads() {
 function buildLeadRow(l) {
   const initials = ((l.client_name||'E').split(' ').map(w=>w[0]).join('').substring(0,2)).toUpperCase();
   const hasProp = !!l.proposal_sent_at;
-  const d1c = fuChip(hasProp, l.followup_d1_sent_at);
-  const d3c = fuChip(hasProp && !!l.followup_d1_sent_at, l.followup_d3_sent_at);
-  const d7c = fuChip(hasProp && !!l.followup_d3_sent_at, l.followup_d7_sent_at);
+  const d1c = fuChip(hasProp, l.followup_d1_sent_at, l.project_code, 'd1');
+  const d3c = fuChip(hasProp && !!l.followup_d1_sent_at, l.followup_d3_sent_at, l.project_code, 'd3');
+  const d7c = fuChip(hasProp && !!l.followup_d3_sent_at, l.followup_d7_sent_at, l.project_code, 'd7');
   const precio = l.proposal_amount
     ? `<div class="proposal-amount">$${parseFloat(l.proposal_amount).toLocaleString('es-EC',{minimumFractionDigits:0})}</div>`
     : l.budget_range ? `<div class="budget-range">${l.budget_range}</div>` : `<div class="budget-range">—</div>`;
@@ -464,20 +464,17 @@ function buildLeadRow(l) {
       <td class="center">${d3c}</td>
       <td class="center">${d7c}</td>
       <td><span class="${badgeCls}">${badgeLbl}</span></td>
-      <td style="min-width:240px;">
-        <div style="display:flex;gap:6px;align-items:center;">
-          <select class="status-select fu-status-select" data-code="${l.project_code}">${opts}</select>
-          <button class="reminder-btn fu-reminder-btn" data-code="${l.project_code}" data-tip="Enviar WhatsApp">📲</button>
-        </div>
+      <td style="min-width:200px;">
+        <select class="status-select fu-status-select" data-code="${l.project_code}" style="width:100%;">${opts}</select>
       </td>
       <td style="white-space:nowrap;color:#94a3b8;font-size:12px;">${creado}</td>
     </tr>`;
 }
 
-function fuChip(applicable, sentAt) {
+function fuChip(applicable, sentAt, code, day) {
   if (!applicable) return `<span class="fu-chip fu-na">—</span>`;
   if (sentAt)      return `<span class="fu-chip fu-sent" title="${new Date(sentAt).toLocaleDateString('es-EC')}">✅</span>`;
-  return `<span class="fu-chip fu-pending">⏳</span>`;
+  return `<button class="fu-btn fu-btn-pending" data-code="${code}" data-day="${day}" title="Enviar WhatsApp ${day.toUpperCase()}">📲</button>`;
 }
 
 async function updateLeadStatus(code, status, selectEl) {
@@ -503,7 +500,8 @@ async function updateLeadStatus(code, status, selectEl) {
   }
 }
 
-async function sendLeadReminder(code, btn) {
+async function sendLeadReminder(code, day, btn) {
+  if (!day) return alert('Falta día de follow-up');
   btn.disabled = true;
   const orig = btn.textContent;
   btn.textContent = '⏳';
@@ -511,7 +509,7 @@ async function sendLeadReminder(code, btn) {
     const res = await fetch(`/api/enzo/leads/${code}/send-followup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
+      body: JSON.stringify({ day })
     });
     const d = await res.json();
     if (d.ok) {

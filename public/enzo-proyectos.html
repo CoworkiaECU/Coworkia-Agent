@@ -352,6 +352,17 @@
     .fu-sent    { background: #052e16; color: #86efac; }
     .fu-pending { background: #451a03; color: #fbbf24; }
     .fu-na      { background: #1e293b; color: #475569; border: 1px solid #334155; }
+    .fu-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 28px; border-radius: 6px; font-size: 15px;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .fu-btn-pending {
+      background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+      color: #fbbf24; border: 1px solid #78350f;
+    }
+    .fu-btn-pending:hover { background: #78350f; transform: scale(1.05); }
+    .fu-btn-pending:disabled { opacity: 0.5; cursor: not-allowed; }
     .proposal-amount { font-size: 13px; font-weight: 700; color: #F97316; }
     .budget-range    { font-size: 11px; color: #64748b; }
     .leads-state td { text-align: center; padding: 50px 20px; color: #64748b; font-size: 14px; }

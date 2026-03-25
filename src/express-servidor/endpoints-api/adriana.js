@@ -11,7 +11,7 @@
 import express from 'express';
 import { analyzeImage } from '../../servicios-ia/openai.js';
 import { generateAndSendComparisonQuote } from '../../servicios/adriana-quote-generator.js';
-import databaseService from '../../database/database-service.js';
+import databaseService from '../../database/database.js';
 import { loggers } from '../../utils/logger.js';
 
 const router = express.Router();
@@ -306,6 +306,105 @@ router.post('/send-quote', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al generar cotización',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/adriana/leads
+ * Lista todas las cotizaciones de seguros (para dashboard)
+ * Query params: ?limit=500&status=quoted
+ */
+router.get('/leads', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { limit = 500, status } = req.query;
+
+    let query = 'SELECT * FROM insurance_leads';
+    const params = [];
+
+    if (status && status !== 'all') {
+      query += ' WHERE status = $1';
+      params.push(status);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1);
+    params.push(parseInt(limit));
+
+    const leads = await databaseService.query(query, params);
+
+    loggers.adriana.info('Leads fetched for dashboard', { count: leads.length, status });
+
+    res.json({
+      success: true,
+      data: leads,
+      count: leads.length
+    });
+
+  } catch (error) {
+    loggers.adriana.error('Error fetching leads', {}, error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener cotizaciones',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/adriana/leads-stats
+ * Estadísticas para dashboard (totales, aceptados, prima acumulada)
+ */
+router.get('/leads-stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    // Total leads histórico
+    const totalResult = await databaseService.get(
+      'SELECT COUNT(*) as count FROM insurance_leads'
+    );
+
+    // Leads este mes
+    const thisMonthResult = await databaseService.get(
+      `SELECT COUNT(*) as count FROM insurance_leads 
+       WHERE TO_CHAR(created_at, 'YYYY-MM') = TO_CHAR(NOW(), 'YYYY-MM')`
+    );
+
+    // Aceptados (conversion rate)
+    const acceptedResult = await databaseService.get(
+      'SELECT COUNT(*) as count FROM insurance_leads WHERE status = \'accepted\''
+    );
+
+    // Prima total acumulada (solo aceptados)
+    const premiumResult = await databaseService.get(
+      'SELECT SUM(quoted_premium) as total FROM insurance_leads WHERE status = \'accepted\''
+    );
+
+    const total = parseInt(totalResult?.count || 0);
+    const thisMonth = parseInt(thisMonthResult?.count || 0);
+    const accepted = parseInt(acceptedResult?.count || 0);
+    const totalPremium = parseFloat(premiumResult?.total || 0);
+    const conversionRate = total > 0 ? ((accepted / total) * 100).toFixed(1) : 0;
+
+    loggers.adriana.info('Stats fetched', { total, accepted, conversionRate });
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        thisMonth,
+        accepted,
+        conversionRate: `${conversionRate}%`,
+        totalPremium: Math.round(totalPremium)
+      }
+    });
+
+  } catch (error) {
+    loggers.adriana.error('Error fetching stats', {}, error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener estadísticas',
       message: error.message
     });
   }

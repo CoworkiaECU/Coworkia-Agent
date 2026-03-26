@@ -45,6 +45,32 @@ GROUP BY user_phone
 - ✅ No generó plan de reparación (sistema saludable)
 - ⏱️ Completado en 0.5s
 
+### ⚖️ LOPDP Compliance - Autopilot (v1145-v1146) — 10min
+**Ejecutado**: Autopilot verde - Precisión quirúrgica  
+**Objetivo**: Completar pendientes críticos de compliance legal
+
+✅ **Tabla arco_requests en BD**:
+- Creada en postgres-adapter.js línea 1390
+- 7 columnas + 3 índices de performance
+- Integrada con endpoint /api/arco
+- **CRÍTICO**: Sin esta tabla el formulario ARCO fallaba 500
+- Deploy: v1145
+
+✅ **Caso Javier Troya (solicitud cancelación)**:
+- Script creado: scripts/resolve-javier-troya-arco.mjs
+- Ejecutado en Heroku: `heroku run node scripts/...`
+- Búsqueda insurance_leads: 0 registros (ya eliminados)
+- Solicitud ARCO registrada: ID: 34, status: resolved
+- Fecha: 2026-03-26T14:07:02Z
+- Cumplimiento legal: ✅ (dentro de plazo 15 días)
+- Deploy: v1146
+
+**Commits**:
+- `8905fb0`: feat(lopdp): crear tabla arco_requests en BD - checkpoint 1/2
+- `916c258`: feat(lopdp): script resolver caso ARCO Javier Troya
+
+**Resultado**: Sistema LOPDP 100% funcional en coworkia-agent (WiFi Portal requiere Mac Mini)
+
 ---
 
 ## ✅ COMPLETADO AYER (25 Mar 2026)

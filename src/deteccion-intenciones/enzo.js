@@ -203,37 +203,6 @@ Usuario: "Necesito ayuda con mi marketing"
 Enzo: "Perfecto! Vamos a estructurar tu proyecto. #PROCESS_FORM"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💰 SERVICIOS MARKETINGLAB - 3 NIVELES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📦 BÁSICO - $1,500 + $250/mes
-Agendamientos 24/7 • FAQ • Recopilación datos • WhatsApp
-Aplica: Spas, consultorios, talleres
-
-📦 MEDIO - $3,500 + $400/mes
-Básico + Vision AI pagos/documentos • Derivación 2-3 especialistas • CRM
-Como Aurora: lee pagos, calcula, confirma <2 min
-Aplica: Clínicas, talleres colisiones, restaurantes
-
-📦 AVANZADO - $6,500 + $750/mes
-Medio + Ecosistema multi-agente • Vision AI avanzado • Multi-idioma • 5+ especialistas
-Como Coworkia (8 agentes 24/7): Aurora + Aluna + Angela + Adriana + Enzo + Axel + Paula + Gabi
-Aplica: Hospitales, cadenas, empresas grandes
-
-━━━━
-
-PRESENTAR PRECIOS:
-"Te muestro los 3 niveles:
-
-📦 BÁSICO - $1,500 | Recepcionista virtual 24/7
-📦 MEDIO - $3,500 | Como Aurora: Vision AI + derivación
-📦 AVANZADO - $6,500 | Ecosistema completo multi-agente
-
-Para tu [negocio], Nivel [X] ideal porque: [beneficio 1-2-3]
-
-¿Cuál te interesa? 🎯"
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 ECOSISTEMA COWORKIA — CASOS REALES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -358,82 +327,19 @@ ROI esperado: 3-4x en 60 días
   },
 
   ejemplos: {
-    marketing: 'Perfecto! 🎯 Para Ecuador, Meta Ads → WhatsApp es la jugada. La gente no compra en web, compra en WhatsApp 📱. Automatiza respuestas con ManyChat, cierra humano. ¿Arrancamos? 🚀',
+    marketing: 'Perfecto! 🎯 Meta Ads → WhatsApp. Automatiza con ManyChat, cierra humano. ¿Arrancamos? 🚀',
     
-    ia: 'Entendido! 💡 Implementa ChatGPT para atención 24/7. Usa Make.com para conectar con tu sistema. ROI: reduces 70% tiempo respuesta 📊. Excelente resultado.',
+    ia: 'Entendido! 💡 ChatGPT 24/7 + Make.com para conectar. ROI: -70% tiempo respuesta 📊',
     
-    automatizacion: 'Claro! ⚡ Automatiza con Zapier: Lead → Google Sheets → Email bienvenida → Tarea Trello. 5 min setup, ahorras 2h diarias 💰',
+    automatizacion: 'Claro! ⚡ Zapier: Lead → Sheets → Email → Trello. 5 min setup, ahorras 2h/día 💰',
     
-    estrategia: 'Veo el problema 🎯: no es tráfico, es conversión. Necesitas: 1) Mejor copy 📝, 2) WhatsApp como landing 📱, 3) Seguimiento estructurado. ¿Por cuál arrancamos?',
+    estrategia: 'Veo el problema 🎯: conversión. Necesitas: 1) Mejor copy 📝, 2) WhatsApp como landing 📱, 3) Seguimiento. ¿Por dónde?',
     
-    analisisArchivo: 'Listo! 📄 Analizando tu documento... [después del análisis] Excelente! Veo oportunidades claras aquí 💡: [insights específicos]. ¡Adelante! 🚀',
+    analisisArchivo: 'Listo! 📄 Analizando... [análisis terminado] Excelente! Veo oportunidades 💡: [insights específicos]. ¡Adelante! 🚀',
     
-    // NUEVOS EJEMPLOS CON ECOSISTEMA COWORKIA
-    ventaAgenteBasico: `Perfecto! Para tu spa, te recomiendo un agente Nivel 1 🎯
-
-📦 BÁSICO - $1,500 desarrollo + $250/mes
-• Agenda automáticamente masajes, faciales, manicure 24/7
-• Pregunta: servicio, día, hora → reserva confirmada
-• Cliente recibe confirmación por WhatsApp
-
-ROI: Ahorras 1 recepcionista = $450/mes + ventas nocturnas/fines de semana 📊
-
-¿Arrancamos? #PROCESS_FORM`,
-
-    ventaAgenteMedio: `Excelente! Para tu clínica con 3 especialistas, te recomiendo Nivel 2 🎯
-
-📦 MEDIO - $3,500 desarrollo + $400/mes
-Como Aurora + Angela trabajando juntas:
-• Agenda citas automáticamente
-• Vision AI lee constancias de pago (calcula comisiones)
-• Deriva pacientes: pediatría → Dr. Juan, ginecología → Dra. María
-• Confirma pagos y envía recordatorios
-
-ROI: Ahorras 1 recepcionista = $600/mes + 30% más citas por disponibilidad 24/7 📊
-
-Quieres ver cómo funciona? Escribe: @aurora quiero hot desk mañana 10am
-
-¿Arrancamos tu clínica? #PROCESS_FORM`,
-
-    ventaAgenteAvanzado: `Increíble! Para tu hospital necesitas un ecosistema completo Nivel 3 🎯
-
-📦 AVANZADO - $6,500 desarrollo + $750/mes
-Mira el ecosistema Coworkia (8 agentes trabajando juntos):
-• Aurora: Recepción + reservas + pagos con Vision AI
-• Aluna: Ventas de membresías
-• Angela: Coordinación pacientes + Vision AI para exámenes
-• Adriana: Seguros médicos
-• Enzo: Marketing para captar pacientes
-• + 3 especialistas más
-
-Para tu hospital:
-• Recepcionista virtual 24/7 (agendas, pagos)
-• 5 especialistas virtuales por área médica
-• Laboratorio con Vision AI (interpreta resultados)
-• Farmacia (procesa recetas)
-• Administración (facturación, seguros)
-
-ROI: 3 recepcionistas ahorradas = $1,800/mes + 50% más pacientes atendidos 📊
-
-¿Arrancamos? #PROCESS_FORM`,
-
-    ventaConComparacion: `Perfecto, déjame mostrarte los 3 niveles según tu necesidad:
-
-📦 BÁSICO - Desde $1,500
-Para spas, consultorios pequeños, talleres. Recepcionista básica 24/7.
-
-📦 MEDIO - Desde $3,500
-Para clínicas, talleres de colisiones, restaurantes. Como Aurora: Vision AI + derivación inteligente.
-
-📦 AVANZADO - Desde $6,500
-Para hospitales, cadenas, empresas grandes. Ecosistema completo como Coworkia con 8 agentes coordinados.
-
-Para tu [tipo de negocio], el Nivel [X] es ideal porque:
-• [Beneficio 1]
-• [Beneficio 2]
-• [Beneficio 3]
-
-¿Cuál te interesa más? 🎯`
+    cotizacion: 'Perfecto! Vamos a estructurar tu proyecto. Necesito entender: 1) ¿Qué procesos automatizas? 2) ¿Integración con qué sistemas? 3) ¿Volumen esperado? #PROCESS_FORM',
+    
+    comparacion: 'Tengo 3 niveles según complejidad:\n\n🟢 BÁSICO: Automatización FAQ + agendamientos\n🟠 MEDIO: Básico + Vision AI + derivación\n🔴 AVANZADO: Ecosistema multi-agente completo\n\n¿Cuál se ajusta a tu necesidad?'
   },
 
   derivacion: {

@@ -1,10 +1,10 @@
 /**
  * 📧 Templates de Email para Agentes Especializados
  * Cada empresa tiene su propio diseño HTML con branding
- * ✨ Con soporte para Dark Mode
+ * ✅ v1148: Dark mode eliminado para compatibilidad universal Xiaomi/MIUI
  */
 
-import { LOGOS_BASE64, DARK_MODE_CSS } from './email-assets.js';
+import { LOGOS_BASE64 } from './email-assets.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
 import { EMAIL_TRANSLATIONS } from './email-i18n.js';
@@ -228,10 +228,9 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="color-scheme" content="light dark">
-      <meta name="supported-color-schemes" content="light dark">
+      <meta name="color-scheme" content="light">
+      <meta name="supported-color-schemes" content="light">
       <title>${t.title} - SegPopular</title>
-      ${DARK_MODE_CSS}
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
       
@@ -910,12 +909,9 @@ export function generatePaulaEmailHTML(leadData, { userLanguage = 'es', leadScor
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="color-scheme" content="light dark">
-      <meta name="supported-color-schemes" content="light dark">
+      <meta name="color-scheme" content="light">
+      <meta name="supported-color-schemes" content="light">
       <title>Búsqueda de Propiedad - PropElite</title>
-      <style>
-        ${DARK_MODE_CSS}
-      </style>
     </head>
     <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #EDE8D0; background-color: #3D4436; margin: 0; padding: 20px;">
       

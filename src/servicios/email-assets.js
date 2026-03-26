@@ -31,10 +31,12 @@ export const LOGOS_BASE64 = {
   marketinglabWhite: marketinglabWhiteBase64
 };
 
-// CSS para Dark Mode
+// CSS para Dark Mode (DEPRECATED v1148 — No usar en nuevos templates)
+// Xiaomi/MIUI ignora @media (prefers-color-scheme: dark)
+// Mantener solo para compatibilidad legacy; nuevos emails deben usar inline styles con light mode
 export const DARK_MODE_CSS = `
   <style>
-    /* 🌙 Dark Mode Support */
+    /* 🌙 Dark Mode Support — DEPRECATED: No funciona en Xiaomi/MIUI */
     @media (prefers-color-scheme: dark) {
       body { background-color: #1a1a1a !important; color: #e5e5e5 !important; }
       .email-container { background-color: #2d2d2d !important; }
@@ -56,6 +58,6 @@ export const DARK_MODE_CSS = `
   </style>
 `;
 
-console.log('\n✅ Dark mode CSS generado');
+console.log('\n⚠️  DARK_MODE_CSS deprecated (v1148) — usar inline styles con light mode');
 console.log('\nAhora actualiza generic-email-templates.js importando:');
 console.log('  import { LOGOS_BASE64, DARK_MODE_CSS } from "./email-assets.js"');

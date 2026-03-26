@@ -90,16 +90,16 @@ export const AGENT_BRANDING = {
 // ─── UTILIDADES ───────────────────────────────────────────────────────────────
 
 /**
- * CSS compartido para dark mode, mobile responsiveness y accesibilidad.
+ * CSS compartido para mobile responsiveness y accesibilidad.
  * Se inyecta en el <style> de cada template via ${getEmailMediaStyles()}.
+ * 
+ * NOTA XIAOMI-SAFE (v1148): Eliminamos @media (prefers-color-scheme:dark) 
+ * porque Xiaomi/MIUI lo ignora completamente. Todos los emails fuerzan light mode
+ * con inline styles para máxima compatibilidad universal (Xiaomi, iPhone, Gmail, Outlook).
  */
 function getEmailMediaStyles() {
   return `
     img{max-width:100%;height:auto;}
-    @media (prefers-color-scheme:dark){
-      body{background-color:#f3f4f6 !important;}
-      .em-wrap{background-color:#ffffff !important;color:#1f2937 !important;}
-    }
     @media screen and (max-width:600px){
       .em-wrap{border-radius:0 !important;}
       .em-body{padding:20px 18px !important;}

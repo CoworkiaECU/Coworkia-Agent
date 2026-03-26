@@ -4,7 +4,7 @@
  * Maneja el flujo conversacional de 6 pasos para cotizaciones automáticas:
  * 1. Tipo vehículo + marca
  * 2. Modelo + año
- * 3. Upload cédula (WhatsApp media)
+ * 3. 🆕 Upload multi-documento (matrícula + cédula + licencia opcional) con Vision AI
  * 4. Confirmación datos extraídos
  * 5. Coberturas deseadas  
  * 6. Email + envío cotización
@@ -14,6 +14,7 @@
 
 import databaseService from '../database/database.js';
 import { analyzeImage } from '../servicios-ia/openai.js';
+import { analyzeDocument, calculateRiskScore } from './adriana-document-analyzer.js';
 import { generateAndSendComparisonQuote } from './adriana-quote-generator.js';
 import { loggers } from '../utils/logger.js';
 
@@ -271,82 +272,305 @@ async function processStep2VehicleDetails(userPhone, message, conversation) {
   
   return {
     success: true,
-    message: `Excelente! ${vehicleDesc} 🚗✅\n\nAhora necesito una foto de tu **cédula** (lado frontal donde está tu foto) para extraer tus datos.\n\n📸 Envía la foto clara y completa 👍`,
+    message: `Excelente! ${vehicleDesc} 🚗✅\n\n📸 **Ahora necesito 2 fotos:**\n\n1️⃣ **Matrícula del vehículo** (documento completo)\n2️⃣ **Tu cédula** (lado frontal con foto)\n3️⃣ Licencia de conducir (opcional)\n\n🤖 **Auto-detección:** Mi sistema reconocerá automáticamente cada documento.\n\nEnvía las fotos una por una 📸`,
     step: 3
   };
 }
 
 /**
- * PASO 3: Upload de cédula
+ * PASO 3: 🆕 Upload multi-documento (matrícula + cédula + licencia opcional)
+ * Sistema inteligente que detecta automáticamente el tipo de documento
  */
 async function processStep3IdCardUpload(userPhone, mediaUrl, conversation) {
   if (!mediaUrl) {
     return {
       success: false,
-      message: 'No recibí ninguna imagen 😕\n\nPor favor envía la foto de tu cédula (cara frontal con tu foto)'
+      message: 'No recibí ninguna imagen 😕\n\nPor favor envía las fotos de:\n\n1️⃣ **Matrícula del vehículo** (obligatoria)\n2️⃣ **Tu cédula** (obligatoria)\n3️⃣ Licencia de conducir (opcional)\n\nEnvía una por una 📸'
     };
   }
   
-  // Analizar imagen con Vision AI
   try {
-    const response = await fetch(`${process.env.APP_URL || 'https://coworkia-agent-e97d15dac56f.herokuapp.com'}/api/adriana/extract-cedula`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: mediaUrl })
-    });
+    // 1. Analizar documento automáticamente con Vision AI
+    loggers.adriana.info('Analizando documento multi-type...', { userPhone });
     
-    const result = await response.json();
+    const analysisResult = await analyzeDocument(mediaUrl);
     
-    if (!result.success) {
+    if (!analysisResult.success) {
       return {
         success: false,
-        message: result.error || 'No pude leer la cédula. ¿Puedes enviar una foto más clara?'
+        message: analysisResult.validations?.errors?.[0] || 'No pude reconocer el documento. Por favor envía una foto más clara 📸'
       };
     }
     
-    const extractedData = result.data;
-   
-    await updateConversationStep(userPhone, 4, {
-      cedulaImageUrl: mediaUrl,
-      extractedData
+    const { documentType, data, confidence, validations } = analysisResult;
+    
+    loggers.adriana.info('Documento reconocido', {
+      type: documentType,
+      confidence,
+      userPhone
     });
+    
+    // 2. Guardar documento en BD
+    await databaseService.saveAdrianaDocument(
+      userPhone,
+      documentType,
+      data,
+      confidence,
+      mediaUrl,
+      null // quoteCode agregado después
+    );
+    
+    // 3. Obtener estado actual de documentos
+    const currentConversation = await databaseService.get(
+      `SELECT documents_state, vehicle_brand, vehicle_model, vehicle_year FROM adriana_conversations 
+       WHERE user_phone = $1 AND status = 'active'
+       ORDER BY created_at DESC LIMIT 1`,
+      [userPhone]
+    );
+    
+    let documentsState = currentConversation.documents_state || {
+      cedula: { received: false, data: null },
+      matricula: { received: false, data: null },
+      licencia: { received: false, data: null }
+    };
+    
+    // Parse si viene como string
+    if (typeof documentsState === 'string') {
+      documentsState = JSON.parse(documentsState);
+    }
+    
+    // 4. Actualizar estado del documento recibido
+    documentsState[documentType] = {
+      received: true,
+      data,
+      confidence: parseFloat(confidence)
+    };
+    
+    // 5. Auto-fill datos del vehículo desde matrícula
+    let vehicleAutoFilled = false;
+    let vehicleData = null;
+    
+    if (documentType === 'matricula') {
+      vehicleData = {
+        vehicleBrand: data.marca,
+        vehicleModel: data.modelo,
+        vehicleYear: data.anio,
+        vehicleType: data.tipo?.toLowerCase() === 'liviano' ? 'auto' : 'camioneta'
+      };
+      
+      await updateConversationStep(userPhone, 3, {
+        ...vehicleData,
+        extractedData: documentsState
+      });
+      
+      vehicleAutoFilled = true;
+      
+      loggers.adriana.info('Vehículo auto-completado desde matrícula', {
+        userPhone,
+        vehiculo: `${data.marca} ${data.modelo} ${data.anio}`
+      });
+    } else {
+      // Solo actualizar documents_state
+      await databaseService.run(
+        `UPDATE adriana_conversations 
+         SET documents_state = $1, extracted_data = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE user_phone = $2 AND status = 'active'`,
+        [JSON.stringify(documentsState), userPhone]
+      );
+    }
+    
+    // 6. Verificar qué documentos faltan
+    const hasCedula = documentsState.cedula.received;
+    const hasMatricula = documentsState.matricula.received;
+    const hasLicencia = documentsState.licencia.received;
+    
+    // 7. Generar mensaje de confirmación personalizado
+    let responseMessage = '';
+    
+    if (documentType === 'cedula') {
+      const cedulaData = data;
+      responseMessage = `✅ **Cédula recibida**\n\n👤 ${cedulaData.nombres}\n🆔 ${cedulaData.cedula}\n🎂 ${cedulaData.edad} años\n📍 ${cedulaData.provincia}`;
+    } else if (documentType === 'matricula') {
+      const matriculaData = data;
+      responseMessage = `✅ **Matrícula recibida**\n\n🚗 ${matriculaData.marca} ${matriculaData.modelo}\n📅 Año: ${matriculaData.anio}\n🔖 Placa: ${matriculaData.placa}`;
+      
+      if (vehicleAutoFilled) {
+        responseMessage += `\n\n🎯 **Datos del vehículo auto-completados!**`;
+      }
+    } else if (documentType === 'licencia') {
+      const licenciaData = data;
+      const vencida = licenciaData.vencida ? '⚠️ VENCIDA' : '✅ Vigente';
+      responseMessage = `✅ **Licencia recibida**\n\n👤 ${licenciaData.nombres}\n🪪 Tipo: ${licenciaData.tipoLicencia}\n📅 ${vencida}`;
+      
+      // Advertencia si está vencida
+      if (licenciaData.vencida) {
+        responseMessage += `\n\n⚠️ **Tu licencia está vencida.** Deberás renovarla antes de contratar el seguro.`;
+      }
+      
+      // Advertencia si es tipo A (motos)
+      if (licenciaData.tipoLicencia === 'A') {
+        responseMessage += `\n\n⚠️ **Licencia tipo A** (motos) solo. Para seguros de auto necesitas licencia tipo B.`;
+      }
+    }
+    
+    // 8. Indicar qué documentos faltan
+    const missingDocs = [];
+    if (!hasMatricula) missingDocs.push('1️⃣ Matrícula del vehículo');
+    if (!hasCedula) missingDocs.push('2️⃣ Tu cédula');
+    
+    if (missingDocs.length > 0) {
+      responseMessage += `\n\n📋 **Faltan:**\n${missingDocs.join('\n')}`;
+      responseMessage += `\n\n📸 Envía la siguiente foto...`;
+      
+      return {
+        success: true,
+        message: responseMessage,
+        step: 3, // Sigue en paso 3
+        documentsState
+      };
+    }
+    
+    // 9. Si ya tiene matrícula Y cédula → avanzar a Paso 4
+    responseMessage += `\n\n✅ **Documentos completos!**`;
+    
+    if (hasLicencia) {
+      responseMessage += ` (incluida licencia)`;
+    } else {
+      responseMessage += `\n\n💡 Si tienes tu licencia de conducir también puedes enviarla (opcional).`;
+    }
+    
+    await updateConversationStep(userPhone, 4, {
+      extractedData: documentsState
+    });
+    
+    // Preparar mensaje de confirmación final
+    const cedulaData = documentsState.cedula.data;
+    const matriculaData = documentsState.matricula.data;
+    
+    responseMessage += `\n\n---\n📝 **Resumen:**\n\n👤 Conductor: ${cedulaData.nombres} (${cedulaData.edad} años)\n🚗 Vehículo: ${matriculaData.marca} ${matriculaData.modelo} ${matriculaData.anio}\n🔖 Placa: ${matriculaData.placa}`;
+    
+    responseMessage += `\n\n¿Los datos son correctos?\n\nResponde "sí" para continuar o "no" si hay algún error.`;
     
     return {
       success: true,
-      message: `Perfecto! Extraído de tu cédula:\n\n👤 ${extractedData.nombres}\n🆔 ${extractedData.cedula}\n🎂 ${extractedData.edad} años\n📍 ${extractedData.provincia}\n\n¿Los datos son correctos?\n\nResponde "sí" para continuar o "no" si hay algún error.`,
+      message: responseMessage,
       step: 4,
-      extractedData
+      documentsState
     };
     
   } catch (error) {
-    loggers.adriana.error('Error extracting cedula', {}, error);
+    loggers.adriana.error('Error processing multi-document upload', {}, error);
     return {
       success: false,
-      message: 'Hubo un error al procesar la imagen. Por favor intenta de nuevo.'
+      message: 'Hubo un error al procesar la imagen. Por favor intenta de nuevo 📸'
     };
   }
 }
 
 /**
- * PASO 4: Confirmar datos extraídos
+ * PASO 4: 🆕 Confirmar datos extraídos + Cálculo de Risk Score
  */
 async function processStep4ConfirmData(userPhone, message, conversation) {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('no') || lowerMessage.includes('incorrecto')) {
+    // Resetear documentos y volver a Paso 3
+    await updateConversationStep(userPhone, 3, {});
     return {
       success: false,
-      message: 'Entendido. Por favor envía nuevamente la foto de tu cédula más clara 📸'
+      message: 'Entendido. Por favor envía nuevamente las fotos de tus documentos 📸\n\n1️⃣ Matrícula del vehículo\n2️⃣ Tu cédula\n3️⃣ Licencia (opcional)'
     };
   }
   
   if (lowerMessage.includes('si') || lowerMessage.includes('sí') || lowerMessage.includes('correcto')) {
+    // ═══════════════════════════════════════════════════════════════════════
+    // CALCULAR RISK SCORE
+    // ═══════════════════════════════════════════════════════════════════════
+    const documentsState = conversation.documents_state || conversation.extracted_data;
+    let docs = documentsState;
+    
+    // Parse si viene como string
+    if (typeof docs === 'string') {
+      docs = JSON.parse(docs);
+    }
+    
+    const cedulaData = docs.cedula?.data;
+    const matriculaData = docs.matricula?.data;
+    const licenciaData = docs.licencia?.data;
+    
+    if (!cedulaData || !matriculaData) {
+      return {
+        success: false,
+        message: 'Faltan datos de documentos. Por favor reinicia el formulario.'
+      };
+    }
+    
+    // Calcular score de riesgo
+    const riskAnalysis = calculateRiskScore(cedulaData, matriculaData, licenciaData);
+    
+    loggers.adriana.info('Risk score calculado', {
+      userPhone,
+      score: riskAnalysis.score,
+      classification: riskAnalysis.classification,
+      hasBlockingIssues: riskAnalysis.hasBlockingIssues
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // VERIFICAR ISSUES BLOQUEANTES
+    // ═══════════════════════════════════════════════════════════════════════
+    if (riskAnalysis.hasBlockingIssues) {
+      const blockingAlerts = riskAnalysis.alerts.filter(a => a.blocking);
+      let errorMessage = `⛔ **No podemos proceder con la cotización:**\n\n`;
+      
+      blockingAlerts.forEach(alert => {
+        errorMessage += `• ${alert.message}\n`;
+      });
+      
+      errorMessage += `\n💬 Por favor contacta a nuestro equipo para resolver estos problemas.`;
+      
+      await abandonConversation(userPhone);
+      
+      return {
+        success: false,
+        message: errorMessage,
+        riskAnalysis
+      };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // MOSTRAR ANÁLISIS DE RIESGO Y RECOMENDACIÓN
+    // ═══════════════════════════════════════════════════════════════════════
+    let analysisMessage = `✅ **Datos confirmados!**\n\n`;
+    
+    // Score visual
+    const scoreEmoji = riskAnalysis.score >= 80 ? '🟢' :
+                      riskAnalysis.score >= 60 ? '🟡' :
+                      riskAnalysis.score >= 40 ? '🟠' : '🔴';
+    
+    analysisMessage += `📊 **Perfil de Riesgo:** ${scoreEmoji} ${riskAnalysis.classification} (${riskAnalysis.score}/100)\n\n`;
+    
+    // Recomendación de cobertura
+    analysisMessage += `🎯 **Cobertura recomendada:** ${riskAnalysis.recommendedCoverage}\n\n`;
+    
+    // Mostrar alertas no bloqueantes si existen
+    const warnings = riskAnalysis.alerts.filter(a => !a.blocking && a.severity !== 'low');
+    if (warnings.length > 0) {
+      analysisMessage += `⚠️ **Consideraciones:**\n`;
+      warnings.forEach(alert => {
+        analysisMessage += `• ${alert.message}\n`;
+      });
+      analysisMessage += `\n`;
+    }
+    
     await updateConversationStep(userPhone, 5, {});
+    
+    analysisMessage += `---\n\n¿Qué tipo de cobertura prefieres?\n\n1️⃣ **Plan Básico** - Terceros + Robo\n2️⃣ **Plan Elemental** 🔥 (Recomendado) - Todo Riesgo 7% deducible\n3️⃣ **Plan Premium** - Todo Riesgo sin deducible\n\nResponde con el número (1, 2 o 3)`;
     
     return {
       success: true,
-      message: `Genial! 🎉\n\n¿Qué tipo de cobertura prefieres?\n\n1️⃣ **Plan Básico** - Terceros + Robo\n2️⃣ **Plan Elemental** 🔥 (Recomendado) - Todo Riesgo 7% deducible\n3️⃣ **Plan Premium** - Todo Riesgo sin deducible\n\nResponde con el número (1, 2 o 3)`,
-      step: 5
+      message: analysisMessage,
+      step: 5,
+      riskAnalysis
     };
   }
   

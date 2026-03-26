@@ -1384,6 +1384,31 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_adriana_documents_analyzed ON adriana_documents(analyzed_at DESC);
       `);
 
+      // ===================================================================
+      // TABLA: arco_requests — LOPDP Compliance (Derechos ARCO)
+      // Solicitudes de Acceso, Rectificación, Cancelación, Oposición
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS arco_requests (
+          id SERIAL PRIMARY KEY,
+          request_type VARCHAR(20) NOT NULL CHECK (request_type IN ('acceso', 'rectificacion', 'cancelacion', 'oposicion')),
+          full_name VARCHAR(200) NOT NULL,
+          email VARCHAR(200) NOT NULL,
+          phone VARCHAR(50),
+          description TEXT,
+          status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'resolved')),
+          resolved_at TIMESTAMPTZ,
+          notes TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_arco_requests_status ON arco_requests(status);
+        CREATE INDEX IF NOT EXISTS idx_arco_requests_created ON arco_requests(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_arco_requests_type ON arco_requests(request_type);
+      `);
+
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);

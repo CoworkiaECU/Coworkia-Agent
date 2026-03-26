@@ -2,7 +2,25 @@
 **Fecha**: 24 Mar 2026  
 **Repos**: `coworkia-agent` (Heroku) + `WiFi Coworkia` (Mac Mini)  
 **Magic Todo**: #38  
-**Estado**: ✅ COMPLETADO — 24 Mar 2026
+**Estado**: 🟡 PARCIAL — Frontend/Backend OK, **Falta tabla BD arco_requests**
+
+---
+
+## ⚠️ ESTADO ACTUAL DE IMPLEMENTACIÓN (26 Mar 03:15 AM)
+
+**✅ COMPLETADO:**
+- Página `/privacidad` (public/privacidad.html) — política completa LOPDP
+- Página `/privacidad/arco` (public/privacidad-arco.html) — formulario derechos
+- Endpoint `POST /api/arco` (src/express-servidor/endpoints-api/privacidad.js) — backend funcional
+- Aviso silencioso en agentes WA (wassenger.js línea 3555) — link a política
+
+**❌ PENDIENTE CRÍTICO:**
+- **Tabla `arco_requests`** NO existe en postgres-adapter.js
+- Sin la tabla → endpoint `/api/arco` falla con error 500
+- WiFi Coworkia portal NO modificado (requiere acceso Mac Mini)
+- Caso Javier Troya NO resuelto
+
+**Próxima acción**: Crear tabla arco_requests en postgres-adapter.js (15 min) → deploy v1142
 
 ---
 

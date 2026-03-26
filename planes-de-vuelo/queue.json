@@ -1,9 +1,23 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-26T14:20:00Z",
-  "currentPlan": "sprint-10min-26mar",
-  "nextPriority": "html-xiaomi-urgent",
+  "lastUpdated": "2026-03-26T15:30:00Z",
+  "currentPlan": "fix-xiaomi-html",
+  "nextPriority": "xiaomi-testing-manual",
   "queue": [
+    {
+      "id": "fix-xiaomi-html-blocka",
+      "title": "Fix HTML Xiaomi - Bloque A (Fallbacks CSS)",
+      "status": "completed",
+      "plan": "FIX-HTML-XIAOMI-TODO56.md",
+      "estimatedTime": "30min",
+      "realTime": "25min",
+      "completedAt": "2026-03-26T15:30:00Z",
+      "commit": "4341c00",
+      "heroku": "v1147",
+      "priority": "urgent",
+      "chat": "chat-derecho",
+      "notes": "✅ Gradientes con fallback sólido. ✅ Box-shadows sin hex-alpha (rgba universal). ✅ Compatibilidad MIUI mejorada. 🎯 Pending: Testing manual en Xiaomi Diego + Bloques B+C si necesita."
+    },
     {
       "id": "lopdp-compliance-bd",
       "title": "LOPDP — Completar tabla arco_requests + WiFi portal",

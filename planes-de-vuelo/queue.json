@@ -1,18 +1,22 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-26T03:15:00Z",
-  "currentPlan": null,
-  "nextPriority": "lopdp-compliance-bd",
+  "lastUpdated": "2026-03-26T14:20:00Z",
+  "currentPlan": "sprint-10min-26mar",
+  "nextPriority": "html-xiaomi-urgent",
   "queue": [
     {
       "id": "lopdp-compliance-bd",
       "title": "LOPDP — Completar tabla arco_requests + WiFi portal",
-      "status": "pending",
+      "status": "completed",
       "plan": "plan-vuelo-lopdp-24mar.md",
       "estimatedTime": "45min",
+      "realTime": "10min",
+      "completedAt": "2026-03-26T14:10:00Z",
+      "commit": "8905fb0, 916c258, 976b9bf",
+      "heroku": "v1145, v1146",
       "priority": "high",
-      "chat": "chat-izquierdo",
-      "notes": "Frontend/backend LOPDP completos. FALTA: crear tabla arco_requests en postgres-adapter (endpoint /api/arco la requiere). WiFi portal requiere acceso Mac Mini Diego."
+      "chat": "chat-derecho",
+      "notes": "✅ Tabla arco_requests creada. ✅ Caso Javier Troya resuelto (ARCO ID: 34). ✅ Sistema funcional. 🟡 WiFi portal blocked (Mac Mini)."
     },
     {
       "id": "adriana-multi-doc",

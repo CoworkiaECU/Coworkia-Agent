@@ -31,33 +31,20 @@ export const LOGOS_BASE64 = {
   marketinglabWhite: marketinglabWhiteBase64
 };
 
-// CSS para Dark Mode (DEPRECATED v1148 — No usar en nuevos templates)
-// Xiaomi/MIUI ignora @media (prefers-color-scheme: dark)
-// Mantener solo para compatibilidad legacy; nuevos emails deben usar inline styles con light mode
+// CSS para Dark Mode — Restaurado v1150 con estrategia inteligente
+// → Clientes modernos (iPhone, Gmail desktop): reciben dark mode via @media
+// → Xiaomi/MIUI: se les envía con xiaomiSafe=true (sin este CSS)
+// Uso: importar en templates legacy; nuevos templates usan getEmailStyles()
 export const DARK_MODE_CSS = `
   <style>
-    /* 🌙 Dark Mode Support — DEPRECATED: No funciona en Xiaomi/MIUI */
+    /* 🌙 Dark Mode Support — Solo clientes que soportan @media queries */
     @media (prefers-color-scheme: dark) {
-      body { background-color: #1a1a1a !important; color: #e5e5e5 !important; }
-      .email-container { background-color: #2d2d2d !important; }
-      .content-section { background-color: #363636 !important; }
-      .card-white { background-color: #404040 !important; }
-      .card-white-border { background-color: #404040 !important; border-color: #4a4a4a !important; }
-      .text-dark { color: #e5e5e5 !important; }
-      .text-gray { color: #b3b3b3 !important; }
-      .text-muted { color: #999999 !important; }
-      .border-light { border-color: #4a4a4a !important; }
-      .shadow { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important; }
-      
-      /* Mantener colores de marca */
-      .brand-yellow { background-color: #FFD700 !important; }
-      .brand-blue { color: #60A5FA !important; }
-      .brand-green { color: #84CC16 !important; }
-      .brand-red { color: #F87171 !important; }
+      body { background-color: #f3f4f6 !important; }
+      .em-wrap { background-color: #ffffff !important; color: #1f2937 !important; }
     }
   </style>
 `;
 
-console.log('\n⚠️  DARK_MODE_CSS deprecated (v1148) — usar inline styles con light mode');
+console.log('\n✅ DARK_MODE_CSS restaurado (v1150) — uso con xiaomiSafe flag');
 console.log('\nAhora actualiza generic-email-templates.js importando:');
 console.log('  import { LOGOS_BASE64, DARK_MODE_CSS } from "./email-assets.js"');

@@ -90,21 +90,36 @@ export const AGENT_BRANDING = {
 // ─── UTILIDADES ───────────────────────────────────────────────────────────────
 
 /**
- * CSS compartido para mobile responsiveness y accesibilidad.
- * Se inyecta en el <style> de cada template via ${getEmailMediaStyles()}.
+ * CSS compartido para mobile responsiveness, accesibilidad y dark mode adaptativo.
  * 
- * NOTA XIAOMI-SAFE (v1148): Eliminamos @media (prefers-color-scheme:dark) 
- * porque Xiaomi/MIUI lo ignora completamente. Todos los emails fuerzan light mode
- * con inline styles para máxima compatibilidad universal (Xiaomi, iPhone, Gmail, Outlook).
+ * @param {object} options
+ * @param {boolean} options.xiaomiSafe - Si true, elimina @media dark mode (Xiaomi/MIUI no lo soporta)
+ * @returns {string} CSS para inyectar en <style>
+ * 
+ * ESTRATEGIA v1150:
+ * - xiaomiSafe=false (default): dark mode para clientes modernos (iPhone, Gmail)
+ * - xiaomiSafe=true: solo light mode (Xiaomi/MIUI ignora @media queries)
  */
-function getEmailMediaStyles() {
-  return `
-    img{max-width:100%;height:auto;}
+function getEmailStyles({ xiaomiSafe = false } = {}) {
+  const baseStyles = `img{max-width:100%;height:auto;}`;
+  
+  const responsiveStyles = `
     @media screen and (max-width:600px){
       .em-wrap{border-radius:0 !important;}
       .em-body{padding:20px 18px !important;}
     }
   `;
+  
+  // Solo para clientes que soportan @media (prefers-color-scheme)
+  // Xiaomi/MIUI lo ignora → xiaomiSafe=true desactiva esto
+  const darkModeStyles = xiaomiSafe ? '' : `
+    @media (prefers-color-scheme:dark){
+      body{background-color:#f3f4f6 !important;}
+      .em-wrap{background-color:#ffffff !important;color:#1f2937 !important;}
+    }
+  `;
+  
+  return baseStyles + responsiveStyles + darkModeStyles;
 }
 
 /**
@@ -137,8 +152,9 @@ function buildCoworkiaFooter(branding) {
  * @param {string} name    — Nombre del prospecto
  * @param {string} message — Cuerpo del mensaje (texto del operador)
  * @param {string} [plan]  — Nombre del plan (default: Membresía Coworkia)
+ * @param {object} options — { xiaomiSafe: boolean } para control de dark mode
  */
-export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }) {
+export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero agendar mi visita gratuita a Coworkia`);
@@ -150,7 +166,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
   <title>Tu membresía en Coworkia te espera</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -241,8 +257,9 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
  *
  * @param {string} name    — Nombre del prospecto
  * @param {string} message — Cuerpo del mensaje (texto del operador)
+ * @param {object} options — { xiaomiSafe: boolean }
  */
-export function buildAlunaD3HTML({ name, message }) {
+export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero reservar mi espacio en Coworkia antes de que se agoten`);
@@ -254,7 +271,7 @@ export function buildAlunaD3HTML({ name, message }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
   <title>⚠️ Últimas disponibilidades — Coworkia</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -361,7 +378,7 @@ export function buildAdrianaComparisonHTML({
   message = '',
   waNumber = '593994837117',
   quoteCode = '',
-}) {
+}, { xiaomiSafe = false } = {}) {
   const branding  = AGENT_BRANDING.ADRIANA;
   const firstName = name ? name.split(' ')[0] : 'allí';
   const ahorro    = (primaVAZ && primaAnual) ? Math.round(primaVAZ - primaAnual) : 0;
@@ -375,7 +392,7 @@ export function buildAdrianaComparisonHTML({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
   <title>Comparativo de Seguros — SegPopular${codeSuffix}</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
@@ -491,7 +508,7 @@ export function buildAdrianaComparisonHTML({
  * @param {string} hora      — Hora de la reserva (ej: "10:00 AM")
  * @param {string} [precio]  — Precio si aplica
  */
-export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, precio = '' }) {
+export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, precio = '' }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.AURORA;
   const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
   return `<!DOCTYPE html>
@@ -501,7 +518,7 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
@@ -559,7 +576,7 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
  * @param {string} servicio  — Servicio que usó
  * @param {string} [descuento] — Código de descuento (opcional)
  */
-export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
+export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.AURORA;
   const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
   return `<!DOCTYPE html>
@@ -569,7 +586,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
@@ -626,7 +643,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }) {
  * @param {string} proyecto — Tipo de proyecto / servicio cotizado
  * @param {string} message  — Mensaje personalizado
  */
-export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = '' }) {
+export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = '' }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.ENZO;
   const firstName = nombre ? nombre.split(' ')[0] : '';
   return `<!DOCTYPE html>
@@ -636,7 +653,7 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
@@ -688,7 +705,7 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
  * @param {string} proyecto  — Tipo de proyecto / servicio
  * @param {number} [descuento] — Porcentaje de descuento (default: 15)
  */
-export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 15 }) {
+export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 15 }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.ENZO;
   const firstName = nombre ? nombre.split(' ')[0] : '';
   const vence = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -699,7 +716,7 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
@@ -759,7 +776,7 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
  * @param {string} proyecto   — Tipo de proyecto
  * @param {string} [caseStudy] — Descripción del caso de éxito (opcional)
  */
-export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = '' }) {
+export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = '' }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.ENZO;
   const firstName = nombre ? nombre.split(' ')[0] : '';
   const defaultCase = 'Cliente del sector retail aumentó sus ventas online un 300% en 3 meses con nuestra estrategia de contenidos y pauta digital.';
@@ -770,7 +787,7 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
@@ -858,7 +875,7 @@ export function buildAdrianaComparisonV2HTML({
   bot_phone = process.env.BOT_PHONE || '593994837117',
   adriana_email = process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
   adriana_phone = process.env.ADRIANA_PHONE || '+593 987 770 788',
-} = {}) {
+} = {}, { xiaomiSafe = false } = {}) {
   const b           = AGENT_BRANDING.ADRIANA;
   const firstName   = nombre ? nombre.split(' ')[0] : 'Cliente';
   const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'tu vehículo';
@@ -919,7 +936,7 @@ export function buildAdrianaComparisonV2HTML({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light !important;}${getEmailMediaStyles()}</style>
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
   <title>Análisis de Seguros — ${firstName} — Adriana Bróker</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
@@ -1058,24 +1075,26 @@ export function buildAdrianaComparisonV2HTML({
 /**
  * 🚀 buildEmailTemplate — Wrapper central para todos los templates
  *
- * @param {string} agent  — 'ALUNA', 'AURORA', 'ADRIANA', 'ENZO', etc.
- * @param {string} type   — 'confirmation', 'rebooking', 'd1', 'd3', 'd7', 'comparison', etc.
- * @param {object} data   — Datos del template
+ * @param {string} agent    — 'ALUNA', 'AURORA', 'ADRIANA', 'ENZO', etc.
+ * @param {string} type     — 'confirmation', 'rebooking', 'd1', 'd3', 'd7', 'comparison', etc.
+ * @param {object} data     — Datos del template
+ * @param {object} [options] — { xiaomiSafe: boolean } para control adaptivo de dark mode
  * @returns {string} HTML del email
  */
-export function buildEmailTemplate(agent, type, data) {
+export function buildEmailTemplate(agent, type, data, options = {}) {
+  const { xiaomiSafe = false } = options;
   const key = `${agent.toUpperCase()}_${type.toUpperCase()}`;
 
   const builders = {
-    ALUNA_D1:                 () => buildAlunaD1HTML(data),
-    ALUNA_D3:                 () => buildAlunaD3HTML(data),
-    AURORA_CONFIRMATION:      () => buildAuroraConfirmationHTML(data),
-    AURORA_REBOOKING:         () => buildAuroraRebookingHTML(data),
-    ENZO_D1:                  () => buildEnzoD1HTML(data),
-    ENZO_D3:                  () => buildEnzoD3HTML(data),
-    ENZO_D7:                  () => buildEnzoD7HTML(data),
-    ADRIANA_COMPARISON:       () => buildAdrianaComparisonHTML(data),
-    ADRIANA_COMPARISON_V2:    () => buildAdrianaComparisonV2HTML(data),
+    ALUNA_D1:                 () => buildAlunaD1HTML(data, { xiaomiSafe }),
+    ALUNA_D3:                 () => buildAlunaD3HTML(data, { xiaomiSafe }),
+    AURORA_CONFIRMATION:      () => buildAuroraConfirmationHTML(data, { xiaomiSafe }),
+    AURORA_REBOOKING:         () => buildAuroraRebookingHTML(data, { xiaomiSafe }),
+    ENZO_D1:                  () => buildEnzoD1HTML(data, { xiaomiSafe }),
+    ENZO_D3:                  () => buildEnzoD3HTML(data, { xiaomiSafe }),
+    ENZO_D7:                  () => buildEnzoD7HTML(data, { xiaomiSafe }),
+    ADRIANA_COMPARISON:       () => buildAdrianaComparisonHTML(data, { xiaomiSafe}),
+    ADRIANA_COMPARISON_V2:    () => buildAdrianaComparisonV2HTML(data, { xiaomiSafe }),
   };
 
   const builder = builders[key];

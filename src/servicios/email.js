@@ -448,6 +448,26 @@ function minifyEmailHTML(html) {
     .trim();
 }
 
+/**
+ * 📱 Detecta si el User-Agent corresponde a un dispositivo Xiaomi/MIUI
+ * @param {string} userAgent — User-Agent string desde HTTP headers (Wassenger webhook)
+ * @returns {boolean} — true si es Xiaomi/MIUI/Redmi/POCO, false en caso contrario
+ * 
+ * Xiaomi/MIUI ignora @media (prefers-color-scheme: dark) y aplica sus propios estilos.
+ * Cuando detectemos estos dispositivos, enviamos emails con xiaomiSafe=true (sin dark CSS).
+ */
+export function isXiaomiDevice(userAgent = '') {
+  if (!userAgent) return false;
+  const xiaomiPatterns = [
+    /xiaomi/i,      // Xiaomi genérico
+    /miui/i,        // ROM MIUI Browser
+    /redmi/i,       // Redmi (submarca)
+    /mi \d+/i,      // Mi 10, Mi 11, Mi 12, etc
+    /poco/i         // POCO (submarca gaming)
+  ];
+  return xiaomiPatterns.some(pattern => pattern.test(userAgent));
+}
+
 export async function sendEmail({ to, subject, html, text, from, cc, bcc, attachments }) {
   try {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);

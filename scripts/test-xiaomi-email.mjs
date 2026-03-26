@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * 📧 Script de testing Dark Mode Inteligente v1150
+ * 📧 Script de testing Dark Mode Inteligente v1151
  * Envía email de prueba a Diego para validar sistema adaptativo:
- * - --xiaomi: Fuerza light mode (xiaomiSafe=true) para testing Xiaomi/MIUI
+ * - --xiaomi: Fuerza light mode (xiaomiSafe=true) para testing Xiaomi/MIUI/Honor
  * - --iphone: Fuerza dark mode (xiaomiSafe=false) para testing iOS/Gmail
  * - Sin flags: usa default (dark mode habilitado)
  */
@@ -10,20 +10,21 @@
 import { sendEmail, isXiaomiDevice } from '../src/servicios/email.js';
 import { buildEmailTemplate } from '../src/servicios/email-template-system.js';
 
-// Email de Diego (verifica en su Xiaomi + puede reenviar a iPhone)
-const DIEGO_EMAIL = process.env.DIEGO_EMAIL || 'yo@diegovillota.com';
-
 // 🎛️ Detectar flags CLI
 const args = process.argv.slice(2);
 const forceXiaomi = args.includes('--xiaomi');
 const forceIphone = args.includes('--iphone');
 
+// Email destinatario (acepta --to=email@example.com o usa default)
+const emailArg = args.find(arg => arg.startsWith('--to='));
+const TEST_EMAIL = emailArg ? emailArg.split('=')[1] : 'usavipshop@gmail.com';
+
 // Determinar modo
 let xiaomiSafe, modeLabel, testDevice;
 if (forceXiaomi) {
   xiaomiSafe = true;
-  modeLabel = 'Light Mode (Xiaomi/MIUI)';
-  testDevice = 'Xiaomi';
+  modeLabel = 'Light Mode (Xiaomi/Honor/MIUI)';
+  testDevice = 'Xiaomi/Honor';
 } else if (forceIphone) {
   xiaomiSafe = false;
   modeLabel = 'Dark Mode (iPhone/Gmail)';
@@ -34,70 +35,73 @@ if (forceXiaomi) {
   testDevice = 'Automático (detecta dark mode sistema)';
 }
 
-console.log(`📧 [TEST-DARKMODE] Generando email de prueba v1150...\n`);
+console.log(`📧 [TEST-DARKMODE] Generando email de prueba v1151...\n`);
 console.log(`🎛️  Modo: ${modeLabel}`);
 console.log(`📱  Dispositivo target: ${testDevice}`);
 console.log(`🔧  xiaomiSafe = ${xiaomiSafe}\n`);
 
 // Usar template Aluna D+1 (diseño verde Coworkia aprobado, muchos estilos)
 const emailHTML = buildEmailTemplate('aluna', 'D1', {
-  name: 'Diego Villota',
-  message: `Diego nena, este es un email de TESTING v1150 — Dark Mode Inteligente.
+  name: 'Francisco Zapata',
+  message: `Hola Francisco, este es un email de TESTING v1151 — Dark Mode Inteligente + Responsive Fix de Coworkia.
 
 🎯 MODO DE PRUEBA: *${modeLabel}*
 📱 Target device: ${testDevice}
 
-🔬 QUÉ ESPERAR:
+🔬 QUÉ ESPERAR EN TU MOTOROLA:
 
 ${forceXiaomi ? `
-✅ **Xiaomi/MIUI Mode (Light Only)**:
-   - Sin @media (prefers-color-scheme: dark)
-   - Colores forzados a light mode
+✅ **Light Mode Only** (para Xiaomi/Honor):
+   - Colores forzados a modo claro
    - Fondo blanco, texto oscuro siempre
-   - Xiaomi NO podrá cambiarlo a dark (esperado)
+   - Sin adaptación automática
+   - width:100% responsive (no corta contenido)
 ` : `
-✅ **iPhone/Gmail Mode (Adaptive Dark)**:
-   - Incluye @media (prefers-color-scheme: dark)
-   - Si tu teléfono está en dark mode → email se adapta
-   - Si está en light mode → email light normal
-   - Respeta preferencia del sistema operativo
+✅ **Dark Mode Adaptativo** (modo predeterminado):
+   - Si tu Motorola está en modo oscuro → email se adapta automáticamente
+   - Si está en modo claro → email light normal
+   - Respeta la preferencia de tu sistema operativo
+   - width:100% responsive en todos los dispositivos
+   - NO corta contenido a la derecha
 `}
 
-🔍 VALIDACIÓN TÉCNICA:
-✅ Header verde Coworkia legible
-✅ Card blanca con tu nombre visible
-✅ Botones con colores correctos
-✅ Texto no quemado (negro sobre negro)
-✅ Logo e imágenes cargan
+🔍 VALIDA POR FAVOR:
+✅ Header verde Coworkia se ve bien
+✅ Card blanca con tu nombre es legible
+✅ Botones tienen los colores correctos
+✅ Texto legible (no negro sobre negro)
+✅ Logo e imágenes cargan correctamente
+✅ NO se corta contenido por la derecha (FIX Motorola)
 
-📝 RESPONDE:
-- Si todo OK → "OK ${forceXiaomi ? 'Xiaomi' : 'iPhone'}" en el chat
-- Si falla → screenshot + descripción
+📝 Si puedes, responde confirmando que se ve bien en tu Motorola.
 
-Ignora contenido de membresía, esto es solo validación técnica.`,
-  plan: `Test v1150 — ${modeLabel}`
+Gracias por ayudarnos a testear el sistema! 🙌
+
+Ignora el contenido de membresía, esto es solo validación técnica.`,
+  plan: `Test v1151 — ${modeLabel}`
 }, { xiaomiSafe }); // ← OPCIÓN THREADING
 
 console.log('✅ Template generado con options threading');
-console.log(`📤 Enviando a: ${DIEGO_EMAIL}\n`);
+console.log(`📤 Enviando a: ${TEST_EMAIL}\n`);
 
 try {
   const result = await sendEmail({
-    to: DIEGO_EMAIL,
-    subject: `🧪 TEST v1150 ${modeLabel} — Aluna Coworkia`,
+    to: TEST_EMAIL,
+    subject: `🧪 TEST v1151 ${modeLabel} — Aluna Coworkia`,
     html: emailHTML,
-    text: `Email de testing v1150 Dark Mode Inteligente. Modo: ${modeLabel}. Verifica que se vea correctamente en ${testDevice}. Responde OK si todo perfecto.`
+    text: `Email de testing v1151 Dark Mode Inteligente + Responsive. Modo: ${modeLabel}. Verifica que se vea correctamente en ${testDevice}. Responde OK si todo perfecto.`
   });
 
   if (result.success) {
     console.log('✅ Email enviado exitosamente');
     console.log(`📧 MessageId: ${result.messageId}\n`);
-    console.log('🔍 INSTRUCCIONES PARA DIEGO:');
-    console.log('   1. Abre el email en tu Xiaomi');
+    console.log('🔍 INSTRUCCIONES PARA FRANCISCO (Motorola test):');
+    console.log('   1. Abre el email en tu Motorola');
     console.log('   2. Verifica que los colores verdes se vean bien (header, botones)');
     console.log('   3. Chequea que el texto sea legible (no negro sobre negro)');
     console.log('   4. Valida que la card blanca con tu nombre se ve correcta');
-    console.log('   5. Responde "OK Xiaomi" si se ve perfecto, o reporta problemas\n');
+    console.log('   5. Si está en dark mode → verifica que el email se adapta automáticamente');
+    console.log('   6. Responde confirmando si se ve bien o reporta cualquier problema\n');
   } else {
     console.error('❌ Error enviando email:', result.error);
     process.exit(1);

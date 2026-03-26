@@ -54,7 +54,12 @@ async function analyzeFailedConversations() {
          SELECT user_phone, 
                 COUNT(*) as msg_count,
                 MAX(timestamp) as last_msg,
-                STRING_AGG(content, ' | ' ORDER BY timestamp) as conversation_sample
+                (SELECT STRING_AGG(content, ' | ' ORDER BY timestamp)
+                 FROM conversation_history ch2
+                 WHERE ch2.user_phone = conversation_history.user_phone
+                   AND ch2.timestamp > NOW() - INTERVAL '24 hours'
+                   AND ch2.role = 'user'
+                 LIMIT 5) as conversation_sample
          FROM conversation_history
          WHERE timestamp > NOW() - INTERVAL '24 hours'
            AND role = 'user'

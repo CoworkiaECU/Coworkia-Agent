@@ -11,8 +11,7 @@
  * - arco_requests (LOPDP - podría haber pedido supresión)
  */
 
-import databaseService from '../src/database/database-service.js';
-import { loggers } from '../src/utils/logger.js';
+import databaseService from '../src/database/database.js';
 
 async function investigateJavierTroya() {
   console.log('🔍 Investigando registros de Javier Troya...\n');

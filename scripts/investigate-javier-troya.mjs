@@ -19,33 +19,30 @@ async function investigateJavierTroya() {
   try {
     await databaseService.initialize();
 
-    // 1. Buscar en tabla leads (principal)
-    console.log('📊 Buscando en tabla LEADS...');
-    const leadsQuery = `
-      SELECT id, name, phone, agent, status, interest_type, 
-             metadata, created_at, updated_at, is_deleted
-      FROM leads 
-      WHERE (LOWER(name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%')
+    // 1. Buscar en tabla adriana_quote_leads (cotizaciones Adriana)
+    console.log('📊 Buscando en tabla ADRIANA_QUOTE_LEADS...');
+    const adrianaQuotesQuery = `
+      SELECT * 
+      FROM adriana_quote_leads 
+      WHERE LOWER(name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%'
       ORDER BY created_at DESC;
     `;
-    const leadsResults = await databaseService.all(leadsQuery);
+    const adrianaQuotesResults = await databaseService.all(adrianaQuotesQuery);
     
-    if (leadsResults.length > 0) {
-      console.log(`✅ Encontrados ${leadsResults.length} registros en LEADS:`);
-      leadsResults.forEach(lead => {
+    if (adrianaQuotesResults.length > 0) {
+      console.log(`✅ Encontrados ${adrianaQuotesResults.length} registros en ADRIANA_QUOTE_LEADS:`);
+      adrianaQuotesResults.forEach(lead => {
         console.log(`   - ID: ${lead.id}`);
         console.log(`     Nombre: ${lead.name}`);
         console.log(`     Teléfono: ${lead.phone}`);
-        console.log(`     Agente: ${lead.agent}`);
         console.log(`     Status: ${lead.status}`);
-        console.log(`     Tipo interés: ${lead.interest_type}`);
-        console.log(`     Eliminado: ${lead.is_deleted ? 'SÍ' : 'NO'}`);
+        console.log(`     Placa: ${lead.plate || 'N/A'}`);
+        console.log(`     Vehículo: ${lead.vehicle_info || 'N/A'}`);
         console.log(`     Creado: ${lead.created_at}`);
-        console.log(`     Metadata: ${JSON.stringify(lead.metadata, null, 2)}`);
         console.log('');
       });
     } else {
-      console.log('❌ No se encontraron registros en LEADS\n');
+      console.log('❌ No se encontraron registros en ADRIANA_QUOTE_LEADS\n');
     }
 
     // 2. Buscar en insurance_leads (Adriana específica)
@@ -130,7 +127,7 @@ async function investigateJavierTroya() {
     console.log('📋 RESUMEN DE INVESTIGACIÓN');
     console.log('════════════════════════════════════════════════════════════════\n');
     
-    const totalFound = leadsResults.length + insuranceResults.length + usersResults.length + arcoResults.length;
+    const totalFound = adrianaQuotesResults.length + insuranceResults.length + usersResults.length + arcoResults.length;
     
     if (totalFound === 0) {
       console.log('❌ NO SE ENCONTRÓ NINGÚN REGISTRO de Javier Troya en la BD');
@@ -141,7 +138,7 @@ async function investigateJavierTroya() {
       console.log('      - Teléfono');
       console.log('      - Placa del vehículo');
       console.log('      - Marca/modelo del vehículo');
-      console.log('   → Crear registro nuevo en tabla leads con agent="ADRIANA"');
+      console.log('   → Crear registro nuevo en tabla adriana_quote_leads');
     } else {
       console.log(`✅ Total de registros encontrados: ${totalFound}`);
       console.log('');
@@ -151,12 +148,13 @@ async function investigateJavierTroya() {
         console.log('   → Javier Troya solicitó supresión/cancelación de datos');
         console.log('   → NO PODEMOS restaurar sin consentimiento explícito');
         console.log('   → ACCIÓN: Consultar a Diego si Javier dio nuevo consentimiento');
-      } else if (leadsResults.length > 0 && leadsResults[0].is_deleted) {
-        console.log('🔧 ACCIÓN: Restaurar registro existente');
-        console.log(`   → UPDATE leads SET is_deleted = false, status = 'pending' WHERE id = ${leadsResults[0].id};`);
-      } else if (leadsResults.length > 0) {
-        console.log('✅ El prospecto YA EXISTE y está activo');
-        console.log(`   → Status actual: ${leadsResults[0].status}`);
+      } else if (adrianaQuotesResults.length > 0) {
+        console.log('✅ El prospecto YA EXISTE en ADRIANA_QUOTE_LEADS');
+        console.log(`   → Status actual: ${adrianaQuotesResults[0].status}`);
+        console.log('   → Verificar dashboard Adriana para confirmar visibilidad');
+      } else if (insuranceResults.length > 0) {
+        console.log('✅ El prospecto YA EXISTE en INSURANCE_LEADS');
+        console.log(`   → Status actual: ${insuranceResults[0].status}`);
         console.log('   → Verificar dashboard Adriana para confirmar visibilidad');
       }
     }

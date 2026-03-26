@@ -1281,7 +1281,9 @@ async function loadAutomationStats() {
       reminder_24h: { prefix: '24h' },
       reminder_2h:  { prefix: '2h' },
       no_show:      { prefix: 'noshow' },
-      rebook_d7:    { prefix: 'd7' }
+      rebook_d7:    { prefix: 'd7' },
+      payment:      { prefix: 'pay' },
+      upsell:       { prefix: 'upsell' }
     };
 
     for (const [key, cfg] of Object.entries(mapping)) {

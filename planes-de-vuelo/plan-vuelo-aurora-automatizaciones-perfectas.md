@@ -4,7 +4,7 @@
 
 **Tiempo estimado:** 12-15 horas (dividido en bloques ejecutables)  
 **Prioridad:** HIGH  
-**Status:** 🟢 Ready para autopilot
+**Status:** ✅ COMPLETADO
 
 ---
 
@@ -42,7 +42,7 @@
 
 **Tareas:**
 
-- [ ] **A1** — Migración BD: agregar campos tracking (30 min)
+- [x] **A1** — Migración BD: agregar campos tracking (30 min)
   ```sql
   ALTER TABLE reservations ADD COLUMN IF NOT EXISTS followup_d1_sent_at TIMESTAMP;
   ALTER TABLE reservations ADD COLUMN IF NOT EXISTS followup_d3_sent_at TIMESTAMP;
@@ -53,7 +53,7 @@
   ALTER TABLE reservations ADD COLUMN IF NOT EXISTS upsell_aluna_sent_at TIMESTAMP;
   ```
 
-- [ ] **A2** — Fix bug D+7 query window (15 min)
+- [x] **A2** — Fix bug D+7 query window (15 min)
   ```js
   // Antes: date = CURRENT_DATE - INTERVAL '7 days'
   // Después: date BETWEEN CURRENT_DATE - INTERVAL '9 days' AND CURRENT_DATE - INTERVAL '7 days'
@@ -61,7 +61,7 @@
   ```
   - Archivo: `src/cron/aurora-followup-cron.js` línea ~140
 
-- [ ] **A3** — Crear sección "Automatizaciones" en dashboard (45 min)
+- [x] **A3** — Crear sección "Automatizaciones" en dashboard (45 min)
   - Archivo: `public/aurora-reservas-dark.html`
   - UI: 7 cards con:
     - Nombre automatización
@@ -71,7 +71,7 @@
     - Botón "Ver detalles" (modal con logs recientes)
   - Diseño: grid 2x4 con iconos
 
-- [ ] **A4** — Auditar números en botones WhatsApp (30 min)
+- [x] **A4** — Auditar números en botones WhatsApp (30 min)
   - Buscar `wa.me/` en todos los dashboards: aurora, aluna, adriana, enzo
   - Verificar que usen `process.env.BOT_PHONE` o `593994837117` (sistema)
   - NO debe aparecer `593987770788` (Diego personal) excepto en notificaciones admin
@@ -88,13 +88,13 @@
 
 **Tareas:**
 
-- [ ] **B1** — Crear `sendAuroraD1Followup()` en email.js (45 min)
+- [x] **B1** — Crear `sendAuroraD1Followup()` en email.js (45 min)
   - Parámetros: `{ userName, serviceType, date, feedbackUrl }`
   - Template: buildEmailTemplate('AURORA', 'D1', data)
   - Subject: "¿Cómo estuvo tu experiencia en Coworkia? 🌟"
   - CTA: Link feedback form + invitación a volver
 
-- [ ] **B2** — Crear template HTML `buildAuroraD1HTML()` en email-template-system.js (45 min)
+- [x] **B2** — Crear template HTML `buildAuroraD1HTML()` en email-template-system.js (45 min)
   - Header verde Coworkia
   - Mensaje personalizado según serviceType:
     - Hot Desk: "Esperamos hayas tenido un día productivo"
@@ -105,7 +105,7 @@
     3. Conocer membresías (upselling suave)
   - Footer: WhatsApp directo al bot
 
-- [ ] **B3** — Crear `sendAuroraD3Followup()` (FOMO) (30 min)
+- [x] **B3** — Crear `sendAuroraD3Followup()` (FOMO) (30 min)
   - Mensaje: "Han pasado 3 días desde tu visita... ¿cuándo vuelves?"
   - Variaciones inteligentes:
     - Si `wasFree=true`: "Tu primera visita gratis caducó, pero tenemos 15% OFF esta semana"
@@ -113,7 +113,7 @@
     - Si `serviceType=meetingRoom`: "Salas disponibles para mañana con 20% OFF"
   - CTA: Agendar ahora (wa.me link directo)
 
-- [ ] **B4** — Agregar cron job D+1 y D+3 (45 min)
+- [x] **B4** — Agregar cron job D+1 y D+3 (45 min)
   - Archivo: `src/cron/aurora-followup-cron.js`
   - D+1 cron: ejecuta 10:00 AM diario
   - D+3 cron: ejecuta 14:00 PM diario (tarde para FOMO)
@@ -121,7 +121,7 @@
   - Logs: `[AURORA-D1] ✅ Enviado a {userName} (#reservationId)`
   - Actualizar campos `followup_d1_sent_at`, `followup_d3_sent_at`
 
-- [ ] **B5** — Tests unitarios follow-ups D+1/D+3 (15 min)
+- [x] **B5** — Tests unitarios follow-ups D+1/D+3 (15 min)
   - Mock sendEmail, verificar llamadas correctas
   - Test queries BD
   - Test variaciones inteligentes de mensajes
@@ -137,7 +137,7 @@
 
 **Tareas:**
 
-- [ ] **C1** — Crear `sendPreReservationReminder24h()` (45 min)
+- [x] **C1** — Crear `sendPreReservationReminder24h()` (45 min)
   - Query: `status=confirmed AND date = CURRENT_DATE + 1 AND reminder_24h_sent_at IS NULL`
   - Email: "Mañana a las {startTime} te esperamos en Coworkia"
   - WhatsApp: Mensaje con:
@@ -147,7 +147,7 @@
     - Botón "¿Necesitas cancelar?" → flujo cancelación
   - Cron: ejecuta 18:00 PM (tarde anterior)
 
-- [ ] **C2** — Crear `sendPreReservationReminder2h()` (30 min)
+- [x] **C2** — Crear `sendPreReservationReminder2h()` (30 min)
   - Query: `status=confirmed AND date = CURRENT_DATE AND start_time <= NOW() + INTERVAL '2 hours' AND reminder_2h_sent_at IS NULL`
   - Solo WhatsApp (no email, muy urgente)
   - Mensaje: "🔔 ¡Recordatorio! En 2 horas te esperamos en Coworkia"
@@ -156,14 +156,14 @@
     - Cancelar (reply "CANCELAR")
   - Cron: ejecuta cada 30 min desde 8:00 AM a 18:00 PM
 
-- [ ] **C3** — Flujo cancelación desde recordatorio (45 min)
+- [x] **C3** — Flujo cancelación desde recordatorio (45 min)
   - Detectar keyword "CANCELAR" / "NO VOY" / "NO PUEDO"
   - Actualizar BD: `status=cancelled`, `cancellation_reason=user_request`
   - Respuesta: "Entendido, tu reserva ha sido cancelada. ¿Quieres reagendar?"
   - Si reply "SÍ": trigger flujo Aurora normal
   - Log: `[AURORA-CANCEL] Usuario {phone} canceló reserva #{id}`
 
-- [ ] **C4** — Dashboard: mostrar cancelaciones recientes (30 min)
+- [x] **C4** — Dashboard: mostrar cancelaciones recientes (30 min)
   - Sección nueva: "Cancelaciones últimas 7 días"
   - Tabla: nombre, fecha original, razón, reagendó (sí/no)
   - Filtros: por razón de cancelación
@@ -180,7 +180,7 @@
 
 **Tareas:**
 
-- [ ] **D1** — Query detección no-shows (1h)
+- [x] **D1** — Query detección no-shows (1h)
   ```sql
   -- Reserva confirmada + fecha/hora pasó + sin followup_1h (= no llegó)
   SELECT * FROM reservations
@@ -194,19 +194,19 @@
   - Marca: `no_show_detected_at = NOW(), status = 'no_show'`
   - Log: `[AURORA-NOSHOW] ⚠️ Detectado no-show: {userName} #{reservationId}`
 
-- [ ] **D2** — Re-engagement D+1 después no-show (45 min)
+- [x] **D2** — Re-engagement D+1 después no-show (45 min)
   - Mensaje WhatsApp: "Hola {userName}, notamos que no pudiste venir ayer. ¿Todo bien? ¿Quieres reagendar?"
   - Tono: empático, no acusatorio
   - CTA: "Reagendar ahora" (link directo a flow Aurora)
   - Variación: si `wasFree=true` → "Tu visita gratis sigue disponible, reagenda cuando quieras"
 
-- [ ] **D3** — Re-engagement D+3 FOMO (30 min)
+- [x] **D3** — Re-engagement D+3 FOMO (30 min)
   - Si no respondió a D+1
   - Mensaje: "Hola {userName}, ¿sigues interesado en Coworkia? Tenemos 20% OFF en tu próxima reserva"
   - CTA: código descuento único `VUELVE20-{reservationId}`
   - Aplicar descuento automáticamente si agenda con ese código
 
-- [ ] **D4** — Analytics no-show en dashboard (45 min)
+- [x] **D4** — Analytics no-show en dashboard (45 min)
   - Card: "No-Show Rate: {X}% (últimos 30 días)"
   - Gráfico tendencia semanal
   - Top 3 razones de no-show (si capturamos)
@@ -223,7 +223,7 @@
 
 **Tareas:**
 
-- [ ] **E1** — Query power users (1h)
+- [x] **E1** — Query power users (1h)
   ```sql
   -- Usuarios con 3+ reservas en últimos 30 días, sin membresía
   SELECT user_phone, user_name, COUNT(*) as total_reservas,
@@ -239,7 +239,7 @@
   - Cron: ejecuta lunes 10:00 AM (inicio semana)
   - Identifica top 10 candidatos semanales
 
-- [ ] **E2** — Calcular ahorro con membresía (30 min)
+- [x] **E2** — Calcular ahorro con membresía (30 min)
   ```js
   function calculateMembershipSavings(totalSpent, reservationCount) {
     const monthlyEstimate = (totalSpent / 30) * 30; // Proyección mensual
@@ -255,7 +255,7 @@
   }
   ```
 
-- [ ] **E3** — Email/WhatsApp propuesta Aluna (45 min)
+- [x] **E3** — Email/WhatsApp propuesta Aluna (45 min)
   - Subject: "¡{userName}, ahorra ${monthlySavings} al mes con Membresía Gold!"
   - Comparativa:
     - Gastos actuales: ${currentSpending}/mes
@@ -267,7 +267,7 @@
     3. "No gracias, seguir pagando por visita"
   - Marca: `upsell_aluna_sent_at = NOW()`
 
-- [ ] **E4** — Dashboard: Upselling pipeline (15 min)
+- [x] **E4** — Dashboard: Upselling pipeline (15 min)
   - Sección: "Candidatos Membresía Aluna"
   - Tabla: nombre, visitas/mes, gasto/mes, ahorro potencial, estado
   - Acciones: "Enviar propuesta", "Marcar como no interesado"
@@ -284,7 +284,7 @@
 
 **Tareas:**
 
-- [ ] **F1** — Recordatorio pago pendiente D+1 (45 min)
+- [x] **F1** — Recordatorio pago pendiente D+1 (45 min)
   - Query: `status=pending_payment AND date >= CURRENT_DATE AND payment_reminder_sent_at IS NULL AND created_at <= NOW() - INTERVAL '24 hours'`
   - Mensaje: "Hola {userName}, tu reserva para {date} está pendiente de pago"
   - Métodos pago:
@@ -294,13 +294,13 @@
   - CTA: "Ya pagué" (trigger verificación manual)
   - Cron: ejecuta 11:00 AM diario
 
-- [ ] **F2** — Webhook Payphone verificación automática (30 min)
+- [x] **F2** — Webhook Payphone verificación automática (30 min)
   - Endpoint existente: `/webhooks/payphone`
   - Detectar pago exitoso → actualizar `status=confirmed, payment_verified_at=NOW()`
   - Envío automático email confirmación
   - Actualizar dashboard en tiempo real (WebSocket si es posible)
 
-- [ ] **F3** — Auto-cancelación 48h sin pago (30 min)
+- [x] **F3** — Auto-cancelación 48h sin pago (30 min)
   - Query: `status=pending_payment AND created_at <= NOW() - INTERVAL '48 hours'`
   - Actualizar: `status=cancelled, cancellation_reason=payment_timeout`
   - Mensaje: "Tu reserva ha sido cancelada por falta de pago. ¿Quieres reagendar?"
@@ -308,7 +308,7 @@
   - Log: `[AURORA-TIMEOUT] Cancelada reserva #{id} por timeout pago`
   - Cron: ejecuta cada 6 horas
 
-- [ ] **F4** — Dashboard: pagos pendientes urgentes (15 min)
+- [x] **F4** — Dashboard: pagos pendientes urgentes (15 min)
   - Alert rojo: "X reservas con pago pendiente >36h"
   - Lista ordenada por urgencia (más antiguas primero)
   - Acciones rápidas: "Llamar", "Enviar recordatorio", "Cancelar"
@@ -324,7 +324,7 @@
 
 **Tareas:**
 
-- [ ] **G1** — Keyword detection cancelación (45 min)
+- [x] **G1** — Keyword detection cancelación (45 min)
   - Keywords: "CANCELAR", "NO VOY", "NO PUEDO", "REPROGRAMAR"
   - Trigger flujo: "¿Estás seguro que quieres cancelar tu reserva del {date} a las {startTime}?"
   - Opciones:
@@ -332,7 +332,7 @@
     2. "Quiero cambiar fecha" → reagendamiento
     3. "No, mantener reserva" → exit
 
-- [ ] **G2** — Captura motivo cancelación (30 min)
+- [x] **G2** — Captura motivo cancelación (30 min)
   - Pregunta: "¿Nos cuentas por qué cancelas? (opcional)"
   - Categorías auto-detectadas:
     - Enfermedad / emergencia
@@ -344,7 +344,7 @@
   - Guardar: `cancellation_reason` (texto libre), `cancellation_category` (enum)
   - Analytics: dashboard con top 3 motivos
 
-- [ ] **G3** — Reagendamiento inteligente (45 min)
+- [x] **G3** — Reagendamiento inteligente (45 min)
   - Si cancela, ofrecer: "¿Quieres reagendar? Tengo disponibilidad:"
   - Slots sugeridos:
     1. Mismo día semana siguiente (mantener rutina)
@@ -354,7 +354,7 @@
   - Reply número (1/2/3) → reserva automáticamente
   - Si acepta: `rescheduled_from_id` = {original_reservation_id}
 
-- [ ] **G4** — Dashboard analytics cancelaciones (hasta aquí llega el bloque)
+- [x] **G4** — Dashboard analytics cancelaciones (hasta aquí llega el bloque)
   - Sección: "Cancelaciones últimos 30 días"
   - Gráficos:
     - Cancelaciones por día de semana (¿lunes tiene más?)
@@ -373,7 +373,7 @@
 
 **Tareas:**
 
-- [ ] **H1** — Dashboard sección "Automatizaciones" (1h)
+- [x] **H1** — Dashboard sección "Automatizaciones" (1h)
   - UI: 7 cards (una por automatización)
   - Cada card muestra:
     - 📊 Nombre: "Follow-up D+1"
@@ -384,7 +384,7 @@
   - Grid responsive 2x4
   - Colores: verde (OK), amarillo (warning), rojo (error)
 
-- [ ] **H2** — Tests unitarios + integración (45 min)
+- [x] **H2** — Tests unitarios + integración (45 min)
   ```bash
   npm test -- aurora-followup-d1.test.js
   npm test -- aurora-no-show.test.js
@@ -397,7 +397,7 @@
   - Verificar lógica condicionales (variaciones mensajes)
   - Coverage target: 80%+
 
-- [ ] **H3** — Documentación wiki interna (15 min)
+- [x] **H3** — Documentación wiki interna (15 min)
   - Crear: `documentacion/AURORA-AUTOMATIZACIONES.md`
   - Explicar:
     - Qué hace cada automatización

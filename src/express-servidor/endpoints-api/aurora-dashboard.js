@@ -814,7 +814,9 @@ router.get('/automations/stats', async (req, res) => {
       { key: 'reminder_24h', col: 'reminder_24h_sent_at' },
       { key: 'reminder_2h',  col: 'reminder_2h_sent_at' },
       { key: 'no_show',      col: 'no_show_detected_at' },
-      { key: 'rebook_d7',    col: 'rebook_reminder_sent_at' }
+      { key: 'rebook_d7',    col: 'rebook_reminder_sent_at' },
+      { key: 'payment',      col: 'payment_reminder_sent_at' },
+      { key: 'upsell',       col: 'upsell_aluna_sent_at' }
     ];
 
     const stats = {};

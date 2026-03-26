@@ -24,7 +24,7 @@ async function investigateJavierTroya() {
     const adrianaQuotesQuery = `
       SELECT * 
       FROM adriana_quote_leads 
-      WHERE LOWER(name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%'
+      WHERE LOWER(client_name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%'
       ORDER BY created_at DESC;
     `;
     const adrianaQuotesResults = await databaseService.all(adrianaQuotesQuery);
@@ -33,11 +33,10 @@ async function investigateJavierTroya() {
       console.log(`✅ Encontrados ${adrianaQuotesResults.length} registros en ADRIANA_QUOTE_LEADS:`);
       adrianaQuotesResults.forEach(lead => {
         console.log(`   - ID: ${lead.id}`);
-        console.log(`     Nombre: ${lead.name}`);
+        console.log(`     Nombre: ${lead.client_name}`);
         console.log(`     Teléfono: ${lead.phone}`);
         console.log(`     Status: ${lead.status}`);
-        console.log(`     Placa: ${lead.plate || 'N/A'}`);
-        console.log(`     Vehículo: ${lead.vehicle_info || 'N/A'}`);
+        console.log(`     Vehículo: ${JSON.stringify(lead.vehicle_data)}`);
         console.log(`     Creado: ${lead.created_at}`);
         console.log('');
       });
@@ -45,12 +44,12 @@ async function investigateJavierTroya() {
       console.log('❌ No se encontraron registros en ADRIANA_QUOTE_LEADS\n');
     }
 
-    // 2. Buscar en insurance_leads (Adriana específica)
+    // 2. Buscar en insurance_leads (Adriana específica - tabla antigua)
     console.log('📊 Buscando en tabla INSURANCE_LEADS...');
     const insuranceQuery = `
       SELECT * 
       FROM insurance_leads 
-      WHERE LOWER(name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%'
+      WHERE LOWER(client_name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%' OR LOWER(user_phone) LIKE '%troya%'
       ORDER BY created_at DESC;
     `;
     const insuranceResults = await databaseService.all(insuranceQuery);
@@ -59,8 +58,10 @@ async function investigateJavierTroya() {
       console.log(`✅ Encontrados ${insuranceResults.length} registros en INSURANCE_LEADS:`);
       insuranceResults.forEach(lead => {
         console.log(`   - ID: ${lead.id}`);
-        console.log(`     Nombre: ${lead.name}`);
-        console.log(`     Teléfono: ${lead.phone}`);
+        console.log(`     Nombre: ${lead.client_name}`);
+        console.log(`     Teléfono: ${lead.phone || lead.user_phone}`);
+        console.log(`     Placa: ${lead.plate}`);
+        console.log(`     Vehículo: ${lead.vehicle_brand} ${lead.vehicle_model} ${lead.vehicle_year}`);
         console.log(`     Status: ${lead.status}`);
         console.log(`     Creado: ${lead.created_at}`);
         console.log('');
@@ -72,9 +73,9 @@ async function investigateJavierTroya() {
     // 3. Buscar en users (por si fue contacto de coworking)
     console.log('📊 Buscando en tabla USERS...');
     const usersQuery = `
-      SELECT id, name, phone, email, created_at, profile
+      SELECT phone_number, name, email, created_at, active_agent
       FROM users 
-      WHERE LOWER(name) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%' OR LOWER(email) LIKE '%troya%'
+      WHERE LOWER(name) LIKE '%troya%' OR LOWER(phone_number) LIKE '%troya%' OR LOWER(email) LIKE '%troya%'
       ORDER BY created_at DESC;
     `;
     const usersResults = await databaseService.all(usersQuery);
@@ -82,10 +83,10 @@ async function investigateJavierTroya() {
     if (usersResults.length > 0) {
       console.log(`✅ Encontrados ${usersResults.length} registros en USERS:`);
       usersResults.forEach(user => {
-        console.log(`   - ID: ${user.id}`);
+        console.log(`   - Teléfono: ${user.phone_number}`);
         console.log(`     Nombre: ${user.name}`);
-        console.log(`     Teléfono: ${user.phone}`);
         console.log(`     Email: ${user.email}`);
+        console.log(`     Agente activo: ${user.active_agent}`);
         console.log(`     Creado: ${user.created_at}`);
         console.log('');
       });

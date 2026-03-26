@@ -105,8 +105,9 @@ function getEmailStyles({ xiaomiSafe = false } = {}) {
   
   const responsiveStyles = `
     @media screen and (max-width:600px){
-      .em-wrap{border-radius:0 !important;}
+      .em-wrap{border-radius:0 !important;width:100% !important;}
       .em-body{padding:20px 18px !important;}
+      .em-container{width:100% !important;max-width:100% !important;}
     }
   `;
   
@@ -170,7 +171,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
   <title>Tu membresía en Coworkia te espera</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div class="em-container" style="width:100%;max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
   <!-- Header — idéntico al template de proformas aprobado -->
   <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
@@ -275,7 +276,7 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
   <title>⚠️ Últimas disponibilidades — Coworkia</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div class="em-container" style="width:100%;max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
   <!-- Header — fondo verde con badge de urgencia -->
   <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
@@ -396,7 +397,7 @@ export function buildAdrianaComparisonHTML({
   <title>Comparativo de Seguros — SegPopular${codeSuffix}</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+<div class="em-container" style="width:100%;max-width:600px;margin:0 auto;padding:24px 16px;">
 
   <!-- Header -->
   <div style="background:${branding.gradient};padding:40px 32px;border-radius:12px 12px 0 0;text-align:center;">
@@ -521,7 +522,7 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
@@ -589,7 +590,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }, {
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
@@ -656,7 +657,7 @@ export function buildEnzoD1HTML({ nombre, proyecto = 'tu proyecto', message = ''
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
@@ -719,7 +720,7 @@ export function buildEnzoD3HTML({ nombre, proyecto = 'tu proyecto', descuento = 
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Urgency banner -->
   <div style="background:#dc2626;padding:10px;text-align:center;">
@@ -790,7 +791,7 @@ export function buildEnzoD7HTML({ nombre, proyecto = 'tu proyecto', caseStudy = 
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">

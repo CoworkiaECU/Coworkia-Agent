@@ -295,6 +295,33 @@
     .section-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
     .section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
     .section-sub { font-size: 13px; color: #475569; margin-top: 3px; }
+
+    /* ── automatizaciones grid ── */
+    .auto-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+    }
+    .auto-card {
+      background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      transition: border-color .15s;
+    }
+    .auto-card:hover { border-color: #475569; }
+    .auto-card-head { display: flex; align-items: center; gap: 10px; }
+    .auto-card-icon { font-size: 22px; flex-shrink: 0; }
+    .auto-card-name { font-size: 13px; font-weight: 600; color: #f1f5f9; line-height: 1.3; }
+    .auto-card-status {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .auto-status-active  { background: #064e3b; color: #34d399; }
+    .auto-status-pending { background: #451a03; color: #fb923c; }
+    .auto-status-error   { background: #450a0a; color: #f87171; }
+    .auto-card-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+    .auto-stat { display: flex; flex-direction: column; }
+    .auto-stat-num { font-size: 18px; font-weight: 800; color: #f1f5f9; }
+    .auto-stat-lbl { font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: .3px; }
+    .auto-card-last { font-size: 11px; color: #475569; }
   </style>
 </head>
 <body>
@@ -413,6 +440,131 @@
       <button id="qa-campaign-wa" class="qa-btn">
         <span class="icon">📣</span>Campaña Completados
       </button>
+    </div>
+  </div>
+
+  <!-- ── Automatizaciones Aurora ── -->
+  <div class="section" id="section-automations">
+    <div class="section-header">
+      <div>
+        <div class="section-title">⚙️ Automatizaciones</div>
+        <div class="section-sub">Estado en tiempo real de las 7 automatizaciones de Aurora.</div>
+      </div>
+      <button id="btn-refresh-automations" class="btn btn-primary btn-sm">↺ Actualizar</button>
+    </div>
+    <div class="auto-grid" id="automations-grid">
+      <!-- +1h Follow-up -->
+      <div class="auto-card" data-auto="followup_1h">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">⏰</span>
+          <div>
+            <div class="auto-card-name">Follow-up +1h</div>
+            <span class="auto-card-status auto-status-active">✅ Activo</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-1h-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-1h-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-1h-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-1h-last">—</span></div>
+      </div>
+      <!-- D+1 Follow-up -->
+      <div class="auto-card" data-auto="followup_d1">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">📨</span>
+          <div>
+            <div class="auto-card-name">Follow-up D+1</div>
+            <span class="auto-card-status auto-status-pending">⚠️ Pendiente</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d1-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d1-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d1-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-d1-last">—</span></div>
+      </div>
+      <!-- D+3 Follow-up FOMO -->
+      <div class="auto-card" data-auto="followup_d3">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">🔥</span>
+          <div>
+            <div class="auto-card-name">Follow-up D+3 FOMO</div>
+            <span class="auto-card-status auto-status-pending">⚠️ Pendiente</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d3-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d3-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d3-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-d3-last">—</span></div>
+      </div>
+      <!-- Reminder 24h -->
+      <div class="auto-card" data-auto="reminder_24h">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">📅</span>
+          <div>
+            <div class="auto-card-name">Recordatorio 24h</div>
+            <span class="auto-card-status auto-status-pending">⚠️ Pendiente</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-24h-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-24h-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-24h-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-24h-last">—</span></div>
+      </div>
+      <!-- Reminder 2h -->
+      <div class="auto-card" data-auto="reminder_2h">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">🔔</span>
+          <div>
+            <div class="auto-card-name">Recordatorio 2h</div>
+            <span class="auto-card-status auto-status-pending">⚠️ Pendiente</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-2h-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-2h-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-2h-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-2h-last">—</span></div>
+      </div>
+      <!-- No-Show Detection -->
+      <div class="auto-card" data-auto="no_show">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">👻</span>
+          <div>
+            <div class="auto-card-name">No-Show Detection</div>
+            <span class="auto-card-status auto-status-pending">⚠️ Pendiente</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-noshow-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-noshow-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-noshow-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-noshow-last">—</span></div>
+      </div>
+      <!-- Re-booking D+7 -->
+      <div class="auto-card" data-auto="rebook_d7">
+        <div class="auto-card-head">
+          <span class="auto-card-icon">🔁</span>
+          <div>
+            <div class="auto-card-name">Re-booking D+7</div>
+            <span class="auto-card-status auto-status-active">✅ Activo</span>
+          </div>
+        </div>
+        <div class="auto-card-stats">
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d7-today">–</span><span class="auto-stat-lbl">Hoy</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d7-week">–</span><span class="auto-stat-lbl">Semana</span></div>
+          <div class="auto-stat"><span class="auto-stat-num" id="auto-d7-total">–</span><span class="auto-stat-lbl">Total</span></div>
+        </div>
+        <div class="auto-card-last">Último: <span id="auto-d7-last">—</span></div>
+      </div>
     </div>
   </div>
 

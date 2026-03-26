@@ -143,8 +143,8 @@ async function sendRebookingReminders() {
   try {
     await databaseService.ensureInitialized();
 
-    // Buscar reservas completadas hace exactamente 7 días
-    // que NO hayan recibido el reminder todavía
+    // Buscar reservas completadas hace 7-9 días (ventana de 3 días para no perder ninguna)
+    // Fix v1152: antes usaba = exacto y perdía reservas de 8+ días
     const reservationsToRebook = await databaseService.all(`
       SELECT 
         id, 
@@ -155,7 +155,7 @@ async function sendRebookingReminders() {
         guest_count
       FROM reservations
       WHERE status = 'confirmed'
-        AND date = CURRENT_DATE - INTERVAL '7 days'
+        AND date BETWEEN CURRENT_DATE - INTERVAL '9 days' AND CURRENT_DATE - INTERVAL '7 days'
         AND rebook_reminder_sent_at IS NULL
       ORDER BY date ASC
       LIMIT 30

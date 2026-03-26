@@ -1267,6 +1267,58 @@ window.sendFollowupNow = async function(id, type, btn) {
   } catch (err) { showToast('❌ Error de red'); btn.disabled = false; btn.textContent = origText; }
 };
 
+// ── Automatizaciones stats ────────────────────────────────────────────────────
+async function loadAutomationStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/aurora/automations/stats`);
+    const data = await res.json();
+    if (!data.ok || !data.stats) return;
+
+    const mapping = {
+      followup_1h:  { prefix: '1h' },
+      followup_d1:  { prefix: 'd1' },
+      followup_d3:  { prefix: 'd3' },
+      reminder_24h: { prefix: '24h' },
+      reminder_2h:  { prefix: '2h' },
+      no_show:      { prefix: 'noshow' },
+      rebook_d7:    { prefix: 'd7' }
+    };
+
+    for (const [key, cfg] of Object.entries(mapping)) {
+      const s = data.stats[key];
+      if (!s) continue;
+      const el = (id) => document.getElementById(id);
+      const todayEl = el(`auto-${cfg.prefix}-today`);
+      const weekEl  = el(`auto-${cfg.prefix}-week`);
+      const totalEl = el(`auto-${cfg.prefix}-total`);
+      const lastEl  = el(`auto-${cfg.prefix}-last`);
+
+      if (todayEl) todayEl.textContent = s.today;
+      if (weekEl)  weekEl.textContent  = s.week;
+      if (totalEl) totalEl.textContent = s.total;
+      if (lastEl) {
+        lastEl.textContent = s.lastSent
+          ? new Date(s.lastSent).toLocaleString('es-EC', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+          : '—';
+      }
+
+      // Update status badge dynamically based on whether automation has sent anything
+      const card = document.querySelector(`[data-auto="${key}"]`);
+      if (card) {
+        const badge = card.querySelector('.auto-card-status');
+        if (badge && s.total > 0) {
+          badge.className = 'auto-card-status auto-status-active';
+          badge.textContent = '✅ Activo';
+        }
+      }
+    }
+
+    console.log('[AURORA-DASH] ⚙️ Automation stats cargadas');
+  } catch (err) {
+    console.warn('[AURORA-DASH] No se pudieron cargar automation stats:', err.message);
+  }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
 try {
@@ -1415,6 +1467,15 @@ try {
   // Conversaciones: se cargan la primera vez que se abre ese tab (lazy-load)
 
   // Métricas: se cargan la primera vez que se abre ese tab (lazy-load)
+
+  // Automatizaciones: cargar stats al inicio + refresh cada 60s
+  loadAutomationStats();
+  setInterval(loadAutomationStats, 60000);
+
+  document.getElementById('btn-refresh-automations')?.addEventListener('click', () => {
+    loadAutomationStats();
+    showToast('⚙️ Automatizaciones actualizadas');
+  });
 
   console.log('[AURORA-DASH] ✅ Inicialización completa');
 } catch (error) {

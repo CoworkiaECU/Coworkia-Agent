@@ -795,4 +795,52 @@ router.patch('/reservations/:id/attended', async (req, res) => {
   }
 });
 
+// ============================================================================
+// AUTOMATIONS STATS
+// ============================================================================
+
+/**
+ * GET /api/aurora/automations/stats
+ * Devuelve estadísticas de cada automatización (hoy, semana, total, último envío)
+ */
+router.get('/automations/stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const fields = [
+      { key: 'followup_1h',  col: 'followup_1h_sent_at' },
+      { key: 'followup_d1',  col: 'followup_d1_sent_at' },
+      { key: 'followup_d3',  col: 'followup_d3_sent_at' },
+      { key: 'reminder_24h', col: 'reminder_24h_sent_at' },
+      { key: 'reminder_2h',  col: 'reminder_2h_sent_at' },
+      { key: 'no_show',      col: 'no_show_detected_at' },
+      { key: 'rebook_d7',    col: 'rebook_reminder_sent_at' }
+    ];
+
+    const stats = {};
+
+    for (const f of fields) {
+      const row = await databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE ${f.col} >= CURRENT_DATE) AS today,
+          COUNT(*) FILTER (WHERE ${f.col} >= CURRENT_DATE - INTERVAL '7 days') AS week,
+          COUNT(*) FILTER (WHERE ${f.col} IS NOT NULL) AS total,
+          MAX(${f.col}) AS last_sent
+        FROM reservations
+      `);
+      stats[f.key] = {
+        today:    parseInt(row?.today || 0),
+        week:     parseInt(row?.week || 0),
+        total:    parseInt(row?.total || 0),
+        lastSent: row?.last_sent || null
+      };
+    }
+
+    return res.json({ ok: true, stats });
+  } catch (error) {
+    console.error('[AURORA-API] Error en automations/stats:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

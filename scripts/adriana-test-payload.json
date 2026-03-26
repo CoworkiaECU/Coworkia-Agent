@@ -1,21 +1,21 @@
 {
   "vehicleData": {
-    "brand": "Chevrolet",
-    "model": "Tracker",
-    "year": 2023,
+    "brand": "Mazda",
+    "model": "CX-5",
+    "year": 2024,
     "type": "suv",
-    "commercialValue": 45000
+    "commercialValue": 52000
   },
   "customerData": {
-    "nombres": "Diego Villota",
+    "nombres": "María González",
     "email": "mktlab.ec@gmail.com",
-    "telefono": "+593994837117",
-    "cedula": "1234567890",
-    "edad": 32,
+    "telefono": "+593999888777",
+    "cedula": "1715896320",
+    "edad": 28,
     "provincia": "Pichincha"
   },
   "options": {
-    "quoteCode": "VAZ-TEST-DEMO001",
+    "quoteCode": "VAZ-PROD-FINAL-001",
     "includeCompetitors": true
   }
 }

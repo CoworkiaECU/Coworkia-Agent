@@ -255,6 +255,17 @@ router.post('/send-quote', async (req, res) => {
 
     // 4. Guardar en insurance_leads (tracking)
     try {
+      // Crear usuario si no existe (para cumplir FOREIGN KEY constraint)
+      const userPhone = customerData.telefono || '';
+      if (userPhone) {
+        await databaseService.run(
+          `INSERT INTO users (phone_number, full_name, email, agent, first_interaction)
+           VALUES ($1, $2, $3, 'ADRIANA', CURRENT_TIMESTAMP)
+           ON CONFLICT (phone_number) DO NOTHING`,
+          [userPhone, customerData.nombres, customerData.email]
+        );
+      }
+
       const leadId = `IL-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       await databaseService.run(
         `INSERT INTO insurance_leads (
@@ -268,12 +279,12 @@ router.post('/send-quote', async (req, res) => {
         [
           leadId,
           quoteCode,
-          customerData.telefono || '',
+          userPhone,
           'ADRIANA',
           'Vehículo Liviano',
           customerData.nombres,
           customerData.email,
-          customerData.telefono || '',
+          userPhone,
           customerData.cedula || '',
           vehicleData.brand,
           vehicleData.model,
@@ -284,6 +295,7 @@ router.post('/send-quote', async (req, res) => {
           'quoted',
         ]
       );
+      loggers.adriana.info('Lead guardado exitosamente', { leadId, quoteCode });
     } catch (dbError) {
       loggers.adriana.warn('Error guardando lead (no crítico)', {}, dbError);
     }

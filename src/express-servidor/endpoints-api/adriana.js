@@ -259,9 +259,12 @@ router.post('/send-quote', async (req, res) => {
       const userPhone = customerData.telefono || '';
       if (userPhone) {
         await databaseService.run(
-          `INSERT INTO users (phone_number, full_name, email, agent, first_interaction)
+          `INSERT INTO users (phone_number, name, email, active_agent, last_message_at)
            VALUES ($1, $2, $3, 'ADRIANA', CURRENT_TIMESTAMP)
-           ON CONFLICT (phone_number) DO NOTHING`,
+           ON CONFLICT (phone_number) DO UPDATE SET
+             name = COALESCE(EXCLUDED.name, users.name),
+             email = COALESCE(EXCLUDED.email, users.email),
+             last_message_at = CURRENT_TIMESTAMP`,
           [userPhone, customerData.nombres, customerData.email]
         );
       }

@@ -17,7 +17,7 @@ const payload = {
     provincia: 'Pichincha'
   },
   options: {
-    quoteCode: 'VAZ-FINAL-TEST-002',
+    quoteCode: `VAZ-TEST-${Date.now().toString(36).toUpperCase().slice(-8)}`,
     includeCompetitors: true
   }
 };

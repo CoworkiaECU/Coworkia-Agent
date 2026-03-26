@@ -1,9 +1,23 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-26T15:30:00Z",
-  "currentPlan": "fix-xiaomi-html",
-  "nextPriority": "xiaomi-testing-manual",
+  "lastUpdated": "2026-03-26T16:00:00Z",
+  "currentPlan": "fix-xiaomi-html-blockb",
+  "nextPriority": "xiaomi-manual-validation",
   "queue": [
+    {
+      "id": "fix-xiaomi-html-blockb",
+      "title": "Fix HTML Xiaomi - Bloque B (Dark mode robusto)",
+      "status": "testing",
+      "plan": "FIX-HTML-XIAOMI-TODO56.md",
+      "estimatedTime": "30min",
+      "realTime": "20min",
+      "startedAt": "2026-03-26T15:40:00Z",
+      "commit": "5202016, fc6d212",
+      "heroku": "v1149",
+      "priority": "urgent",
+      "chat": "chat-derecho",
+      "notes": "✅ B1: Eliminado @media (prefers-color-scheme:dark) de getEmailMediaStyles(). ✅ DARK_MODE_CSS deprecated en email-assets.js. ✅ Templates fuerzan light mode universal (Xiaomi, iPhone, Gmail, Outlook). 🧪 B2: Email de test enviado a yo@diegovillota.com — esperando validación Diego en Xiaomi. 🎯 Pending: OK de Diego → Bloque C (xiaomiSafe flag)."
+    },
     {
       "id": "fix-xiaomi-html-blocka",
       "title": "Fix HTML Xiaomi - Bloque A (Fallbacks CSS)",
@@ -16,7 +30,7 @@
       "heroku": "v1147",
       "priority": "urgent",
       "chat": "chat-derecho",
-      "notes": "✅ Gradientes con fallback sólido. ✅ Box-shadows sin hex-alpha (rgba universal). ✅ Compatibilidad MIUI mejorada. 🎯 Pending: Testing manual en Xiaomi Diego + Bloques B+C si necesita."
+      "notes": "✅ Gradientes con fallback sólido. ✅ Box-shadows sin hex-alpha (rgba universal). ✅ Compatibilidad MIUI mejorada."
     },
     {
       "id": "lopdp-compliance-bd",

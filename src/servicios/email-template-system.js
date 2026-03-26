@@ -636,6 +636,221 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }, {
 </html>`;
 }
 
+// ─── TEMPLATE: AURORA D+1 FOLLOW-UP ─────────────────────────────────────────
+
+/**
+ * 📨 Email D+1 — Aurora post-visita (engagement + satisfacción)
+ * @param {string} nombre      — Nombre del cliente
+ * @param {string} servicio    — Servicio que usó (Hot Desk / Sala de Reuniones)
+ * @param {string} dia         — Fecha de la reserva
+ */
+export function buildAuroraD1HTML({ nombre, servicio, dia }, { xiaomiSafe = false } = {}) {
+  const b = AGENT_BRANDING.AURORA;
+  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+  const serviceMsg = servicio?.toLowerCase().includes('sala')
+    ? '¿Tu reunión fue un éxito? Nos encanta saber que nuestros espacios contribuyen a tus logros.'
+    : 'Esperamos que hayas tenido un día super productivo. Nada como un buen espacio para concentrarse.';
+  
+  return `<!DOCTYPE html>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
+</head>
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¿Cómo estuvo tu experiencia? 🌟</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Tu opinión nos hace mejores</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:16px;color:#1e293b;margin:0 0 20px;">Hola <strong>${firstName}</strong> 👋</p>
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      Ayer disfrutaste de tu <strong>${servicio}</strong> en Coworkia. ${serviceMsg}
+    </p>
+
+    <!-- Feedback prompt -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:24px;">
+      <div style="font-size:28px;margin-bottom:8px;">⭐⭐⭐⭐⭐</div>
+      <p style="margin:0;font-size:14px;color:#166534;font-weight:600;">¿Qué calificación nos das?</p>
+      <p style="margin:6px 0 0;font-size:13px;color:#6b7280;">Responde este email con un número del 1 al 5</p>
+    </div>
+
+    <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0 0 24px;">
+      Nos ayuda mucho tu feedback para seguir mejorando. Y si necesitas un espacio pronto, recuerda que puedes reservar al instante por WhatsApp. 😊
+    </p>
+
+    <!-- CTAs -->
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40aurora%0AHola%20Aurora%2C%20quiero%20reservar%20de%20nuevo"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        📅 Reservar de Nuevo
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: AURORA D+3 FOLLOW-UP FOMO ────────────────────────────────────
+
+/**
+ * 🔥 Email D+3 — Aurora FOMO + upselling suave
+ * @param {string} nombre       — Nombre del cliente
+ * @param {string} servicio     — Servicio que usó
+ * @param {boolean} [wasFree]   — Si fue visita gratis (primera vez)
+ */
+export function buildAuroraD3HTML({ nombre, servicio, wasFree = false }, { xiaomiSafe = false } = {}) {
+  const b = AGENT_BRANDING.AURORA;
+  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+
+  const fomoMsg = wasFree
+    ? 'Tu primera visita gratis fue genial, pero hay mucho más por descubrir. Esta semana tenemos <strong>15% OFF</strong> en tu siguiente reserva.'
+    : servicio?.toLowerCase().includes('sala')
+      ? '¿Tienes otra reunión pendiente? Salas disponibles esta semana con <strong>horarios flexibles</strong>.'
+      : '¿Sabías que con una <strong>Membresía Coworkia</strong> ahorras hasta un 40%? Pregunta por nuestros planes.';
+
+  return `<!DOCTYPE html>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
+</head>
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¿Cuándo vuelves, ${firstName}? 🚀</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Han pasado 3 días desde tu visita</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+      ${fomoMsg}
+    </p>
+
+    <!-- Social proof -->
+    <div style="background:#f8fafc;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:18px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">
+        📊 <strong>Esta semana en Coworkia:</strong><br>
+        ✅ 47 profesionales trabajaron aquí<br>
+        ✅ 12 reuniones exitosas<br>
+        ✅ WiFi premium · Café ilimitado · Parking gratuito
+      </p>
+    </div>
+
+    ${wasFree ? `
+    <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid ${b.primaryColor};border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:24px;">
+      <div style="font-size:13px;color:#065f46;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🎁 Oferta Primera Vez</div>
+      <div style="font-size:28px;font-weight:800;color:#047857;margin:8px 0;">15% OFF</div>
+      <div style="font-size:13px;color:#6b7280;">En tu próxima visita esta semana</div>
+    </div>` : ''}
+
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40aurora%0AHola%20Aurora%2C%20quiero%20reservar%20para%20esta%20semana"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        📅 Agendar Ahora
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
+// ─── TEMPLATE: AURORA REMINDER 24H ──────────────────────────────────────────
+
+/**
+ * 📅 Email recordatorio 24h antes — Aurora pre-reserva
+ * @param {string} nombre    — Nombre del cliente
+ * @param {string} servicio  — Servicio reservado
+ * @param {string} dia       — Fecha de la reserva
+ * @param {string} hora      — Hora de inicio
+ */
+export function buildAuroraReminder24hHTML({ nombre, servicio, dia, hora }, { xiaomiSafe = false } = {}) {
+  const b = AGENT_BRANDING.AURORA;
+  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+  return `<!DOCTYPE html>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
+</head>
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+<div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+  <!-- Header -->
+  <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
+    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Mañana te esperamos! 📅</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Recordatorio de tu reserva</p>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:36px 32px;">
+    <p style="font-size:16px;color:#1e293b;margin:0 0 20px;">Hola <strong>${firstName}</strong> 👋</p>
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 24px;">
+      Te recordamos que <strong>mañana ${dia}</strong> a las <strong>${hora}</strong> tienes tu reserva de <strong>${servicio}</strong> en Coworkia.
+    </p>
+
+    <!-- Detalles -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">📋 Tu Reserva</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;width:40%;">Servicio</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${servicio}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;">Fecha</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${dia}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#64748b;">Hora</td><td style="padding:6px 0;font-size:14px;color:#1e293b;font-weight:600;">${hora}</td></tr>
+      </table>
+    </div>
+
+    <div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+        📍 <strong>Dirección:</strong> Av. 12 de Octubre N24-562 y Cordero, Quito<br>
+        🅿️ Estacionamiento disponible · ☕ Café incluido<br>
+        📶 WiFi de alta velocidad
+      </p>
+    </div>
+
+    <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0 0 24px;">
+      ¿Necesitas cancelar o cambiar la hora? No hay problema, escríbenos por WhatsApp.
+    </p>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/${process.env.BOT_PHONE || '593994837117'}?text=%40aurora%0AHola%20Aurora%2C%20tengo%20una%20consulta%20sobre%20mi%20reserva%20de%20ma%C3%B1ana"
+         style="display:inline-block;background:${b.primaryColor};color:#fff;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;">
+        💬 Contactar por WhatsApp
+      </a>
+    </div>
+  </div>
+
+  ${buildCoworkiaFooter(b)}
+</div>
+</body>
+</html>`;
+}
+
 // ─── TEMPLATE: ENZO D+1 ─────────────────────────────────────────────────────
 
 /**
@@ -1091,6 +1306,9 @@ export function buildEmailTemplate(agent, type, data, options = {}) {
     ALUNA_D3:                 () => buildAlunaD3HTML(data, { xiaomiSafe }),
     AURORA_CONFIRMATION:      () => buildAuroraConfirmationHTML(data, { xiaomiSafe }),
     AURORA_REBOOKING:         () => buildAuroraRebookingHTML(data, { xiaomiSafe }),
+    AURORA_D1:                () => buildAuroraD1HTML(data, { xiaomiSafe }),
+    AURORA_D3:                () => buildAuroraD3HTML(data, { xiaomiSafe }),
+    AURORA_REMINDER_24H:      () => buildAuroraReminder24hHTML(data, { xiaomiSafe }),
     ENZO_D1:                  () => buildEnzoD1HTML(data, { xiaomiSafe }),
     ENZO_D3:                  () => buildEnzoD3HTML(data, { xiaomiSafe }),
     ENZO_D7:                  () => buildEnzoD7HTML(data, { xiaomiSafe }),

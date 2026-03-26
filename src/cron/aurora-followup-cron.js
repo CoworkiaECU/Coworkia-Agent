@@ -559,6 +559,237 @@ En *2 horas* te esperamos en Coworkia para tu *${serviceLabel}* a las *${r.start
   }
 }
 
+// ─── No-Show Detection + Re-engagement ────────────────────────────────────────
+
+async function detectNoShows() {
+  console.log('[AURORA-NOSHOW] 👻 Detectando no-shows...');
+  
+  try {
+    await databaseService.ensureInitialized();
+
+    // Reservas confirmadas cuya fecha/hora ya pasó hace 3+ horas sin followup_1h (= no llegó)
+    const noShows = await databaseService.all(`
+      SELECT 
+        r.id, r.user_phone, r.service_type, r.date, r.start_time, r.total_price,
+        u.name AS user_name
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone
+      WHERE r.status = 'confirmed'
+        AND (r.date::date + r.start_time::time) < (NOW() - INTERVAL '3 hours')
+        AND r.followup_1h_sent_at IS NULL
+        AND r.no_show_detected_at IS NULL
+        AND r.date >= CURRENT_DATE - INTERVAL '3 days'
+      ORDER BY r.date DESC, r.start_time DESC
+      LIMIT 20
+    `);
+
+    if (noShows.length === 0) {
+      console.log('[AURORA-NOSHOW] ℹ️ No se detectaron no-shows');
+      return;
+    }
+
+    console.log(`[AURORA-NOSHOW] ⚠️ Detectados ${noShows.length} no-shows`);
+    let processed = 0;
+
+    for (const r of noShows) {
+      try {
+        const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
+        const wasFree = parseFloat(r.total_price || 0) === 0;
+
+        // Marcar como no-show en BD
+        await databaseService.run(
+          `UPDATE reservations SET no_show_detected_at = NOW() WHERE id = $1`,
+          [r.id]
+        );
+
+        // Mensaje empático (no acusatorio)
+        const freeNote = wasFree
+          ? '\n🎁 Tu visita gratis sigue disponible. Reagenda cuando quieras.'
+          : '';
+
+        const waMessage = `Hola ${firstName} 👋
+
+Notamos que no pudiste venir a tu reserva en Coworkia. ¡Esperamos que todo esté bien!
+
+No te preocupes, estas cosas pasan. ¿Te gustaría reagendar para otro día?${freeNote}
+
+Solo dime la fecha y hora que te queden mejor y reservo para ti 😊`;
+
+        await sendWhatsApp(r.user_phone, waMessage);
+
+        processed++;
+        console.log(`[AURORA-NOSHOW] ⚠️ No-show detectado: ${r.user_phone} (reserva #${r.id})`);
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+      } catch (error) {
+        console.error(`[AURORA-NOSHOW] ❌ Error procesando no-show ${r.id}:`, error.message);
+      }
+    }
+
+    console.log(`[AURORA-NOSHOW] 📊 Resumen: ${processed} no-shows procesados`);
+  } catch (error) {
+    console.error('[AURORA-NOSHOW] ❌ Error en cron no-show:', error.message);
+  }
+}
+
+// ─── Upselling: Hot Desk Power Users → Membresía Aluna ───────────────────────
+
+async function sendUpsellAluna() {
+  console.log('[AURORA-UPSELL] 🎯 Buscando power users para upselling Aluna...');
+  
+  try {
+    await databaseService.ensureInitialized();
+
+    // Usuarios con 3+ reservas en últimos 30 días sin membresía y sin upsell previo
+    const powerUsers = await databaseService.all(`
+      SELECT 
+        r.user_phone,
+        u.name AS user_name,
+        u.email AS user_email,
+        COUNT(*) AS total_reservas,
+        SUM(COALESCE(r.total_price, 0)) AS total_gastado,
+        MAX(r.id) AS last_reservation_id
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone
+      WHERE r.status IN ('confirmed', 'completed')
+        AND r.date >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY r.user_phone, u.name, u.email
+      HAVING COUNT(*) >= 3
+        AND MAX(r.upsell_aluna_sent_at) IS NULL
+      ORDER BY SUM(COALESCE(r.total_price, 0)) DESC
+      LIMIT 10
+    `);
+
+    if (powerUsers.length === 0) {
+      console.log('[AURORA-UPSELL] ℹ️ No hay power users para upselling Aluna');
+      return;
+    }
+
+    console.log(`[AURORA-UPSELL] 🎯 ${powerUsers.length} power users encontrados`);
+    let sent = 0;
+
+    for (const u of powerUsers) {
+      try {
+        const firstName = u.user_name ? u.user_name.split(' ')[0] : 'amig@';
+        const totalGastado = parseFloat(u.total_gastado || 0);
+        const alunaGoldCost = 180;
+        const monthlyEstimate = totalGastado; // Ya es el gasto de 30 días
+        const potentialSavings = monthlyEstimate - alunaGoldCost;
+        const savingsPercent = monthlyEstimate > 0 ? Math.round((potentialSavings / monthlyEstimate) * 100) : 0;
+
+        const waMessage = `¡Hola ${firstName}! 🌟
+
+Hemos notado que eres un usuario frecuente de Coworkia — *${u.total_reservas} visitas* este mes. ¡Nos encanta tenerte!
+
+💡 ¿Sabías que con una *Membresía Gold* podrías ahorrar?
+
+📊 *Tu mes en números:*
+• Reservas: ${u.total_reservas}
+• Gasto total: $${totalGastado.toFixed(0)}
+${potentialSavings > 0 ? `• Con Membresía Gold ($180/mes): *ahorras $${potentialSavings.toFixed(0)} (${savingsPercent}%)*` : '• Con Membresía Gold: acceso ilimitado por $180/mes'}
+
+✅ *Membresía Gold incluye:*
+• Acceso ilimitado a Hot Desk
+• 4 horas/mes de Sala de Reuniones
+• WiFi premium + Café ilimitado
+• Casillero dedicado
+
+¿Te interesa? Escríbeme y te paso los detalles 📋`;
+
+        await sendWhatsApp(u.user_phone, waMessage);
+
+        // Marcar en la última reserva
+        await databaseService.run(
+          `UPDATE reservations SET upsell_aluna_sent_at = NOW() WHERE id = $1`,
+          [u.last_reservation_id]
+        );
+
+        sent++;
+        console.log(`[AURORA-UPSELL] ✅ Upselling enviado a ${firstName} (${u.total_reservas} reservas, $${totalGastado.toFixed(0)})`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+      } catch (error) {
+        console.error(`[AURORA-UPSELL] ❌ Error enviando upsell a ${u.user_phone}:`, error.message);
+      }
+    }
+
+    console.log(`[AURORA-UPSELL] 📊 Resumen: ${sent} upsells enviados`);
+  } catch (error) {
+    console.error('[AURORA-UPSELL] ❌ Error en cron upselling:', error.message);
+  }
+}
+
+// ─── Payment Reminder (pendientes de pago) ────────────────────────────────────
+
+async function sendPaymentReminders() {
+  console.log('[AURORA-PAY] 💳 Buscando reservas pendientes de pago...');
+  
+  try {
+    await databaseService.ensureInitialized();
+
+    // Reservas confirmadas con pago pendiente, fecha mañana o hoy
+    const pending = await databaseService.all(`
+      SELECT 
+        r.id, r.user_phone, r.service_type, r.date, r.start_time, r.total_price,
+        u.name AS user_name
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone
+      WHERE r.status = 'confirmed'
+        AND r.payment_status IN ('pending', 'pending_efectivo')
+        AND r.date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '2 days'
+        AND r.payment_reminder_sent_at IS NULL
+        AND r.total_price > 0
+      ORDER BY r.date ASC
+      LIMIT 20
+    `);
+
+    if (pending.length === 0) {
+      console.log('[AURORA-PAY] ℹ️ No hay reservas pendientes de pago');
+      return;
+    }
+
+    console.log(`[AURORA-PAY] 💳 ${pending.length} reservas pendientes de pago`);
+    let sent = 0;
+
+    for (const r of pending) {
+      try {
+        const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
+        const serviceLabel = r.service_type === 'hot_desk' ? 'Hot Desk'
+          : r.service_type === 'meeting_room' ? 'Sala de Reuniones'
+          : r.service_type === 'private_office' ? 'Oficina Privada' : r.service_type;
+
+        const waMessage = `Hola ${firstName} 👋
+
+Tienes una reserva de *${serviceLabel}* para el *${formatDate(r.date)}* a las *${r.start_time}* pendiente de pago.
+
+💰 *Monto:* $${parseFloat(r.total_price).toFixed(2)}
+
+Puedes pagar en efectivo al llegar o por transferencia bancaria. Si necesitas ayuda con el pago, escríbeme 😊
+
+⚠️ Las reservas sin pago confirmado pueden ser liberadas 2h antes del horario.`;
+
+        await sendWhatsApp(r.user_phone, waMessage);
+
+        await databaseService.run(
+          `UPDATE reservations SET payment_reminder_sent_at = NOW() WHERE id = $1`,
+          [r.id]
+        );
+
+        sent++;
+        console.log(`[AURORA-PAY] ✅ Recordatorio pago enviado a ${r.user_phone} ($${r.total_price})`);
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+      } catch (error) {
+        console.error(`[AURORA-PAY] ❌ Error enviando recordatorio pago a ${r.user_phone}:`, error.message);
+      }
+    }
+
+    console.log(`[AURORA-PAY] 📊 Resumen: ${sent} recordatorios de pago enviados`);
+  } catch (error) {
+    console.error('[AURORA-PAY] ❌ Error en cron payment reminder:', error.message);
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr) {
@@ -627,12 +858,42 @@ export function startAuroraFollowupCrons() {
     'America/Guayaquil'
   );
 
+  // Cron 7: No-Show Detection — cada 4 horas
+  const noShowJob = new CronJob(
+    '0 */4 * * *', // Cada 4 horas
+    detectNoShows,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  // Cron 8: Upselling Aluna — lunes 10:00 AM (inicio semana)
+  const upsellJob = new CronJob(
+    '0 10 * * 1', // Lunes 10:00 AM
+    sendUpsellAluna,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  // Cron 9: Payment Reminder — diario 8:00 AM
+  const paymentJob = new CronJob(
+    '0 8 * * *', // 8:00 AM todos los días
+    sendPaymentReminders,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
   console.log('[AURORA-FOLLOWUP] ✅ Cron de follow-up +1h configurado (cada 15 min)');
   console.log('[AURORA-REBOOK] ✅ Cron de re-booking D+7 configurado (10:00 AM Ecuador)');
   console.log('[AURORA-D1] ✅ Cron de follow-up D+1 configurado (10:05 AM Ecuador)');
   console.log('[AURORA-D3] ✅ Cron de follow-up D+3 FOMO configurado (14:00 PM Ecuador)');
   console.log('[AURORA-24H] ✅ Cron de recordatorio 24h configurado (18:00 PM Ecuador)');
   console.log('[AURORA-2H] ✅ Cron de recordatorio 2h configurado (cada 30 min 8-18h)');
+  console.log('[AURORA-NOSHOW] ✅ Cron de no-show detection configurado (cada 4h)');
+  console.log('[AURORA-UPSELL] ✅ Cron de upselling Aluna configurado (lunes 10AM)');
+  console.log('[AURORA-PAY] ✅ Cron de payment reminder configurado (8:00 AM)');
 
-  return { followupJob, rebookJob, d1Job, d3Job, reminder24hJob, reminder2hJob };
+  return { followupJob, rebookJob, d1Job, d3Job, reminder24hJob, reminder2hJob, noShowJob, upsellJob, paymentJob };
 }

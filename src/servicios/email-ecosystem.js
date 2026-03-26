@@ -113,13 +113,13 @@ function darkCard(key) {
   
   // Botón más sencillo y pequeño
   const btnStyle = isSpecial 
-    ? `display:inline-block;background:linear-gradient(135deg,${color},#8B5CF6);border:none;border-radius:16px;padding:8px 12px;color:white;font-size:9px;font-weight:700;text-decoration:none;white-space:nowrap;`
+    ? `display:inline-block;background:${color};background:linear-gradient(135deg,${color},#8B5CF6);border:none;border-radius:16px;padding:8px 12px;color:white;font-size:9px;font-weight:700;text-decoration:none;white-space:nowrap;`
     : `display:inline-block;background:${color};border:none;border-radius:16px;padding:7px 11px;color:#0F172A;font-size:9px;font-weight:700;text-decoration:none;white-space:nowrap;`;
   
-  // Card con glow sutil y dinámico
+  // Card con glow sutil y dinámico (Xiaomi-safe: fallback gradiente + box-shadow sin hex-alpha)
   const cardStyle = isSpecial
-    ? `background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid ${color}88;border-radius:12px;box-shadow:0 0 20px ${color}40, inset 0 1px 0 rgba(255,255,255,0.05);transition:all 0.3s ease;`
-    : `background:#16181d;border:1px solid ${color}55;border-radius:12px;box-shadow:0 0 16px ${color}35;transition:all 0.3s ease;`;
+    ? `background:#1a1a2e;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid ${color};border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;`
+    : `background:#16181d;border:1px solid ${color};border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:all 0.3s ease;`;
   
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0" height="180" class="eco-card eco-card-${key}" style="${cardStyle}"><tr><td style="padding:16px;vertical-align:top;" valign="top" height="180"><div style="margin-bottom:10px;">${svg}</div><div style="color:${color};font-size:9px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;margin-bottom:7px;opacity:0.75;">${a.tag}</div><div style="color:rgba(255,255,255,0.95);font-size:15px;font-weight:600;line-height:1.25;margin-bottom:8px;">${a.name}</div><div style="color:rgba(255,255,255,0.6);font-size:11px;line-height:1.5;margin-bottom:14px;">${a.pitch}</div><a href="${a.link}" target="_blank" style="${btnStyle}">${a.cta}</a></td></tr></table>`;
 }

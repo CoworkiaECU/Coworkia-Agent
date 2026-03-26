@@ -1350,6 +1350,40 @@ class PostgresAdapter {
         CREATE INDEX IF NOT EXISTS idx_adriana_conversations_updated ON adriana_conversations(updated_at DESC);
       `);
 
+      // Migración: agregar columna documents_state para multi-document upload (v1137)
+      await client.query(`
+        ALTER TABLE adriana_conversations ADD COLUMN IF NOT EXISTS documents_state JSONB DEFAULT '{
+          "cedula": {"received": false, "data": null},
+          "matricula": {"received": false, "data": null},
+          "licencia": {"received": false, "data": null}
+        }'::jsonb
+      `).catch(() => {/* columna puede ya existir */});
+
+      // ===================================================================
+      // TABLA: adriana_documents — Multi-Document Recognition System
+      // Almacena documentos analizados (cédula, matrícula, licencia)
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS adriana_documents (
+          id SERIAL PRIMARY KEY,
+          user_phone TEXT NOT NULL,
+          document_type TEXT NOT NULL CHECK (document_type IN ('cedula', 'matricula', 'licencia')),
+          image_url TEXT,
+          extracted_data JSONB NOT NULL,
+          confidence_score DECIMAL(3,2),
+          analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          quote_code TEXT,
+          FOREIGN KEY (user_phone) REFERENCES users(phone_number) ON DELETE CASCADE
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_adriana_documents_user ON adriana_documents(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_adriana_documents_type ON adriana_documents(document_type);
+        CREATE INDEX IF NOT EXISTS idx_adriana_documents_quote ON adriana_documents(quote_code);
+        CREATE INDEX IF NOT EXISTS idx_adriana_documents_analyzed ON adriana_documents(analyzed_at DESC);
+      `);
+
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);
@@ -1577,6 +1611,90 @@ class PostgresAdapter {
     } catch (error) {
       console.error('[POSTGRES] ❌ Error eliminando confirmación pendiente:', error);
       return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ADRIANA MULTI-DOCUMENT REPOSITORY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * 💾 Guardar documento analizado (cédula, matrícula, licencia)
+   * @param {string} userPhone - Teléfono del usuario
+   * @param {string} documentType - 'cedula' | 'matricula' | 'licencia'
+   * @param {Object} extractedData - Datos extraídos del documento
+   * @param {number} confidenceScore - Score 0.0 - 1.0
+   * @param {string} [imageUrl] - URL de la imagen (opcional)
+   * @param {string} [quoteCode] - Código de cotización asociada (opcional)
+   * @returns {Promise<number>} ID del documento guardado
+   */
+  async saveAdrianaDocument(userPhone, documentType, extractedData, confidenceScore, imageUrl = null, quoteCode = null) {
+    await this.initialize();
+    
+    try {
+      const result = await this.pool.query(
+        `INSERT INTO adriana_documents (user_phone, document_type, image_url, extracted_data, confidence_score, quote_code)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [userPhone, documentType, imageUrl, JSON.stringify(extractedData), confidenceScore, quoteCode]
+      );
+
+      const docId = result.rows[0].id;
+      console.log('[POSTGRES] ✅ Documento Adriana guardado:', { id: docId, type: documentType, user: userPhone });
+      return docId;
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error guardando documento Adriana:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 📖 Obtener documentos de un usuario
+   * @param {string} userPhone - Teléfono del usuario
+   * @param {string} [documentType] - Filtrar por tipo de documento (opcional)
+   * @returns {Promise<Array>} Lista de documentos
+   */
+  async getAdrianaDocumentsByUser(userPhone, documentType = null) {
+    await this.initialize();
+    
+    try {
+      let sql = `SELECT * FROM adriana_documents WHERE user_phone = $1`;
+      let params = [userPhone];
+
+      if (documentType) {
+        sql += ` AND document_type = $2`;
+        params.push(documentType);
+      }
+
+      sql += ` ORDER BY analyzed_at DESC`;
+
+      const result = await this.pool.query(sql, params);
+      return result.rows;
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error obteniendo documentos Adriana:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 📋 Obtener documentos de una cotización específica
+   * @param {string} quoteCode - Código de cotización
+   * @returns {Promise<Array>} Lista de documentos asociados
+   */
+  async getAdrianaDocumentsByQuote(quoteCode) {
+    await this.initialize();
+    
+    try {
+      const result = await this.pool.query(
+        `SELECT * FROM adriana_documents WHERE quote_code = $1 ORDER BY analyzed_at ASC`,
+        [quoteCode]
+      );
+
+      console.log(`[POSTGRES] 📋 Documentos encontrados para quote ${quoteCode}:`, result.rows.length);
+      return result.rows;
+    } catch (error) {
+      console.error('[POSTGRES] ❌ Error obteniendo documentos por quote:', error);
+      return [];
     }
   }
 }

@@ -2,7 +2,7 @@
  * 🛡️ Adriana API Endpoints - Cotizaciones Automáticas VAZ
  * 
  * Sistema completo:
- * - Vision AI para extracción de cédula
+ * - Vision AI para extracción multi-documento (cédula, matrícula, licencia)
  * - Tasas VAZ real-time con cache
  * - Generador de cotizaciones comparativas
  * - Form conversacional 6 pasos
@@ -10,6 +10,7 @@
 
 import express from 'express';
 import { analyzeImage } from '../../servicios-ia/openai.js';
+import { analyzeDocument } from '../../servicios/adriana-document-analyzer.js';
 import { generateAndSendComparisonQuote } from '../../servicios/adriana-quote-generator.js';
 import databaseService from '../../database/database.js';
 import { loggers } from '../../utils/logger.js';
@@ -103,6 +104,82 @@ IMPORTANTE:
     res.status(500).json({
       success: false,
       error: 'Error al procesar la cédula',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/adriana/extract-document
+ * 🆕 Vision AI genérico para análisis multi-documento
+ * Detecta automáticamente el tipo (cédula, matrícula, licencia)
+ * Body: { image: base64String, expectedType?: 'cedula'|'matricula'|'licencia', userPhone?: string, quoteCode?: string }
+ */
+router.post('/extract-document', async (req, res) => {
+  try {
+    const { image, expectedType, userPhone, quoteCode } = req.body;
+
+    if (!image) {
+      return res.status(400).json({
+        success: false,
+        error: 'Falta imagen en base64'
+      });
+    }
+
+    // Convertir base64 a data URL si no lo está ya
+    const imageUrl = image.startsWith('data:image')
+      ? image
+      : `data:image/jpeg;base64,${image}`;
+
+    loggers.adriana.info('Analizando documento...', {
+      expectedType,
+      userPhone,
+      hasImage: !!imageUrl
+    });
+
+    // Análisis automático con Vision AI
+    const analysisResult = await analyzeDocument(imageUrl, expectedType);
+
+    // Si no fue exitoso, devolver error
+    if (!analysisResult.success) {
+      return res.status(400).json(analysisResult);
+    }
+
+    // Guardar en BD si se proporcionó userPhone
+    if (userPhone) {
+      try {
+        await databaseService.saveAdrianaDocument(
+          userPhone,
+          analysisResult.documentType,
+          analysisResult.data,
+          analysisResult.confidence,
+          null, // No guardamos la imagen para ahorrar espacio
+          quoteCode || null
+        );
+        loggers.adriana.info('Documento guardado en BD', {
+          user: userPhone,
+          type: analysisResult.documentType
+        });
+      } catch (dbError) {
+        // Log pero no bloquear si falla el guardado
+        loggers.adriana.error('Error guardando documento en BD (no bloqueante)', {}, dbError);
+      }
+    }
+
+    // Response exitoso
+    res.json({
+      success: true,
+      documentType: analysisResult.documentType,
+      data: analysisResult.data,
+      confidence: parseFloat(analysisResult.confidence),
+      validations: analysisResult.validations
+    });
+
+  } catch (error) {
+    loggers.adriana.error('Error en extract-document', {}, error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al analizar el documento',
       message: error.message
     });
   }

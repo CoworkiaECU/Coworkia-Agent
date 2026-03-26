@@ -98,7 +98,7 @@ async function investigateJavierTroya() {
     console.log('📊 Buscando en tabla ARCO_REQUESTS (solicitudes LOPDP)...');
     const arcoQuery = `
       SELECT id, full_name, email, phone, request_type, status, 
-             reason, resolved_at, created_at
+             description, notes, resolved_at, created_at
       FROM arco_requests 
       WHERE LOWER(full_name) LIKE '%troya%' OR LOWER(email) LIKE '%troya%' OR LOWER(phone) LIKE '%troya%'
       ORDER BY created_at DESC;
@@ -114,7 +114,7 @@ async function investigateJavierTroya() {
         console.log(`     Teléfono: ${request.phone}`);
         console.log(`     Tipo: ${request.request_type}`);
         console.log(`     Status: ${request.status}`);
-        console.log(`     Razón: ${request.reason}`);
+        console.log(`     Descripción: ${request.description}`);
         console.log(`     Resuelto: ${request.resolved_at || 'Pendiente'}`);
         console.log(`     Creado: ${request.created_at}`);
         console.log('');

@@ -210,29 +210,35 @@ window.markAttended = async function(id, attended) {
   }
 };
 
-// ─── Celda MONTO: muestra precio + formulario inline para pagos pendientes
+// ─── Celda MONTO: muestra precio de referencia + formulario inline para cobro
 function renderMontoCell(r) {
   if (r.was_free) return '<span class="pay-chip pay-free">🎁 Gratis</span>';
-  const price = formatPrice(r.total_price, false);
-  // Ya pagado → badge verde con monto
+
+  // Ya pagado → badge verde con monto real
   if (r.payment_status === 'paid') {
-    return `<span style="color:#6ee7b7;font-weight:700;font-size:13px;">✅ ${price}</span>`;
+    const paid = formatPrice(r.total_price, false);
+    return `<span style="color:#6ee7b7;font-weight:700;font-size:13px;">✅ ${paid}</span>`;
   }
-  // No pagado → input para registrar cobro
-  const preVal = parseFloat(r.total_price) > 0 ? parseFloat(r.total_price).toFixed(2) : '';
+
+  // Precio de referencia del sistema (calculado en API)
+  const ref = parseFloat(r.reference_price) || 0;
+  const stored = parseFloat(r.total_price) || 0;
+  const suggested = stored > 0 ? stored : ref;
+  const preVal = suggested > 0 ? suggested.toFixed(2) : '';
+
   return `
-    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
-      ${parseFloat(r.total_price) > 0 ? `<span style="color:#94a3b8;font-size:11px;">Ref: ${price}</span>` : ''}
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+      ${ref > 0 ? `<span style="color:#f97316;font-weight:700;font-size:13px;">$${ref.toFixed(2)}</span>` : '<span style="color:#64748b;font-size:11px;">Sin precio</span>'}
       <div style="display:flex;gap:4px;align-items:center;">
         <input id="pay-amt-${r.id}" type="text" inputmode="decimal" value="${preVal}"
           placeholder="0.00"
-          style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
+          style="width:72px;padding:3px 6px;border-radius:5px;border:1px solid #334155;
                  background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
           onkeydown="if(event.key==='Enter') registerPayment('${r.id}')">
         <button onclick="registerPayment('${r.id}')"
-          style="background:#334155;color:#94a3b8;border:none;padding:3px 9px;border-radius:5px;
-                 font-size:13px;font-weight:700;cursor:pointer;line-height:1.4;transition:all .15s;"
-          title="Confirmar pago en efectivo"
+          style="background:#334155;color:#94a3b8;border:none;padding:4px 10px;border-radius:5px;
+                 font-size:13px;font-weight:700;cursor:pointer;line-height:1.2;transition:all .15s;"
+          title="Registrar pago → Gabi envía recibo al cliente"
           onmouseover="this.style.background='#16a34a';this.style.color='#fff';"
           onmouseout="this.style.background='#334155';this.style.color='#94a3b8';">✓</button>
       </div>

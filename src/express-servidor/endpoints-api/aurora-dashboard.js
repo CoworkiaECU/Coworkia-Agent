@@ -12,6 +12,7 @@ import databaseService from '../../database/database.js';
 import { sendOneHourFollowup, sendRebookingReminder } from '../../servicios/aurora-followup-service.js';
 import { sendEmail } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
+import { calculateReservationCost } from '../../servicios/payment-calculator.js';
 
 const router = express.Router();
 
@@ -115,10 +116,20 @@ router.get('/reservations', async (req, res) => {
     }
     
     const countResult = await databaseService.get(countQuery, countParams);
-    
+
+    // Enriquecer cada reserva con precio de referencia calculado
+    const enriched = reservations.map(r => {
+      let reference_price = null;
+      if (!r.was_free && r.service_type && r.duration_hours) {
+        const calc = calculateReservationCost(r.service_type, r.duration_hours, 1, 'transferencia');
+        if (!calc.error) reference_price = calc.basePrice;
+      }
+      return { ...r, reference_price };
+    });
+
     return res.json({
       ok: true,
-      data: reservations,
+      data: enriched,
       total: countResult?.total || 0,
       showing: reservations.length,
       limit: parseInt(limit),

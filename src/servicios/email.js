@@ -470,7 +470,7 @@ export function isXiaomiDevice(userAgent = '') {
   return problematicPatterns.some(pattern => pattern.test(userAgent));
 }
 
-export async function sendEmail({ to, subject, html, text, from, cc, bcc, attachments }) {
+export async function sendEmail({ to, subject, html, text, from, cc, bcc, attachments, agent, refId }) {
   try {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
@@ -486,6 +486,12 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     
     const processedHtml = html ? minifyEmailHTML(html) : html;
 
+    // Detectar agente desde FROM name si no viene explícito
+    const detectedAgent = agent || detectAgentFromFrom(fromAddress);
+    
+    // Generar Message-ID con tracking del agente
+    const trackingId = `coworkia-${detectedAgent}-${refId || Date.now()}-${Math.random().toString(36).substr(2, 6)}@coworkia.ec`;
+
     const mailOptions = {
       from: fromAddress,
       to: to,
@@ -495,22 +501,38 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
       html: processedHtml,
       text: text || (html ? htmlToPlainText(html) : undefined),
       attachments,
+      messageId: trackingId,
       headers: {
         'X-Mailer': 'Coworkia Agent v2.0',
         'X-Priority': '3',
         'X-Auto-Response-Suppress': 'All',
+        'X-Coworkia-Agent': detectedAgent,
+        'X-Coworkia-Ref': refId || '',
       }
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL] ✅ Email enviado: ${info.messageId}`);
+    console.log(`[EMAIL] ✅ Email enviado: ${info.messageId} (agent: ${detectedAgent})`);
     
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: info.messageId, trackingId };
     
   } catch (error) {
     console.error('[EMAIL] ❌ Error enviando email:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🔍 Detecta el agente desde el FROM address/name
+ */
+function detectAgentFromFrom(fromStr) {
+  if (!fromStr) return 'system';
+  const lower = fromStr.toLowerCase();
+  for (const agent of Object.keys(AGENT_FROM_NAMES)) {
+    if (agent === '_default') continue;
+    if (lower.includes(agent)) return agent;
+  }
+  return 'system';
 }
 
 export async function sendReservationConfirmation(reservationData) {

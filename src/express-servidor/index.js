@@ -38,6 +38,7 @@ import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { runMigrations } from '../database/migrations/migration-runner.js';
 import { startDailyReportCron, startWeeklyPerfReportCron, startAuroraWeeklyMetricsCron } from '../cron/daily-report.js';
 import { startSelfHealingCron } from '../cron/self-healing-cron.js';
+import { startEmailReplyCron } from '../cron/email-reply-cron.js';
 // �📊 Sistema de monitoreo
 import { getAllCircuits } from '../servicios/external-dispatcher.js';
 import { getQueueStats } from '../servicios/task-queue.js';
@@ -72,6 +73,7 @@ import todosDashboardRouter from './endpoints-api/todos-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
 import autopilotApiRouter from './endpoints-api/autopilot-api.js';
 import privacidadRouter from './endpoints-api/privacidad.js';
+import emailRepliesRouter from './endpoints-api/email-replies.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -234,6 +236,7 @@ app.use('/api/admin', adminSeedRouter);
 app.use('/', autopilotApiRouter);
 app.use('/', wifiCodesRouter);
 app.use('/', privacidadRouter);
+app.use('/api/email-replies', emailRepliesRouter);
 
 // 🛡️ Middleware de captura de errores para Self-Healing System
 app.use(async (err, req, res, next) => {
@@ -330,6 +333,8 @@ async function startServer() {
     console.log('✅ Métricas semanales Aurora configuradas (viernes 18:00 Ecuador)');
     startSelfHealingCron();
     console.log('✅ Self-Healing System activo (análisis nocturno 02:00 AM Ecuador)');
+    startEmailReplyCron();
+    console.log('✅ Email Reply Reader activo (polling cada 10 min)');
     
     // Arrancar servidor después de DB
     app.listen(PORT, () => {

@@ -12,6 +12,7 @@ import databaseService from '../../database/database.js';
 import { enviarWhatsApp } from './wassenger.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
+import { sendPaymentReceipt, prepareReceiptData } from '../../servicios/payment-receipt-email.js';
 
 const router = express.Router();
 
@@ -1326,6 +1327,218 @@ router.post('/campaigns/send', async (req, res) => {
       ok: false,
       error: error.message
     });
+  }
+});
+
+// ============================================================================
+// PAGO HÍBRIDO — Efectivo + Canje de Servicio/Producto
+// ============================================================================
+
+/**
+ * PATCH /api/aluna/memberships/:id/register-payment
+ * Registra pago híbrido: efectivo + canje de servicio/producto (autorizado por Diego)
+ * Body: {
+ *   cashAmount: number,           // monto en efectivo (requerido, puede ser 0)
+ *   canjeAmount: number,          // monto en canje (opcional, default 0)
+ *   canjeDescription: string,     // descripción del servicio/producto en canje
+ *   paymentMethod: string         // 'efectivo' | 'transferencia' | 'mixto'
+ * }
+ */
+router.patch('/memberships/:id/register-payment', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+    const { cashAmount, canjeAmount = 0, canjeDescription = '', paymentMethod = 'efectivo' } = req.body || {};
+
+    const parsedCash  = parseFloat(String(cashAmount).replace(',', '.'));
+    const parsedCanje = parseFloat(String(canjeAmount).replace(',', '.')) || 0;
+
+    if (isNaN(parsedCash) || parsedCash < 0) {
+      return res.status(400).json({ ok: false, error: 'Monto efectivo inválido' });
+    }
+    if (parsedCanje < 0) {
+      return res.status(400).json({ ok: false, error: 'Monto canje inválido' });
+    }
+    if (parsedCanje > 0 && !canjeDescription.trim()) {
+      return res.status(400).json({ ok: false, error: 'Descripción del canje requerida' });
+    }
+
+    const totalAmount = parsedCash + parsedCanje;
+    if (totalAmount <= 0) {
+      return res.status(400).json({ ok: false, error: 'El monto total debe ser mayor a 0' });
+    }
+
+    // Buscar lead
+    const lead = await databaseService.get(`
+      SELECT * FROM membership_leads WHERE id = $1
+    `, [id]);
+
+    if (!lead) {
+      return res.status(404).json({ ok: false, error: 'Membresía no encontrada' });
+    }
+    if (lead.status === 'active' || lead.status === 'accepted') {
+      return res.status(409).json({ ok: false, error: 'Esta membresía ya fue pagada/activada' });
+    }
+
+    // Determinar método de pago
+    const isHybrid = parsedCanje > 0;
+    const finalMethod = isHybrid ? 'mixto' : (paymentMethod || 'efectivo');
+
+    // Registrar pago en membership_payments
+    const paymentId = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    await databaseService.run(`
+      INSERT INTO membership_payments (
+        id, membership_lead_id, user_phone, amount, 
+        payment_method, status, verification_method,
+        transaction_date, processed_at, verified_at,
+        raw_vision_data, confidence_score,
+        created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, 'verified', 'admin_dashboard',
+        CURRENT_DATE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+        $6, 100,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+    `, [
+      paymentId,
+      lead.id,
+      lead.user_phone,
+      totalAmount,
+      finalMethod,
+      JSON.stringify({
+        registeredFrom: 'admin_dashboard',
+        cashAmount: parsedCash,
+        canjeAmount: parsedCanje,
+        canjeDescription: canjeDescription.trim(),
+        isHybrid,
+        diegoAuthorized: isHybrid,
+        registeredAt: new Date().toISOString()
+      })
+    ]);
+
+    // Actualizar status del lead
+    await databaseService.run(`
+      UPDATE membership_leads 
+      SET status = 'accepted',
+          monthly_fee = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [totalAmount, id]);
+
+    // Enviar WA de confirmación
+    let waSent = false;
+    if (lead.user_phone) {
+      try {
+        const firstName = lead.client_name ? lead.client_name.split(' ')[0] : '';
+        const planName = (lead.membership_type || 'Membresía').replace('plan-','Plan ').replace('plan_','Plan ');
+        
+        let waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago por tu *${planName}*.\n\n`;
+        
+        if (isHybrid) {
+          waMsg += `💵 Efectivo: $${parsedCash.toFixed(2)}\n`;
+          waMsg += `🔄 Canje: $${parsedCanje.toFixed(2)} (${canjeDescription.trim()})\n`;
+          waMsg += `💰 Total: $${totalAmount.toFixed(2)}/mes\n\n`;
+          waMsg += `📝 Autorizado por Diego Villota\n\n`;
+        } else {
+          waMsg += `💰 Monto: $${totalAmount.toFixed(2)}\n\n`;
+        }
+        
+        waMsg += `¡Bienvenido/a a Coworkia! 🏢`;
+        
+        await enviarWhatsApp(lead.user_phone, waMsg);
+        waSent = true;
+      } catch (e) {
+        console.warn('[ALUNA-API] WA confirmación pago failed:', e.message);
+      }
+    }
+
+    // Enviar recibo por email si tiene email
+    let emailSent = false;
+    if (lead.email) {
+      try {
+        const compositePayment = isHybrid ? {
+          cashAmount: parsedCash,
+          canjeAmount: parsedCanje,
+          canjeDescription: canjeDescription.trim(),
+          totalAmount,
+          isComposite: true
+        } : null;
+
+        const receiptData = prepareReceiptData(lead, {
+          amount: totalAmount,
+          transaction_date: new Date().toISOString(),
+          transaction_id: paymentId
+        }, compositePayment);
+
+        await sendPaymentReceipt(receiptData);
+        emailSent = true;
+        console.log(`[ALUNA-API] 📧 Recibo enviado a ${lead.email}`);
+      } catch (e) {
+        console.warn('[ALUNA-API] Email recibo failed:', e.message);
+      }
+    }
+
+    console.log(`[ALUNA-API] 💰 Pago ${isHybrid ? 'HÍBRIDO' : finalMethod} registrado: lead #${id} → $${parsedCash} cash + $${parsedCanje} canje = $${totalAmount} | WA: ${waSent} | Email: ${emailSent}`);
+
+    return res.json({
+      ok: true,
+      message: isHybrid 
+        ? `Pago híbrido registrado: $${parsedCash.toFixed(2)} efectivo + $${parsedCanje.toFixed(2)} canje`
+        : `Pago registrado: $${totalAmount.toFixed(2)} ${finalMethod}`,
+      paymentId,
+      waSent,
+      emailSent,
+      isHybrid,
+      cashAmount: parsedCash,
+      canjeAmount: parsedCanje,
+      totalAmount
+    });
+
+  } catch (error) {
+    console.error('[ALUNA-API] Error en register-payment:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/aluna/memberships/:id/payments
+ * Historial de pagos de una membresía
+ */
+router.get('/memberships/:id/payments', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+
+    const payments = await databaseService.all(`
+      SELECT id, amount, payment_method, status, confidence_score,
+             transaction_date, verified_at, verification_method,
+             raw_vision_data, created_at
+      FROM membership_payments 
+      WHERE membership_lead_id = $1
+      ORDER BY created_at DESC
+    `, [id]);
+
+    // Extraer datos híbridos del raw_vision_data
+    const enriched = (payments || []).map(p => {
+      let hybridData = null;
+      try {
+        const raw = typeof p.raw_vision_data === 'string' ? JSON.parse(p.raw_vision_data) : p.raw_vision_data;
+        if (raw?.isHybrid) {
+          hybridData = {
+            cashAmount: raw.cashAmount,
+            canjeAmount: raw.canjeAmount,
+            canjeDescription: raw.canjeDescription,
+            diegoAuthorized: raw.diegoAuthorized
+          };
+        }
+      } catch (_) {}
+      return { ...p, hybridData };
+    });
+
+    return res.json({ ok: true, payments: enriched });
+  } catch (error) {
+    console.error('[ALUNA-API] Error payments history:', error);
+    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 

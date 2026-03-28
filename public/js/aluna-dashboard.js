@@ -554,6 +554,7 @@ async function loadProformas() {
           <td>${(p.membership_type || '—').replace('plan-','Plan ').replace('plan_','Plan ').replace('_',' ')}</td>
           <td class="money-green">${formatPrice(p.monthly_fee)}</td>
           <td>${getDetailedStatusBadge(p.status)}</td>
+          <td>${buildPaymentCell(p)}</td>
           <td>${getAutomationStatus(p)}</td>
           <td class="text-muted">${getTimeSinceLastContact(p)}</td>
           <td>${getClientInteraction(p)}</td>
@@ -590,6 +591,116 @@ window.resetFilters = function() {
 
 /* ─── manual followup actions ────────────────────────────────── */
 let currentFollowupData = null;
+
+/* ─── payment cell builder ───────────────────────────────────── */
+function buildPaymentCell(p) {
+  const isPending = p.status === 'pending_payment' || p.status === 'pending';
+  const isAccepted = p.status === 'accepted' || p.status === 'active';
+
+  if (isAccepted) {
+    // Check if hybrid payment via raw_vision_data
+    return `<span class="badge" style="background:#065f46;color:#6ee7b7;font-size:10px;">✅ Pagado</span>`;
+  }
+
+  if (!isPending) {
+    return `<span style="color:#64748b;font-size:11px;">—</span>`;
+  }
+
+  // Inline payment editor for pending_payment
+  return `
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:160px;" data-payment-editor="${p.id}">
+      <div style="display:flex;gap:3px;align-items:center;">
+        <span style="font-size:10px;color:#94a3b8;">💵</span>
+        <input type="text" inputmode="decimal" placeholder="$ Efectivo"
+               data-pay-cash="${p.id}"
+               style="width:75px;padding:3px 5px;border:1px solid #334155;border-radius:4px;background:#0f172a;color:#f1f5f9;font-size:11px;">
+      </div>
+      <div style="display:flex;gap:3px;align-items:center;">
+        <span style="font-size:10px;color:#94a3b8;">🔄</span>
+        <input type="text" inputmode="decimal" placeholder="$ Canje"
+               data-pay-canje="${p.id}"
+               style="width:75px;padding:3px 5px;border:1px solid #334155;border-radius:4px;background:#0f172a;color:#f1f5f9;font-size:11px;">
+      </div>
+      <input type="text" placeholder="Servicio/producto canje"
+             data-pay-desc="${p.id}"
+             style="width:100%;padding:3px 5px;border:1px solid #334155;border-radius:4px;background:#0f172a;color:#f1f5f9;font-size:10px;display:none;">
+      <button data-action="register-payment" data-lid="${p.id}" 
+        style="padding:4px 8px;border-radius:4px;font-size:10px;font-weight:700;background:#10b981;color:#fff;border:none;cursor:pointer;width:100%;"
+        title="Registrar pago (híbrido si ambos montos)">
+        💰 Registrar Pago
+      </button>
+    </div>
+  `;
+}
+
+/* ─── register hybrid payment ────────────────────────────────── */
+window.registerHybridPayment = async function(leadId) {
+  const cashInput  = document.querySelector(`[data-pay-cash="${leadId}"]`);
+  const canjeInput = document.querySelector(`[data-pay-canje="${leadId}"]`);
+  const descInput  = document.querySelector(`[data-pay-desc="${leadId}"]`);
+  const btn        = document.querySelector(`[data-action="register-payment"][data-lid="${leadId}"]`);
+
+  if (!cashInput) return;
+
+  const cashAmount  = parseFloat((cashInput.value || '0').replace(',', '.'));
+  const canjeAmount = parseFloat((canjeInput?.value || '0').replace(',', '.'));
+  const canjeDesc   = descInput?.value?.trim() || '';
+
+  if (isNaN(cashAmount) && isNaN(canjeAmount)) {
+    toast('⚠️ Ingresa al menos un monto');
+    return;
+  }
+
+  const totalAmount = (cashAmount || 0) + (canjeAmount || 0);
+  if (totalAmount <= 0) {
+    toast('⚠️ El monto total debe ser mayor a $0');
+    return;
+  }
+
+  if (canjeAmount > 0 && !canjeDesc) {
+    toast('⚠️ Describe el servicio/producto del canje');
+    descInput.focus();
+    return;
+  }
+
+  // Confirm
+  const isHybrid = canjeAmount > 0;
+  const confirmMsg = isHybrid
+    ? `Registrar pago HÍBRIDO:\n💵 Efectivo: $${(cashAmount||0).toFixed(2)}\n🔄 Canje: $${canjeAmount.toFixed(2)} (${canjeDesc})\n💰 Total: $${totalAmount.toFixed(2)}\n\n¿Confirmar?`
+    : `Registrar pago de $${totalAmount.toFixed(2)} en efectivo?\n\n¿Confirmar?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  try {
+    const r = await fetch(`${API_BASE}/api/aluna/memberships/${leadId}/register-payment`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cashAmount: cashAmount || 0,
+        canjeAmount: canjeAmount || 0,
+        canjeDescription: canjeDesc,
+        paymentMethod: isHybrid ? 'mixto' : 'efectivo'
+      })
+    });
+
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'Error registrando pago');
+
+    const waIcon = data.waSent ? '📱✅' : '📱❌';
+    const emailIcon = data.emailSent ? '📧✅' : '📧❌';
+    toast(`✅ Pago registrado — $${data.totalAmount.toFixed(2)} ${isHybrid ? '(híbrido)' : ''} ${waIcon} ${emailIcon}`);
+
+    // Refresh table
+    setTimeout(() => { loadProformas(); loadPipeline(); }, 500);
+
+  } catch (e) {
+    console.error('[PAYMENT] Error:', e);
+    toast(`❌ ${e.message}`);
+    if (btn) { btn.disabled = false; btn.textContent = '💰 Registrar Pago'; }
+  }
+};
 
 function buildActionButtons(p) {
   const d1Sent = p.followup_24h_sent_at || p.automation_d1_sent;
@@ -1010,7 +1121,7 @@ document.getElementById('search').addEventListener('input', e => {
   window._searchTimer = setTimeout(loadProformas, 450);
 });
 
-/* ─── event delegation — botones dinámicos (D+1, D+3, convert, wanow) ─── */
+/* ─── event delegation — botones dinámicos (D+1, D+3, convert, wanow, payment) ─── */
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('[data-action]');
   if (!btn || btn.disabled) return;
@@ -1025,6 +1136,20 @@ document.addEventListener('click', function(e) {
     sendD1WA(btn.dataset.lid, btn.dataset.phone, btn.dataset.name, btn.dataset.plan, btn);
   } else if (action === 'pipeline-d3-wa') {
     sendD3WA(btn.dataset.lid, btn.dataset.phone, btn.dataset.name, btn.dataset.plan, btn);
+  } else if (action === 'register-payment') {
+    registerHybridPayment(btn.dataset.lid);
+  }
+});
+
+/* ─── show/hide canje description when canje amount entered ──── */
+document.addEventListener('input', function(e) {
+  const canjeInput = e.target.closest('[data-pay-canje]');
+  if (!canjeInput) return;
+  const lid = canjeInput.dataset.payCanje;
+  const descInput = document.querySelector(`[data-pay-desc="${lid}"]`);
+  if (descInput) {
+    const val = parseFloat((canjeInput.value || '0').replace(',', '.'));
+    descInput.style.display = val > 0 ? 'block' : 'none';
   }
 });
 

@@ -30,13 +30,19 @@ const MIN_CONFIDENCE = 70; // Confianza mínima para auto-aprobar
 
 // Keywords para detectar autorización de Diego para pagos compuestos
 const DIEGO_AUTH_KEYWORDS = [
+  'diego villota autorizó',
+  'diego villota autorizo',
+  'diego villota aprobó',
+  'diego villota aprobo',
   'diego me autorizó',
   'diego autorizo',
   'diego me autorizo',
   'diego aprobó',
   'diego aprobo',
   'autorización de diego',
-  'autorizacion de diego'
+  'autorizacion de diego',
+  'autorización de diego villota',
+  'autorizacion de diego villota'
 ];
 
 /**

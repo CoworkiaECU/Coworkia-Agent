@@ -85,11 +85,43 @@
 - [ ] **D2** — Confirmación asistencia post-pago: WA con datos de acceso (15 min)
 - [ ] **D3** — Testing end-to-end del flujo completo (15 min)
 
+### BLOQUE E: Auto-respuesta a emails de confirmación (2h) 🆕
+
+> **Contexto**: Cuando Aurora envía email de confirmación de reserva, el cliente puede responder
+> a ese email con dudas, cambios, o confirmación. Actualmente nadie lee esas respuestas.
+> Necesitamos que Aurora lea SOLO los replies a emails del sistema y responda automáticamente.
+
+**Restricción crítica — Aislamiento multi-agente:**
+- Todos los agentes (Aurora, Aluna, Adriana, etc.) usan el **mismo correo Gmail**
+- Cada agente usa **diferente membrete/template** en sus emails
+- La lógica DEBE identificar a qué agente pertenece cada email original
+- Aurora SOLO debe leer y responder replies a emails que **ella misma envió**
+- Nunca cruzar respuestas entre agentes (ej: no responder un reply de Aluna como Aurora)
+
+**Diseño propuesto:**
+- Leer inbox con IMAP (o Gmail API) filtrando por `In-Reply-To` / `References` headers
+- Matchear el `Message-ID` del email original con registros en `email_log` o tabla equivalente
+- Cada email enviado debe registrar: `{ message_id, agent, reservation_id, user_phone, sent_at }`
+- Al detectar reply → verificar que `agent === 'aurora'` → procesar
+- Respuesta automática con GPT: contexto de la reserva + datos del cliente
+- NO responder emails que no sean replies al sistema (spam, newsletters, etc.)
+
+**Tareas:**
+- [ ] **E1** — Crear tabla `email_sent_log` con `message_id`, `agent`, `entity_id`, `user_phone`, `sent_at`
+- [ ] **E2** — Modificar `sendEmail()` para registrar cada email enviado con su `Message-ID` header
+- [ ] **E3** — Crear servicio `email-inbox-reader.js`: lee inbox IMAP, filtra replies por `In-Reply-To`
+- [ ] **E4** — Lógica de aislamiento: cruzar `In-Reply-To` con `email_sent_log.message_id` → obtener agente
+- [ ] **E5** — Solo si `agent === 'aurora'` → generar respuesta con GPT + contexto de la reserva
+- [ ] **E6** — Cron cada 5 min: `readAndReplyAuroraEmails()` — solo procesa lo de Aurora
+- [ ] **E7** — Testing: enviar confirmación → reply manual → verificar auto-respuesta correcta
+
 ---
 
-## ⏱️ ESTIMACIÓN TOTAL: ~6h (4 bloques)
+## ⏱️ ESTIMACIÓN TOTAL: ~8h (5 bloques)
 
 ## 📝 NOTAS
-- Archivos principales: `aurora-reservas-dark.html`, `aurora-dashboard.js`, `aurora-dashboard.js` (API)
+- Archivos principales: `aurora-reservas.html` (PRODUCCIÓN), `aurora-dashboard.js`, `aurora-dashboard.js` (API)
+- **aurora-reservas-dark.html** es la versión dark alternativa — NO es producción
 - No crear archivos markdown de documentación — solo código
 - Commitear por bloque con mensaje descriptivo
+- **Bloque E**: requiere credenciales IMAP Gmail (app password) en env vars

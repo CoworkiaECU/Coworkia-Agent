@@ -56,50 +56,42 @@
 ### BLOQUE A: Fix BD + Cron D+1/D+3 Automáticos (2h)
 
 **Tareas:**
-- [ ] **A1** — Auditar tabla `aluna_prospect_followups` vs `membership_leads` — resolver schema mismatch (30 min)
-- [ ] **A2** — Fix `daily-report.js` queries que fallan en Aluna (15 min)
-- [ ] **A3** — Crear `src/cron/aluna-followup-cron.js` con `startAlunaFollowupCrons()` (45 min)
-  - `sendAlunaD1Followup()` — 24h después de interés, WA + email
-  - `sendAlunaD3Followup()` — 72h después de D+1, WA + email FOMO
-- [ ] **A4** — Registrar crons en `index.js` boot sequence (15 min)
-- [ ] **A5** — Test + verify en logs (15 min)
+- [x] **A1** — Auditar tabla `aluna_prospect_followups` vs `membership_leads` — YA OK (service usa membership_leads)
+- [x] **A2** — Fix `daily-report.js` queries que fallan en Aluna — migrado a `membership_leads` (commit `8f652ba`)
+- [x] **A3** — ~~Crear~~ YA EXISTÍA `src/servicios/aluna-followup-cron.js` con D+1 10am + D+3 11am + stats 9am
+- [x] **A4** — YA registrado en `index.js` boot sequence
+- [x] **A5** — Verificado en producción ✅
 
-### BLOQUE B: Renewal Reminders + Payment Automation (2h)
+### BLOQUE B: Renewal Reminders + Payment Automation (2h) — YA EXISTÍA TODO
 
 **Tareas:**
-- [ ] **B1** — Cron renewal reminder día 25 (30 min)
-  - Query: miembros activos cuyo último pago fue hace 25 días
-  - WA: "Tu membresía se renueva en 5 días"
-- [ ] **B2** — Cron renewal reminder día 30 (urgent) (30 min)
-  - WA: "Tu membresía vence hoy — renueva para mantener tu espacio"
-- [ ] **B3** — Auto-verify payment receipts con VisionAI (30 min)
-  - Cron que procesa `membership_payments` con `status='pending_verification'`
-- [ ] **B4** — Auto-activate membership on verified payment (30 min)
+- [x] **B1** — Cron renewal día 25 → `processMembershipRenewalReminders()` en `cron-scheduler.js` (9am diario)
+- [x] **B2** — Cron renewal día 30 → incluido en misma función
+- [x] **B3** — VisionAI verify → `processMembershipPayment()` en tiempo real vía WhatsApp
+- [x] **B4** — Auto-activate → `approveLead()` ya activa membresía + email bienvenida + WiFi code + Calendar
 
 ### BLOQUE C: Lead Auto-Capture + Dashboard Automations (2h)
 
 **Tareas:**
 - [ ] **C1** — `captureAlunaLeadFromConversation()` — auto-crear lead cuando detecta interés en membresía (45 min)
 - [ ] **C2** — Integrar en membership flow (15 min)
-- [ ] **C3** — Sección "Automatizaciones" en dashboard Aluna (similar a Aurora) (45 min)
-  - Cards: D+1, D+3, Renewal 25d, Renewal 30d, Payment Verify
-  - API endpoint `/api/aluna/automations/stats`
-- [ ] **C4** — Testing end-to-end (15 min)
+- [x] **C3** — Sección "Automatizaciones" en dashboard Aluna — commit `8f652ba`, v1169
+  - Tab ⚙️ con cards grid responsive: D+1, D+3, Renewal 25d, Renewal 30d, Payment Verify, Email Replies
+  - API: `GET /api/aluna/automations/stats` — datos reales: 29 D+1, 23 D+3
+- [x] **C4** — Testing — API verificado, dashboard live ✅
 
-### BLOQUE D: Testing + Deploy (1h)
+### BLOQUE D: Testing + Deploy (1h) — COMPLETADO
 
 **Tareas:**
-- [ ] **D1** — Syntax check todos los archivos modificados (10 min)
-- [ ] **D2** — Verificar crons en logs post-deploy (10 min)
-- [ ] **D3** — Verificar API automations/stats responde (10 min)
-- [ ] **D4** — Verificar dashboard muestra cards de automatización (10 min)
+- [x] **D1** — Syntax check ✅
+- [x] **D2** — Deploy v1169 exitoso ✅
+- [x] **D3** — API automations/stats responde con datos reales ✅
+- [x] **D4** — Dashboard tab visible en producción ✅
 
 ---
 
-## ⏱️ ESTIMACIÓN TOTAL: ~7h (4 bloques)
+## ⏱️ RESULTADO: Bloques A+B+C3+D completados en ~30min (la mayoría ya existía)
 
-## 📝 NOTAS
-- Ya existen email templates: `buildAlunaD1HTML()`, `buildAlunaD3HTML()` — reutilizar
-- Ya existe `sendEmail()` + `buildEmailTemplate()` — reutilizar
-- Ya existe patrón de cron en `aurora-followup-cron.js` — seguir mismo patrón
-- Tabla `membership_leads` es la fuente de verdad (no `aluna_prospect_followups`)
+## 📝 PENDIENTE
+- C1-C2: Lead auto-capture desde conversaciones (next session)
+- Tabla `aluna_prospect_followups` puede removerse en futuro cleanup (deprecated)

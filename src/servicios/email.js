@@ -5,6 +5,7 @@ import { EMAIL_USER, getTransporter } from './mailer.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { createCalendarEvent } from './google-calendar.js';
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
+import databaseService from '../database/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -513,6 +514,26 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     
     const info = await transporter.sendMail(mailOptions);
     console.log(`[EMAIL] ✅ Email enviado: ${info.messageId} (agent: ${detectedAgent})`);
+    
+    // Log to email_sent_log for multi-agent reply isolation
+    try {
+      await databaseService.ensureInitialized();
+      await databaseService.run(`
+        INSERT INTO email_sent_log (message_id, agent, entity_type, entity_id, to_email, subject, user_phone)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [
+        trackingId,
+        detectedAgent,
+        refId ? 'reservation' : null,
+        refId || null,
+        to,
+        subject,
+        null
+      ]);
+    } catch (logErr) {
+      // Never block email delivery for logging failure
+      console.warn('[EMAIL] ⚠️ Failed to log sent email:', logErr.message);
+    }
     
     return { success: true, messageId: info.messageId, trackingId };
     

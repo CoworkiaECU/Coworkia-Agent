@@ -766,7 +766,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
         };
         const svcName = serviceNames[reservation.service_type] || reservation.service_type;
         const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
-        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nAv. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },

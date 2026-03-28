@@ -16,6 +16,9 @@
 import imaps from 'imap-simple';
 import { simpleParser } from 'mailparser';
 import databaseService from '../database/database.js';
+import { complete } from '../servicios-ia/openai.js';
+import { sendEmail } from './email.js';
+import { buildEmailTemplate } from './email-template-system.js';
 
 // Pattern para identificar emails del sistema: coworkia-AGENTE-...@coworkia.ec
 const COWORKIA_MESSAGE_ID_PATTERN = /coworkia-(\w+)-[^@]+@coworkia\.ec/i;
@@ -356,6 +359,10 @@ export async function pollEmailReplies() {
     if (replies.length > 0) {
       const result = await processAndStoreReplies(replies);
       console.log(`[EMAIL-READER] ✅ Poll completado: ${result.stored} nuevas respuestas`);
+      
+      // Auto-reply para respuestas de Aurora
+      await autoReplyAuroraEmails();
+      
       return result;
     }
     
@@ -365,5 +372,117 @@ export async function pollEmailReplies() {
   } catch (error) {
     console.error('[EMAIL-READER] ❌ Error en polling:', error.message);
     return { processed: 0, stored: 0, error: error.message };
+  }
+}
+
+// ─── Auto-Reply: Respuestas automáticas para Aurora ───────────────────────────
+
+const AURORA_REPLY_SYSTEM = `Eres Aurora, la asistente de reservas de Coworkia, un espacio de coworking en Quito, Ecuador.
+Un cliente respondió a un email de confirmación de reserva. Responde de forma breve, amable y profesional.
+
+SERVICIOS DISPONIBLES:
+- Hot Desk: $10/2h, $5/hora extra (IVA incluido)
+- Sala de Reuniones: $29/2h, $15/hora extra (IVA incluido)  
+- Oficina Privada: consultar disponibilidad
+
+DATOS DE ACCESO:
+- Dirección: Av. 12 de Octubre N24-562 y Cordero, Quito
+- Estacionamiento disponible
+- WiFi: CoworkiaWiFi / Clave: coworkia2024
+- Café de cortesía en recepción
+
+REGLAS:
+- Responde en español, máximo 3-4 oraciones
+- Si preguntan por cambios/cancelaciones: "Puedo ayudarte con eso. ¿Qué fecha y hora prefieres?"
+- Si confirman asistencia: "¡Perfecto! Te esperamos."
+- Si preguntan ubicación/acceso: da los datos de arriba
+- Si preguntan algo que no sabes: "Te conectaré con nuestro equipo para ayudarte con eso."
+- NO inventes datos de reservas específicas
+- Firma como: Aurora · Coworkia Reservas`;
+
+/**
+ * 🤖 Auto-reply para emails de Aurora pendientes de respuesta
+ */
+async function autoReplyAuroraEmails() {
+  try {
+    await databaseService.ensureInitialized();
+
+    // Buscar replies de Aurora sin responder (máx 5 por batch)
+    const pendingReplies = await databaseService.all(`
+      SELECT id, from_email, from_name, subject, reply_text
+      FROM email_replies
+      WHERE agent = 'aurora'
+        AND responded = FALSE
+        AND status = 'new'
+        AND received_at >= NOW() - INTERVAL '24 hours'
+      ORDER BY received_at ASC
+      LIMIT 5
+    `);
+
+    if (pendingReplies.length === 0) return;
+
+    console.log(`[AURORA-REPLY] 🤖 ${pendingReplies.length} replies pendientes de Aurora`);
+
+    for (const reply of pendingReplies) {
+      try {
+        // Buscar contexto de reserva por email del remitente
+        let context = '';
+        const reservation = await databaseService.get(`
+          SELECT r.id, r.service_type, r.date, r.start_time, r.end_time, r.payment_status, r.total_price
+          FROM reservations r
+          JOIN users u ON u.phone_number = r.user_phone
+          WHERE u.email = $1
+          ORDER BY r.created_at DESC LIMIT 1
+        `, [reply.from_email]);
+
+        if (reservation) {
+          const svc = reservation.service_type === 'hot_desk' ? 'Hot Desk'
+            : reservation.service_type === 'meeting_room' ? 'Sala de Reuniones' : reservation.service_type;
+          context = `\nCONTEXTO: El cliente tiene una reserva de ${svc} para ${reservation.date} de ${reservation.start_time} a ${reservation.end_time}. Pago: ${reservation.payment_status}. Monto: $${reservation.total_price || 0}.`;
+        }
+
+        const prompt = `El cliente ${reply.from_name || reply.from_email} respondió a un email de Aurora con este mensaje:\n\n"${reply.reply_text}"${context}\n\nGenera una respuesta breve y profesional.`;
+
+        const gptResponse = await complete(prompt, {
+          system: AURORA_REPLY_SYSTEM,
+          temperature: 0.5,
+          max_tokens: 300
+        });
+
+        if (!gptResponse || gptResponse.includes('dificultades técnicas')) {
+          console.warn(`[AURORA-REPLY] ⚠️ GPT no disponible, skip reply ${reply.id}`);
+          continue;
+        }
+
+        // Enviar respuesta por email
+        const replySubject = reply.subject?.startsWith('Re:') ? reply.subject : `Re: ${reply.subject}`;
+        
+        await sendEmail({
+          to: reply.from_email,
+          subject: replySubject,
+          html: `<div style="font-family: -apple-system, sans-serif; color: #333; line-height: 1.6;">
+            <p>${gptResponse.replace(/\n/g, '<br>')}</p>
+            <br>
+            <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>Av. 12 de Octubre N24-562 y Cordero, Quito<br>🌐 coworkia.com</p>
+          </div>`,
+          agent: 'aurora',
+          refId: reservation?.id || null
+        });
+
+        // Marcar como respondido
+        await databaseService.run(`
+          UPDATE email_replies 
+          SET responded = TRUE, response_sent_at = NOW(), status = 'replied'
+          WHERE id = $1
+        `, [reply.id]);
+
+        console.log(`[AURORA-REPLY] ✅ Auto-reply enviado a ${reply.from_email}`);
+
+      } catch (replyErr) {
+        console.error(`[AURORA-REPLY] ❌ Error respondiendo ${reply.id}:`, replyErr.message);
+      }
+    }
+  } catch (error) {
+    console.error('[AURORA-REPLY] ❌ Error en auto-reply:', error.message);
   }
 }

@@ -790,6 +790,90 @@ Puedes pagar en efectivo al llegar o por transferencia bancaria. Si necesitas ay
   }
 }
 
+// ─── Recordatorio 10 minutos antes de reserva (solo WhatsApp) ─────────────────
+
+async function sendReminder10min() {
+  console.log('[AURORA-10MIN] ⏰ Buscando reservas para recordatorio 10min...');
+  
+  try {
+    await databaseService.ensureInitialized();
+
+    // Reservas confirmadas de HOY cuya hora de inicio está a 5-15 min de ahora
+    const reservations = await databaseService.all(`
+      SELECT 
+        r.id, r.user_phone, r.service_type, r.date, r.start_time, r.end_time,
+        r.hot_desk_number, r.payment_status, r.total_price,
+        u.name AS user_name
+      FROM reservations r
+      LEFT JOIN users u ON r.user_phone = u.phone
+      WHERE r.status = 'confirmed'
+        AND r.date = CURRENT_DATE
+        AND r.start_time::time BETWEEN (NOW() + INTERVAL '5 minutes')::time 
+                                     AND (NOW() + INTERVAL '15 minutes')::time
+        AND r.reminder_10min_sent_at IS NULL
+      ORDER BY r.start_time ASC
+      LIMIT 20
+    `);
+
+    if (reservations.length === 0) {
+      console.log('[AURORA-10MIN] ℹ️ No hay reservas para recordatorio 10min');
+      return;
+    }
+
+    console.log(`[AURORA-10MIN] 📨 Enviando ${reservations.length} recordatorios 10min...`);
+    let sent = 0, failed = 0;
+
+    for (const r of reservations) {
+      try {
+        const serviceLabel = r.service_type === 'hot_desk' ? 'Hot Desk'
+          : r.service_type === 'meeting_room' ? 'Sala de Reuniones'
+          : r.service_type === 'private_office' ? 'Oficina Privada' : r.service_type;
+        const firstName = r.user_name ? r.user_name.split(' ')[0] : '';
+
+        const deskInfo = r.hot_desk_number ? `\n🪑 Tu puesto: *Hot Desk #${r.hot_desk_number}*` : '';
+        const payInfo = r.payment_status === 'paid' 
+          ? '\n✅ Pago confirmado' 
+          : r.total_price > 0 
+            ? `\n💰 Pago pendiente: $${parseFloat(r.total_price).toFixed(2)} (efectivo al llegar)` 
+            : '';
+
+        const waMessage = `@aurora
+⏰ *¡${firstName ? firstName + ', f' : 'F'}altan 10 minutos!*
+
+Tu *${serviceLabel}* comienza a las *${r.start_time}* ${r.end_time ? `hasta las *${r.end_time}*` : ''}.
+${deskInfo}${payInfo}
+
+📍 *Coworkia Quito*
+Av. 12 de Octubre N24-562 y Cordero
+🅿️ Estacionamiento disponible
+🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*
+☕ Café de cortesía en recepción
+
+¡Te esperamos! 😊`;
+
+        await sendWhatsApp(r.user_phone, waMessage);
+
+        await databaseService.run(
+          `UPDATE reservations SET reminder_10min_sent_at = NOW() WHERE id = $1`,
+          [r.id]
+        );
+
+        sent++;
+        console.log(`[AURORA-10MIN] ✅ Recordatorio 10min enviado a ${r.user_phone}`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+      } catch (error) {
+        failed++;
+        console.error(`[AURORA-10MIN] ❌ Error enviando a ${r.user_phone}:`, error.message);
+      }
+    }
+
+    console.log(`[AURORA-10MIN] 📊 Resumen: ${sent} enviados, ${failed} fallidos`);
+  } catch (error) {
+    console.error('[AURORA-10MIN] ❌ Error en cron 10min:', error.message);
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr) {
@@ -885,6 +969,15 @@ export function startAuroraFollowupCrons() {
     'America/Guayaquil'
   );
 
+  // Cron 10: Recordatorio 10 min antes — cada 5 min de 7AM a 8PM
+  const reminder10minJob = new CronJob(
+    '*/5 7-20 * * *', // Cada 5 min, horario laboral ampliado
+    sendReminder10min,
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
   console.log('[AURORA-FOLLOWUP] ✅ Cron de follow-up +1h configurado (cada 15 min)');
   console.log('[AURORA-REBOOK] ✅ Cron de re-booking D+7 configurado (10:00 AM Ecuador)');
   console.log('[AURORA-D1] ✅ Cron de follow-up D+1 configurado (10:05 AM Ecuador)');
@@ -894,6 +987,7 @@ export function startAuroraFollowupCrons() {
   console.log('[AURORA-NOSHOW] ✅ Cron de no-show detection configurado (cada 4h)');
   console.log('[AURORA-UPSELL] ✅ Cron de upselling Aluna configurado (lunes 10AM)');
   console.log('[AURORA-PAY] ✅ Cron de payment reminder configurado (8:00 AM)');
+  console.log('[AURORA-10MIN] ✅ Cron de recordatorio 10min configurado (cada 5 min 7-20h)');
 
-  return { followupJob, rebookJob, d1Job, d3Job, reminder24hJob, reminder2hJob, noShowJob, upsellJob, paymentJob };
+  return { followupJob, rebookJob, d1Job, d3Job, reminder24hJob, reminder2hJob, noShowJob, upsellJob, paymentJob, reminder10minJob };
 }

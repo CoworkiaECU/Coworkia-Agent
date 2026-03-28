@@ -163,7 +163,7 @@ router.get('/stats', async (req, res) => {
        ORDER BY count DESC`
     );
     
-    // Revenue
+    // Revenue — solo reservas efectivamente pagadas
     const revenueResult = await databaseService.get(
       `SELECT 
         SUM(total_price) as total,
@@ -171,7 +171,7 @@ router.get('/stats', async (req, res) => {
         SUM(CASE WHEN was_free = true THEN 1 ELSE 0 END) as free_count,
         SUM(CASE WHEN was_free = false THEN 1 ELSE 0 END) as paid_count
        FROM reservations 
-       WHERE status IN ('confirmed', 'completed')`
+       WHERE payment_status = 'paid' AND total_price > 0`
     );
     
     // Reservas recientes (últimos 7 días)
@@ -633,6 +633,69 @@ router.post('/send-campaign', async (req, res) => {
 
   } catch (error) {
     console.error('[AURORA-API] Error en send-campaign:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// RESERVA MANUAL (BOSS COMMAND)
+// ============================================================================
+
+/**
+ * POST /api/aurora/reservations/manual
+ * Crea una reserva manual desde el dashboard del admin.
+ * Body: { clientName, clientPhone, serviceType, date, startTime, endTime, amount, paymentType, notes }
+ */
+router.post('/reservations/manual', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { clientName, clientPhone, serviceType, date, startTime, endTime, amount, paymentType, notes } = req.body;
+
+    if (!clientName || !clientPhone || !serviceType || !date || !startTime || !endTime) {
+      return res.status(400).json({ ok: false, error: 'Campos requeridos: clientName, clientPhone, serviceType, date, startTime, endTime' });
+    }
+
+    // Generar ID único
+    const id = `MAN-${Date.now().toString(36).toUpperCase()}`;
+
+    // Calcular duración
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const durationHours = Math.max(1, Math.round(((eh * 60 + em) - (sh * 60 + sm)) / 60));
+
+    const parsedAmount = parseFloat(amount) || 0;
+    const isFree = paymentType === 'gratis';
+    const paymentStatus = isFree ? 'free' : (parsedAmount > 0 ? 'paid' : 'pending');
+    const paymentMethod = isFree ? null : (paymentType || 'efectivo');
+
+    // Asegurar que el usuario existe
+    await databaseService.run(`
+      INSERT INTO users (phone_number, name, registered_at)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT (phone_number) DO UPDATE SET name = COALESCE(NULLIF($2, ''), users.name)
+    `, [clientPhone, clientName]);
+
+    // Insertar reserva
+    await databaseService.run(`
+      INSERT INTO reservations (id, user_phone, service_type, date, start_time, end_time, duration_hours,
+        total_price, was_free, status, payment_status, payment_method, created_at, confirmed_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'confirmed', $10, $11, NOW(), NOW())
+    `, [id, clientPhone, serviceType, date, startTime, endTime, durationHours,
+        parsedAmount, isFree, paymentStatus, paymentMethod]);
+
+    // Si hay notas, guardarlas como interacción
+    if (notes?.trim()) {
+      await databaseService.run(`
+        INSERT INTO interactions (user_phone, agent, agent_name, intent_reason, input, output, timestamp)
+        VALUES ($1, 'ADMIN', 'Dashboard', 'manual_reservation', $2, $3, NOW())
+      `, [clientPhone, notes.trim(), `Reserva manual ${id} creada desde dashboard`]).catch(() => {});
+    }
+
+    console.log(`[AURORA-API] Reserva manual creada: ${id} → ${clientName} (${clientPhone})`);
+    return res.json({ ok: true, id });
+
+  } catch (error) {
+    console.error('[AURORA-API] Error creando reserva manual:', error);
     return res.status(500).json({ ok: false, error: error.message });
   }
 });

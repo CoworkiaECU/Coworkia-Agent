@@ -198,6 +198,19 @@
     .d7-pending { background: #431407; color: #f97316; }
     .d7-sent    { background: #022c22; color: #34d399; }
 
+    /* ── tooltips ── */
+    [data-tip] { position: relative; }
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: #f1f5f9; border: 1px solid #475569;
+      padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 400;
+      white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s;
+      z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    [data-tip]:hover::after { opacity: 1; }
+    .table-wrap { overflow-x: auto; overflow-y: visible; position: relative; }
+
     /* ── prospects section ── */
     .kpi-chips {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;
@@ -425,6 +438,9 @@
   <div class="qa-bar">
     <div class="qa-label">⚡ Acciones Rápidas</div>
     <div class="qa-grid">
+      <button id="qa-new-reservation" class="qa-btn" onclick="openManualReservation()">
+        <span class="icon">➕</span>Nueva Reserva
+      </button>
       <button id="qa-refresh-all" class="qa-btn">
         <span class="icon">🔄</span>Actualizar Todo
       </button>
@@ -651,14 +667,16 @@
       <table id="reservations-table" style="display:none;">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Servicio</th>
+            <th>ID</th>
             <th>Cliente</th>
+            <th>Servicio</th>
+            <th>Fecha</th>
             <th>Horario</th>
             <th>Monto</th>
-            <th>Estado</th>
+            <th>Asistió</th>
             <th>Pago</th>
             <th>Creada</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -778,6 +796,73 @@
 <!-- Toast -->
 <div id="toast"></div>
 
+<!-- Modal: Nueva Reserva Manual -->
+<div id="modal-new-reservation" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:28px;width:420px;max-width:92vw;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="font-size:16px;font-weight:700;color:#f1f5f9;">➕ Nueva Reserva</h3>
+      <button onclick="closeManualReservation()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;padding:4px;">&times;</button>
+    </div>
+    <form id="form-manual-reservation" onsubmit="submitManualReservation(event)" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Nombre *</label>
+          <input type="text" id="mr-name" required placeholder="Juan Pérez" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Teléfono *</label>
+          <input type="text" id="mr-phone" required placeholder="593999123456" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Servicio *</label>
+        <select id="mr-service" required style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+          <option value="">Seleccionar...</option>
+          <option value="hotDesk">Hot Desk</option>
+          <option value="meetingRoom">Sala de Reuniones</option>
+          <option value="deskIndividual">Escritorio Individual</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Fecha *</label>
+          <input type="date" id="mr-date" required style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Inicio *</label>
+          <input type="time" id="mr-start" required value="09:00" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Fin *</label>
+          <input type="time" id="mr-end" required value="17:00" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Monto ($)</label>
+          <input type="text" inputmode="decimal" id="mr-amount" placeholder="0.00" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Tipo Pago</label>
+          <select id="mr-payment" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="gratis">🎁 Gratis / Cortesía</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Notas (opcional)</label>
+        <input type="text" id="mr-notes" placeholder="Ej: Reserva por llamada, cliente VIP…" style="width:100%;margin-top:4px;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+      </div>
+      <button type="submit" id="mr-submit" class="btn btn-primary" style="margin-top:6px;padding:12px;font-size:14px;font-weight:600;">
+        ✅ Crear Reserva
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- FAB -->
 <button class="fab" id="btn-fab-refresh" title="Actualizar todo">
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -785,6 +870,6 @@
   </svg>
 </button>
 
-<script src="/js/aurora-dashboard.js?v=20260324b"></script>
+<script src="/js/aurora-dashboard.js?v=20260329a"></script>
 </body>
 </html>

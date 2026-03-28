@@ -32,10 +32,19 @@ function getTabReservations(reservations, tab) {
     ['pending', 'pending_payment'].includes(r.status) ||
     (r.status === 'confirmed' && r.payment_status !== 'paid' && r.attended !== true)
   );
-  if (tab === 'completed') return reservations.filter(r => r.status === 'completed');
+  if (tab === 'completed') return reservations.filter(r => {
+    if (!r.date) return false;
+    const isPast = new Date(r.date + 'T23:59:59') < new Date();
+    return isPast && (r.payment_status === 'paid' || r.attended === true);
+  });
   if (tab === 'followup') {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return reservations.filter(r => r.status === 'completed' && r.date && new Date(r.date) > cutoff);
+    return reservations.filter(r => {
+      if (!r.date) return false;
+      const rDate = new Date(r.date);
+      const isPast = new Date(r.date + 'T23:59:59') < new Date();
+      return isPast && (r.payment_status === 'paid' || r.attended === true) && rDate > cutoff;
+    });
   }
   return reservations;
 }
@@ -50,10 +59,17 @@ function updateTabCounts(reservations) {
       ['pending', 'pending_payment'].includes(r.status) ||
       (r.status === 'confirmed' && r.payment_status !== 'paid' && r.attended !== true)
     ).length,
-    completed: reservations.filter(r => r.status === 'completed').length,
+    completed: reservations.filter(r => {
+      if (!r.date) return false;
+      const isPast = new Date(r.date + 'T23:59:59') < new Date();
+      return isPast && (r.payment_status === 'paid' || r.attended === true);
+    }).length,
     followup:  reservations.filter(r => {
       const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      return r.status === 'completed' && r.date && new Date(r.date) > cutoff;
+      if (!r.date) return false;
+      const rDate = new Date(r.date);
+      const isPast = new Date(r.date + 'T23:59:59') < new Date();
+      return isPast && (r.payment_status === 'paid' || r.attended === true) && rDate > cutoff;
     }).length
   };
   for (const [tab, count] of Object.entries(counts)) {
@@ -194,29 +210,33 @@ window.markAttended = async function(id, attended) {
   }
 };
 
-// ─── Celda MONTO: muestra precio + formulario inline para pagos pendientes en efectivo
+// ─── Celda MONTO: muestra precio + formulario inline para pagos pendientes
 function renderMontoCell(r) {
   if (r.was_free) return '<span class="pay-chip pay-free">🎁 Gratis</span>';
   const price = formatPrice(r.total_price, false);
-  if (r.payment_status === 'pending_efectivo') {
-    const preVal = parseFloat(r.total_price) > 0 ? parseFloat(r.total_price).toFixed(2) : '';
-    return `
-      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
-        <span style="color:#94a3b8;font-size:12px;">${price}</span>
-        <div style="display:flex;gap:4px;align-items:center;">
-          <input id="pay-amt-${r.id}" type="text" inputmode="decimal" value="${preVal}"
-            placeholder="0.00"
-            style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
-                   background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
-            onkeydown="if(event.key==='Enter') registerPayment('${r.id}')">
-          <button onclick="registerPayment('${r.id}')"
-            style="background:#16a34a;color:#fff;border:none;padding:3px 9px;border-radius:5px;
-                   font-size:13px;font-weight:700;cursor:pointer;line-height:1.4;"
-            title="Confirmar pago en efectivo">✓</button>
-        </div>
-      </div>`;
+  // Ya pagado → badge verde con monto
+  if (r.payment_status === 'paid') {
+    return `<span style="color:#6ee7b7;font-weight:700;font-size:13px;">✅ ${price}</span>`;
   }
-  return price;
+  // No pagado → input para registrar cobro
+  const preVal = parseFloat(r.total_price) > 0 ? parseFloat(r.total_price).toFixed(2) : '';
+  return `
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
+      ${parseFloat(r.total_price) > 0 ? `<span style="color:#94a3b8;font-size:11px;">Ref: ${price}</span>` : ''}
+      <div style="display:flex;gap:4px;align-items:center;">
+        <input id="pay-amt-${r.id}" type="text" inputmode="decimal" value="${preVal}"
+          placeholder="0.00"
+          style="width:76px;padding:3px 6px;border-radius:5px;border:1px solid #f97316;
+                 background:#0f172a;color:#f1f5f9;font-size:12px;text-align:right;"
+          onkeydown="if(event.key==='Enter') registerPayment('${r.id}')">
+        <button onclick="registerPayment('${r.id}')"
+          style="background:#334155;color:#94a3b8;border:none;padding:3px 9px;border-radius:5px;
+                 font-size:13px;font-weight:700;cursor:pointer;line-height:1.4;transition:all .15s;"
+          title="Confirmar pago en efectivo"
+          onmouseover="this.style.background='#16a34a';this.style.color='#fff';"
+          onmouseout="this.style.background='#334155';this.style.color='#94a3b8';">✓</button>
+      </div>
+    </div>`;
 }
 
 // Formateo de estado de pago
@@ -1485,3 +1505,55 @@ try {
   showToast('❌ Error inicializando dashboard: ' + error.message, 5000);
 }
 }); // DOMContentLoaded
+
+// ─── Reserva Manual (Boss Command) ──────────────────────────────────────────
+window.openManualReservation = function() {
+  const modal = document.getElementById('modal-new-reservation');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.getElementById('mr-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('mr-name')?.focus();
+  }
+};
+
+window.closeManualReservation = function() {
+  const modal = document.getElementById('modal-new-reservation');
+  if (modal) modal.style.display = 'none';
+};
+
+window.submitManualReservation = async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('mr-submit');
+  btn.disabled = true; btn.textContent = '⏳ Creando…';
+  try {
+    const body = {
+      clientName:  document.getElementById('mr-name').value.trim(),
+      clientPhone: document.getElementById('mr-phone').value.trim(),
+      serviceType: document.getElementById('mr-service').value,
+      date:        document.getElementById('mr-date').value,
+      startTime:   document.getElementById('mr-start').value,
+      endTime:     document.getElementById('mr-end').value,
+      amount:      document.getElementById('mr-amount').value.trim().replace(',', '.'),
+      paymentType: document.getElementById('mr-payment').value,
+      notes:       document.getElementById('mr-notes').value.trim()
+    };
+    const res = await fetch(`${API_BASE}/api/aurora/reservations/manual`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast(`✅ Reserva ${data.id} creada para ${body.clientName}`);
+      closeManualReservation();
+      document.getElementById('form-manual-reservation').reset();
+      await loadReservations();
+    } else {
+      showToast('❌ ' + (data.error || 'Error al crear reserva'));
+    }
+  } catch (err) {
+    showToast('❌ Error de red: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '✅ Crear Reserva';
+  }
+};

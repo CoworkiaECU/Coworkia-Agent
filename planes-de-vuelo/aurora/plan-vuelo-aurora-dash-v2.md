@@ -3,7 +3,7 @@
 **Fecha**: 28 Mar 2026  
 **Objetivo**: Corregir 6 issues del dashboard Aurora detectados por Diego  
 **Prioridad**: HIGH  
-**Status**: 🟢 Ready para autopilot  
+**Status**: 🟢 Bloques A+B+C COMPLETOS — Pendiente D (automatizaciones pago)  
 **Chat asignado**: Chat derecho (Aurora)
 
 ---
@@ -57,26 +57,26 @@
 ### BLOQUE A: Payment Flow Completo (2h)
 
 **Tareas:**
-- [ ] **A1** — Fix columna MONTO: mostrar precio del sistema + input del admin lado a lado (30 min)
-- [ ] **A2** — Fix check button: gris por defecto → click → confirma monto → verde → PATCH API (30 min)
-- [ ] **A3** — Estado actualiza: "Por cobrar" → "Pagado" con badge verde en tiempo real (15 min)
-- [ ] **A4** — Gabi envía recibo: trigger `sendPaymentReceipt()` post-pago con datos cliente (30 min)
-- [ ] **A5** — Fix revenue query: solo sumar `payment_status='paid' AND total_price > 0` (15 min)
+- [x] **A1** — Fix columna MONTO: input para TODOS los no pagados, badge verde ✅ para pagados
+- [x] **A2** — Fix check button: gris por defecto → hover verde → PATCH API (unificado con A1)
+- [x] **A3** — Estado actualiza: badge verde ✅ $X.XX en tiempo real tras pago (unificado con A1)
+- [x] **A4** — Gabi ya envía recibo WA + email post-pago (ya existía en register-payment)
+- [x] **A5** — Fix revenue query: `WHERE payment_status='paid' AND total_price > 0`
 
 ### BLOQUE B: Tooltip + Completadas + UX (1.5h)
 
 **Tareas:**
-- [ ] **B1** — Agregar CSS `[data-tip]::after` completo al dark dashboard (20 min)
-- [ ] **B2** — Fix overflow containers: quitar `overflow:hidden` de `.wrap` y padres (15 min)
-- [ ] **B3** — Redefinir "Completadas": reservas con `date < TODAY AND (status='confirmed' OR payment_status='paid')` (30 min)
-- [ ] **B4** — Renombrar tab si necesario: "Completadas" → "Finalizadas" o mantener pero que funcione (10 min)
+- [x] **B1** — CSS `[data-tip]::after` con z-index:9999 + box-shadow
+- [x] **B2** — `.table-wrap` overflow-y:visible + position:relative
+- [x] **B3** — Completadas: `date < TODAY AND (paid OR attended)` + Follow-ups D+7 usa misma lógica
+- [x] **B4** — Headers de tabla corregidos: 10 columnas (ID, Cliente, Servicio, Fecha, Horario, Monto, Asistió, Pago, Creada, Acciones)
 
 ### BLOQUE C: Reserva Manual Boss Command (1.5h)
 
 **Tareas:**
-- [ ] **C1** — Crear endpoint `POST /api/aurora/reservations/manual` (30 min)
-- [ ] **C2** — Modal de nueva reserva: campos mínimos, validación, dark theme (45 min)
-- [ ] **C3** — Botón "➕" sutil en header del dashboard + atajo teclado (15 min)
+- [x] **C1** — Endpoint `POST /api/aurora/reservations/manual` con upsert usuario + validación
+- [x] **C2** — Modal dark theme: nombre, tel, servicio, fecha, hora inicio/fin, monto, tipo pago, notas
+- [x] **C3** — Botón "➕ Nueva Reserva" en Quick Actions bar
 
 ### BLOQUE D: Automatizaciones Pago (1h)
 

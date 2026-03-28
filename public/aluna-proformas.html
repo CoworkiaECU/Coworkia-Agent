@@ -451,6 +451,9 @@
     <button class="tab-btn" data-tab="pipeline" data-tip="Embudo de seguimiento automático D+1 / D+3 / Convertido">
       🔄 Pipeline de Seguimiento <span class="tab-count" id="tab-count-pipeline"></span>
     </button>
+    <button class="tab-btn" data-tab="automatizaciones" data-tip="Estado de todas las automatizaciones activas de Aluna">
+      ⚙️ Automatizaciones
+    </button>
   </nav>
 
   <!-- ══════════════════════════════════════════
@@ -688,6 +691,19 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 
   </div><!-- /tab-pipeline -->
 
+  <!-- ══════════════════════════════════════════
+       TAB: AUTOMATIZACIONES
+  ══════════════════════════════════════════ -->
+  <div id="tab-automatizaciones" class="tab-content" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;color:#e2e8f0;">⚙️ Automatizaciones Activas</h3>
+      <button onclick="loadAutomationStats();toast('⚙️ Actualizado')" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">🔄 Refresh</button>
+    </div>
+    <div id="automations-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+      <div style="color:#64748b;padding:40px;text-align:center;">Cargando automatizaciones...</div>
+    </div>
+  </div><!-- /tab-automatizaciones -->
+
 </div><!-- /wrap -->
 
 <!-- Footer removido - logo ahora en header -->
@@ -905,6 +921,6 @@ Mi propuesta concreta: ven a Coworkia un día completo, completamente gratis.
 </div>
 
 <!-- Funciones del prospect modal están en aluna-dashboard.js -->
-<script src="/js/aluna-dashboard.js?v=20260328a"></script>
+<script src="/js/aluna-dashboard.js?v=20260328b"></script>
 </body>
 </html>

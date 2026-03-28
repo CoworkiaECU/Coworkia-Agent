@@ -24,6 +24,8 @@ window.switchTab = function(name) {
   });
   document.getElementById('tab-proformas').style.display = name === 'proformas' ? '' : 'none';
   document.getElementById('tab-pipeline').style.display  = name === 'pipeline'  ? '' : 'none';
+  document.getElementById('tab-automatizaciones').style.display = name === 'automatizaciones' ? '' : 'none';
+  if (name === 'automatizaciones') loadAutomationStats();
 };
 
 /* ─── stage filter ───────────────────────────────────────────── */
@@ -1264,6 +1266,51 @@ window.submitAddProspect = async function() {
     toast(`❌ Error de red: ${error.message}`);
   }
 };
+
+/* ─── automatizaciones ────────────────────────────────────── */
+
+async function loadAutomationStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/aluna/automations/stats`);
+    const data = await res.json();
+    if (!data.ok || !data.stats) return;
+
+    const grid = document.getElementById('automations-grid');
+    if (!grid) return;
+
+    let html = '';
+    for (const [key, s] of Object.entries(data.stats)) {
+      const active = (s.total || 0) > 0;
+      const badge = active
+        ? '<span style="background:#064e3b;color:#34d399;padding:2px 8px;border-radius:10px;font-size:11px;">✅ Activo</span>'
+        : '<span style="background:#1e293b;color:#64748b;padding:2px 8px;border-radius:10px;font-size:11px;">⏸ Sin datos</span>';
+
+      const lastStr = s.lastSent
+        ? new Date(s.lastSent).toLocaleString('es-EC', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+        : '—';
+
+      html += `
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;transition:border-color .2s;" onmouseover="this.style.borderColor='#334155'" onmouseout="this.style.borderColor='#1e293b'">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:20px;">${s.icon || '⚙️'}</span>
+            ${badge}
+          </div>
+          <div style="color:#e2e8f0;font-weight:600;font-size:14px;margin-bottom:4px;">${s.label}</div>
+          <div style="color:#64748b;font-size:12px;margin-bottom:14px;">🕐 ${s.schedule || '—'}</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+            ${s.today !== undefined ? `<div><div style="color:#34d399;font-size:18px;font-weight:700;">${s.today}</div><div style="color:#64748b;font-size:10px;">Hoy</div></div>` : ''}
+            ${s.week !== undefined ? `<div><div style="color:#38bdf8;font-size:18px;font-weight:700;">${s.week}</div><div style="color:#64748b;font-size:10px;">Semana</div></div>` : ''}
+            <div><div style="color:#a78bfa;font-size:18px;font-weight:700;">${s.total || 0}</div><div style="color:#64748b;font-size:10px;">Total</div></div>
+          </div>
+          <div style="color:#475569;font-size:11px;margin-top:10px;border-top:1px solid #1e293b;padding-top:8px;">Último: ${lastStr}</div>
+        </div>`;
+    }
+
+    grid.innerHTML = html;
+  } catch (err) {
+    console.warn('[ALUNA-DASH] No se pudieron cargar automation stats:', err.message);
+  }
+}
 
 /* ─── end ───────────────────────────────────────────────────── */
 // Estado de la aplicación -- LEGACY (removed)

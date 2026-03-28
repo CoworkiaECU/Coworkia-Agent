@@ -21,17 +21,18 @@ async function collectAlunaStats() {
 
     const [newToday, followups, conversions] = await Promise.all([
       databaseService.get(
-        `SELECT COUNT(*) as count FROM aluna_prospect_followups
-         WHERE DATE(interest_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE`
+        `SELECT COUNT(*) as count FROM membership_leads
+         WHERE DATE(created_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE`
       ),
       databaseService.get(
-        `SELECT COUNT(*) as count FROM aluna_prospect_followups
+        `SELECT COUNT(*) as count FROM membership_leads
          WHERE (followup_24h_sent_at IS NOT NULL OR followup_3d_sent_at IS NOT NULL)
            AND DATE(GREATEST(COALESCE(followup_24h_sent_at, '1970-01-01'), COALESCE(followup_3d_sent_at, '1970-01-01')) AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE`
       ),
       databaseService.get(
-        `SELECT COUNT(*) as count FROM aluna_prospect_followups
-         WHERE DATE(converted_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE`
+        `SELECT COUNT(*) as count FROM membership_leads
+         WHERE status = 'active'
+           AND DATE(updated_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE`
       ),
     ]);
 

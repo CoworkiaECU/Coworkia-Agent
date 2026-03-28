@@ -1542,4 +1542,124 @@ router.get('/memberships/:id/payments', async (req, res) => {
   }
 });
 
+// ============================================================================
+// AUTOMATIZACIONES — STATS
+// ============================================================================
+
+/**
+ * GET /api/aluna/automations/stats
+ * Resumen de todas las automatizaciones activas de Aluna
+ */
+router.get('/automations/stats', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+
+    const [d1, d3, renewals, payments, emailReplies] = await Promise.all([
+      // D+1 Follow-up (24h)
+      databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE DATE(followup_24h_sent_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE) as today,
+          COUNT(*) FILTER (WHERE followup_24h_sent_at >= NOW() - INTERVAL '7 days') as week,
+          COUNT(*) FILTER (WHERE followup_24h_sent_at IS NOT NULL) as total,
+          MAX(followup_24h_sent_at) as last_sent
+        FROM membership_leads
+      `),
+      // D+3 Follow-up (FOMO)
+      databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE DATE(followup_3d_sent_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE) as today,
+          COUNT(*) FILTER (WHERE followup_3d_sent_at >= NOW() - INTERVAL '7 days') as week,
+          COUNT(*) FILTER (WHERE followup_3d_sent_at IS NOT NULL) as total,
+          MAX(followup_3d_sent_at) as last_sent
+        FROM membership_leads
+      `),
+      // Renewal Reminders
+      databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE renewal_reminder_1_sent_at IS NOT NULL) as reminder1_total,
+          COUNT(*) FILTER (WHERE renewal_reminder_2_sent_at IS NOT NULL) as reminder2_total,
+          MAX(GREATEST(COALESCE(renewal_reminder_1_sent_at, '1970-01-01'), COALESCE(renewal_reminder_2_sent_at, '1970-01-01'))) as last_sent
+        FROM membership_leads
+      `).catch(() => ({ reminder1_total: 0, reminder2_total: 0, last_sent: null })),
+      // Payments verified
+      databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE DATE(verified_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE) as today,
+          COUNT(*) FILTER (WHERE verified_at >= NOW() - INTERVAL '7 days') as week,
+          COUNT(*) FILTER (WHERE status = 'verified') as total,
+          MAX(verified_at) as last_sent
+        FROM membership_payments
+      `).catch(() => ({ today: 0, week: 0, total: 0, last_sent: null })),
+      // Email replies (from new system)
+      databaseService.get(`
+        SELECT
+          COUNT(*) FILTER (WHERE agent = 'aluna' AND DATE(received_at AT TIME ZONE 'America/Guayaquil') = CURRENT_DATE) as today,
+          COUNT(*) FILTER (WHERE agent = 'aluna' AND received_at >= NOW() - INTERVAL '7 days') as week,
+          COUNT(*) FILTER (WHERE agent = 'aluna') as total,
+          MAX(CASE WHEN agent = 'aluna' THEN received_at END) as last_sent
+        FROM email_replies
+      `).catch(() => ({ today: 0, week: 0, total: 0, last_sent: null })),
+    ]);
+
+    return res.json({
+      ok: true,
+      stats: {
+        followup_d1: {
+          label: 'Follow-up D+1 (24h)',
+          icon: '📨',
+          schedule: '10:00 AM diario',
+          today: parseInt(d1?.today || 0),
+          week: parseInt(d1?.week || 0),
+          total: parseInt(d1?.total || 0),
+          lastSent: d1?.last_sent || null,
+        },
+        followup_d3: {
+          label: 'Follow-up D+3 (FOMO)',
+          icon: '🔥',
+          schedule: '11:00 AM diario',
+          today: parseInt(d3?.today || 0),
+          week: parseInt(d3?.week || 0),
+          total: parseInt(d3?.total || 0),
+          lastSent: d3?.last_sent || null,
+        },
+        renewal_d25: {
+          label: 'Renewal Reminder (día 25)',
+          icon: '🌙',
+          schedule: '9:00 AM diario',
+          total: parseInt(renewals?.reminder1_total || 0),
+          lastSent: renewals?.last_sent || null,
+        },
+        renewal_d30: {
+          label: 'Renewal Reminder (día 30)',
+          icon: '⚠️',
+          schedule: '9:00 AM diario',
+          total: parseInt(renewals?.reminder2_total || 0),
+          lastSent: renewals?.last_sent || null,
+        },
+        payment_verify: {
+          label: 'Payment Verification (VisionAI)',
+          icon: '💳',
+          schedule: 'En tiempo real',
+          today: parseInt(payments?.today || 0),
+          week: parseInt(payments?.week || 0),
+          total: parseInt(payments?.total || 0),
+          lastSent: payments?.last_sent || null,
+        },
+        email_replies: {
+          label: 'Email Reply Reader',
+          icon: '📬',
+          schedule: 'Cada 10 min',
+          today: parseInt(emailReplies?.today || 0),
+          week: parseInt(emailReplies?.week || 0),
+          total: parseInt(emailReplies?.total || 0),
+          lastSent: emailReplies?.last_sent || null,
+        },
+      }
+    });
+  } catch (error) {
+    console.error('[ALUNA-API] Error automations stats:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

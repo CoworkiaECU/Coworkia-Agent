@@ -12,12 +12,28 @@ Lee en este orden (todos antes de responder):
 4. `/Users/diegovillota/coworkia-agent/.github/memory/people.md` — personas y agentes
 5. Skill completo: `/Users/diegovillota/coworkia-agent/.github/skills/coworkia-memory/SKILL.md`
 
-### PASO 2 — Identificar el chat actual
-Mira el contexto del editor y archivos abiertos para detectar en qué agente/módulo está trabajando Diego:
-- Si hay archivos de `adriana` abiertos → es el chat de Adriana
-- Si hay archivos de `aurora` abiertos → es el chat de Aurora
-- Si hay archivos de `aluna` o `membership` → es el chat de Aluna
-- Si no está claro → revisar el plan de vuelo activo
+### PASO 2 — Identificar el chat actual (SISTEMA MULTI-CHAT)
+
+**Diego trabaja en 2 chats paralelos**, cada uno enfocado en un agente distinto.
+Para saber en qué chat estás, busca **la primera instrucción de Diego** en la conversación:
+
+- "nena hoy nos enfocamos en **aurora**" → Este es el chat de Aurora
+- "nena hoy nos enfocamos en **aluna**" → Este es el chat de Aluna
+- "nena hoy nos enfocamos en **adriana**" → Este es el chat de Adriana
+- Si no lo dice explícitamente → revisar archivos abiertos y plan de vuelo activo
+
+**Cada agente tiene su propio plan de vuelo** en:
+```
+planes-de-vuelo/aurora/plan-vuelo-aurora-*.md
+planes-de-vuelo/aluna/plan-vuelo-aluna-*.md
+planes-de-vuelo/adriana/plan-vuelo-adriana-*.md
+```
+
+**Al identificar el chat:**
+1. Leer el plan de vuelo del agente correspondiente
+2. Retomar desde la última tarea marcada `[x]`
+3. Continuar con la siguiente tarea `[ ]`
+4. Al finalizar sesión → actualizar checkboxes del plan + anotar estado
 
 ### PASO 2b — Revisar plan de reparación Self-Healing (si existe)
 Después de cargar la memoria, busca si existe un archivo `planes-de-vuelo/plan-vuelo-repair-[YYYY-MM-DD].md` con la fecha de hoy.

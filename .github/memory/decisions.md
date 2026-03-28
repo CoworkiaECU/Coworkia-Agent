@@ -30,6 +30,11 @@
 - Los `@aurora` prefixes están en: `buildOneHourWhatsApp`, `buildRebookingWhatsApp`, `send-campaign`, `register-payment`
 - Prospectos: tabla (no grid de cards) — decisión 23 Mar 2026
 - **Dashboard arranca siempre en tab "Todas"** — NO persistir el tab activo en localStorage (fix 24 Mar 2026: localStorage causa que reabrir el dash quede atrapado en D+7=0)
+- **Payment flow (28 Mar 2026)**: Admin ingresa monto → click check → status "pagado" → Gabi envía recibo → acciones automáticas
+- **Revenue INGRESOS TOTAL**: solo sumar reservas con `payment_status='paid' AND total_price > 0` — NO incluir gratis ni pendientes
+- **"Completadas"**: reserva con fecha pasada + pagada/asistió = completada. No solo filtrar por `status='completed'`
+- **Reserva manual desde dashboard**: botón sutil "➕ Nueva Reserva" estilo boss command
+- **Tooltips**: z-index 9999 + overflow visible en todos los contenedores padre
 
 ## Dashboard UX — Decisiones tomadas
 - Columnas de tabla: truncar agentes a 3+N, temas a 3+N con tooltip hover
@@ -60,10 +65,16 @@ const d = await res.json();
 - Al terminar una tarea: PATCH `/api/todos/:id/status` con `{ status: 'done' }`
 - Al crear tarea nueva: POST `/api/todos` con `{ title, agent, priority }`
 
-## Planes de vuelo
-- Archivar / eliminar planes de vuelo completados al cerrar sprint
-- Solo mantener el plan activo o "próxima sesión" en `/planes-de-vuelo/`
-- Nuevo plan se crea en: `planes-de-vuelo/plan-vuelo-DDMMM.md`
+## Planes de vuelo (SISTEMA MULTI-CHAT — desde 28 Mar 2026)
+- **Un plan de vuelo por agente**, en carpetas separadas:
+  - `planes-de-vuelo/aurora/` — todo lo de Aurora (reservas, dashboard, pagos)
+  - `planes-de-vuelo/aluna/` — todo lo de Aluna (membresías, closer, follow-ups)
+  - `planes-de-vuelo/adriana/` — todo lo de Adriana (seguros, documentos)
+- Cada chat trabaja en UN solo agente a la vez
+- Diego dice "nena hoy nos enfocamos en [agente]" para identificar el chat
+- Al finalizar sesión → actualizar checkboxes del plan activo del agente
+- Archivar / eliminar planes completados al cerrar sprint
+- Solo mantener planes activos en la carpeta del agente
 
 ## Seguridad
 - Nunca hardcodear tokens ni emails — siempre `process.env.*`

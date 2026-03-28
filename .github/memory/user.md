@@ -8,13 +8,16 @@
 - **Estilo**: Rápido, directo, quiere resultados sin explicaciones. Dice "nena" y "véndeme eso" cuando algo le gusta.
 
 ## Cómo trabaja Diego
-- Trabaja en **dos chats paralelos** en VS Code: izquierdo (coordinación/deploy) y derecho (Aurora/development)
+- Trabaja en **dos chats paralelos** en VS Code, cada uno enfocado en un agente distinto
+- Al iniciar dice: "nena hoy nos enfocamos en [agente]" → eso define el scope del chat
+- Cada agente tiene su plan de vuelo en `planes-de-vuelo/[agente]/plan-vuelo-*.md`
+- Al finalizar sesión: actualizar plan de vuelo del agente con progreso
 - Prefiere ver el resultado, no escuchar el proceso
 - Si algo está bien dicho: responde con emojis o "wow nena"
 - Si algo es confuso: pide que lo repienses
 - **No le gusta**: pantallas con mucho ruido, tablas sin acción, métricas que no dicen nada
 - **Le encanta**: dashboards que convierten, acciones con un clic, datos que hablan solos
-- Aprueba deploys desde el chat izquierdo con `git push heroku main`
+- Aprueba deploys desde cualquier chat con `git push heroku main`
 
 ## Frases clave de Diego
 - "autopilot verde nena" → activar modo autónomo total

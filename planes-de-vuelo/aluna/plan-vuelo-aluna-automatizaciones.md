@@ -1,9 +1,10 @@
 # Plan de Vuelo: Aluna — Automatizaciones + Wiring Completo
 
 **Fecha**: 28 Mar 2026  
+**Última actualización**: 28 Mar 2026 — sesión superpoderes Aluna  
 **Objetivo**: Llevar Aluna de 70% a 100% — crons automáticos, fix BD, dashboard automations  
 **Prioridad**: HIGH  
-**Status**: 🟢 Ready para autopilot  
+**Status**: 🟡 En progreso (2 features nuevas deployadas hoy)  
 **Chat asignado**: Chat izquierdo (Aluna)
 
 ---
@@ -11,18 +12,42 @@
 ## 📊 ESTADO ACTUAL
 
 **✅ Funcionando:**
-- Dashboard excelente (18 endpoints API, pipeline, stats)
+- Dashboard excelente (18+ endpoints API, pipeline, stats)
 - Email templates D+1 y D+3 ya existen
 - Membership flow desde WhatsApp
 - High-intent detector
 - Payment verification con VisionAI (tabla lista)
+- **🆕 Sistema de pagos híbridos (efectivo + canje)** — v1166, commit `9af6065`
+- **🆕 Email Reply Reader IMAP** — v1167, commit `866ac76`
 
-**❌ Crítico:**
-- 0 cron jobs propios (follow-ups solo manuales desde dashboard)
+**❌ Crítico pendiente:**
+- 0 cron jobs propios de follow-ups (solo manuales desde dashboard)
 - Tabla `aluna_prospect_followups` rota — queries fallan con error 400
 - Sin renewal reminders automáticos
 - Sin lead auto-capture desde conversaciones
 - Sin sección Automatizaciones en dashboard
+
+---
+
+## ✅ COMPLETADO HOY (28 Mar 2026)
+
+### Pago Híbrido (Efectivo + Canje) — commit `9af6065`, v1166
+- [x] Keywords "diego villota autorizó" en `membership-payment-verification.js` (13 variantes)
+- [x] `PATCH /api/aluna/memberships/:id/register-payment` — cashAmount, canjeAmount, canjeDescription
+- [x] `GET /api/aluna/memberships/:id/payments` — historial con hybridData
+- [x] UI dashboard: columna 💰 Pago inline con inputs cash/canje
+- [x] Prompt Aluna WhatsApp actualizado con flujo de autorización
+- [x] Deploy + verificado en producción ✅
+
+### Email Reply Reader — commit `866ac76`, v1167  
+- [x] `sendEmail()` genera Message-ID tracking: `coworkia-AGENT-REF@coworkia.ec`
+- [x] Headers X-Coworkia-Agent y X-Coworkia-Ref en cada email saliente
+- [x] `email-reply-reader.js`: polling IMAP Gmail, filtro 3 capas (replies + sistema + no auto-replies)
+- [x] Routing por agente sin cruce de información
+- [x] API `/api/email-replies`: poll, list, stats, respond, dismiss
+- [x] Cron cada 10 min (`email-reply-cron.js`)
+- [x] Registrado en `index.js` (router + cron boot)
+- [x] Deploy + IMAP verificado en producción (`poll` OK, `stats` OK) ✅
 
 ---
 

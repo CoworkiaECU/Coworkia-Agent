@@ -1,9 +1,37 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-26T16:00:00Z",
-  "currentPlan": "fix-xiaomi-html-blockb",
-  "nextPriority": "xiaomi-manual-validation",
+  "lastUpdated": "2026-03-28T16:45:00Z",
+  "currentPlan": "aluna-superpowers-dashboard",
+  "nextPriority": "aluna-automatizaciones-bloque-a",
   "queue": [
+    {
+      "id": "aluna-email-reply-reader",
+      "title": "Aluna — Email Reply Reader IMAP (respuestas de clientes)",
+      "status": "completed",
+      "plan": "plan-vuelo-aluna-automatizaciones.md",
+      "estimatedTime": "1.5h",
+      "realTime": "1h",
+      "completedAt": "2026-03-28T16:40:00Z",
+      "commit": "866ac76",
+      "heroku": "v1167",
+      "priority": "high",
+      "chat": "chat-izquierdo",
+      "notes": "IMAP polling cada 10min. Filtro 3 capas (solo replies sistema). Routing por agente sin cruce. API /api/email-replies (poll, list, stats, respond, dismiss). Message-ID tracking en sendEmail(). Deps: imap-simple + mailparser."
+    },
+    {
+      "id": "aluna-hybrid-payment",
+      "title": "Aluna — Sistema de Pagos Híbridos (efectivo + canje)",
+      "status": "completed",
+      "plan": "plan-vuelo-aluna-automatizaciones.md",
+      "estimatedTime": "1h",
+      "realTime": "45min",
+      "completedAt": "2026-03-28T15:30:00Z",
+      "commit": "9af6065",
+      "heroku": "v1166",
+      "priority": "high",
+      "chat": "chat-izquierdo",
+      "notes": "Keywords 'diego villota autorizó' (13 variantes). PATCH register-payment. Dashboard UI inline cash/canje. Prompt Aluna actualizado."
+    },
     {
       "id": "fix-xiaomi-html-blockb",
       "title": "Fix HTML Xiaomi - Bloque B (Dark mode robusto)",

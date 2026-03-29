@@ -236,7 +236,7 @@ async function sendD1Followups() {
         r.id, r.user_phone, r.service_type, r.date, r.start_time,
         u.name AS user_name, u.email AS user_email
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status IN ('confirmed', 'completed')
         AND r.date = CURRENT_DATE - INTERVAL '1 day'
         AND r.followup_d1_sent_at IS NULL
@@ -322,7 +322,7 @@ async function sendD3Followups() {
         r.id, r.user_phone, r.service_type, r.date, r.total_price,
         u.name AS user_name, u.email AS user_email
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status IN ('confirmed', 'completed')
         AND r.date BETWEEN CURRENT_DATE - INTERVAL '4 days' AND CURRENT_DATE - INTERVAL '3 days'
         AND r.followup_d3_sent_at IS NULL
@@ -418,7 +418,7 @@ async function sendReminder24h() {
         r.id, r.user_phone, r.service_type, r.date, r.start_time,
         u.name AS user_name, u.email AS user_email
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
         AND r.date = CURRENT_DATE + INTERVAL '1 day'
         AND r.reminder_24h_sent_at IS NULL
@@ -503,7 +503,7 @@ async function sendReminder2h() {
         r.id, r.user_phone, r.service_type, r.date, r.start_time,
         u.name AS user_name
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
         AND r.date = CURRENT_DATE
         AND r.start_time::time BETWEEN (NOW() + INTERVAL '1 hour 30 minutes')::time 
@@ -573,7 +573,7 @@ async function detectNoShows() {
         r.id, r.user_phone, r.service_type, r.date, r.start_time, r.total_price,
         u.name AS user_name
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
         AND (r.date::date + r.start_time::time) < (NOW() - INTERVAL '3 hours')
         AND r.followup_1h_sent_at IS NULL
@@ -650,7 +650,7 @@ async function sendUpsellAluna() {
         SUM(COALESCE(r.total_price, 0)) AS total_gastado,
         MAX(r.id) AS last_reservation_id
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status IN ('confirmed', 'completed')
         AND r.date >= CURRENT_DATE - INTERVAL '30 days'
       GROUP BY r.user_phone, u.name, u.email
@@ -733,7 +733,7 @@ async function sendPaymentReminders() {
         r.id, r.user_phone, r.service_type, r.date, r.start_time, r.total_price,
         u.name AS user_name
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
         AND r.payment_status IN ('pending', 'pending_efectivo')
         AND r.date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '2 days'
@@ -805,7 +805,7 @@ async function sendReminder10min() {
         r.hot_desk_number, r.payment_status, r.total_price,
         u.name AS user_name
       FROM reservations r
-      LEFT JOIN users u ON r.user_phone = u.phone
+      LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
         AND r.date = CURRENT_DATE
         AND r.start_time::time BETWEEN (NOW() + INTERVAL '5 minutes')::time 

@@ -570,6 +570,33 @@ function normalizeText(data) {
   return safeStr(data.body || data.message || '');
 }
 
+// Tipos de webhook que Wassenger envía sin texto descifrado (Click-to-WhatsApp, IG ads)
+const UNDECRYPTED_TYPES = ['ciphertext', 'notification_template'];
+
+/**
+ * Fetch mensaje desde Wassenger API cuando el webhook llega sin texto
+ * (ej: ciphertext de Click-to-WhatsApp / Instagram ads)
+ */
+async function fetchMessageText(messageId) {
+  const token = process.env.WASSENGER_TOKEN;
+  if (!token || !messageId) return '';
+  try {
+    // Esperar 2s para que Wassenger descifre
+    await new Promise(r => setTimeout(r, 2000));
+    const res = await fetch(`https://api.wassenger.com/v1/messages/${messageId}`, {
+      headers: { Token: token }
+    });
+    if (!res.ok) return '';
+    const msg = await res.json();
+    const text = safeStr(msg.body || msg.message || '');
+    if (text) console.log(`[CTWA-FETCH] ✅ Texto recuperado para ${messageId}: "${text.substring(0, 60)}"`);
+    return text;
+  } catch (e) {
+    console.warn(`[CTWA-FETCH] ❌ Error fetching message ${messageId}:`, e.message);
+    return '';
+  }
+}
+
 function normalizeType(data) {
   return safeStr(data.type || 'text') || 'text';
 }
@@ -1304,7 +1331,10 @@ function isOldMessage(data) {
   const ts = Number(data.timestamp || 0);
   if (!ts) return false;
   const diff = nowUnix() - ts;
-  return diff > 3600; // 1h
+  const type = safeStr(data.type || '');
+  // Click-to-WhatsApp (IG ads) pueden llegar horas después — tolerar hasta 8h
+  if (UNDECRYPTED_TYPES.includes(type)) return diff > 28800;
+  return diff > 3600; // 1h para mensajes normales
 }
 
 function isCasualGreetingOnly(text) {
@@ -1378,6 +1408,20 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         name,
         messageId
       };
+
+      // 📱 CTWA: Click-to-WhatsApp (Instagram/Facebook ads) llegan como
+      // ciphertext o notification_template sin texto — recuperar de API
+      if (!webhookData.text && UNDECRYPTED_TYPES.includes(type)) {
+        console.log(`[CTWA] ⏳ Mensaje tipo '${type}' sin texto de ${userId}, consultando API...`);
+        const fetchedText = await fetchMessageText(messageId);
+        if (fetchedText) {
+          webhookData.text = fetchedText;
+          console.log(`[CTWA] ✅ Texto recuperado para ${userId}: "${fetchedText.substring(0, 80)}"`);
+        } else {
+          console.log(`[CTWA] ⚠️ No se pudo recuperar texto para ${userId} (type=${type}), ignorando`);
+          return;
+        }
+      }
 
       if (debug) {
         console.log('[WASSENGER] Incoming:', {

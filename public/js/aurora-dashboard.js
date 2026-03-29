@@ -490,7 +490,14 @@ window.registerPayment = async function(id) {
     showToast('⚠️ Ingresa un monto válido para registrar el pago.');
     return;
   }
+
+  // Confirmación obligatoria antes de registrar
+  if (!confirm(`¿Registrar pago de $${amount.toFixed(2)}?\nEsta acción no se puede deshacer.`)) return;
+
+  // Bloquear input + botón inmediatamente (seguridad: evita edición post-click)
   const btn = input.nextElementSibling;
+  input.disabled = true;
+  input.style.opacity = '0.5';
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
   try {
     const res = await fetch(`/api/aurora/reservations/${id}/register-payment`, {
@@ -504,10 +511,15 @@ window.registerPayment = async function(id) {
       showToast(`💰 Pago de $${amount.toFixed(2)} registrado${data.waSent ? ' · ✅ WA enviado al cliente' : ''}`);
     } else {
       showToast('❌ ' + (data.error || 'No se pudo registrar el pago'));
+      // Solo re-habilitar si falló el servidor
+      input.disabled = false;
+      input.style.opacity = '1';
       if (btn) { btn.disabled = false; btn.textContent = '✓'; }
     }
   } catch (e) {
     showToast('❌ Error de red al registrar pago');
+    input.disabled = false;
+    input.style.opacity = '1';
     if (btn) { btn.disabled = false; btn.textContent = '✓'; }
   }
 };

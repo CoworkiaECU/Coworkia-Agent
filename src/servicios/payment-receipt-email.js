@@ -322,7 +322,7 @@ export function prepareReceiptData(lead, paymentData, compositePayment = null) {
   
   return {
     receiptNumber,
-    memberName: lead.full_name,
+    memberName: lead.client_name || lead.full_name,
     memberEmail: lead.email,
     membershipType: lead.membership_type,
     totalAmount: parseFloat(lead.total_amount || paymentData.amount || 0),

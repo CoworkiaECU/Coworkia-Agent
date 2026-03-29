@@ -13,6 +13,7 @@ import { enviarWhatsApp } from './wassenger.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { sendPaymentReceipt, prepareReceiptData } from '../../servicios/payment-receipt-email.js';
+import { approveLead } from '../../servicios/membership-payment-verification.js';
 
 const router = express.Router();
 
@@ -1416,23 +1417,39 @@ router.patch('/memberships/:id/register-payment', async (req, res) => {
       })
     ]);
 
-    // Actualizar status del lead
+    // Actualizar monthly_fee con el total
     await databaseService.run(`
       UPDATE membership_leads 
-      SET status = 'accepted',
-          monthly_fee = $1,
+      SET monthly_fee = $1,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
     `, [totalAmount, id]);
 
-    // Enviar WA de confirmación
+    // ── PROCESO COMPLETO: approveLead() → Gabi receipt + Aluna welcome + WiFi + Calendar + Pipeline ──
+    const compositePayment = isHybrid ? {
+      cashAmount: parsedCash,
+      canjeAmount: parsedCanje,
+      canjeDescription: canjeDescription.trim(),
+      totalAmount,
+      isComposite: true
+    } : null;
+
+    const approveResult = await approveLead(lead, {
+      amount: totalAmount,
+      transaction_date: new Date().toISOString(),
+      transaction_id: paymentId
+    }, compositePayment);
+
+    const emailSent = approveResult?.receiptSent || false;
+
+    // Enviar WA de confirmación al cliente
     let waSent = false;
     if (lead.user_phone) {
       try {
         const firstName = lead.client_name ? lead.client_name.split(' ')[0] : '';
         const planName = (lead.membership_type || 'Membresía').replace('plan-','Plan ').replace('plan_','Plan ');
         
-        let waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago por tu *${planName}*.\n\n`;
+        let waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago por tu *${planName}*.\n\n`;
         
         if (isHybrid) {
           waMsg += `💵 Efectivo: $${parsedCash.toFixed(2)}\n`;
@@ -1452,33 +1469,7 @@ router.patch('/memberships/:id/register-payment', async (req, res) => {
       }
     }
 
-    // Enviar recibo por email si tiene email
-    let emailSent = false;
-    if (lead.email) {
-      try {
-        const compositePayment = isHybrid ? {
-          cashAmount: parsedCash,
-          canjeAmount: parsedCanje,
-          canjeDescription: canjeDescription.trim(),
-          totalAmount,
-          isComposite: true
-        } : null;
-
-        const receiptData = prepareReceiptData(lead, {
-          amount: totalAmount,
-          transaction_date: new Date().toISOString(),
-          transaction_id: paymentId
-        }, compositePayment);
-
-        await sendPaymentReceipt(receiptData);
-        emailSent = true;
-        console.log(`[ALUNA-API] 📧 Recibo enviado a ${lead.email}`);
-      } catch (e) {
-        console.warn('[ALUNA-API] Email recibo failed:', e.message);
-      }
-    }
-
-    console.log(`[ALUNA-API] 💰 Pago ${isHybrid ? 'HÍBRIDO' : finalMethod} registrado: lead #${id} → $${parsedCash} cash + $${parsedCanje} canje = $${totalAmount} | WA: ${waSent} | Email: ${emailSent}`);
+    console.log(`[ALUNA-API] 💰 Pago ${isHybrid ? 'HÍBRIDO' : finalMethod} registrado: lead #${id} → $${parsedCash} cash + $${parsedCanje} canje = $${totalAmount} | WA: ${waSent} | Email: ${emailSent} | approveLead: ${approveResult?.success}`);
 
     return res.json({
       ok: true,

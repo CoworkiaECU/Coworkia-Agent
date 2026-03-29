@@ -637,6 +637,7 @@ function buildPaymentCell(p) {
 
 /* ─── register hybrid payment ────────────────────────────────── */
 window.registerHybridPayment = async function(leadId) {
+  const editor   = document.querySelector(`[data-payment-editor="${leadId}"]`);
   const cashInput  = document.querySelector(`[data-pay-cash="${leadId}"]`);
   const canjeInput = document.querySelector(`[data-pay-canje="${leadId}"]`);
   const descInput  = document.querySelector(`[data-pay-desc="${leadId}"]`);
@@ -673,7 +674,11 @@ window.registerHybridPayment = async function(leadId) {
 
   if (!confirm(confirmMsg)) return;
 
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  // ── BLOQUEO INMEDIATO: deshabilitar TODOS los inputs + botón ──
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Procesando…'; }
+  if (cashInput) { cashInput.disabled = true; cashInput.style.opacity = '0.5'; }
+  if (canjeInput) { canjeInput.disabled = true; canjeInput.style.opacity = '0.5'; }
+  if (descInput) { descInput.disabled = true; descInput.style.opacity = '0.5'; }
 
   try {
     const r = await fetch(`${API_BASE}/api/aluna/memberships/${leadId}/register-payment`, {
@@ -690,17 +695,29 @@ window.registerHybridPayment = async function(leadId) {
     const data = await r.json();
     if (!data.ok) throw new Error(data.error || 'Error registrando pago');
 
+    // ── REEMPLAZO INMEDIATO: editor → badge inmutable ──
+    if (editor) {
+      const badge = isHybrid
+        ? `<span class="badge" style="background:#065f46;color:#6ee7b7;font-size:10px;">✅ $${data.totalAmount.toFixed(2)} (híbrido)</span>`
+        : `<span class="badge" style="background:#065f46;color:#6ee7b7;font-size:10px;">✅ Pagado $${data.totalAmount.toFixed(2)}</span>`;
+      editor.innerHTML = badge;
+    }
+
     const waIcon = data.waSent ? '📱✅' : '📱❌';
     const emailIcon = data.emailSent ? '📧✅' : '📧❌';
     toast(`✅ Pago registrado — $${data.totalAmount.toFixed(2)} ${isHybrid ? '(híbrido)' : ''} ${waIcon} ${emailIcon}`);
 
-    // Refresh table
-    setTimeout(() => { loadProformas(); loadPipeline(); }, 500);
+    // Refresh table (confirmación visual completa)
+    setTimeout(() => { loadProformas(); loadPipeline(); }, 1000);
 
   } catch (e) {
     console.error('[PAYMENT] Error:', e);
     toast(`❌ ${e.message}`);
+    // Re-habilitar SOLO si falló
     if (btn) { btn.disabled = false; btn.textContent = '💰 Registrar Pago'; }
+    if (cashInput) { cashInput.disabled = false; cashInput.style.opacity = '1'; }
+    if (canjeInput) { canjeInput.disabled = false; canjeInput.style.opacity = '1'; }
+    if (descInput) { descInput.disabled = false; descInput.style.opacity = '1'; }
   }
 };
 

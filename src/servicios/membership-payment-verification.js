@@ -523,7 +523,7 @@ async function approveLead(lead, payment, compositePayment = null) {
         : (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })();
 
       blockMembershipCalendar({
-        clientName:     lead.full_name,
+        clientName:     lead.client_name || lead.full_name,
         membershipType: lead.membership_type,
         startDate:      membershipStart.toISOString(),
         membershipCode: lead.membership_code
@@ -804,7 +804,10 @@ export async function findPendingMembershipLead(userId) {
   }
 }
 
+export { approveLead };
+
 export default {
   processMembershipPayment,
-  findPendingMembershipLead
+  findPendingMembershipLead,
+  approveLead
 };

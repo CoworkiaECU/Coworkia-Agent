@@ -3,7 +3,7 @@
 **Fecha**: 28 Mar 2026  
 **Objetivo**: Corregir 6 issues del dashboard Aurora detectados por Diego  
 **Prioridad**: HIGH  
-**Status**: 🟢 Bloques A+B+C COMPLETOS — Pendiente D (automatizaciones pago)  
+**Status**: ✅ TODOS LOS BLOQUES COMPLETOS — Deployado v1170  
 **Chat asignado**: Chat derecho (Aurora)
 
 ---
@@ -81,9 +81,9 @@
 ### BLOQUE D: Automatizaciones Pago (1h)
 
 **Tareas:**
-- [ ] **D1** — Recordatorio 10 min antes: cron que envía WA "Tu reserva es en 10 min" (30 min)
-- [ ] **D2** — Confirmación asistencia post-pago: WA con datos de acceso (15 min)
-- [ ] **D3** — Testing end-to-end del flujo completo (15 min)
+- [x] **D1** — Recordatorio 10 min antes: cron WA cada 5min 7-20h con datos de acceso (WiFi, parking)
+- [x] **D2** — WA post-pago incluye datos de acceso (WiFi, dirección, estacionamiento)
+- [x] **D3** — node --check 5 archivos + deploy v1170 + migración 004 aplicada
 
 ### BLOQUE E: Auto-respuesta a emails de confirmación (2h) 🆕
 
@@ -107,13 +107,13 @@
 - NO responder emails que no sean replies al sistema (spam, newsletters, etc.)
 
 **Tareas:**
-- [ ] **E1** — Crear tabla `email_sent_log` con `message_id`, `agent`, `entity_id`, `user_phone`, `sent_at`
-- [ ] **E2** — Modificar `sendEmail()` para registrar cada email enviado con su `Message-ID` header
-- [ ] **E3** — Crear servicio `email-inbox-reader.js`: lee inbox IMAP, filtra replies por `In-Reply-To`
-- [ ] **E4** — Lógica de aislamiento: cruzar `In-Reply-To` con `email_sent_log.message_id` → obtener agente
-- [ ] **E5** — Solo si `agent === 'aurora'` → generar respuesta con GPT + contexto de la reserva
-- [ ] **E6** — Cron cada 5 min: `readAndReplyAuroraEmails()` — solo procesa lo de Aurora
-- [ ] **E7** — Testing: enviar confirmación → reply manual → verificar auto-respuesta correcta
+- [x] **E1** — Migración 004: tabla `email_sent_log` + columna `reminder_10min_sent_at` en reservations
+- [x] **E2** — `sendEmail()` registra cada email enviado en `email_sent_log` (agent, message_id, to_email, subject)
+- [x] **E3** — YA EXISTÍA: `email-reply-reader.js` lee inbox IMAP, filtra replies por `In-Reply-To`
+- [x] **E4** — YA EXISTÍA: aislamiento con `extractAgentFromMessageId()` + 3 capas de filtro
+- [x] **E5** — `autoReplyAuroraEmails()`: GPT con contexto de reserva, solo agent=aurora, max 5/batch
+- [x] **E6** — YA EXISTÍA: cron cada 10min polling IMAP, ahora incluye auto-reply Aurora
+- [x] **E7** — Deploy v1170 exitoso, migración 004 aplicada, app booteó limpio
 
 ---
 

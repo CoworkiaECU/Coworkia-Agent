@@ -1,10 +1,10 @@
 # Plan de Vuelo: Aluna — Automatizaciones + Wiring Completo
 
 **Fecha**: 28 Mar 2026  
-**Última actualización**: 28 Mar 2026 — sesión superpoderes Aluna  
+**Última actualización**: 29 Mar 2026 — fix seguridad pagos + wiring Gabi  
 **Objetivo**: Llevar Aluna de 70% a 100% — crons automáticos, fix BD, dashboard automations  
 **Prioridad**: HIGH  
-**Status**: 🟡 En progreso (2 features nuevas deployadas hoy)  
+**Status**: 🟡 En progreso (pagos fixed, Gabi wired, pendiente auto-capture)  
 **Chat asignado**: Chat izquierdo (Aluna)
 
 ---
@@ -92,6 +92,41 @@
 
 ## ⏱️ RESULTADO: Bloques A+B+C3+D completados en ~30min (la mayoría ya existía)
 
+---
+
+## 🔧 HOTFIX SESSION — 29 Mar 2026
+
+### Fix Seguridad Pagos Dashboard + Wiring Gabi — commits `3de4429` v1171, `8608ea1` v1173
+
+**Problema reportado por Diego:**
+- Al registrar pago desde dashboard, Gabi NO enviaba recibo (proceso incompleto)
+- Campos de pago seguían editables después de "Registrar Pago" (riesgo de seguridad)
+- Email llegaba como "Recibo de reserva" (Aurora) en vez de recibo de Gabi
+
+**Causa raíz (3 bugs):**
+1. INSERT en `membership_payments` faltaba `transaction_number` (NOT NULL) → error 500 silencioso
+2. Endpoint reimplementaba flujo simplificado en vez de llamar `approveLead()` completo
+3. `lead.full_name` no existe — la columna es `client_name` → nombres `undefined` en emails
+
+**Fixes aplicados:**
+- [x] **F1** — Agregar `transaction_number` al INSERT de `membership_payments` (usa paymentId)
+- [x] **F2** — Reemplazar lógica inline por `approveLead()` del sistema de verificación
+  - Ahora ejecuta proceso COMPLETO: Gabi receipt + Aluna welcome + WiFi code + Calendar + Pipeline
+- [x] **F3** — Fix `lead.full_name` → `lead.client_name` en 4 archivos:
+  - `payment-receipt-email.js` (prepareReceiptData)
+  - `membership-payment-verification.js` (blockMembershipCalendar)
+  - `aluna-welcome-email.js` (subject + template + logs)
+- [x] **F4** — Frontend: bloqueo INMEDIATO de todos los inputs al hacer clic
+  - Inputs se deshabilitan + opacity 0.5 antes del fetch
+  - Al éxito: editor reemplazado con badge inmutable "✅ Pagado $XX.XX"
+  - Solo se re-habilitan si hay error
+  - Backend ya rechaza pagos duplicados (status check accepted/active → 409)
+- [x] **F5** — Export `approveLead` desde `membership-payment-verification.js`
+- [x] **F6** — Deploy v1173 exitoso ✅
+
+---
+
 ## 📝 PENDIENTE
 - C1-C2: Lead auto-capture desde conversaciones (next session)
 - Tabla `aluna_prospect_followups` puede removerse en futuro cleanup (deprecated)
+- Probar pago completo desde dashboard con lead real para verificar Gabi + Welcome + WiFi + Calendar

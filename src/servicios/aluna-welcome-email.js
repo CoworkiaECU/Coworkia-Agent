@@ -280,12 +280,13 @@ export async function sendAlunaWelcomeEmail(lead, payment, composite = null, wif
   }
 
   console.log('[ALUNA-WELCOME] 🌙 Preparando email de bienvenida...');
-  console.log('[ALUNA-WELCOME] - Cliente:', lead.full_name);
+  const clientName = lead.client_name || lead.full_name || '';
+  console.log('[ALUNA-WELCOME] - Cliente:', clientName);
   console.log('[ALUNA-WELCOME] - Plan:', lead.membership_type);
   console.log('[ALUNA-WELCOME] - Contrato:', lead.membership_code);
 
   const htmlContent = buildWelcomeHTML({
-    memberName:       lead.full_name,
+    memberName:       clientName,
     membershipType:   lead.membership_type,
     membershipCode:   lead.membership_code,
     startDate:        lead.start_date,
@@ -300,7 +301,7 @@ export async function sendAlunaWelcomeEmail(lead, payment, composite = null, wif
     from:    '"Aluna - Coworkia Membresías" <noreply@coworkia.ec>',
     to:      lead.email,
     cc:      'coworkia.ec@gmail.com',
-    subject: `🎉 ¡Bienvenida a Coworkia, ${lead.full_name}! — Tu ${lead.membership_type} está activa · ${lead.membership_code}`,
+    subject: `🎉 ¡Bienvenida a Coworkia, ${lead.client_name || lead.full_name}! — Tu ${lead.membership_type} está activa · ${lead.membership_code}`,
     html:    htmlContent
   });
 

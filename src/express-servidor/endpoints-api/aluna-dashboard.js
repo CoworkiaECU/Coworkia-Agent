@@ -1391,12 +1391,12 @@ router.patch('/memberships/:id/register-payment', async (req, res) => {
       INSERT INTO membership_payments (
         id, membership_lead_id, user_phone, amount, 
         payment_method, status, verification_method,
-        transaction_date, processed_at, verified_at,
+        transaction_number, transaction_date, processed_at, verified_at,
         raw_vision_data, confidence_score,
         created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, 'verified', 'admin_dashboard',
-        CURRENT_DATE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+        $1, CURRENT_DATE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
         $6, 100,
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )

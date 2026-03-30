@@ -10,6 +10,7 @@
     }
   ],
   "settings": {
+    "chat.agent.defaultModel": "claude-sonnet-4",
     "chat.tools.terminal.autoApprove": {
       "heroku": true,
       "/^node --check src/database/migrations/migration-runner\\.js && node --check src/database/migrations/001_initial\\.js && node --check src/database/migrations/template\\.js && echo \"✅ B4 migrations OK\"$/": {

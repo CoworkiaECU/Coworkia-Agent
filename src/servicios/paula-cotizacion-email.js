@@ -377,7 +377,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
  * @param {string} mensajeCompleto — texto crudo del jefe en WA
  */
 export async function sendPaulaCotizacion(mensajeCompleto, { quoteCode = '' } = {}) {
-  const datos = parsePaulaQuoteData(mensajeCompleto);
+  const datos = await parsePaulaQuoteData(mensajeCompleto);
 
   if (!datos.email) {
     return { success: false, error: 'No se pudo extraer email del mensaje' };

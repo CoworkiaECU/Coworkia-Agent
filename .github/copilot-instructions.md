@@ -14,11 +14,14 @@ Lee en este orden (todos antes de responder):
 
 ### PASO 2 — Identificar el chat actual (SISTEMA MULTI-CHAT)
 
-**Diego trabaja en 2 chats paralelos**, cada uno enfocado en un agente distinto.
-Para saber en qué chat estás, busca **la primera instrucción de Diego** en la conversación:
+**Diego trabaja en 3 chats paralelos simultáneos**, cada uno enfocado en un agente distinto.
+Esto le permite trabajar en Aurora, Aluna y Adriana sin mezclar contextos.
+
+**IMPORTANTE:** Cuando Diego abre un chat limpio, TÚ debes saludar primero y preguntar en qué agente enfocar.
+Si Diego ya escribió primero, identifica el agente según su mensaje:
 
 - "nena hoy nos enfocamos en **aurora**" → Este es el chat de Aurora
-- "nena hoy nos enfocamos en **aluna**" → Este es el chat de Aluna
+- "nena hoy nos enfocamos en **aluna**" → Este es el chat de Aluna  
 - "nena hoy nos enfocamos en **adriana**" → Este es el chat de Adriana
 - Si no lo dice explícitamente → revisar archivos abiertos y plan de vuelo activo
 
@@ -30,10 +33,15 @@ planes-de-vuelo/adriana/plan-vuelo-adriana-*.md
 ```
 
 **Al identificar el chat:**
-1. Leer el plan de vuelo del agente correspondiente
+1. Leer el plan de vuelo del agente correspondiente (buscar el más reciente)
 2. Retomar desde la última tarea marcada `[x]`
 3. Continuar con la siguiente tarea `[ ]`
 4. Al finalizar sesión → actualizar checkboxes del plan + anotar estado
+
+**Si es un chat completamente nuevo (sin historial):**
+- TÚ debes saludar primero
+- Pregunta: "¿En qué agente nos enfocamos hoy? (aurora/aluna/adriana)"
+- Luego carga el plan de vuelo correspondiente y arranca
 
 ### PASO 2b — Revisar plan de reparación Self-Healing (si existe)
 Después de cargar la memoria, busca si existe un archivo `planes-de-vuelo/plan-vuelo-repair-[YYYY-MM-DD].md` con la fecha de hoy.
@@ -62,12 +70,16 @@ Después de cargar la memoria, busca si existe un archivo `planes-de-vuelo/plan-
   - Ofrecer "autopilot para reparar" si Diego lo aprueba
 
 ### PASO 3 — Saludar con resumen específico del chat actual
+
+**REGLA CRÍTICA:** Si el chat está vacío (sin historial), TÚ debes saludar primero.
+No esperes a que Diego hable. Carga la memoria y pregunta en qué agente enfocar.
+
 El saludo SIEMPRE debe incluir:
 1. **En qué nos quedamos en ESTE chat** (basado en archivos abiertos + última sesión de memoria)
 2. **Siguiente tarea inmediata** para este chat
 3. **Estado del sistema** (versión actual, producción OK/NOK)
 
-**Formato del saludo**:
+**Formato del saludo (chat existente con contexto)**:
 ```
 ¡Hola Diego! 🤖
 
@@ -84,6 +96,20 @@ El saludo SIEMPRE debe incluir:
 🟢 Producción: v[versión] — [commit hash corto]
 
 ¿Arrancamos? 🚀
+```
+
+**Formato del saludo (chat nuevo sin historial)**:
+```
+¡Hola Diego! 🤖
+
+✨ Chat limpio iniciado
+
+¿En qué agente nos enfocamos hoy?
+→ Aurora (reservas coworking)
+→ Aluna (membresías/closer)
+→ Adriana (seguros vehiculares)
+
+Dime el agente y cargo su plan de vuelo 🚀
 ```
 
 ### PASO 4 — Skills disponibles (NO listar, solo cargar cuando se necesiten)

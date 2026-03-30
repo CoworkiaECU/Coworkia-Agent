@@ -255,36 +255,50 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     return true;
   }
 
-  // SI: aprobar acción del autopilot (sinónimo de SIGUIENTE)
-  if (cmd === 'SI' || cmd === 'SÍ' || cmd === 'YES' || cmd === 'OK') {
-    console.log('[DIEGO-CMD]  SI recibido (aprobación)');
-    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
-    setAutopilotState({ active: true, waitingForApproval: false });
+  // SI/NO/OK: Palabras ambiguas — solo interceptar si hay autopilot question pendiente
+  // Si Diego está en una conversación activa (form, pending_confirmation), dejar pasar al flujo normal
+  const AMBIGUOUS_CMDS = ['SI', 'SÍ', 'YES', 'OK', 'NO', 'NOPE', 'CANCELAR'];
+  if (AMBIGUOUS_CMDS.includes(cmd)) {
+    // Verificar si hay una pregunta autopilot pendiente ANTES de interceptar
+    let hasAutopilotQuestion = false;
     try {
-      const { query } = await import('../../database/database.js');
-      await query(
-        `UPDATE _autopilot_checkpoints SET command = 'SI', answered_at = NOW()
-         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+      const pending = await query(
+        `SELECT id FROM _autopilot_checkpoints WHERE command IS NULL AND answered_at IS NULL ORDER BY asked_at DESC LIMIT 1`
       );
-    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
-    await enviarWhatsApp(userId, '✅ *Acción aprobada.*\nEl agente continuará con la tarea.');
-    return true;
-  }
+      hasAutopilotQuestion = pending?.rows?.length > 0;
+    } catch (_) { /* tabla puede no existir → no hay pregunta pendiente */ }
 
-  // NO: rechazar acción del autopilot
-  if (cmd === 'NO' || cmd === 'NOPE' || cmd === 'CANCELAR') {
-    console.log('[DIEGO-CMD] ❌ NO recibido (rechazo)');
-    const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
-    setAutopilotState({ active: false, waitingForApproval: false });
-    try {
-      const { query } = await import('../../database/database.js');
-      await query(
-        `UPDATE _autopilot_checkpoints SET command = 'NO', answered_at = NOW()
-         WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
-      );
-    } catch (_) { /* tabla puede no existir todavía, no bloquear */ }
-    await enviarWhatsApp(userId, '❌ *Acción rechazada.*\nEl agente saltará esta tarea y continuará con la siguiente.');
-    return true;
+    if (!hasAutopilotQuestion) {
+      console.log(`[DIEGO-CMD] ⏭️ "${cmd}" ignorado como boss command — no hay autopilot question pendiente, pasa al flujo de conversación`);
+      return false; // Dejar que el flujo normal (Aurora, Aluna, etc.) lo procese
+    }
+
+    // Hay autopilot question pendiente → procesar como boss command
+    if (cmd === 'NO' || cmd === 'NOPE' || cmd === 'CANCELAR') {
+      console.log('[DIEGO-CMD] ❌ NO recibido (rechazo autopilot)');
+      const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+      setAutopilotState({ active: false, waitingForApproval: false });
+      try {
+        await query(
+          `UPDATE _autopilot_checkpoints SET command = 'NO', answered_at = NOW()
+           WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+        );
+      } catch (_) { /* no bloquear */ }
+      await enviarWhatsApp(userId, '❌ *Acción rechazada.*\nEl agente saltará esta tarea y continuará con la siguiente.');
+      return true;
+    } else {
+      console.log('[DIEGO-CMD] ✅ SI recibido (aprobación autopilot)');
+      const { setAutopilotState } = await import('../../servicios/autopilot-state.js');
+      setAutopilotState({ active: true, waitingForApproval: false });
+      try {
+        await query(
+          `UPDATE _autopilot_checkpoints SET command = 'SI', answered_at = NOW()
+           WHERE command IS NULL ORDER BY asked_at DESC LIMIT 1`
+        );
+      } catch (_) { /* no bloquear */ }
+      await enviarWhatsApp(userId, '✅ *Acción aprobada.*\nEl agente continuará con la tarea.');
+      return true;
+    }
   }
 
   // REVIEW: solicitar revisión detallada antes de continuar

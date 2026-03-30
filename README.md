@@ -12,20 +12,6 @@ Sistema de agente conversacional multi-personalidad para Coworkia Business Cente
 
 ---
 
-## 🚀 Quick Start — Desarrollo Multi-Chat
-
-**Launcher automático** para trabajar con 3 chats paralelos (Aurora, Aluna, Adriana):
-
-```bash
-./scripts/launch-multi-chat.sh
-```
-
-Esto abre 3 ventanas de VS Code separadas, cada una con memoria cargada y lista para asignar agente.
-
-📖 Ver [scripts/LAUNCH-README.md](scripts/LAUNCH-README.md) para detalles completos.
-
----
-
 ## 🌟 Características Principales
 
 ### 💬 Sistema Multi-Agente (8 Especialistas)

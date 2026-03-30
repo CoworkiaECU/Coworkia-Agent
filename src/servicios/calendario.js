@@ -89,8 +89,8 @@ function parseCapacity(value, fallback = 1) {
 }
 
 const SERVICE_CAPACITY = {
-  // ⚠️ Tests esperan que un solo Hot Desk cause conflicto; usar capacidad 1 en tests
-  hotDesk: IS_TEST ? 1 : parseCapacity(process.env.COWORKIA_HOTDESK_CAPACITY, 4),
+  // Total físico: 6 hot desks. Los permanentes se restan dinámicamente.
+  hotDesk: IS_TEST ? 1 : parseCapacity(process.env.COWORKIA_HOTDESK_CAPACITY, 6),
   meetingRoom: parseCapacity(process.env.COWORKIA_MEETINGROOM_CAPACITY, 1),
   privateOffice: parseCapacity(process.env.COWORKIA_PRIVATEOFFICE_CAPACITY, 1)
 };
@@ -452,11 +452,15 @@ export async function createReservation(reservationData) {
     serviceType = 'hotDesk',
     wasFree = false,
     email = null,
-    total = 0,
+    total,
+    totalPrice,
     guestCount = 0,
     hotDeskNumber = null, // Nuevo campo: número de Hot Desk asignado
     paymentMethod = null // Nuevo campo: método de pago
   } = reservationData;
+
+  // Resolver precio: acepta tanto "total" como "totalPrice"
+  const resolvedTotal = total ?? totalPrice ?? 0;
   
   // Verificar disponibilidad primero (pasando userId para ignorar sus propias reservas pending)
   const availability = await checkAvailability(date, startTime, durationHours, serviceType, null, userId);
@@ -479,7 +483,7 @@ export async function createReservation(reservationData) {
       end_time: endTime,
       duration_hours: durationHours,
       guest_count: guestCount,
-      total_price: total,
+      total_price: resolvedTotal,
       was_free: wasFree,
       status: 'pending',
       payment_status: wasFree ? 'waived' : 'pending',
@@ -502,7 +506,7 @@ export async function createReservation(reservationData) {
         status: 'pending',
         wasFree,
         email,
-        total,
+        total: resolvedTotal,
         guestCount,
         hotDeskNumber,
         paymentMethod,
@@ -807,7 +811,8 @@ export async function checkHotDeskAvailability(date, startTime, endTime) {
     occupiedCount: availability.occupiedCount,
     availableCount: availability.availableCount,
     occupiedNumbers: availability.occupiedNumbers,
-    maxCapacity: 4,
+    permanentCount: availability.permanentCount || 0,
+    maxCapacity: 6,
     message
   };
 }

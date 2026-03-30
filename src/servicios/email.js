@@ -483,7 +483,13 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
       return { success: false, error: 'Email transporter not configured' };
     }
     
-    const fromAddress = from || `"Coworkia Agent" <${DEFAULT_FROM_EMAIL}>`;
+    // Normalizar from: puede ser string o { name, address } object
+    let fromAddress;
+    if (typeof from === 'object' && from !== null && from.address) {
+      fromAddress = from.name ? `"${from.name}" <${from.address}>` : from.address;
+    } else {
+      fromAddress = from || `"Coworkia Agent" <${DEFAULT_FROM_EMAIL}>`;
+    }
     
     const processedHtml = html ? minifyEmailHTML(html) : html;
 

@@ -348,12 +348,17 @@ class ReservationRepository {
   }
 
   /**
-   * 🔢 Asigna número de Hot Desk automáticamente (1-4)
-   * Consulta reservas confirmadas en el mismo slot y asigna el siguiente disponible
+   * 🔢 Asigna número de Hot Desk automáticamente (1-6)
+   * Excluye desks permanentes + reservas confirmadas en el slot
    */
   async assignHotDeskNumber(date, startTime, endTime) {
     databaseService.ensureInitialized();
     
+    // 1. Obtener desks permanentes ocupados en esa fecha
+    const permanentDesks = await this.getPermanentDeskNumbers(date);
+    const permanentNumbers = permanentDesks.map(d => d.hot_desk_number);
+    
+    // 2. Obtener reservas confirmadas en el slot
     const query = `
       SELECT hot_desk_number
       FROM reservations
@@ -371,16 +376,17 @@ class ReservationRepository {
     
     const occupiedDesks = await databaseService.all(query, [
       date,
-      endTime, startTime, // Overlap: starts before end, ends after start
-      startTime, endTime, // Overlap: starts within slot
-      startTime, startTime // Overlap: starts at or before start, ends after start
+      endTime, startTime,
+      startTime, endTime,
+      startTime, startTime
     ]);
     
-    const occupiedNumbers = occupiedDesks.map(r => r.hot_desk_number);
+    const reservedNumbers = occupiedDesks.map(r => r.hot_desk_number);
+    const allOccupied = new Set([...permanentNumbers, ...reservedNumbers]);
     
-    // Buscar primer número disponible (1-4)
-    for (let i = 1; i <= 4; i++) {
-      if (!occupiedNumbers.includes(i)) {
+    // Buscar primer número disponible (1-6), excluyendo permanentes y reservados
+    for (let i = 1; i <= 6; i++) {
+      if (!allOccupied.has(i)) {
         return i;
       }
     }
@@ -390,11 +396,18 @@ class ReservationRepository {
 
   /**
    * 📊 Cuenta cuántos Hot Desks están ocupados en un slot específico
-   * Retorna información para validación de disponibilidad
+   * Incluye desks permanentes + reservas confirmadas
    */
   async countOccupiedHotDesks(date, startTime, endTime) {
     databaseService.ensureInitialized();
     
+    const TOTAL_DESKS = 6;
+    
+    // 1. Desks permanentes activos en esa fecha
+    const permanentDesks = await this.getPermanentDeskNumbers(date);
+    const permanentNumbers = permanentDesks.map(d => d.hot_desk_number);
+    
+    // 2. Reservas confirmadas en el slot
     const query = `
       SELECT hot_desk_number
       FROM reservations
@@ -416,14 +429,17 @@ class ReservationRepository {
       startTime, startTime
     ]);
     
-    const occupiedNumbers = results.map(r => r.hot_desk_number).filter(n => n != null);
-    const occupiedCount = occupiedNumbers.length;
+    const reservedNumbers = results.map(r => r.hot_desk_number).filter(n => n != null);
+    const allOccupied = [...new Set([...permanentNumbers, ...reservedNumbers])];
+    const occupiedCount = allOccupied.length;
     
     return {
       occupiedCount,
-      availableCount: 4 - occupiedCount,
-      occupiedNumbers,
-      isFull: occupiedCount >= 4
+      availableCount: TOTAL_DESKS - occupiedCount,
+      occupiedNumbers: allOccupied,
+      permanentCount: permanentNumbers.length,
+      permanentNumbers,
+      isFull: occupiedCount >= TOTAL_DESKS
     };
   }
 
@@ -480,6 +496,66 @@ class ReservationRepository {
     await databaseService.run(
       `UPDATE reservations SET rebook_reminder_sent_at = $1 WHERE id = $2`,
       [new Date().toISOString(), reservationId]
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🔒 PERMANENT DESKS — Hot Desks asignados a miembros con membresía
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Obtiene los números de hot desk ocupados permanentemente para una fecha
+   */
+  async getPermanentDeskNumbers(date) {
+    databaseService.ensureInitialized();
+    const results = await databaseService.all(
+      `SELECT hot_desk_number, client_name, user_phone
+       FROM permanent_desks
+       WHERE status = 'active'
+         AND start_date <= $1
+         AND (end_date IS NULL OR end_date >= $1)
+       ORDER BY hot_desk_number ASC`,
+      [date]
+    );
+    return results;
+  }
+
+  /**
+   * Crea o reactiva un desk permanente para un miembro
+   */
+  async createPermanentDesk({ userPhone, clientName, hotDeskNumber, membershipLeadId, startDate, endDate, notes }) {
+    databaseService.ensureInitialized();
+    
+    // Si ya tiene uno activo con ese número, solo actualizar fechas
+    const existing = await databaseService.get(
+      `SELECT id FROM permanent_desks WHERE user_phone = $1 AND status = 'active'`,
+      [userPhone]
+    );
+
+    if (existing) {
+      await databaseService.run(
+        `UPDATE permanent_desks 
+         SET end_date = $1, updated_at = NOW(), notes = COALESCE($2, notes)
+         WHERE id = $3`,
+        [endDate, notes, existing.id]
+      );
+      return existing;
+    }
+
+    return await databaseService.get(
+      `INSERT INTO permanent_desks (user_phone, client_name, hot_desk_number, membership_lead_id, start_date, end_date, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [userPhone, clientName, hotDeskNumber, membershipLeadId, startDate, endDate, notes]
+    );
+  }
+
+  /**
+   * Lista todos los desks permanentes activos
+   */
+  async getActivePermanentDesks() {
+    databaseService.ensureInitialized();
+    return await databaseService.all(
+      `SELECT * FROM permanent_desks WHERE status = 'active' ORDER BY hot_desk_number ASC`
     );
   }
 }

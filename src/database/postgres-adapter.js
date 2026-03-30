@@ -134,7 +134,7 @@ class PostgresAdapter {
           date DATE NOT NULL,
           start_time TEXT NOT NULL,
           end_time TEXT NOT NULL,
-          duration_hours INTEGER NOT NULL,
+          duration_hours NUMERIC(4,1) NOT NULL,
           guest_count INTEGER DEFAULT 0,
           total_price DECIMAL(10,2) DEFAULT 0,
           was_free BOOLEAN DEFAULT FALSE,
@@ -1412,6 +1412,26 @@ class PostgresAdapter {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);
+      `);
+
+      // 🔒 Hot Desks permanentes (membresías)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS permanent_desks (
+          id SERIAL PRIMARY KEY,
+          user_phone VARCHAR(50) NOT NULL,
+          client_name TEXT NOT NULL,
+          hot_desk_number INTEGER NOT NULL,
+          membership_lead_id TEXT,
+          start_date DATE NOT NULL,
+          end_date DATE,
+          status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'paused', 'cancelled')),
+          notes TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_permanent_desks_phone ON permanent_desks(user_phone);
+        CREATE INDEX IF NOT EXISTS idx_permanent_desks_status ON permanent_desks(status);
+        CREATE INDEX IF NOT EXISTS idx_permanent_desks_number ON permanent_desks(hot_desk_number);
       `);
 
       await client.query('COMMIT');

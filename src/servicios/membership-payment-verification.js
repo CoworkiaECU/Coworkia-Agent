@@ -534,7 +534,32 @@ async function approveLead(lead, payment, compositePayment = null) {
       });
     }
 
-    // ── 4. PIPELINE: Marcar prospecto como convertido ─────────────────────────
+    // ── 4. PERMANENT DESK: Asignar hot desk permanente al miembro ────────────
+    if (lead.membership_type !== 'Oficina Virtual') {
+      try {
+        const reservationRepository = (await import('../database/reservationRepository.js')).default;
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Asignar el primer desk disponible
+        const deskNumber = await reservationRepository.assignHotDeskNumber(today, '08:00', '19:00');
+        if (deskNumber) {
+          await reservationRepository.createPermanentDesk({
+            userPhone: lead.user_phone,
+            clientName: lead.client_name || 'Sin nombre',
+            hotDeskNumber: deskNumber,
+            membershipLeadId: lead.id,
+            startDate: today,
+            endDate: null, // Indefinido hasta cancelación
+            notes: `Auto-asignado al aprobar membresía ${lead.membership_type} — ${lead.membership_code}`
+          });
+          console.log(`[PAYMENT-VERIFICATION] 🔒 Desk permanente #${deskNumber} asignado a ${lead.client_name}`);
+        }
+      } catch (deskErr) {
+        console.error('[PAYMENT-VERIFICATION] ⚠️ Desk permanente falló (no crítico):', deskErr.message);
+      }
+    }
+
+    // ── 5. PIPELINE: Marcar prospecto como convertido ─────────────────────────
     markAlunaProspectConverted(lead.user_phone).catch(() => {});
 
     console.log('[PAYMENT-VERIFICATION] ✅ Lead aprobado:', lead.id);

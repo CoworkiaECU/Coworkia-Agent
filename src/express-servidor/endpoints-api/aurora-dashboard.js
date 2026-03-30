@@ -919,4 +919,43 @@ router.get('/automations/stats', async (req, res) => {
   }
 });
 
+// ============================================================================
+// OCUPACIÓN HOT DESKS — Permanentes + Disponibilidad
+// ============================================================================
+
+/**
+ * GET /api/aurora/occupancy
+ * Retorna estado de ocupación total: 6 desks, N permanentes, N disponibles
+ */
+router.get('/occupancy', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const reservationRepository = (await import('../../database/reservationRepository.js')).default;
+
+    const permanentDesks = await reservationRepository.getActivePermanentDesks();
+    const permanentNumbers = permanentDesks.map(d => d.hot_desk_number);
+
+    const totalDesks = 6;
+    const available = totalDesks - permanentDesks.length;
+
+    return res.json({
+      ok: true,
+      totalDesks,
+      permanentCount: permanentDesks.length,
+      availableForBooking: available,
+      permanentDesks: permanentDesks.map(d => ({
+        deskNumber: d.hot_desk_number,
+        clientName: d.client_name,
+        since: d.start_date,
+        until: d.end_date
+      })),
+      availableNumbers: Array.from({ length: 6 }, (_, i) => i + 1)
+        .filter(n => !permanentNumbers.includes(n))
+    });
+  } catch (error) {
+    console.error('[AURORA-API] Error en occupancy:', error);
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;

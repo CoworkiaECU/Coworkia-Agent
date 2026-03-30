@@ -1302,14 +1302,17 @@ export function buildAdrianaComparisonV2HTML({
 export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDate, monthlyFee }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : 'Hola';
   const displayName = name || '';
+  const fee = monthlyFee ? parseFloat(monthlyFee) : 0;
+  const parkingFee = 25;
+  const totalWithParking = fee ? fee + parkingFee : parkingFee;
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero renovar mi ${plan}`);
+  const waParkingText = encodeURIComponent(`¡Hola @aluna!, quiero renovar mi ${plan} con estacionamiento — total $${totalWithParking}/mes`);
   const waUpgradeText = encodeURIComponent(`¡Hola @aluna!, me interesa hacer upgrade de mi membresía`);
 
   // Upsale dinámico según plan actual
   const upsaleMap = {
-    'Plan 10':  { next: 'Plan 20', price: '$250/mes', benefit: '20 días hábiles + 2 días cortesía', save: 'Ahorra $30 vs pagar por día' },
-    'Plan 20':  { next: 'Plan 30', price: '$310/mes', benefit: 'Acceso ilimitado L-V + prioridad en sala', save: 'Sin límite de días — trabaja cuando quieras' },
-    'Plan 30':  { next: 'Plan Full', price: '$395/mes', benefit: 'Acceso 7 días + sala de alto rendimiento', save: 'Incluye fines de semana + sala premium' },
+    'Plan 10':  { next: 'Plan 20', price: '$250/mes', benefit: '22 días completos (20 + 2 gratis)', save: '4 invitados/mes + 4 usos sala reuniones' },
+    'Plan 20':  { next: 'Oficina Virtual', price: '$365/año', benefit: 'Dirección comercial oficial + correspondencia', save: 'Equivale a $1/día — cumplimiento SRI incluido' },
   };
   const upsale = upsaleMap[plan] || null;
 
@@ -1354,8 +1357,8 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
       <div style="color:#047857;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">📋 Tu membresía actual</div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;"><strong>${plan}</strong>${monthlyFee ? ` — $${monthlyFee}/mes` : ''}</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Vencimiento: <strong>${expirationDate}</strong></span></div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi + café + snacks ilimitados</span></div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Acceso a salas de reuniones</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi premium + café ilimitado</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Locker o cajonera (a elegir)</span></div>
     </div>
 
     <!-- CTA principal — Renovar -->
@@ -1366,6 +1369,20 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
         🔄 Renovar mi ${plan} →
       </a>
       <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta en menos de 5 minutos · WhatsApp</p>
+    </div>
+
+    <!-- ADD-ON — Estacionamiento -->
+    <div style="background:linear-gradient(135deg,rgba(14,116,144,0.08),rgba(6,95,70,0.06));border:1.5px solid rgba(14,116,144,0.25);border-radius:12px;padding:22px;margin-bottom:24px;">
+      <div style="color:#0E7490;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">🅿️ AGREGA ESTACIONAMIENTO</div>
+      <div style="color:#1f2937;font-size:16px;font-weight:700;margin-bottom:8px;">Parking privado — $${parkingFee}/mes adicional</div>
+      <div style="margin:8px 0;"><span style="color:#0E7490;font-size:16px;margin-right:8px;">🚗</span><span style="color:#374151;font-size:14px;">Sótano nivel 2, acceso exclusivo miembros</span></div>
+      <div style="margin:8px 0;"><span style="color:#0E7490;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${plan}${fee ? ` ($${fee})` : ''} + parking = <strong>$${totalWithParking}/mes</strong></span></div>
+      <div style="text-align:center;margin-top:16px;">
+        <a href="https://wa.me/593994837117?text=${waParkingText}"
+           style="background:linear-gradient(135deg,#0E7490,#0D6E85);color:white;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(14,116,144,0.35);font-size:14px;">
+          🅿️ Renovar con estacionamiento →
+        </a>
+      </div>
     </div>
 
     ${upsale ? `
@@ -1387,7 +1404,7 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
     <!-- Testimonio -->
     <div style="background:#F0FDF4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
       <p style="margin:0;color:#374151;font-size:14px;font-style:italic;line-height:1.7;">
-        "Llevo 6 meses en Coworkia y cada mes es mejor. El WiFi, el café, las reuniones... Todo funciona perfecto."
+        "Llevo 6 meses en Coworkia y cada mes es mejor. El WiFi, el café, la ubicación... Todo funciona perfecto."
       </p>
       <p style="margin:8px 0 0;color:#047857;font-size:13px;font-weight:700;">— Miembro activo, Coworkia 2026</p>
     </div>

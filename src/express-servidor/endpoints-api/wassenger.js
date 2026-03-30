@@ -2417,7 +2417,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         
         return;
       }
-      // Si no maneja el mensaje → continúa al LLM
+      // Si no maneja el mensaje → auto-captura lead por keywords antes de pasar al LLM
+      try {
+        const userName = profile?.nombre || envelope?.from?.name || 'Sin nombre';
+        await captureAlunaLeadFromKeywords(userId, userName, processedText);
+      } catch (captureErr) {
+        console.warn('[ALUNA-CAPTURE] ⚠️ Error en auto-captura (no crítico):', captureErr.message);
+      }
     } else {
       console.log('[ALUNA-FLOW-DEBUG] ❌ Condiciones NO satisfechas - saltando flujo');
     }

@@ -1286,6 +1286,138 @@ export function buildAdrianaComparisonV2HTML({
 </html>`;
 }
 
+// ─── TEMPLATE: ALUNA RENEWAL (recordatorio 1 día antes de vencimiento) ─────
+
+/**
+ * 🌙 Email Renewal — Aluna recordatorio de renovación de membresía
+ * Mismo diseño Coworkia Business Center verde + upsale de upgrade de plan.
+ *
+ * @param {object} data
+ * @param {string} data.name — Nombre del miembro
+ * @param {string} data.plan — Plan actual (Plan 10, Plan 20, etc.)
+ * @param {string} data.expirationDate — Fecha de vencimiento formateada
+ * @param {number} data.monthlyFee — Precio mensual actual
+ * @param {object} options — { xiaomiSafe: boolean }
+ */
+export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDate, monthlyFee }, { xiaomiSafe = false } = {}) {
+  const firstName = name ? name.trim().split(' ')[0] : 'Hola';
+  const displayName = name || '';
+  const waText = encodeURIComponent(`¡Hola @aluna!, quiero renovar mi ${plan}`);
+  const waUpgradeText = encodeURIComponent(`¡Hola @aluna!, me interesa hacer upgrade de mi membresía`);
+
+  // Upsale dinámico según plan actual
+  const upsaleMap = {
+    'Plan 10':  { next: 'Plan 20', price: '$250/mes', benefit: '20 días hábiles + 2 días cortesía', save: 'Ahorra $30 vs pagar por día' },
+    'Plan 20':  { next: 'Plan 30', price: '$310/mes', benefit: 'Acceso ilimitado L-V + prioridad en sala', save: 'Sin límite de días — trabaja cuando quieras' },
+    'Plan 30':  { next: 'Plan Full', price: '$395/mes', benefit: 'Acceso 7 días + sala de alto rendimiento', save: 'Incluye fines de semana + sala premium' },
+  };
+  const upsale = upsaleMap[plan] || null;
+
+  return `<!DOCTYPE html>
+<html lang="es" style="color-scheme:light !important;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
+  <title>🌙 Tu membresía vence mañana — Coworkia</title>
+</head>
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div class="em-container" style="width:100%;max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+
+  <!-- Header — fondo verde Coworkia -->
+  <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+    <div style="color:white;font-size:52px;font-weight:700;margin-bottom:6px;line-height:1;">Coworkia</div>
+    <div style="color:rgba(255,255,255,0.9);font-size:11px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:28px;">BUSINESS CENTER</div>
+
+    <!-- Card blanca con info de renovación -->
+    <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
+      <div style="background:#F59E0B;color:white;display:inline-block;padding:4px 14px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⏰ RENOVACIÓN</div>
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${displayName}</div>` : ''}
+      <div style="color:#92400E;font-size:14px;font-weight:700;margin-bottom:8px;">Tu ${plan} vence el ${expirationDate}</div>
+      <div style="color:#047857;font-size:12px;font-weight:600;">Aluna · Especialista en Membresías</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:30px 30px 10px;">
+
+    <!-- Saludo -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName}, tu espacio te espera 🌟</h2>
+      <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">Renueva y sigue disfrutando todo sin interrupciones</p>
+    </div>
+
+    <!-- Resumen de membresía actual -->
+    <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px;margin-bottom:24px;">
+      <div style="color:#047857;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">📋 Tu membresía actual</div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;"><strong>${plan}</strong>${monthlyFee ? ` — $${monthlyFee}/mes` : ''}</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Vencimiento: <strong>${expirationDate}</strong></span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi + café + snacks ilimitados</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Acceso a salas de reuniones</span></div>
+    </div>
+
+    <!-- CTA principal — Renovar -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Renueva con un mensaje</p>
+      <a href="https://wa.me/593994837117?text=${waText}"
+         style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:16px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:16px;">
+        🔄 Renovar mi ${plan} →
+      </a>
+      <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta en menos de 5 minutos · WhatsApp</p>
+    </div>
+
+    ${upsale ? `
+    <!-- UPSALE — Upgrade de plan -->
+    <div style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(109,40,217,0.12));border:1.5px solid rgba(139,92,246,0.3);border-radius:12px;padding:22px;margin-bottom:24px;">
+      <div style="color:#7C3AED;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">🚀 ¿Y si subes de nivel?</div>
+      <div style="color:#1f2937;font-size:16px;font-weight:700;margin-bottom:8px;">${upsale.next} — ${upsale.price}</div>
+      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">⭐</span><span style="color:#374151;font-size:14px;">${upsale.benefit}</span></div>
+      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${upsale.save}</span></div>
+      <div style="text-align:center;margin-top:16px;">
+        <a href="https://wa.me/593994837117?text=${waUpgradeText}"
+           style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);color:white;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(139,92,246,0.35);font-size:14px;">
+          ⬆️ Quiero hacer upgrade →
+        </a>
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- Testimonio -->
+    <div style="background:#F0FDF4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
+      <p style="margin:0;color:#374151;font-size:14px;font-style:italic;line-height:1.7;">
+        "Llevo 6 meses en Coworkia y cada mes es mejor. El WiFi, el café, las reuniones... Todo funciona perfecto."
+      </p>
+      <p style="margin:8px 0 0;color:#047857;font-size:13px;font-weight:700;">— Miembro activo, Coworkia 2026</p>
+    </div>
+
+  </div>
+
+  <!-- ECOSISTEMA + FOOTER OSCURO -->
+  <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
+    <div style="color:#4ECDC4;font-size:20px;font-weight:800;margin-bottom:10px;line-height:1.3;">Un ecosistema completo de agentes IA</div>
+    <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 22px;">Coworkia es más que un espacio. Es un sistema inteligente que trabaja por ti.</div>
+    <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora','adriana','angela','axel','aluna','gabi','paula','custom'], theme: 'dark' })}</div>
+    <div style="margin-bottom:22px;padding:0 8px;">
+      <p style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.8;margin:0;">Un solo ecosistema. Agentes especializados que se hablan entre sí.<br><strong style="color:rgba(255,255,255,0.75);">Haz clic en cualquier agente para hablar directamente por WhatsApp.</strong></p>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:8px;">
+      <div style="color:#4ECDC4;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">Coworkia</div>
+      <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
+      <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
+        © 2026 Coworkia Ecuador — Espacios que inspiran<br>
+        Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
+        coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
 // ─── DISPATCHER CENTRAL ──────────────────────────────────────────────────────
 
 /**
@@ -1304,6 +1436,7 @@ export function buildEmailTemplate(agent, type, data, options = {}) {
   const builders = {
     ALUNA_D1:                 () => buildAlunaD1HTML(data, { xiaomiSafe }),
     ALUNA_D3:                 () => buildAlunaD3HTML(data, { xiaomiSafe }),
+    ALUNA_RENEWAL:            () => buildAlunaRenewalHTML(data, { xiaomiSafe }),
     AURORA_CONFIRMATION:      () => buildAuroraConfirmationHTML(data, { xiaomiSafe }),
     AURORA_REBOOKING:         () => buildAuroraRebookingHTML(data, { xiaomiSafe }),
     AURORA_D1:                () => buildAuroraD1HTML(data, { xiaomiSafe }),

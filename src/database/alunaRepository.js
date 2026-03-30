@@ -621,6 +621,40 @@ export async function markRenewalReminder2Sent(membershipLeadId) {
 }
 
 /**
+ * 🔔 Miembros cuya membresía vence MAÑANA (29 días post-pago)
+ * Para enviar reminder 1 día antes con email HTML + WhatsApp
+ */
+export async function findMembersExpiringTomorrow() {
+  await databaseService.ensureInitialized();
+  return databaseService.all(
+    `SELECT
+       ml.id,
+       ml.user_phone,
+       ml.membership_type,
+       ml.client_name,
+       ml.email,
+       ml.monthly_fee,
+       mp.transaction_date AS last_payment_date,
+       (mp.transaction_date + INTERVAL '30 days')::date AS expiration_date
+     FROM membership_leads ml
+     JOIN (
+       SELECT DISTINCT ON (membership_lead_id)
+         membership_lead_id, transaction_date
+       FROM membership_payments
+       WHERE status = 'verified'
+       ORDER BY membership_lead_id, transaction_date DESC
+     ) mp ON mp.membership_lead_id = ml.id
+     WHERE ml.status IN ('accepted', 'active')
+       AND (mp.transaction_date + INTERVAL '30 days')::date = CURRENT_DATE + INTERVAL '1 day'
+       AND (ml.renewal_reminder_2_sent_at IS NULL
+            OR ml.renewal_reminder_2_sent_at < mp.transaction_date::timestamp)
+     ORDER BY mp.transaction_date ASC
+     LIMIT 50`,
+    []
+  );
+}
+
+/**
  * 📊 Obtener estadísticas de leads
  */
 export async function getMembershipLeadsStats() {

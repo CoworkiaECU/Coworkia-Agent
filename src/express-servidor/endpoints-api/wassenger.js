@@ -1016,13 +1016,19 @@ async function handleFormResult(formResult, userId, agentName, profile) {
         await clearAgentForm(userId, agentName);
         return true; // Manejado - hacer return
       } else {
-        // 🎯 FIX A6: Manejar errores de validación (duración >8h, horario inválido, etc.)
-        // Si la validación falla, enviar el mensaje de error al usuario y limpiar formulario
+        // 🎯 FIX: Manejar errores de validación SIN borrar el formulario
+        // Mantener date, spaceType, email para que el usuario solo corrija hora
         console.log('[AURORA-FORM] ❌ Validación fallida:', confirmationResult.error);
         await enviarWhatsApp(userId, confirmationResult.userMessage || '❌ No pude procesar tu reserva. Por favor, intenta con otros datos.');
         await saveConversationMessage(userId, { role: 'assistant', content: confirmationResult.userMessage, agent: agentName });
-        // Limpiar formulario para que el usuario pueda empezar de nuevo
-        await clearAgentForm(userId, agentName);
+        // 🛡️ NO limpiar form completo — solo resetear time/duration para que pueda elegir otra hora
+        if (formResult.form) {
+          formResult.form.time = null;
+          formResult.form.durationHours = 2;
+          formResult.form.paymentMethod = null;
+          await saveAgentForm(userId, agentName, formResult.form.toJSON(), 120);
+          console.log('[AURORA-FORM] 🔄 Form preservado sin time/payment — usuario puede elegir otra hora');
+        }
         return true; // Manejado - hacer return
       }
     }

@@ -1318,6 +1318,94 @@ Estamos abiertos:
   // 🎯 Generar pregunta siguiente o mensaje de confirmación
   let nextQuestion = null;
   let confirmationMessage = null;
+
+  // 🛡️ FIX URGENTE: Verificar disponibilidad ANTES de pedir paymentMethod
+  // Evita que el usuario pierda tiempo eligiendo método de pago para un slot no disponible
+  if (!validationError && !isComplete && form.date && form.time && form.spaceType) {
+    const onlyMissingPayment = missingFields.length === 1 && missingFields[0] === 'paymentMethod';
+    const missingOnlyPaymentAndEmail = missingFields.every(f => f === 'paymentMethod' || f === 'email');
+    
+    if (onlyMissingPayment || missingOnlyPaymentAndEmail) {
+      try {
+        const { checkAvailability } = await import('./calendario.js');
+        const { validateReservation, suggestAlternativeSlots } = await import('./reservation-validation.js');
+        const reservationRepository = (await import('../database/reservationRepository.js')).default;
+        
+        // Calcular endTime
+        const [startH, startM] = form.time.split(':').map(Number);
+        const endMin = startH * 60 + (startM || 0) + Math.round((form.durationHours || 2) * 60);
+        const endH = Math.floor(endMin / 60) % 24;
+        const endMn = endMin % 60;
+        const endTime = `${endH.toString().padStart(2, '0')}:${endMn.toString().padStart(2, '0')}`;
+        
+        // 1. Validar horario laboral / duración
+        const earlyValidation = validateReservation(form.date, form.time, endTime, form.durationHours);
+        if (!earlyValidation.valid) {
+          console.log('[FORM] 🛡️ Early validation FAILED:', earlyValidation.errors);
+          let existingReservations = [];
+          try {
+            const allRes = await reservationRepository.findByDate(form.date);
+            existingReservations = allRes.filter(r => r.status !== 'cancelled' && r.status !== 'rejected');
+          } catch (_e) { /* ignore */ }
+          const alternatives = suggestAlternativeSlots(form.date, form.time, form.durationHours, existingReservations);
+          
+          const altText = alternatives.length > 0
+            ? alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${alt.startTime} - ${alt.endTime}`).join('\n')
+            : 'No hay alternativas disponibles hoy';
+          
+          // NO limpiar form — mantener date, spaceType, email; solo limpiar time
+          form.time = null;
+          form.durationHours = 2;
+          
+          return {
+            form,
+            updates,
+            isComplete: false,
+            nextQuestion: `❌ Ese horario no está disponible 😕\n\n📅 ¿Qué tal alguna de estas opciones?\n${altText}\n\n¿Te sirve alguna?`,
+            needsMoreInfo: true,
+            summary: form.getSummary(),
+            userMessage: message,
+            validationError: null,
+            confirmationMessage: null,
+            canPauseAndResume: true
+          };
+        }
+        
+        // 2. Verificar disponibilidad real (conflictos con otras reservas)
+        const availability = await checkAvailability(
+          form.date, form.time, form.durationHours, 
+          form.spaceType === 'meetingRoom' ? 'meetingRoom' : 'hotDesk',
+          null, userId
+        );
+        if (!availability.available) {
+          console.log('[FORM] 🛡️ Early availability check FAILED:', availability.reason);
+          const altText = availability.alternatives && availability.alternatives.length > 0
+            ? availability.alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${alt.startTime || alt}`).join('\n')
+            : '';
+          
+          // NO limpiar form — mantener date, spaceType, email; solo limpiar time
+          form.time = null;
+          form.durationHours = 2;
+          
+          return {
+            form,
+            updates,
+            isComplete: false,
+            nextQuestion: `⚠️ ${availability.reason}${altText ? `\n\n📅 ¿Qué tal estos horarios?\n${altText}` : '\n\n¿Prefieres otro horario? 😊'}`,
+            needsMoreInfo: true,
+            summary: form.getSummary(),
+            userMessage: message,
+            validationError: null,
+            confirmationMessage: null,
+            canPauseAndResume: true
+          };
+        }
+        console.log('[FORM] 🛡️ Early availability check PASSED ✅');
+      } catch (earlyCheckErr) {
+        console.error('[FORM] ⚠️ Early availability check error (non-blocking):', earlyCheckErr.message);
+      }
+    }
+  }
   
   // ✅ FIX: Si está completo, generar confirmación final
   if (isComplete && !validationError) {

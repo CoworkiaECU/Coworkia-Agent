@@ -73,8 +73,8 @@
 ### BLOQUE C: Lead Auto-Capture + Dashboard Automations (2h)
 
 **Tareas:**
-- [ ] **C1** — `captureAlunaLeadFromConversation()` — auto-crear lead cuando detecta interés en membresía (45 min)
-- [ ] **C2** — Integrar en membership flow (15 min)
+- [x] **C1** — Auto-captura leads: wired `captureAlunaLeadFromKeywords()` en flujo Wassenger cuando Aluna no maneja mensaje (30 Mar 2026, commit `72a9802`)
+- [x] **C2** — Integrado: captura corre antes del LLM, anti-duplicados verificados, deploy OK
 - [x] **C3** — Sección "Automatizaciones" en dashboard Aluna — commit `8f652ba`, v1169
   - Tab ⚙️ con cards grid responsive: D+1, D+3, Renewal 25d, Renewal 30d, Payment Verify, Email Replies
   - API: `GET /api/aluna/automations/stats` — datos reales: 29 D+1, 23 D+3
@@ -127,6 +127,6 @@
 ---
 
 ## 📝 PENDIENTE
-- C1-C2: Lead auto-capture desde conversaciones (next session)
+- ~~C1-C2: Lead auto-capture desde conversaciones~~ ✅ Completado 30 Mar 2026, commit `72a9802`
 - Tabla `aluna_prospect_followups` puede removerse en futuro cleanup (deprecated)
 - Probar pago completo desde dashboard con lead real para verificar Gabi + Welcome + WiFi + Calendar

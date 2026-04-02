@@ -19,6 +19,7 @@ import databaseService from '../database/database.js';
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail } from './email.js';
 import { buildEmailTemplate } from './email-template-system.js';
+import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 
 // Pattern para identificar emails del sistema: coworkia-AGENTE-...@coworkia.ec
 const COWORKIA_MESSAGE_ID_PATTERN = /coworkia-(\w+)-[^@]+@coworkia\.ec/i;
@@ -27,14 +28,15 @@ const COWORKIA_MESSAGE_ID_PATTERN = /coworkia-(\w+)-[^@]+@coworkia\.ec/i;
 const VALID_AGENTS = ['aurora', 'aluna', 'adriana', 'gabi', 'enzo', 'axel', 'paula', 'system'];
 
 // Subject patterns por agente (fallback si no hay Message-ID match)
+// NOTE: Order matters — more specific patterns first to avoid mis-routing
 const AGENT_SUBJECT_PATTERNS = {
-  aurora:  /reserva|hot\s*desk|sala\s*(de\s+)?reuniones|coworking/i,
+  axel:    /AXL-\d|paintbull|colisi[oó]n.*veh[ií]cul|reparaci[oó]n.*veh[ií]cul|pintura\s+vehicular/i,
+  adriana: /seguro|p[oó]liza|segpopular|comparativo|ADR-/i,
   aluna:   /membres[ií]a|plan\s+\d+|oficina\s+virtual|proforma|ALU-/i,
-  adriana: /seguro|p[oó]liza|veh[ií]culo|segpopular|comparativo/i,
-  gabi:    /legal|contable|recibo|factura|cotizaci[oó]n/i,
-  enzo:    /marketing|estrategia\s+digital|campa[ñn]a|marketinglab/i,
-  axel:    /reparaci[oó]n|colisi[oó]n|paintbull|automotriz/i,
-  paula:   /inmobiliaria|propiedad|real\s+estate/i,
+  enzo:    /marketing|estrategia\s+digital|campa[ñn]a|marketinglab|ENZ-/i,
+  paula:   /inmobiliaria|propiedad|real\s+estate|PAU-/i,
+  gabi:    /legal|contable|recibo|factura|GAB-/i,
+  aurora:  /reserva|hot\s*desk|sala\s*(de\s+)?reuniones|coworking/i,
 };
 
 /**
@@ -320,6 +322,22 @@ export async function processAndStoreReplies(replies) {
       `, [id, reply.fromEmail, reply.fromName, reply.subject, reply.replyText, reply.agent, reply.inReplyTo, reply.receivedAt, leadId]);
       
       stored++;
+
+      // 📲 Notify admin via WhatsApp about new email reply
+      try {
+        await notifyAdminEmailReply(reply, leadId);
+      } catch (notifErr) {
+        console.warn(`[EMAIL-READER] ⚠️ WA notification failed: ${notifErr.message}`);
+      }
+
+      // 🔧 Axel-specific: extract quote code and update collision_quotes
+      if (reply.agent === 'axel') {
+        try {
+          await handleAxelReply(reply, leadId);
+        } catch (axelErr) {
+          console.warn(`[EMAIL-READER] ⚠️ Axel reply handler error: ${axelErr.message}`);
+        }
+      }
     }
     
     console.log(`[EMAIL-READER] 💾 ${stored}/${replies.length} respuestas almacenadas`);
@@ -348,7 +366,68 @@ function getLeadTableForAgent(agent) {
 }
 
 /**
- * 🔄 CRON: Polling periódico de respuestas (cada 10 minutos)
+ * � Notifica al admin por WhatsApp cuando un cliente responde un email
+ */
+async function notifyAdminEmailReply(reply, leadId) {
+  const adminPhone = process.env.DIEGO_PERSONAL_PHONE;
+  if (!adminPhone) return;
+
+  const agentLabel = (reply.agent || 'sistema').toUpperCase();
+  const preview = (reply.replyText || '').slice(0, 200);
+  const name = reply.fromName || reply.fromEmail;
+
+  const msg = [
+    `📬 *Email reply detectado*`,
+    ``,
+    `👤 ${name}`,
+    `📧 ${reply.fromEmail}`,
+    `🤖 Agente: ${agentLabel}`,
+    leadId ? `🔗 Lead: ${leadId}` : '',
+    ``,
+    `💬 "${preview}${preview.length >= 200 ? '...' : ''}"`,
+    ``,
+    `📋 Subject: ${(reply.subject || '').slice(0, 80)}`
+  ].filter(Boolean).join('\n');
+
+  await enviarWhatsApp(adminPhone, msg);
+}
+
+/**
+ * 🔧 Handler específico para replies de Axel — actualiza collision_quotes
+ */
+async function handleAxelReply(reply, leadId) {
+  // Extract quote code from subject: "Re: Cotización 🚗 AXL-2026-0012 — ..."
+  const codeMatch = (reply.subject || '').match(/AXL-\d{4}-\d{3,}/i);
+  const quoteCode = codeMatch ? codeMatch[0].toUpperCase() : null;
+
+  if (!quoteCode && !leadId) return;
+
+  // Try to find the collision_quote by code or by email
+  const quote = quoteCode
+    ? await databaseService.get(`SELECT id, quote_code, status FROM collision_quotes WHERE quote_code = $1`, [quoteCode])
+    : await databaseService.get(`SELECT id, quote_code, status FROM collision_quotes WHERE email = $1 ORDER BY created_at DESC LIMIT 1`, [reply.fromEmail]);
+
+  if (!quote) {
+    console.log(`[EMAIL-READER] ⚠️ Axel reply but no matching collision_quote for ${quoteCode || reply.fromEmail}`);
+    return;
+  }
+
+  // Mark client_email_reply = true and update notes
+  await databaseService.run(`
+    UPDATE collision_quotes 
+    SET notes = COALESCE(notes, '') || $1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE quote_code = $2
+  `, [
+    `\n[EMAIL-REPLY ${new Date().toISOString().split('T')[0]}] ${(reply.replyText || '').slice(0, 500)}`,
+    quote.quote_code
+  ]);
+
+  console.log(`[EMAIL-READER] 🔧 Axel reply linked to ${quote.quote_code}`);
+}
+
+/**
+ * �🔄 CRON: Polling periódico de respuestas (cada 10 minutos)
  */
 export async function pollEmailReplies() {
   console.log('[EMAIL-READER] 🔄 Polling de respuestas...');

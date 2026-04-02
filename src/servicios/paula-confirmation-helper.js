@@ -17,6 +17,15 @@ import {
 import { savePendingConfirmation } from '../perfiles-interacciones/memoria-sqlite.js';
 import { normalizeTimeFormat, parseDate } from '../utils/date-time-parser.js';
 
+// Catálogo de direcciones de propiedades (El Morenal, Cumbayá)
+const PROPERTY_ADDRESSES = {
+  'ECU-JARDIN-1': 'Urbanización El Morenal, Casa Jardín #1, Cumbayá, Quito',
+  'ECU-JARDIN-3': 'Urbanización El Morenal, Casa Jardín #3, Cumbayá, Quito',
+  'ECU-JARDIN-6': 'Urbanización El Morenal, Casa Jardín #6, Cumbayá, Quito',
+  'ECU-JARDIN-7': 'Urbanización El Morenal, Casa Jardín #7, Cumbayá, Quito',
+};
+const DEFAULT_ADDRESS = 'Urbanización El Morenal, Cumbayá, Quito';
+
 /**
  * ✅ Detecta si Paula quiere activar confirmación de visita
  */
@@ -58,18 +67,27 @@ export function extractVisitData(message, userProfile) {
     // Detectar fecha (mismo sistema que Aurora)
     const dateMatch = message.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|mañana|ma\u00f1ana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)/i);
     
-    // Detectar horario
+    // Detectar horario — soporta: "3pm", "15:30", "3 de la tarde", "a las 10", "10 am", "10am"
     const timeMatch = message.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/gi) || 
-                     message.match(/(\d{1,2}:\d{2})/g);
+                     message.match(/(\d{1,2}:\d{2})/g) ||
+                     message.match(/(\d{1,2})\s*(?:de la\s*(?:tarde|mañana|noche))/gi) ||
+                     message.match(/(?:a las|alas)\s*(\d{1,2})/gi);
     
-    // Si no hay horario, devolver null para que Paula pida aclaración
-    if (!timeMatch || timeMatch.length === 0) {
-      console.log('[PAULA-CONFIRM] ❌ No se detectó horario');
-      return null;
+    // Si no hay horario, usar 10:00 como default y permitir que el flujo continúe
+    let rawTime = '10:00';
+    if (timeMatch && timeMatch.length > 0) {
+      rawTime = timeMatch[0];
+      // "3 de la tarde" → "3pm", "a las 10" → "10"
+      rawTime = rawTime.replace(/de la tarde/i, 'pm')
+                       .replace(/de la mañana/i, 'am')
+                       .replace(/de la noche/i, 'pm')
+                       .replace(/^(?:a las|alas)\s*/i, '');
+    } else {
+      console.log('[PAULA-CONFIRM] ⚠️ No se detectó horario, usando 10:00 por defecto');
     }
     
     // Normalizar horario
-    const startTime = normalizeTimeFormat(timeMatch[0], '10:00');
+    const startTime = normalizeTimeFormat(rawTime, '10:00');
     
     // Fecha por defecto: mañana
     const tomorrow = new Date();
@@ -79,10 +97,21 @@ export function extractVisitData(message, userProfile) {
     // Obtener nombre del cliente
     const clientName = userProfile.name || userProfile.whatsapp_display_name || 'Cliente';
     
+    // Resolver dirección desde catálogo (o del mensaje si la incluye)
+    let propertyAddress = DEFAULT_ADDRESS;
+    if (propertyCode && PROPERTY_ADDRESSES[propertyCode]) {
+      propertyAddress = PROPERTY_ADDRESSES[propertyCode];
+    }
+    // Intentar extraer dirección del mensaje si se incluyó explícitamente
+    const addrMatch = message.match(/(?:Dirección|Ubicación|📍):\s*([^\n]+)/i);
+    if (addrMatch) {
+      propertyAddress = addrMatch[1].trim();
+    }
+
     return {
       propertyCode,
       propertyName: propertyName || 'Propiedad de interés',
-      propertyAddress: 'Por confirmar', // Paula debe incluirlo en el mensaje
+      propertyAddress,
       date: visitDate,
       startTime,
       userId: userProfile.userId,
@@ -146,12 +175,12 @@ export async function confirmPropertyVisit(userId, userProfile) {
     
     const visitData = pending.data;
     
-    // Verificar que tenga dirección
+    // Si no tiene dirección, usar default del proyecto El Morenal
     if (!visitData.propertyAddress || visitData.propertyAddress === 'Por confirmar') {
-      return {
-        success: false,
-        message: '⚠️ Necesito la dirección completa de la propiedad para agendar la visita.'
-      };
+      visitData.propertyAddress = (visitData.propertyCode && PROPERTY_ADDRESSES[visitData.propertyCode])
+        ? PROPERTY_ADDRESSES[visitData.propertyCode]
+        : DEFAULT_ADDRESS;
+      console.log('[PAULA-CONFIRM] 📍 Dirección resuelta desde catálogo:', visitData.propertyAddress);
     }
     
     // Agendar visita

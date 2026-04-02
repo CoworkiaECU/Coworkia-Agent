@@ -31,6 +31,8 @@ import { generateSequentialCode } from '../utils/code-generator.js';
  */
 export async function checkVisitAvailability(date, startTime, propertyCode) {
   try {
+    await databaseService.initialize();
+    
     // Validar fecha no sea pasada
     const visitDate = new Date(date + 'T00:00:00-05:00'); // Ecuador timezone
     const today = new Date();
@@ -143,6 +145,7 @@ function formatVisitDateTime(date, time) {
  */
 export async function schedulePropertyVisit(visitData) {
   try {
+    await databaseService.initialize();
     console.log('[PAULA-SCHEDULER] 📅 Iniciando agendamiento:', visitData);
     
     const {

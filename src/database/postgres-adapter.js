@@ -601,7 +601,7 @@ class PostgresAdapter {
           viewing_completed BOOLEAN DEFAULT FALSE,
           offer_made BOOLEAN DEFAULT FALSE,
           offer_amount DECIMAL(10,2),
-          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'searching', 'viewing_scheduled', 'negotiating', 'offer_made', 'accepted', 'rejected', 'cancelled')),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'searching', 'viewing_scheduled', 'negotiating', 'offer_made', 'closed', 'cancelled')),
           assigned_to TEXT,
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

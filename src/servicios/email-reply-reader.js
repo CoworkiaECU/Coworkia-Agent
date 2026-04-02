@@ -40,14 +40,15 @@ const AGENT_SUBJECT_PATTERNS = {
 };
 
 /**
- * 🔌 Conectar a Gmail IMAP
+ * 🔌 Conectar a IMAP (Gmail o dominio propio vía cPanel)
  */
 async function connectIMAP() {
+  const imapHost = process.env.EMAIL_HOST || 'imap.gmail.com';
   const config = {
     imap: {
       user: process.env.EMAIL_USER,
       password: process.env.EMAIL_PASS,
-      host: 'imap.gmail.com',
+      host: imapHost,
       port: 993,
       tls: true,
       authTimeout: 10000,

@@ -14,10 +14,31 @@ import { loggers } from '../utils/logger.js';
 
 const logger = loggers.axel || console;
 
+/**
+ * Resolve the client's phone from quote fields.
+ * `phone` = real client phone (filled from form data)
+ * `user_phone` = WA session initiator (may be admin for boss quotes)
+ */
+function resolveClientPhone(quote) {
+  return quote.phone || quote.user_phone || null;
+}
+
+/**
+ * Check if a phone number belongs to the admin (Diego) — never send automated follow-ups there.
+ */
+function isAdminPhone(phone) {
+  if (!phone) return false;
+  const norm = phone.replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
+
 function buildD2Message(quote) {
   const name = (quote.client_name || 'Hola').split(' ')[0];
   const vehicle = [quote.vehicle_brand, quote.vehicle_model, quote.vehicle_year].filter(Boolean).join(' ') || 'tu vehículo';
   return [
+    `@axel`,
     `Hola ${name} 👋`,
     ``,
     `¿Te quedó alguna duda de la propuesta de *${vehicle}*?`,
@@ -34,6 +55,7 @@ function buildD7Message(quote) {
   const priceMin = quote.price_min ? `$${Math.round(quote.price_min)}` : null;
   const priceLine = priceMin ? `💰 Cotización: desde ${priceMin} USD` : '';
   return [
+    `@axel`,
     `${name}, última vez que me comunicaba contigo sobre *${vehicle}* 🚗`,
     ``,
     priceLine,
@@ -64,8 +86,13 @@ export function startAxelFollowupCronJobs() {
         let sent = 0;
         for (const q of quotes) {
           try {
-            if (!q.user_phone) continue;
-            await enviarWhatsApp(q.user_phone, buildD2Message(q));
+            const clientPhone = resolveClientPhone(q);
+            if (!clientPhone) continue;
+            if (isAdminPhone(clientPhone)) {
+              logger.info(`[AXEL-CRON] ⏭️ Skipping D+2 for ${q.quote_code} — admin phone`);
+              continue;
+            }
+            await enviarWhatsApp(clientPhone, buildD2Message(q));
             await markReminder1Sent(q.quote_code);
             sent++;
           } catch (err) {
@@ -97,8 +124,13 @@ export function startAxelFollowupCronJobs() {
         let sent = 0;
         for (const q of quotes) {
           try {
-            if (!q.user_phone) continue;
-            await enviarWhatsApp(q.user_phone, buildD7Message(q));
+            const clientPhone = resolveClientPhone(q);
+            if (!clientPhone) continue;
+            if (isAdminPhone(clientPhone)) {
+              logger.info(`[AXEL-CRON] ⏭️ Skipping D+7 for ${q.quote_code} — admin phone`);
+              continue;
+            }
+            await enviarWhatsApp(clientPhone, buildD7Message(q));
             await markReminder2Sent(q.quote_code);
             sent++;
           } catch (err) {

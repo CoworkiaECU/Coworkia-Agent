@@ -6,8 +6,8 @@
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 
-const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || 'villotaj71@gmail.com';
-const ADMIN_CC = 'mktlab.ec@gmail.com';
+const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || '';
+const ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || '';
 
 async function fetchAndCompressPhoto(url) {
   try {
@@ -350,7 +350,7 @@ export async function sendQuoteEmail({
 
     const result = await sendEmail({
       to: customerEmail,
-      cc: [WORKSHOP_CC, ADMIN_CC].join(','),
+      cc: [WORKSHOP_CC, ADMIN_CC].filter(Boolean).join(',') || undefined,
       subject: subject,
       html: htmlContent,
       attachments,

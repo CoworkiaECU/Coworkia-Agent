@@ -111,7 +111,9 @@ router.post('/quotes/:code/send-reminder', async (req, res) => {
     if (!targetPhone) return res.status(404).json({ ok: false, error: 'Lead sin teléfono de cliente' });
 
     const _adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
-    if (_adminNorm && targetPhone.replace(/\D/g, '') === _adminNorm) {
+    const _diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+    const _targetNorm = targetPhone.replace(/\D/g, '');
+    if ((_adminNorm && _targetNorm === _adminNorm) || (_diegoNorm && _targetNorm === _diegoNorm)) {
       return res.status(403).json({ ok: false, error: 'TEST_LEAD', message: 'Lead creado con teléfono de prueba — proporciona el teléfono del cliente en la cotización' });
     }
 

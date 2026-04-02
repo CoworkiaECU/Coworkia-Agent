@@ -254,7 +254,7 @@ export async function findQuotesForReminder1() {
   await databaseService.ensureInitialized();
 
   const results = await databaseService.all(`
-    SELECT quote_code, user_phone, client_name, email, vehicle_brand, vehicle_model,
+    SELECT quote_code, user_phone, phone, client_name, email, vehicle_brand, vehicle_model,
            vehicle_year, price_min, price_max, quote_sent_at
     FROM collision_quotes
     WHERE email IS NOT NULL
@@ -278,7 +278,7 @@ export async function findQuotesForReminder2() {
   await databaseService.ensureInitialized();
 
   const results = await databaseService.all(`
-    SELECT quote_code, user_phone, client_name, email, vehicle_brand, vehicle_model,
+    SELECT quote_code, user_phone, phone, client_name, email, vehicle_brand, vehicle_model,
            vehicle_year, price_min, price_max, quote_sent_at
     FROM collision_quotes
     WHERE email IS NOT NULL

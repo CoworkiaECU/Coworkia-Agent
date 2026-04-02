@@ -92,9 +92,11 @@
       display: inline-block; padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 700; white-space: nowrap;
     }
-    .badge-pending           { background: #FEF3C7; color: #5B21B6; }
+    .badge-pending           { background: #FEF3C7; color: #92400E; }
+    .badge-searching         { background: #EDE9FE; color: #5B21B6; }
     .badge-viewing_scheduled { background: #DBEAFE; color: #1E40AF; }
     .badge-negotiating       { background: #FDE8D8; color: #C2410C; }
+    .badge-offer_made        { background: #FEF9C3; color: #854D0E; }
     .badge-closed            { background: #D1FAE5; color: #065F46; }
     .badge-cancelled         { background: #F3F4F6; color: #6B7280; }
     .badge-op-compra  { background: #FEF3C7; color: #5B21B6; }
@@ -207,32 +209,37 @@
     <!-- Pipeline -->
     <div class="stats-grid" style="margin-bottom: 20px;">
       <div class="stat-card" style="border-left-color: #f97316;">
-        <div class="stat-label">⏳ Pendientes</div>
-        <div class="stat-value" id="pipe-active" style="color: #f97316;">-</div>
-        <div class="stat-sublabel">Sin prospectar</div>
+        <div class="stat-label">⏳ Nuevos</div>
+        <div class="stat-value" id="pipe-new" style="color: #f97316;">-</div>
+        <div class="stat-sublabel">Pendientes + Buscando</div>
       </div>
       <div class="stat-card" style="border-left-color: #8b5cf6;">
-        <div class="stat-label">🏠 Visitas Agend.</div>
-        <div class="stat-value" id="pipe-24h" style="color: #8b5cf6;">-</div>
-        <div class="stat-sublabel">Propiedad a ver</div>
+        <div class="stat-label">🏠 Visitas</div>
+        <div class="stat-value" id="pipe-visits" style="color: #8b5cf6;">-</div>
+        <div class="stat-sublabel">Agendadas</div>
       </div>
-      <div class="stat-card" style="border-left-color: #6b7280;">
-        <div class="stat-label">💬 Negociando</div>
-        <div class="stat-value" id="pipe-3d" style="color: #6b7280;">-</div>
-        <div class="stat-sublabel">Oferta en proceso</div>
+      <div class="stat-card" style="border-left-color: #ea580c;">
+        <div class="stat-label">💬 En negociación</div>
+        <div class="stat-value" id="pipe-negotiating" style="color: #ea580c;">-</div>
+        <div class="stat-sublabel">Negociando + Oferta</div>
       </div>
-      <div class="stat-card" style="border-left-color: #7C3AED;">
+      <div class="stat-card" style="border-left-color: #16a34a;">
         <div class="stat-label">✅ Cerrados</div>
-        <div class="stat-value" id="pipe-converted" style="color: #7C3AED;">-</div>
+        <div class="stat-value" id="pipe-closed" style="color: #16a34a;">-</div>
         <div class="stat-sublabel">Operación exitosa</div>
       </div>
     </div>
 
     <div class="filters-panel">
+      <div class="filter-group">
+        <label>Estado</label>
+        <select id="filter-status">
           <option value="">Todos</option>
           <option value="pending">⏳ Pendiente</option>
+          <option value="searching">🔍 Buscando</option>
           <option value="viewing_scheduled">🏠 Visita agendada</option>
           <option value="negotiating">💬 Negociando</option>
+          <option value="offer_made">📝 Oferta enviada</option>
           <option value="closed">✅ Cerrado</option>
           <option value="cancelled">❌ Cancelado</option>
         </select>
@@ -256,7 +263,7 @@
         <h2>🏠 Leads Inmobiliarios</h2>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span class="table-count" id="table-count"></span>
-          <button id="btn-seed-demo" onclick="seedDemo()" style="padding:6px 12px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:12px;cursor:pointer;" title="Insertar 10 leads demo (Fernanda &amp; Paul Gavilanez incluidos)">🎭 Demo</button>
+          <button id="btn-seed-demo" onclick="seedDemo()" style="padding:6px 12px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:12px;cursor:pointer;display:none;" title="Insertar 10 leads demo">🎭 Demo</button>
         </div>
       </div>
       <div id="leads-container">

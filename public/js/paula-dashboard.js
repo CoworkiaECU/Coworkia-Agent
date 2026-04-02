@@ -12,10 +12,10 @@ function showToast(msg, type = 'error') {
 
 // ══ PIPELINE ══════════════════════════════════════════════════════════════════════
 function updatePipeline() {
-  document.getElementById('pipe-active').textContent    = allLeads.filter(l => l.status === 'pending').length;
-  document.getElementById('pipe-24h').textContent       = allLeads.filter(l => l.status === 'viewing_scheduled').length;
-  document.getElementById('pipe-3d').textContent        = allLeads.filter(l => l.status === 'negotiating').length;
-  document.getElementById('pipe-converted').textContent = allLeads.filter(l => l.status === 'closed').length;
+  document.getElementById('pipe-new').textContent         = allLeads.filter(l => l.status === 'pending' || l.status === 'searching').length;
+  document.getElementById('pipe-visits').textContent      = allLeads.filter(l => l.status === 'viewing_scheduled').length;
+  document.getElementById('pipe-negotiating').textContent = allLeads.filter(l => l.status === 'negotiating' || l.status === 'offer_made').length;
+  document.getElementById('pipe-closed').textContent      = allLeads.filter(l => l.status === 'closed').length;
 }
 
 function formatDate(ds) {
@@ -34,8 +34,10 @@ function formatDate(ds) {
 function statusBadge(status) {
   const map = {
     pending:            ['badge-pending',            '⏳ Pendiente'],
+    searching:          ['badge-searching',          '🔍 Buscando'],
     viewing_scheduled:  ['badge-viewing_scheduled',  '🏠 Visita'],
     negotiating:        ['badge-negotiating',         '💬 Negociando'],
+    offer_made:         ['badge-offer_made',          '📝 Oferta'],
     closed:             ['badge-closed',              '✅ Cerrado'],
     cancelled:          ['badge-cancelled',           '❌ Cancelado'],
   };
@@ -162,8 +164,10 @@ async function loadLeads() {
               <td>
                 <select class="status-select" data-id="${l.id}">
                   <option value="pending"           ${l.status==='pending'           ?'selected':''}>⏳ Pendiente</option>
+                  <option value="searching"         ${l.status==='searching'         ?'selected':''}>🔍 Buscando</option>
                   <option value="viewing_scheduled" ${l.status==='viewing_scheduled' ?'selected':''}>🏠 Visita</option>
                   <option value="negotiating"       ${l.status==='negotiating'       ?'selected':''}>💬 Negociando</option>
+                  <option value="offer_made"        ${l.status==='offer_made'        ?'selected':''}>📝 Oferta</option>
                   <option value="closed"            ${l.status==='closed'            ?'selected':''}>✅ Cerrado</option>
                   <option value="cancelled"         ${l.status==='cancelled'         ?'selected':''}>❌ Cancelado</option>
                 </select>
@@ -180,7 +184,11 @@ async function loadLeads() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {  // Show demo button only with ?debug=true
+  if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+    const demoBtn = document.getElementById('btn-seed-demo');
+    if (demoBtn) demoBtn.style.display = '';
+  }
   loadStats();
   loadLeads();
 

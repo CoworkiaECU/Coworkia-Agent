@@ -50,8 +50,9 @@ export function extractVisitData(message, userProfile) {
   try {
     console.log('[PAULA-CONFIRM] 📝 Analizando mensaje:', message.substring(0, 200));
     
-    // Detectar código de propiedad (ECU-001, DOM-002, etc.)
-    const propertyCodeMatch = message.match(/(ECU|DOM)-\d{3}/i);
+    // Detectar código de propiedad (ECU-JARDIN-1, DOM-PLAYA-2, ECU-001, etc.)
+    const propertyCodeMatch = message.match(/(ECU|DOM)-[A-Z]+-\d{1,3}/i) ||
+                              message.match(/(ECU|DOM)-\d{3}/i);
     const propertyCode = propertyCodeMatch ? propertyCodeMatch[0].toUpperCase() : null;
     
     // Detectar nombre de propiedad (entre ** o después de "Propiedad:")

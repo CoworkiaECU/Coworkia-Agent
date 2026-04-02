@@ -7,6 +7,7 @@ import {
   cleanupExpiredPartialForms 
 } from '../../scripts/database/cleanup-expired-data.js';
 import { processFollowUps, processAlunaLeadFollowUps, processMembershipRenewalReminders, processAuroraRebookReminders, processAxelQuoteReminders } from './follow-up-service.js';
+import { processPaulaFollowUps } from './paula-followup-service.js';
 import dailyCleanup from '../../scripts/maintenance/daily-cleanup.js';
 import { expireCodesForDate } from './wifi-codes-service.js';
 
@@ -219,6 +220,30 @@ export function initScheduler() {
 
   jobs.push(axelReminderJob);
   console.log('[CRON] 📅 Recordatorios cotizaciones PaintBull (Axel): 10:00 AM lun-vie');
+
+  // ✅ Follow-up automático de leads inmobiliarios (PAULA)
+  // Cada 2 horas (10am, 12pm, 2pm, 4pm, 6pm). Envía:
+  // - 24h post-brochure: "¿Pudiste revisar el brochure?"
+  // - 3d post-brochure: "Tengo opciones nuevas"
+  // - 24h antes de visita agendada: recordatorio
+  const paulaFollowUpJob = new CronJob(
+    '0 10,12,14,16,18 * * *', // cada 2h en horario laboral
+    async () => {
+      try {
+        console.log('[CRON] 🏡 Verificando follow-ups inmobiliarios (Paula)...');
+        const result = await processPaulaFollowUps();
+        console.log(`[CRON] ✅ Paula follow-ups: ${result.sent24h} (24h), ${result.sent3d} (3d), ${result.visitReminders} (visitas), ${result.skipped} saltados`);
+      } catch (error) {
+        console.error('[CRON] ❌ Error en Paula follow-ups:', error);
+      }
+    },
+    null,
+    true,
+    'America/Guayaquil'
+  );
+
+  jobs.push(paulaFollowUpJob);
+  console.log('[CRON] 📅 Follow-up inmobiliario Paula: 10am/12pm/2pm/4pm/6pm diario');
   
   // ✅ Opcional: Backup automático (solo en producción)
   if (isProd && process.env.ENABLE_AUTO_BACKUP === 'true') {

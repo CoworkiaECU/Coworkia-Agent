@@ -2001,8 +2001,9 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           if (result.success) {
             try {
               const { v4: uuidv4 } = await import('uuid');
+              const leadId = uuidv4();
               await saveRealEstateLead({
-                id:            uuidv4(),
+                id:            leadId,
                 userId:        userId, // admin phone — FK válido en users
                 operationType: 'Compra',
                 propertyType:  result.propiedad || 'Propiedad',
@@ -2011,9 +2012,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 clientName:    result.nombre || quoteData.nombre,
                 email:         result.email  || quoteData.email,
                 phone:         quoteData.telefono || null,
-                requirements:  { quoteCode, brochureEnviado: true, fuente: 'boss_command' },
+                requirements:  { quoteCode, brochureEnviado: true, fuente: 'boss_command', brochureSentAt: new Date().toISOString(), leadId },
               });
               console.log(`[BOSS-CMD] ✅ Lead PAULA guardado en real_estate_leads: ${quoteCode}`);
+
+              // 🤖 AUTO WA: Paula se presenta al cliente tras enviar brochure
+              if (quoteData.telefono) {
+                const clientFirstName = (result.nombre || quoteData.nombre || 'Hola').split(' ')[0];
+                const propName = quoteData.esOverview ? 'las Casas Jardín El Morenal' : quoteData.propiedad?.nombre;
+                const autoMsg = `@paula\n¡Hola ${clientFirstName}! 🏡\n\nSoy *Paula* de PropElite Bienes Raíces. Te acabo de enviar un brochure exclusivo de *${propName}* a tu correo 📧\n\nRevísalo con calma y si te interesa, con gusto te agendo una *visita presencial* para que conozcas la propiedad en persona.\n\n¿Tienes alguna pregunta? Estoy aquí para ayudarte 🤝`;
+                await new Promise(r => setTimeout(r, 2000));
+                await enviarWhatsApp(quoteData.telefono, autoMsg);
+                console.log(`[BOSS-CMD] 🤖 Auto-WA enviado a cliente: ${quoteData.telefono}`);
+              }
             } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando real_estate_lead:', err.message); }
           }
           const reply = result.success

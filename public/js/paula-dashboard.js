@@ -52,6 +52,35 @@ function opBadge(op) {
     : `<span class="badge badge-op-arriendo">🔑 Arriendo</span>`;
 }
 
+function leadTempBadge(lead) {
+  // Lead temperature: hot/warm/cold based on signals
+  const req = lead.requirements || {};
+  const hasBrochure = req.brochureEnviado;
+  const hasPhone = !!lead.phone;
+  const hasEmail = !!lead.email;
+  const daysOld = Math.floor((Date.now() - new Date(lead.created_at)) / 86400000);
+  const isAdvanced = ['viewing_scheduled','negotiating','offer_made','closed'].includes(lead.status);
+  
+  let score = 0;
+  if (hasPhone) score += 2;
+  if (hasEmail) score += 1;
+  if (hasBrochure) score += 2;
+  if (isAdvanced) score += 3;
+  if (daysOld <= 3) score += 2;
+  else if (daysOld <= 7) score += 1;
+  
+  if (score >= 7) return '<span class="badge" style="background:#FEE2E2;color:#991B1B;font-size:10px;">🔥 Hot</span>';
+  if (score >= 4) return '<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:10px;">🌡 Warm</span>';
+  return '<span class="badge" style="background:#E0E7FF;color:#3730A3;font-size:10px;">❄️ Cold</span>';
+}
+
+function sourceBadge(req) {
+  if (!req) return '';
+  if (req.fuente === 'boss_command') return '<span class="badge" style="background:#ECFDF5;color:#065F46;font-size:10px;">👔 Boss</span>';
+  if (req.fuente === 'whatsapp') return '<span class="badge" style="background:#DBEAFE;color:#1E40AF;font-size:10px;">📱 WA</span>';
+  return '';
+}
+
 // ── STATS ─────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
@@ -159,8 +188,8 @@ async function loadLeads() {
               <td>${l.property_type || '-'}</td>
               <td>${l.preferred_zone || '-'}</td>
               <td><span class="amount">${l.budget_range || '-'}</span></td>
-              <td>${statusBadge(l.status)}</td>
-              <td><span class="date-cell">${formatDate(l.created_at)}</span></td>
+              <td>${statusBadge(l.status)} ${leadTempBadge(l)}</td>
+              <td>${sourceBadge(l.requirements)} <span class="date-cell">${formatDate(l.created_at)}</span></td>
               <td>
                 <select class="status-select" data-id="${l.id}">
                   <option value="pending"           ${l.status==='pending'           ?'selected':''}>⏳ Pendiente</option>

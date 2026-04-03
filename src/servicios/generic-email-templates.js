@@ -8,6 +8,7 @@ import { LOGOS_BASE64 } from './email-assets.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
 import { EMAIL_TRANSLATIONS } from './email-i18n.js';
+import { buildEmailTemplate } from './email-template-system.js';
 
 /**
  * 🛡️ ADRIANA - SegPopular (Seguros)
@@ -19,7 +20,7 @@ function _adrianaQuoteHTML(d) {
   const fechaFmt = new Date().toLocaleDateString('es-EC', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
-  const premium = { annual: d.quotedPremium || 0, monthly: d.quotedMonthly || Math.round((d.quotedPremium || 0) / 10) };
+  const premium = { annual: d.quotedPremium || 0, monthly: d.quotedMonthly || Math.round((d.quotedPremium || 0) / 12) };
   const vehicleLabel = `${d.vehicleBrand} ${d.vehicleModel} ${d.vehicleYear}`;
   const waLink = `https://wa.me/${d.waNumber || '593994837117'}?text=${encodeURIComponent(
     `Hola Adriana! Soy ${d.nombre}. Recibí la cotización de seguro para mi ${vehicleLabel} (${d.quoteCode}). Me interesa proceder.`
@@ -112,7 +113,7 @@ function _adrianaQuoteHTML(d) {
       <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:22px;">USD incluye IVA · Seguro ${d.insuranceType}</div>
       <div style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:14px;display:inline-block;margin-bottom:20px;">
         <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">O en cómodas cuotas</div>
-        <div style="color:white;font-size:22px;font-weight:800;">${premium.monthly}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 10</span></div>
+        <div style="color:white;font-size:22px;font-weight:800;">${premium.monthly}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 12</span></div>
       </div>
       <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
         🛡️ Quiero activar mi seguro →
@@ -194,7 +195,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
     leadId
   } = leadData;
 
-  const monthlyPremium = quotedPremium ? Math.round(quotedPremium / 10) : null;
+  const monthlyPremium = quotedPremium ? Math.round(quotedPremium / 12) : null;
   const waLink = `https://wa.me/593994837117?text=%40adriana%2C+quiero+activar+mi+seguro`;
 
   const premiumSection = quotedPremium ? `
@@ -1941,11 +1942,27 @@ ${data.whatsappLink ? `<tr><td style="padding:8px 0; color:#6B7280; font-weight:
         html: generatePaulaEmailHTML({ ...data, userName: clientName }, { userLanguage: lang })
       };
 
-    case 'ADRIANA':
+    case 'ADRIANA': {
+      const vehicleDesc = [data.vehicleBrand, data.vehicleModel, data.vehicleYear].filter(Boolean).join(' ') || 'tu vehículo';
+      const annualPremium = data.quotedPremium || 0;
+      const monthlyPremium = Math.round(annualPremium / 12);
       return {
-        subject: `🛡️ Solicitud de seguro — ${clientName}`,
-        html: generateAdrianaEmailHTML({ ...data, userName: clientName }, { type: 'confirmation', userLanguage: lang })
+        subject: `🛡️ Cotización de Seguro — ${clientName} | ${vehicleDesc}`,
+        html: buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
+          nombre: clientName,
+          marca: data.vehicleBrand || '',
+          modelo: data.vehicleModel || '',
+          anio: data.vehicleYear || '',
+          placa: data.plate || '',
+          valor_asegurado: data.commercialValue ? `$${Number(data.commercialValue).toLocaleString()}` : '',
+          vaz_prima_anual: annualPremium ? `$${Number(annualPremium).toLocaleString()}` : '',
+          vaz_prima_mensual: monthlyPremium ? `$${monthlyPremium}/mes` : '',
+          vaz_deducible: '7%',
+          analisis_broker: '',
+          competitors: [],
+        }),
       };
+    }
 
     default:
       throw new Error(`[generateEmailForAgent] Agente desconocido: ${agentName}`);

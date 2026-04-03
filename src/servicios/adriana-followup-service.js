@@ -113,6 +113,7 @@ function buildEmailS1HTML(l) {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
   <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <div style="color:rgba(255,255,255,0.7);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;">🛡️ ADRIANA · SEGPOPULAR ECUADOR</div>
     <h1 style="color:#FCD34D;margin:0;font-size:24px;font-weight:900;">¿Tuviste la oportunidad de revisar tu cotización, ${fn}?</h1>
   </div>
@@ -136,6 +137,7 @@ function buildEmailS2HTML(l) {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
     <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <div style="color:rgba(255,255,255,0.8);font-size:28px;margin-bottom:8px;">⏰</div>
     <h1 style="color:white;margin:0;font-size:22px;font-weight:900;">ÚLTIMA OPORTUNIDAD, ${fn}</h1>
     <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Tu cotización vence HOY · Código ${l.quote_code}</p>
@@ -166,6 +168,7 @@ function buildEmailS3HTML(l) {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
   <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <h1 style="color:#FCD34D;margin:0;font-size:22px;font-weight:900;">Un mensaje final de Adriana 🤝</h1>
   </div>
   <div style="background:white;padding:32px 28px;border-radius:0 0 12px 12px;">

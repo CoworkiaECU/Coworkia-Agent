@@ -67,6 +67,7 @@ import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesR
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
 import { analyzeInsuranceDocument, detectDocumentType, extractVehicleData, DOCUMENT_TYPES } from '../../servicios/insurance-document-analysis.js';
 import { calculateAllCoverages, formatPremiumForWhatsApp, inferVehicleCategory, VEHICLE_CATEGORIES, COVERAGE_TYPES, calculateVehiclePremium } from '../../servicios/adriana-quote-calculator.js';
+import { generateMultiQuotes, saveLeadQuotes, formatQuotesForTemplate } from '../../servicios/adriana-multi-quote-engine.js';
 import { processFormMessage, getOrCreateConversation, resetForm } from '../../servicios/adriana-conversational-form.js';
 import { processRealEstateForm } from '../../servicios/real-estate-form.js';
 import enzoRepository from '../../database/enzoRepository.js';
@@ -4098,32 +4099,46 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
       const cat   = inferVehicleCategory(`${lead.vehicle_brand || ''} ${lead.vehicle_model || ''}`);
       const premiumResult = calculateVehiclePremium({ commercialValue: Number(value), vehicleYear: Number(year), vehicleCategory: cat, coverage: selectedCoverage });
 
+      // Multi-quote: obtener cotizaciones de todas las aseguradoras activas
+      const allQuotes = await generateMultiQuotes({ commercialValue: Number(value), vehicleYear: Number(year), vehicleCategory: 'liviano' });
+      const { vaz_prima_anual, vaz_prima_mensual, vaz_deducible, competitors: multiCompetitors } = formatQuotesForTemplate(allQuotes);
+
       const clientEmail = lead.email || '';
       const clientName  = lead.client_name || profile.name || userId;
       const brandModel  = [lead.vehicle_brand, lead.vehicle_model].filter(Boolean).join(' ') || 'Vehículo';
       const competitorQuotes = lead.competitor_quotes || [];
+      // Merge competitors: multi-quote DB + Vision AI extracted quotes
+      const mergedCompetitors = [
+        ...multiCompetitors,
+        ...competitorQuotes.filter(c => !multiCompetitors.some(mc => mc.nombre?.toLowerCase() === c.nombre?.toLowerCase())).map(c => ({
+          nombre: c.nombre, plan: c.plan || 'Plan estándar',
+          prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',
+          deducible: c.deducible || 'N/A', asistencia: c.asistencia || '', amparo: c.amparo || '',
+        })),
+      ];
 
       if (premiumResult.success && clientEmail) {
         const html = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
           nombre: clientName,
           marca: lead.vehicle_brand, modelo: lead.vehicle_model, anio: lead.vehicle_year,
           placa: lead.plate, valor_asegurado: `$${Number(value).toLocaleString()}`,
-          vaz_prima_anual: `$${premiumResult.annual_total}`,
-          vaz_prima_mensual: `$${Math.round(premiumResult.annual_total / 12)}`,
-          vaz_deducible: `${deduciblePct}%`,
+          vaz_prima_anual: vaz_prima_anual || `$${premiumResult.annual_total}`,
+          vaz_prima_mensual: vaz_prima_mensual || `$${Math.round(premiumResult.annual_total / 12)}`,
+          vaz_deducible: vaz_deducible || `${deduciblePct}%`,
           analisis_broker: `${clientName.split(' ')[0]}, analicé el mercado ecuatoriano de seguros para tu ${brandModel} y el Plan Elemental de VAZ Seguros ofrece la mejor relación precio-cobertura. Con asistencia 24/7 y taller propio en Quito, es la opción más sólida. Puedes pagarlo en hasta 12 cuotas.`,
-          competitors: competitorQuotes.map(c => ({
-            nombre: c.nombre, plan: c.plan || 'Plan estándar',
-            prima_anual: c.prima_anual, prima_mensual: c.prima_mensual || 'N/A',
-            deducible: c.deducible || 'N/A', asistencia: c.asistencia || '', amparo: c.amparo || '',
-          })),
+          competitors: mergedCompetitors,
           fecha_cotizacion: new Date().toLocaleDateString('es-EC'),
           bot_phone: process.env.BOT_PHONE || '593994837117',
           adriana_email: process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
           adriana_phone: process.env.ADRIANA_PHONE || '+593 987 770 788',
         });
-        await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html })
+        await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html, from: { name: 'Adriana · SegPopular', address: process.env.ADRIANA_FROM_EMAIL || 'adriana@segpopular.com' }, agent: 'adriana', cc: process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com' })
           .catch(err => console.error('[ADRIANA-V2] ⚠️ Email error:', err));
+      }
+
+      // Persist multi-quotes to DB (async, non-blocking)
+      if (allQuotes.length > 0 && lead.id) {
+        saveLeadQuotes(lead.id, allQuotes).catch(err => console.error('[ADRIANA-V2] ⚠️ saveLeadQuotes error:', err));
       }
 
       const waMsg = [

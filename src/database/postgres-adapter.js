@@ -408,6 +408,71 @@ class PostgresAdapter {
         )
       `);
 
+      // Tabla de proveedores de seguros (multi-aseguradora)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS insurance_providers (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          slug TEXT UNIQUE NOT NULL,
+          logo_url TEXT,
+          active BOOLEAN DEFAULT true,
+          contact_info JSONB DEFAULT '{}'::jsonb,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Tabla de tasas por aseguradora / categoría / antigüedad
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS insurance_rates (
+          id SERIAL PRIMARY KEY,
+          provider_id INTEGER NOT NULL REFERENCES insurance_providers(id),
+          vehicle_category TEXT NOT NULL DEFAULT 'liviano',
+          year_range_min INTEGER NOT NULL DEFAULT 0,
+          year_range_max INTEGER NOT NULL DEFAULT 99,
+          base_rate DECIMAL(6,4) NOT NULL,
+          deductible_pct DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+          has_roadside BOOLEAN DEFAULT false,
+          has_replacement_vehicle BOOLEAN DEFAULT false,
+          plan_name TEXT NOT NULL DEFAULT 'Estándar',
+          coverages JSONB DEFAULT '[]'::jsonb,
+          active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(provider_id, vehicle_category, year_range_min, year_range_max, plan_name)
+        )
+      `);
+
+      // Seed VAZ si no existe
+      await client.query(`
+        INSERT INTO insurance_providers (name, slug, logo_url, active, contact_info)
+        VALUES ('VAZ Seguros', 'vaz', 'https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png', true, '{"phone":"+593987770788","email":"adriana@segpopular.com"}'::jsonb)
+        ON CONFLICT (slug) DO NOTHING
+      `);
+
+      // Seed VAZ rates (liviano, 0-25 años) si no existen
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 0, 25, 0.0519, 7.00, true, true, 'Elemental',
+          '["Pérdida total o parcial por colisión","Incendio, rayo y explosión","Fenómenos naturales","Robo total","Responsabilidad civil","Asistencia vial 24/7","Vehículo de reemplazo"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'vaz'
+        ON CONFLICT DO NOTHING
+      `);
+
+      // Tabla de cotizaciones individuales por proveedor (vinculada a insurance_leads)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS insurance_lead_quotes (
+          id SERIAL PRIMARY KEY,
+          lead_id TEXT NOT NULL REFERENCES insurance_leads(id) ON DELETE CASCADE,
+          provider_id INTEGER NOT NULL REFERENCES insurance_providers(id),
+          plan_name TEXT NOT NULL,
+          annual_premium DECIMAL(10,2) NOT NULL,
+          monthly_premium DECIMAL(10,2) NOT NULL,
+          deductible_pct DECIMAL(5,2) NOT NULL,
+          coverages JSONB DEFAULT '[]'::jsonb,
+          is_recommended BOOLEAN DEFAULT false,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Tabla de cotizaciones de colisiones (Axel - PaintBull)
       await client.query(`
         CREATE TABLE IF NOT EXISTS collision_quotes (

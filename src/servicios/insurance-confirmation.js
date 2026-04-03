@@ -19,9 +19,10 @@
 import { getPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import databaseService from '../database/database.js';
 import adrianaRepository from '../database/adrianaRepository.js';
-import { generateEmailForAgent } from './generic-email-templates.js';
-import { sendEmail } from './email.js';
+import { buildEmailTemplate } from './email-template-system.js';
+import { sendEmail, AGENT_FROM_NAMES, ADRIANA_FROM_EMAIL } from './email.js';
 import { generateSequentialCode } from '../utils/code-generator.js';
+import { generateMultiQuotes, saveLeadQuotes, formatQuotesForTemplate } from './adriana-multi-quote-engine.js';
 
 /**
  * 🎯 Procesa la confirmación de cotización de seguro
@@ -95,38 +96,43 @@ export async function processInsuranceConfirmation(userId, message, userProfile)
       try {
         console.log(`[INSURANCE-CONFIRM] 📧 Enviando email a ${formData.email}...`);
         
-        // Generar HTML del email con template de SegPopular
-        const { html: emailHTML } = generateEmailForAgent('ADRIANA', 'client', {
-          clientName: formData.fullName,
-          leadId,
-          insuranceType: formData.insuranceType || 'Seguro para Vehículos livianos',
-          fullName: formData.fullName,
-          cedula: formData.cedula,
-          email: formData.email,
-          phone: formData.phone,
-          vehicleBrand: formData.vehicleBrand,
-          vehicleModel: formData.vehicleModel,
-          vehicleYear: formData.vehicleYear,
-          plate: formData.plate,
-          motor: formData.motor,
-          chasis: formData.chasis,
-          originCountry: formData.originCountry,
-          city: formData.city,
-          commercialValue: formData.commercialValue,
-          licenseType: formData.licenseType,
-          licenseExpiry: formData.licenseExpiry,
-          quotedPremium: premium.totalPremium,
-          basePremium: premium.basePremium,
-          iva: premium.iva,
-          emissionCost: premium.emissionCost,
-          otherCosts: premium.otherCosts
+        // Multi-quote: obtener cotizaciones de todas las aseguradoras activas
+        const allQuotes = await generateMultiQuotes({
+          commercialValue: Number(formData.commercialValue),
+          vehicleYear: Number(formData.vehicleYear),
+          vehicleCategory: 'liviano',
+        });
+        const { vaz_prima_anual, vaz_prima_mensual, vaz_deducible, competitors } = formatQuotesForTemplate(allQuotes);
+
+        // Generar HTML con template V2 unificado
+        const monthlyPremium = Math.round(premium.totalPremium / 12);
+        const emailHTML = buildEmailTemplate('ADRIANA', 'COMPARISON_V2', {
+          nombre: formData.fullName,
+          marca: formData.vehicleBrand,
+          modelo: formData.vehicleModel,
+          anio: formData.vehicleYear,
+          placa: formData.plate,
+          valor_asegurado: `$${Number(formData.commercialValue).toLocaleString()}`,
+          vaz_prima_anual: vaz_prima_anual || `$${Number(premium.totalPremium).toLocaleString()}`,
+          vaz_prima_mensual: vaz_prima_mensual || `$${monthlyPremium}/mes`,
+          vaz_deducible: vaz_deducible || '7%',
+          analisis_broker: `Hemos preparado tu cotización personalizada para tu ${formData.vehicleBrand} ${formData.vehicleModel} ${formData.vehicleYear}. Esta propuesta incluye cobertura amplia con VAZ Seguros, asistencia vial 24/7 y vehículo de reemplazo.`,
+          competitors,
         });
 
         await sendEmail({
           to: formData.email,
+          cc: process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com',
           subject: `🛡️ Cotización de Seguro - SegPopular | ${formData.vehicleBrand} ${formData.vehicleModel}`,
-          html: emailHTML
+          html: emailHTML,
+          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: ADRIANA_FROM_EMAIL },
+          agent: 'adriana',
         });
+
+        // Persist multi-quotes to DB
+        if (allQuotes.length > 0) {
+          saveLeadQuotes(leadId, allQuotes).catch(err => console.error('[INSURANCE-CONFIRM] ⚠️ saveLeadQuotes error:', err));
+        }
 
         emailSent = true;
         console.log('[INSURANCE-CONFIRM] ✅ Email enviado exitosamente');

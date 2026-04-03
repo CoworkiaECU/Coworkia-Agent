@@ -1,7 +1,7 @@
 // Sistema de Email para confirmaciones de reservas - Coworkia
 // Envía emails profesionales con detalles de reserva
 
-import { EMAIL_USER, getTransporter } from './mailer.js';
+import { EMAIL_USER, getTransporter, getAdrianaTransporter, ADRIANA_FROM_EMAIL } from './mailer.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 import { createCalendarEvent } from './google-calendar.js';
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
@@ -476,7 +476,14 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
     
-    const transporter = await getTransporter();
+    // Detectar si es email de Adriana para usar transporter dedicado
+    const isAdriana = agent === 'adriana' || 
+      (typeof from === 'object' && from?.name?.toLowerCase().includes('adriana')) ||
+      (typeof from === 'string' && from.toLowerCase().includes('adriana'));
+    
+    const transporter = isAdriana 
+      ? await getAdrianaTransporter() 
+      : await getTransporter();
     
     if (!transporter) {
       console.error('[EMAIL] ❌ No se pudo crear transportador');
@@ -1121,7 +1128,7 @@ Reserva confirmada en Coworkia
 }
 
 // Export constantes para otros módulos
-export { AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL };
+export { AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL, ADRIANA_FROM_EMAIL };
 
 export default {
   sendReservationConfirmation,

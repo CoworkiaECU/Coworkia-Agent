@@ -15,10 +15,10 @@
  */
 
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
-import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, ADRIANA_FROM_EMAIL } from './email.js';
 import databaseService from '../database/database.js';
 
-const ADMIN_CC  = process.env.COWORKIA_ADMIN_EMAIL || '';
+const ADMIN_CC  = process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com';
 const BOT_PHONE = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -209,7 +209,8 @@ export async function sendAdrianaS1Followups() {
           to: l.email, cc: ADMIN_CC,
           subject: `${firstName(l.client_name)}, ¿tienes dudas sobre tu cotización de seguro? 🛡️`,
           html: buildEmailS1HTML(l),
-          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: DEFAULT_FROM_EMAIL },
+          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: ADRIANA_FROM_EMAIL },
+          agent: 'adriana',
         });
       }
       sent++;
@@ -241,7 +242,8 @@ export async function sendAdrianaS2Followups() {
           to: l.email, cc: ADMIN_CC,
           subject: `⚠️ ${firstName(l.client_name)}, tu cotización de seguro vence HOY — Código ${l.quote_code}`,
           html: buildEmailS2HTML(l),
-          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: DEFAULT_FROM_EMAIL },
+          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: ADRIANA_FROM_EMAIL },
+          agent: 'adriana',
         });
       }
       sent++;
@@ -273,7 +275,8 @@ export async function sendAdrianaS3Followups() {
           to: l.email, cc: ADMIN_CC,
           subject: `Un último mensaje de Adriana — y un regalo para ti 🎁`,
           html: buildEmailS3HTML(l),
-          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: DEFAULT_FROM_EMAIL },
+          from: { name: AGENT_FROM_NAMES.adriana || 'Adriana · SegPopular', address: ADRIANA_FROM_EMAIL },
+          agent: 'adriana',
         });
       }
       sent++;

@@ -14,7 +14,7 @@ import { buildEmailTemplate } from './email-template-system.js';
 import { sendEmail } from './email.js';
 import { loggers } from '../utils/logger.js';
 
-const ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || '';
+const ADMIN_CC = process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com';
 const ADMIN_WA = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 /**
@@ -93,8 +93,9 @@ export async function generateAndSendComparisonQuote(
       html,
       from: {
         name: 'Adriana • Directora SegPopular',
-        address: process.env.EMAIL_USER || 'secretaria.coworkia@gmail.com'
-      }
+        address: process.env.ADRIANA_SMTP_USER || process.env.EMAIL_USER || 'secretaria.coworkia@gmail.com'
+      },
+      agent: 'adriana'
     });
 
     loggers.adriana.info('Cotización generada y enviada', {

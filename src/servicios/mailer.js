@@ -77,4 +77,54 @@ export async function getTransporter() {
   return cachedTransporter;
 }
 
+// ─── ADRIANA — Transporter dedicado (SMTP segpopular.com) ─────────────────
+const ADRIANA_SMTP_USER = process.env.ADRIANA_SMTP_USER;
+const ADRIANA_SMTP_PASS = process.env.ADRIANA_SMTP_PASS;
+const ADRIANA_SMTP_HOST = process.env.ADRIANA_SMTP_HOST || 'mail.segpopular.com';
+const ADRIANA_SMTP_PORT = parseInt(process.env.ADRIANA_SMTP_PORT || '465', 10);
+
+let cachedAdrianaTransporter = null;
+
+async function createAdrianaTransporter() {
+  if (IS_TEST) return null;
+  if (!ADRIANA_SMTP_USER || !ADRIANA_SMTP_PASS) {
+    console.warn('[MAILER] ⚠️ Adriana SMTP no configurado — usará transporter global');
+    return null;
+  }
+
+  console.log('[MAILER] 🛡️ Inicializando transporter Adriana (segpopular)');
+  try {
+    const instance = nodemailer.createTransport({
+      host: ADRIANA_SMTP_HOST,
+      port: ADRIANA_SMTP_PORT,
+      secure: ADRIANA_SMTP_PORT === 465,
+      auth: { user: ADRIANA_SMTP_USER, pass: ADRIANA_SMTP_PASS },
+      tls: { rejectUnauthorized: false },
+      debug: DEBUG_EMAIL,
+      logger: DEBUG_EMAIL
+    });
+
+    try {
+      await instance.verify();
+      console.log('[MAILER] ✅ Adriana SMTP verificado (segpopular)');
+    } catch (verifyErr) {
+      console.error('[MAILER] ❌ Error verificando Adriana SMTP:', verifyErr.message);
+    }
+    return instance;
+  } catch (err) {
+    console.error('[MAILER] ❌ Error creando transporter Adriana:', err.message);
+    return null;
+  }
+}
+
+export async function getAdrianaTransporter() {
+  if (!cachedAdrianaTransporter) {
+    cachedAdrianaTransporter = await createAdrianaTransporter();
+  }
+  // Fallback al transporter global si Adriana no está configurado
+  return cachedAdrianaTransporter || getTransporter();
+}
+
+export const ADRIANA_FROM_EMAIL = ADRIANA_SMTP_USER || EMAIL_USER || 'secretaria.coworkia@gmail.com';
+
 export const transporter = await getTransporter();

@@ -313,6 +313,7 @@ export async function processEnzoConsultingFlow(userId, message, profile) {
     return _handleInitialMessage(userId, message, profile);
   }
 
+  console.log('[ENZO-FLOW] ℹ️ No handled:', { hasState: !!state, phase: state?.phase, intentDetected: isEnzoConsultingIntent(message), msgPreview: message?.substring(0, 50) });
   return { handled: false };
 }
 
@@ -321,9 +322,22 @@ export async function processEnzoConsultingFlow(userId, message, profile) {
 async function _handleInitialMessage(userId, message, profile) {
   console.log('[ENZO-FLOW] 🧠 Decodificando mensaje inicial...');
 
-  const decoded = await decodeClientMessage(message);
+  let decoded = await decodeClientMessage(message);
   if (!decoded) {
-    return { handled: false }; // fallo silencioso, deja que el LLM normal maneje
+    console.warn('[ENZO-FLOW] ⚠️ OpenAI decode falló, usando fallback básico');
+    // Fallback: crear estado mínimo con preguntas genéricas
+    decoded = {
+      intent: 'marketing_digital',
+      empresa: null,
+      sector: null,
+      objetivo: message.substring(0, 200),
+      email: null,
+      understood: ['tu consulta'],
+      questions: [
+        '¿Cuál es el nombre de tu empresa o negocio?',
+        '¿A qué email te envío el plan estratégico?'
+      ]
+    };
   }
 
   const newState = {

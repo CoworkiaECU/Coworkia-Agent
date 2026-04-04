@@ -9,6 +9,7 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
+import { thinkingCompleteJSON, isGeminiAvailable } from '../servicios-ia/gemini.js';
 
 // Superpoderes reales del stack MarketingLab — lo que ningún competidor tiene igual
 const ML_STACK = `STACK REAL DE MARKETINGLAB (esto es lo que vendemos, sé específico al comparar):
@@ -93,6 +94,23 @@ Reglas críticas:
 - Responde SOLO con el JSON. Nada más.`;
 
   try {
+    // 🧠 Intentar con Gemini thinking primero (razonamiento más profundo)
+    if (isGeminiAvailable()) {
+      const geminiResult = await thinkingCompleteJSON(prompt, {
+        system: SYSTEM_PROMPT,
+        maxOutputTokens: 2000,
+        thinkingBudget: 8192,
+        timeout: 55000,
+      });
+
+      if (geminiResult?.socialAudit && geminiResult?.capabilityMatrix && geminiResult?.sectorSuperpowers) {
+        console.log('[ENZO-BRIEF] ✅ Brief generado con Gemini thinking');
+        return geminiResult;
+      }
+      console.warn('[ENZO-BRIEF] Gemini no retornó estructura válida, fallback a OpenAI');
+    }
+
+    // Fallback a OpenAI
     const raw = await complete(prompt, {
       system: SYSTEM_PROMPT,
       model: 'gpt-4o',
@@ -108,6 +126,7 @@ Reglas críticas:
       return null;
     }
 
+    console.log('[ENZO-BRIEF] ✅ Brief generado con OpenAI (fallback)');
     return json;
   } catch (err) {
     console.error('[ENZO-BRIEF] Error generando brief:', err.message);

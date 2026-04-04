@@ -11,6 +11,7 @@
  */
 
 import { complete } from '../servicios-ia/openai.js';
+import { thinkingCompleteJSON, isGeminiAvailable } from '../servicios-ia/gemini.js';
 import { getPendingConfirmation, setPendingConfirmation, clearPendingConfirmation } from './reservation-state.js';
 import { generateEnzoEmailHTML } from './generic-email-templates.js';
 import { renderEnzoBriefHTML } from './enzo-brief-generator.js';
@@ -140,6 +141,25 @@ Reglas críticas:
 - NO exageres números ni prometas resultados imposibles
 - Responde SOLO JSON.`;
 
+  const PLAN_SYSTEM = 'Eres Enzo, Director de MarketingLab Ecuador. Produces planes estratégicos CONCRETOS y personalizados. Devuelves SOLO JSON válido.';
+
+  // 🧠 Intentar con Gemini thinking primero
+  if (isGeminiAvailable()) {
+    const geminiResult = await thinkingCompleteJSON(prompt, {
+      system: PLAN_SYSTEM,
+      maxOutputTokens: 2000,
+      thinkingBudget: 8192,
+      timeout: 55000,
+    });
+
+    if (geminiResult?.ideaCentral && geminiResult?.planAccion) {
+      console.log('[ENZO-PLAN] ✅ Plan generado con Gemini thinking');
+      return geminiResult;
+    }
+    console.warn('[ENZO-PLAN] Gemini no retornó estructura válida, fallback a OpenAI');
+  }
+
+  // Fallback a OpenAI
   const raw = await complete(prompt, {
     model: 'gpt-4o',
     temperature: 0.5,
@@ -147,7 +167,9 @@ Reglas críticas:
   });
 
   try {
-    return JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim());
+    console.log('[ENZO-PLAN] ✅ Plan generado con OpenAI (fallback)');
+    return result;
   } catch {
     return null;
   }

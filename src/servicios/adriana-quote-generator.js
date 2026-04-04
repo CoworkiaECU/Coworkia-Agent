@@ -13,6 +13,7 @@
 import { buildEmailTemplate } from './email-template-system.js';
 import { sendEmail } from './email.js';
 import { loggers } from '../utils/logger.js';
+import { thinkingComplete, isGeminiAvailable } from '../servicios-ia/gemini.js';
 
 const ADMIN_CC = process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com';
 const ADMIN_WA = (process.env.BOT_PHONE || '593994837117').replace('+', '');
@@ -60,8 +61,8 @@ export async function generateAndSendComparisonQuote(
       vaz_deducible: vazRates.plans[0].deductible.client, // 7%
       vaz_cuotas: vazRates.plans[0].maxInstallments, // hasta 12 meses
       
-      // Análisis profesional de Adriana
-      analisis_broker: generateBrokerAnalysis(vehicleData, customerData, vazRates),
+      // Análisis profesional de Adriana (Gemini thinking si disponible)
+      analisis_broker: await generateBrokerAnalysis(vehicleData, customerData, vazRates),
       
       // Competidores (opcional, para comparación)
       competitors: options.includeCompetitors ? generateCompetitorComparison(vazRates) : [],
@@ -124,13 +125,50 @@ export async function generateAndSendComparisonQuote(
 }
 
 /**
- * Genera análisis profesional personalizado de Adriana
+ * Genera análisis profesional personalizado de Adriana.
+ * Usa Gemini thinking para razonamiento comparativo real, con fallback a template.
  */
-function generateBrokerAnalysis(vehicleData, customerData, vazRates) {
+async function generateBrokerAnalysis(vehicleData, customerData, vazRates) {
   const firstName = customerData.nombres?.split(' ')[0] || 'Cliente';
   const vehicleName = [vehicleData.brand, vehicleData.model].filter(Boolean).join(' ');
-  const plan = vazRates.plans[0]; // Plan Elemental recomendado
-  
+  const plan = vazRates.plans[0];
+
+  // 🧠 Intentar Gemini thinking para análisis más profundo
+  if (isGeminiAvailable()) {
+    try {
+      const geminiAnalysis = await thinkingComplete(
+        `Eres Adriana, broker de seguros vehiculares de SegPopular S.A. en Ecuador.
+Genera un análisis personalizado de 4-5 líneas para este cliente:
+
+- Cliente: ${firstName}
+- Vehículo: ${vehicleName} ${vehicleData.year || ''}
+- Valor comercial: $${Number(vehicleData.commercialValue || 40000).toLocaleString()}
+- Plan recomendado: VAZ Elemental
+- Prima mensual: $${plan.monthlyPremium.toLocaleString()}
+- Prima anual: $${plan.annualPremium.toLocaleString()}
+- Deducible: ${plan.deductible.client}
+- Edad del cliente: ${customerData.edad || 'desconocida'}
+- Provincia: ${customerData.provincia || 'no especificada'}
+
+Escribe el análisis dirigido al cliente en primera persona ("he analizado"). Menciona por qué este plan es competitivo para su vehículo específico. Sé específico con datos. No uses markdown. Máximo 5 líneas.`,
+        {
+          system: 'Eres Adriana, directora de SegPopular S.A., broker experta en seguros vehiculares en Ecuador. Respondes con análisis concisos, profesionales y personalizados. Solo texto plano, sin markdown.',
+          maxOutputTokens: 400,
+          thinkingBudget: 2048,
+          timeout: 15000,
+        }
+      );
+
+      if (geminiAnalysis && geminiAnalysis.length > 50) {
+        console.log('[ADRIANA-QUOTE] ✅ Análisis broker generado con Gemini thinking');
+        return geminiAnalysis;
+      }
+    } catch (err) {
+      console.warn('[ADRIANA-QUOTE] Gemini broker analysis failed, using template:', err.message);
+    }
+  }
+
+  // Fallback: template estático
   const age = customerData.edad || null;
   const ageNote = age && age < 25 
     ? ' Como conductor joven, este plan ofrece la mejor relación costo-beneficio.'
@@ -138,15 +176,7 @@ function generateBrokerAnalysis(vehicleData, customerData, vazRates) {
     ? ' El plan incluye cobertura completa sin restricciones por edad.'
     : '';
 
-  return `${firstName}, he analizado el mercado ecuatoriano y el **Plan VAZ Elemental** es la mejor opción para tu ${vehicleName}.
-
-Con una prima de **$${plan.monthlyPremium.toLocaleString()}/mes** (hasta 12 meses), obtienes:
-- Cobertura completa con deducible del ${plan.deductible.client}
-- Asistencia vial 24/7 en todo el país
-- Red de talleres autorizados en ${customerData.provincia || 'tu provincia'}
-- Proceso de reclamos ágil y transparente${ageNote}
-
-Este plan te ofrece tranquilidad sin comprometer tu presupuesto. ¿Te gustaría proceder con la emisión?`;
+  return `${firstName}, he analizado el mercado ecuatoriano y el Plan VAZ Elemental es la mejor opción para tu ${vehicleName}. Con una prima de $${plan.monthlyPremium.toLocaleString()}/mes (hasta 12 meses), obtienes cobertura completa con deducible del ${plan.deductible.client}, asistencia vial 24/7 en todo el país y red de talleres autorizados en ${customerData.provincia || 'tu provincia'}.${ageNote} Este plan te ofrece tranquilidad sin comprometer tu presupuesto.`;
 }
 
 /**

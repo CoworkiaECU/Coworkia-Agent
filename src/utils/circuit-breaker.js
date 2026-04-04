@@ -223,5 +223,12 @@ export const wassengerBreaker = manager.getBreaker('Wassenger', {
   resetTimeout: 20000
 });
 
+export const geminiBreaker = manager.getBreaker('Gemini', {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 60000,
+  resetTimeout: 30000
+});
+
 export { CircuitBreaker, manager as circuitBreakerManager };
 export default CircuitBreaker;

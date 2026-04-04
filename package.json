@@ -19,6 +19,7 @@
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "cron": "^4.3.4",

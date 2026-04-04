@@ -2375,7 +2375,8 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     
     // 🔍 DETECCIÓN TEMPRANA: Verificar si hay intención especial que debe ir directo al orquestador
     const { detectVirtualAgentSalesPromo, detectarSaludoConInteresServicio } = await import('../../deteccion-intenciones/detectar-intencion.js');
-    const hasVirtualAgentPromo = detectVirtualAgentSalesPromo(processedText).detected;
+    // 🛡️ FIX: No activar OneMind promo si el agente activo ya es ENZO — el cliente ya está en contexto
+    const hasVirtualAgentPromo = profile.activeAgent !== 'ENZO' && detectVirtualAgentSalesPromo(processedText).detected;
     const hasServiceInterest = detectarSaludoConInteresServicio(processedText);
     
     // 🎯 LÓGICA CORRECTA:

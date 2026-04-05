@@ -61,7 +61,7 @@ import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } 
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
 import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo-cotizacion-email.js';
-import { processEnzoConsultingFlowFull } from '../../servicios/enzo-consulting-flow.js';
+// enzo-consulting-flow: imported dynamically when needed (#PROCESS_FORM or active state)
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
@@ -2385,25 +2385,40 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // - Cualquier otro mensaje con intención de reserva: SÍ activar formulario
     const shouldActivateForm = !hasVirtualAgentPromo && (hasServiceInterest || isReservationIntent(processedText) || hasActiveForm || isFormContinuation);
     
-    // 🎯 ENZO - Flujo consultivo conversacional (decode → qualify → confirm → plan)
+    // 🎯 ENZO - Flujo consultivo estructurado SOLO para #PROCESS_FORM o states activos
+    // Conversaciones normales → orquestador con system prompt + conversation history (más natural)
     if (profile.activeAgent === 'ENZO' && !isEnzoBossQuoteCommand(processedText)) {
       try {
-        const enzoResult = await processEnzoConsultingFlowFull(userId, processedText, profile);
-        if (enzoResult.handled) {
-          console.log('[ENZO-FLOW] ✅ Manejado por flujo consultivo');
-          await enviarWhatsApp(userId, enzoResult.reply);
-          await saveConversationMessage(userId, { role: 'assistant', content: enzoResult.reply, agent: 'ENZO' });
-          await saveInteraction({
-            userId, agent: 'ENZO', agentName: 'Enzo - MarketingLab',
-            intentReason: 'enzo_consulting_flow',
-            input: processedText, output: enzoResult.reply,
-            meta: { envelope }
-          });
-          return;
+        // Importar módulos del consulting flow
+        const { processEnzoConsultingFlowFull } = await import('../../servicios/enzo-consulting-flow.js');
+        const { getPendingConfirmation } = await import('../../servicios/reservation-state.js');
+
+        // Solo activar consulting flow si:
+        // 1. Hay un state activo (QUALIFYING/CONFIRMING/WAITING_EMAIL) — respetar flujo en progreso
+        // 2. El mensaje tiene #PROCESS_FORM — el cliente quiere formalizar
+        const existingState = await getPendingConfirmation(userId).catch(() => null);
+        const hasActiveState = existingState?.type === 'enzo_consulting';
+        const hasProcessForm = /\#PROCESS_FORM/i.test(processedText);
+
+        if (hasActiveState || hasProcessForm) {
+          const enzoResult = await processEnzoConsultingFlowFull(userId, processedText, profile);
+          if (enzoResult.handled) {
+            console.log(`[ENZO-FLOW] ✅ Manejado por ${hasActiveState ? 'state activo' : '#PROCESS_FORM'}`);
+            await enviarWhatsApp(userId, enzoResult.reply);
+            await saveConversationMessage(userId, { role: 'assistant', content: enzoResult.reply, agent: 'ENZO' });
+            await saveInteraction({
+              userId, agent: 'ENZO', agentName: 'Enzo - MarketingLab',
+              intentReason: hasActiveState ? 'enzo_consulting_state' : 'enzo_process_form',
+              input: processedText, output: enzoResult.reply,
+              meta: { envelope }
+            });
+            return;
+          }
         }
       } catch (enzoErr) {
         console.error('[ENZO-FLOW] ❌ Error en flujo consultivo, fallback al LLM:', enzoErr.message);
       }
+      // → Conversaciones normales fluyen al orquestador con Enzo system prompt + history
     }
 
     // ═══════════════════════════════════════════════════════════════════════

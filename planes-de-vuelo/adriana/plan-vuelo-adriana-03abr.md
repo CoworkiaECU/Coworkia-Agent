@@ -1,17 +1,26 @@
-# ✈️ Plan de Vuelo — Adriana (03 Abr 2026)
-**Status**: 🟡 En revisión — Auditoría templates + Multi-aseguradora  
-**Producción**: v1200  
-**Última sesión**: 03 Abr 2026 — SMTP dedicado segpopular.com configurado
+# ✈️ Plan de Vuelo — Adriana (03-04 Abr 2026)
+**Status**: 🟢 Bloques A+B completados  
+**Producción**: v1209  
+**Última sesión**: 04 Abr 2026 — Gemini thinking + Enzo fixes
 
 ---
 
 ## 📊 RESUMEN DE SESIÓN (03 Abr)
 
-### ✅ Completado hoy
+### ✅ Completado 03 Abr
 - [x] SMTP dedicado `adriana@segpopular.com` (mail.segpopular.com:465)
 - [x] CC automático a `info@segpopular.com` en todos los emails de Adriana
 - [x] Env vars Heroku: ADRIANA_SMTP_USER, ADRIANA_SMTP_PASS, ADRIANA_SMTP_HOST, ADRIANA_SMTP_PORT, ADRIANA_CC_EMAIL, ADRIANA_EMAIL
 - [x] Deploy v1200
+
+### ✅ Completado 04 Abr
+- [x] Gemini 2.5 Flash thinking integrado en `adriana-quote-generator.js` → `generateBrokerAnalysis()` con thinking (2K budget, 15s timeout, fallback OpenAI)
+- [x] Gemini integrado en `enzo-brief-generator.js` y `enzo-consulting-flow.js`
+- [x] `src/servicios-ia/gemini.js` creado (thinkingComplete, thinkingCompleteJSON, isGeminiAvailable)
+- [x] `geminiBreaker` añadido a circuit-breaker.js
+- [x] GEMINI_API_KEY configurado en Heroku (billing enabled, $300 credit, $5/month budget alert)
+- [x] @google/generative-ai ^0.24.1 instalado
+- [x] Deploy v1205-v1209
 
 ---
 

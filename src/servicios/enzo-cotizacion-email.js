@@ -76,7 +76,13 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   "precio_desarrollo": 1800,
   "mantenimiento_mensual": 150,
   "dolor_principal": "problema clave que resuelve este servicio para su negocio",
-  "roi_estimado": "texto corto de ROI realista para su negocio en Ecuador",
+  "roi_estimado": "texto corto de ROI realista para su negocio en Ecuador — incluir al menos 2 números concretos (ej: 'Reducción del 60% en tiempo de respuesta + 3x más leads capturados')",
+  "caso_exito": {
+    "sector": "sector similar al del cliente (ej: 'Restaurante en Quito' o 'Lavandería en Guayaquil')",
+    "resultado": "resultado concreto con números reales o realistas (ej: 'Pasó de 15 a 47 reservas/semana en 60 días')",
+    "servicio": "qué servicio de MarketingLab usaron (ej: 'Agente WhatsApp + Google Ads local')"
+  },
+  "urgencia": "razón sutil y real de por qué actuar ahora — no spam, debe ser creíble (ej: 'Precio introductorio válido hasta fin de mes' o 'Solo tomamos 3 proyectos nuevos al mes para mantener la calidad')",
   "casos_uso": ["caso 1 específico para su sector", "caso 2", "caso 3"],
   "deliverables": [
     "Entregable 1 — específico para lo que necesitan (no genérico)",
@@ -95,7 +101,7 @@ RESPONDE ÚNICAMENTE con este JSON válido (sin markdown, sin texto extra):
   const raw = await complete(mensajeJefe, {
     system: systemPrompt,
     temperature: 0.4,
-    max_tokens: 1800,
+    max_tokens: 2200,
     model: 'gpt-4o',
   });
 
@@ -163,6 +169,12 @@ function _renderBossQuoteBriefHTML(d, quoteCode = '') {
       <div style="background:#FFF7ED;border-left:3px solid #F59E0B;border-radius:0 10px 10px 0;padding:14px 18px;">
         <p style="font-size:13px;color:#92400E;line-height:1.7;margin:0;font-weight:500;">${d.dolor_principal || ''}</p>
       </div>
+      ${d.caso_exito ? `
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:16px 18px;margin-top:16px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#16A34A;text-transform:uppercase;margin-bottom:8px;">Caso similar — ${d.caso_exito.sector || 'sector relacionado'}</div>
+        <p style="font-size:13px;color:#166534;line-height:1.7;margin:0;font-weight:600;">${d.caso_exito.resultado || ''}</p>
+        ${d.caso_exito.servicio ? `<p style="font-size:11px;color:#6B7280;margin:6px 0 0;line-height:1.5;">Servicio: ${d.caso_exito.servicio}</p>` : ''}
+      </div>` : ''}
     </div>
 
     <div style="height:1px;background:linear-gradient(90deg,#E5E7EB,transparent);margin-bottom:32px;"></div>
@@ -203,10 +215,12 @@ function _renderBossQuoteBriefHTML(d, quoteCode = '') {
 
     <!-- CTA -->
     <div style="background:linear-gradient(135deg,#ECFDF9,#F0FDFA);border:1.5px solid rgba(45,212,191,0.3);border-radius:14px;padding:28px;text-align:center;margin-bottom:4px;">
+      ${d.cierre_emocional ? `<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 16px;font-style:italic;">${d.cierre_emocional}</p>` : ''}
       <p style="font-size:15px;font-weight:700;color:#0A0F1E;margin:0 0 6px;">¿Le damos luz verde a ${d.empresa}?</p>
       <p style="font-size:13px;color:#6B7280;margin:0 0 22px;line-height:1.6;">${d.contacto ? `${d.contacto}, arrancar` : 'Arrancar'} es una conversación de 15 minutos.<br>Escríbame ahora y lo coordinamos hoy mismo.</p>
       <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#059669,#2DD4BF);color:white;font-size:15px;font-weight:800;padding:16px 42px;border-radius:50px;text-decoration:none;box-shadow:0 6px 22px rgba(13,148,136,0.4);letter-spacing:0.3px;">Arrancar con ${d.empresa} →</a>
-      <p style="font-size:11px;color:#9CA3AF;margin:14px 0 0;">Respondo en menos de 2 horas · Lunes a sábado · Sin compromiso</p>
+      ${d.urgencia ? `<p style="font-size:12px;color:#D97706;font-weight:600;margin:14px 0 0;line-height:1.5;">⚡ ${d.urgencia}</p>` : ''}
+      <p style="font-size:11px;color:#9CA3AF;margin:10px 0 0;">Respondo en menos de 2 horas · Lunes a sábado · Sin compromiso</p>
     </div>
   `;
 }

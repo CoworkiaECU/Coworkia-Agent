@@ -457,6 +457,101 @@ class PostgresAdapter {
         ON CONFLICT DO NOTHING
       `);
 
+      // ── Seed aseguradoras reales Ecuador (Sucre, Equinoccial, Unidos) ──
+
+      // Seguros Sucre (estatal, la más grande del Ecuador)
+      await client.query(`
+        INSERT INTO insurance_providers (name, slug, logo_url, active, contact_info)
+        VALUES ('Seguros Sucre', 'sucre', NULL, true, '{"web":"https://www.segurossucre.fin.ec","phone":"1800-778273"}'::jsonb)
+        ON CONFLICT (slug) DO NOTHING
+      `);
+      // Sucre rates: liviano 0-5 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 0, 5, 0.0680, 10.00, true, false, 'Todo Riesgo Vehicular',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Robo parcial accesorios","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'sucre'
+        ON CONFLICT DO NOTHING
+      `);
+      // Sucre rates: liviano 6-15 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 6, 15, 0.0760, 12.00, true, false, 'Todo Riesgo Vehicular',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'sucre'
+        ON CONFLICT DO NOTHING
+      `);
+      // Sucre rates: liviano 16-25 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 16, 25, 0.0850, 15.00, false, false, 'Todo Riesgo Vehicular',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'sucre'
+        ON CONFLICT DO NOTHING
+      `);
+
+      // Seguros Equinoccial (grupo Zurich, competitiva)
+      await client.query(`
+        INSERT INTO insurance_providers (name, slug, logo_url, active, contact_info)
+        VALUES ('Seguros Equinoccial', 'equinoccial', NULL, true, '{"web":"https://www.segurosequinoccial.com","phone":"1800-736486"}'::jsonb)
+        ON CONFLICT (slug) DO NOTHING
+      `);
+      // Equinoccial rates: liviano 0-5 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 0, 5, 0.0550, 8.00, true, true, 'Auto Seguro Plus',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Robo parcial accesorios","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7","Vehículo de reemplazo (5 días)"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'equinoccial'
+        ON CONFLICT DO NOTHING
+      `);
+      // Equinoccial rates: liviano 6-15 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 6, 15, 0.0630, 10.00, true, false, 'Auto Seguro Plus',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'equinoccial'
+        ON CONFLICT DO NOTHING
+      `);
+      // Equinoccial rates: liviano 16-25 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 16, 25, 0.0750, 12.00, true, false, 'Auto Seguro',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales","Asistencia vial"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'equinoccial'
+        ON CONFLICT DO NOTHING
+      `);
+
+      // Seguros Unidos (privada, mid-tier)
+      await client.query(`
+        INSERT INTO insurance_providers (name, slug, logo_url, active, contact_info)
+        VALUES ('Seguros Unidos', 'unidos', NULL, true, '{"web":"https://www.segurosunidos.com","phone":"(02) 399-0300"}'::jsonb)
+        ON CONFLICT (slug) DO NOTHING
+      `);
+      // Unidos rates: liviano 0-5 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 0, 5, 0.0620, 10.00, true, false, 'Protección Total',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Robo parcial accesorios","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'unidos'
+        ON CONFLICT DO NOTHING
+      `);
+      // Unidos rates: liviano 6-15 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 6, 15, 0.0700, 12.00, true, false, 'Protección Total',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales","Asistencia vial 24/7"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'unidos'
+        ON CONFLICT DO NOTHING
+      `);
+      // Unidos rates: liviano 16-25 años
+      await client.query(`
+        INSERT INTO insurance_rates (provider_id, vehicle_category, year_range_min, year_range_max, base_rate, deductible_pct, has_roadside, has_replacement_vehicle, plan_name, coverages)
+        SELECT p.id, 'liviano', 16, 25, 0.0800, 15.00, false, false, 'Protección Total',
+          '["Pérdida total por colisión","Pérdida parcial por colisión","Incendio, rayo y explosión","Robo total","Responsabilidad civil","Fenómenos naturales"]'::jsonb
+        FROM insurance_providers p WHERE p.slug = 'unidos'
+        ON CONFLICT DO NOTHING
+      `);
+
       // Tabla de cotizaciones individuales por proveedor (vinculada a insurance_leads)
       await client.query(`
         CREATE TABLE IF NOT EXISTS insurance_lead_quotes (

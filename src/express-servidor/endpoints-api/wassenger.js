@@ -4157,18 +4157,29 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
         saveLeadQuotes(lead.id, allQuotes).catch(err => console.error('[ADRIANA-V2] ⚠️ saveLeadQuotes error:', err));
       }
 
+      // Build multi-quote summary for WhatsApp
+      const quoteSummaryLines = allQuotes.length > 1
+        ? allQuotes.map(q => {
+            const star = q.isRecommended ? '⭐' : '•';
+            const rec = q.isRecommended ? ' ← *Recomendada*' : '';
+            return `  ${star} ${q.provider} — *$${q.annualPremium.toLocaleString()}/año* ($${q.monthlyPremium}/mes)${rec}`;
+          })
+        : [];
+
       const waMsg = [
         `✅ *¡Cotización lista!* 🛡️`,
         ``,
         `🚗 *${brandModel} ${lead.vehicle_year || ''}*`,
         `💵 Valor: $${Number(value).toLocaleString()}`,
-        premiumResult.success ? `💰 Prima VAZ anual: *$${premiumResult.annual_total}*` : '',
-        premiumResult.success ? `📅 Prima mensual: $${Math.round(premiumResult.annual_total / 12)} (hasta 12 cuotas)` : '',
-        `📊 Deducible: ${deduciblePct}%`,
         ``,
-        clientEmail ? `📧 Te envié la comparativa detallada por email.` : '',
+        allQuotes.length > 1 ? `📊 *Comparativa de ${allQuotes.length} aseguradoras:*` : '',
+        ...quoteSummaryLines,
+        allQuotes.length <= 1 && premiumResult.success ? `💰 Prima VAZ anual: *$${premiumResult.annual_total}*` : '',
+        allQuotes.length <= 1 && premiumResult.success ? `📅 Prima mensual: $${Math.round(premiumResult.annual_total / 12)} (hasta 12 cuotas)` : '',
         ``,
-        `Para aceptar, responde *ACEPTO* 🤝`,
+        clientEmail ? `📧 Te envié el detalle completo por email.` : '',
+        ``,
+        `Para aceptar la mejor opción, responde *ACEPTO* 🤝`,
         `Ref: *${quoteCode}*`,
       ].filter(l => l !== '').join('\n');
 

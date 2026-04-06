@@ -134,6 +134,23 @@
     .urgency-link { color:#f87171; font-weight:700; cursor:pointer; background:none; border:none; font-size:13px; padding:0; text-decoration:underline; }
     .urgency-dot { display:inline-block; width:7px; height:7px; background:#ef4444; border-radius:50%; margin-right:4px; vertical-align:middle; animation:pdot 1.5s ease-in-out infinite; }
     @keyframes pdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
+    /* MULTI-QUOTE PANEL */
+    .quotes-row { display: none; }
+    .quotes-row.open { display: table-row; }
+    .quotes-panel { background: var(--bg); border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin: 4px 0; }
+    .quotes-panel h4 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .quotes-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .quotes-table th { padding: 8px 10px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); background: rgba(99,102,241,0.08); border-bottom: 1px solid var(--border); }
+    .quotes-table td { padding: 8px 10px; border-bottom: 1px solid rgba(51,65,85,0.3); vertical-align: middle; }
+    .quotes-table tr.recommended { background: rgba(99,102,241,0.08); }
+    .quotes-table .provider-name { font-weight: 700; }
+    .quotes-table .rec-badge { background: var(--accent); color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700; margin-left: 6px; }
+    .quotes-table .premium { font-weight: 800; color: var(--success); font-size: 13px; }
+    .quotes-table .coverages-list { font-size: 10px; color: var(--text-muted); max-width: 240px; line-height: 1.4; }
+    .btn-quotes { background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; }
+    .btn-quotes:hover { background: var(--accent-glow); }
+    .btn-quotes.active { background: var(--accent); color: white; }
+    .no-quotes { text-align: center; padding: 16px; color: var(--text-dim); font-size: 12px; }
     /* BRAND LOGOS */
     .dash-brands { display:flex; align-items:center; gap:14px; flex-shrink:0; }
     .btn-demo { background:var(--surface2); color:var(--text-muted); border:1px solid var(--border); font-size:12px; padding:6px 13px; border-radius:8px; cursor:pointer; font-weight:600; transition:all .15s; display:inline-flex; align-items:center; gap:5px; }

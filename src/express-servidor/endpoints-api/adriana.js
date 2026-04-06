@@ -504,6 +504,32 @@ router.get('/leads-stats', async (req, res) => {
 });
 
 /**
+ * GET /api/adriana/leads/:id/quotes
+ * Multi-cotización por lead — devuelve todas las quotes generadas (insurance_lead_quotes JOIN insurance_providers)
+ */
+router.get('/leads/:id/quotes', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+
+    const quotes = await databaseService.all(`
+      SELECT q.id, q.plan_name, q.annual_premium, q.monthly_premium, q.deductible_pct,
+             q.coverages, q.is_recommended, q.created_at,
+             p.name AS provider_name, p.slug AS provider_slug, p.logo_url, p.contact_info
+      FROM insurance_lead_quotes q
+      JOIN insurance_providers p ON p.id = q.provider_id
+      WHERE q.lead_id = $1
+      ORDER BY q.annual_premium ASC
+    `, [id]);
+
+    res.json({ ok: true, data: quotes || [] });
+  } catch (err) {
+    loggers.adriana.error('Error fetching lead quotes', {}, err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * Genera tasas VAZ hardcoded (fallback hasta tener API real)
  * En producción, esto se reemplaza con fetch a API VAZ
  */

@@ -8,8 +8,12 @@
 - **Estilo**: Rápido, directo, quiere resultados sin explicaciones. Dice "nena" y "véndeme eso" cuando algo le gusta.
 
 ## Cómo trabaja Diego
-- Trabaja en **dos chats paralelos** en VS Code, cada uno enfocado en un agente distinto
-- Al iniciar dice: "nena hoy nos enfocamos en [agente]" → eso define el scope del chat
+- Trabaja en **tres chats paralelos** en VS Code:
+  - **Chat 1 = Torre de Control**: piensa planes de vuelo, genera prompts para los otros 2 chats, coordina deploys
+  - **Chat 2 = Ejecución A**: recibe prompt copiado de Torre y ejecuta tareas de 1-2 agentes
+  - **Chat 3 = Ejecución B**: recibe prompt copiado de Torre y ejecuta tareas de 1-2 agentes
+- Torre de Control genera instrucciones en bloques de texto simple copiables
+- Los chats de ejecución commitean pero **NO deployean** sin autorización de Torre
 - Cada agente tiene su plan de vuelo en `planes-de-vuelo/[agente]/plan-vuelo-*.md`
 - Al finalizar sesión: actualizar plan de vuelo del agente con progreso
 - Prefiere ver el resultado, no escuchar el proceso

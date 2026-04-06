@@ -191,8 +191,16 @@ function renderLeads() {
                   <option value="rejected"  ${l.status==='rejected'  ?'selected':''}>❌ Rechazado</option>
                   <option value="cancelled" ${l.status==='cancelled' ?'selected':''}>🚫 Cancelado</option>
                 </select>
-                ${l.email ? `<button class="btn-sm btn-email" data-code="${l.quote_code}" data-action="email" title="Enviar comparación de seguros por correo electrónico">� Comparación</button>` : ''}
+                <button class="btn-sm btn-quotes" data-action="quotes" data-lead-id="${l.id}" data-code="${l.quote_code}" title="Ver multi-cotización de aseguradoras">📊</button>
+                ${l.email ? `<button class="btn-sm btn-email" data-code="${l.quote_code}" data-action="email" title="Enviar comparación de seguros por correo electrónico">📧 Comparación</button>` : ''}
                 ${l.phone ? `<button class="btn-sm btn-wa" data-code="${l.quote_code}" data-action="wa" title="Enviar recordatorio de cotización por WhatsApp">📲 WA</button>` : ''}
+              </div>
+            </td>
+          </tr>
+          <tr class="quotes-row" id="quotes-row-${l.id}">
+            <td colspan="8">
+              <div class="quotes-panel" id="quotes-panel-${l.id}">
+                <div class="loading" style="padding:12px;">⏳ Cargando cotizaciones...</div>
               </div>
             </td>
           </tr>`;
@@ -333,11 +341,73 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('leads-container').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    const { code, action } = btn.dataset;
-    if (action === 'wa')    sendWA(code, btn);
-    if (action === 'email') sendComparison(code, btn);
+    const { code, action, leadId } = btn.dataset;
+    if (action === 'wa')     sendWA(code, btn);
+    if (action === 'email')  sendComparison(code, btn);
+    if (action === 'quotes') toggleQuotes(leadId, btn);
   });
 
   // Auto-refresh every 5 minutes
   setInterval(() => refreshAll(), 5 * 60 * 1000);
 });
+
+// ── MULTI-QUOTE PANEL ─────────────────────────────────────────────────────────
+const quotesCache = {};
+
+async function toggleQuotes(leadId, btn) {
+  const row = document.getElementById(`quotes-row-${leadId}`);
+  if (!row) return;
+  const isOpen = row.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.quotes-row.open').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('.btn-quotes.active').forEach(b => b.classList.remove('active'));
+  if (isOpen) return; // Was open → just close
+
+  row.classList.add('open');
+  btn.classList.add('active');
+
+  if (quotesCache[leadId]) {
+    renderQuotesPanel(leadId, quotesCache[leadId]);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/adriana/leads/${leadId}/quotes`);
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error);
+    quotesCache[leadId] = d.data;
+    renderQuotesPanel(leadId, d.data);
+  } catch (err) {
+    document.getElementById(`quotes-panel-${leadId}`).innerHTML =
+      `<div class="no-quotes">❌ Error: ${err.message}</div>`;
+  }
+}
+
+function renderQuotesPanel(leadId, quotes) {
+  const panel = document.getElementById(`quotes-panel-${leadId}`);
+  if (!quotes.length) {
+    panel.innerHTML = `<div class="no-quotes">Sin cotizaciones multi-aseguradora para este lead.<br><small>Las cotizaciones se generan cuando el cliente completa el flujo por WhatsApp.</small></div>`;
+    return;
+  }
+
+  const rows = quotes.map(q => {
+    const coverages = (() => { try { const c = typeof q.coverages === 'string' ? JSON.parse(q.coverages) : q.coverages; return Array.isArray(c) ? c.slice(0, 3).join(', ') + (c.length > 3 ? ` (+${c.length - 3})` : '') : '—'; } catch { return '—'; } })();
+    return `<tr class="${q.is_recommended ? 'recommended' : ''}">
+      <td class="provider-name">${q.is_recommended ? '⭐ ' : ''}${q.provider_name}${q.is_recommended ? '<span class="rec-badge">Recomendada</span>' : ''}</td>
+      <td>${q.plan_name || '—'}</td>
+      <td class="premium">${formatMoney(q.annual_premium)}</td>
+      <td>${formatMoney(q.monthly_premium)}/mes</td>
+      <td>${q.deductible_pct}%</td>
+      <td class="coverages-list">${coverages}</td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <h4>📊 Comparativa de ${quotes.length} aseguradoras</h4>
+    <table class="quotes-table">
+      <thead><tr>
+        <th>Aseguradora</th><th>Plan</th><th>Prima Anual</th><th>Mensual</th><th>Deducible</th><th>Coberturas</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}

@@ -10,6 +10,8 @@
 import databaseService from '../database/database.js';
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { isWithinAllowedHours } from './follow-up-service.js';
+import { sendEmail } from './email.js';
+import { generateFollowUp24hEmail, generateFollowUp3dEmail, generateVisitReminderFollowUpEmail } from './email-templates-paula.js';
 
 // ─── FOLLOW-UP 24H POST-BROCHURE ──────────────────────────────────────────────
 
@@ -137,6 +139,24 @@ export async function processPaulaFollowUps() {
       const msg = `@paula\nHola ${firstName} 👋\n\n¿Pudiste revisar el brochure de *${prop}* que te envié? 📧\n\nSi tienes alguna pregunta sobre la propiedad, financiamiento o el proceso de compra, estoy aquí para ayudarte.\n\n¿Te gustaría agendar una *visita presencial* para conocerla? 🏡`;
       
       await enviarWhatsApp(lead.phone, msg);
+
+      // Email follow-up (si tiene email)
+      if (lead.email) {
+        try {
+          const { subject, html } = generateFollowUp24hEmail({
+            clientName: lead.client_name,
+            propertyType: lead.property_type,
+            operationType: lead.operation_type,
+            preferredZone: lead.preferred_zone,
+            budgetRange: lead.budget_range
+          });
+          await sendEmail({ to: lead.email, subject, html, agent: 'paula', refId: `followup24h-${lead.id}` });
+          console.log(`[PAULA-FOLLOWUP] 📧 Email 24h enviado a ${lead.email}`);
+        } catch (emailErr) {
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 24h falló para ${lead.client_name}:`, emailErr.message);
+        }
+      }
+
       await markFollowupSent(lead.id, 'followup24hSent');
       results.sent24h++;
       console.log(`[PAULA-FOLLOWUP] ✅ 24h follow-up enviado a ${lead.client_name}`);
@@ -156,6 +176,23 @@ export async function processPaulaFollowUps() {
       const msg = `@paula\nHola ${firstName} 🏡\n\nTe escribo porque tengo algunas *opciones nuevas* en *${zone}* que podrían interesarte.\n\n¿Sigues buscando propiedad? Si tu presupuesto o preferencias cambiaron, cuéntame y te busco algo que se ajuste mejor 🎯\n\nEstoy a una respuesta de distancia 🤝`;
       
       await enviarWhatsApp(lead.phone, msg);
+
+      // Email follow-up (si tiene email)
+      if (lead.email) {
+        try {
+          const { subject, html } = generateFollowUp3dEmail({
+            clientName: lead.client_name,
+            propertyType: lead.property_type,
+            operationType: lead.operation_type,
+            preferredZone: lead.preferred_zone
+          });
+          await sendEmail({ to: lead.email, subject, html, agent: 'paula', refId: `followup3d-${lead.id}` });
+          console.log(`[PAULA-FOLLOWUP] 📧 Email 3d enviado a ${lead.email}`);
+        } catch (emailErr) {
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 3d falló para ${lead.client_name}:`, emailErr.message);
+        }
+      }
+
       await markFollowupSent(lead.id, 'followup3dSent');
       results.sent3d++;
       console.log(`[PAULA-FOLLOWUP] ✅ 3d follow-up enviado a ${lead.client_name}`);
@@ -175,6 +212,24 @@ export async function processPaulaFollowUps() {
       const msg = `@paula\nHola ${firstName} 🏡\n\n¡Mañana es tu visita a *${visit.property_name}*!\n\n📅 *Fecha:* Mañana\n⏰ *Hora:* ${timeStr}\n📍 *Dirección:* ${visit.property_address || 'Te envío la ubicación exacta por aquí'}\n\n¿Confirmamos para mañana? Responde *SÍ* para confirmar o avísame si necesitas reagendar 🙂`;
       
       await enviarWhatsApp(visit.client_phone, msg);
+
+      // Email reminder (si tiene email)
+      if (visit.client_email) {
+        try {
+          const { subject, html } = generateVisitReminderFollowUpEmail({
+            clientName: visit.client_name,
+            propertyName: visit.property_name,
+            propertyAddress: visit.property_address,
+            date: visit.date,
+            startTime: visit.start_time
+          });
+          await sendEmail({ to: visit.client_email, subject, html, agent: 'paula', refId: `visitreminder-${visit.id}` });
+          console.log(`[PAULA-FOLLOWUP] 📧 Email reminder enviado a ${visit.client_email}`);
+        } catch (emailErr) {
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email reminder falló para ${visit.client_name}:`, emailErr.message);
+        }
+      }
+
       await markVisitReminderSent(visit.id);
       results.visitReminders++;
       console.log(`[PAULA-FOLLOWUP] ✅ Reminder visita enviado a ${visit.client_name}`);

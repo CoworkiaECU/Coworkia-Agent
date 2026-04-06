@@ -31,6 +31,8 @@ import { startAuroraEnzoCronJobs } from '../servicios/aurora-enzo-followup-cron.
 import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
 // 🛡️ Adriana Follow-up Automation
 import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron.js';
+// 🏡 Paula Follow-up Automation
+import { startPaulaFollowupCronJobs } from '../servicios/paula-followup-cron.js';
 // � Aurora Follow-up Automation 
 import { startAuroraFollowupCrons } from '../cron/aurora-followup-cron.js';
 // �🔔 FASE 4: Sistema de notificaciones
@@ -314,6 +316,11 @@ async function startServer() {
     console.log('🛡️ Iniciando follow-ups automatizados de Adriana...');
     startAdrianaFollowupCronJobs();
     console.log('✅ Adriana follow-ups activos (S1: 10am, S2: 11:30am, S3: 9:30am Ecuador)');
+
+    // Iniciar follow-ups Paula (inmobiliaria)
+    console.log('🏡 Iniciando follow-ups automatizados de Paula...');
+    startPaulaFollowupCronJobs();
+    console.log('✅ Paula follow-ups activos (24h: 10am, 3d: 10am, reminder: 10am Ecuador)');
 
     startAuroraFollowupCrons();
     console.log('✅ Aurora follow-ups activos (+1h cada 15min, D+7 re-booking 10am Ecuador)');

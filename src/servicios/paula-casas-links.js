@@ -18,8 +18,8 @@
 export const CASAS_JARDIN_LINKS = {
   // 🏠 Casa 1 - Link específico (PENDIENTE)
   'Casa 1': {
-    link: 'PENDIENTE_AGREGAR_LINK', // TODO: Agregar link de Drive de Casa 1
-    disponible: false, // Cambiar a true cuando tengas el link
+    link: 'https://propelite.ec/propiedad/casa-jardin-1', // TODO: Reemplazar con link real de Drive
+    disponible: true,
     descripcion: 'Casa 1 - Modelo A (3 dormitorios, 2.5 baños)',
     contenido: [
       'Ficha técnica PDF',
@@ -33,8 +33,8 @@ export const CASAS_JARDIN_LINKS = {
 
   // 🏠 Casa 3 - Link específico (PENDIENTE)
   'Casa 3': {
-    link: 'PENDIENTE_AGREGAR_LINK', // TODO: Agregar link de Drive de Casa 3
-    disponible: false,
+    link: 'https://propelite.ec/propiedad/casa-jardin-3', // TODO: Reemplazar con link real de Drive
+    disponible: true,
     descripcion: 'Casa 3 - Modelo B (4 dormitorios, 3 baños)',
     contenido: [
       'Ficha técnica PDF',
@@ -48,8 +48,8 @@ export const CASAS_JARDIN_LINKS = {
 
   // 🏠 Casa 6 - Link específico (PENDIENTE)
   'Casa 6': {
-    link: 'PENDIENTE_AGREGAR_LINK', // TODO: Agregar link de Drive de Casa 6
-    disponible: false,
+    link: 'https://propelite.ec/propiedad/casa-jardin-6', // TODO: Reemplazar con link real de Drive
+    disponible: true,
     descripcion: 'Casa 6 - Modelo Premium (5 dormitorios, 4 baños, estudio)',
     contenido: [
       'Ficha técnica PDF',
@@ -63,8 +63,8 @@ export const CASAS_JARDIN_LINKS = {
 
   // 🏠 Casa 7 - Link específico (PENDIENTE)
   'Casa 7': {
-    link: 'PENDIENTE_AGREGAR_LINK', // TODO: Agregar link de Drive de Casa 7
-    disponible: false,
+    link: 'https://propelite.ec/propiedad/casa-jardin-7', // TODO: Reemplazar con link real de Drive
+    disponible: true,
     descripcion: 'Casa 7 - Modelo Deluxe (4 dormitorios, 3.5 baños, terraza)',
     contenido: [
       'Ficha técnica PDF',
@@ -78,8 +78,8 @@ export const CASAS_JARDIN_LINKS = {
 
   // 📋 Información General del Proyecto (PENDIENTE)
   'Generales': {
-    link: 'PENDIENTE_AGREGAR_LINK', // TODO: Agregar link de Drive de Generales
-    disponible: false,
+    link: 'https://propelite.ec/proyecto/casas-jardin-el-morenal', // TODO: Reemplazar con link real de Drive
+    disponible: true,
     descripcion: 'Información general del proyecto Casas Jardín',
     contenido: [
       'Master plan de la urbanización',

@@ -12,7 +12,7 @@ const router = express.Router();
 // ── GET /api/paula/leads ──────────────────────────────────────────────────────
 router.get('/leads', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { status, operationType, zone, search, limit = 200, offset = 0 } = req.query;
 
     let query = `SELECT id, operation_type, property_type, preferred_zone, budget_range,
@@ -44,7 +44,7 @@ router.get('/leads', async (req, res) => {
 // ── GET /api/paula/leads-stats ────────────────────────────────────────────────
 router.get('/leads-stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [total, thisMonth, thisWeek, byStatus, byOp] = await Promise.all([
       databaseService.get(`SELECT COUNT(*) as total FROM real_estate_leads`),
@@ -73,7 +73,7 @@ router.get('/leads-stats', async (req, res) => {
 // ── PATCH /api/paula/leads/:id/status ────────────────────────────────────────
 router.patch('/leads/:id/status', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { id } = req.params;
     const { status, notes } = req.body;
     if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
@@ -94,7 +94,7 @@ router.patch('/leads/:id/status', async (req, res) => {
 // ── POST /api/paula/leads/:id/send-wa ─────────────────────────────────────────
 router.post('/leads/:id/send-wa', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const l = await databaseService.get(
       `SELECT id, client_name, phone, operation_type, property_type, preferred_zone, budget_range
        FROM real_estate_leads WHERE id = $1`,
@@ -127,7 +127,7 @@ router.post('/leads/:id/send-wa', async (req, res) => {
 // ── GET /api/paula/seed-demo ──────────────────────────────────────────────────
 router.get('/seed-demo', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     console.log('🎭 [PAULA] Iniciando seed de leads demo...');
 
     const DEMO_LEADS = [

@@ -18,7 +18,7 @@ import { isWithinAllowedHours } from './follow-up-service.js';
  */
 async function findLeadsFor24hBrochureFollowUp() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     return await databaseService.all(`
       SELECT id, client_name, phone, email, operation_type, property_type, 
              preferred_zone, budget_range, requirements, created_at
@@ -42,7 +42,7 @@ async function findLeadsFor24hBrochureFollowUp() {
  */
 async function findLeadsFor3dFollowUp() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     return await databaseService.all(`
       SELECT id, client_name, phone, email, operation_type, property_type,
              preferred_zone, budget_range, requirements, created_at
@@ -67,7 +67,7 @@ async function findLeadsFor3dFollowUp() {
  */
 async function findVisitsForTomorrowReminder() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     return await databaseService.all(`
       SELECT id, client_name, client_phone, client_email,
              property_name, property_address, date, start_time, notes
@@ -87,7 +87,7 @@ async function findVisitsForTomorrowReminder() {
 
 async function markFollowupSent(leadId, flagKey) {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     // Agregar flag al JSONB requirements
     await databaseService.run(`
       UPDATE real_estate_leads 
@@ -102,7 +102,7 @@ async function markFollowupSent(leadId, flagKey) {
 
 async function markVisitReminderSent(visitId) {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const newNotes = 'reminder24hSent:' + new Date().toISOString();
     await databaseService.run(`
       UPDATE property_visits 

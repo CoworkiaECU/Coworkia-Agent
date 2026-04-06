@@ -13,7 +13,9 @@ import { complete } from '../servicios-ia/openai.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 
-const PE_ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
+// SMTP dedicado Paula/PropElite — si no hay env var, fallback al global
+const PE_FROM_EMAIL = process.env.PAULA_SMTP_USER || DEFAULT_FROM_EMAIL;
+const PE_ADMIN_CC   = process.env.PAULA_CC_EMAIL || process.env.COWORKIA_ADMIN_EMAIL || '';
 const ADMIN_WA    = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 // ─── CATÁLOGO ─────────────────────────────────────────────────────────────────
@@ -399,7 +401,7 @@ export async function sendPaulaCotizacion(mensajeCompleto, { quoteCode = '' } = 
     cc: PE_ADMIN_CC, 
     subject, 
     html,
-    from: { name: AGENT_FROM_NAMES.paula, address: DEFAULT_FROM_EMAIL }
+    from: { name: AGENT_FROM_NAMES.paula, address: PE_FROM_EMAIL }
   });
 
   return {

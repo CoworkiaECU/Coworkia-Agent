@@ -530,6 +530,132 @@ router.get('/leads/:id/quotes', async (req, res) => {
 });
 
 /**
+ * GET /api/adriana/leads/:id/quotes/export
+ * C4: Exportar cotización comparativa como HTML descargable (print-friendly)
+ * Sin dependencia de pdfkit — HTML puro que el navegador puede imprimir como PDF
+ */
+router.get('/leads/:id/quotes/export', async (req, res) => {
+  try {
+    await databaseService.ensureInitialized();
+    const { id } = req.params;
+
+    // Fetch lead info
+    const lead = await databaseService.get(`SELECT * FROM insurance_leads WHERE id = $1`, [id]);
+    if (!lead) return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+
+    // Fetch quotes
+    const quotes = await databaseService.all(`
+      SELECT q.id, q.plan_name, q.annual_premium, q.monthly_premium, q.deductible_pct,
+             q.coverages, q.is_recommended, q.created_at,
+             p.name AS provider_name, p.slug AS provider_slug
+      FROM insurance_lead_quotes q
+      JOIN insurance_providers p ON p.id = q.provider_id
+      WHERE q.lead_id = $1
+      ORDER BY q.annual_premium ASC
+    `, [id]);
+
+    if (!quotes || !quotes.length) {
+      return res.status(404).json({ ok: false, error: 'Sin cotizaciones para este lead' });
+    }
+
+    const fmtMoney = (v) => v ? `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
+    const vehicle = [lead.vehicle_brand, lead.vehicle_model, lead.vehicle_year].filter(Boolean).join(' ');
+    const date = new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const quotesRows = quotes.map(q => {
+      let coverages = '—';
+      try {
+        const c = typeof q.coverages === 'string' ? JSON.parse(q.coverages) : q.coverages;
+        if (Array.isArray(c)) coverages = c.join(', ');
+      } catch { /* ignore */ }
+      return `<tr${q.is_recommended ? ' class="recommended"' : ''}>
+        <td>${q.is_recommended ? '⭐ ' : ''}${q.provider_name}${q.is_recommended ? ' <em>(Recomendada)</em>' : ''}</td>
+        <td>${q.plan_name || '—'}</td>
+        <td class="num">${fmtMoney(q.annual_premium)}</td>
+        <td class="num">${fmtMoney(q.monthly_premium)}</td>
+        <td class="num">${q.deductible_pct}%</td>
+        <td class="cov">${coverages}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparativa de Seguros — ${lead.client_name || lead.quote_code}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fff; color: #1e293b; padding: 40px; max-width: 900px; margin: 0 auto; }
+    @media print { body { padding: 20px; } .no-print { display: none !important; } }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 3px solid #6366f1; }
+    .header h1 { font-size: 22px; color: #6366f1; letter-spacing: 1px; }
+    .header .meta { text-align: right; font-size: 12px; color: #64748b; }
+    .header .meta strong { color: #1e293b; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+    .info-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; }
+    .info-item label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; }
+    .info-item .val { font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+    th { background: #6366f1; color: white; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+    tr.recommended { background: #eef2ff; }
+    tr.recommended td:first-child { font-weight: 700; }
+    .num { text-align: right; font-weight: 700; }
+    .cov { font-size: 11px; color: #64748b; max-width: 220px; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+    .btn-print { background: #6366f1; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    .btn-print:hover { opacity: 0.9; }
+    .actions { text-align: center; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="actions no-print">
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+
+  <div class="header">
+    <div>
+      <h1>SegPopular</h1>
+      <p style="font-size:12px;color:#64748b;margin-top:4px;">Comparativa de Seguros Vehiculares</p>
+    </div>
+    <div class="meta">
+      <p><strong>${lead.quote_code || '—'}</strong></p>
+      <p>${date}</p>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item"><label>Cliente</label><div class="val">${lead.client_name || '—'}</div></div>
+    <div class="info-item"><label>Vehículo</label><div class="val">${vehicle || '—'}</div></div>
+    <div class="info-item"><label>Placa</label><div class="val">${lead.plate || '—'}</div></div>
+    <div class="info-item"><label>Valor Comercial</label><div class="val">${fmtMoney(lead.commercial_value)}</div></div>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th>Aseguradora</th><th>Plan</th><th>Prima Anual</th><th>Mensual</th><th>Deducible</th><th>Coberturas</th>
+    </tr></thead>
+    <tbody>${quotesRows}</tbody>
+  </table>
+
+  <div class="footer">
+    <p>Documento generado por Adriana · SegPopular — ${date}</p>
+    <p style="margin-top:4px;">Cotización válida por 15 días. Las primas pueden variar según inspección del vehículo.</p>
+  </div>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="comparativa-${lead.quote_code || id}.html"`);
+    res.send(html);
+  } catch (err) {
+    loggers.adriana.error('Error exporting quotes', {}, err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * Genera tasas VAZ hardcoded (fallback hasta tener API real)
  * En producción, esto se reemplaza con fetch a API VAZ
  */

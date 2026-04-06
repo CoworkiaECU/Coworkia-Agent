@@ -390,24 +390,57 @@ function renderQuotesPanel(leadId, quotes) {
     return;
   }
 
-  const rows = quotes.map(q => {
-    const coverages = (() => { try { const c = typeof q.coverages === 'string' ? JSON.parse(q.coverages) : q.coverages; return Array.isArray(c) ? c.slice(0, 3).join(', ') + (c.length > 3 ? ` (+${c.length - 3})` : '') : '—'; } catch { return '—'; } })();
-    return `<tr class="${q.is_recommended ? 'recommended' : ''}">
-      <td class="provider-name">${q.is_recommended ? '⭐ ' : ''}${q.provider_name}${q.is_recommended ? '<span class="rec-badge">Recomendada</span>' : ''}</td>
-      <td>${q.plan_name || '—'}</td>
-      <td class="premium">${formatMoney(q.annual_premium)}</td>
-      <td>${formatMoney(q.monthly_premium)}/mes</td>
-      <td>${q.deductible_pct}%</td>
-      <td class="coverages-list">${coverages}</td>
-    </tr>`;
-  }).join('');
+  // Agrupar quotes por fecha (historial)
+  const grouped = {};
+  quotes.forEach(q => {
+    const date = q.created_at ? new Date(q.created_at).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sin fecha';
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(q);
+  });
+  const dates = Object.keys(grouped);
 
-  panel.innerHTML = `
-    <h4>📊 Comparativa de ${quotes.length} aseguradoras</h4>
-    <table class="quotes-table">
+  const buildTable = (qs) => {
+    const rows = qs.map(q => {
+      const coverages = (() => { try { const c = typeof q.coverages === 'string' ? JSON.parse(q.coverages) : q.coverages; return Array.isArray(c) ? c.slice(0, 3).join(', ') + (c.length > 3 ? ` (+${c.length - 3})` : '') : '—'; } catch { return '—'; } })();
+      return `<tr class="${q.is_recommended ? 'recommended' : ''}">
+        <td class="provider-name">${q.is_recommended ? '⭐ ' : ''}${q.provider_name}${q.is_recommended ? '<span class="rec-badge">Recomendada</span>' : ''}</td>
+        <td>${q.plan_name || '—'}</td>
+        <td class="premium">${formatMoney(q.annual_premium)}</td>
+        <td>${formatMoney(q.monthly_premium)}/mes</td>
+        <td>${q.deductible_pct}%</td>
+        <td class="coverages-list">${coverages}</td>
+      </tr>`;
+    }).join('');
+    return `<table class="quotes-table">
       <thead><tr>
         <th>Aseguradora</th><th>Plan</th><th>Prima Anual</th><th>Mensual</th><th>Deducible</th><th>Coberturas</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+  };
+
+  let html = `<div class="quotes-header">
+    <h4>📊 Comparativa de ${quotes.length} cotizaciones${dates.length > 1 ? ` · ${dates.length} fechas` : ''}</h4>
+    <button class="btn-export" onclick="exportQuotesHTML('${leadId}')" title="Descargar comparativa como HTML">📥 Exportar</button>
+  </div>`;
+
+  if (dates.length === 1) {
+    html += buildTable(quotes);
+  } else {
+    dates.forEach((date, i) => {
+      html += `<div class="quotes-history-label">📅 ${date} <span>${grouped[date].length} cotiz.</span></div>`;
+      html += buildTable(grouped[date]);
+    });
+  }
+
+  panel.innerHTML = html;
+}
+
+// ── C4: Export quotes as downloadable HTML ────────────────────────────────────
+async function exportQuotesHTML(leadId) {
+  try {
+    window.open(`${API_BASE}/api/adriana/leads/${leadId}/quotes/export`, '_blank');
+  } catch (err) {
+    showToast('Error al exportar: ' + err.message);
+  }
 }

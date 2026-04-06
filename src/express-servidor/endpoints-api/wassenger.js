@@ -4077,6 +4077,8 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
         plate: vData.plate,
         motor: vData.motor,
         chasis: vData.chasis,
+        // C2: guardar owner_name de matrícula para validación cruzada con cédula
+        premiumBreakdown: { matricula_owner_name: vData.owner_name || '', matricula_owner_id: vData.owner_id || '' },
       });
       const msg = [
         `✅ *Matrícula registrada* 🚗`,
@@ -4098,6 +4100,26 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
       const analysis = await analyzeInsuranceDocument(mediaUrl, processedText || '', { documentType: DOCUMENT_TYPES.ID_CARD });
       const cedula = analysis.success ? (analysis.analysis?.match(/\b\d{10}\b/)?.[0] || null) : null;
       const clientName = analysis.success ? (analysis.analysis?.match(/(?:nombre|name)[:\s]+([A-ZÁÉÍÓÚÑ ]+)/i)?.[1]?.trim() || profile.name || null) : (profile.name || null);
+
+      // ── C2: Validación cruzada cédula ↔ matrícula ──────────────────────
+      try {
+        const breakdown = typeof lead.premium_breakdown === 'string' ? JSON.parse(lead.premium_breakdown) : (lead.premium_breakdown || {});
+        const matriculaOwner = (breakdown.matricula_owner_name || '').toUpperCase().trim();
+        const cedulaName = (clientName || '').toUpperCase().trim();
+        if (matriculaOwner && cedulaName) {
+          // Comparar: al menos un apellido o nombre debe coincidir
+          const matriculaParts = matriculaOwner.split(/\s+/).filter(w => w.length > 2);
+          const cedulaParts = cedulaName.split(/\s+/).filter(w => w.length > 2);
+          const match = matriculaParts.some(mp => cedulaParts.includes(mp));
+          if (!match && ADMIN_PHONE) {
+            const alertMsg = `⚠️ *ADRIANA — Alerta de identidad*\n\n📋 Cotización: *${quoteCode}*\n🪪 Cédula: ${cedulaName}\n🚗 Matrícula: ${matriculaOwner}\n\n❗ El nombre en la cédula NO coincide con el propietario de la matrícula.\nVerificar antes de emitir póliza.`;
+            await enviarWhatsApp(ADMIN_PHONE, alertMsg).catch(e => console.error('[ADRIANA] ❌ Alert WA:', e.message));
+            console.log(`[ADRIANA] ⚠️ Cross-validation mismatch: cédula="${cedulaName}" vs matrícula="${matriculaOwner}" — ${quoteCode}`);
+          }
+        }
+      } catch (cvErr) {
+        console.error('[ADRIANA] Cross-validation error:', cvErr.message);
+      }
 
       await createOrUpdateInsuranceLead({ quoteCode, userPhone: userId, status: 'waiting_competitor', cedula, clientName });
       const msg = [

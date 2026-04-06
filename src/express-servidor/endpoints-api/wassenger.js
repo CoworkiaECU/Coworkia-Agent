@@ -4257,6 +4257,63 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
       }
     }
 
+    // ── CONVERSATIONAL FALLBACK: texto sin match en cualquier estado activo ──
+    // Responde contextualmente según el estado del lead en vez de caer al orquestador genérico
+    if (processedText && lead && NEW_STATES.includes(status)) {
+      const clientName = lead.client_name || profile.name || '';
+      const firstName = clientName.split(' ')[0] || '';
+      const brandModel = [lead.vehicle_brand, lead.vehicle_model].filter(Boolean).join(' ');
+
+      let nudge = '';
+
+      if (status === 'waiting_matricula') {
+        nudge = [
+          `${firstName ? firstName + ', p' : 'P'}ara cotizar tu seguro necesito la *foto de tu matrícula* 🚗`,
+          ``,
+          `📸 Envía una foto clara de ambos lados.`,
+          `Si no tienes la matrícula a mano, puedes escribirme los datos:`,
+          `*Marca, modelo, año y valor comercial del vehículo*.`,
+        ].join('\n');
+      } else if (status === 'waiting_cedula') {
+        nudge = [
+          `${firstName ? firstName + ', y' : 'Y'}a tengo los datos de tu ${brandModel || 'vehículo'} ✅`,
+          ``,
+          `Ahora necesito una *foto de tu cédula de identidad* 🪪`,
+          `(NO licencia de conducir)`,
+        ].join('\n');
+      } else if (status === 'waiting_competitor') {
+        nudge = [
+          `Si tienes cotizaciones de otras aseguradoras, envíame las *fotos* 📸`,
+          ``,
+          `O escribe *OMITIR* para que te presente mi comparativa de ${brandModel ? brandModel + ' — ' : ''}4 aseguradoras al mejor precio 📊`,
+        ].join('\n');
+      } else if (status === 'quoted') {
+        const premium = lead.quoted_premium ? `$${Number(lead.quoted_premium).toLocaleString()}/año` : '';
+        nudge = [
+          `${firstName ? firstName + ', t' : 'T'}u cotización${premium ? ' de *' + premium + '*' : ''} está lista 📋`,
+          ``,
+          `¿Qué te gustaría hacer?`,
+          `• Responde *ACEPTO* para iniciar tu póliza 🤝`,
+          `• Si tienes alguna duda sobre coberturas o deducibles, pregúntame 😊`,
+          ``,
+          `Ref: *${quoteCode}*`,
+        ].join('\n');
+      } else if (status === 'waiting_kyc') {
+        nudge = [
+          `Estamos completando tu póliza 🛡️`,
+          ``,
+          `¿Podrías indicarme tu *estado civil*? (Soltero/Casado/Divorciado/Viudo)`,
+          `Y tu *dirección de domicilio* para la documentación UAFE.`,
+        ].join('\n');
+      }
+
+      if (nudge) {
+        await enviarWhatsApp(userId, nudge);
+        await saveConversationMessage(userId, { role: 'assistant', content: nudge, agent: 'ADRIANA' });
+        return true;
+      }
+    }
+
     return false;
   } catch (err) {
     console.error('[ADRIANA-V2] ❌ Error en handleAdrianaFlow:', err);

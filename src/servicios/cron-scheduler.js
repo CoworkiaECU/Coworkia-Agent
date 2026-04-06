@@ -178,27 +178,26 @@ export function initScheduler() {
   jobs.push(membershipRenewalJob);
   console.log('[CRON] 📅 Recordatorios renovación membresías: 9:00 AM diario');
 
-  // ✅ Recordatorios de re-reserva semanal (AURORA)
-  // Diario a las 5:00 PM Ecuador. AURORA sugiere reservar el mismo servicio del día siguiente
-  // (el usuario usó el espacio hace 7 días = mismo día de semana de mañana)
-  const rebookReminderJob = new CronJob(
-    '0 17 * * *', // 5:00 PM diario
-    async () => {
-      try {
-        console.log('[CRON] 🏢 Verificando recordatorios de re-reserva semanal (AURORA)...');
-        const result = await processAuroraRebookReminders();
-        console.log(`[CRON] ✅ Re-reservas: ${result.sent} enviados, ${result.skipped} saltados`);
-      } catch (error) {
-        console.error('[CRON] ❌ Error en recordatorios de re-reserva:', error);
-      }
-    },
-    null,
-    true,
-    'America/Guayaquil'
-  );
-
-  jobs.push(rebookReminderJob);
-  console.log('[CRON] 📅 Recordatorios re-reserva semanal: 5:00 PM diario');
+  // ⚠️ DESACTIVADO Sprint 1 dedup (6 abr 2026) — redundante con aurora-enzo-followup-cron.js (10:00 AM)
+  // Ambos marcan rebook_reminder_sent_at → sin duplicados de mensajes, pero cron redundante.
+  // const rebookReminderJob = new CronJob(
+  //   '0 17 * * *', // 5:00 PM diario
+  //   async () => {
+  //     try {
+  //       console.log('[CRON] 🏢 Verificando recordatorios de re-reserva semanal (AURORA)...');
+  //       const result = await processAuroraRebookReminders();
+  //       console.log(`[CRON] ✅ Re-reservas: ${result.sent} enviados, ${result.skipped} saltados`);
+  //     } catch (error) {
+  //       console.error('[CRON] ❌ Error en recordatorios de re-reserva:', error);
+  //     }
+  //   },
+  //   null,
+  //   true,
+  //   'America/Guayaquil'
+  // );
+  //
+  // jobs.push(rebookReminderJob);
+  console.log('[CRON] ⚠️ Recordatorios re-reserva: desactivado (migrado a aurora-enzo-followup-cron)');
 
   // ✅ Recordatorios de cotizaciones pendientes Axel / The PaintBull
   // Diario a las 10:00 AM Ecuador (lun-vie). Envía email 24h y 7d post-cotización si no hay cita agendada.

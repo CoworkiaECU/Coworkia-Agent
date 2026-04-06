@@ -33,8 +33,9 @@ import { startAxelFollowupCronJobs } from '../servicios/axel-followup-cron.js';
 import { startAdrianaFollowupCronJobs } from '../servicios/adriana-followup-cron.js';
 // 🏡 Paula Follow-up Automation
 import { startPaulaFollowupCronJobs } from '../servicios/paula-followup-cron.js';
-// � Aurora Follow-up Automation 
-import { startAuroraFollowupCrons } from '../cron/aurora-followup-cron.js';
+// ⚠️ DESACTIVADO Sprint 1 dedup (6 abr 2026) — duplicaba Aurora +1h y D+7 con aurora-enzo-followup-cron.js
+// 8 jobs únicos migrados a aurora-followup-service.js → wired en aurora-enzo-followup-cron.js
+// import { startAuroraFollowupCrons } from '../cron/aurora-followup-cron.js';
 // �🔔 FASE 4: Sistema de notificaciones
 import { startHealthMonitor } from '../servicios/health-monitor.js';
 import { runMigrations } from '../database/migrations/migration-runner.js';
@@ -322,8 +323,9 @@ async function startServer() {
     startPaulaFollowupCronJobs();
     console.log('✅ Paula follow-ups activos (24h: 10am, 3d: 10am, reminder: 10am Ecuador)');
 
-    startAuroraFollowupCrons();
-    console.log('✅ Aurora follow-ups activos (+1h cada 15min, D+7 re-booking 10am Ecuador)');
+    // ⚠️ DESACTIVADO Sprint 1 dedup (6 abr 2026) — jobs migrados a aurora-enzo-followup-cron.js
+    // startAuroraFollowupCrons();
+    // console.log('✅ Aurora follow-ups activos (+1h cada 15min, D+7 re-booking 10am Ecuador)');
 
     // Ejecutar migraciones de base de datos
     console.log('🗃️ Ejecutando migraciones de base de datos...');

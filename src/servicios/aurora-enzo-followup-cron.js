@@ -12,7 +12,12 @@
  */
 
 import { CronJob } from 'cron';
-import { sendOneHourFollowups, sendRebookingReminders } from './aurora-followup-service.js';
+import {
+  sendOneHourFollowups, sendRebookingReminders,
+  sendAuroraD1Followups, sendAuroraD3Followups,
+  sendAuroraReminder24h, sendAuroraReminder2h, sendAuroraReminder10min,
+  detectAuroraNoShows, sendAuroraUpsellAluna, sendAuroraPaymentReminders
+} from './aurora-followup-service.js';
 import { sendEnzoD1Followups, sendEnzoD3Followups, sendEnzoD7Followups } from './enzo-followup-service.js';
 import { sendAdrianaS1Followups, sendAdrianaS2Followups, sendAdrianaS3Followups } from './adriana-followup-service.js';
 import { loggers } from '../utils/logger.js';
@@ -174,7 +179,122 @@ export function startAuroraEnzoCronJobs() {
   );
   logger.info('[CRON] ✅ Adriana S3 configurado (09:30 AM Ecuador)');
 
-  logger.info('[CRON] 🚀 Aurora + Enzo + Adriana follow-up crons activos (8 jobs)');
+  // ─── AURORA: D+1 feedback (10:05 AM Ecuador = 15:05 UTC) ─────
+  const auroraD1Job = new CronJob(
+    '5 15 * * *',
+    async function () {
+      logger.info('[CRON-AURORA] 📨 Ejecutando D+1 follow-up...');
+      try {
+        const result = await sendAuroraD1Followups();
+        if (result.success) logger.info(`[CRON-AURORA] ✅ D+1: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error D+1:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora D+1 configurado (10:05 AM Ecuador)');
 
-  return { aurora1hJob, auroraRebookJob, enzoD1Job, enzoD3Job, enzoD7Job, adrianaS1Job, adrianaS2Job, adrianaS3Job };
+  // ─── AURORA: D+3 FOMO (14:00 Ecuador = 19:00 UTC) ────────────
+  const auroraD3Job = new CronJob(
+    '0 19 * * *',
+    async function () {
+      logger.info('[CRON-AURORA] 🔥 Ejecutando D+3 FOMO follow-up...');
+      try {
+        const result = await sendAuroraD3Followups();
+        if (result.success) logger.info(`[CRON-AURORA] ✅ D+3: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error D+3:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora D+3 FOMO configurado (14:00 PM Ecuador)');
+
+  // ─── AURORA: Reminder 24h (18:00 Ecuador = 23:00 UTC) ────────
+  const auroraReminder24hJob = new CronJob(
+    '0 23 * * *',
+    async function () {
+      logger.info('[CRON-AURORA] 📅 Ejecutando recordatorio 24h...');
+      try {
+        const result = await sendAuroraReminder24h();
+        if (result.success) logger.info(`[CRON-AURORA] ✅ 24h: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error 24h:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora reminder 24h configurado (18:00 PM Ecuador)');
+
+  // ─── AURORA: Reminder 2h (cada 30min 8-18h) ──────────────────
+  const auroraReminder2hJob = new CronJob(
+    '*/30 8-18 * * *',
+    async function () {
+      try {
+        const result = await sendAuroraReminder2h();
+        if (result.success && result.sent > 0) logger.info(`[CRON-AURORA] ✅ 2h: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error 2h:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora reminder 2h configurado (cada 30min 8-18h Ecuador)');
+
+  // ─── AURORA: Reminder 10min (cada 5min 7-20h) ────────────────
+  const auroraReminder10minJob = new CronJob(
+    '*/5 7-20 * * *',
+    async function () {
+      try {
+        const result = await sendAuroraReminder10min();
+        if (result.success && result.sent > 0) logger.info(`[CRON-AURORA] ✅ 10min: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error 10min:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora reminder 10min configurado (cada 5min 7-20h Ecuador)');
+
+  // ─── AURORA: No-Show Detection (cada 4h) ─────────────────────
+  const auroraNoShowJob = new CronJob(
+    '0 */4 * * *',
+    async function () {
+      logger.info('[CRON-AURORA] 👻 Ejecutando no-show detection...');
+      try {
+        const result = await detectAuroraNoShows();
+        if (result.success && result.sent > 0) logger.info(`[CRON-AURORA] ✅ No-shows: ${result.sent} procesados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error no-show:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora no-show detection configurado (cada 4h)');
+
+  // ─── AURORA: Upsell Aluna (lunes 10:00 AM) ───────────────────
+  const auroraUpsellJob = new CronJob(
+    '0 15 * * 1',
+    async function () {
+      logger.info('[CRON-AURORA] 🎯 Ejecutando upselling Aluna...');
+      try {
+        const result = await sendAuroraUpsellAluna();
+        if (result.success) logger.info(`[CRON-AURORA] ✅ Upsell: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error upsell:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora upsell Aluna configurado (lunes 10:00 AM Ecuador)');
+
+  // ─── AURORA: Payment Reminders (8:00 AM diario) ──────────────
+  const auroraPaymentJob = new CronJob(
+    '0 13 * * *',
+    async function () {
+      logger.info('[CRON-AURORA] 💳 Ejecutando payment reminders...');
+      try {
+        const result = await sendAuroraPaymentReminders();
+        if (result.success && result.sent > 0) logger.info(`[CRON-AURORA] ✅ Pagos: ${result.sent} enviados`);
+      } catch (err) { logger.error('[CRON-AURORA] ❌ Error pagos:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Aurora payment reminders configurado (8:00 AM Ecuador)');
+
+  logger.info('[CRON] 🚀 Aurora + Enzo + Adriana follow-up crons activos (16 jobs)');
+
+  return {
+    aurora1hJob, auroraRebookJob, enzoD1Job, enzoD3Job, enzoD7Job,
+    adrianaS1Job, adrianaS2Job, adrianaS3Job,
+    auroraD1Job, auroraD3Job, auroraReminder24hJob, auroraReminder2hJob,
+    auroraReminder10minJob, auroraNoShowJob, auroraUpsellJob, auroraPaymentJob
+  };
 }

@@ -1,7 +1,7 @@
-# ✈️ Plan de Vuelo — Adriana (03-04 Abr 2026)
-**Status**: 🟢 Bloques A+B completados  
-**Producción**: v1209  
-**Última sesión**: 04 Abr 2026 — Gemini thinking + Enzo fixes
+# ✈️ Plan de Vuelo — Adriana (03-05 Abr 2026)
+**Status**: 🟢 Bloques A+B+B5+B6+C1 completados  
+**Producción**: pendiente deploy (commits locales)  
+**Última sesión**: 05 Abr 2026 — Multi-quote seed + dashboard + conversational handler
 
 ---
 
@@ -102,19 +102,23 @@
   - Template ya soporta N competidores dinámicamente
   - Cuando se agreguen aseguradoras a BD, aparecerán automáticamente
 
-- [ ] **B5** — Definir aseguradoras a integrar
-  - ❓ **PREGUNTA PARA DIEGO**: ¿Qué aseguradoras agregar? ¿Tienes las tablas de tasas?
-  - Candidatas Ecuador: Equinoccial, Liberty, AIG, Mapfre, Seguros Sucre, BMI, Hispana
-  - Se necesita: tabla de tasas por tipo vehículo + antigüedad + coberturas
+- [x] **B5** — Seed aseguradoras reales (05 Abr)
+  - Sucre, Equinoccial, Unidos insertados en insurance_providers + insurance_rates
+  - Multi-quote WA summary formateado con 4 aseguradoras
+  - Commit: `76178a6`
 
-- [ ] **B6** — Dashboard Adriana — vista multi-cotización
-  - Mostrar todas las cotizaciones generadas por lead
-  - Comparativa visual entre aseguradoras
-  - Filtros por aseguradora, rango de precio, tipo de cobertura
+- [x] **B6** — Dashboard Adriana — vista multi-cotización (05 Abr)
+  - Endpoint GET /api/adriana/leads/:id/quotes
+  - Tabla comparativa en detalle lead: aseguradora, prima, deducible, coberturas, logo
+  - Commit: `45dc529`
 
 ### BLOQUE C — Mejoras pendientes (del plan anterior)
 
-- [ ] **C1** — Handler conversacional Adriana en wassenger.js (Todo #4)
+- [x] **C1** — Handler conversacional Adriana en wassenger.js (05 Abr)
+  - Adriana ahora responde conversacionalmente en todos los insurance states
+  - Usa orquestador con history (patrón Enzo post-fix)
+  - Commit: `b6f2dbc`
+  - E2E test: 17/17 passed — Commit: `0ed4fcf`
 - [ ] **C2** — Validación cruzada cédula ↔ matrícula
 - [ ] **C3** — Historial de cotizaciones por cliente en dashboard
 - [ ] **C4** — PDF export de cotización comparativa

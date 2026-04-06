@@ -1,9 +1,37 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-05T00:30:00Z",
-  "currentPlan": "enzo-prompt-rewrite + consulting-flow-bypass",
-  "nextPriority": "enzo-validate-whatsapp-test + adriana-B5-aseguradoras",
+  "lastUpdated": "2026-04-05T17:00:00Z",
+  "currentPlan": "3-chat session: adriana B5-C1 + paula C1-C5 + enzo validation",
+  "nextPriority": "deploy pending commits + aurora validations + enzo WA test",
   "queue": [
+    {
+      "id": "adriana-B5-B6-C1",
+      "title": "Adriana — B5 seed aseguradoras + B6 dashboard multi-quote + C1 conversational",
+      "status": "completed",
+      "plan": "plan-vuelo-adriana-03abr.md",
+      "estimatedTime": "2h",
+      "realTime": "1.5h",
+      "completedAt": "2026-04-05T16:30:00Z",
+      "commit": "76178a6, 45dc529, b6f2dbc, 0ed4fcf",
+      "heroku": "pending-deploy",
+      "priority": "high",
+      "chat": "chat-2",
+      "notes": "Sucre+Equinoccial+Unidos seeded, dashboard multi-quote view, conversational handler all states, E2E 17/17 passed"
+    },
+    {
+      "id": "paula-C1-C5-fixes",
+      "title": "Paula — C1-C5: Follow-up cron + ensureInit fix + SMTP + links",
+      "status": "completed",
+      "plan": "plan-vuelo-paula-03abr.md",
+      "estimatedTime": "1.5h",
+      "realTime": "1h",
+      "completedAt": "2026-04-05T16:45:00Z",
+      "commit": "262ffcd",
+      "heroku": "pending-deploy",
+      "priority": "critical",
+      "chat": "chat-3",
+      "notes": "Follow-up cron activated, ensureInitialized→initialize, SMTP env vars, property links placeholder"
+    },
     {
       "id": "enzo-prompt-rewrite",
       "title": "Enzo — Rewrite system prompt: visión primero, preguntas después",

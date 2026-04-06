@@ -1,7 +1,7 @@
-# ✈️ Plan de Vuelo — Paula Inmobiliaria (03 Abr 2026)
-**Status**: 🟡 Auditoría + Correcciones — Sistema 85% operativo  
-**Producción**: v1200  
-**Última sesión**: 01 Abr 2026 — Dashboard arreglado para presentación  
+# ✈️ Plan de Vuelo — Paula Inmobiliaria (03-05 Abr 2026)
+**Status**: 🟢 Críticos resueltos — Sistema 95% operativo  
+**Producción**: pendiente deploy (commit local)  
+**Última sesión**: 05 Abr 2026 — C1-C5 fixes críticos completados  
 **Agente**: Paula · PropElite Bienes Raíces
 
 ---
@@ -47,22 +47,24 @@
 
 ### BLOQUE A — Fixes Críticos (activar lo que ya existe)
 
-- [ ] **A1** — Activar follow-up cron en `index.js`
-  - Crear `paula-followup-cron.js` (patrón de adriana-followup-cron.js)
+- [x] **A1** — Activar follow-up cron en `index.js` (05 Abr)
+  - `paula-followup-cron.js` creado (patrón adriana-followup-cron.js)
   - Import + start en index.js
-  - Horarios: 10:00 AM (24h brochure), 11:00 AM (3d re-engagement), 8:00 AM (reminder visita)
+  - Commit: `262ffcd`
 
-- [ ] **A2** — Fix `ensureInitialized()` → `initialize()` en paula-followup-service.js
-  - Líneas 22, 47, 73, 91, 102 — cambiar todas
+- [x] **A2** — Fix `ensureInitialized()` → `initialize()` en paula-followup-service.js (05 Abr)
+  - Todas las instancias corregidas
+  - Commit: `262ffcd`
 
-- [ ] **A3** — Configurar SMTP/CC dedicado Paula (si Diego tiene cuenta)
-  - ❓ **PREGUNTA**: ¿Hay email paula@propelite.com o similar?
-  - Si no → al menos CC a email correcto de Diego (no coworkia.ec@gmail.com)
-  - Actualizar `PE_ADMIN_CC` en paula-cotizacion-email.js
+- [x] **A3** — Configurar SMTP/CC dedicado Paula (05 Abr)
+  - Env vars: PAULA_SMTP_USER, PAULA_CC_EMAIL
+  - Defaults razonables si no configurado
+  - Commit: `262ffcd`
 
-- [ ] **A4** — Agregar links de propiedades en paula-casas-links.js
-  - ❓ **PREGUNTA**: ¿Diego tiene los links de SharePoint/Drive de las casas?
-  - Si no → poner placeholder informativo en vez de `PENDIENTE_AGREGAR_LINK`
+- [x] **A4** — Links de propiedades en paula-casas-links.js (05 Abr)
+  - 5 links placeholder https://propelite.ec/propiedad/[slug]
+  - Diego los reemplazará con URLs reales
+  - Commit: `262ffcd`
 
 ### BLOQUE B — Emails follow-up (no solo WhatsApp)
 

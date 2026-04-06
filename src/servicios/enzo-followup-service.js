@@ -238,7 +238,7 @@ function emailWrapper(content) {
   <style>
     body { font-family: 'Inter', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 32px auto; background: white; border-radius: 12px; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); padding: 32px 40px; text-align: center; }
+    .header { background-color: #F97316; background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); padding: 32px 40px; text-align: center; }
     .header img { height: 48px; }
     .header h1 { color: white; margin: 12px 0 0; font-size: 22px; font-weight: 700; }
     .body { padding: 40px; color: #1f2937; line-height: 1.7; }
@@ -246,6 +246,7 @@ function emailWrapper(content) {
     .cta-btn { display: inline-block; background: #F97316; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; margin: 8px 0; }
     .footer { background: #f9f9f9; padding: 24px 40px; text-align: center; color: #6b7280; font-size: 13px; border-top: 1px solid #e5e7eb; }
     .badge { display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
+    @media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.container{background-color:#fff!important;color:#1f2937!important}}
   </style>
 </head>
 <body>

@@ -28,6 +28,7 @@ export function generateVisitConfirmationEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Confirmada - PropElite</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F7F5F0;">
   
@@ -35,7 +36,7 @@ export function generateVisitConfirmationEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
     
     <!-- Header con branding PropElite -->
-    <div style="background: linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -123,7 +124,7 @@ export function generateVisitConfirmationEmail(visitData) {
       </div>
       
       <!-- Separador -->
-      <div style="height: 1px; background: linear-gradient(to right, transparent, #D4AF37, transparent); margin: 35px 0;"></div>
+      <div style="height: 1px; background-color:#D4AF37;background:linear-gradient(to right, transparent, #D4AF37, transparent); margin: 35px 0;"></div>
       
       <!-- Beneficios de PropElite -->
       <div style="padding: 20px 0;">
@@ -188,12 +189,13 @@ export function generateRescheduleEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Reagendada - PropElite</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F7F5F0;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -286,12 +288,13 @@ export function generateCancellationEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Cancelada - PropElite</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F7F5F0;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -380,12 +383,13 @@ export function generateReminderEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recordatorio de Visita - PropElite</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F7F5F0;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>

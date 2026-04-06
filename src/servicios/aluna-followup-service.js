@@ -245,10 +245,11 @@ function buildD1EmailHTML(lead) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   
-  <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px 10px 0 0;">
+  <div class="em-wrap" style="text-align: center; padding: 20px; background-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px 10px 0 0;">
     <h1 style="margin: 0; font-size: 28px;">Coworkia Quito</h1>
     <p style="margin: 10px 0 0 0; opacity: 0.9;">Tu espacio de trabajo ideal</p>
   </div>
@@ -305,10 +306,11 @@ function buildD3EmailHTML(lead) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   
-  <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 10px 10px 0 0;">
+  <div class="em-wrap" style="text-align: center; padding: 20px; background-color: #f093fb; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 10px 10px 0 0;">
     <h1 style="margin: 0; font-size: 32px;">🔥 ¡Últimas Unidades!</h1>
     <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Oferta limitada este mes</p>
   </div>

@@ -109,10 +109,10 @@ function buildEmailS1HTML(l) {
   const veh = vehicleLabel(l);
   const pri = l.quoted_premium ? `$${parseFloat(l.quoted_premium).toFixed(0)}` : '—';
   const cta = encodeURIComponent(`Hola Adriana, tengo preguntas sobre mi cotización ${l.quote_code}`);
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
-  <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style></head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div class="em-wrap" style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
+  <div style="background-color:#1E3A8A;background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
     <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <div style="color:rgba(255,255,255,0.7);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;">🛡️ ADRIANA · SEGPOPULAR ECUADOR</div>
     <h1 style="color:#FCD34D;margin:0;font-size:24px;font-weight:900;">¿Tuviste la oportunidad de revisar tu cotización, ${fn}?</h1>
@@ -133,10 +133,10 @@ function buildEmailS2HTML(l) {
   const veh = vehicleLabel(l);
   const pri = l.quoted_premium ? `$${parseFloat(l.quoted_premium).toFixed(0)}` : '—';
   const cta = encodeURIComponent(`Hola Adriana, acepto la cotización VAZ para mi ${veh} — código ${l.quote_code}`);
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
-    <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style></head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div class="em-wrap" style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
+    <div style="background-color:#dc2626;background:linear-gradient(135deg,#dc2626,#b91c1c);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
     <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <div style="color:rgba(255,255,255,0.8);font-size:28px;margin-bottom:8px;">⏰</div>
     <h1 style="color:white;margin:0;font-size:22px;font-weight:900;">ÚLTIMA OPORTUNIDAD, ${fn}</h1>
@@ -147,12 +147,12 @@ function buildEmailS2HTML(l) {
       <p style="margin:0;font-size:14px;color:#c2410c;font-weight:600;">⚠️ Después de hoy, la prima podría aumentar hasta un 12% por recálculo tarifario.</p>
     </div>
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px;">Tu <strong>${veh}</strong> seguirá en el tráfico de Quito sin cobertura mientras este seguro no esté activo. Un solo accidente puede costarte más que 5 años de prima.</p>
-    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:10px;padding:18px;margin:20px 0;text-align:center;">
+    <div style="background-color:#f0fdf4;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:10px;padding:18px;margin:20px 0;text-align:center;">
       <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">Tu prima anual VAZ (precio de hoy)</div>
       <div style="font-size:34px;font-weight:900;color:#16a34a;">${pri}</div>
     </div>
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://wa.me/${BOT_PHONE}?text=${cta}" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;box-shadow:0 4px 14px rgba(220,38,38,0.4);">🛡️ ACTIVAR AHORA — PRECIO DE HOY →</a>
+      <a href="https://wa.me/${BOT_PHONE}?text=${cta}" style="display:inline-block;background-color:#dc2626;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;box-shadow:0 4px 14px rgba(220,38,38,0.4);">🛡️ ACTIVAR AHORA — PRECIO DE HOY →</a>
     </div>
     <p style="font-size:12px;color:#9ca3af;text-align:center;">SegPopular · ${l.quote_code}</p>
   </div>
@@ -164,10 +164,10 @@ function buildEmailS3HTML(l) {
   const veh = vehicleLabel(l);
   const cup = encodeURIComponent(`Hola Adriana, quisiera usar mi cupón de asesoría gratuita en seguros corporativos 🎁`);
   const cta = encodeURIComponent(`Hola Adriana, quisiera revisar opciones de seguro para mi ${veh}`);
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<div style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
-  <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style></head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div class="em-wrap" style="max-width:580px;margin:0 auto;padding:20px 12px 40px;">
+  <div style="background-color:#1E3A8A;background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:36px 28px;border-radius:12px 12px 0 0;text-align:center;">
     <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/assets/logos/segpopular.png" alt="SegPopular" style="height:42px;margin-bottom:14px;filter:brightness(0) invert(1);opacity:0.95;display:block;margin-left:auto;margin-right:auto;" />
     <h1 style="color:#FCD34D;margin:0;font-size:22px;font-weight:900;">Un mensaje final de Adriana 🤝</h1>
   </div>
@@ -181,7 +181,7 @@ function buildEmailS3HTML(l) {
     <div style="text-align:center;margin:20px 0 24px;">
       <a href="https://wa.me/${BOT_PHONE}?text=${cta}" style="display:inline-block;background:#1E3A8A;color:#FCD34D;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:800;font-size:15px;">💬 Revisar opciones →</a>
     </div>
-    <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1.5px dashed #a855f7;border-radius:10px;padding:18px 20px;margin-top:16px;">
+    <div style="background-color:#faf5ff;background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1.5px dashed #a855f7;border-radius:10px;padding:18px 20px;margin-top:16px;">
       <div style="font-size:11px;color:#7e22ce;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🎁 CUPÓN EXCLUSIVO</div>
       <p style="margin:0 0 10px;font-size:13px;color:#581c87;font-weight:600;">Asesoría GRATUITA en Seguros Corporativos</p>
       <p style="margin:0 0 12px;font-size:12px;color:#6b7280;line-height:1.6;">Si tu empresa tiene flota vehicular, maquinaria o activos que proteger, como cliente VAZ tienes derecho a una sesión de análisis gratuita.</p>

@@ -127,12 +127,13 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>Cotización The PaintBull — ${vehicleTitle}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
 <div style="max-width:660px;margin:30px auto;">
 
   <!-- ══ HEADER ══ -->
-  <div style="background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
+  <div style="background-color:#B91C1C;background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
     <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none;"></div>
     <div style="position:absolute;bottom:-40px;left:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none;"></div>
 
@@ -250,7 +251,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
     </div>
 
     <!-- CTA principal -->
-    <div style="background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
+    <div style="background-color:#DC2626;background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
       <div style="font-size:40px;margin-bottom:12px;">🚗</div>
       <div style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Tu auto dice todo de ti.</div>
       <div style="color:rgba(255,255,255,0.9);font-size:15px;font-weight:600;margin-bottom:6px;">Sin abolladuras = autoestima + imagen que habla por ti.</div>
@@ -277,7 +278,7 @@ async function generateQuoteEmailHTML({ customerName, vehicleData, damageAnalysi
   </div>
 
   <!-- ══ ECOSISTEMA DE AGENTES ══ -->
-  <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #DC2626;">
+  <div style="background-color:#12121a;background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #DC2626;">
     <div style="max-width:480px;margin:0 auto 28px;">
       <h2 style="color:#FB923C;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">Tu próximo equipo no se contrata. Se activa.</h2>
       <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">OneMind conecta agentes especializados, memoria operativa y automatización inteligente para atender, vender, coordinar y ejecutar procesos empresariales <strong style="color:rgba(255,255,255,0.9);">24/7</strong> — sin turnos, sin tiempos de espera, sin límites.</p>
@@ -391,11 +392,12 @@ export function generateReminder1EmailHTML({ customerName, vehicleData, quoteCod
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axel - The PaintBull · Tu cotización espera</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
   <div style="max-width:580px;margin:0 auto;padding:20px;">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#DC2626,#7F1D1D);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="background-color:#DC2626;background:linear-gradient(135deg,#DC2626,#7F1D1D);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
       <div style="font-size:36px;margin-bottom:8px;">🚗</div>
       <div style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;">Tu cotización todavía te espera</div>
       <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:6px;">${vehicleLabel} · ${quoteCode}</div>
@@ -419,7 +421,7 @@ export function generateReminder1EmailHTML({ customerName, vehicleData, quoteCod
         <div style="font-size:17px;font-weight:700;color:#DC2626;margin-bottom:8px;">¿Le damos una cita a tu ${vehicleLabel}?</div>
         <div style="font-size:13px;color:#888;margin-bottom:16px;">Escríbeme el día que prefieres · Proceso en 24–72h</div>
         <a href="https://wa.me/593994837117?text=Hola%20Axel%2C%20quiero%20agendar%20la%20cita%20para%20mi%20cotizaci%C3%B3n%20${encodeURIComponent(quoteCode)}"
-           style="display:inline-block;background:linear-gradient(135deg,#DC2626,#991B1B);color:white;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;">
+           style="display:inline-block;background-color:#DC2626;background:linear-gradient(135deg,#DC2626,#991B1B);color:white;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;">
           Agendar mi cita ahora 🚗✨
         </a>
       </div>
@@ -451,11 +453,12 @@ export function generateReminder2EmailHTML({ customerName, vehicleData, quoteCod
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axel - The PaintBull · Última oportunidad</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
   <div style="max-width:580px;margin:0 auto;padding:20px;">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1a1a1a,#333);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="background-color:#1a1a1a;background:linear-gradient(135deg,#1a1a1a,#333);padding:32px 28px;border-radius:12px 12px 0 0;text-align:center;">
       <div style="font-size:36px;margin-bottom:8px;">💪</div>
       <div style="color:white;font-size:22px;font-weight:800;">La vida se ve diferente</div>
       <div style="color:rgba(255,255,255,0.7);font-size:14px;margin-top:6px;">desde un auto impecable</div>
@@ -488,7 +491,7 @@ export function generateReminder2EmailHTML({ customerName, vehicleData, quoteCod
       </div>
 
       <!-- CTA final -->
-      <div style="text-align:center;background:linear-gradient(135deg,#DC2626,#991B1B);border-radius:10px;padding:24px;margin-bottom:24px;">
+      <div style="text-align:center;background-color:#DC2626;background:linear-gradient(135deg,#DC2626,#991B1B);border-radius:10px;padding:24px;margin-bottom:24px;">
         <div style="color:white;font-size:17px;font-weight:700;margin-bottom:8px;">Cotización ${quoteCode}</div>
         <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:16px;">${vehicleLabel}</div>
         <a href="https://wa.me/593994837117?text=Hola%20Axel%2C%20quiero%20retomar%20mi%20cotizaci%C3%B3n%20${encodeURIComponent(quoteCode)}"

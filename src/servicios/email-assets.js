@@ -45,6 +45,14 @@ export const DARK_MODE_CSS = `
   </style>
 `;
 
+/**
+ * Inline dark mode CSS for injection into <head> of legacy templates.
+ * Returns JUST the @media block (no <style> tags) for embedding inside existing <style>.
+ * For templates that don't have <style>, use DARK_MODE_CSS (includes tags).
+ */
+export const DARK_MODE_INLINE = `@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}`;
+
+
 console.log('\n✅ DARK_MODE_CSS restaurado (v1150) — uso con xiaomiSafe flag');
 console.log('\nAhora actualiza generic-email-templates.js importando:');
 console.log('  import { LOGOS_BASE64, DARK_MODE_CSS } from "./email-assets.js"');

@@ -106,12 +106,13 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>Bienvenida a Coworkia — ${membershipCode}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+  <div class="em-wrap" style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
 
     <!-- Header Coworkia Verde Oscuro — igual al template aprobado de proformas -->
-    <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+    <div style="background-color:#047857;background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
       <div style="color:white;font-size:70px;font-weight:700;margin-bottom:8px;line-height:0.9;">Coworkia</div>
       <div style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">BUSINESS CENTER</div>
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:20px 32px;display:inline-block;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
@@ -136,14 +137,14 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
       </div>
 
       <!-- Número de contrato — destacado con borde verde -->
-      <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px 25px;margin:0 0 20px;text-align:center;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
+      <div style="background-color:rgba(4,120,87,0.08);background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px 25px;margin:0 0 20px;text-align:center;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
         <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Número de Contrato</div>
         <div style="color:#065F46;font-size:36px;font-weight:900;letter-spacing:4px;margin:0 0 6px;">${membershipCode}</div>
         <div style="color:#6B7280;font-size:12px;">Preséntalo en recepción — te lo pedirán la primera vez</div>
       </div>
 
       <!-- Detalles del plan -->
-      <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:25px;margin:0 0 20px;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
+      <div style="background-color:rgba(4,120,87,0.08);background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:25px;margin:0 0 20px;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
         <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">📋 Detalles de tu Plan</div>
         <div style="background:white;border-radius:10px;padding:18px;border:1px solid rgba(4,120,87,0.15);">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -209,7 +210,7 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
       </div>
 
       <!-- Próximos pasos -->
-      <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:24px 25px;margin:0 0 20px;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
+      <div style="background-color:rgba(4,120,87,0.08);background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:24px 25px;margin:0 0 20px;box-shadow:0 2px 8px rgba(4,120,87,0.15);">
         <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">🚀 Próximos Pasos</div>
         <div style="background:white;border-radius:10px;padding:18px;border:1px solid rgba(4,120,87,0.15);">
           <div style="display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid #F0FDF4;">
@@ -235,14 +236,14 @@ function buildWelcomeHTML({ memberName, membershipType, membershipCode, startDat
       <div style="text-align:center;margin:25px 0 30px;">
         <p style="color:#374151;font-size:14px;margin:0 0 6px;font-weight:600;">¿Todo listo para tu primer día?</p>
         <p style="color:#6B7280;font-size:13px;margin:0 0 16px;line-height:1.5;">Escríbeme ahora y coordinamos la hora de llegada — quiero asegurarme de que todo esté perfecto.</p>
-        <a href="https://wa.me/593994837117?text=${encodeURIComponent('@aluna soy ' + memberName + ', acabo de confirmar mi ' + membershipType + ' (' + membershipCode + ') — ¿a qué hora puedo llegar mañana para mi primer día?')}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:15px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;letter-spacing:0.3px;">¿Cuándo empiezo mi primer día? →</a>
+        <a href="https://wa.me/593994837117?text=${encodeURIComponent('@aluna soy ' + memberName + ', acabo de confirmar mi ' + membershipType + ' (' + membershipCode + ') — ¿a qué hora puedo llegar mañana para mi primer día?')}" style="background-color:#047857;background:linear-gradient(135deg,#047857,#065F46);color:white;padding:15px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;letter-spacing:0.3px;">¿Cuándo empiezo mi primer día? →</a>
         <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">Whymper 403, Edificio Finistere - PB, Quito · secretaria.coworkia@gmail.com</p>
       </div>
 
     </div>
 
     <!-- ECOSISTEMA 8 AGENTES + FOOTER (igual al template aprobado de proformas) -->
-    <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
+    <div style="background-color:#0C0F14;background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">Todo el ecosistema a tu servicio</div>
       <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">Como miembro de Coworkia tienes acceso a todos nuestros especialistas. Cada uno resuelve un área de tu negocio — seguros, marketing, bienes raíces, colisiones, finanzas y más.</div>
       <div style="margin-bottom:22px;">${ecosistemaTable({ aliados: ['aurora', 'enzo', 'angela', 'axel', 'adriana', 'gabi', 'paula', 'custom'], theme: 'dark' })}</div>

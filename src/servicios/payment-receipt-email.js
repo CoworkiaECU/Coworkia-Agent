@@ -94,13 +94,14 @@ function generatePaymentReceiptHTML(paymentData) {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Recibo de Pago - ${receiptNumber}</title>
+      <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
       
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         
         <!-- Header formal con colores sobrios para recibo de pago -->
-        <div style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); text-align: center; padding: 40px 20px;">
+        <div style="background-color:#374151;background:linear-gradient(135deg, #374151 0%, #1f2937 100%); text-align: center; padding: 40px 20px;">
           <div style="color: white; font-size: 64px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px;">
             Coworkia
           </div>
@@ -242,7 +243,7 @@ function generatePaymentReceiptHTML(paymentData) {
               ¿Dudas sobre tu pago o membresía?
             </p>
             <a href="https://wa.me/593994837117?text=Hola%20Aluna,%20recibí%20mi%20recibo%20de%20pago%20y%20tengo%20una%20consulta%20sobre%20mi%20membresía" 
-               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
+               style="background-color:#25D366;background:linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               📱 Hablar con Aluna
             </a>
             <p style="color: #9ca3af; font-size: 12px; margin: 12px 0 0 0;">

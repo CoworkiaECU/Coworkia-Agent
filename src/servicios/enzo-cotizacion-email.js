@@ -190,7 +190,7 @@ function _renderBossQuoteBriefHTML(d, quoteCode = '') {
         <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#9CA3AF;text-transform:uppercase;margin-bottom:14px;">Todo lo que incluye</div>
         ${deliverableItems}
       </div>
-      ${d.roi_estimado ? `<div style="background:linear-gradient(135deg,#050B15,#0D1B2A);border-radius:12px;padding:22px 24px;"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#2DD4BF;text-transform:uppercase;margin-bottom:10px;">Qué cambia el día que entregamos esto</div><p style="font-size:13px;color:rgba(255,255,255,0.78);line-height:1.85;margin:0;">${d.roi_estimado}</p></div>` : ''}
+      ${d.roi_estimado ? `<div style="background-color:#050B15;background:linear-gradient(135deg,#050B15,#0D1B2A);border-radius:12px;padding:22px 24px;"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#2DD4BF;text-transform:uppercase;margin-bottom:10px;">Qué cambia el día que entregamos esto</div><p style="font-size:13px;color:rgba(255,255,255,0.78);line-height:1.85;margin:0;">${d.roi_estimado}</p></div>` : ''}
     </div>
 
     <div style="height:1px;background:linear-gradient(90deg,#E5E7EB,transparent);margin-bottom:32px;"></div>
@@ -214,11 +214,11 @@ function _renderBossQuoteBriefHTML(d, quoteCode = '') {
     </div>
 
     <!-- CTA -->
-    <div style="background:linear-gradient(135deg,#ECFDF9,#F0FDFA);border:1.5px solid rgba(45,212,191,0.3);border-radius:14px;padding:28px;text-align:center;margin-bottom:4px;">
+    <div style="background-color:#ECFDF9;background:linear-gradient(135deg,#ECFDF9,#F0FDFA);border:1.5px solid rgba(45,212,191,0.3);border-radius:14px;padding:28px;text-align:center;margin-bottom:4px;">
       ${d.cierre_emocional ? `<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 16px;font-style:italic;">${d.cierre_emocional}</p>` : ''}
       <p style="font-size:15px;font-weight:700;color:#0A0F1E;margin:0 0 6px;">¿Le damos luz verde a ${d.empresa}?</p>
       <p style="font-size:13px;color:#6B7280;margin:0 0 22px;line-height:1.6;">${d.contacto ? `${d.contacto}, arrancar` : 'Arrancar'} es una conversación de 15 minutos.<br>Escríbame ahora y lo coordinamos hoy mismo.</p>
-      <a href="${waLink}" style="display:inline-block;background:linear-gradient(135deg,#059669,#2DD4BF);color:white;font-size:15px;font-weight:800;padding:16px 42px;border-radius:50px;text-decoration:none;box-shadow:0 6px 22px rgba(13,148,136,0.4);letter-spacing:0.3px;">Arrancar con ${d.empresa} →</a>
+      <a href="${waLink}" style="display:inline-block;background-color:#059669;background:linear-gradient(135deg,#059669,#2DD4BF);color:white;font-size:15px;font-weight:800;padding:16px 42px;border-radius:50px;text-decoration:none;box-shadow:0 6px 22px rgba(13,148,136,0.4);letter-spacing:0.3px;">Arrancar con ${d.empresa} →</a>
       ${d.urgencia ? `<p style="font-size:12px;color:#D97706;font-weight:600;margin:14px 0 0;line-height:1.5;">⚡ ${d.urgencia}</p>` : ''}
       <p style="font-size:11px;color:#9CA3AF;margin:10px 0 0;">Respondo en menos de 2 horas · Lunes a sábado · Sin compromiso</p>
     </div>

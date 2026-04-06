@@ -39,8 +39,9 @@ function _adrianaQuoteHTML(d) {
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>Cotización Seguro — ${vehicleLabel}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin:0;padding:0;background:#F0F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<body style="margin:0;padding:0;background-color:#F0F4F8;background:#F0F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
 <div style="max-width:640px;margin:30px auto;">
 
   <!-- ══ HEADER SEGPOPULAR ══ -->
@@ -107,7 +108,7 @@ function _adrianaQuoteHTML(d) {
     </div>
 
     <!-- ══ PRIMA ══ -->
-    <div style="background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin-bottom:26px;">
+    <div style="background-color:#1E3A8A;background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin-bottom:26px;">
       <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Tu cotización anual</div>
       <div style="color:white;font-size:46px;font-weight:900;line-height:1;margin-bottom:6px;">${premium.annual.toLocaleString()}</div>
       <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:22px;">USD incluye IVA · Seguro ${d.insuranceType}</div>
@@ -115,7 +116,7 @@ function _adrianaQuoteHTML(d) {
         <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">O en cómodas cuotas</div>
         <div style="color:white;font-size:22px;font-weight:800;">${premium.monthly}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">× 12</span></div>
       </div>
-      <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
+      <a href="${waLink}" style="display:block;background-color:#FFD700;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
         🛡️ Quiero activar mi seguro →
       </a>
     </div>
@@ -141,7 +142,7 @@ function _adrianaQuoteHTML(d) {
     </div>
 
     <!-- Por qué SegPopular -->
-    <div style="background:linear-gradient(135deg,#FFFBEB,#FFF9C4);border:2px solid #FFD700;border-radius:14px;padding:24px;margin-bottom:10px;">
+    <div style="background-color:#FFFBEB;background:linear-gradient(135deg,#FFFBEB,#FFF9C4);border:2px solid #FFD700;border-radius:14px;padding:24px;margin-bottom:10px;">
       <div style="color:#1E3A8A;font-size:14px;font-weight:700;margin-bottom:12px;">⭐ ¿Por qué elegir SegPopular?</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${[
@@ -159,7 +160,7 @@ function _adrianaQuoteHTML(d) {
   </div>
 
   <!-- ══ CO-BRANDING COWORKIA ══ -->
-  <div style="background:linear-gradient(180deg,#0A1520 0%,#060E17 100%);border-radius:0 0 20px 20px;padding:40px;text-align:center;">
+  <div style="background-color:#0A1520;background:linear-gradient(180deg,#0A1520 0%,#060E17 100%);border-radius:0 0 20px 20px;padding:40px;text-align:center;">
     <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:30px;margin-bottom:26px;">
       <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Cotización presentada a través de</div>
       <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
@@ -199,7 +200,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
   const waLink = `https://wa.me/593994837117?text=%40adriana%2C+quiero+activar+mi+seguro`;
 
   const premiumSection = quotedPremium ? `
-    <div style="background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin:25px 0;">
+    <div style="background-color:#1E3A8A;background:linear-gradient(145deg,#1E3A8A 0%,#1D4ED8 100%);border-radius:18px;padding:32px;text-align:center;margin:25px 0;">
       <div style="color:#FFD700;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">${t.premiumLabel}</div>
       <div style="color:white;font-size:46px;font-weight:900;line-height:1;margin-bottom:6px;">$${quotedPremium.toLocaleString()}</div>
       <div style="color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:20px;">${t.premiumCurrency} · Seguro ${insuranceType || 'Vehículo Liviano'}</div>
@@ -207,7 +208,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
         <div style="color:#FFD700;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${t.installmentsLabel}</div>
         <div style="color:white;font-size:22px;font-weight:800;">$${monthlyPremium}/mes <span style="font-size:14px;font-weight:400;opacity:0.7;">${t.installmentsSuffix}</span></div>
       </div>
-      <a href="${waLink}" style="display:block;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
+      <a href="${waLink}" style="display:block;background-color:#FFD700;background:linear-gradient(135deg,#FFD700,#FFC200);color:#1E3A8A;padding:16px 36px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 22px rgba(255,215,0,0.45);">
         ${t.ctaConfirm}
       </a>
     </div>
@@ -232,6 +233,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
       <title>${t.title} - SegPopular</title>
+      <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
       
@@ -358,7 +360,7 @@ export function generateAdrianaEmailHTML(leadData, { type = 'confirmation', user
               ${t.ctaTagline}
             </p>
             <a href="https://wa.me/593994837117?text=%40adriana%2C%20es%20exactamente%20lo%20que%20buscaba%20%C2%BFActivamos%20mi%20seguro%20ahora%3F" 
-               style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
+               style="background-color:#25D366;background:linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3); font-size: 14px;">
               ${t.ctaActivate}
             </a>
           </div>
@@ -459,12 +461,13 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>Cotización The PaintBull — ${vehicleTitle}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin:0;padding:0;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
+<body style="margin:0;padding:0;background-color:#F3F4F6;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
 <div style="max-width:660px;margin:30px auto;">
 
   <!-- ══ HEADER ══ -->
-  <div style="background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
+  <div style="background-color:#B91C1C;background:linear-gradient(150deg,#B91C1C 0%,#DC2626 50%,#991B1B 100%);border-radius:20px 20px 0 0;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;">
     <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none;"></div>
     <div style="position:absolute;bottom:-40px;left:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none;"></div>
     <div style="margin:0 auto 22px;width:82px;height:82px;position:relative;">
@@ -581,7 +584,7 @@ export function generateAxelEmailHTML({ customerName, vehicleData = {}, damageAn
     </div>
 
     <!-- CTA -->
-    <div style="background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
+    <div style="background-color:#DC2626;background:linear-gradient(145deg,#DC2626,#991B1B);border-radius:18px;padding:36px;text-align:center;margin-bottom:10px;">
       <div style="color:rgba(255,255,255,0.85);font-size:13px;margin-bottom:8px;">${t.ctaTitle1}</div>
       <div style="color:white;font-size:20px;font-weight:700;margin-bottom:6px;">${t.ctaTitle2}</div>
       <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:24px;">${t.ctaDesc}</div>
@@ -659,6 +662,7 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
       <title>Cotización MarketingLab — ${leadId}</title>
       <meta name="color-scheme" content="light only">
       <meta name="supported-color-schemes" content="light">
+      <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #0D9488; margin: 0; padding: 0;">
 
@@ -782,12 +786,12 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
           </div>
 
           <!-- CTA consultoría -->
-          <div style="background: linear-gradient(135deg, #1F2937 0%, #0A0F1E 100%); border-radius: 14px; padding: 28px 24px; margin: 0 0 24px; text-align: center;">
+          <div style="background-color:#1F2937;background:linear-gradient(135deg, #1F2937 0%, #0A0F1E 100%); border-radius: 14px; padding: 28px 24px; margin: 0 0 24px; text-align: center;">
             <div style="color: #2DD4BF; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">${t.sectionBonus}</div>
             <div style="color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px;">${t.bonusTitle}</div>
             <div style="color: rgba(255,255,255,0.65); font-size: 13px; line-height: 1.7; margin-bottom: 22px;">${t.bonusDesc}</div>
             <a href="https://wa.me/593994837117?text=%40enzo%2C%20mejoremos%20el%20precio%20de%20tu%20oferta%20y%20cerremos%20este%20negocio%20en%20una%20reuni%C3%B3n%20en%20tu%20oficina"
-               style="display: inline-block; background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); color: #042f2e; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 15px; box-shadow: 0 6px 20px rgba(45,212,191,0.40); letter-spacing: 0.3px;">
+               style="display: inline-block; background-color:#2DD4BF;background:linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); color: #042f2e; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 15px; box-shadow: 0 6px 20px rgba(45,212,191,0.40); letter-spacing: 0.3px;">
               ${t.ctaNegotiate}
             </a>
             <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 12px 0 0; letter-spacing: 0.3px;">${t.ctaNegotiateNote}</p>
@@ -824,7 +828,7 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
                   </div>
                 </td>
                 <td style="width: 25%; padding: 0 0 0 4px; vertical-align: top; height: 175px;">
-                  <div style="background: linear-gradient(135deg, #042f2e 0%, #0A0F1E 100%); border: 1px solid rgba(45,212,191,0.4); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
+                  <div style="background-color:#042f2e;background:linear-gradient(135deg, #042f2e 0%, #0A0F1E 100%); border: 1px solid rgba(45,212,191,0.4); border-radius: 10px; padding: 14px 12px; text-align: center; min-height: 175px; height: 100%; box-sizing: border-box;">
                     <div style="color: #2DD4BF; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">${t.week(4)}</div>
                     <div style="font-size: 22px; margin-bottom: 6px;">${t.weekIcons[3]}</div>
                     <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 4px;">${t.weekTitles[3]}</div>
@@ -840,7 +844,7 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
           <div style="text-align: center; margin: 0 0 8px;">
             <p style="color: #6B7280; font-size: 14px; margin: 0 0 14px; font-weight: 500;">${t.ctaQue}</p>
             <a href="https://wa.me/593994837117?text=%40enzo%20recib%C3%AD%20tu%20cotizaci%C3%B3n%20por%20correo%20(${encodeURIComponent(leadId)})%20y%20tengo%20algunas%20dudas"
-               style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; padding: 13px 32px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 5px 18px rgba(37,211,102,0.35); font-size: 14px;">
+               style="background-color:#25D366;background:linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; padding: 13px 32px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; box-shadow: 0 5px 18px rgba(37,211,102,0.35); font-size: 14px;">
               ${t.ctaWa}
             </a>
             <p style="color: #9CA3AF; font-size: 11px; margin: 10px 0 0;">${t.ctaWaSub}</p>
@@ -850,7 +854,7 @@ export function generateEnzoEmailHTML(leadData, { type = 'confirmation', userLan
       </div>
 
       <!-- ═══ ECOSISTEMA DE AGENTES ═══ -->
-      <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #0D9488;">
+      <div style="background-color:#12121a;background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #0D9488;">
         <div style="max-width:480px;margin:0 auto 28px;">
           <h2 style="color:#2DD4BF;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">${t.ecosistemaTitle}</h2>
           <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">${t.ecosistemaDesc}</p>
@@ -913,6 +917,7 @@ export function generatePaulaEmailHTML(leadData, { userLanguage = 'es', leadScor
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
       <title>Búsqueda de Propiedad - PropElite</title>
+      <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
     </head>
     <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #EDE8D0; background-color: #3D4436; margin: 0; padding: 20px;">
       
@@ -1061,12 +1066,13 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Membresía Coworkia</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
 
     <!-- Header — mismo estilo aprobado de la proforma -->
-    <div style="background: linear-gradient(135deg, #047857 0%, #065F46 100%); text-align: center; padding: 40px 20px 35px;">
+    <div style="background-color:#047857;background:linear-gradient(135deg, #047857 0%, #065F46 100%); text-align: center; padding: 40px 20px 35px;">
       <div style="color: white; font-size: 70px; font-weight: 700; margin-bottom: 8px; line-height: 0.9;">Coworkia</div>
       <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 30px;">BUSINESS CENTER</div>
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
@@ -1096,7 +1102,7 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
       <!-- CTA único -->
       <div style="text-align:center;margin-bottom:20px;">
         <a href="https://wa.me/593994837117?text=${waVisita}"
-           style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">
+           style="background-color:#047857;background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">
           📅 Reservar mi primera visita gratuita
         </a>
         <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Respuesta en minutos · Puedes venir cualquier día de la semana</div>
@@ -1208,7 +1214,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
     </div>
 
     <!-- OFFER: clear 2-tier pitch -->
-    <div style="background:linear-gradient(145deg,#1B3358 0%,#0D2137 100%);border-radius:16px;padding:32px 24px;margin:0 0 24px;text-align:center;">
+    <div style="background-color:#1B3358;background:linear-gradient(145deg,#1B3358 0%,#0D2137 100%);border-radius:16px;padding:32px 24px;margin:0 0 24px;text-align:center;">
       <div style="background:rgba(255,224,51,0.1);border:1px solid rgba(255,224,51,0.3);border-radius:20px;padding:5px 18px;display:inline-block;margin-bottom:20px;">
         <span style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">🎁 ${t.sectionOffer}</span>
       </div>
@@ -1236,7 +1242,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
         ${t.offerDesc}
       </div>
       <a href="${clientWaCTA1}"
-         style="display:inline-block;background:linear-gradient(135deg,#FFE033 0%,#E8B800 100%);color:#0D2137;padding:16px 36px;text-decoration:none;border-radius:50px;font-weight:900;font-size:15px;box-shadow:0 6px 22px rgba(255,224,51,0.5);letter-spacing:0.3px;">
+         style="display:inline-block;background-color:#FFE033;background:linear-gradient(135deg,#FFE033 0%,#E8B800 100%);color:#0D2137;padding:16px 36px;text-decoration:none;border-radius:50px;font-weight:900;font-size:15px;box-shadow:0 6px 22px rgba(255,224,51,0.5);letter-spacing:0.3px;">
         ${t.ctaPrimary}
       </a>
       <p style="color:rgba(255,255,255,0.35);font-size:11px;margin:12px 0 0;letter-spacing:0.3px;">${t.ctaNote}</p>
@@ -1264,7 +1270,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
             </div>
           </td>
           <td style="width:33.3%;padding:0 0 0 5px;vertical-align:top;">
-            <div style="background:linear-gradient(135deg,#2a1a00 0%,#0A0F1E 100%);border:1px solid rgba(255,224,51,0.4);border-radius:10px;padding:16px 12px;text-align:center;">
+            <div style="background-color:#2a1a00;background:linear-gradient(135deg,#2a1a00 0%,#0A0F1E 100%);border:1px solid rgba(255,224,51,0.4);border-radius:10px;padding:16px 12px;text-align:center;">
               <div style="color:#FFE033;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${t.processResult}</div>
               <div style="font-size:24px;margin-bottom:8px;">📋</div>
               <div style="color:white;font-size:12px;font-weight:700;margin-bottom:4px;">${t.process3Title}</div>
@@ -1279,7 +1285,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
     <div style="text-align:center;margin:0 0 8px;">
       <p style="color:#6B7280;font-size:14px;margin:0 0 14px;font-weight:500;">${t.ctaQue}</p>
       <a href="${clientWaCTA2}"
-         style="background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
+         style="background-color:#25D366;background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
         ${t.ctaWa}
       </a>
       <p style="color:#9CA3AF;font-size:11px;margin:10px 0 0;">${t.ctaWaSub}</p>
@@ -1309,7 +1315,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
     <div style="text-align:center;margin:0 0 8px;">
       <p style="color:#6B7280;font-size:14px;margin:0 0 14px;">💬 Contactar al cliente</p>
       <a href="${adminWaLink}"
-         style="background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
+         style="background-color:#25D366;background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);color:white;padding:13px 32px;text-decoration:none;border-radius:50px;font-weight:700;display:inline-block;box-shadow:0 5px 18px rgba(37,211,102,0.35);font-size:14px;">
         📱 Abrir WhatsApp con ${userName}
       </a>
     </div>
@@ -1329,13 +1335,14 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
       <meta name="color-scheme" content="light only">
       <meta name="supported-color-schemes" content="light">
       <title>${recipientType === 'admin' ? 'Nueva Consultoría' : `Cotización ${consultationCode}`} — GR Consulting</title>
+      <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
     </head>
     <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;background-color:#0D2137;margin:0;padding:0;">
 
       <div style="max-width:600px;margin:0 auto;background:white;border-radius:0;overflow:hidden;">
 
         <!-- ═══ HEADER: dark navy + fluorescent gold ═══ -->
-        <div style="background:linear-gradient(145deg,#1B3358 0%,#0D2137 55%,#14293F 100%);text-align:center;padding:48px 20px 40px;position:relative;overflow:hidden;">
+        <div style="background-color:#1B3358;background:linear-gradient(145deg,#1B3358 0%,#0D2137 55%,#14293F 100%);text-align:center;padding:48px 20px 40px;position:relative;overflow:hidden;">
 
           <div style="color:white;font-size:32px;font-weight:900;letter-spacing:-0.5px;margin-bottom:5px;font-family:Georgia,serif;">GR Consulting</div>
           <div style="color:#FFE033;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin-bottom:28px;">FINANZAS · LEGAL · RRHH · COMPLIANCE</div>
@@ -1375,7 +1382,7 @@ export function generateGabiEmailHTML(leadData, userLanguage = 'es') {
       </div>
 
       <!-- ═══ ECOSISTEMA ═══ -->
-      <div style="background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #FFE033;">
+      <div style="background-color:#12121a;background:linear-gradient(180deg,#12121a 0%,#0d0d12 100%);padding:40px 24px 0;text-align:center;border-top:3px solid #FFE033;">
         <div style="max-width:480px;margin:0 auto 28px;">
           <h2 style="color:#FFE033;font-size:22px;font-weight:700;line-height:1.3;margin:0 0 12px;letter-spacing:-0.5px;">${t.ecosistemaTitle}</h2>
           <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;margin:0;">${t.ecosistemaDesc}</p>
@@ -1521,7 +1528,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
       </div>
     </div>
     <div style="text-align:center;">
-      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:12px 28px;text-decoration:none;border-radius:22px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:14px;">${t.comboCTA}</a>
+      <a href="https://wa.me/${coworkiaWhatsApp}?text=${waComboText}" style="background-color:#047857;background:linear-gradient(135deg,#047857,#065F46);color:white;padding:12px 28px;text-decoration:none;border-radius:22px;font-weight:600;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:14px;">${t.comboCTA}</a>
       <div style="color:#9CA3AF;font-size:11px;margin-top:6px;">${t.comboNote}</div>
     </div>
   </div>` : '';
@@ -1580,13 +1587,14 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>Tu propuesta de membresía — Coworkia</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0;">
 
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
 
     <!-- Header Coworkia Verde Oscuro -->
-    <div style="background: linear-gradient(135deg, #047857 0%, #065F46 100%); text-align: center; padding: 40px 20px 35px;">
+    <div style="background-color:#047857;background:linear-gradient(135deg, #047857 0%, #065F46 100%); text-align: center; padding: 40px 20px 35px;">
       <!-- Logo texto simple -->
       <div style="color: white; font-size: 70px; font-weight: 700; margin-bottom: 8px; line-height: 0.9;">Coworkia</div>
       <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 30px;">
@@ -1619,7 +1627,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
         <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;width:100%;">
           <tr>
             <td style="width:62px;vertical-align:middle;padding-right:14px;">
-              <div style="background:linear-gradient(135deg,#047857,#065F46);border-radius:10px;width:48px;height:48px;text-align:center;line-height:48px;box-shadow:0 4px 12px rgba(4,120,87,0.3);">
+              <div style="background-color:#047857;background:linear-gradient(135deg,#047857,#065F46);border-radius:10px;width:48px;height:48px;text-align:center;line-height:48px;box-shadow:0 4px 12px rgba(4,120,87,0.3);">
                 <span style="font-size:24px;">🎫</span>
               </div>
             </td>
@@ -1666,7 +1674,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
       </div>` : ''}
 
       <!-- Diferenciador IA -->
-      <div style="background: linear-gradient(135deg, #047857, #065F46); border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; box-shadow: 0 4px 16px rgba(4,120,87,0.25);">
+      <div style="background-color:#047857;background:linear-gradient(135deg, #047857, #065F46); border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; box-shadow: 0 4px 16px rgba(4,120,87,0.25);">
         <div style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">${t.aiSectionLabel}</div>
         <div style="color: white; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${t.aiTitle}</div>
         <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; line-height: 1.6;">${t.aiDesc}</p>
@@ -1678,7 +1686,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
           ${t.ctaTagline}
         </p>
         <a href="https://wa.me/${coworkiaWhatsApp}?text=${waText}"
-           style="background: linear-gradient(135deg, #047857, #065F46); color: white; padding: 14px 32px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(4,120,87,0.35); font-size: 15px;">
+           style="background-color:#047857;background:linear-gradient(135deg, #047857, #065F46); color: white; padding: 14px 32px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(4,120,87,0.35); font-size: 15px;">
           ${t.ctaButton}
         </a>
         <p style="color: #9CA3AF; font-size: 12px; margin: 12px 0 0 0;">${t.ctaNote}</p>
@@ -1723,7 +1731,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
     </div>
 
     <!-- ECOSISTEMA 8 AGENTES + FOOTER -->
-    <div style="background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
+    <div style="background-color:#0C0F14;background:linear-gradient(180deg,#0C0F14 0%,#0A0D12 100%);padding:36px 32px;text-align:center;">
       <div style="color:#4ECDC4;font-size:22px;font-weight:800;margin-bottom:12px;line-height:1.3;">${t.ecosistemaTitle}</div>
       <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;max-width:480px;margin:0 auto 28px;">${t.ecosistemaDesc}</div>
       <div style="margin-bottom:22px;">${ecosistemaItems}</div>
@@ -1760,7 +1768,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
 // Helper privado DRY: genera el header verde oscuro idéntico al de la proforma.
 function _alunaEmailHeader(userName, badgeLabel) {
   return `
-    <div style="background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
+    <div style="background-color:#047857;background:linear-gradient(135deg,#047857 0%,#065F46 100%);text-align:center;padding:40px 20px 35px;">
       <div style="color:white;font-size:70px;font-weight:700;margin-bottom:8px;line-height:0.9;">Coworkia</div>
       <div style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">BUSINESS CENTER</div>
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:20px 32px;display:inline-block;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
@@ -1779,7 +1787,7 @@ export function generateAlunaFollowup2HTML({ userName, membershipType, membershi
   const proformaRef = membershipCode
     ? `<div style="background:#F0FDF4;border:1px solid #D1FAE5;border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:11px;color:#065F46;">Ref. proforma: <strong>${membershipCode}</strong></div>`
     : '';
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Oferta especial — Coworkia</title></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Oferta especial — Coworkia</title><style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
   ${_alunaEmailHeader(firstName, '· OFERTA ESPECIAL PARA TI ·')}
@@ -1795,7 +1803,7 @@ export function generateAlunaFollowup2HTML({ userName, membershipType, membershi
       <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#DC2626;margin-right:8px;">⏰</span>Oferta válida hasta el <strong>${expiryDate || '7 días desde hoy'}</strong></div>
     </div>
     <div style="text-align:center;margin-bottom:20px;">
-      <a href="https://wa.me/593994837117?text=${waText}" style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">🔥 Quiero mi 15% adicional</a>
+      <a href="https://wa.me/593994837117?text=${waText}" style="background-color:#047857;background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(4,120,87,0.4);font-size:15px;">🔥 Quiero mi 15% adicional</a>
       <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">Respuesta en minutos · Abre WhatsApp directo con Aluna</div>
     </div>
     <div style="text-align:center;padding:16px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
@@ -1815,7 +1823,7 @@ export function generateAlunaFollowup3HTML({ userName, membershipType, membershi
   const proformaRef = membershipCode
     ? `<div style="background:#F0FDF4;border:1px solid #D1FAE5;border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:11px;color:#065F46;">Ref. proforma: <strong>${membershipCode}</strong></div>`
     : '';
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Última oportunidad — Coworkia</title></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Última oportunidad — Coworkia</title><style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:0;">
 <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
   ${_alunaEmailHeader(firstName, '· ÚLTIMO DÍA · OFERTA VENCE HOY ·')}
@@ -1836,10 +1844,10 @@ export function generateAlunaFollowup3HTML({ userName, membershipType, membershi
       <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Garantía: 15 días de devolución completa si no convence</div>
     </div>
     <div style="text-align:center;margin-bottom:20px;">
-      <a href="https://wa.me/593994837117?text=${waText}" style="background:linear-gradient(135deg,#DC2626,#991B1B);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(220,38,38,0.4);font-size:15px;">⚡ Activar ahora — último día</a>
+      <a href="https://wa.me/593994837117?text=${waText}" style="background-color:#DC2626;background:linear-gradient(135deg,#DC2626,#991B1B);color:white;padding:14px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 14px rgba(220,38,38,0.4);font-size:15px;">⚡ Activar ahora — último día</a>
       <div style="color:#9CA3AF;font-size:12px;margin-top:8px;">En 10 minutos queda todo listo</div>
     </div>
-    <div style="text-align:center;padding:16px;background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
+    <div style="text-align:center;padding:16px;background-color:rgba(4,120,87,0.08);background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-radius:10px;">
       <p style="color:#9CA3AF;font-size:12px;margin:0;">Equipo Coworkia · Whymper 403, Edificio Finistere, Quito</p>
     </div>
   </div>

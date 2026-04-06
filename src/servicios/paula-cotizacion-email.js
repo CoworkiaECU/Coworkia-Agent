@@ -193,7 +193,7 @@ function propCardHTML(p, single = false) {
   <!-- PROPIEDAD CARD: ${p.nombre} -->
   <div style="border:2px solid #E8E0D0;border-radius:18px;overflow:hidden;margin-bottom:28px;">
     <!-- Card Header -->
-    <div style="background:linear-gradient(135deg,#1A2744,#243558);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg,#1A2744,#243558);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div>
         ${p.badge ? `<div style="color:#D4AF37;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">${p.badge}</div>` : ''}
         <div style="color:white;font-size:${single ? '22' : '19'}px;font-weight:800;">${p.nombre}</div>
@@ -233,7 +233,7 @@ function propCardHTML(p, single = false) {
 
       <!-- Botones -->
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="${FOTOS_LINK}" style="flex:1;display:block;text-align:center;background:linear-gradient(135deg,#1A2744,#243558);color:white;padding:13px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;">
+        <a href="${FOTOS_LINK}" style="flex:1;display:block;text-align:center;background-color:#1A2744;background:linear-gradient(135deg,#1A2744,#243558);color:white;padding:13px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;">
           📸 Ver Fotos Profesionales →
         </a>
         <a href="${UBICACION}" style="flex:1;display:block;text-align:center;background:#F9F6F0;border:2px solid #E8E0D0;color:#1A2744;padding:13px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;">
@@ -268,17 +268,18 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>PropElite — ${titulo}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
 <body style="margin:0;padding:0;background:#F2EDE6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;">
 <div style="max-width:660px;margin:30px auto;">
 
   <!-- ══ HEADER PROPELITE ══ -->
-  <div style="background:linear-gradient(160deg,#0F1C2E 0%,#1A2744 55%,#0C1520 100%);border-radius:20px 20px 0 0;padding:52px 42px 46px;text-align:center;position:relative;overflow:hidden;">
+  <div style="background-color:#0F1C2E;background:linear-gradient(160deg,#0F1C2E 0%,#1A2744 55%,#0C1520 100%);border-radius:20px 20px 0 0;padding:52px 42px 46px;text-align:center;position:relative;overflow:hidden;">
     <!-- Elementos decorativos -->
     <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:rgba(212,175,55,0.05);pointer-events:none;"></div>
     <div style="position:absolute;bottom:-50px;left:-40px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.04);pointer-events:none;"></div>
 
-    <div style="margin:0 auto 20px;width:74px;height:74px;background:linear-gradient(145deg,#D4AF37,#F0CB55);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 6px 28px rgba(212,175,55,0.5);">🏡</div>
+    <div style="margin:0 auto 20px;width:74px;height:74px;background-color:#D4AF37;background:linear-gradient(145deg,#D4AF37,#F0CB55);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 6px 28px rgba(212,175,55,0.5);">🏡</div>
     <div style="color:white;font-size:30px;font-weight:800;letter-spacing:-0.5px;margin-bottom:3px;">PropElite</div>
     <div style="color:#D4AF37;font-size:11px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;margin-bottom:28px;">BIENES RAÍCES DE LUJO · ECUADOR & R.D.</div>
 
@@ -326,12 +327,12 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
     </div>
 
     <!-- ══ CTA AGENDAR VISITA ══ -->
-    <div style="background:linear-gradient(145deg,#1A2744,#0C1520);border-radius:18px;padding:38px;text-align:center;margin-bottom:10px;">
+    <div style="background-color:#1A2744;background:linear-gradient(145deg,#1A2744,#0C1520);border-radius:18px;padding:38px;text-align:center;margin-bottom:10px;">
       <div style="color:#D4AF37;font-size:13px;font-weight:600;margin-bottom:10px;">¿Lista para conocerla en persona?</div>
       <p style="color:rgba(255,255,255,0.75);font-size:15px;line-height:1.75;margin:0 0 26px 0;max-width:400px;margin-left:auto;margin-right:auto;">
         Las fotos capturan la belleza, pero la visita presencial revela la vida que puede tener aquí. ¿Agendamos una recorrida esta semana?
       </p>
-      <a href="${waVisita}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#F0CB55);color:#1A2744;padding:17px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(212,175,55,0.5);">
+      <a href="${waVisita}" style="display:inline-block;background-color:#D4AF37;background:linear-gradient(135deg,#D4AF37,#F0CB55);color:#1A2744;padding:17px 44px;border-radius:50px;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(212,175,55,0.5);">
         🏡 Agendar mi visita →
       </a>
       <div style="margin-top:18px;">
@@ -344,7 +345,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
   </div>
 
   <!-- ══ CO-BRANDING COWORKIA ══ -->
-  <div style="background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
+  <div style="background-color:#060E17;background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
       <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Propuesta presentada a través de</div>
       <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>

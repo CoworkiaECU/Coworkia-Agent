@@ -36,7 +36,7 @@ const WASSENGER_DEVICE_ID = process.env.WASSENGER_DEVICE_ID;
  */
 router.get('/reservations', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     const { status, serviceType, date, limit = 100, offset = 0 } = req.query;
     
@@ -151,7 +151,7 @@ router.get('/reservations', async (req, res) => {
  */
 router.get('/stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     // Total reservas
     const totalResult = await databaseService.get(
@@ -242,7 +242,7 @@ router.get('/stats', async (req, res) => {
  */
 router.get('/stats/weekly', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // Reservas + revenue por semana (últimas 8 semanas)
     const weeklyRows = await databaseService.all(`
@@ -310,7 +310,7 @@ router.get('/stats/weekly', async (req, res) => {
  */
 router.get('/prospects/abandoned', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const prospects = await databaseService.all(`
       SELECT
@@ -363,7 +363,7 @@ router.get('/prospects/abandoned', async (req, res) => {
  */
 router.get('/reservations/:reservationId', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     const { reservationId } = req.params;
     
@@ -403,7 +403,7 @@ router.get('/reservations/:reservationId', async (req, res) => {
  */
 router.get('/conversations', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const { phone, limit = 200 } = req.query;
 
@@ -487,7 +487,7 @@ router.get('/conversations', async (req, res) => {
  */
 router.post('/reservations/:id/send-followup-1h', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const reservation = await databaseService.get(
       `SELECT id, user_phone, service_type, date, start_time, end_time, total_price, status
        FROM reservations WHERE id = $1`,
@@ -510,7 +510,7 @@ router.post('/reservations/:id/send-followup-1h', async (req, res) => {
  */
 router.post('/reservations/:id/send-rebooking', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const reservation = await databaseService.get(
       `SELECT id, user_phone, service_type, date, start_time, end_time, total_price, status
        FROM reservations WHERE id = $1`,
@@ -534,7 +534,7 @@ router.post('/reservations/:id/send-rebooking', async (req, res) => {
  */
 router.get('/interested-groups', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // Grupo 1: Se fueron a la mitad (empezaron a reservar, nunca confirmaron)
     const partial = await databaseService.all(`
@@ -659,7 +659,7 @@ router.post('/send-campaign', async (req, res) => {
  */
 router.post('/reservations/manual', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { clientName, clientPhone, serviceType, date, startTime, endTime, amount, paymentType, notes } = req.body;
 
     if (!clientName || !clientPhone || !serviceType || !date || !startTime || !endTime) {
@@ -723,7 +723,7 @@ router.post('/reservations/manual', async (req, res) => {
  */
 router.patch('/reservations/:id/register-payment', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { id } = req.params;
     const parsedAmount = parseFloat(req.body?.amount);
 
@@ -834,7 +834,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
  */
 router.patch('/reservations/:id/attended', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { id } = req.params;
     const { attended } = req.body;
 
@@ -879,7 +879,7 @@ router.patch('/reservations/:id/attended', async (req, res) => {
  */
 router.get('/automations/stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const fields = [
       { key: 'followup_1h',  col: 'followup_1h_sent_at' },
@@ -929,7 +929,7 @@ router.get('/automations/stats', async (req, res) => {
  */
 router.get('/occupancy', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const reservationRepository = (await import('../../database/reservationRepository.js')).default;
 
     const permanentDesks = await reservationRepository.getActivePermanentDesks();

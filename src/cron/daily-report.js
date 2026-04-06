@@ -17,7 +17,7 @@ import { metricsCollector }  from '../utils/observability.js';
 
 async function collectAlunaStats() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [newToday, followups, conversions] = await Promise.all([
       databaseService.get(
@@ -49,7 +49,7 @@ async function collectAlunaStats() {
 
 async function collectAuroraStats() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [todayReservations, pending] = await Promise.all([
       databaseService.get(
@@ -74,7 +74,7 @@ async function collectAuroraStats() {
 
 async function collectAdrianaStats() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [newToday, accepted] = await Promise.all([
       databaseService.get(
@@ -119,7 +119,7 @@ async function sendDailyReport() {
 
 async function collectSelfHealingReport() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // Obtener el reporte más reciente (de anoche)
     const latestReport = await databaseService.get(
@@ -179,7 +179,7 @@ export { sendDailyReport };
 
 async function collectAuroraWeeklyStats() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [
       totalWeek,

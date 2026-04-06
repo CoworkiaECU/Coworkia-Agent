@@ -530,7 +530,7 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     
     // Log to email_sent_log for multi-agent reply isolation
     try {
-      await databaseService.ensureInitialized();
+      await databaseService.initialize();
       await databaseService.run(`
         INSERT INTO email_sent_log (message_id, agent, entity_type, entity_id, to_email, subject, user_phone)
         VALUES ($1, $2, $3, $4, $5, $6, $7)

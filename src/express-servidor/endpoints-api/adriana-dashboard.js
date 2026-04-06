@@ -14,7 +14,7 @@ const router = express.Router();
 // ── GET /api/adriana/leads ────────────────────────────────────────────────────
 router.get('/leads', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { status, insuranceType, search, limit = 200, offset = 0 } = req.query;
 
     let query = `SELECT id, quote_code, insurance_type, client_name, email, phone,
@@ -47,7 +47,7 @@ router.get('/leads', async (req, res) => {
 // ── GET /api/adriana/leads-stats ──────────────────────────────────────────────
 router.get('/leads-stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [total, thisMonth, thisWeek, byStatus, premiumRow] = await Promise.all([
       databaseService.get(`SELECT COUNT(*) as total FROM insurance_leads`),
@@ -77,7 +77,7 @@ router.get('/leads-stats', async (req, res) => {
 // ── PATCH /api/adriana/leads/:code/status ────────────────────────────────────
 router.patch('/leads/:code/status', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { code } = req.params;
     const { status, notes } = req.body;
     if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
@@ -98,7 +98,7 @@ router.patch('/leads/:code/status', async (req, res) => {
 // ── POST /api/adriana/leads/:code/send-wa ────────────────────────────────────
 router.post('/leads/:code/send-wa', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const l = await databaseService.get(
       `SELECT quote_code, client_name, phone, insurance_type, vehicle_brand, vehicle_model, vehicle_year, quoted_premium
        FROM insurance_leads WHERE quote_code = $1`,
@@ -133,7 +133,7 @@ router.post('/leads/:code/send-wa', async (req, res) => {
 router.delete('/leads/:code', async (req, res) => {
   const { code } = req.params;
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const existing = await databaseService.get(
       'SELECT id, client_name FROM insurance_leads WHERE id = $1',
       [code]
@@ -151,7 +151,7 @@ router.delete('/leads/:code', async (req, res) => {
 // ── GET /api/adriana/seed-demo ────────────────────────────────────────────────
 router.get('/seed-demo', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     console.log('🎭 [ADRIANA] Iniciando seed de leads demo...');
 
     const DEMO_LEADS = [
@@ -206,7 +206,7 @@ router.get('/seed-demo', async (req, res) => {
 // ── POST /api/adriana/leads/:code/send-comparison ────────────────────────────
 router.post('/leads/:code/send-comparison', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const l = await databaseService.get(
       `SELECT quote_code, client_name, email, phone, insurance_type,
               vehicle_brand, vehicle_model, vehicle_year, commercial_value,

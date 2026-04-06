@@ -15,7 +15,7 @@ const router = express.Router();
 // ═══════════════════════════════════════════════════════════════════════════
 router.get('/dashboard', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // ─── MÉTRICAS DEL MES ───────────────────────────────────────────────────
     const monthStart = new Date();
@@ -129,7 +129,7 @@ router.get('/dashboard', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 router.get('/projects', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const { status, projectType, urgency, search } = req.query;
     
@@ -202,7 +202,7 @@ router.get('/stats', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 router.patch('/projects/:code/status', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { code } = req.params;
     const { status } = req.body;
     if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
@@ -222,7 +222,7 @@ router.patch('/projects/:code/status', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 router.post('/projects/:code/send-reminder', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const p = await databaseService.get(
       `SELECT project_code, client_name, user_phone, phone, project_type, company, proposal_amount
        FROM marketing_leads WHERE project_code = $1`,
@@ -264,7 +264,7 @@ router.post('/projects/:code/send-reminder', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 router.post('/leads/:code/send-followup', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { day: dayParam } = req.body;
     const leadForDay = await databaseService.get(
       `SELECT followup_d1_sent_at, followup_d3_sent_at, followup_d7_sent_at FROM marketing_leads WHERE project_code = $1`,

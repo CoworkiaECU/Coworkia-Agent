@@ -29,7 +29,7 @@ const __dirname = path.dirname(__filename);
  */
 async function analyzeFailedConversations() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // Query 1: Mensajes de error del agente
     const errorMessages = await databaseService.all(
@@ -131,7 +131,7 @@ async function analyzeFailedConversations() {
  */
 async function analyzeErrorEvents() {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // Query: Agrupar errores por tipo y fuente
     const errorSummary = await databaseService.all(

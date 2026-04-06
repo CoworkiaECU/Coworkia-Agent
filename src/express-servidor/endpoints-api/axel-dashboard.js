@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/quotes', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { status, damageType, search, limit = 200, offset = 0 } = req.query;
 
     let query = `SELECT id, quote_code, damage_type, client_name, email, phone,
@@ -46,7 +46,7 @@ router.get('/quotes', async (req, res) => {
 router.get('/quotes-stats', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [total, thisMonth, thisWeek, byStatus, avgRow] = await Promise.all([
       databaseService.get(`SELECT COUNT(*) as total FROM collision_quotes`),
@@ -76,7 +76,7 @@ router.get('/quotes-stats', async (req, res) => {
 // ── PATCH /api/axel/quotes/:code/status ──────────────────────────────────────
 router.patch('/quotes/:code/status', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { code } = req.params;
     const { status, notes } = req.body;
     if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
@@ -97,7 +97,7 @@ router.patch('/quotes/:code/status', async (req, res) => {
 // ── POST /api/axel/quotes/:code/send-reminder ─────────────────────────────────
 router.post('/quotes/:code/send-reminder', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const q = await databaseService.get(
       `SELECT quote_code, user_phone, phone, client_name, vehicle_brand, vehicle_model, vehicle_year, price_min, price_max
        FROM collision_quotes WHERE quote_code = $1`,

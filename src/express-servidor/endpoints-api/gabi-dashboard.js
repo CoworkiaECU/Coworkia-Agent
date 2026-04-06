@@ -213,7 +213,7 @@ router.get('/dashboard', async (req, res) => {
  */
 router.get('/leads', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const { status, consultationType, urgency, search, limit = 200, offset = 0 } = req.query;
 
@@ -257,7 +257,7 @@ router.get('/leads', async (req, res) => {
 // ── PATCH /api/gabi/leads/:code/status ────────────────────────────────────
 router.patch('/leads/:code/status', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { code } = req.params;
     const { status } = req.body;
     if (!status) return res.status(400).json({ ok: false, error: 'status requerido' });
@@ -275,7 +275,7 @@ router.patch('/leads/:code/status', async (req, res) => {
 // ── POST /api/gabi/leads/:code/send-wa ─────────────────────────────────────
 router.post('/leads/:code/send-wa', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const l = await databaseService.get(
       `SELECT consultation_code, client_name, phone, consultation_type, urgency, company
        FROM legal_leads WHERE consultation_code = $1`,
@@ -311,7 +311,7 @@ router.post('/leads/:code/send-wa', async (req, res) => {
  */
 router.get('/leads-stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [total, byStatus, byType, revenueRow, thisMonth, thisWeek] = await Promise.all([
       databaseService.get(`SELECT COUNT(*) as total FROM legal_leads`),

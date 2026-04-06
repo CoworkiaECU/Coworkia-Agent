@@ -42,7 +42,7 @@ export async function generateSequentialCode(prefix, table, codeColumn, padLengt
   const fullPrefix = `${prefix}-${year}-`;
 
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const last = await databaseService.get(
       `SELECT ${codeColumn} FROM ${table} WHERE ${codeColumn} LIKE $1 ORDER BY ${codeColumn} DESC LIMIT 1`,

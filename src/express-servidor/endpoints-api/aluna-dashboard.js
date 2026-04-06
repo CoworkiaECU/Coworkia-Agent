@@ -32,7 +32,7 @@ const router = express.Router();
  */
 router.get('/proformas', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     const { status, limit = 100, offset = 0 } = req.query;
     
@@ -112,7 +112,7 @@ router.get('/proformas', async (req, res) => {
  */
 router.get('/proformas/:membershipCode', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     const { membershipCode } = req.params;
     
@@ -156,7 +156,7 @@ router.get('/proformas/:membershipCode', async (req, res) => {
  */
 router.get('/stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     // ── MÉTRICAS DE FOLLOW-UPS — todas desde membership_leads ───────────────
 
@@ -320,7 +320,7 @@ router.get('/stats', async (req, res) => {
  */
 router.get('/dashboard', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     // ── Stats (inline, same logic as /stats) ───────────────────────────────
     const [totalResult, byStatus, byType, revenueResult, recent, thisMonth, recentProformas] =
@@ -384,7 +384,7 @@ router.get('/dashboard', async (req, res) => {
  */
 router.get('/pipeline', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [total, pending24h, pending3d, converted, recent] = await Promise.all([
       databaseService.get(`SELECT COUNT(*) as total FROM membership_leads WHERE membership_activated IS NOT TRUE`),
@@ -459,7 +459,7 @@ router.get('/pipeline', async (req, res) => {
  */
 router.post('/prospects', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     let { phone, name, membershipType, membershipCode, email, alreadyConverted } = req.body;
     
     if (!phone || !name) {
@@ -500,7 +500,7 @@ router.post('/prospects', async (req, res) => {
  */
 router.post('/prospect/manual', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     let { userPhone, userName, membershipType } = req.body;
 
     if (!userPhone) return res.status(400).json({ ok: false, error: 'userPhone es requerido' });
@@ -535,7 +535,7 @@ router.post('/prospect/manual', async (req, res) => {
  */
 router.post('/prospect/:phone/convert', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { phone } = req.params;
     const result = await databaseService.run(
       `UPDATE aluna_prospect_followups
@@ -557,7 +557,7 @@ router.post('/prospect/:phone/convert', async (req, res) => {
  */
 router.post('/prospect/:phone/sendwa', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { phone } = req.params;
 
     const prospect = await databaseService.get(
@@ -614,7 +614,7 @@ router.post('/prospect/:phone/sendwa', async (req, res) => {
 router.get('/seed-demo-contacts', async (req, res) => {
   try {
     console.log('🎭 [ALUNA] Iniciando seed de contactos demo...');
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     // Datos de contactos demo
     const DEMO_CONTACTS = [
@@ -806,7 +806,7 @@ router.get('/seed-demo-contacts', async (req, res) => {
  */
 router.get('/followup-stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     
     const { days = 30 } = req.query;
     const daysInt = parseInt(days);
@@ -928,7 +928,7 @@ router.get('/followup-stats', async (req, res) => {
  */
 router.post('/send-d1-whatsapp', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { leadId, membershipCode, userPhone, message } = req.body;
 
     if (!leadId || !message) {
@@ -976,7 +976,7 @@ router.post('/send-d1-whatsapp', async (req, res) => {
  */
 router.post('/send-d1-email', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { leadId, email, message } = req.body;
 
     if (!leadId || !message || !email) {
@@ -1038,7 +1038,7 @@ router.post('/send-d1-email', async (req, res) => {
  */
 router.post('/send-d3-whatsapp', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { leadId, membershipCode, userPhone, message } = req.body;
 
     if (!leadId || !message) {
@@ -1086,7 +1086,7 @@ router.post('/send-d3-whatsapp', async (req, res) => {
  */
 router.post('/send-d3-email', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { leadId, email, message } = req.body;
 
     if (!leadId || !message || !email) {
@@ -1152,7 +1152,7 @@ router.post('/send-d3-email', async (req, res) => {
  */
 router.get('/campaigns/preview', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { filter } = req.query;
 
     let query = 'SELECT * FROM membership_leads WHERE 1=1';
@@ -1203,7 +1203,7 @@ router.get('/campaigns/preview', async (req, res) => {
  */
 router.post('/campaigns/create', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { name, messageTemplate, targetFilter, channel } = req.body;
 
     if (!name || !messageTemplate || !targetFilter) {
@@ -1251,7 +1251,7 @@ router.post('/campaigns/create', async (req, res) => {
  */
 router.post('/campaigns/send', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { campaignId, leads, message, channel } = req.body;
 
     if (!campaignId || !leads || !message) {
@@ -1347,7 +1347,7 @@ router.post('/campaigns/send', async (req, res) => {
  */
 router.patch('/memberships/:id/register-payment', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { id } = req.params;
     const { cashAmount, canjeAmount = 0, canjeDescription = '', paymentMethod = 'efectivo' } = req.body || {};
 
@@ -1497,7 +1497,7 @@ router.patch('/memberships/:id/register-payment', async (req, res) => {
  */
 router.get('/memberships/:id/payments', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
     const { id } = req.params;
 
     const payments = await databaseService.all(`
@@ -1543,7 +1543,7 @@ router.get('/memberships/:id/payments', async (req, res) => {
  */
 router.get('/automations/stats', async (req, res) => {
   try {
-    await databaseService.ensureInitialized();
+    await databaseService.initialize();
 
     const [d1, d3, renewals, payments, emailReplies] = await Promise.all([
       // D+1 Follow-up (24h)

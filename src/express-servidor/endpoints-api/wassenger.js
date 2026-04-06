@@ -1597,6 +1597,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
         
         // ✅ FALLBACK: Enviar mensaje directamente y terminar (NO procesar con Aurora)
         console.log('[Whisper] 🔄 Fallback activado - sin URL de audio');
+        // 📊 Registrar en error_events para self-healing
+        databaseService.run(
+          `INSERT INTO error_events (source, agent, error_type, message, user_phone, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
+          ['whisper', 'orquestador', 'AUDIO_NO_URL', 'No se encontró URL de audio en el mensaje', userId, JSON.stringify({ type, hasMedia: !!data.media })]
+        ).catch(() => {});
         const fallbackMsg = userLanguage === 'en' 
           ? '🎤 I could not access your audio. Can you write it as text? 😊'
           : userLanguage === 'fr'
@@ -1637,6 +1642,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           
           // ✅ FALLBACK: Enviar mensaje de error y terminar (NO procesar con Aurora)
           console.log('[Whisper] 🔄 Fallback activado - validación fallida');
+          // 📊 Registrar en error_events para self-healing
+          databaseService.run(
+            `INSERT INTO error_events (source, agent, error_type, message, user_phone, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
+            ['whisper', 'orquestador', 'AUDIO_VALIDATION_FAILED', validation.errors.join('; '), userId, JSON.stringify({ url: mediaUrl?.substring(0, 100), mime: audioMetadata.mimeType, size: audioMetadata.size })]
+          ).catch(() => {});
           const errorMsg = getLocalizedAudioError(validation.errors[0], userLanguage);
           console.log('[Whisper] 📤 Enviando mensaje de error y deteniendo flujo');
           await enviarWhatsApp(userId, errorMsg);
@@ -1667,6 +1677,11 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             
             // ✅ FALLBACK: Enviar mensaje de error y terminar (NO procesar con Aurora)
             console.log('[Whisper] 🔄 Fallback activado - transcripción fallida');
+            // 📊 Registrar en error_events para self-healing
+            databaseService.run(
+              `INSERT INTO error_events (source, agent, error_type, message, user_phone, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
+              ['whisper', 'orquestador', 'AUDIO_TRANSCRIPTION_FAILED', tr?.error || 'Error desconocido', userId, JSON.stringify({ url: mediaUrl?.substring(0, 100), language: userLanguage })]
+            ).catch(() => {});
             const errorMsg = getLocalizedAudioError(tr?.error || 'Error desconocido', userLanguage);
             console.log('[Whisper] 📤 Enviando mensaje de error y deteniendo flujo');
             await enviarWhatsApp(userId, errorMsg);

@@ -384,11 +384,11 @@ export async function transcribeAudio(audioUrl, options = {}) {
     let lastError;
     
     try {
-      console.log('[Whisper] 📥 Descargando audio (timeout: 30s)');
+      console.log('[Whisper] 📥 Descargando audio (timeout: 45s)');
       
-      // Timeout de 30 segundos - si tarda más, activar fallback
+      // Timeout de 45 segundos - archivos grandes en Wassenger CDN pueden tardar
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+      const timeout = setTimeout(() => controller.abort(), 45000);
       
       response = await fetch(audioUrl, {
         method: 'GET',

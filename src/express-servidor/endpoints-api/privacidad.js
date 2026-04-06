@@ -98,4 +98,34 @@ router.post('/api/arco', async (req, res) => {
   }
 });
 
+// 🔐 Estado de consentimiento de un usuario
+router.get('/api/users/:phone/consent', async (req, res) => {
+  try {
+    const phone = (req.params.phone || '').replace(/[\s+\-().]/g, '');
+    if (!phone || phone.length < 8) {
+      return res.status(400).json({ ok: false, error: 'Número de teléfono inválido' });
+    }
+
+    const user = await databaseService.get(
+      `SELECT phone_number, data_consent_at, data_consent_source FROM users WHERE phone_number = $1`,
+      [phone]
+    );
+
+    if (!user) {
+      return res.status(404).json({ ok: false, error: 'Usuario no encontrado' });
+    }
+
+    return res.json({
+      ok: true,
+      phone: user.phone_number,
+      hasConsent: !!user.data_consent_at,
+      consentAt: user.data_consent_at || null,
+      consentSource: user.data_consent_source || null
+    });
+  } catch (err) {
+    console.error('[CONSENT] ❌ Error consultando consentimiento:', err.message);
+    return res.status(500).json({ ok: false, error: 'Error interno' });
+  }
+});
+
 export default router;

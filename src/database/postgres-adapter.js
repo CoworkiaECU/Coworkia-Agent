@@ -1006,6 +1006,20 @@ class PostgresAdapter {
           ) THEN
             ALTER TABLE users ADD COLUMN context_preferences JSONB DEFAULT '{}'::jsonb;
           END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'data_consent_at'
+          ) THEN
+            ALTER TABLE users ADD COLUMN data_consent_at TIMESTAMP;
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'data_consent_source'
+          ) THEN
+            ALTER TABLE users ADD COLUMN data_consent_source VARCHAR(50);
+          END IF;
         END $$;
       `);
 

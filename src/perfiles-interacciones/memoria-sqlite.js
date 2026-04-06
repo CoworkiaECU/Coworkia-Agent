@@ -216,6 +216,8 @@ export async function loadProfile(userId) {
       updatedAt: user.updated_at,
       activeAgent: user.active_agent || 'AURORA', // Agente activo actual
       preferredLanguage: user.preferred_language || 'es', // 🌍 Idioma preferido
+      dataConsentAt: user.data_consent_at || null, // 🔐 LOPDP consentimiento
+      dataConsentSource: user.data_consent_source || null,
       reservationHistory,
       upcomingReservations, // 🆕 Reservas confirmadas futuras
       pendingConfirmation,

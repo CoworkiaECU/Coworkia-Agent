@@ -300,8 +300,10 @@ export class PartialReservationForm {
     const spaceName = this.spaceType === 'hotDesk' ? '📍 Hot Desk' : '🏢 Sala de Reuniones';
     const pricing = this.calculateTotalWithTaxes();
     
-    let summary = `${spaceName} (${this.durationHours}h)\\n`;
-    summary += `Subtotal: $${pricing.base.toFixed(2)}\\n`;
+    let summary = `${spaceName} (${this.durationHours}h)
+`;
+    summary += `Subtotal: $${pricing.base.toFixed(2)}
+`;
 
     const metodoPago = this.paymentMethod?.toLowerCase();
     const esPagoConTarjeta = [
@@ -311,17 +313,25 @@ export class PartialReservationForm {
     
     if (esPagoConTarjeta) {
       // Pagos con tarjeta (incluye Payphone, Visa, Mastercard, etc.)
-      summary += `ISD (5%): $${pricing.taxes.isd.toFixed(2)}\\n`;
-      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
-      summary += `\\n💳 Total a pagar: $${pricing.total.toFixed(2)}`;
+      summary += `ISD (5%): $${pricing.taxes.isd.toFixed(2)}
+`;
+      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}
+`;
+      summary += `
+💳 Total a pagar: $${pricing.total.toFixed(2)}`;
     } else if (metodoPago === 'transferencia' || metodoPago?.includes('banco') || metodoPago?.includes('cooperativa')) {
       // Transferencias bancarias Ecuador
-      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}\\n`;
-      summary += `\\n🏦 Total a pagar: $${pricing.total.toFixed(2)}`;
+      summary += `IVA (15%): $${pricing.taxes.iva.toFixed(2)}
+`;
+      summary += `
+🏦 Total a pagar: $${pricing.total.toFixed(2)}`;
     } else if (this.paymentMethod === 'efectivo') {
       // 🔓 BYPASS TEMPORAL para testing
-      summary += `\\n💵 Pago en efectivo: $${pricing.total.toFixed(2)}`;
-      summary += `\\n\\n✅ Pagarás directamente en Coworkia`;
+      summary += `
+💵 Pago en efectivo: $${pricing.total.toFixed(2)}`;
+      summary += `
+
+✅ Pagarás directamente en Coworkia`;
     }
 
     return summary;
@@ -1319,6 +1329,17 @@ Estamos abiertos:
   let nextQuestion = null;
   let confirmationMessage = null;
 
+  // Helper: "hoy", "mañana" o fecha legible
+  const _dateLabelForAlts = (isoDate) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    if (isoDate === today) return 'hoy';
+    if (isoDate === tomorrow) return 'mañana';
+    const [, m, d] = isoDate.split('-');
+    const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `el ${parseInt(d)} de ${meses[parseInt(m) - 1]}`;
+  };
+
   // 🛡️ FIX URGENTE: Verificar disponibilidad ANTES de pedir paymentMethod
   // Evita que el usuario pierda tiempo eligiendo método de pago para un slot no disponible
   if (!validationError && !isComplete && form.date && form.time && form.spaceType) {
@@ -1349,9 +1370,10 @@ Estamos abiertos:
           } catch (_e) { /* ignore */ }
           const alternatives = suggestAlternativeSlots(form.date, form.time, form.durationHours, existingReservations);
           
+          const dateLabel = _dateLabelForAlts(form.date);
           const altText = alternatives.length > 0
-            ? alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${alt.startTime} - ${alt.endTime}`).join('\n')
-            : 'No hay alternativas disponibles hoy';
+            ? alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${dateLabel} de ${alt.startTime} a ${alt.endTime}`).join('\n')
+            : `No hay alternativas disponibles ${dateLabel}`;
           
           // NO limpiar form — mantener date, spaceType, email; solo limpiar time
           form.time = null;
@@ -1379,8 +1401,9 @@ Estamos abiertos:
         );
         if (!availability.available) {
           console.log('[FORM] 🛡️ Early availability check FAILED:', availability.reason);
+          const dateLabel2 = _dateLabelForAlts(form.date);
           const altText = availability.alternatives && availability.alternatives.length > 0
-            ? availability.alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${alt.startTime || alt}`).join('\n')
+            ? availability.alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${dateLabel2} de ${alt.startTime || alt} a ${alt.endTime || ''}`).join('\n')
             : '';
           
           // NO limpiar form — mantener date, spaceType, email; solo limpiar time

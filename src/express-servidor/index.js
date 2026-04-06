@@ -69,6 +69,7 @@ import adrianaDashboardRouter from './endpoints-api/adriana-dashboard.js';
 import adrianaApiRouter from './endpoints-api/adriana.js'; // Cotizaciones automáticas VAZ
 import todosDashboardRouter from './endpoints-api/todos-dashboard.js';
 import wifiCodesRouter from './endpoints-api/wifi-codes.js';
+import portalwifiDashboardRouter from './endpoints-api/portalwifi-dashboard.js';
 import autopilotApiRouter from './endpoints-api/autopilot-api.js';
 import privacidadRouter from './endpoints-api/privacidad.js';
 import emailRepliesRouter from './endpoints-api/email-replies.js';
@@ -233,6 +234,7 @@ app.use('/api/todos', todosDashboardRouter);
 app.use('/api/admin', adminSeedRouter);
 app.use('/', autopilotApiRouter);
 app.use('/', wifiCodesRouter);
+app.use('/', portalwifiDashboardRouter);
 app.use('/', privacidadRouter);
 app.use('/api/email-replies', emailRepliesRouter);
 

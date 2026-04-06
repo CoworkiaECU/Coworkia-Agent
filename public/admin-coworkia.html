@@ -248,26 +248,26 @@
   <div class="grid">
 
     <!-- WiFi -->
-    <a href="http://192.168.0.62/admin.html" class="card" target="_blank" id="wifi-card"
+    <div class="card" id="wifi-card"
        style="--accent:#10b981; --icon-bg:rgba(16,185,129,0.15); --badge-bg:rgba(16,185,129,0.1); --badge-color:#34d399; --badge-border:rgba(16,185,129,0.25); --card-glow:radial-gradient(ellipse at top left,rgba(16,185,129,0.06),transparent 60%);">
       <div class="card-accent"></div>
       <div class="card-head">
         <div class="card-icon">📶</div>
         <div class="card-meta">
           <div class="card-title">Portal Cautivo WiFi</div>
-          <div class="card-tag">Red local</div>
+          <div class="card-tag">Códigos WiFi · Heroku</div>
         </div>
       </div>
       <div class="wifi-stats">
         <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-disponibles">—</span><span class="wifi-stat-lbl">Disponibles</span></div>
-        <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-activas">—</span><span class="wifi-stat-lbl">Activas</span></div>
+        <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-activas">—</span><span class="wifi-stat-lbl">Hoy activos</span></div>
         <div class="wifi-stat"><span class="wifi-stat-num" id="wifi-usados">—</span><span class="wifi-stat-lbl">Usados</span></div>
       </div>
       <div class="wifi-msg" id="wifi-status-msg">Cargando stats...</div>
       <div class="card-footer">
-        <span class="badge">WiFi · Red local</span>
+        <span class="badge">WiFi · Tiempo real</span>
       </div>
-    </a>
+    </div>
 
     <!-- Aurora -->
     <a href="/aurora-reservas.html" class="card"
@@ -397,19 +397,20 @@
 <script>
   async function loadWifiStats() {
     try {
-      const res = await fetch('http://192.168.0.62/api/codes/stats', { signal: AbortSignal.timeout(3000) });
+      const res = await fetch('/api/portalwifi/stats', { signal: AbortSignal.timeout(5000) });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      const byStatus = {};
-      (data.stats || []).forEach(s => { byStatus[s.status] = s.count; });
-      document.getElementById('wifi-disponibles').textContent = byStatus['disponible'] ?? 0;
-      document.getElementById('wifi-activas').textContent = data.activeSessions ?? 0;
-      document.getElementById('wifi-usados').textContent = byStatus['usado'] ?? 0;
-      document.getElementById('wifi-status-msg').textContent = `Total: ${data.total ?? '—'} códigos · actualizado ahora`;
+      if (!data.ok) throw new Error();
+      const s = data.stats;
+      document.getElementById('wifi-disponibles').textContent = s.byStatus?.available ?? 0;
+      document.getElementById('wifi-activas').textContent = s.activeToday ?? 0;
+      document.getElementById('wifi-usados').textContent = s.byStatus?.used ?? 0;
+      document.getElementById('wifi-status-msg').textContent = `Total: ${s.total ?? '—'} códigos · ${s.generatedToday ?? 0} generados hoy`;
       document.getElementById('wifi-status-msg').style.color = '#34d399';
       document.getElementById('wifi-card').style.borderColor = 'rgba(16,185,129,0.35)';
     } catch {
-      document.getElementById('wifi-status-msg').textContent = 'No disponible (solo en red local)';
+      document.getElementById('wifi-status-msg').textContent = 'Error cargando stats WiFi';
+      document.getElementById('wifi-status-msg').style.color = '#ef4444';
     }
   }
   loadWifiStats();

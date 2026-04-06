@@ -1474,6 +1474,29 @@ class PostgresAdapter {
       `);
 
       // ===================================================================
+      // TABLA: autotraining_reports — Análisis semanal de conversaciones
+      // Reportes generados por GPT-4o-mini sobre calidad conversacional
+      // ===================================================================
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS autotraining_reports (
+          id SERIAL PRIMARY KEY,
+          agent TEXT NOT NULL,
+          report_date DATE NOT NULL,
+          total_conversations INTEGER DEFAULT 0,
+          success_count INTEGER DEFAULT 0,
+          failed_count INTEGER DEFAULT 0,
+          successful_patterns JSONB DEFAULT '[]'::jsonb,
+          failed_patterns JSONB DEFAULT '[]'::jsonb,
+          suggestions JSONB DEFAULT '[]'::jsonb,
+          health_score INTEGER DEFAULT -1,
+          summary TEXT,
+          applied BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(agent, report_date)
+        )
+      `);
+
+      // ===================================================================
       // TABLA: vaz_rates — Adriana VAZ Cotizaciones Automáticas
       // Cache de tasas VAZ con vigencia 24h
       // ===================================================================
@@ -1586,6 +1609,11 @@ class PostgresAdapter {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_date ON self_healing_reports(report_date DESC);
         CREATE INDEX IF NOT EXISTS idx_self_healing_reports_status ON self_healing_reports(status);
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_autotraining_reports_agent ON autotraining_reports(agent, report_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_autotraining_reports_date ON autotraining_reports(report_date DESC);
       `);
 
       // 🔒 Hot Desks permanentes (membresías)

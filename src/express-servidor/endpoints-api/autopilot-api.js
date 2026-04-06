@@ -225,4 +225,62 @@ router.get('/api/self-healing/latest', async (req, res) => {
   }
 });
 
+// ─── GET /api/autotraining/latest ─────────────────────────────────────────────
+
+/**
+ * Obtiene el último reporte de autotraining para un agente específico o todos.
+ * Query params: ?agent=aurora (opcional — sin agent retorna todos los últimos)
+ *
+ * Respuesta: { ok: true, reports: [...] }
+ */
+router.get('/api/autotraining/latest', async (req, res) => {
+  try {
+    const { agent } = req.query;
+
+    let sql, params;
+    if (agent) {
+      sql = `SELECT agent, report_date, total_conversations, success_count, failed_count,
+                    successful_patterns, failed_patterns, suggestions, health_score, summary, applied
+             FROM autotraining_reports
+             WHERE agent = $1
+             ORDER BY report_date DESC
+             LIMIT 1`;
+      params = [agent];
+    } else {
+      // Último reporte de cada agente
+      sql = `SELECT DISTINCT ON (agent)
+                    agent, report_date, total_conversations, success_count, failed_count,
+                    successful_patterns, failed_patterns, suggestions, health_score, summary, applied
+             FROM autotraining_reports
+             ORDER BY agent, report_date DESC`;
+      params = [];
+    }
+
+    const result = await query(sql, params);
+
+    if (!result.rows || result.rows.length === 0) {
+      return res.json({ ok: true, reports: [] });
+    }
+
+    const reports = result.rows.map(r => ({
+      agent: r.agent,
+      date: r.report_date,
+      totalConversations: parseInt(r.total_conversations || 0),
+      successCount: parseInt(r.success_count || 0),
+      failedCount: parseInt(r.failed_count || 0),
+      successfulPatterns: r.successful_patterns || [],
+      failedPatterns: r.failed_patterns || [],
+      suggestions: r.suggestions || [],
+      healthScore: parseInt(r.health_score ?? -1),
+      summary: r.summary || '',
+      applied: r.applied || false,
+    }));
+
+    res.json({ ok: true, reports });
+  } catch (err) {
+    console.error('[AUTOTRAINING-API] ❌ Error obteniendo reporte:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;

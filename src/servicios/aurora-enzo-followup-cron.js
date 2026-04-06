@@ -20,6 +20,7 @@ import {
 } from './aurora-followup-service.js';
 import { sendEnzoD1Followups, sendEnzoD3Followups, sendEnzoD7Followups } from './enzo-followup-service.js';
 import { sendAdrianaS1Followups, sendAdrianaS2Followups, sendAdrianaS3Followups } from './adriana-followup-service.js';
+import { analyzeConversations } from './autotraining-service.js';
 import { loggers } from '../utils/logger.js';
 
 const logger = loggers.aurora || console;
@@ -289,12 +290,30 @@ export function startAuroraEnzoCronJobs() {
   );
   logger.info('[CRON] ✅ Aurora payment reminders configurado (8:00 AM Ecuador)');
 
-  logger.info('[CRON] 🚀 Aurora + Enzo + Adriana follow-up crons activos (16 jobs)');
+  // ─── AUTOTRAINING: Análisis semanal (domingo 3:00 AM Ecuador = 08:00 UTC) ─
+  const autotrainingJob = new CronJob(
+    '0 8 * * 0',
+    async function () {
+      logger.info('[CRON-AUTOTRAINING] 🧠 Ejecutando análisis semanal...');
+      try {
+        const result = await analyzeConversations();
+        if (result.success) {
+          const analyzed = result.agents.filter(a => !a.skipped).length;
+          logger.info(`[CRON-AUTOTRAINING] ✅ ${analyzed} agentes analizados en ${result.duration}s`);
+        }
+      } catch (err) { logger.error('[CRON-AUTOTRAINING] ❌ Error:', err); }
+    },
+    null, true, 'America/Guayaquil'
+  );
+  logger.info('[CRON] ✅ Autotraining semanal configurado (domingo 3:00 AM Ecuador)');
+
+  logger.info('[CRON] 🚀 Aurora + Enzo + Adriana follow-up crons activos (17 jobs)');
 
   return {
     aurora1hJob, auroraRebookJob, enzoD1Job, enzoD3Job, enzoD7Job,
     adrianaS1Job, adrianaS2Job, adrianaS3Job,
     auroraD1Job, auroraD3Job, auroraReminder24hJob, auroraReminder2hJob,
-    auroraReminder10minJob, auroraNoShowJob, auroraUpsellJob, auroraPaymentJob
+    auroraReminder10minJob, auroraNoShowJob, auroraUpsellJob, auroraPaymentJob,
+    autotrainingJob
   };
 }

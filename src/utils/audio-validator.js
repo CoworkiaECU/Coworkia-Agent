@@ -31,6 +31,10 @@ export function validateAudioFormat(url, mimeType = null) {
 
   // 1. Primero intentar con mime type si está disponible
   if (mimeType) {
+    // Strip MIME parameters: 'audio/ogg; codecs=opus' → 'audio/ogg'
+    // WhatsApp voice notes (PTT) send 'audio/ogg; codecs=opus' which must match
+    const baseMime = mimeType.toLowerCase().split(';')[0].trim();
+    
     const mimeToFormat = {
       'audio/mpeg': 'mp3',
       'audio/mp3': 'mp3',
@@ -45,7 +49,7 @@ export function validateAudioFormat(url, mimeType = null) {
       'audio/aac': 'm4a'
     };
     
-    const format = mimeToFormat[mimeType.toLowerCase()];
+    const format = mimeToFormat[baseMime];
     if (format && SUPPORTED_FORMATS.includes(format)) {
       return { valid: true, format };
     }
@@ -56,6 +60,11 @@ export function validateAudioFormat(url, mimeType = null) {
   const format = SUPPORTED_FORMATS.find(fmt => 
     urlLower.includes(`.${fmt}`) || urlLower.includes(`/${fmt}`)
   );
+
+  // 3. Fallback para URLs de Wassenger/WhatsApp sin extensión (CDN dinámico)
+  if (!format && (urlLower.includes('wassenger.com') || urlLower.includes('whatsapp.net'))) {
+    return { valid: true, format: 'ogg' };
+  }
 
   if (!format) {
     return { 

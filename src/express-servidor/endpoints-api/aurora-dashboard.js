@@ -13,6 +13,7 @@ import { sendOneHourFollowup, sendRebookingReminder } from '../../servicios/auro
 import { sendEmail } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { calculateReservationCost } from '../../servicios/payment-calculator.js';
+import { generateWifiCode, getWifiCodeForReservation } from '../../servicios/wifi-codes-service.js';
 
 const router = express.Router();
 
@@ -61,9 +62,13 @@ router.get('/reservations', async (req, res) => {
         r.confirmed_at,
         r.followup_1h_sent_at,
         r.rebook_reminder_sent_at,
-        r.attended
+        r.attended,
+        wc.code AS wifi_code,
+        wc.status AS wifi_status
       FROM reservations r
       LEFT JOIN users u ON r.user_phone = u.phone_number
+      LEFT JOIN wifi_codes wc ON wc.reservation_id = r.id
+        AND wc.status NOT IN ('cancelled', 'expired')
       WHERE 1=1
     `;
     
@@ -368,9 +373,12 @@ router.get('/reservations/:reservationId', async (req, res) => {
     const { reservationId } = req.params;
     
     const reservation = await databaseService.get(
-      `SELECT r.*, u.name as user_name, u.email as user_email
+      `SELECT r.*, u.name as user_name, u.email as user_email,
+              wc.code AS wifi_code, wc.status AS wifi_status
        FROM reservations r
        LEFT JOIN users u ON r.user_phone = u.phone_number
+       LEFT JOIN wifi_codes wc ON wc.reservation_id = r.id
+         AND wc.status NOT IN ('cancelled', 'expired')
        WHERE r.id = $1`,
       [reservationId]
     );
@@ -702,8 +710,25 @@ router.post('/reservations/manual', async (req, res) => {
       `, [clientPhone, notes.trim(), `Reserva manual ${id} creada desde dashboard`]).catch(() => {});
     }
 
+    // 🔑 Generar código WiFi automático para la reserva
+    let wifiCode = null;
+    try {
+      const wifiResult = await generateWifiCode({
+        reservationId: id,
+        userPhone: clientPhone,
+        durationHours,
+        validForDate: date
+      });
+      if (wifiResult.success) {
+        wifiCode = wifiResult.code;
+        console.log(`[AURORA-API] 🔑 WiFi generado para reserva manual: ${wifiCode}`);
+      }
+    } catch (wifiErr) {
+      console.warn('[AURORA-API] ⚠️ No se pudo generar WiFi (no bloquea):', wifiErr.message);
+    }
+
     console.log(`[AURORA-API] Reserva manual creada: ${id} → ${clientName} (${clientPhone})`);
-    return res.json({ ok: true, id });
+    return res.json({ ok: true, id, wifiCode });
 
   } catch (error) {
     console.error('[AURORA-API] Error creando reserva manual:', error);
@@ -755,6 +780,24 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
       WHERE id = $2
     `, [parsedAmount, id]);
 
+    // 🔑 Generar código WiFi para la reserva pagada
+    let wifiCode = null;
+    try {
+      const durationHours = parseFloat(reservation.duration_hours) || 2;
+      const wifiResult = await generateWifiCode({
+        reservationId: id,
+        userPhone: reservation.user_phone,
+        durationHours,
+        validForDate: reservation.date
+      });
+      if (wifiResult.success) {
+        wifiCode = wifiResult.code;
+        console.log(`[AURORA-API] 🔑 WiFi generado para pago registrado: ${wifiCode}`);
+      }
+    } catch (wifiErr) {
+      console.warn('[AURORA-API] ⚠️ No se pudo generar WiFi (no bloquea):', wifiErr.message);
+    }
+
     // Enviar WA de confirmación al cliente
     let waSent = false;
     if (WASSENGER_TOKEN && reservation.user_phone) {
@@ -766,7 +809,10 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
         };
         const svcName = serviceNames[reservation.service_type] || reservation.service_type;
         const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
-        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nAv. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const wifiLine = wifiCode
+          ? `\n🔑 Tu código WiFi: *${wifiCode}*\n⏱️ Válido por ${parseFloat(reservation.duration_hours) || 2}h desde que te conectes`
+          : '\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*';
+        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nAv. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible${wifiLine}\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },

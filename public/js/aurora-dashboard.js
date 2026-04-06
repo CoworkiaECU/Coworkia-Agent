@@ -164,6 +164,14 @@ function formatPrice(price, allowFree = true) {
   return `$${parseFloat(price).toFixed(2)}`;
 }
 
+// ─── Código WiFi asociado a la reserva ───────────────────────────────────────
+function renderWifiCell(r) {
+  if (!r.wifi_code) return '<span style="color:#64748b;font-size:11px;">—</span>';
+  const color = r.wifi_status === 'used' ? '#6ee7b7' : '#93c5fd';
+  const icon = r.wifi_status === 'used' ? '✅' : '🔑';
+  return `<span style="font-family:monospace;font-size:12px;font-weight:700;color:${color};letter-spacing:1px;" title="Estado: ${r.wifi_status || 'active'}">${icon} ${r.wifi_code}</span>`;
+}
+
 // ─── Toggle "Asistió Sí/No" (reemplaza badge de estado en tabla) ─────────────
 function renderAttendedToggle(r) {
   // Solo aplica a reservas confirmadas; resto sigue usando el badge original
@@ -463,6 +471,7 @@ function renderReservationsTable(reservations) {
         <small class="text-muted">${r.duration_hours}h${r.guest_count > 0 ? ` · ${r.guest_count} inv.` : ''}</small>
       </td>
       <td class="money">${renderMontoCell(r)}</td>
+      <td>${renderWifiCell(r)}</td>
       <td>${renderAttendedToggle(r)}</td>
       <td>${getPaymentBadge(r.payment_status, r.payment_method)}</td>
       <td>${formatDate(r.created_at)}</td>

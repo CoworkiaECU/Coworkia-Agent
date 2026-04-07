@@ -23,7 +23,7 @@ import {
 
 // Keywords AURORA ↔ ALUNA (detección automática natural)
 const ALUNA_KEYWORDS = [
-  'membresía', 'membresias', 'membresías', 'membresia', 'plan mensual', 'planes',
+  'membresía', 'membresias', 'membresías', 'membresia', 'plan mensual', 'planes mensuales',
   'plan 10', 'plan10', 'plan 20', 'plan20',
   'oficina virtual', 'virtual office', 'sala reuniones', 'meeting room'
 ];

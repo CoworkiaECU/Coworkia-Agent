@@ -1378,10 +1378,9 @@ function isCasualGreetingOnly(text) {
 
 function isReservationIntent(text) {
   const t = (text || '').toLowerCase();
-  const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala', 'espacio', 'quiero venir', 'me gustaría'];
-  const questionKeywords = ['servicios', 'ofrecen', 'tienen', 'precios', 'cuesta', 'quiero saber', 'información', 'ubicación', 'donde', 'horario'];
+  const reservationKeywords = ['reserva', 'reservar', 'hot desk', 'sala de reuniones', 'quiero venir', 'quiero reservar'];
   if (isCasualGreetingOnly(text)) return false;
-  return reservationKeywords.some(k => t.includes(k)) || questionKeywords.some(k => t.includes(k));
+  return reservationKeywords.some(k => t.includes(k));
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -2243,7 +2242,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       const _hasFCont = detectFormContinuation(processedText);
       // 🔥 FIX: No interceptar mensajes con keywords de Aluna si no hay form Aurora activo.
       // Evita que isReservationIntent (que matchea 'tienen', 'ofrecen', etc.) tape el handoff a Aluna.
-      const _alunaKeywords = ['membresía','membresias','membresías','membresia','plan mensual','planes mensuales','planes','plan 10','plan 20','plan10','plan20'];
+      const _alunaKeywords = ['membresía','membresias','membresías','membresia','plan mensual','planes mensuales','plan 10','plan 20','plan10','plan20'];
       const _isAlunaIntent = !_hasAF && _alunaKeywords.some(k => (processedText || '').toLowerCase().includes(k));
       const _shouldForm = !_hasVAP && !_isAlunaIntent && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
 

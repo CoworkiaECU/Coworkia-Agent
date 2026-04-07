@@ -58,15 +58,14 @@ const HIGH_INTENT_KEYWORDS = {
     'cuándo empiezo',
   ],
   urgency: [
-    'urgente',
-    'pronto',
-    'rápido',
-    'rapido',
-    'ya',
-    'hoy',
-    'esta semana',
-    'lo antes posible',
+    'lo necesito urgente',
     'necesito ya',
+    'lo antes posible',
+    'lo necesito pronto',
+    'quiero empezar ya',
+    'quiero empezar hoy',
+    'para esta semana',
+    'necesito esta semana',
   ],
 };
 

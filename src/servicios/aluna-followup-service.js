@@ -41,7 +41,7 @@ export async function sendD1Followups() {
       WHERE created_at >= NOW() - INTERVAL '25 hours'
         AND created_at < NOW() - INTERVAL '23 hours'
         AND followup_24h_sent_at IS NULL
-        AND status NOT IN ('active', 'cancelled', 'expired')
+        AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
       ORDER BY created_at DESC
     `);
     
@@ -129,7 +129,7 @@ export async function sendD3Followups() {
         AND followup_24h_sent_at IS NOT NULL
         AND followup_3d_sent_at IS NULL
         AND updated_at = created_at
-        AND status NOT IN ('active', 'cancelled', 'expired')
+        AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
       ORDER BY created_at DESC
     `);
     

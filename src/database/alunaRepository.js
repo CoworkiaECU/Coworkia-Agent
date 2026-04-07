@@ -296,7 +296,7 @@ export async function trackAlunaProspect(userPhone, userName = null, membershipT
 export async function captureAlunaLeadFromKeywords(userPhone, userName, messageText) {
   await databaseService.ensureInitialized();
   
-  const ALUNA_KEYWORDS = ['plan', 'membresi', 'mensual', 'oficina', 'cowork'];
+  const ALUNA_KEYWORDS = ['membresía', 'membresia', 'membresias', 'membresías', 'plan mensual', 'planes mensuales', 'plan 10', 'plan 20', 'plan10', 'plan20', 'oficina virtual', 'coworking'];
   const textLower = (messageText || '').toLowerCase();
   const hasKeyword = ALUNA_KEYWORDS.some(kw => textLower.includes(kw));
   

@@ -52,7 +52,8 @@ import {
   saveProfile,
   saveInteraction,
   loadConversationHistory,
-  saveConversationMessage
+  saveConversationMessage,
+  invalidateCachedProfile
 } from '../../perfiles-interacciones/memoria-sqlite.js';
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
@@ -84,8 +85,8 @@ const router = Router();
 // 👔 Número del jefe — activa comandos directos de cotización desde WhatsApp
 const ADMIN_PHONE = process.env.ADMIN_PHONE || null;
 
-// Normaliza número de teléfono para comparación: quita +, espacios, guiones
-const normalizePhone = (p) => p ? String(p).replace(/[\s+\-().]/g, '') : '';
+// Normaliza número de teléfono para comparación: solo dígitos
+const normalizePhone = (p) => p ? String(p).replace(/\D/g, '') : '';
 const isAdminPhone = (userId) => ADMIN_PHONE && normalizePhone(userId) === normalizePhone(ADMIN_PHONE);
 
 /* ─────────────────────────────────────────────────────────────
@@ -1562,6 +1563,8 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
           `UPDATE users SET data_consent_at = NOW(), data_consent_source = 'whatsapp' WHERE phone_number = $1`,
           [userId]
         );
+        // 🐛 FIX: Invalidar caché para que próximo mensaje vea dataConsentAt
+        invalidateCachedProfile(userId);
         await enviarWhatsApp(userId, '✅ ¡Gracias! Tu consentimiento quedó registrado. ¿En qué puedo ayudarte hoy?');
         return;
       }

@@ -649,3 +649,4 @@ export async function setUserPreferredLanguage(userId, language) {
 // Mantener exports para compatibilidad
 export { saveProfile as updateProfile };
 export { databaseService };
+export { invalidateCachedProfile };

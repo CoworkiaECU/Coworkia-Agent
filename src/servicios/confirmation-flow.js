@@ -358,21 +358,25 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         pendingReservation.endTime
       );
       
-      console.log('[Confirmation] 📊 Disponibilidad verificada:', availability);
+      const desksNeeded = pendingReservation.desksQuantity || 1;
+      console.log('[Confirmation] 📊 Disponibilidad verificada:', availability, 'desks necesarios:', desksNeeded);
       
-      if (!availability.available) {
-        console.log('[Confirmation] ❌ Hot Desks agotados:', availability);
+      if (!availability.available || availability.availableCount < desksNeeded) {
+        console.log('[Confirmation] ❌ Hot Desks insuficientes:', availability.availableCount, 'de', desksNeeded);
         
-        // Aurora ofrece alternativas (siguiente slot disponible o día siguiente)
+        const reason = availability.availableCount === 0
+          ? `${availability.message}\n\nDéjame revisar otros horarios disponibles...`
+          : `Solo hay ${availability.availableCount} Hot Desk${availability.availableCount !== 1 ? 's' : ''} disponible${availability.availableCount !== 1 ? 's' : ''}, pero necesitas ${desksNeeded}.\n\n¿Prefieres reservar ${availability.availableCount} o buscar otro horario?`;
+        
         throw new ConfirmationFlowError({
           success: false,
-          message: `${availability.message}\n\nDéjame revisar otros horarios disponibles...`,
+          message: reason,
           needsAction: true,
           actionType: 'check_alternatives'
         });
       }
       
-      // Asignar número de Hot Desk automáticamente
+      // Asignar número(s) de Hot Desk automáticamente
       const hotDeskNumber = await assignHotDeskNumber(
         pendingReservation.date,
         pendingReservation.startTime,
@@ -380,7 +384,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       );
       
       pendingReservation.hotDeskNumber = hotDeskNumber;
-      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/4`);
+      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/${availability.maxCapacity}`);
     }
     
     // 🔄 Crear reserva

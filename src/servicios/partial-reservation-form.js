@@ -78,6 +78,7 @@ export class PartialReservationForm {
     this.discountPercent = existingData.discountPercent || 0; // 0-10 (% de descuento por reserva doble)
     this.durationWasUpgraded = existingData.durationWasUpgraded || false; // true cuando se sub ió silencioso de 1h → 2h
     this.pendingAlternatives = existingData.pendingAlternatives || null; // alternativas mostradas al usuario [{startTime, endTime, durationHours}]
+    this.desksQuantity = existingData.desksQuantity || 1; // multi-hotdesk: cuántos escritorios reservar
     this.updatedAt = new Date();
   }
 
@@ -196,10 +197,11 @@ export class PartialReservationForm {
       const basePerBlock = 10; // $10 por 2 horas (primer bloque)
       const hoursPerBlock = 2;
       const blocks = this.durationHours / hoursPerBlock;
+      const qty = this.desksQuantity || 1;
       
       // Si es exactamente 2 horas o menos, precio base
       if (blocks <= 1) {
-        return basePerBlock;
+        return basePerBlock * qty;
       }
       
       // Calcular precio con descuentos progresivos del 15% por bloque
@@ -212,7 +214,7 @@ export class PartialReservationForm {
         currentBlockPrice = currentBlockPrice * 0.85;
       }
       
-      return Math.round(totalPrice * 100) / 100; // Redondear a 2 decimales
+      return Math.round(totalPrice * qty * 100) / 100; // Multiplicar por cantidad de desks
       
     } else if (this.spaceType === 'meetingRoom') {
       const basePerBlock = 29; // $29 por 2 horas
@@ -396,7 +398,9 @@ export class PartialReservationForm {
     }
     
     if (this.numPeople > 1) {
-      parts.push(`👥 Personas: ${this.numPeople}`);
+      const deskInfo = this.spaceType === 'hotDesk' && (this.desksQuantity || 1) > 1
+        ? ` (${this.desksQuantity} Hot Desks)` : '';
+      parts.push(`👥 Personas: ${this.numPeople}${deskInfo}`);
     }
     
     if (this.email) {
@@ -513,7 +517,10 @@ export class PartialReservationForm {
       }
 
       // ✅ CASO 1B: RESERVA SIMPLE (espacio único)
-      const spaceName = this.spaceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
+      const isMultiDesk = this.spaceType === 'hotDesk' && (this.desksQuantity || 1) > 1;
+      const spaceName = this.spaceType === 'hotDesk' 
+        ? (isMultiDesk ? `${this.desksQuantity} Hot Desks` : 'Hot Desk')
+        : 'Sala de Reuniones';
 
       // ✅ Formatear fecha para mostrar día de semana + mes en español
       const formattedDate = this.formatDate(this.date);
@@ -525,6 +532,7 @@ export class PartialReservationForm {
       message += `📅 Fecha: ${formattedDate}\n`;
       message += `⏰ Horario: ${this.time} (${this.durationHours}h)\n`;
       message += `💻 Espacio: ${spaceName}\n`;
+      if (isMultiDesk) message += `👥 Personas: ${this.numPeople}\n`;
       message += `📧 Email: ${this.email}\n`;
       
       // 🎁 BRANCH 1: Cliente NUEVO con Hot Desk - GRATIS
@@ -551,8 +559,12 @@ export class PartialReservationForm {
       
       message += `\n💰 *Costo:*\n`;
       
-      // Mostrar desglose de bloques si son más de 2 horas (hot desk)
-      if (this.spaceType === 'hotDesk' && this.durationHours > 2) {
+      // Mostrar desglose multi-desk
+      if (isMultiDesk) {
+        const pricePerDesk = Math.round((pricing.base / this.desksQuantity) * 100) / 100;
+        message += `📦 ${this.desksQuantity} Hot Desks × $${pricePerDesk.toFixed(2)} = $${pricing.base.toFixed(2)}\n`;
+      } else if (this.spaceType === 'hotDesk' && this.durationHours > 2) {
+        // Mostrar desglose de bloques si son más de 2 horas (hot desk)
         const blocks = this.durationHours / 2;
         let blockPrice = 10;
         message += `📦 Desglose (bloques de 2h):\n`;
@@ -663,6 +675,7 @@ export class PartialReservationForm {
       discountPercent: this.discountPercent,
       durationWasUpgraded: this.durationWasUpgraded,
       pendingAlternatives: this.pendingAlternatives,
+      desksQuantity: this.desksQuantity,
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -1133,12 +1146,10 @@ export function extractDataFromMessage(message, currentForm) {
       updates.numPeople = num;
       console.log('[FORM] 👥 Detectado personas:', num);
       
-      // ✅ VALIDACIÓN: Hot Desk es SOLO individual (1 persona)
-      // Si numPeople > 1 y spaceType es hotDesk, cambiar a meetingRoom
+      // ✅ Multi-hotdesk: si numPeople > 1 y spaceType es hotDesk, reservar N escritorios
       if (num > 1 && currentForm.spaceType === 'hotDesk') {
-        updates.spaceType = 'meetingRoom';
-        console.log('[FORM] ⚠️ CORRECCIÓN AUTOMÁTICA: Hot Desk no permite múltiples personas');
-        console.log('[FORM] 🔄 Cambiando de hotDesk → meetingRoom (para', num, 'personas)');
+        updates.desksQuantity = num;
+        console.log('[FORM] 💻 Multi-hotdesk: reservando', num, 'escritorios');
       }
       
       break;

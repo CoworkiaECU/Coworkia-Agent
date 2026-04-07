@@ -314,11 +314,14 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
 
   const serviceCapacity = getServiceCapacity(serviceType);
 
-  if (overlappingReservations.length >= serviceCapacity) {
+  // Contar escritorios ocupados (multi-desk: cada reserva puede ocupar N desks)
+  const occupiedDesks = overlappingReservations.reduce((sum, r) => sum + (r.desks_quantity || 1), 0);
+
+  if (occupiedDesks >= serviceCapacity) {
     return {
       available: false,
       reason: `${getServiceName(serviceType)} ocupado en ese horario`,
-      occupiedSpaces: overlappingReservations.length,
+      occupiedSpaces: occupiedDesks,
       capacity: serviceCapacity,
       alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
@@ -349,8 +352,8 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
   
   return {
     available: true,
-    occupiedSpaces: overlappingReservations.length,
-    availableSpaces: Math.max(serviceCapacity - overlappingReservations.length, 0),
+    occupiedSpaces: occupiedDesks,
+    availableSpaces: Math.max(serviceCapacity - occupiedDesks, 0),
     capacity: serviceCapacity
   };
 }
@@ -473,7 +476,8 @@ export async function createReservation(reservationData) {
     totalPrice,
     guestCount = 0,
     hotDeskNumber = null, // Nuevo campo: número de Hot Desk asignado
-    paymentMethod = null // Nuevo campo: método de pago
+    paymentMethod = null, // Nuevo campo: método de pago
+    desksQuantity = 1 // Multi-hotdesk: cantidad de escritorios
   } = reservationData;
 
   // Resolver precio: acepta tanto "total" como "totalPrice"
@@ -506,7 +510,8 @@ export async function createReservation(reservationData) {
       payment_status: wasFree ? 'waived' : 'pending',
       payment_data: email ? { email } : null,
       payment_method: paymentMethod, // Guardar método de pago
-      hot_desk_number: hotDeskNumber // Guardar número de Hot Desk
+      hot_desk_number: hotDeskNumber, // Guardar número de Hot Desk
+      desks_quantity: desksQuantity // Multi-hotdesk
     });
     
     return {

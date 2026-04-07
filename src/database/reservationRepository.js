@@ -60,7 +60,8 @@ class ReservationRepository {
       payment_data = null,
       hot_desk_number = null, // Nuevo: número de Hot Desk (1-4)
       payment_method = null, // Nuevo: método de pago
-      calendar_event_id = null // Nuevo: ID de evento en Google Calendar
+      calendar_event_id = null, // Nuevo: ID de evento en Google Calendar
+      desks_quantity = 1 // Multi-hotdesk: cantidad de escritorios
     } = reservationData;
 
     // Generar código secuencial si no se provee ID
@@ -71,15 +72,15 @@ class ReservationRepository {
         id, user_phone, service_type, date, start_time, end_time,
         duration_hours, guest_count, total_price, was_free,
         status, payment_status, payment_data, hot_desk_number,
-        payment_method, calendar_event_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        payment_method, calendar_event_id, desks_quantity
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       reservationId, user_phone, service_type, date, start_time, end_time,
       duration_hours, guest_count, total_price, was_free ? 1 : 0,
       status, payment_status, payment_data ? JSON.stringify(payment_data) : null,
-      hot_desk_number, payment_method, calendar_event_id
+      hot_desk_number, payment_method, calendar_event_id, desks_quantity
     ];
 
     await databaseService.run(query, params);

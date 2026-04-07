@@ -131,6 +131,7 @@ export async function getPendingConfirmation(userPhone) {
         durationHours: form.durationHours || 2,
         email: form.email,
         guestCount: form.numPeople ? form.numPeople - 1 : 0,
+        desksQuantity: form.desksQuantity || 1,
         totalPrice: wasFree ? 0 : (form.totalPrice || 0),  // ← Si es gratis, precio = 0
         wasFree: wasFree,  // ← Propagar correctamente
         paymentMethod: wasFree ? null : form.paymentMethod,  // ← Si es gratis, no hay método de pago

@@ -77,6 +77,7 @@ export class PartialReservationForm {
     this.secondDurationHours = existingData.secondDurationHours || 2;
     this.discountPercent = existingData.discountPercent || 0; // 0-10 (% de descuento por reserva doble)
     this.durationWasUpgraded = existingData.durationWasUpgraded || false; // true cuando se sub ió silencioso de 1h → 2h
+    this.pendingAlternatives = existingData.pendingAlternatives || null; // alternativas mostradas al usuario [{startTime, endTime, durationHours}]
     this.updatedAt = new Date();
   }
 
@@ -661,6 +662,7 @@ export class PartialReservationForm {
       secondDurationHours: this.secondDurationHours,
       discountPercent: this.discountPercent,
       durationWasUpgraded: this.durationWasUpgraded,
+      pendingAlternatives: this.pendingAlternatives,
       updatedAt: this.updatedAt.toISOString()
     };
   }
@@ -761,11 +763,45 @@ export function extractDataFromMessage(message, currentForm) {
   console.log('[FORM-EXTRACT] 📋 Formulario actual:', { 
     time: currentForm.time, 
     date: currentForm.date,
-    spaceType: currentForm.spaceType 
+    spaceType: currentForm.spaceType,
+    pendingAlternatives: currentForm.pendingAlternatives?.length || 0
   });
   
   const updates = {};
   const lowerMsg = message.toLowerCase();
+
+  // 🎯 SELECCIÓN DE ALTERNATIVA — detectar ANTES de cualquier otro parser
+  if (currentForm.pendingAlternatives && currentForm.pendingAlternatives.length > 0) {
+    const trimmed = message.trim();
+    let chosenIdx = -1;
+
+    // Número directo: "1", "2", "3"
+    if (/^[1-3]$/.test(trimmed)) {
+      chosenIdx = parseInt(trimmed) - 1;
+    }
+    // Textual: "la 2", "la primera", "opción 3", "la tercera"
+    const textMatch = trimmed.match(/^(?:la\s+)?(?:opci[oó]n\s+)?(\d|primera?|segunda?|tercera?)$/i);
+    if (textMatch) {
+      const val = textMatch[1].toLowerCase();
+      if (/^\d$/.test(val)) chosenIdx = parseInt(val) - 1;
+      else if (val.startsWith('primer')) chosenIdx = 0;
+      else if (val.startsWith('segund')) chosenIdx = 1;
+      else if (val.startsWith('tercer')) chosenIdx = 2;
+    }
+
+    if (chosenIdx >= 0 && chosenIdx < currentForm.pendingAlternatives.length) {
+      const chosen = currentForm.pendingAlternatives[chosenIdx];
+      updates.time = chosen.startTime;
+      if (chosen.durationHours) updates.durationHours = chosen.durationHours;
+      currentForm.pendingAlternatives = null;
+      console.log('[FORM] ✅ Alternativa seleccionada:', chosen);
+      return updates; // retornar inmediato — no parsear nada más
+    }
+
+    // Si el mensaje NO es selección de alternativa, limpiar para no interferir
+    currentForm.pendingAlternatives = null;
+    console.log('[FORM] 🧹 pendingAlternatives limpiadas — usuario no seleccionó número');
+  }
 
   // 🏢 Detectar tipo de espacio
   // ✅ CAMBIO: Permitir sobrescribir si usuario menciona explícitamente un espacio
@@ -1373,10 +1409,13 @@ Estamos abiertos:
           const alternatives = suggestAlternativeSlots(form.date, form.time, form.durationHours, existingReservations);
           
           const dateLabel = _dateLabelForAlts(form.date);
-          const altText = alternatives.length > 0
-            ? alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${dateLabel} de ${alt.startTime} a ${alt.endTime}`).join('\n')
+          const topAlts = alternatives.slice(0, 3);
+          const altText = topAlts.length > 0
+            ? topAlts.map((alt, i) => `${i + 1}. ${dateLabel} de ${alt.startTime} a ${alt.endTime}`).join('\n')
             : `No hay alternativas disponibles ${dateLabel}`;
           
+          // Guardar alternativas para que el usuario pueda elegir por número
+          form.pendingAlternatives = topAlts.map(a => ({ startTime: a.startTime, endTime: a.endTime, durationHours: a.durationHours }));
           // NO limpiar form — mantener date, spaceType, email; solo limpiar time
           form.time = null;
           form.durationHours = 2;
@@ -1404,10 +1443,13 @@ Estamos abiertos:
         if (!availability.available) {
           console.log('[FORM] 🛡️ Early availability check FAILED:', availability.reason);
           const dateLabel2 = _dateLabelForAlts(form.date);
-          const altText = availability.alternatives && availability.alternatives.length > 0
-            ? availability.alternatives.slice(0, 3).map((alt, i) => `${i + 1}. ${dateLabel2} de ${alt.startTime || alt} a ${alt.endTime || ''}`).join('\n')
+          const topAlts2 = (availability.alternatives || []).slice(0, 3);
+          const altText = topAlts2.length > 0
+            ? topAlts2.map((alt, i) => `${i + 1}. ${dateLabel2} de ${alt.startTime || alt} a ${alt.endTime || ''}`).join('\n')
             : '';
           
+          // Guardar alternativas para que el usuario pueda elegir por número
+          form.pendingAlternatives = topAlts2.filter(a => a.startTime).map(a => ({ startTime: a.startTime, endTime: a.endTime, durationHours: a.durationHours }));
           // NO limpiar form — mantener date, spaceType, email; solo limpiar time
           form.time = null;
           form.durationHours = 2;

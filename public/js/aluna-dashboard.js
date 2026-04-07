@@ -995,7 +995,7 @@ window.updateCampaignPreview = async function() {
   countEl.style.color = '#3b82f6';
   
   try {
-    const response = await fetch(`/api/aluna/campaigns/preview?filter=${filter}`);
+    const response = await fetch(`${API_BASE}/api/aluna/campaigns/preview?filter=${filter}`);
     const data = await response.json();
     
     if (data.ok) {
@@ -1072,7 +1072,7 @@ window.createAndSendCampaign = async function() {
   
   try {
     // 1. Create campaign
-    const createResponse = await fetch('/api/aluna/campaigns/create', {
+    const createResponse = await fetch(`${API_BASE}/api/aluna/campaigns/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1094,7 +1094,7 @@ window.createAndSendCampaign = async function() {
     progressDiv.textContent = `Campaña creada. Enviando a ${campaignPreviewLeads.length} leads...`;
     
     // 2. Send campaign
-    const sendResponse = await fetch('/api/aluna/campaigns/send', {
+    const sendResponse = await fetch(`${API_BASE}/api/aluna/campaigns/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1214,7 +1214,7 @@ document.addEventListener('input', function(e) {
 loadProformas();
 loadPipeline();
 
-setInterval(() => { loadStats(); loadPipeline(); }, 30000);
+setInterval(() => { loadStats(); loadProformas(); loadPipeline(); }, 30000);
 
 /* ─── prospect modal (añadir al pipeline) ────────────────────── */
 window.openAddProspectModal = function() {
@@ -1255,7 +1255,7 @@ window.submitAddProspect = async function() {
   }
   
   try {
-    const response = await fetch('/api/aluna/prospect/manual', {
+    const response = await fetch(`${API_BASE}/api/aluna/prospect/manual`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

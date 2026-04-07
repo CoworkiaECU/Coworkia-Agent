@@ -245,7 +245,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: '🚫 Los domingos Coworkia está cerrado',
       suggestion: 'Estamos abiertos de lunes a sábado',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }
   
@@ -257,7 +257,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: `🎉 ${nombreFeriado} - Coworkia está cerrado`,
       suggestion: 'Estamos cerrados en feriados',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }
   
@@ -275,7 +275,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: 'Ese horario ya pasó',
       suggestion: `¿Qué tal ${nextTime}?`,
-      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }
 
@@ -292,7 +292,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
     return {
       available: false,
       reason: 'Fuera del horario laboral (8:30 AM - 7:00 PM)',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }
   
@@ -320,7 +320,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       reason: `${getServiceName(serviceType)} ocupado en ese horario`,
       occupiedSpaces: overlappingReservations.length,
       capacity: serviceCapacity,
-      alternatives: await suggestAlternatives(date, durationHours, serviceType)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }
 
@@ -342,7 +342,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
         reason: `Máximo ${CALENDAR_CONFIG.maxSimultaneousSpaces} espacios ocupados en ese horario`,
         occupiedSpaces: overlappingAll.length,
         capacity: CALENDAR_CONFIG.maxSimultaneousSpaces,
-        alternatives: await suggestAlternatives(date, durationHours, serviceType)
+        alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
       };
     }
   }
@@ -358,19 +358,24 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
 /**
  * 💡 Sugiere horarios alternativos si no hay disponibilidad
  */
-async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk') {
+async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk', requestedStartTime = null) {
   const alternatives = [];
   const capacity = getServiceCapacity(serviceType);
   const dayReservations = await reservationRepository.findByDate(date, serviceType);
   const durationMinutes = durationHours * 60;
   const startLimit = CALENDAR_CONFIG.workingHours.startMinutes;
   const endLimit = CALENDAR_CONFIG.workingHours.endMinutes - durationMinutes;
+  
+  // Calcular minutos del horario solicitado para ordenar por proximidad
+  const requestedMinutes = requestedStartTime 
+    ? timeToMinutes(requestedStartTime) 
+    : Math.round((startLimit + endLimit) / 2); // centro del día si no hay referencia
 
-  // Buscar horarios libres el mismo día en intervalos de 30 minutos respetando 15 minutos de gap
-  for (let minutes = startLimit; minutes <= endLimit && alternatives.length < 3; minutes += 30) {
+  // Recolectar TODOS los slots disponibles
+  const allSlots = [];
+  for (let minutes = startLimit; minutes <= endLimit; minutes += 30) {
     const startMinutes = minutes;
     const endMinutes = startMinutes + durationMinutes;
-    const testTime = minutesToTime(startMinutes);
     
     const overlapping = dayReservations.filter(res => {
       if (res.status === 'cancelled') return false;
@@ -380,12 +385,24 @@ async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk')
     });
     
     if (overlapping.length < capacity) {
-      alternatives.push({
+      allSlots.push({
         date,
-        time: testTime,
-        duration: `${durationHours}h`
+        time: minutesToTime(startMinutes),
+        startTime: minutesToTime(startMinutes),
+        endTime: minutesToTime(endMinutes),
+        duration: `${durationHours}h`,
+        _distance: Math.abs(startMinutes - requestedMinutes)
       });
     }
+  }
+  
+  // Ordenar por proximidad al horario solicitado
+  allSlots.sort((a, b) => a._distance - b._distance);
+  
+  // Tomar los 3 más cercanos y limpiar campo interno
+  for (const slot of allSlots.slice(0, 3)) {
+    const { _distance, ...clean } = slot;
+    alternatives.push(clean);
   }
   
   // Si no hay alternativas el mismo día, sugerir día siguiente
@@ -516,7 +533,7 @@ export async function createReservation(reservationData) {
     };
   } catch (error) {
     console.error('[CALENDARIO] Error creando reserva:', error);
-    const fallbackAlternatives = await suggestAlternatives(date, durationHours);
+    const fallbackAlternatives = await suggestAlternatives(date, durationHours, serviceType, startTime);
     return {
       success: false,
       error: error?.code === 'SQLITE_CONSTRAINT'

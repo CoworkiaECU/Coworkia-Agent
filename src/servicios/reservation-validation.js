@@ -212,6 +212,10 @@ export function suggestAlternativeSlots(date, requestedStart, durationHours, exi
   const businessStart = '08:00';
   const businessEnd = '20:00';
   
+  // Convertir hora solicitada a minutos para calcular proximidad
+  const [reqH, reqM] = (requestedStart || '12:00').split(':').map(Number);
+  const requestedMinutes = reqH * 60 + (reqM || 0);
+  
   // Generar slots de 30 minutos durante todo el día
   const slots = [];
   let currentTime = businessStart;
@@ -233,11 +237,12 @@ export function suggestAlternativeSlots(date, requestedStart, durationHours, exi
       if (!hasConflict) {
         const validation = validateReservation(date, currentTime, endTime, durationHours);
         if (validation.valid) {
+          const slotMinutes = hours * 60 + mins;
           alternatives.push({
             startTime: currentTime,
             endTime,
             durationHours,
-            recommended: alternatives.length < 3 // Marcar las primeras 3 como recomendadas
+            _distance: Math.abs(slotMinutes - requestedMinutes) // proximidad al horario pedido
           });
         }
       }
@@ -250,7 +255,11 @@ export function suggestAlternativeSlots(date, requestedStart, durationHours, exi
     currentTime = `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
   }
   
-  return alternatives.slice(0, 5); // Máximo 5 alternativas
+  // Ordenar por proximidad al horario solicitado (más cercano primero)
+  alternatives.sort((a, b) => a._distance - b._distance);
+  
+  // Limpiar campo interno y devolver top 5
+  return alternatives.slice(0, 5).map(({ _distance, ...alt }) => ({ ...alt, recommended: true }));
 }
 
 /**

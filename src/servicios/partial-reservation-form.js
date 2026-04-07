@@ -825,7 +825,9 @@ export function extractDataFromMessage(message, currentForm) {
   const namedDateMatch = lowerMsg.match(/(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/);
   
   // 🗓️ Detectar "lunes 19 enero 2026" o "lunes 19 enero" o "lunes 19"
-  const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?(?:\b|(?=[^\d]))/i);
+  // ⚠️ FIX: El número después del día NO debe ir seguido de am/pm/h/: (eso sería hora, no día del mes)
+  // Ejemplo: "jueves 4pm" → NO debe matchear (4 es hora). "jueves 19" → SÍ debe matchear (19 es día).
+  const fullDateMatch = lowerMsg.match(/\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})(?!\s*(?:am|pm|h\b|:))(?:\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))?(?:\s+(\d{4}))?(?:\b|(?=[^\d]))/i);
   
   if (fullDateMatch) {
     const [, dayName, dayNum, monthName, yearStr] = fullDateMatch;

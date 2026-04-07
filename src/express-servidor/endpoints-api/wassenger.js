@@ -2244,10 +2244,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       // Evita que isReservationIntent (que matchea 'tienen', 'ofrecen', etc.) tape el handoff a Aluna.
       const _alunaKeywords = ['membresía','membresias','membresías','membresia','plan mensual','planes mensuales','plan 10','plan 20','plan10','plan20'];
       const _isAlunaIntent = !_hasAF && _alunaKeywords.some(k => (processedText || '').toLowerCase().includes(k));
-      // 🔒 Admin phone NUNCA activa el form de reserva — Diego usa dashboard manual.
-      // Sin esto, reservas creadas por admin guardan SU teléfono → recordatorios llegan a Diego.
-      const _isAdmin = isAdminPhone(userId);
-      const _shouldForm = !_isAdmin && !_hasVAP && !_isAlunaIntent && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
+      const _shouldForm = !_hasVAP && !_isAlunaIntent && (_hasSI || isReservationIntent(processedText) || _hasAF || _hasFCont);
 
       // ① Interceptar pedidos de supervisores / escalación humana
       const _supervisorKeywords = ['supervisor', 'gerente', 'jefe', 'encargado', 'responsable', 'hablar con alguien', 'hablar con una persona', 'persona real', 'humano real', 'quiero hablar con', 'comunícame con', 'comunicate con', 'pásame con', 'pasame con', 'llamar a', 'queja', 'reclamo', 'denuncia'];

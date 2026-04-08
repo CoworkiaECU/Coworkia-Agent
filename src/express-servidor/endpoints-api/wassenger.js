@@ -80,6 +80,7 @@ import { saveInsuranceLead, getQuoteLead, upsertQuoteLead, updateQuoteLeadData, 
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
+import { scoreConversation } from '../../servicios/conversation-scorer.js';
 
 const router = Router();
 
@@ -3712,6 +3713,17 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         replyContext: getReplyContextMetadata(replyContext)
       }
     });
+
+    // 🧠 Auto-aprendizaje: scoring + embedding de la conversación (fire-and-forget)
+    scoreConversation(
+      normalizeAgentName(resultado.agenteKey),
+      [
+        { role: 'user', content: auroraInput },
+        { role: 'assistant', content: finalReply }
+      ],
+      'completed',
+      userId
+    ).catch(err => console.warn('[LEARNING] ⚠️ Score error:', err.message));
 
     // � LOPDP — Aviso silencioso de privacidad (solo primer contacto histórico con Aurora)
     // El aviso se añade UNA sola vez: cuando Aurora responde al usuario por primera vez.

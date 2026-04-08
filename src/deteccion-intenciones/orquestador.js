@@ -17,6 +17,7 @@ import { setUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqli
 import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
+import { getRelevantExamples, formatRAGExamples } from '../servicios/rag-retriever.js';
 
 // ⚠️ NOTA V2: detectPaulaOutOfScope() ELIMINADA
 // Ahora SOLO @menciones explícitas cambian de agente
@@ -429,8 +430,19 @@ ${specialMode ? '- ⚠️ MODO ESPECIAL ACTIVO: Sigue el formato exacto del syst
 
   // �🔧 Reemplazar placeholders con datos reales del usuario
   const userName = perfil.name || perfil.whatsappDisplayName || '';
-  const systemPromptWithData = systemPrompt.replace(/ \{nombre\}|\{nombre\}/g, userName ? ` ${userName}` : '');
+  let systemPromptWithData = systemPrompt.replace(/ \{nombre\}|\{nombre\}/g, userName ? ` ${userName}` : '');
   const promptWithData = prompt.replace(/ \{nombre\}|\{nombre\}/g, userName ? ` ${userName}` : '');
+
+  // 🧠 RAG: inyectar ejemplos de conversaciones exitosas similares (fire-and-forget safe)
+  try {
+    const ragExamples = await getRelevantExamples(targetAgent, mensaje, 2);
+    const ragBlock = formatRAGExamples(ragExamples);
+    if (ragBlock) {
+      systemPromptWithData += ragBlock;
+    }
+  } catch (err) {
+    // RAG es best-effort — no bloquear respuesta
+  }
 
   const duration = Date.now() - startTime;
   loggers.orquestador.timing('procesarMensaje', duration, { userId, agent: targetAgent, isHandoff });

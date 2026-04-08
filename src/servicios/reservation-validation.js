@@ -8,13 +8,16 @@ const BUSINESS_CONFIG = {
   // Horarios laborales (horario de Ecuador UTC-5)
   // IMPORTANTE: Debe coincidir con lo que Aurora comunica a los usuarios
   weekdayStart: '07:00',  // 7:00 AM como dice Aurora
-  weekdayEnd: '19:00',    // 7:00 PM - CIERRE
+  weekdayEnd: '19:00',    // 7:00 PM - CIERRE oficial
   weekendStart: '08:00',  // Sábados desde 8 AM
   weekendEnd: '18:00',    // Hasta 6 PM
   
+  // Grace period: "siempre les esperaremos unos minutos" — Diego
+  graceMinutes: 30,       // 30 min después de cierre (reserva puede TERMINAR hasta 7:30 PM)
+  
   // Restricciones de duración
   minDurationHours: 2,    // Mínimo 2 horas (no existe tarifa de 1 hora)
-  maxDurationHours: 8,    // Máximo 8 horas por WhatsApp
+  maxDurationHours: 12,   // Sin cap artificial — limitado por horario de negocio + grace
   defaultDurationHours: 2,
   
   // Ventana de reserva
@@ -47,14 +50,17 @@ export function validateBusinessHours(date, startTime, endTime) {
   const endMinutes = toMinutes(endTime);
   const businessStartMinutes = toMinutes(businessStart);
   const businessEndMinutes = toMinutes(businessEnd);
+  // Grace period: reserva puede TERMINAR hasta graceMinutes después del cierre
+  const graceEndMinutes = businessEndMinutes + (BUSINESS_CONFIG.graceMinutes || 0);
   
-  if (startMinutes < businessStartMinutes || endMinutes > businessEndMinutes) {
+  if (startMinutes < businessStartMinutes || endMinutes > graceEndMinutes) {
+    const graceEndTime = `${Math.floor(graceEndMinutes / 60).toString().padStart(2, '0')}:${(graceEndMinutes % 60).toString().padStart(2, '0')}`;
     return {
       valid: false,
       reason: isWeekend 
         ? `Fuera del horario laboral de fin de semana (${businessStart} - ${businessEnd})`
         : `Fuera del horario laboral (${businessStart} - ${businessEnd})`,
-      suggestion: `Horario disponible: ${businessStart} - ${businessEnd}`
+      suggestion: `Horario disponible: ${businessStart} - ${graceEndTime} (cierre oficial ${businessEnd}, cortesía +${BUSINESS_CONFIG.graceMinutes}min)`
     };
   }
   
@@ -76,8 +82,8 @@ export function validateDuration(durationHours) {
   if (durationHours > BUSINESS_CONFIG.maxDurationHours) {
     return {
       valid: false,
-      reason: `Duración máxima: ${BUSINESS_CONFIG.maxDurationHours} horas`,
-      suggestion: `Para reservas de más de ${BUSINESS_CONFIG.maxDurationHours} horas, contacta a secretaria.coworkia@gmail.com`
+      reason: `Duración máxima: ${BUSINESS_CONFIG.maxDurationHours} horas (jornada completa)`,
+      suggestion: `Puedes reservar hasta ${BUSINESS_CONFIG.maxDurationHours} horas dentro del horario laboral`
     };
   }
   

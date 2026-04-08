@@ -11,8 +11,8 @@ const IS_TEST = (process.env.NODE_ENV || '').toLowerCase() === 'test';
 const CALENDAR_CONFIG = {
   maxSimultaneousSpaces: 5, // Máximo 5 espacios al mismo tiempo
   workingHours: {
-    startMinutes: 8 * 60 + 30, // 8:30 AM
-    endMinutes: 19 * 60        // 7:00 PM
+    startMinutes: 7 * 60,       // 7:00 AM — consistente con reservation-validation.js
+    endMinutes: 19 * 60 + 30   // 7:30 PM — grace period (cierre oficial 7PM + 30min cortesía)
   },
   timeSlots: 60, // Slots de 60 minutos
   availableSpaces: ['hotDesk1', 'hotDesk2', 'hotDesk3', 'hotDesk4', 'meetingRoom1', 'privateOffice1']
@@ -284,14 +284,14 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = startMinutes + (durationHours * 60);
   
-  // Verificar horario laboral (8:30 AM - 7:00 PM) y última hora permitida 5:00 PM (para 2h termina 7:00 PM)
+  // Verificar horario laboral (7:00 AM - 7:30 PM con grace period)
   const workStart = CALENDAR_CONFIG.workingHours.startMinutes;
   const workEnd = CALENDAR_CONFIG.workingHours.endMinutes;
   
   if (startMinutes < workStart || endMinutes > workEnd) {
     return {
       available: false,
-      reason: 'Fuera del horario laboral (8:30 AM - 7:00 PM)',
+      reason: 'Fuera del horario laboral (7:00 AM - 7:00 PM)',
       alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
     };
   }

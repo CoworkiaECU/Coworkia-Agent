@@ -397,7 +397,7 @@ Por favor, intenta así:
         userMessage: `🚫 Los domingos Coworkia está cerrado, Diego 😊
 
 Estamos abiertos:
-📅 Lunes a viernes: 8:30 AM - 6:00 PM
+📅 Lunes a viernes: 7:00 AM - 7:00 PM
 📅 Sábado: 9:00 AM - 2:00 PM
 
 ¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️`
@@ -555,17 +555,17 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
         };
         
         const endTime = calcEndTime(reservationData.startTime, reservationData.durationHours);
-        const isOverMax = reservationData.durationHours > 8;
+        const isOverMax = reservationData.durationHours > 12;
         
         if (isOverMax) {
           // Calcular el máximo hasta las 7pm (cierre)
-          const closeTime = '19:00';
+          const closeTime = '19:30'; // 7PM cierre oficial + 30min grace
           const [startH, startM] = reservationData.startTime.split(':').map(Number);
           const [closeH, closeM] = closeTime.split(':').map(Number);
           const startMinutes = startH * 60 + startM;
           const closeMinutes = closeH * 60 + closeM;
           const maxDurationToClose = Math.floor((closeMinutes - startMinutes) / 60 * 10) / 10;
-          const suggestedDuration = Math.min(8, maxDurationToClose);
+          const suggestedDuration = Math.min(12, maxDurationToClose);
           const suggestedEnd = calcEndTime(reservationData.startTime, suggestedDuration);
           const basePricePerHour = 5; // $5 por hora
           const baseTotal = suggestedDuration * basePricePerHour;
@@ -579,8 +579,8 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
 
 📋 *Límites de reserva:*
 • Mínimo: 2 horas
-• Máximo: 8 horas
-• Cierre del espacio: 7:00 PM
+• Horario: 7:00 AM - 7:00 PM
+• Cortesía: te esperamos hasta 7:30 PM 😊
 
 💡 *Ajustando a máximo disponible:*
 🕐 ${reservationData.startTime} - ${suggestedEnd} (${suggestedDuration}h)
@@ -588,13 +588,13 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
 
 ¿Te parece bien con ${suggestedDuration} horas?`;
         } else {
-          userMessage += `❌ La duración debe ser entre 2 y 8 horas 🕐
+          userMessage += `❌ La duración mínima es 2 horas 🕐
 
 *Tu solicitud:*
 🕐 ${reservationData.startTime} - ${endTime}
 ⏱️ Duración: ${reservationData.durationHours}h
 
-¿Cuántas horas necesitas? (2-8h)`;
+¿Cuántas horas necesitas? (mínimo 2h)`;
         }
       } else {
         userMessage += '❌ ' + formatValidationErrors(validation);

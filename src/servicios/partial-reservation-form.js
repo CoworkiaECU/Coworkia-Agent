@@ -1302,7 +1302,7 @@ ${hotDeskInfo}
         message: `🚫 Los sábados Coworkia está cerrado, lo siento 😊
 
 Estamos abiertos:
-📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
+📅 *Lunes a viernes: 7:00 AM - 7:00 PM*
 
 ¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
 
@@ -1325,7 +1325,7 @@ Estamos abiertos:
         message: `🚫 Los domingos Coworkia está cerrado, lo siento 😊
 
 Estamos abiertos:
-📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
+📅 *Lunes a viernes: 7:00 AM - 7:00 PM*
 
 ¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
 
@@ -1357,7 +1357,7 @@ Estamos abiertos:
             message: `🎉 ${nombreFeriado} - Coworkia está cerrado ese día 😊
 
 Estamos abiertos:
-📅 *Lunes a viernes: 8:30 AM - 6:00 PM*
+📅 *Lunes a viernes: 7:00 AM - 7:00 PM*
 
 ¿Qué tal si reservas para el ${nextDateStr}? 🗓️
 

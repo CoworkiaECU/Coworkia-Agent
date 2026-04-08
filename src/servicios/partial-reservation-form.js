@@ -1129,7 +1129,8 @@ export function extractDataFromMessage(message, currentForm) {
     /con\s+(\d+)\s+(?:personas?|acompa[ñn]antes?)/i,
     /(?:yo y|para)\s+(\d+)\s+(?:m[aá]s|personas?)/i,  // "yo y 3 más", "para 4 personas"
     /(\d+)\s+en total/i,  // "4 en total"
-    /(?:reservar? para|necesito para)\s+(\d+)/i  // "reservar para 4"
+    /(?:reservar? para|necesito para)\s+(\d+)/i,  // "reservar para 4"
+    /(\d+)\s+(?:hot\s*desks?|escritorios?|puestos?)/i  // "2 hot desks", "3 escritorios"
   ];
 
   for (const pattern of peoplePatterns) {
@@ -1147,7 +1148,8 @@ export function extractDataFromMessage(message, currentForm) {
       console.log('[FORM] 👥 Detectado personas:', num);
       
       // ✅ Multi-hotdesk: si numPeople > 1 y spaceType es hotDesk, reservar N escritorios
-      if (num > 1 && currentForm.spaceType === 'hotDesk') {
+      const effectiveSpaceType = updates.spaceType || currentForm.spaceType;
+      if (num > 1 && effectiveSpaceType === 'hotDesk') {
         updates.desksQuantity = num;
         console.log('[FORM] 💻 Multi-hotdesk: reservando', num, 'escritorios');
       }

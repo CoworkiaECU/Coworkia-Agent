@@ -12,6 +12,7 @@ import { CronJob } from 'cron';
 import databaseService from '../database/database.js';
 import { notifyRaw } from '../servicios/notification-service.js';
 import { complete as generateChatCompletion } from '../servicios-ia/openai.js';
+import { getIntentAccuracy, getTopFalsePositives } from '../servicios/intent-feedback-tracker.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -180,16 +181,61 @@ async function analyzeErrorEvents() {
 
 // ─── Generador de Plan de Reparación ─────────────────────────────────────────
 
+// ─── Análisis de Precisión de Intents ────────────────────────────────────────
+
+/**
+ * Consulta intent_feedback de los últimos 7 días.
+ * Si hay >= 3 false positives del mismo keyword, lo reporta.
+ */
+async function analyzeIntentAccuracy() {
+  try {
+    const accuracy = await getIntentAccuracy(null, 7);
+    const topFP = await getTopFalsePositives(null, 10);
+
+    // Keywords problemáticos: >= 3 false positives en 7 días
+    const problematicKeywords = topFP.filter(fp => parseInt(fp.count) >= 3);
+
+    // Knowledge gaps con >= 5 ocurrencias
+    let knowledgeGaps = [];
+    try {
+      await databaseService.initialize();
+      knowledgeGaps = await databaseService.all(
+        `SELECT agent, question, occurrence_count, cluster_key
+         FROM unanswered_questions
+         WHERE status = 'suggested'
+           AND created_at > NOW() - INTERVAL '7 days'
+         ORDER BY occurrence_count DESC
+         LIMIT 5`
+      ) || [];
+    } catch (_e) {
+      // Table may not exist yet
+    }
+
+    return {
+      accuracy,
+      problematicKeywords,
+      knowledgeGaps,
+      hasIssues: problematicKeywords.length > 0 || knowledgeGaps.length > 0
+    };
+  } catch (err) {
+    console.warn('[SELF-HEAL] ⚠️ Error analizando intents:', err.message);
+    return { accuracy: null, problematicKeywords: [], knowledgeGaps: [], hasIssues: false };
+  }
+}
+
+// ─── Generador de Plan de Reparación (original) ─────────────────────────────
+
 /**
  * Usa OpenAI para analizar errores y generar plan de reparación priorizado
  */
-async function generateRepairPlan(errorAnalysis, conversationAnalysis) {
+async function generateRepairPlan(errorAnalysis, conversationAnalysis, intentAnalysis = {}) {
   try {
     const { errorSummary, multiUserErrors, totalErrors } = errorAnalysis;
     const { errorMessages, abandonedConversations, repeatedQuestions, totalFailed } = conversationAnalysis;
+    const { accuracy, problematicKeywords = [], knowledgeGaps = [], hasIssues: hasIntentIssues } = intentAnalysis;
 
     // Si no hay problemas, no generar plan
-    if (totalErrors === 0 && totalFailed === 0) {
+    if (totalErrors === 0 && totalFailed === 0 && !hasIntentIssues) {
       console.log('[SELF-HEAL] ✅ No se detectaron problemas en las últimas 24h');
       return null;
     }
@@ -205,6 +251,18 @@ async function generateRepairPlan(errorAnalysis, conversationAnalysis) {
       repeatedQuestions.length > 0 ? `Preguntas repetidas: ${repeatedQuestions.length}` : ''
     ].filter(Boolean).join('\n');
 
+    // Contexto de intents y knowledge gaps
+    const intentContext = [];
+    if (accuracy && accuracy.total > 0) {
+      intentContext.push(`Precisión de intents (7d): ${(accuracy.accuracy * 100).toFixed(1)}% (${accuracy.correct}/${accuracy.total})`);
+    }
+    if (problematicKeywords.length > 0) {
+      intentContext.push(`Keywords con false positives: ${problematicKeywords.map(k => `"${k.keyword_triggered}" → ${k.detected_intent} (${k.count}x)`).join(', ')}`);
+    }
+    if (knowledgeGaps.length > 0) {
+      intentContext.push(`Preguntas sin respuesta recurrentes: ${knowledgeGaps.map(g => `"${g.question?.substring(0, 60)}" (${g.occurrence_count}x, ${g.agent})`).join('; ')}`);
+    }
+
     const prompt = `Eres el sistema de auto-diagnóstico de Coworkia Agent, un sistema multi-agente para WhatsApp Business con 8 agentes especializados.
 
 Analiza estos errores de las últimas 24h y genera un plan de reparación priorizado.
@@ -214,6 +272,9 @@ ${errorContext || 'Ninguno'}
 
 CONVERSACIONES FALLIDAS (${totalFailed} total):
 ${conversationContext || 'Ninguno'}
+
+ANÁLISIS DE INTENTS Y KNOWLEDGE GAPS:
+${intentContext.length > 0 ? intentContext.join('\n') : 'Sin problemas detectados'}
 
 Genera un JSON con máximo 5 issues priorizados. Cada issue debe tener:
 - priority: 'critical' | 'high' | 'medium' (critical = afecta múltiples usuarios o bloquea funcionalidad core)
@@ -366,13 +427,18 @@ export async function runSelfHealing() {
     console.log('[SELF-HEAL] 💬 Analizando conversaciones fallidas...');
     const conversationAnalysis = await analyzeFailedConversations();
 
+    console.log('[SELF-HEAL] 🧠 Analizando precisión de intents y knowledge gaps...');
+    const intentAnalysis = await analyzeIntentAccuracy();
+
     console.log(`[SELF-HEAL] Resultados:`);
     console.log(`  - Errores detectados: ${errorAnalysis.totalErrors}`);
     console.log(`  - Conversaciones fallidas: ${conversationAnalysis.totalFailed}`);
+    console.log(`  - Keywords problemáticos: ${intentAnalysis.problematicKeywords.length}`);
+    console.log(`  - Knowledge gaps: ${intentAnalysis.knowledgeGaps.length}`);
 
     // PASO 2: Generar plan con OpenAI
     console.log('[SELF-HEAL] 🤖 Generando plan de reparación con OpenAI...');
-    const issues = await generateRepairPlan(errorAnalysis, conversationAnalysis);
+    const issues = await generateRepairPlan(errorAnalysis, conversationAnalysis, intentAnalysis);
 
     // PASO 3: Escribir plan de vuelo
     const planFile = await writePlanFile(issues, today);

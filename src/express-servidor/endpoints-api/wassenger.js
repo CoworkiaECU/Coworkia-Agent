@@ -58,6 +58,7 @@ import {
 
 import { loadProfileWithTimeout } from '../../utils/timeout-helpers.js';
 import { dispatchHttpRequest } from '../../servicios/external-dispatcher.js';
+import { detectKnowledgeGap } from '../../servicios/knowledge-gap-detector.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../../servicios/reservation-state.js';
 import { isBossQuoteCommand, parseGabiQuoteData, sendGabiConsultoriaEmail } from '../../servicios/gabi-cotizacion-email.js';
 import { isAxelBossQuoteCommand, parseAxelDemoQuoteData, sendAxelDemoCotizacion } from '../../servicios/axel-demo-cotizacion.js';
@@ -3681,6 +3682,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         }
       }
     }
+
+    // 🧠 Auto-learning: detectar gaps de conocimiento (fire-and-forget)
+    detectKnowledgeGap(
+      normalizeAgentName(resultado.agenteKey),
+      auroraInput,
+      finalReply
+    ).catch(err => console.error('[KNOWLEDGE-GAP] ⚠️', err.message));
 
     await saveConversationMessage(userId, {
       role: 'assistant',

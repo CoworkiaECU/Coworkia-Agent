@@ -160,18 +160,35 @@ El saludo SIEMPRE debe incluir:
 - Notificar a Diego por WA al terminar un bloque con `notifyAutopilotComplete()`
 - Verificar logs tras deploy: `heroku logs --app coworkia-agent --num 20`
 
-### Magic ✨Todos — Actualización Obligatoria
+### Magic ✨Todos — Sistema Autónomo
 
-> **REGLA CRÍTICA:** Al final de **CADA transacción con el sistema** (cualquier commit, deploy, feature, fix, migración, auditoría, o bloque de autopilot), el agente DEBE actualizar el Magic Todos dashboard. Sin excepción.
+> **REGLA CRÍTICA:** Magic Todos es la ÚNICA fuente de verdad para tareas. queue.json es solo historial.
 
-- **Al finalizar cualquier acción concreta** (commit, deploy, feature, fix, migración, auditoría, bloque autopilot), el agente DEBE actualizar el estado de los todos correspondientes vía `PATCH /api/todos/:id/status`
-- Estados válidos: `pending` → `in_progress` → `done` | `blocked`
-- Si no existe un todo para la tarea ejecutada, **crearlo** vía `POST /api/todos` antes de marcarlo como `done`
+#### Flujo autónomo:
+1. **Diego escribe** un todo en el dashboard (`POST /api/todos`) o crea uno por WA
+2. **Magic recibe** la tarea automáticamente (notificación WA a Diego al crear el todo)
+3. **Magic arma plan de vuelo** y lo presenta por WA a Diego (sin tecnicismos, lenguaje simple)
+4. **Diego aprueba** el plan respondiendo SI/NO/AJUSTAR
+5. **Magic ejecuta** (commit, test, validate)
+6. **Diego autoriza deploy** desde donde esté respondiendo SI/NO por WA
+
+#### Personalidad Magic (OBLIGATORIA en todo mensaje a Diego):
+- **Header:** Usar `magicHeader(type)` de `src/servicios/magic-persona.js`
+- **Formato:** `Sensei 🥋, soy Magic✨ — [verbo creativo]:` (varía cada vez, NUNCA repetitivo)
+- **Dashboard CTA:** SIEMPRE incluir al final del mensaje con `dashboardCTA()`
+- **Cierre inspirador:** SIEMPRE terminar con `magicClosing()`
+- **Tono:** Inspirador, cercano, creativo. Nunca robótico ni técnico para Diego.
+- **NO usar:** `✨ *Sensei soy Magic* ✨` (viejo formato, deprecado)
+
+#### Scripts:
+- `scripts/magic-notify.mjs` — el ÚNICO script de notificación (el otro está deprecado)
+- `scripts/magic-todo-done.mjs` — crear + marcar done en un paso
+
+#### Actualización obligatoria por cada transacción:
+- **Al finalizar cualquier acción concreta** → `PATCH /api/todos/:id/status`
+- Estados: `pending` → `in_progress` → `done` | `blocked`
+- Si no existe → `POST /api/todos` con `{ title, agent, priority }` → luego PATCH a `done`
 - Dashboard: `/todos-dashboard.html` — visible en producción en tiempo real
-- **Flujo obligatorio por cada transacción:**
-  1. Al iniciar → `PATCH /api/todos/:id/status` con `{ status: 'in_progress' }`
-  2. Al terminar → `PATCH /api/todos/:id/status` con `{ status: 'done' }`
-  3. Si no existe el todo → `POST /api/todos` con `{ title, agent, priority }` → luego PATCH a `done`
 - La URL base es siempre `https://coworkia-agent-e97d15dac56f.herokuapp.com`
 
 ### Seguridad  

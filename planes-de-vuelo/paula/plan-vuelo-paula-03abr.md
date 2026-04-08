@@ -1,8 +1,8 @@
 # ✈️ Plan de Vuelo — Paula Inmobiliaria (03-05 Abr 2026)
-**Status**: 🟢 Críticos resueltos — Sistema 95% operativo  
-**Producción**: pendiente deploy (commit local)  
-**Última sesión**: 05 Abr 2026 — C1-C5 fixes críticos completados  
-**Agente**: Paula · PropElite Bienes Raíces
+**Status**: � B1-B4 + D1/D3 completados — Falta: C1-C3 dashboard + D2 Xiaomi  
+**Producción**: pendiente deploy  
+**Última sesión**: 08 Abr 2026 — Branding navy + co-brand removed  
+**Commits**: `262ffcd` (A1-A4), `eb65ea0` (B1/B2/D1/D3)
 
 ---
 
@@ -68,24 +68,23 @@
 
 ### BLOQUE B — Emails follow-up (no solo WhatsApp)
 
-- [ ] **B1** — Crear template email follow-up 24h Paula
-  - Branding PropElite (gold #D4AF37 + navy #1A2744)
-  - Incluir: resumen propiedad, link al brochure, CTA "Agendar visita"
-  - Usar logo PropElite consistente
+- [x] **B1** — Crear template email follow-up 24h Paula
+  - ✅ Ya existía en email-templates-paula.js L487
+  - Branding actualizado: olive → navy (#1A2744/#2D3748)
+  - Commit: `eb65ea0`
 
-- [ ] **B2** — Crear template email follow-up 3d Paula
-  - Mensaje de re-engagement con nuevas opciones
-  - CTA: "Ver más propiedades" + WhatsApp directo
+- [x] **B2** — Crear template email follow-up 3d Paula
+  - ✅ Ya existía en email-templates-paula.js L600
+  - Branding actualizado a navy
+  - Commit: `eb65ea0`
 
-- [ ] **B3** — Crear template email recordatorio visita 24h
-  - Datos de visita: propiedad, dirección, hora
-  - Google Maps link, preparación para visita
-  - CTA: "Confirmar" / "Reagendar"
+- [x] **B3** — Crear template email recordatorio visita 24h
+  - ✅ Ya existía en email-templates-paula.js L708
+  - Branding actualizado a navy (incluído en batch)
 
-- [ ] **B4** — Integrar envío dual (WA + email) en processPaulaFollowUps()
-  - Si tiene email → enviar email
-  - Si tiene phone → enviar WhatsApp
-  - Si tiene ambos → ambos
+- [x] **B4** — Integrar envío dual (WA + email) en processPaulaFollowUps()
+  - ✅ Ya implementado: WA + email para D+1, D+3, y visit reminder
+  - paula-followup-service.js ya importa y usa generateFollowUp24hEmail/3dEmail
 
 ### BLOQUE C — Dashboard + Lead Scoring visual
 
@@ -104,18 +103,20 @@
 
 ### BLOQUE D — Limpieza de template brochure
 
-- [ ] **D1** — Remover co-brand Coworkia del footer del brochure
-  - Paula/PropElite es marca independiente
-  - Reemplazar ecosistemaTable() con footer PropElite propio
+- [x] **D1** — Remover co-brand Coworkia del footer del brochure
+  - ✅ ecosistemaTable() eliminado, import removido
+  - Footer PropElite limpio con contacto directo
+  - Commit: `eb65ea0`
 
 - [ ] **D2** — Verificar compatibilidad Xiaomi/MIUI del brochure
   - Sin linear-gradient sin fallback
   - Sin sombras complejas
   - Viewport-safe
 
-- [ ] **D3** — Verificar que FROM del brochure muestre "Paula • PropElite"
-  - Actual: usa DEFAULT_FROM_EMAIL (email genérico)
-  - Fix: usar email dedicado si existe, sino al menos nombre correcto
+- [x] **D3** — Verificar que FROM del brochure muestre "Paula · PropElite"
+  - ✅ AGENT_FROM_NAMES.paula = 'Paula · PropElite Bienes Raíces'
+  - PE_FROM_EMAIL usa PAULA_SMTP_USER o DEFAULT_FROM_EMAIL
+  - Commit: `eb65ea0`
 
 ### BLOQUE E — Verificación e2e producción
 

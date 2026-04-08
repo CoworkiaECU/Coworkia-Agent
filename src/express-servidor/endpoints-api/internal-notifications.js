@@ -11,6 +11,7 @@
 
 import { enviarWhatsApp } from './wassenger.js';
 import { loggers } from '../../utils/logger.js';
+import { magicHeader, dashboardCTA, magicClosing } from '../../servicios/magic-persona.js';
 
 // Número personal de Diego (desde .env)
 const DIEGO_PERSONAL = process.env.DIEGO_PERSONAL_PHONE;
@@ -91,7 +92,7 @@ function formatNotificationMessage(type, title, data) {
   };
   
   const emoji = emojis[type] || '📬';
-  let message = `✨ *Sensei soy Magic* ✨\n${emoji} *${title}*\n\n`;
+  let message = `${magicHeader(type)}\n${emoji} *${title}*\n\n`;
   
   switch (type) {
     case 'success':
@@ -109,6 +110,10 @@ function formatNotificationMessage(type, title, data) {
     default:
       message += JSON.stringify(data, null, 2);
   }
+  
+  // Always add dashboard CTA + inspiring closing
+  message += `\n\n${dashboardCTA()}`;
+  message += `\n${magicClosing()}`;
   
   return message;
 }

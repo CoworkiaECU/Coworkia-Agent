@@ -14,6 +14,7 @@
  */
 
 import https from 'https';
+import { magicHeader, dashboardCTA, magicClosing } from './magic-persona.js';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 // Leemos en runtime (no en import-time) para que dotenv ya esté cargado
@@ -94,6 +95,8 @@ export async function notifyHighIntent(lead) {
     const phone    = lead.phone    || lead.userPhone  || '';
 
     const msg = [
+      magicHeader('inform'),
+      ``,
       `🔥 *LEAD CALIENTE*`,
       ``,
       `👤 *${nombre}*${phone ? ` (${phone})` : ''}`,
@@ -101,7 +104,8 @@ export async function notifyHighIntent(lead) {
       keyword  ? `💬 Dijo: "${keyword}"`           : null,
       category ? `📂 Categoría: ${category}`       : null,
       ``,
-      `→ Abre el dashboard Aluna para tomar acción 🏃`,
+      dashboardCTA(),
+      magicClosing(),
     ].filter(l => l !== null).join('\n');
 
     await _send(msg);
@@ -124,7 +128,7 @@ export async function notifyDailyReport(stats = {}) {
     const totalActive = (a.newToday || 0) + (au.todayReservations || 0) + (ad.newToday || 0);
 
     const lines = [
-      `📊 *Buenos días Diego!*`,
+      magicHeader('inform'),
       ``,
       `💜 *Aluna:* ${a.newToday || 0} leads nuevos today · ${a.followupsSent || 0} follow-ups enviados · ${a.conversions || 0} convertidos`,
       `🏢 *Aurora:* ${au.todayReservations || 0} reservas hoy · ${au.pendingConfirmations || 0} pendientes de confirmar`,
@@ -146,6 +150,9 @@ export async function notifyDailyReport(stats = {}) {
 
     lines.push(``);
     lines.push(new Date().toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }));
+    lines.push(``);
+    lines.push(dashboardCTA());
+    lines.push(magicClosing());
 
     await _send(lines.join('\n'));
   } catch (err) {
@@ -162,12 +169,16 @@ export async function notifyCriticalError(context, error) {
   try {
     const errMsg = (error instanceof Error) ? error.message : String(error);
     const msg = [
+      magicHeader('error'),
+      ``,
       `🚨 *ERROR CRÍTICO*`,
       ``,
       `📍 ${context}`,
       `❌ ${errMsg.slice(0, 300)}`,
       ``,
       `⏱️ ${new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}`,
+      ``,
+      dashboardCTA(),
     ].join('\n');
 
     await _send(msg);
@@ -186,6 +197,8 @@ export async function notifyAdrianaAccepted({ clientName = 'Cliente', marca = ''
     const vehicleDesc = [marca, modelo, anio].filter(Boolean).join(' ') || 'Vehículo';
     const prima = primaAnual ? `$${Number(primaAnual).toLocaleString()}` : '—';
     const msg = [
+      magicHeader('success'),
+      ``,
       `🛡️ *ADRIANA — Nuevo Seguro Aceptado!*`,
       ``,
       `👤 Cliente: *${clientName}*`,
@@ -195,7 +208,9 @@ export async function notifyAdrianaAccepted({ clientName = 'Cliente', marca = ''
       quoteCode ? `📋 Ref: ${quoteCode}` : '',
       ``,
       `Siguiente paso: coordinar KYC y emisión`,
-      `Dashboard: https://coworkia-agent.herokuapp.com/adriana-seguros.html`,
+      ``,
+      dashboardCTA(),
+      magicClosing(),
     ].filter(l => l !== '').join('\n');
 
     await _send(msg);
@@ -214,12 +229,18 @@ export async function notifyAutopilotComplete(tasksCompleted, errors = 0, blockN
   try {
     const statusEmoji = errors === 0 ? '✅' : '⚠️';
     const msg = [
+      magicHeader('deploy'),
+      ``,
       `${statusEmoji} *Autopilot completó*${blockName ? ` — ${blockName}` : ''}`,
       ``,
       `📋 Tareas: *${tasksCompleted}* completadas`,
       errors > 0 ? `❗ Errores: *${errors}*` : `🎯 Sin errores`,
       ``,
-      `¿Deploy a producción? Responde *SI* / *NO*`,
+      `¿Autorizo el deploy a producción?`,
+      `Responde *SI* / *NO*`,
+      ``,
+      dashboardCTA(),
+      magicClosing(),
     ].filter(Boolean).join('\n');
 
     await _send(msg);
@@ -235,11 +256,15 @@ export async function notifyAutopilotComplete(tasksCompleted, errors = 0, blockN
 export async function notifyAutopilotBlocked(reason) {
   try {
     const msg = [
+      magicHeader('error'),
+      ``,
       `⏸️ *Autopilot pausado*`,
       ``,
       `🤔 ${reason}`,
       ``,
       `Responde para continuar o indica cómo proceder.`,
+      ``,
+      dashboardCTA(),
     ].join('\n');
 
     await _send(msg);
@@ -263,6 +288,8 @@ export async function notifyGitCommit(hash = '', msg = '', chat = 'Copilot', fil
       : '';
 
     const text = [
+      magicHeader('inform'),
+      ``,
       `📦 *Commit nuevo — ${chat}*`,
       ``,
       `🔖 \`${hash}\``,
@@ -270,7 +297,8 @@ export async function notifyGitCommit(hash = '', msg = '', chat = 'Copilot', fil
       ``,
       filesLine,
       ``,
-      `_(usa STATUS para ver estado del sistema)_`,
+      dashboardCTA(),
+      magicClosing(),
     ].filter(Boolean).join('\n');
 
     await _send(text);

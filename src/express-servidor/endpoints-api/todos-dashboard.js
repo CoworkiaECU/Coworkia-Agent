@@ -1,7 +1,46 @@
 import express from 'express';
 import databaseService from '../../database/database.js';
+import { formatNewTodoNotification, magicMessage } from '../../servicios/magic-persona.js';
 
 const router = express.Router();
+
+// ─── Notify Diego on new TODO (async, non-blocking) ──────────────────────────
+async function notifyNewTodo(todo) {
+  try {
+    if (process.env.NOTIFICATIONS_ENABLED !== 'true') return;
+    const { enviarWhatsApp } = await import('./wassenger.js');
+    const phone = process.env.DIEGO_PERSONAL_PHONE;
+    if (!phone) return;
+    const message = formatNewTodoNotification(todo);
+    await enviarWhatsApp(phone, message);
+    console.log(`[MAGIC] ✨ Notificó nuevo TODO #${todo.id} a Diego`);
+  } catch (err) {
+    console.warn('[MAGIC] notify new todo error:', err.message);
+  }
+}
+
+// ─── Notify Diego when a TODO is completed ───────────────────────────────────
+async function notifyTodoDone(todo) {
+  try {
+    if (process.env.NOTIFICATIONS_ENABLED !== 'true') return;
+    const { enviarWhatsApp } = await import('./wassenger.js');
+    const phone = process.env.DIEGO_PERSONAL_PHONE;
+    if (!phone) return;
+    const body = [
+      `✅ *Tarea #${todo.id} completada*`,
+      ``,
+      `📝 ${todo.title}`,
+      todo.assigned_agent ? `🤖 Agente: ${todo.assigned_agent}` : null,
+      ``,
+      `Otro paso más hacia la visión, Sensei. 🎯`,
+    ].filter(Boolean).join('\n');
+    const message = magicMessage('success', body);
+    await enviarWhatsApp(phone, message);
+    console.log(`[MAGIC] ✨ Notificó TODO #${todo.id} completado a Diego`);
+  } catch (err) {
+    console.warn('[MAGIC] notify todo done error:', err.message);
+  }
+}
 
 // SSE clients store
 const sseClients = new Set();
@@ -39,6 +78,8 @@ router.post('/', async (req, res) => {
       [title.trim(), priority, assigned_agent]
     );
     broadcast({ event: 'created', todo: row });
+    // Fire-and-forget: notify Diego's WhatsApp
+    notifyNewTodo(row).catch(() => {});
     res.json({ ok: true, todo: row });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
@@ -59,6 +100,8 @@ router.patch('/:id/status', async (req, res) => {
     );
     if (!row) return res.status(404).json({ ok: false, error: 'todo not found' });
     broadcast({ event: 'updated', todo: row });
+    // Fire-and-forget: notify Diego when a todo is completed
+    if (status === 'done') notifyTodoDone(row).catch(() => {});
     res.json({ ok: true, todo: row });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });

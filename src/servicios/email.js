@@ -20,7 +20,7 @@ const AGENT_FROM_NAMES = {
   axel: 'Axel • Reparación Automotriz PaintBull',
   gabi: 'Gabi • Asesoría Legal y Contable',
   adriana: 'Adriana • Directora SegPopular',
-  paula: 'Paula • Real Estate Expert',
+  paula: 'Paula · PropElite Bienes Raíces',
   _default: 'Coworkia Secretaría'
 };
 

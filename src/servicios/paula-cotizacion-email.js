@@ -11,7 +11,6 @@
 
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
-import { ecosistemaTable } from './email-ecosystem.js';
 
 // SMTP dedicado Paula/PropElite — si no hay env var, fallback al global
 const PE_FROM_EMAIL = process.env.PAULA_SMTP_USER || DEFAULT_FROM_EMAIL;
@@ -257,11 +256,6 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
   const titulo   = esOverview ? 'Casas Jardín — El Morenal' : propiedad.nombre;
   const subtitulo = esOverview ? '4 casas de lujo disponibles · G.M.A. Arquitectos · Ecuador' : `El Morenal · G.M.A. Arquitectos · Ecuador 🇪🇨`;
 
-  const ecosistemaItems = ecosistemaTable({
-    aliados: ['enzo', 'gabi', 'angela', 'adriana', 'axel', 'aurora'],
-    theme: 'dark',
-  });
-
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -344,27 +338,24 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
     </div>
   </div>
 
-  <!-- ══ CO-BRANDING COWORKIA ══ -->
-  <div style="background-color:#060E17;background:linear-gradient(180deg,#060E17 0%,#0A1520 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
-    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:32px;margin-bottom:28px;">
-      <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Propuesta presentada a través de</div>
-      <div style="color:white;font-size:22px;font-weight:800;margin-bottom:4px;">Coworkia Business Center</div>
-      <div style="color:#D4AF37;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">Ecosistema de Inteligencia Empresarial · Ecuador</div>
+  <!-- ══ FOOTER PROPELITE ══ -->
+  <div style="background-color:#1A2744;background:linear-gradient(180deg,#0F1C2E 0%,#1A2744 100%);border-radius:0 0 20px 20px;padding:44px;text-align:center;">
+    <div style="margin-bottom:20px;">
+      <div style="color:#D4AF37;font-size:24px;font-weight:800;letter-spacing:2px;font-family:'Georgia',serif;">PropElite</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;">Bienes Raíces de Lujo · Ecuador & R.D.</div>
     </div>
 
-    <div style="color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Todo el ecosistema a tu servicio</div>
-    <div style="margin-bottom:28px;">${ecosistemaItems}</div>
-
-    <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;padding:16px;margin-bottom:22px;">
-      <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;margin:0;">
-        Un solo ecosistema. Seis especialistas que trabajan por ti.<br>
-        <strong style="color:rgba(255,255,255,0.75);">Tu nueva vida comienza con la propiedad correcta.</strong>
-      </p>
+    <div style="margin:20px 0;">
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">📱 WhatsApp: +593 98 777 0788</p>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">📧 secretaria.coworkia@gmail.com</p>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
     </div>
 
-    <div style="color:rgba(255,255,255,0.15);font-size:11px;line-height:1.7;">
-      Brochure generado por <strong style="color:rgba(255,255,255,0.3);">Paula</strong> · PropElite Bienes Raíces<br>
-      Coworkia Intelligence System · ${fechaFmt}
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
+      <div style="color:rgba(255,255,255,0.2);font-size:11px;line-height:1.7;">
+        Brochure generado por <strong style="color:rgba(255,255,255,0.35);">Paula</strong> · PropElite Bienes Raíces<br>
+        ${fechaFmt}
+      </div>
     </div>
   </div>
 

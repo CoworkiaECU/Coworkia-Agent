@@ -36,7 +36,7 @@ export function generateVisitConfirmationEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
     
     <!-- Header con branding PropElite -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -50,8 +50,8 @@ export function generateVisitConfirmationEmail(visitData) {
     
     <!-- Título principal -->
     <div style="text-align: center; padding: 0 30px 30px 30px;">
-      <h2 style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Confirmada</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0;">
+      <h2 style="color: #1A2744; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Confirmada</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0;">
         ${clientName}, tu visita ha sido agendada exitosamente
       </p>
     </div>
@@ -61,27 +61,27 @@ export function generateVisitConfirmationEmail(visitData) {
       
       <!-- Código de visita -->
       <div style="background: #EDE8D0; border-radius: 0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #D4AF37;">
-        <div style="color: #52594B; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #3D4436; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #2D3748; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
+        <div style="color: #1A2744; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
       </div>
       
       <!-- Grid de detalles -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; border-radius: 0; padding: 25px; margin: 20px 0;">
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
           <div style="color: #798071; font-size: 13px; margin-top: 4px;">${propertyCode}</div>
         </div>
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyAddress}</div>
         </div>
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${dayName} ${day}/${month}/${year}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${dayName} ${day}/${month}/${year}</div>
           <div style="color: #D4AF37; font-size: 16px; font-weight: 600; margin-top: 4px;">${time} (1 hora)</div>
         </div>
         
@@ -91,7 +91,7 @@ export function generateVisitConfirmationEmail(visitData) {
       <div style="background: #FFFFFF; border: 2px solid #D4AF37; border-radius: 0; padding: 25px; margin: 25px 0;">
         <h3 style="color: #D4AF37; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 INSTRUCCIONES PARA LA VISITA</h3>
         
-        <div style="color: #3D4436; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <div style="color: #1A2744; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
           <p style="margin: 12px 0;">
             <span style="color: #D4AF37; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
@@ -128,9 +128,9 @@ export function generateVisitConfirmationEmail(visitData) {
       
       <!-- Beneficios de PropElite -->
       <div style="padding: 20px 0;">
-        <h3 style="color: #3D4436; font-size: 18px; margin: 0 0 20px 0; font-family: 'Georgia', serif; text-align: center; letter-spacing: 1px;">¿Por qué elegir PropElite?</h3>
+        <h3 style="color: #1A2744; font-size: 18px; margin: 0 0 20px 0; font-family: 'Georgia', serif; text-align: center; letter-spacing: 1px;">¿Por qué elegir PropElite?</h3>
         
-        <div style="color: #52594B; font-size: 14px; line-height: 1.8;">
+        <div style="color: #2D3748; font-size: 14px; line-height: 1.8;">
           <p style="margin: 12px 0;">✓ <strong>Asesoría 100% gratuita</strong> en todo el proceso</p>
           <p style="margin: 12px 0;">✓ <strong>Portafolio exclusivo</strong> de propiedades premium</p>
           <p style="margin: 12px 0;">✓ <strong>Due diligence legal</strong> incluido</p>
@@ -141,7 +141,7 @@ export function generateVisitConfirmationEmail(visitData) {
     </div>
     
     <!-- Footer -->
-    <div style="text-align: center; margin: 45px 0 0 0; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; margin: 45px 0 0 0; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       
@@ -195,7 +195,7 @@ export function generateRescheduleEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -209,8 +209,8 @@ export function generateRescheduleEmail(visitData) {
 
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 30px 30px;">
-      <h2 style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Reagendada</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0;">${clientName}, tu visita ha sido confirmada en la nueva fecha</p>
+      <h2 style="color: #1A2744; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Reagendada</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0;">${clientName}, tu visita ha sido confirmada en la nueva fecha</p>
     </div>
 
     <!-- Details -->
@@ -218,19 +218,19 @@ export function generateRescheduleEmail(visitData) {
 
       <!-- Visit code -->
       <div style="background: #EDE8D0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #D4AF37;">
-        <div style="color: #52594B; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #3D4436; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #2D3748; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
+        <div style="color: #1A2744; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
       </div>
 
       <!-- New schedule -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
         </div>
         <div>
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Nueva Fecha y Hora</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${formatted}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Nueva Fecha y Hora</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${formatted}</div>
           <div style="color: #D4AF37; font-size: 14px; font-weight: 600; margin-top: 4px;">1 hora de visita</div>
         </div>
       </div>
@@ -252,7 +252,7 @@ export function generateRescheduleEmail(visitData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
@@ -294,7 +294,7 @@ export function generateCancellationEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -308,8 +308,8 @@ export function generateCancellationEmail(visitData) {
 
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 30px 30px;">
-      <h2 style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Cancelada</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0;">
+      <h2 style="color: #1A2744; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Cancelada</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0;">
         ${clientName}, hemos procesado la cancelación de tu visita
       </p>
     </div>
@@ -319,20 +319,20 @@ export function generateCancellationEmail(visitData) {
 
       <!-- Visit code -->
       <div style="background: #EDE8D0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #D4AF37;">
-        <div style="color: #52594B; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #3D4436; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #2D3748; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
+        <div style="color: #1A2744; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
       </div>
 
       <!-- Property -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
-        <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-        <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+        <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+        <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
       </div>
 
       <!-- Reschedule CTA -->
       <div style="background: #FFFBEB; border: 2px solid #D4AF37; padding: 25px; margin: 25px 0;">
         <h3 style="color: #D4AF37; font-size: 16px; margin: 0 0 12px 0; font-family: 'Georgia', serif;">¿Deseas agendar en otra fecha?</h3>
-        <p style="color: #52594B; font-size: 14px; margin: 0 0 16px 0; line-height: 1.7;">
+        <p style="color: #2D3748; font-size: 14px; margin: 0 0 16px 0; line-height: 1.7;">
           Nuestro portafolio El Morenal sigue disponible. Escríbenos por WhatsApp y te ayudamos a encontrar el momento ideal.
         </p>
         <div style="text-align: center;">
@@ -345,7 +345,7 @@ export function generateCancellationEmail(visitData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
@@ -389,7 +389,7 @@ export function generateReminderEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -397,14 +397,14 @@ export function generateReminderEmail(visitData) {
     <!-- Status icon -->
     <div style="text-align: center; margin: 35px 0 25px 0;">
       <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; background: #D4AF37; line-height: 80px;">
-        <span style="color: #3D4436; font-size: 38px;">🔔</span>
+        <span style="color: #1A2744; font-size: 38px;">🔔</span>
       </div>
     </div>
 
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 30px 30px;">
-      <h2 style="color: #3D4436; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Recordatorio de Visita</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0;">
+      <h2 style="color: #1A2744; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Recordatorio de Visita</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0;">
         ${clientName}, mañana es tu visita. ¡Te esperamos!
       </p>
     </div>
@@ -414,22 +414,22 @@ export function generateReminderEmail(visitData) {
 
       <!-- Visit code -->
       <div style="background: #EDE8D0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #D4AF37;">
-        <div style="color: #52594B; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #3D4436; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #2D3748; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
+        <div style="color: #1A2744; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
       </div>
 
       <!-- Visit info -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
         </div>
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
         </div>
         <div>
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
           <div style="color: #D4AF37; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${formatted}</div>
         </div>
       </div>
@@ -437,7 +437,7 @@ export function generateReminderEmail(visitData) {
       <!-- Reminders -->
       <div style="background: #FFFFFF; border: 2px solid #D4AF37; padding: 25px; margin: 25px 0;">
         <h3 style="color: #D4AF37; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
-        <div style="color: #3D4436; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <div style="color: #1A2744; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
           <p style="margin: 12px 0;">
             <span style="color: #D4AF37; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
@@ -460,7 +460,7 @@ export function generateReminderEmail(visitData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
@@ -511,7 +511,7 @@ export function generateFollowUp24hEmail(leadData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -519,14 +519,14 @@ export function generateFollowUp24hEmail(leadData) {
     <!-- Icon -->
     <div style="text-align: center; margin: 35px 0 25px 0;">
       <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; background: #D4AF37; line-height: 80px;">
-        <span style="color: #3D4436; font-size: 38px;">📧</span>
+        <span style="color: #1A2744; font-size: 38px;">📧</span>
       </div>
     </div>
 
     <!-- Content -->
     <div style="text-align: center; padding: 0 30px 10px 30px;">
-      <h2 style="color: #3D4436; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Hola ${firstName}</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0; line-height: 1.7;">
+      <h2 style="color: #1A2744; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Hola ${firstName}</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0; line-height: 1.7;">
         Te escribo para saber si pudiste revisar el brochure de <strong>${prop}</strong> que te envié.
       </p>
     </div>
@@ -535,8 +535,8 @@ export function generateFollowUp24hEmail(leadData) {
 
       <!-- Resumen de búsqueda -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #3D4436; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">Tu búsqueda</h3>
-        <div style="color: #52594B; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #1A2744; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">Tu búsqueda</h3>
+        <div style="color: #2D3748; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
           <p style="margin: 8px 0;">🏠 <strong>Tipo:</strong> ${prop} — ${operationType || 'Compra'}</p>
           <p style="margin: 8px 0;">📍 <strong>Zona:</strong> ${zone}</p>
           ${budgetRange ? `<p style="margin: 8px 0;">💰 <strong>Presupuesto:</strong> ${budgetRange}</p>` : ''}
@@ -546,14 +546,14 @@ export function generateFollowUp24hEmail(leadData) {
       <!-- Siguiente paso -->
       <div style="background: #FFFFFF; border: 2px solid #D4AF37; padding: 25px; margin: 25px 0;">
         <h3 style="color: #D4AF37; font-size: 16px; margin: 0 0 12px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">Siguiente paso</h3>
-        <p style="color: #52594B; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
+        <p style="color: #2D3748; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
           Si alguna propiedad llamó tu atención, podemos agendar una <strong>visita presencial</strong> sin compromiso. Te acompaño personalmente para resolver todas tus dudas.
         </p>
       </div>
 
       <!-- Beneficios -->
       <div style="padding: 15px 0;">
-        <div style="color: #52594B; font-size: 14px; line-height: 1.8;">
+        <div style="color: #2D3748; font-size: 14px; line-height: 1.8;">
           <p style="margin: 8px 0;">✓ <strong>Asesoría 100% gratuita</strong></p>
           <p style="margin: 8px 0;">✓ <strong>Sin compromiso</strong> — conoce la propiedad antes de decidir</p>
           <p style="margin: 8px 0;">✓ <strong>Due diligence legal</strong> incluido</p>
@@ -575,7 +575,7 @@ export function generateFollowUp24hEmail(leadData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
@@ -622,7 +622,7 @@ export function generateFollowUp3dEmail(leadData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -636,8 +636,8 @@ export function generateFollowUp3dEmail(leadData) {
 
     <!-- Content -->
     <div style="text-align: center; padding: 0 30px 10px 30px;">
-      <h2 style="color: #3D4436; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Nuevas opciones para ti</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0; line-height: 1.7;">
+      <h2 style="color: #1A2744; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Nuevas opciones para ti</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0; line-height: 1.7;">
         ${firstName}, he estado revisando propiedades en <strong>${zone}</strong> y encontré opciones que podrían interesarte.
       </p>
     </div>
@@ -646,8 +646,8 @@ export function generateFollowUp3dEmail(leadData) {
 
       <!-- Propuesta -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #3D4436; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">¿Qué tengo para ti?</h3>
-        <div style="color: #52594B; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #1A2744; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">¿Qué tengo para ti?</h3>
+        <div style="color: #2D3748; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
           <p style="margin: 10px 0;">🏠 Propiedades nuevas en <strong>${zone}</strong></p>
           <p style="margin: 10px 0;">📊 Análisis de precios actualizado del sector</p>
           <p style="margin: 10px 0;">🎯 Opciones ajustadas a tu perfil de búsqueda</p>
@@ -656,7 +656,7 @@ export function generateFollowUp3dEmail(leadData) {
 
       <!-- Cambio de planes -->
       <div style="background: #EDE8D0; border-left: 4px solid #D4AF37; padding: 20px 25px; margin: 25px 0;">
-        <p style="color: #3D4436; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
+        <p style="color: #1A2744; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
           <strong>¿Cambiaron tus planes?</strong><br>
           Si tu presupuesto, zona o tipo de propiedad cambió, cuéntame y te busco algo que se ajuste mejor. Sin compromiso.
         </p>
@@ -683,7 +683,7 @@ export function generateFollowUp3dEmail(leadData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
@@ -743,7 +743,7 @@ export function generateVisitReminderFollowUpEmail(visitData) {
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
-    <div style="background-color:#3D4436;background:linear-gradient(135deg, #3D4436 0%, #52594B 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
       <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
       <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
     </div>
@@ -751,14 +751,14 @@ export function generateVisitReminderFollowUpEmail(visitData) {
     <!-- Icon -->
     <div style="text-align: center; margin: 35px 0 25px 0;">
       <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; background: #D4AF37; line-height: 80px;">
-        <span style="color: #3D4436; font-size: 38px;">🔔</span>
+        <span style="color: #1A2744; font-size: 38px;">🔔</span>
       </div>
     </div>
 
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 10px 30px;">
-      <h2 style="color: #3D4436; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">¡Mañana es tu visita!</h2>
-      <p style="color: #52594B; font-size: 15px; margin: 0; line-height: 1.7;">
+      <h2 style="color: #1A2744; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">¡Mañana es tu visita!</h2>
+      <p style="color: #2D3748; font-size: 15px; margin: 0; line-height: 1.7;">
         ${firstName}, te esperamos mañana en <strong>${propertyName}</strong>
       </p>
     </div>
@@ -768,19 +768,19 @@ export function generateVisitReminderFollowUpEmail(visitData) {
       <!-- Detalles -->
       <div style="background: #F7F5F0; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
         </div>
         ${propertyAddress ? `<div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #3D4436; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #1A2744; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
         </div>` : ''}
         <div style="margin-bottom: 22px;">
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha</div>
           <div style="color: #D4AF37; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${dateFormatted}</div>
         </div>
         <div>
-          <div style="color: #52594B; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Hora</div>
+          <div style="color: #2D3748; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Hora</div>
           <div style="color: #D4AF37; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${timeStr}</div>
         </div>
       </div>
@@ -795,7 +795,7 @@ export function generateVisitReminderFollowUpEmail(visitData) {
       <!-- Checklist -->
       <div style="background: #FFFFFF; border: 2px solid #D4AF37; padding: 25px; margin: 25px 0;">
         <h3 style="color: #D4AF37; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
-        <div style="color: #3D4436; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <div style="color: #1A2744; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
           <p style="margin: 12px 0;">
             <span style="color: #D4AF37; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
@@ -817,7 +817,7 @@ export function generateVisitReminderFollowUpEmail(visitData) {
       </div>
       <div style="text-align: center; margin: 0 0 20px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20necesito%20reagendar%20mi%20visita"
-           style="display: inline-block; background: transparent; color: #52594B; padding: 12px 32px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 1px; font-family: 'Arial', sans-serif; border: 1px solid #E5E1D8;">
+           style="display: inline-block; background: transparent; color: #2D3748; padding: 12px 32px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 1px; font-family: 'Arial', sans-serif; border: 1px solid #E5E1D8;">
           REAGENDAR
         </a>
       </div>
@@ -825,7 +825,7 @@ export function generateVisitReminderFollowUpEmail(visitData) {
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 45px 30px; background: #3D4436; border-top: 1px solid rgba(212,175,55,0.3);">
+    <div style="text-align: center; padding: 45px 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
       <p style="color: #D4AF37; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
       <p style="color: #EDE8D0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">

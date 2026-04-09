@@ -304,10 +304,14 @@ function getStatusBadge(status) {
 // Formateo de tipo de servicio
 function getServiceBadge(serviceType) {
   const serviceMap = {
-    'hotDesk':     { label: 'Hot Desk',            cls: 'svc-hotdesk' },
-    'meetingRoom': { label: 'Sala de Reuniones',   cls: 'svc-meetingroom' }
+    'hotDesk':         { label: 'Hot Desk',              cls: 'svc-hotdesk' },
+    'hot_desk':        { label: 'Hot Desk',              cls: 'svc-hotdesk' },
+    'meetingRoom':     { label: 'Sala de Reuniones',     cls: 'svc-meetingroom' },
+    'meeting_room':    { label: 'Sala de Reuniones',     cls: 'svc-meetingroom' },
+    'deskIndividual':  { label: 'Escritorio Individual', cls: 'svc-hotdesk' },
+    'private_office':  { label: 'Oficina Privada',       cls: 'svc-meetingroom' }
   };
-  const mapped = serviceMap[serviceType] || { label: serviceType, cls: 'svc-hotdesk' };
+  const mapped = serviceMap[serviceType] || { label: 'Espacio', cls: 'svc-hotdesk' };
   return `<span class="${mapped.cls}">${mapped.label}</span>`;
 }
 

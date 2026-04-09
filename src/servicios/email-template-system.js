@@ -10,6 +10,7 @@
  */
 
 import { ecosistemaTable } from './email-ecosystem.js';
+import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 
 // ─── BRANDING POR AGENTE ──────────────────────────────────────────────────────
 
@@ -239,7 +240,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
       <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
-        Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
+        ${COWORKIA_ADDRESS_FULL}<br>
         coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
       </div>
     </div>
@@ -344,7 +345,7 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
       <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
-        Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
+        ${COWORKIA_ADDRESS_FULL}<br>
         coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
       </div>
     </div>
@@ -685,7 +686,7 @@ export function buildAuroraReminder24hHTML({ nombre, servicio, dia, hora }, { xi
 
     <div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
       <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
-        📍 <strong>Dirección:</strong> Whymper 403, Edificio Finistere, Quito<br>
+        📍 <strong>Dirección:</strong> ${COWORKIA_ADDRESS_FULL}<br>
         ☕ Café incluido · 🏙️ Zona segura, planta baja<br>
         📶 WiFi de alta velocidad
       </p>
@@ -1282,7 +1283,7 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
       <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">BUSINESS CENTER</div>
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
-        Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
+        ${COWORKIA_ADDRESS_FULL}<br>
         coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
       </div>
     </div>

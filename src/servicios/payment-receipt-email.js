@@ -2,6 +2,7 @@
 // Envía recibos profesionales HTML por email (NO interactúa con usuarios)
 
 import { sendEmail } from './email.js';
+import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 
 /**
  * 🎨 Genera HTML template para recibo de pago (estilo formal/legal)
@@ -278,7 +279,7 @@ function generatePaymentReceiptHTML(paymentData) {
         </div>
         <div style="color: #6B7280; font-size: 12px; line-height: 1.6;">
           © 2026 Coworkia Ecuador - Espacios que inspiran<br>
-          Whymper 403, Edificio Finistere - Planta Baja, Quito<br>
+          ${COWORKIA_ADDRESS_FULL}<br>
           RUC: 1234567890001
         </div>
       </div>

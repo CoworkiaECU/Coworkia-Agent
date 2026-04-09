@@ -15,6 +15,7 @@ import { clearPendingConfirmation } from '../perfiles-interacciones/memoria-sqli
 import { markJustConfirmed, setPendingConfirmation } from './reservation-state.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { analyzePaymentReceipt } from '../servicios-ia/openai.js';
+import { getServiceLabel } from '../utils/service-labels.js';
 
 /**
  * 📄 Instrucciones para solicitar comprobantes de pago
@@ -369,7 +370,7 @@ ${transferValidation.validated ? '✅ Cuenta destino verificada' : ''}
 📅 **TU RESERVA:**
 • Fecha: ${updatedReservation.date}
 • Horario: ${updatedReservation.start_time} - ${updatedReservation.end_time}
-• Espacio: ${formatServiceType(updatedReservation.service_type)}
+• Espacio: ${getServiceLabel(updatedReservation.service_type)}
 
 **¿Confirmas la reserva?** (SI/NO)`,
         reservation: updatedReservation,
@@ -639,12 +640,6 @@ export async function getReceiptStats() {
     },
     averageProcessingTime: '45 segundos'
   };
-}
-function formatServiceType(serviceType = '') {
-  if (serviceType === 'hotDesk') return 'Hot Desk';
-  if (serviceType === 'meetingRoom') return 'Sala de Reuniones';
-  if (serviceType === 'privateOffice') return 'Oficina Privada';
-  return serviceType;
 }
 
 async function queueReservationNotifications(reservation, userProfile, paidAmount) {

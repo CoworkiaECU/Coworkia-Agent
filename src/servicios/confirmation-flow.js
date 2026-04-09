@@ -20,6 +20,7 @@ import reservationRepository from '../database/reservationRepository.js';
 import { sendReservationNotifications } from './notification-helper.js';
 import { generateWifiCode, getWifiCodeForReservation } from './wifi-codes-service.js';
 import { isPositiveResponse, isNegativeResponse } from './generic-confirmation-flow.js';
+import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../utils/constants.js';
 export { isPositiveResponse, isNegativeResponse };
 
 class ConfirmationFlowError extends Error {
@@ -260,8 +261,8 @@ Tu reserva está activa:
 
     ${emailLine}
 
-📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+📍 *Ubicación:* ${COWORKIA_ADDRESS}
+🗺️ ${COWORKIA_MAPS_URL}
 
 ¡Te esperamos! 🚀`,
     needsAction: false,
@@ -665,8 +666,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
     ${confirmationDeliveryLine}
 
-📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+📍 *Ubicación:* ${COWORKIA_ADDRESS}
+🗺️ ${COWORKIA_MAPS_URL}
 
 ¡Te esperamos! 🚀`,
         needsAction: false,
@@ -725,8 +726,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
     ${confirmationDeliveryLine}
 
-📍 *Ubicación:* Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66
+📍 *Ubicación:* ${COWORKIA_ADDRESS}
+🗺️ ${COWORKIA_MAPS_URL}
 
 ¡Te esperamos! 🚀`,
         needsAction: false,
@@ -816,8 +817,8 @@ ${priceBreakdown}
 🔢 *Referencia:* ${reservationRecord.id}
 ${paymentInstructions}${confirmationEmailLine}
 
-📍 Whymper 403, Edificio Finistere
-🗺️ https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
+📍 ${COWORKIA_ADDRESS}
+🗺️ ${COWORKIA_MAPS_URL}`,
       needsAction: true,
       actionType: 'payment_pending',
       reservation: reservationRecord

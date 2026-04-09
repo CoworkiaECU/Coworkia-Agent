@@ -18,6 +18,7 @@ import { simpleParser } from 'mailparser';
 import databaseService from '../database/database.js';
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail } from './email.js';
+import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 import { buildEmailTemplate } from './email-template-system.js';
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 
@@ -466,7 +467,7 @@ SERVICIOS DISPONIBLES:
 - Oficina Privada: consultar disponibilidad
 
 DATOS DE ACCESO:
-- Dirección: Whymper 403, Edificio Finistere, Quito
+- Dirección: ${COWORKIA_ADDRESS_FULL}
 - Zona segura, acceso directo en planta baja
 - WiFi: CoworkiaWiFi / Clave: coworkia2024
 - Café de cortesía en recepción
@@ -543,7 +544,7 @@ async function autoReplyAuroraEmails() {
           html: `<div style="font-family: -apple-system, sans-serif; color: #333; line-height: 1.6;">
             <p>${gptResponse.replace(/\n/g, '<br>')}</p>
             <br>
-            <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>Whymper 403, Edificio Finistere, Quito<br>🌐 coworkia.com</p>
+            <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>${COWORKIA_ADDRESS_FULL}<br>🌐 coworkia.com</p>
           </div>`,
           from: { name: 'Aurora • Reservas Coworkia Business Center', address: 'secretaria.coworkia@gmail.com' },
           agent: 'aurora',

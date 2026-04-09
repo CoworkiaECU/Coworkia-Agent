@@ -8,6 +8,8 @@ dotenv.config();
 
 import { google } from 'googleapis';
 import { runWithRetry } from './external-dispatcher.js';
+import { getServiceLabel } from '../utils/service-labels.js';
+import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 
 /**
  * 🔧 Crear cliente autenticado de Google Calendar
@@ -151,14 +153,7 @@ export async function createCalendarEvent(reservationData) {
     const guestCount = reservationData.guestCount || 0;
     const guestSuffix = guestCount > 0 ? ` +${guestCount}` : '';
     
-    // Convertir serviceType a nombres legibles
-    const serviceNames = {
-      'hotDesk': 'Hot Desk',
-      'meetingRoom': 'Sala de Reuniones',
-      'privateOffice': 'Oficina Privada'
-    };
-    
-    const serviceName = serviceNames[serviceType] || serviceType;
+    const serviceName = getServiceLabel(serviceType);
     
     // 🔢 Agregar número de Hot Desk al título si está disponible
     const hotDeskNumber = reservationData.hotDeskNumber;
@@ -216,7 +211,7 @@ export async function createCalendarEvent(reservationData) {
         dateTime: endDateTime.toISOString(), 
         timeZone: 'America/Guayaquil' // Google Calendar ajustará automáticamente
       },
-      location: customLocation || 'Whymper 403, Edificio Finistere, Quito, Ecuador',
+      location: customLocation || COWORKIA_ADDRESS_FULL,
       // NOTA: Service Accounts no pueden invitar attendees sin Domain-Wide Delegation
       // Solo creamos el evento como referencia. Las notificaciones van por email separado.
       reminders: {

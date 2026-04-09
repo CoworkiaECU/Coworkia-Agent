@@ -710,6 +710,12 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         : userProfile.email
         ? '⚠️ La reserva quedó confirmada. El email falló; si quieres, te lo reenvío enseguida.'
         : 'ℹ️ No tengo tu email registrado todavía para enviarte la confirmación.';
+
+      // 🚨 Sábados con efectivo: avisar que requiere pago anticipado por transferencia
+      const isSaturday = new Date(confirmedDate + 'T12:00:00').getDay() === 6;
+      const saturdayWarning = isSaturday
+        ? `\n\n⚠️ *IMPORTANTE — Reserva de sábado:*\nLos sábados abrimos solo bajo demanda. Para garantizar tu espacio, necesitamos *pago anticipado por transferencia* antes del sábado.\n\n🏦 Produbanco · Cta. Ahorros 20059783069\n📱 O envía tu comprobante aquí por WhatsApp.`
+        : '';
       
       return {
         success: true,
@@ -724,7 +730,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 ✅ Pagarás directamente al llegar
 ℹ️ _El código WiFi lo recibirás al completar tu pago en recepción._
 
-    ${confirmationDeliveryLine}
+    ${confirmationDeliveryLine}${saturdayWarning}
 
 📍 *Ubicación:* ${COWORKIA_ADDRESS}
 🗺️ ${COWORKIA_MAPS_URL}

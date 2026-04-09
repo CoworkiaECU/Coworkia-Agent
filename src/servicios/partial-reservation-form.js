@@ -1290,28 +1290,11 @@ ${hotDeskInfo}
     const requestedDate = new Date(form.date + 'T00:00:00-05:00');
     const dayOfWeek = requestedDate.getDay();
     
-    // Validar sábado (day === 6)
+    // Validar sábado (day === 6) — aceptar reserva pero avisar pago anticipado
     if (dayOfWeek === 6) {
-      // Sugerir el lunes siguiente
-      const nextMonday = new Date(requestedDate);
-      nextMonday.setDate(requestedDate.getDate() + 2);
-      const nextMondayStr = nextMonday.toISOString().split('T')[0];
-
-      validationError = {
-        type: 'closed_saturday',
-        message: `🚫 Los sábados Coworkia está cerrado, lo siento 😊
-
-Estamos abiertos:
-📅 *Lunes a viernes: 7:00 AM - 7:00 PM*
-
-¿Qué tal si reservas para el lunes ${nextMondayStr}? 🗓️
-
-📌 Si necesitas un espacio este sábado por un *pedido especial*, escríbele directamente al administrador:
-👉 https://wa.me/593994837117`,
-        suggestedDate: nextMondayStr
-      };
-
-      console.log('[FORM] 🚫 Validación: Sábado detectado -', form.date);
+      // Sábados bajo demanda: Aurora acepta la reserva normalmente
+      // La alerta urgente a Diego se envía cuando el cliente paga
+      console.log('[FORM] 📅 Sábado detectado — reserva aceptada bajo demanda:', form.date);
     }
     // Validar domingo (day === 0)
     else if (dayOfWeek === 0) {

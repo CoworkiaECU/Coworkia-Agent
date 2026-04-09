@@ -16,6 +16,7 @@ import { calculateReservationCost } from '../../servicios/payment-calculator.js'
 import { generateWifiCode, getWifiCodeForReservation } from '../../servicios/wifi-codes-service.js';
 import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../../utils/constants.js';
 import { getServiceLabel } from '../../utils/service-labels.js';
+import { enviarWhatsApp } from './wassenger.js';
 
 const router = express.Router();
 
@@ -852,6 +853,21 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
     }
 
     console.log(`[AURORA-API] 💰 Pago registrado: reserva #${id} → $${parsedAmount} efectivo | WA: ${waSent} | Email: ${emailSent}`);
+
+    // 🚨 ALERTA SÁBADO: si la reserva cae en sábado, avisar urgente a Diego
+    if (reservation.date) {
+      const reservationDay = new Date(reservation.date + 'T12:00:00').getDay();
+      if (reservationDay === 6 && process.env.DIEGO_PERSONAL_PHONE) {
+        const svcName = getServiceLabel(reservation.service_type);
+        const clientName = reservation.user_name || 'Sin nombre';
+        const saturdayAlert = `🚨🚨🚨 ALERTA SÁBADO 🚨🚨🚨\n\n💰 CLIENTE PAGADO — ABRIR COWORKIA\n\n👤 Cliente: ${clientName}\n📅 Sábado ${reservation.date}\n⏰ Horario: ${reservation.start_time || '?'} - ${reservation.end_time || '?'}\n🏢 Servicio: ${svcName}\n💵 Monto: $${parsedAmount.toFixed(2)}\n\n⚡ Este cliente YA PAGÓ. Confirma apertura del local.`;
+        enviarWhatsApp(process.env.DIEGO_PERSONAL_PHONE, saturdayAlert).catch(err =>
+          console.error('[AURORA-API] ⚠️ Alerta sábado falló:', err.message)
+        );
+        console.log(`[AURORA-API] 🚨 Alerta sábado enviada a Diego — reserva #${id}`);
+      }
+    }
+
     return res.json({ ok: true, message: 'Pago registrado', waSent, emailSent, amount: parsedAmount });
 
   } catch (error) {

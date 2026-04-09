@@ -209,9 +209,13 @@ function formatDateEs(dateStr) {
 }
 
 function getServiceLabelLegacy(type) {
-  return type === 'hot_desk' ? 'Hot Desk'
+  return type === 'hotDesk' ? 'Hot Desk'
+    : type === 'meetingRoom' ? 'Sala de Reuniones'
+    : type === 'hot_desk' ? 'Hot Desk'
     : type === 'meeting_room' ? 'Sala de Reuniones'
-    : type === 'private_office' ? 'Oficina Privada' : type;
+    : type === 'private_office' ? 'Oficina Privada'
+    : type === 'deskIndividual' ? 'Escritorio Individual'
+    : 'Espacio';
 }
 
 // ─── Aurora D+1: Feedback post-visit ────────────────────────
@@ -356,7 +360,7 @@ export async function sendAuroraReminder24h() {
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
-        const waMessage = `¡Hola ${firstName}! 📅\n\nTe recordamos que *mañana* a las *${r.start_time}* tienes tu reserva de *${serviceLabel}* en Coworkia.\n\n📍 *Dirección:* Av. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible\n☕ Café incluido\n\n¿Todo listo? Si necesitas cancelar o cambiar la hora, escríbeme y te ayudo 😊`;
+        const waMessage = `¡Hola ${firstName}! 📅\n\nTe recordamos que *mañana* a las *${r.start_time}* tienes tu reserva de *${serviceLabel}* en Coworkia.\n\n📍 *Dirección:* Whymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n☕ Café incluido\n\n¿Todo listo? Si necesitas cancelar o cambiar la hora, escríbeme y te ayudo 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         if (r.user_email) {
@@ -412,7 +416,7 @@ export async function sendAuroraReminder2h() {
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
-        const waMessage = `🔔 *¡Recordatorio!* ${firstName}\n\nEn *2 horas* te esperamos en Coworkia para tu *${serviceLabel}* a las *${r.start_time}*.\n\n📍 Av. 12 de Octubre N24-562 y Cordero\n\n¡Nos vemos pronto! 😊`;
+        const waMessage = `🔔 *¡Recordatorio!* ${firstName}\n\nEn *2 horas* te esperamos en Coworkia para tu *${serviceLabel}* a las *${r.start_time}*.\n\n📍 Whymper 403, Edificio Finistere\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n\n¡Nos vemos pronto! 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         await databaseService.run(`UPDATE reservations SET reminder_2h_sent_at = NOW() WHERE id = $1`, [r.id]);
@@ -468,7 +472,7 @@ export async function sendAuroraReminder10min() {
             ? `\n💰 Pago pendiente: $${parseFloat(r.total_price).toFixed(2)} (efectivo al llegar)`
             : '';
 
-        const waMessage = `@aurora\n⏰ *¡${firstName ? firstName + ', f' : 'F'}altan 10 minutos!*\n\nTu *${serviceLabel}* comienza a las *${r.start_time}* ${r.end_time ? `hasta las *${r.end_time}*` : ''}.\n${deskInfo}${payInfo}\n\n📍 *Coworkia Quito*\nAv. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Te esperamos! 😊`;
+        const waMessage = `⏰ *¡${firstName ? firstName + ', f' : 'F'}altan 10 minutos!*\n\nTu *${serviceLabel}* comienza a las *${r.start_time}* ${r.end_time ? `hasta las *${r.end_time}*` : ''}.\n${deskInfo}${payInfo}\n\n📍 *Coworkia Quito*\nWhymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Te esperamos! 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         await databaseService.run(`UPDATE reservations SET reminder_10min_sent_at = NOW() WHERE id = $1`, [r.id]);
@@ -619,7 +623,7 @@ export async function sendAuroraPaymentReminders() {
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const serviceLabel = getServiceLabelLegacy(r.service_type);
 
-        const waMessage = `Hola ${firstName} 👋\n\nTienes una reserva de *${serviceLabel}* para el *${formatDateEs(r.date)}* a las *${r.start_time}* pendiente de pago.\n\n💰 *Monto:* $${parseFloat(r.total_price).toFixed(2)}\n\nPuedes pagar en efectivo al llegar o por transferencia bancaria. Si necesitas ayuda con el pago, escríbeme 😊\n\n⚠️ Las reservas sin pago confirmado pueden ser liberadas 2h antes del horario.`;
+        const waMessage = `Hola ${firstName} 👋\n\nTienes una reserva de *${serviceLabel}* para el *${formatDateEs(r.date)}* a las *${r.start_time}* pendiente de pago.\n\n💰 *Monto:* $${parseFloat(r.total_price).toFixed(2)}\n\nPuedes pagar en efectivo al llegar o por transferencia bancaria. Si necesitas ayuda con el pago, escríbeme 😊\n\n⚠️ Las reservas sin pago confirmado pueden ser liberadas 2h antes del horario.\n\n💳 Si quieres dejar todo listo, responde con tu forma de pago preferida:\n   1️⃣ Efectivo al llegar\n   2️⃣ Transferencia bancaria\n\nAsí cuando llegues a Coworkia todo estará listo y sin distracciones 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         await databaseService.run(`UPDATE reservations SET payment_reminder_sent_at = NOW() WHERE id = $1`, [r.id]);

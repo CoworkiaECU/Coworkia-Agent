@@ -812,7 +812,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
         const wifiLine = wifiCode
           ? `\n🔑 Tu código WiFi: *${wifiCode}*\n⏱️ Válido por ${parseFloat(reservation.duration_hours) || 2}h desde que te conectes`
           : '\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*';
-        const waMsg = `@gabi\n✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nAv. 12 de Octubre N24-562 y Cordero\n🅿️ Estacionamiento disponible${wifiLine}\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nWhymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66${wifiLine}\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },

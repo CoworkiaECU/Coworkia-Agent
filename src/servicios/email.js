@@ -494,8 +494,12 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     let fromAddress;
     if (typeof from === 'object' && from !== null && from.address) {
       fromAddress = from.name ? `"${from.name}" <${from.address}>` : from.address;
+    } else if (from) {
+      fromAddress = from;
+    } else if (agent && AGENT_FROM_NAMES[agent]) {
+      fromAddress = `"${AGENT_FROM_NAMES[agent]}" <${DEFAULT_FROM_EMAIL}>`;
     } else {
-      fromAddress = from || `"Coworkia Agent" <${DEFAULT_FROM_EMAIL}>`;
+      fromAddress = `"${AGENT_FROM_NAMES._default}" <${DEFAULT_FROM_EMAIL}>`;
     }
     
     const processedHtml = html ? minifyEmailHTML(html) : html;

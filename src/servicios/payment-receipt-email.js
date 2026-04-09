@@ -299,7 +299,7 @@ export async function sendPaymentReceipt(paymentData) {
   const htmlContent = generatePaymentReceiptHTML(paymentData);
 
   const result = await sendEmail({
-    from: '"Gabi - Coworkia Financiera" <noreply@coworkia.ec>',
+    from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
     to: paymentData.memberEmail,
     subject: `🧾 Recibo de Pago - ${paymentData.receiptNumber} - Coworkia`,
     html: htmlContent

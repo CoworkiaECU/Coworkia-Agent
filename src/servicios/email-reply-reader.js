@@ -545,6 +545,7 @@ async function autoReplyAuroraEmails() {
             <br>
             <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>Whymper 403, Edificio Finistere, Quito<br>🌐 coworkia.com</p>
           </div>`,
+          from: { name: 'Aurora • Reservas Coworkia Business Center', address: 'secretaria.coworkia@gmail.com' },
           agent: 'aurora',
           refId: reservation?.id || null
         });

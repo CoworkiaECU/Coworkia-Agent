@@ -32,14 +32,76 @@ jest.unstable_mockModule('../src/database/database.js', () => ({
   }
 }));
 
-import { 
+// Mock OpenAI Vision AI to avoid real API calls in tests
+jest.unstable_mockModule('../src/servicios-ia/openai.js', () => ({
+  analyzeImage: jest.fn().mockImplementation(async (imageUrl, prompt) => {
+    // Type detection (prompt contains "clasificador")
+    if (prompt.includes('clasificador')) {
+      if (imageUrl.includes('random_photo') || imageUrl.includes('invalid')) {
+        return { choices: [{ message: { content: 'otro' } }] };
+      }
+      if (imageUrl.includes('matricula')) {
+        return { choices: [{ message: { content: 'matricula' } }] };
+      }
+      if (imageUrl.includes('licencia')) {
+        return { choices: [{ message: { content: 'licencia' } }] };
+      }
+      return { choices: [{ message: { content: 'cedula' } }] };
+    }
+    // Cedula extraction
+    if (prompt.includes('cédulas ecuatorianas')) {
+      return { choices: [{ message: { content: JSON.stringify({
+        nombres: 'JUAN PEREZ TEST',
+        cedula: '1712345678',
+        edad: 35,
+        provincia: 'Pichincha',
+        fechaNacimiento: '1990-06-15'
+      }) } }] };
+    }
+    // Matricula extraction
+    if (prompt.includes('matrículas vehiculares')) {
+      return { choices: [{ message: { content: JSON.stringify({
+        placa: 'PBA-1234',
+        marca: 'TOYOTA',
+        modelo: 'COROLLA',
+        anio: 2022,
+        motor: 'MTR123456',
+        chasis: 'CHS789012',
+        cilindraje: 1800,
+        tipo: 'LIVIANO',
+        clase: 'AUTOMOVIL',
+        servicio: 'PARTICULAR',
+        propietario: 'JUAN PEREZ TEST',
+        valorComercial: 22000
+      }) } }] };
+    }
+    // Licencia extraction
+    if (prompt.includes('licencias de conducir')) {
+      return { choices: [{ message: { content: JSON.stringify({
+        nombres: 'JUAN PEREZ TEST',
+        cedula: '1712345678',
+        tipoLicencia: 'B',
+        categoria: 'Vehículos livianos',
+        vigenciaDesde: '2023-01-01',
+        vigenciaHasta: '2028-12-31',
+        restricciones: null,
+        donante: false,
+        vencida: false
+      }) } }] };
+    }
+    return { choices: [{ message: { content: 'otro' } }] };
+  })
+}));
+
+// Dynamic import AFTER mock registration
+const { 
   detectDocumentType, 
   extractCedula, 
   extractMatricula, 
   extractLicencia,
   analyzeDocument,
   calculateRiskScore 
-} from '../src/servicios/adriana-document-analyzer.js';
+} = await import('../src/servicios/adriana-document-analyzer.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SETUP & TEARDOWN

@@ -15,6 +15,8 @@ import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail } from '../servicios/email.js';
 import { buildEmailTemplate } from '../servicios/email-template-system.js';
 import databaseService from '../database/database.js';
+import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../utils/constants.js';
+import { getServiceLabel } from '../utils/service-labels.js';
 import {
   findReservationsForOneHourFollowup,
   markFollowup1hSent,
@@ -131,16 +133,7 @@ export async function sendRebookingReminders() {
 // TEMPLATES DE MENSAJES
 // ─────────────────────────────────────────────────────────────
 
-function getServiceLabel(serviceType) {
-  const labels = {
-    sala_reunion: 'Sala de Reuniones',
-    oficina_privada: 'Oficina Privada',
-    hot_desk: 'Hot Desk',
-    evento: 'Evento',
-    coworking: 'Espacio Coworking'
-  };
-  return labels[serviceType] || serviceType || 'espacio';
-}
+// getServiceLabel — imported from utils/service-labels.js
 
 // ─────────────────────────────────────────────────────────────
 // TRIGGER MANUAL (una reserva específica)
@@ -208,15 +201,8 @@ function formatDateEs(dateStr) {
   return `${days[date.getDay()]} ${date.getDate()} de ${months[date.getMonth()]}`;
 }
 
-function getServiceLabelLegacy(type) {
-  return type === 'hotDesk' ? 'Hot Desk'
-    : type === 'meetingRoom' ? 'Sala de Reuniones'
-    : type === 'hot_desk' ? 'Hot Desk'
-    : type === 'meeting_room' ? 'Sala de Reuniones'
-    : type === 'private_office' ? 'Oficina Privada'
-    : type === 'deskIndividual' ? 'Escritorio Individual'
-    : 'Espacio';
-}
+// getServiceLabelLegacy — replaced by getServiceLabel from utils/service-labels.js
+const getServiceLabelLegacy = getServiceLabel;
 
 // ─── Aurora D+1: Feedback post-visit ────────────────────────
 
@@ -360,7 +346,7 @@ export async function sendAuroraReminder24h() {
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
-        const waMessage = `¡Hola ${firstName}! 📅\n\nTe recordamos que *mañana* a las *${r.start_time}* tienes tu reserva de *${serviceLabel}* en Coworkia.\n\n📍 *Dirección:* Whymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n☕ Café incluido\n\n¿Todo listo? Si necesitas cancelar o cambiar la hora, escríbeme y te ayudo 😊`;
+        const waMessage = `¡Hola ${firstName}! 📅\n\nTe recordamos que *mañana* a las *${r.start_time}* tienes tu reserva de *${serviceLabel}* en Coworkia.\n\n📍 *Dirección:* ${COWORKIA_ADDRESS}\n🏙️ Zona segura — acceso directo en planta baja\n📍 ${COWORKIA_MAPS_URL}\n☕ Café incluido\n\n¿Todo listo? Si necesitas cancelar o cambiar la hora, escríbeme y te ayudo 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         if (r.user_email) {
@@ -416,7 +402,7 @@ export async function sendAuroraReminder2h() {
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
-        const waMessage = `🔔 *¡Recordatorio!* ${firstName}\n\nEn *2 horas* te esperamos en Coworkia para tu *${serviceLabel}* a las *${r.start_time}*.\n\n📍 Whymper 403, Edificio Finistere\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n\n¡Nos vemos pronto! 😊`;
+        const waMessage = `🔔 *¡Recordatorio!* ${firstName}\n\nEn *2 horas* te esperamos en Coworkia para tu *${serviceLabel}* a las *${r.start_time}*.\n\n📍 ${COWORKIA_ADDRESS}\n📍 ${COWORKIA_MAPS_URL}\n\n¡Nos vemos pronto! 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         await databaseService.run(`UPDATE reservations SET reminder_2h_sent_at = NOW() WHERE id = $1`, [r.id]);
@@ -472,7 +458,7 @@ export async function sendAuroraReminder10min() {
             ? `\n💰 Pago pendiente: $${parseFloat(r.total_price).toFixed(2)} (efectivo al llegar)`
             : '';
 
-        const waMessage = `⏰ *¡${firstName ? firstName + ', f' : 'F'}altan 10 minutos!*\n\nTu *${serviceLabel}* comienza a las *${r.start_time}* ${r.end_time ? `hasta las *${r.end_time}*` : ''}.\n${deskInfo}${payInfo}\n\n📍 *Coworkia Quito*\nWhymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Te esperamos! 😊`;
+        const waMessage = `⏰ *¡${firstName ? firstName + ', f' : 'F'}altan 10 minutos!*\n\nTu *${serviceLabel}* comienza a las *${r.start_time}* ${r.end_time ? `hasta las *${r.end_time}*` : ''}.\n${deskInfo}${payInfo}\n\n📍 *Coworkia Quito*\n${COWORKIA_ADDRESS}\n🏙️ Zona segura — acceso directo en planta baja\n📍 ${COWORKIA_MAPS_URL}\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*\n☕ Café de cortesía en recepción\n\n¡Te esperamos! 😊`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         await databaseService.run(`UPDATE reservations SET reminder_10min_sent_at = NOW() WHERE id = $1`, [r.id]);

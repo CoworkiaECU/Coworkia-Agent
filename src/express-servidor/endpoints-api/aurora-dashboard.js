@@ -14,6 +14,8 @@ import { sendEmail } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { calculateReservationCost } from '../../servicios/payment-calculator.js';
 import { generateWifiCode, getWifiCodeForReservation } from '../../servicios/wifi-codes-service.js';
+import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../../utils/constants.js';
+import { getServiceLabel } from '../../utils/service-labels.js';
 
 const router = express.Router();
 
@@ -802,17 +804,12 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
     let waSent = false;
     if (WASSENGER_TOKEN && reservation.user_phone) {
       try {
-        const serviceNames = {
-          hotDesk: 'Hot Desk',
-          meetingRoom: 'Sala de Reuniones',
-          deskIndividual: 'Escritorio Individual'
-        };
-        const svcName = serviceNames[reservation.service_type] || reservation.service_type;
+        const svcName = getServiceLabel(reservation.service_type);
         const firstName = reservation.user_name ? reservation.user_name.split(' ')[0] : '';
         const wifiLine = wifiCode
           ? `\n🔑 Tu código WiFi: *${wifiCode}*\n⏱️ Válido por ${parseFloat(reservation.duration_hours) || 2}h desde que te conectes`
           : '\n🔑 WiFi: *CoworkiaWiFi* / Clave: *coworkia2024*';
-        const waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\nWhymper 403, Edificio Finistere\n🏙️ Zona segura — acceso directo en planta baja\n📍 https://maps.app.goo.gl/Nqy6YeGuxo3czEt66${wifiLine}\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
+        const waMsg = `✅ ¡Hola${firstName ? ` ${firstName}` : ''}! Registramos tu pago de *$${parsedAmount.toFixed(2)}* por tu reserva de *${svcName}* el ${reservation.date}.\n\n📍 *Datos de acceso — Coworkia Quito*\n${COWORKIA_ADDRESS}\n🏙️ Zona segura — acceso directo en planta baja\n📍 ${COWORKIA_MAPS_URL}${wifiLine}\n☕ Café de cortesía en recepción\n\n¡Gracias por preferirnos! 🏢 — Coworkia`;
         const waRes = await fetch('https://api.wassenger.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Token': WASSENGER_TOKEN },
@@ -830,12 +827,7 @@ router.patch('/reservations/:id/register-payment', async (req, res) => {
     const clientEmail = reservation.user_email || reservation.email;
     if (clientEmail) {
       try {
-        const serviceNames = {
-          hotDesk: 'Hot Desk',
-          meetingRoom: 'Sala de Reuniones',
-          deskIndividual: 'Escritorio Individual'
-        };
-        const svcName = serviceNames[reservation.service_type] || reservation.service_type;
+        const svcName = getServiceLabel(reservation.service_type);
         const fechaFmt = new Date(reservation.date + 'T12:00:00').toLocaleDateString('es-EC', {
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });

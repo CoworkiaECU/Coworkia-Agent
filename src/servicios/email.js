@@ -5,6 +5,7 @@ import { EMAIL_USER, getTransporter, getAdrianaTransporter, ADRIANA_FROM_EMAIL }
 import { ecosistemaTable } from './email-ecosystem.js';
 import { createCalendarEvent } from './google-calendar.js';
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
+import { getServiceLabel } from '../utils/service-labels.js';
 import databaseService from '../database/database.js';
 import fs from 'fs';
 import path from 'path';
@@ -50,14 +51,8 @@ const PRICING = {
  * @param {string} serviceType - "hotDesk" o "meetingRoom"
  * @returns {string} - "Hot Desk" o "Sala Reuniones"
  */
-function formatServiceType(serviceType) {
-  const types = {
-    hotDesk: 'Hot Desk',
-    meetingRoom: 'Sala Reuniones',
-    salaReuniones: 'Sala Reuniones'
-  };
-  return types[serviceType] || serviceType;
-}
+// formatServiceType — replaced by getServiceLabel from utils/service-labels.js
+const formatServiceType = getServiceLabel;
 
 /**
  * 🕐 Convierte hora 24h a 12h con am/pm

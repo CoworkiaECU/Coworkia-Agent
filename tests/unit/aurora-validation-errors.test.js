@@ -46,11 +46,16 @@ describe('Aurora Validation Errors Structure', () => {
   });
 
   test('errores de duración deben tener reason con "duración"', () => {
+    // Usar fecha futura para evitar error de "horario pasado"
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    const futureDate = future.toISOString().split('T')[0];
+
     const result = validateReservation(
-      '2025-11-12',
-      '10:00',
-      '19:00',
-      9  // Más de 8 horas
+      futureDate,
+      '07:00',
+      '20:00',
+      13  // Más de 12 horas (maxDurationHours = 12)
     );
 
     expect(result.valid).toBe(false);

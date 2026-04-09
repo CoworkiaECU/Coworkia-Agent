@@ -33,12 +33,33 @@ jest.unstable_mockModule('../../src/servicios/email.js', () => ({
 // Mock de payment-receipt-email (dependencia de membership-payment-verification)
 jest.unstable_mockModule('../../src/servicios/payment-receipt-email.js', () => ({
   sendPaymentReceipt: jest.fn().mockResolvedValue({ success: true }),
-  prepareReceiptData: jest.fn().mockReturnValue({})
+  prepareReceiptData: jest.fn().mockReturnValue({ receiptNumber: 'REC-TEST-001' })
+}));
+
+// Mock de dependencias adicionales del flujo de aprobación
+jest.unstable_mockModule('../../src/database/alunaRepository.js', () => ({
+  markAlunaProspectConverted: jest.fn().mockResolvedValue(true)
+}));
+
+jest.unstable_mockModule('../../src/servicios/google-calendar.js', () => ({
+  blockMembershipCalendar: jest.fn().mockResolvedValue({ created: 0, total: 0 })
+}));
+
+jest.unstable_mockModule('../../src/servicios/aluna-welcome-email.js', () => ({
+  sendAlunaWelcomeEmail: jest.fn().mockResolvedValue({ success: true })
+}));
+
+jest.unstable_mockModule('../../src/servicios/wifi-codes-service.js', () => ({
+  generateMembershipWifiCode: jest.fn().mockResolvedValue({ success: true, code: 'WIFI-TEST-001' })
 }));
 
 const { processMembershipPayment, findPendingMembershipLead } = await import('../../src/servicios/membership-payment-verification.js');
 
 describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
+  // Fecha reciente (ayer) para evitar validación MAX_DAYS_OLD
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const recentDate = yesterday.toISOString().split('T')[0];
   
   beforeEach(() => {
     jest.clearAllMocks();
@@ -74,7 +95,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'W70613140',
         amount: 365.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
         isValid: true,
@@ -107,7 +128,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012012345',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         transactionTime: '10:30:00',
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
@@ -157,7 +178,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'W70615789',
         amount: 250.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         transactionTime: '14:15:00',
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
@@ -204,7 +225,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012099999',
         amount: 50.00, // Monto muy bajo // Pagó $100 en vez de $150
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '02003018431',
@@ -251,7 +272,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012011111',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '99999999999', // Cuenta INCORRECTA
@@ -297,7 +318,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'BLUR123456',
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '20059783069',
@@ -342,7 +363,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'TRF2026012054321',
         amount: 365.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'transferencia_interbancaria',
         transactionStatus: 'approved',
         accountNumberDestination: '20059783069',
@@ -389,7 +410,7 @@ describe('💼 ALUNA VISION AI - CONSTANCIAS DE PAGO MEMBRESÍAS', () => {
         transactionNumber: 'DUP789012', // Ya procesado
         amount: 180.00,
         currency: 'USD',
-        transactionDate: '2026-03-10',
+        transactionDate: recentDate,
         paymentMethod: 'payphone',
         transactionStatus: 'approved',
         isValid: true,

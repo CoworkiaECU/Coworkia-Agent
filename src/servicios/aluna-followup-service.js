@@ -27,6 +27,7 @@ export async function sendD1Followups() {
   
   try {
     // Query: leads con interés hace 24h sin follow-up enviado
+    const diegoPhone = process.env.DIEGO_PERSONAL_PHONE || '';
     const leads = await query(`
       SELECT 
         id,
@@ -42,8 +43,9 @@ export async function sendD1Followups() {
         AND created_at < NOW() - INTERVAL '23 hours'
         AND followup_24h_sent_at IS NULL
         AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
+        AND user_phone != $1
       ORDER BY created_at DESC
-    `);
+    `, [diegoPhone]);
     
     if (leads.rows.length === 0) {
       logger.info('[ALUNA-FOLLOWUP] ℹ️ No hay leads para D+1');
@@ -112,6 +114,7 @@ export async function sendD3Followups() {
   
   try {
     // Query: leads con interés hace 3 días, D+1 enviado, sin D+3 enviado, sin respuesta
+    const diegoPhone = process.env.DIEGO_PERSONAL_PHONE || '';
     const leads = await query(`
       SELECT 
         id,
@@ -130,8 +133,9 @@ export async function sendD3Followups() {
         AND followup_3d_sent_at IS NULL
         AND updated_at = created_at
         AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
+        AND user_phone != $1
       ORDER BY created_at DESC
-    `);
+    `, [diegoPhone]);
     
     if (leads.rows.length === 0) {
       logger.info('[ALUNA-FOLLOWUP] ℹ️ No hay leads para D+3');

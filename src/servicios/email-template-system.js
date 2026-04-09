@@ -476,7 +476,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }, {
       <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">
         ✅ <strong>Hot Desk</strong> disponible todos los días<br>
         ✅ <strong>Salas de reuniones</strong> para 4-8 personas<br>
-        ✅ WiFi de alta velocidad · Café incluido · Estacionamiento
+        ✅ WiFi de alta velocidad · Café incluido
       </p>
     </div>
 
@@ -610,7 +610,7 @@ export function buildAuroraD3HTML({ nombre, servicio, wasFree = false }, { xiaom
         📊 <strong>Esta semana en Coworkia:</strong><br>
         ✅ 47 profesionales trabajaron aquí<br>
         ✅ 12 reuniones exitosas<br>
-        ✅ WiFi premium · Café ilimitado · Parking gratuito
+        ✅ WiFi premium · Café ilimitado
       </p>
     </div>
 
@@ -685,8 +685,8 @@ export function buildAuroraReminder24hHTML({ nombre, servicio, dia, hora }, { xi
 
     <div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
       <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
-        📍 <strong>Dirección:</strong> Av. 12 de Octubre N24-562 y Cordero, Quito<br>
-        🅿️ Estacionamiento disponible · ☕ Café incluido<br>
+        📍 <strong>Dirección:</strong> Whymper 403, Edificio Finistere, Quito<br>
+        ☕ Café incluido · 🏙️ Zona segura, planta baja<br>
         📶 WiFi de alta velocidad
       </p>
     </div>

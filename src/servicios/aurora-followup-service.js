@@ -307,7 +307,7 @@ export async function sendAuroraD3Followups() {
         else if (r.service_type === 'meeting_room') fomoLine = '👥 ¿Tienes otra reunión pendiente? Salas disponibles esta semana con horarios flexibles.';
         else fomoLine = '💡 ¿Sabías que con una *Membresía Coworkia* ahorras hasta un 40%? Pregúntame por los planes.';
 
-        const waMessage = `¡Hola ${firstName}! 🚀\n\nHan pasado 3 días desde tu visita a Coworkia. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana en Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado · 🅿️ Parking gratis\n\nSolo dime qué día y hora y reservo para ti 📅`;
+        const waMessage = `¡Hola ${firstName}! 🚀\n\nHan pasado 3 días desde tu visita a Coworkia. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana en Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado\n\nSolo dime qué día y hora y reservo para ti 📅`;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         if (r.user_email) {

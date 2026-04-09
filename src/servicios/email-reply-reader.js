@@ -466,8 +466,8 @@ SERVICIOS DISPONIBLES:
 - Oficina Privada: consultar disponibilidad
 
 DATOS DE ACCESO:
-- Dirección: Av. 12 de Octubre N24-562 y Cordero, Quito
-- Estacionamiento disponible
+- Dirección: Whymper 403, Edificio Finistere, Quito
+- Zona segura, acceso directo en planta baja
 - WiFi: CoworkiaWiFi / Clave: coworkia2024
 - Café de cortesía en recepción
 
@@ -543,7 +543,7 @@ async function autoReplyAuroraEmails() {
           html: `<div style="font-family: -apple-system, sans-serif; color: #333; line-height: 1.6;">
             <p>${gptResponse.replace(/\n/g, '<br>')}</p>
             <br>
-            <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>Av. 12 de Octubre N24-562 y Cordero, Quito<br>🌐 coworkia.com</p>
+            <p style="color: #888; font-size: 13px;">—<br>Aurora · Coworkia Reservas<br>Whymper 403, Edificio Finistere, Quito<br>🌐 coworkia.com</p>
           </div>`,
           agent: 'aurora',
           refId: reservation?.id || null

@@ -677,6 +677,36 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
     // 🔓 BYPASS: Si es efectivo, confirmar reserva pero dejar pago pendiente
     if (pendingReservation.paymentMethod === 'efectivo') {
+
+      // 🚨 SÁBADOS: NO aceptar efectivo — requiere transferencia o link de pago
+      const isSaturday = new Date(confirmedDate + 'T12:00:00').getDay() === 6;
+      if (isSaturday) {
+        console.log('[Confirmation] 🚨 Sábado + efectivo BLOQUEADO — redirigir a transferencia');
+        return {
+          success: true,
+          message: `⚠️ *Reserva de sábado — pago anticipado requerido*
+
+Los sábados Coworkia abre *solo bajo demanda*, por eso necesitamos confirmar tu pago *antes* del sábado.
+
+❌ No aceptamos efectivo para reservas de sábado.
+
+✅ *Opciones de pago:*
+
+1️⃣ *Transferencia bancaria:*
+🏦 Produbanco · Cta. Ahorros *20059783069*
+👤 Gonzalo Villota Izurieta
+💵 Monto: *$${pendingReservation.totalPrice}*
+📱 Envía tu comprobante aquí por WhatsApp
+
+2️⃣ *Link de pago:* Escribe "link de pago" y te lo envío al instante 💳
+
+Tu reserva queda *pre-reservada* hasta confirmar el pago. ¡Gracias! 😊`,
+          needsAction: true,
+          actionType: 'saturday_prepaid_required',
+          reservation: reservationRecord
+        };
+      }
+
       console.log('[Confirmation] 🔓 BYPASS: Efectivo detectado, confirmando reserva con pago pendiente');
       
       // Confirmar reserva pero NO marcar como pagada (el pago se recibe en persona)
@@ -710,12 +740,6 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         : userProfile.email
         ? '⚠️ La reserva quedó confirmada. El email falló; si quieres, te lo reenvío enseguida.'
         : 'ℹ️ No tengo tu email registrado todavía para enviarte la confirmación.';
-
-      // 🚨 Sábados con efectivo: avisar que requiere pago anticipado por transferencia
-      const isSaturday = new Date(confirmedDate + 'T12:00:00').getDay() === 6;
-      const saturdayWarning = isSaturday
-        ? `\n\n⚠️ *IMPORTANTE — Reserva de sábado:*\nLos sábados abrimos solo bajo demanda. Para garantizar tu espacio, necesitamos *pago anticipado por transferencia* antes del sábado.\n\n🏦 Produbanco · Cta. Ahorros 20059783069\n📱 O envía tu comprobante aquí por WhatsApp.`
-        : '';
       
       return {
         success: true,
@@ -730,7 +754,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 ✅ Pagarás directamente al llegar
 ℹ️ _El código WiFi lo recibirás al completar tu pago en recepción._
 
-    ${confirmationDeliveryLine}${saturdayWarning}
+    ${confirmationDeliveryLine}
 
 📍 *Ubicación:* ${COWORKIA_ADDRESS}
 🗺️ ${COWORKIA_MAPS_URL}

@@ -35,6 +35,7 @@ jest.unstable_mockModule(
   '../../src/database/database.js',
   () => ({
     default: {
+      initialize:        jest.fn().mockResolvedValue(),
       ensureInitialized: jest.fn().mockResolvedValue(),
       get:               jest.fn(),
       run:               jest.fn().mockResolvedValue(),

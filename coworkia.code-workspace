@@ -3,6 +3,10 @@
     {
       "name": "🤖 Aurora (coworkia-agent)",
       "path": "."
+    },
+    {
+      "name": "📶 WiFi Portal Cautivo",
+      "path": "/Users/diegovillota/WiFi Coworkia"
     }
   ],
   "settings": {

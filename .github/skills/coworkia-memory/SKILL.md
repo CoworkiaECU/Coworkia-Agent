@@ -32,7 +32,7 @@ Al abrir, el agente dice:
 ```
 ¡Hola Diego! 🤖
 
-📋 Última sesión: 22 Mar 2026 — Aurora CRM Autopilot v1036
+📋 Última sesión: 09 Abr 2026 — Torre de Control 6 rondas, v1237 (2654b86)
 ✅ Completado: Tab Interesados + Campañas WA + Casillero pago efectivo
 
 🎯 Próxima tarea inmediata:
@@ -744,6 +744,32 @@ Cuando un nuevo agente (o Diego en una nueva sesión) arranca:
 - [ ] Estoy listo para trabajar sin hacer preguntas básicas
 
 ---
+
+---
+
+## 📝 Última Sesión: 09 Abr 2026 — Torre de Control (6 Rondas, v1237)
+
+**Mode**: Torre de Control con 3 chats paralelos (Chat 2 = Aurora, Chat 3 = Aluna)
+**Commits**: 11 commits (d518962 → 2654b86), 4 deploys (v1231→v1237)
+**Tests**: 780/795 passing, 0 failures, 15 skipped
+
+**Trabajo completado**:
+- Fix CRÍTICO: eliminada dirección FALSA "Av. 12 de Octubre N24-562" de todo el código (6+ archivos)
+- Creados `src/utils/constants.js` y `src/utils/service-labels.js` — centralizan address/labels
+- Fix 5 tipos de reminder Aurora (24h, 2h, 10min, payment, D+3): address real, sin parking, con mapa, sin @aurora
+- Fix email anti-spam: From consistente con agent-aware names, SPF fix noreply→gmail
+- Sábados on-demand: solo con transferencia + alerta urgente WA a Diego
+- Diego excluido de follow-ups Aluna D+1/D+3
+- 72+ tests arreglados (databaseService mock pattern + mocks paths)
+- Consolidación duplicados: 8 versiones serviceLabel → getServiceLabel(), 4 address strings → constants.js
+- Dashboard Aurora: camelCase + snake_case service labels en frontend
+- Magic Todos cerrados: #100-#105
+
+**Pendiente para próxima sesión**:
+- Plan 08abr Aurora: alternativas inteligentes + multi-hotdesk (NO TOCAR partial-reservation-form.js sin planear)
+- ~30 archivos aún con hardcoded "Whymper 403" (frontend + email-i18n) → migrar a constants
+- WiFi LOPDP (#106) — requiere Mac Mini on-site
+- 15 tests skipped podrían recuperarse
 
 ---
 

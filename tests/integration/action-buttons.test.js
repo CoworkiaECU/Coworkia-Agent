@@ -12,6 +12,7 @@ import request from 'supertest';
 
 // ─── Mock DB ─────────────────────────────────────────────────────────────────
 const mockDB = {
+  initialize: jest.fn().mockResolvedValue(undefined),
   ensureInitialized: jest.fn().mockResolvedValue(undefined),
   all:  jest.fn().mockResolvedValue([]),
   get:  jest.fn().mockResolvedValue(null),

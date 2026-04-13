@@ -76,6 +76,15 @@ const d = await res.json();
 - Archivar / eliminar planes completados al cerrar sprint
 - Solo mantener planes activos en la carpeta del agente
 
+## Aurora — Dirección y Constantes Centralizadas (09 Abr 2026)
+- **Dirección real**: Whymper 403 y Av. Coruña, Quito (NO "Av. 12 de Octubre N24-562 y Cordero" que era FALSA)
+- **Constantes centralizadas** en `src/utils/constants.js`: `COWORKIA_ADDRESS`, `COWORKIA_ADDRESS_FULL`, `COWORKIA_MAPS_URL`
+- **Service labels centralizados** en `src/utils/service-labels.js`: `getServiceLabel(type)` — maneja camelCase + snake_case
+- **NO usar** `getServiceLabelLegacy()`, `formatServiceType()`, ni objetos `serviceNames` inline — todo debe usar `getServiceLabel()`
+- **Mensajes WA al cliente**: NUNCA incluir prefijo `@aurora` ni `@gabi` — esos prefijos son solo internos de Wassenger
+- **Estacionamiento/Parking**: NO existe — no mencionarlo en reminders ni confirmaciones
+- **Sábados**: NO abrimos regularmente. Solo on-demand con pago anticipado + transferencia (no efectivo) + alerta urgente WA a Diego
+
 ## Seguridad
 - Nunca hardcodear tokens ni emails — siempre `process.env.*`
 - Solo `DIEGO_PERSONAL_PHONE` puede ejecutar comandos del bot

@@ -20,6 +20,7 @@ import request from 'supertest';
 // ─── Mock de databaseService ─────────────────────────────────────────────────
 jest.unstable_mockModule('../../src/database/database.js', () => ({
   default: {
+    initialize: jest.fn().mockResolvedValue(undefined),
     ensureInitialized: jest.fn().mockResolvedValue(undefined),
     all:  jest.fn().mockResolvedValue([]),
     get:  jest.fn().mockResolvedValue(null),

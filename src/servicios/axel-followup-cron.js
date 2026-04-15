@@ -10,6 +10,7 @@
 import { CronJob } from 'cron';
 import { findQuotesForReminder1, findQuotesForReminder2, markReminder1Sent, markReminder2Sent } from '../database/axelRepository.js';
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
+import { normalizePhoneEC } from '../utils/validators.js';
 import { loggers } from '../utils/logger.js';
 
 const logger = loggers.axel || console;
@@ -20,7 +21,8 @@ const logger = loggers.axel || console;
  * `user_phone` = WA session initiator (may be admin for boss quotes)
  */
 function resolveClientPhone(quote) {
-  return quote.phone || quote.user_phone || null;
+  const raw = quote.phone || quote.user_phone || null;
+  return normalizePhoneEC(raw);
 }
 
 /**

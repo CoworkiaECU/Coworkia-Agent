@@ -15,6 +15,7 @@
 
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail } from '../servicios/email.js';
+import { normalizePhoneEC } from '../utils/validators.js';
 import {
   findLeadsForEnzoD1Followup,
   findLeadsForEnzoD3Followup,
@@ -26,6 +27,28 @@ import { loggers } from '../utils/logger.js';
 const logger = loggers.enzo || console;
 
 const ML_CC = process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com';
+
+/**
+ * Resolve client phone for WA follow-up.
+ * `phone` = real client phone (from boss quote parsing).
+ * `user_phone` = WA session initiator (admin for boss quotes).
+ * Normalize to +593 format.
+ */
+function resolveClientPhone(lead) {
+  const raw = lead.phone || lead.user_phone || null;
+  return normalizePhoneEC(raw);
+}
+
+/**
+ * Check if phone belongs to admin — never send automated follow-ups there.
+ */
+function isAdminPhone(phone) {
+  if (!phone) return false;
+  const norm = (phone || '').replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
 
 // ─────────────────────────────────────────────────────────────
 // D+1: RECORDATORIO AMIGABLE
@@ -47,9 +70,10 @@ export async function sendEnzoD1Followups() {
 
     for (const lead of leads) {
       try {
-        // WhatsApp si tiene número
-        if (lead.user_phone) {
-          await enviarWhatsApp(lead.user_phone, buildD1WhatsApp(lead));
+        // WhatsApp si tiene número del cliente
+        const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && !isAdminPhone(clientPhone)) {
+          await enviarWhatsApp(clientPhone, buildD1WhatsApp(lead));
         }
 
         // Email si tiene
@@ -103,8 +127,9 @@ export async function sendEnzoD3Followups() {
 
     for (const lead of leads) {
       try {
-        if (lead.user_phone) {
-          await enviarWhatsApp(lead.user_phone, buildD3WhatsApp(lead));
+        const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && !isAdminPhone(clientPhone)) {
+          await enviarWhatsApp(clientPhone, buildD3WhatsApp(lead));
         }
 
         if (lead.email) {
@@ -157,8 +182,9 @@ export async function sendEnzoD7Followups() {
 
     for (const lead of leads) {
       try {
-        if (lead.user_phone) {
-          await enviarWhatsApp(lead.user_phone, buildD7WhatsApp(lead));
+        const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && !isAdminPhone(clientPhone)) {
+          await enviarWhatsApp(clientPhone, buildD7WhatsApp(lead));
         }
 
         if (lead.email) {

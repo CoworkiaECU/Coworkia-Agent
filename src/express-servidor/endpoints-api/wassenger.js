@@ -81,6 +81,7 @@ import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 import { scoreConversation } from '../../servicios/conversation-scorer.js';
+import { normalizePhoneEC } from '../../utils/validators.js';
 
 const router = Router();
 
@@ -1875,7 +1876,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             agent: 'GABI',
             clientName:  quoteData.nombre,
             clientEmail: quoteData.email,
-            clientPhone: quoteData.telefono || null,
+            clientPhone: normalizePhoneEC(quoteData.telefono) || null,
             serviceInfo: result.areaLabel || quoteData.area,
             quoteCode,
             emailSent:   result.success,
@@ -1900,7 +1901,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 ruc:              null,
                 clientName:       quoteData.nombre,
                 email:            quoteData.email,
-                phone:            quoteData.telefono || null,
+                phone:            normalizePhoneEC(quoteData.telefono) || null,
                 description:      quoteData.descripcionServicio || `Cotización generada por Big Boss — ${result.areaLabel || quoteData.area}`,
                 urgency:          'Normal',
               });
@@ -1934,7 +1935,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             agent:       'AXEL',
             clientName:  quoteData.nombre,
             clientEmail: quoteData.email,
-            clientPhone: quoteData.telefono || null,
+            clientPhone: normalizePhoneEC(quoteData.telefono) || null,
             serviceInfo: result.vehicleData ? `${result.vehicleData.marca} ${result.vehicleData.modelo} ${result.vehicleData.año}`.trim() : null,
             amountMin:   result.priceRange?.min  ?? null,
             amountMax:   result.priceRange?.max  ?? null,
@@ -1955,7 +1956,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 vehicleModel:     result.vehicleData?.modelo || null,
                 vehicleYear:      parseInt(result.vehicleData?.año) || null,
                 email:            quoteData.email,
-                phone:            quoteData.telefono || null,
+                phone:            normalizePhoneEC(quoteData.telefono) || null,
                 damageDescription: `Cotización generada por Big Boss`,
                 photoUrls:        [],
                 damageAnalysis:   {},
@@ -2013,7 +2014,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
               company: result.empresa || null,
               clientName: result.contacto || 'Cliente',
               email: result.email,
-              phone: result.telefono || null, // número del cliente extraído por OpenAI
+              phone: normalizePhoneEC(result.telefono) || null, // número del cliente extraído por OpenAI
               budgetRange: result.precio ? `$${result.precio}` : 'Por definir',
               urgency: 'Normal',
               description: `Cotización generada por Big Boss - ${result.nivel || 'Agente IA'}`
@@ -2052,7 +2053,7 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
             agent:       'PAULA',
             clientName:  result.nombre    || quoteData.nombre,
             clientEmail: result.email     || quoteData.email,
-            clientPhone: quoteData.telefono || null,
+            clientPhone: normalizePhoneEC(quoteData.telefono) || null,
             serviceInfo: result.propiedad  || null,
             amountMin:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
             amountMax:   quoteData.esOverview ? null : (quoteData.propiedad?.precio ?? null),
@@ -2073,19 +2074,19 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
                 budgetRange:   quoteData.propiedad?.precio ? `$${quoteData.propiedad.precio}` : 'Por definir',
                 clientName:    result.nombre || quoteData.nombre,
                 email:         result.email  || quoteData.email,
-                phone:         quoteData.telefono || null,
+                phone:         normalizePhoneEC(quoteData.telefono) || null,
                 requirements:  { quoteCode, brochureEnviado: true, fuente: 'boss_command', brochureSentAt: new Date().toISOString(), leadId },
               });
               console.log(`[BOSS-CMD] ✅ Lead PAULA guardado en real_estate_leads: ${quoteCode}`);
 
               // 🤖 AUTO WA: Paula se presenta al cliente tras enviar brochure
-              if (quoteData.telefono) {
+              if (normalizePhoneEC(quoteData.telefono)) {
                 const clientFirstName = (result.nombre || quoteData.nombre || 'Hola').split(' ')[0];
                 const propName = quoteData.esOverview ? 'las Casas Jardín El Morenal' : quoteData.propiedad?.nombre;
                 const autoMsg = `@paula\n¡Hola ${clientFirstName}! 🏡\n\nSoy *Paula* de PropElite Bienes Raíces. Te acabo de enviar un brochure exclusivo de *${propName}* a tu correo 📧\n\nRevísalo con calma y si te interesa, con gusto te agendo una *visita presencial* para que conozcas la propiedad en persona.\n\n¿Tienes alguna pregunta? Estoy aquí para ayudarte 🤝`;
                 await new Promise(r => setTimeout(r, 2000));
-                await enviarWhatsApp(quoteData.telefono, autoMsg);
-                console.log(`[BOSS-CMD] 🤖 Auto-WA enviado a cliente: ${quoteData.telefono}`);
+                await enviarWhatsApp(normalizePhoneEC(quoteData.telefono), autoMsg);
+                console.log(`[BOSS-CMD] 🤖 Auto-WA enviado a cliente: ${normalizePhoneEC(quoteData.telefono)}`);
               }
             } catch (err) { console.error('[BOSS-CMD] ⚠️ Error guardando real_estate_lead:', err.message); }
           }
@@ -2144,13 +2145,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           const proResult = await sendAlunaProforma({ clientName: trimmedName, clientEmail: trimmedEmail, planKey, proformaCode: quoteCode, nota: trimmedNota, fromAdmin: true });
 
           if (proResult.success) {
-            await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: trimmedPhone, proformaCode: proResult.proformaCode, nota: trimmedNota, fromAdmin: true });
+            await saveAlunaLeadFromProforma({ userId, clientName: trimmedName, clientEmail: trimmedEmail, planKey, phone: normalizePhoneEC(trimmedPhone), proformaCode: proResult.proformaCode, nota: trimmedNota, fromAdmin: true });
           }
           await saveBossQuote({
             agent:       'ALUNA',
             clientName:  trimmedName,
             clientEmail: trimmedEmail,
-            clientPhone: trimmedPhone || null,
+            clientPhone: normalizePhoneEC(trimmedPhone) || null,
             serviceInfo: proResult.planName || rawPlan,
             quoteCode,
             emailSent:   proResult.success,
@@ -2182,7 +2183,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
           agent:       'ADRIANA',
           clientName:  result.nombre  || null,
           clientEmail: result.email   || null,
-          clientPhone: result.telefono || null,
+          clientPhone: normalizePhoneEC(result.telefono) || null,
           serviceInfo: result.vehiculo || null,
           amountMin:   result.primaAnual || null,
           amountMax:   result.primaAnual || null,
@@ -2210,7 +2211,7 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
               clientName:    result.nombre   || null,
               cedula:        null,
               email:         result.email    || null,
-              phone:         result.telefono || null,
+              phone:         normalizePhoneEC(result.telefono) || null,
               quotedPremium: result.primaAnual || null,
               premiumBreakdown: { fuente: 'boss_command' },
             });

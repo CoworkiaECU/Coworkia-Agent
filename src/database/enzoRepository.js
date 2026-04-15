@@ -143,7 +143,7 @@ export default {
 export async function findLeadsForEnzoD1Followup() {
   await databaseService.ensureInitialized();
   return await databaseService.all(`
-    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+    SELECT id, user_phone, phone, client_name, email, project_type, proposal_amount,
            project_code, proposal_sent_at
     FROM marketing_leads
     WHERE status IN ('proposal_sent', 'negotiating')
@@ -162,7 +162,7 @@ export async function findLeadsForEnzoD1Followup() {
 export async function findLeadsForEnzoD3Followup() {
   await databaseService.ensureInitialized();
   return await databaseService.all(`
-    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+    SELECT id, user_phone, phone, client_name, email, project_type, proposal_amount,
            project_code, proposal_sent_at
     FROM marketing_leads
     WHERE status IN ('proposal_sent', 'negotiating')
@@ -182,7 +182,7 @@ export async function findLeadsForEnzoD3Followup() {
 export async function findLeadsForEnzoD7Followup() {
   await databaseService.ensureInitialized();
   return await databaseService.all(`
-    SELECT id, user_phone, client_name, email, project_type, proposal_amount,
+    SELECT id, user_phone, phone, client_name, email, project_type, proposal_amount,
            project_code, proposal_sent_at
     FROM marketing_leads
     WHERE status IN ('proposal_sent', 'negotiating')

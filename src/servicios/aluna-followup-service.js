@@ -14,9 +14,31 @@
 import { query } from '../database/database.js';
 import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail } from '../servicios/email.js';
+import { normalizePhoneEC } from '../utils/validators.js';
 import { loggers } from '../utils/logger.js';
 
 const logger = loggers.aluna || console;
+
+/**
+ * Resolve client phone for WA follow-up.
+ * `phone` = real client phone (from boss quote or form).
+ * `user_phone` = WA session initiator (admin for boss quotes).
+ */
+function resolveClientPhone(lead) {
+  const raw = lead.phone || lead.user_phone || null;
+  return normalizePhoneEC(raw);
+}
+
+/**
+ * Check if phone belongs to admin — never send automated follow-ups there.
+ */
+function isAdminPhoneCheck(phone) {
+  if (!phone) return false;
+  const norm = (phone || '').replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
 
 /**
  * 📅 Follow-up D+1 (24 horas)
@@ -32,6 +54,7 @@ export async function sendD1Followups() {
       SELECT 
         id,
         user_phone,
+        phone,
         client_name as name,
         email,
         membership_type as interest_type,
@@ -59,9 +82,12 @@ export async function sendD1Followups() {
     
     for (const lead of leads.rows) {
       try {
-        // Enviar WhatsApp
-        const whatsappMessage = buildD1WhatsAppMessage(lead);
-        await enviarWhatsApp(lead.user_phone, whatsappMessage);
+        // Enviar WhatsApp al teléfono del cliente (no del admin)
+        const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
+          const whatsappMessage = buildD1WhatsAppMessage(lead);
+          await enviarWhatsApp(clientPhone, whatsappMessage);
+        }
         
         // Enviar Email (si tiene)
         if (lead.email) {
@@ -84,14 +110,14 @@ export async function sendD1Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado a ${lead.name} (${lead.user_phone})`);
+        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado a ${lead.name} (${resolveClientPhone(lead) || lead.user_phone})`);
         
         // Delay entre envíos para no saturar API
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 a ${lead.user_phone}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 a ${resolveClientPhone(lead) || lead.user_phone}:`, error);
       }
     }
     
@@ -119,6 +145,7 @@ export async function sendD3Followups() {
       SELECT 
         id,
         user_phone,
+        phone,
         client_name as name,
         email,
         membership_type as interest_type,
@@ -149,9 +176,12 @@ export async function sendD3Followups() {
     
     for (const lead of leads.rows) {
       try {
-        // Enviar WhatsApp con FOMO
-        const whatsappMessage = buildD3WhatsAppMessage(lead);
-        await enviarWhatsApp(lead.user_phone, whatsappMessage);
+        // Enviar WhatsApp con FOMO al teléfono del cliente
+        const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
+          const whatsappMessage = buildD3WhatsAppMessage(lead);
+          await enviarWhatsApp(clientPhone, whatsappMessage);
+        }
         
         // Enviar Email con urgencia (si tiene)
         if (lead.email) {
@@ -174,14 +204,14 @@ export async function sendD3Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado a ${lead.name} (${lead.user_phone})`);
+        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado a ${lead.name} (${resolveClientPhone(lead) || lead.user_phone})`);
         
         // Delay entre envíos
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 a ${lead.user_phone}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 a ${resolveClientPhone(lead) || lead.user_phone}:`, error);
       }
     }
     

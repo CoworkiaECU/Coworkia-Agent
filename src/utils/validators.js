@@ -16,6 +16,40 @@ export function normalizePhone(phone) {
 }
 
 /**
+ * Normaliza un teléfono Ecuador al formato internacional +593XXXXXXXXX
+ * Convierte: 09XXXXXXXX → +593XXXXXXXX, 9XXXXXXXX → +593XXXXXXXX
+ * Preserva formato si ya tiene +593
+ * @param {string|null} phone - Teléfono en cualquier formato
+ * @returns {string|null} - Teléfono normalizado o null si inválido
+ */
+export function normalizePhoneEC(phone) {
+  if (!phone) return null;
+  const cleaned = String(phone).replace(/[\s\-\(\)]/g, '').trim();
+  if (!cleaned) return null;
+  
+  // Ya tiene +593 → solo limpiar
+  if (/^\+593\d{9,10}$/.test(cleaned)) return cleaned;
+  
+  // 593XXXXXXXXX sin + → agregar +
+  if (/^593\d{9,10}$/.test(cleaned)) return `+${cleaned}`;
+  
+  // 09XXXXXXXX → +593XXXXXXXX (Ecuador celular)
+  if (/^09\d{8}$/.test(cleaned)) return `+593${cleaned.slice(1)}`;
+  
+  // 9XXXXXXXX → +593XXXXXXXX
+  if (/^9\d{8}$/.test(cleaned)) return `+593${cleaned}`;
+  
+  // 0[2-7]XXXXXXX → +593[2-7]XXXXXXX (Ecuador fijo)
+  if (/^0[2-7]\d{7}$/.test(cleaned)) return `+593${cleaned.slice(1)}`;
+  
+  // Ya tiene + de otro país → preservar
+  if (/^\+\d{10,15}$/.test(cleaned)) return cleaned;
+  
+  // No reconocido → devolver null (no adivinar)
+  return null;
+}
+
+/**
  * Valida formato de teléfono Ecuador (+593XXXXXXXXX)
  * @param {string} phone - Número a validar
  * @returns {string} - Teléfono normalizado con +

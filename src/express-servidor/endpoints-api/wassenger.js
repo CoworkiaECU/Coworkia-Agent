@@ -82,6 +82,7 @@ import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 import { scoreConversation } from '../../servicios/conversation-scorer.js';
 import { normalizePhoneEC } from '../../utils/validators.js';
+import { pauseBot, isBotPaused, resumeBot, resumeAll, getActiveTakeovers } from '../../servicios/human-takeover.js';
 
 const router = Router();
 
@@ -381,6 +382,39 @@ async function handleDiegoAlwaysOnCommands(userId, text) {
     } catch (err) {
       console.error('[DIEGO-CMD] ❌ Error obteniendo repair report:', err);
       await enviarWhatsApp(userId, `🔧 Error al consultar self-healing reports:\n${err.message}`);
+    }
+    return true;
+  }
+
+  // RETOMA / RESUME: reactivar bot para un número (o todos) tras human takeover
+  if (cmd.startsWith('RETOMA') || cmd.startsWith('RESUME')) {
+    console.log('[DIEGO-CMD] 🤝 RETOMA recibido');
+    const rawText = (text || '').trim();
+    const parts = rawText.split(/\s+/);
+    const target = parts[1] || '';
+
+    if (target.toUpperCase() === 'ALL' || target.toUpperCase() === 'TODOS') {
+      const count = resumeAll();
+      await enviarWhatsApp(userId, `✅ Bot reactivado para *todas* las conversaciones (${count} pausas eliminadas).`);
+      return true;
+    }
+
+    if (target) {
+      const targetNumber = target.replace(/\D/g, '');
+      if (targetNumber.length >= 8) {
+        resumeBot(targetNumber);
+        await enviarWhatsApp(userId, `✅ Bot reactivado para *${targetNumber}*.`);
+        return true;
+      }
+    }
+
+    // Sin target → mostrar estado actual
+    const active = getActiveTakeovers();
+    if (active.length === 0) {
+      await enviarWhatsApp(userId, '✅ No hay conversaciones pausadas actualmente.');
+    } else {
+      const lines = active.map(t => `• ${t.userId} — ${t.remainingMin}min restantes`);
+      await enviarWhatsApp(userId, `🤝 *Takeovers activos (${active.length}):*\n\n${lines.join('\n')}\n\n💡 Usa: RETOMA +593... o RETOMA ALL`);
     }
     return true;
   }
@@ -1405,6 +1439,18 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     return res.status(400).json({ ok: false, error: 'INVALID_PAYLOAD' });
   }
 
+  // 🤝 HUMAN TAKEOVER: Detectar mensajes salientes manuales de Diego
+  if (evt.includes('message:out')) {
+    const outText = safeStr(data.body || data.text || data.message || '');
+    const toNumber = safeStr(data.toNumber || data.to || data.chatId || '').replace(/\D/g, '');
+    // Solo actuar si hay destinatario y el mensaje NO es un echo del bot
+    if (toNumber && !isEchoMessage(toNumber, outText)) {
+      pauseBot(toNumber, 30);
+      console.log(`[TAKEOVER] Diego intervino manualmente en conversación con ${toNumber}, bot pausado 30min`);
+    }
+    return res.json({ ok: true, ignored: true, reason: 'outgoing_message_takeover_check' });
+  }
+
   // Sólo entrantes
   if (!isIncomingEvent(evt)) {
     return res.json({ ok: true, ignored: true, reason: 'not_incoming_message' });
@@ -1493,6 +1539,12 @@ router.post('/webhooks/wassenger', validateWebhookSignature, rateLimitByPhone, a
     {
       const diegoHandled = await handleDiegoAlwaysOnCommands(userId, webhookData.text || '');
       if (diegoHandled) return;
+    }
+
+    // 🤝 HUMAN TAKEOVER: No procesar si Diego está atendiendo manualmente
+    if (isBotPaused(userId)) {
+      console.log(`[TAKEOVER] Bot pausado para ${userId}, ignorando mensaje entrante`);
+      return;
     }
 
     // ⏱️ DEBOUNCE: Agrupar mensajes rápidos del mismo usuario

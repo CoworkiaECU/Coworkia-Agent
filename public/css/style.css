@@ -228,7 +228,7 @@ svg { display: block; }
 .nav-logo {
   display: flex;
   align-items: center;
-  gap: .75rem;
+  gap: 1.25rem;
   flex-shrink: 0;
 }
 .nav-logo-img {
@@ -236,23 +236,17 @@ svg { display: block; }
   width: auto;
   object-fit: contain;
 }
-.nav-brand-wrap {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
+.nav-brand-tagline {
+  font-size: .82rem;
+  font-weight: 400;
+  color: var(--text-mid);
+  letter-spacing: .02em;
+  padding-left: 1.25rem;
+  border-left: 1px solid rgba(255,255,255,.15);
 }
-.nav-brand-name {
-  font-size: 1.05rem;
+.nav-brand-tagline strong {
   font-weight: 700;
   color: var(--text);
-  letter-spacing: -.01em;
-}
-.nav-brand-sub {
-  font-family: var(--font-mono);
-  font-size: .6rem;
-  letter-spacing: .1em;
-  color: var(--text-dim);
-  text-transform: uppercase;
 }
 .nav-links {
   display: flex;

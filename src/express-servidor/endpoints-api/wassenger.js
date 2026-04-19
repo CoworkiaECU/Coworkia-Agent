@@ -67,6 +67,7 @@ import { isEnzoBossQuoteCommand, sendEnzoCotizacion } from '../../servicios/enzo
 import { isPaulaBossQuoteCommand, parsePaulaQuoteData, sendPaulaCotizacion } from '../../servicios/paula-cotizacion-email.js';
 import { saveBossQuote, generateBossQuoteCode } from '../../database/bossQuotesRepository.js';
 import { isAdrianaBossQuoteCommand, sendAdrianaCotizacion } from '../../servicios/adriana-cotizacion-email.js';
+import { isAuroraBossCommand, parseAuroraReservationData, executeAuroraBossReservation } from '../../servicios/aurora-boss-command.js';
 import { analyzeInsuranceDocument, detectDocumentType, extractVehicleData, DOCUMENT_TYPES } from '../../servicios/insurance-document-analysis.js';
 import { calculateAllCoverages, formatPremiumForWhatsApp, inferVehicleCategory, VEHICLE_CATEGORIES, COVERAGE_TYPES, calculateVehiclePremium } from '../../servicios/adriana-quote-calculator.js';
 import { generateMultiQuotes, saveLeadQuotes, formatQuotesForTemplate } from '../../servicios/adriana-multi-quote-engine.js';
@@ -82,6 +83,7 @@ import { sendEmail } from '../../servicios/email.js';
 import { shouldActivateVisitConfirmation, activateVisitConfirmation } from '../../servicios/paula-confirmation-helper.js';
 import { scoreConversation } from '../../servicios/conversation-scorer.js';
 import { normalizePhoneEC } from '../../utils/validators.js';
+import { getServiceLabel } from '../../utils/service-labels.js';
 import { pauseBot, isBotPaused, resumeBot, resumeAll, getActiveTakeovers } from '../../servicios/human-takeover.js';
 
 const router = Router();
@@ -2280,7 +2282,41 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     }
     // ══════════════════════════════════════════════════════════════════════
 
-    // �📋 Inicializar variables de formulario para todo el scope
+    // ══════════════════════════════════════════════════════════════════════
+    // 👔 BOSS COMMANDS: Aurora — reservar hot desk/sala por orden directa
+    // Solo activo cuando: userId === ADMIN_PHONE + agente AURORA + keyword reserva
+    // ══════════════════════════════════════════════════════════════════════
+    if (ADMIN_PHONE && isAdminPhone(userId) && processedText && profile.activeAgent === 'AURORA') {
+      if (isAuroraBossCommand(processedText)) {
+        console.log('[BOSS-CMD] 🏢 Reserva Aurora solicitada por jefe');
+        const parsed = await parseAuroraReservationData(processedText);
+        if (parsed?.fecha) {
+          await enviarWhatsApp(userId, `⏳ Creando reserva...\n📅 ${parsed.fecha} ${parsed.horaInicio}\n👤 ${parsed.nombre || 'Sin nombre'}`);
+          await new Promise(r => setTimeout(r, 400));
+          const result = await executeAuroraBossReservation(parsed);
+          if (result.success) {
+            const quoteCode = await generateBossQuoteCode('AURORA');
+            await saveBossQuote({
+              agent: 'AURORA',
+              clientName:  result.nombre || null,
+              clientEmail: result.email || null,
+              clientPhone: result.telefono || null,
+              serviceInfo: `${getServiceLabel(result.serviceType)} ${result.fecha} ${result.horaInicio}-${result.horaFin}`,
+              quoteCode,
+              emailSent:   result.emailSent,
+            });
+            const reply = `✅ *Reserva creada por Aurora*\n🏢 ${getServiceLabel(result.serviceType)}\n📅 ${result.fecha} · ${result.horaInicio}-${result.horaFin}\n💰 $${result.totalPrice}${result.nombre ? `\n👤 ${result.nombre}` : ''}${result.email ? `\n📧 ${result.email} ${result.emailSent ? '✓' : '✗'}` : ''}${result.telefono ? `\n📱 ${result.telefono}` : ''}\n🔑 ${result.reservationId}\n🎫 ${quoteCode}`;
+            await enviarWhatsApp(userId, reply);
+          } else {
+            await enviarWhatsApp(userId, `❌ Error creando reserva: ${result.error}`);
+          }
+          return;
+        }
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════════
+
+    // 📋 Inicializar variables de formulario para todo el scope
     let formResult = { form: null, needsMoreInfo: false, updates: {} };
     const currentAgentForm = await getAgentForm(userId, profile.activeAgent || 'AURORA').catch(() => null);
 

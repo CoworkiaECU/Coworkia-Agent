@@ -10,6 +10,7 @@ import { google } from 'googleapis';
 import { runWithRetry } from './external-dispatcher.js';
 import { getServiceLabel } from '../utils/service-labels.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
+import { formatHotDeskNumbers, getHotDeskNumbers } from '../utils/hot-desk-assignments.js';
 
 /**
  * 🔧 Crear cliente autenticado de Google Calendar
@@ -156,9 +157,9 @@ export async function createCalendarEvent(reservationData) {
     const serviceName = getServiceLabel(serviceType);
     
     // 🔢 Agregar número de Hot Desk al título si está disponible
-    const hotDeskNumber = reservationData.hotDeskNumber;
-    const hotDeskSuffix = (serviceType === 'hotDesk' || serviceType === 'Hot Desk') && hotDeskNumber 
-      ? ` ${hotDeskNumber}/4` 
+    const hotDeskNumbers = getHotDeskNumbers(reservationData);
+    const hotDeskSuffix = (serviceType === 'hotDesk' || serviceType === 'Hot Desk') && hotDeskNumbers.length
+      ? ` ${formatHotDeskNumbers(hotDeskNumbers)}`
       : '';
     
     const eventTitle = `${serviceName}${hotDeskSuffix} ${userName}${guestSuffix}`;
@@ -192,16 +193,19 @@ export async function createCalendarEvent(reservationData) {
     const guestLine   = guestCount > 0 ? `\n👥 ${1 + guestCount} personas` : '';
     const reserveLine = reservationId ? `\n🔢 ${reservationId}` : '';
     const wifiLine    = wifiCode ? `\n🔑 WiFi: ${wifiCode}  (${duration || '2h'})` : '';
+    const deskLine    = hotDeskNumbers.length
+      ? `\n🪑 ${hotDeskNumbers.length > 1 ? 'Puestos' : 'Puesto'}: ${formatHotDeskNumbers(hotDeskNumbers)}`
+      : '';
     const eventDescription = customDescription || [
       reservationType,
       '',
       `👤 ${userName}  ·  ✉️ ${email}`,
       `🏢 ${serviceName}${hotDeskSuffix}  ·  ⏱️ ${duration || '2 horas'}  ·  💰 ${wasFree ? 'Sin costo' : `$${price} USD`}`,
-      `🗓️ ${dateStr}  ·  🕐 ${startTime} - ${endTime}${guestLine}${reserveLine}${wifiLine}`,
+      `🗓️ ${dateStr}  ·  🕐 ${startTime} - ${endTime}${guestLine}${deskLine}${reserveLine}${wifiLine}`,
     ].join('\n');
     
     const event = {
-      summary: eventTitle, // Ejemplo: "Hot Desk 3/6 Diego Villota +2"
+      summary: eventTitle,
       description: eventDescription,
       start: {
         dateTime: startDateTime.toISOString(),

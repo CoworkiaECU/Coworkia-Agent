@@ -4,6 +4,34 @@
 
 import databaseService from './database.js';
 import { generateSequentialCode } from '../utils/code-generator.js';
+import {
+  normalizeHotDeskNumbers,
+  serializeHotDeskNumbers
+} from '../utils/hot-desk-assignments.js';
+
+function parseReservationRecord(reservation) {
+  if (!reservation) return reservation;
+
+  if (reservation.payment_data && typeof reservation.payment_data === 'string') {
+    try {
+      reservation.payment_data = JSON.parse(reservation.payment_data);
+    } catch (e) {
+      console.error('[RESERVATION] Error parsing payment_data:', e);
+    }
+  }
+
+  const hotDeskNumbers = normalizeHotDeskNumbers(
+    reservation.hot_desk_numbers,
+    reservation.hot_desk_number
+  );
+
+  reservation.hot_desk_numbers = hotDeskNumbers;
+  reservation.hot_desk_number = reservation.hot_desk_number ?? hotDeskNumbers[0] ?? null;
+  reservation.desks_quantity = Number.parseInt(reservation.desks_quantity, 10) || hotDeskNumbers.length || 1;
+  reservation.was_free = Boolean(reservation.was_free);
+
+  return reservation;
+}
 
 class ReservationRepository {
   /**
@@ -20,22 +48,8 @@ class ReservationRepository {
     `;
     
     const reservation = await databaseService.get(query, [reservationId]);
-    
-    if (reservation) {
-      // Parsear JSON fields
-      if (reservation.payment_data) {
-        try {
-          reservation.payment_data = JSON.parse(reservation.payment_data);
-        } catch (e) {
-          console.error('[RESERVATION] Error parsing payment_data:', e);
-        }
-      }
-      
-      // Convertir valores SQLite a JavaScript
-      reservation.was_free = Boolean(reservation.was_free);
-    }
-    
-    return reservation;
+
+    return parseReservationRecord(reservation);
   }
 
   /**
@@ -59,6 +73,7 @@ class ReservationRepository {
       payment_status = 'pending',
       payment_data = null,
       hot_desk_number = null, // Nuevo: número de Hot Desk (1-4)
+      hot_desk_numbers = null, // Multi-hotdesk: números asignados
       payment_method = null, // Nuevo: método de pago
       calendar_event_id = null, // Nuevo: ID de evento en Google Calendar
       desks_quantity = 1 // Multi-hotdesk: cantidad de escritorios
@@ -72,15 +87,16 @@ class ReservationRepository {
         id, user_phone, service_type, date, start_time, end_time,
         duration_hours, guest_count, total_price, was_free,
         status, payment_status, payment_data, hot_desk_number,
-        payment_method, calendar_event_id, desks_quantity
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        hot_desk_numbers, payment_method, calendar_event_id, desks_quantity
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       reservationId, user_phone, service_type, date, start_time, end_time,
       duration_hours, guest_count, total_price, was_free ? 1 : 0,
       status, payment_status, payment_data ? JSON.stringify(payment_data) : null,
-      hot_desk_number, payment_method, calendar_event_id, desks_quantity
+      hot_desk_number, serializeHotDeskNumbers(hot_desk_numbers, hot_desk_number),
+      payment_method, calendar_event_id, desks_quantity
     ];
 
     await databaseService.run(query, params);
@@ -104,6 +120,8 @@ class ReservationRepository {
         // Manejar campos especiales
         if (key === 'payment_data' && typeof value === 'object') {
           params.push(JSON.stringify(value));
+        } else if (key === 'hot_desk_numbers') {
+          params.push(serializeHotDeskNumbers(value));
         } else if (typeof value === 'boolean') {
           params.push(value ? 1 : 0);
         } else {
@@ -142,20 +160,8 @@ class ReservationRepository {
     `;
     
     const reservations = await databaseService.all(query, [phoneNumber, limit]);
-    
-    // Procesar resultados
-    return reservations.map(reservation => {
-      if (reservation.payment_data) {
-        try {
-          reservation.payment_data = JSON.parse(reservation.payment_data);
-        } catch (e) {
-          console.error('[RESERVATION] Error parsing payment_data:', e);
-        }
-      }
-      
-      reservation.was_free = Boolean(reservation.was_free);
-      return reservation;
-    });
+
+    return reservations.map(parseReservationRecord);
   }
 
   /**
@@ -176,20 +182,8 @@ class ReservationRepository {
     `;
     
     const reservations = await databaseService.all(query, [phoneNumber, today]);
-    
-    // Procesar resultados
-    return reservations.map(reservation => {
-      if (reservation.payment_data) {
-        try {
-          reservation.payment_data = JSON.parse(reservation.payment_data);
-        } catch (e) {
-          console.error('[RESERVATION] Error parsing payment_data:', e);
-        }
-      }
-      
-      reservation.was_free = Boolean(reservation.was_free);
-      return reservation;
-    });
+
+    return reservations.map(parseReservationRecord);
   }
 
   /**
@@ -213,8 +207,9 @@ class ReservationRepository {
     }
     
     query += ` ORDER BY r.start_time`;
-    
-    return await databaseService.all(query, params);
+
+    const reservations = await databaseService.all(query, params);
+    return reservations.map(parseReservationRecord);
   }
 
   /**
@@ -229,8 +224,9 @@ class ReservationRepository {
       ORDER BY created_at DESC
       LIMIT 1
     `;
-    
-    return await databaseService.get(query, [phoneNumber]);
+
+    const reservation = await databaseService.get(query, [phoneNumber]);
+    return parseReservationRecord(reservation);
   }
 
   /**
@@ -332,27 +328,15 @@ class ReservationRepository {
     `;
     
     const reservations = await databaseService.all(query);
-    
-    // Parsear JSON fields
-    return reservations.map(reservation => {
-      if (reservation.payment_data) {
-        try {
-          reservation.payment_data = JSON.parse(reservation.payment_data);
-        } catch (e) {
-          console.error('[RESERVATION] Error parsing payment_data:', e);
-        }
-      }
-      
-      reservation.was_free = Boolean(reservation.was_free);
-      return reservation;
-    });
+
+    return reservations.map(parseReservationRecord);
   }
 
   /**
-   * 🔢 Asigna número de Hot Desk automáticamente (1-6)
+   * 🔢 Asigna números de Hot Desk automáticamente (1-6)
    * Excluye desks permanentes + reservas confirmadas en el slot
    */
-  async assignHotDeskNumber(date, startTime, endTime) {
+  async assignHotDeskNumbers(date, startTime, endTime, quantity = 1) {
     databaseService.ensureInitialized();
     
     // 1. Obtener desks permanentes ocupados en esa fecha
@@ -361,7 +345,7 @@ class ReservationRepository {
     
     // 2. Obtener reservas confirmadas en el slot
     const query = `
-      SELECT hot_desk_number
+      SELECT hot_desk_number, hot_desk_numbers, desks_quantity
       FROM reservations
       WHERE service_type = 'hotDesk'
         AND status = 'confirmed'
@@ -371,7 +355,6 @@ class ReservationRepository {
           OR (start_time >= ? AND start_time < ?)
           OR (start_time <= ? AND end_time > ?)
         )
-        AND hot_desk_number IS NOT NULL
       ORDER BY hot_desk_number ASC
     `;
     
@@ -382,17 +365,29 @@ class ReservationRepository {
       startTime, startTime
     ]);
     
-    const reservedNumbers = occupiedDesks.map(r => r.hot_desk_number);
+    const reservedNumbers = occupiedDesks.flatMap(r =>
+      normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number)
+    );
+    const unknownReservedCount = occupiedDesks.reduce((sum, r) => {
+      const explicitNumbers = normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number);
+      if (explicitNumbers.length > 0) return sum;
+      return sum + (Number.parseInt(r.desks_quantity, 10) || 1);
+    }, 0);
     const allOccupied = new Set([...permanentNumbers, ...reservedNumbers]);
     
-    // Buscar primer número disponible (1-6), excluyendo permanentes y reservados
+    const candidateNumbers = [];
     for (let i = 1; i <= 6; i++) {
       if (!allOccupied.has(i)) {
-        return i;
+        candidateNumbers.push(i);
       }
     }
-    
-    return null; // Todos ocupados
+
+    return candidateNumbers.slice(unknownReservedCount, unknownReservedCount + quantity);
+  }
+
+  async assignHotDeskNumber(date, startTime, endTime) {
+    const numbers = await this.assignHotDeskNumbers(date, startTime, endTime, 1);
+    return numbers[0] ?? null;
   }
 
   /**
@@ -410,7 +405,7 @@ class ReservationRepository {
     
     // 2. Reservas confirmadas en el slot
     const query = `
-      SELECT hot_desk_number
+      SELECT hot_desk_number, hot_desk_numbers, desks_quantity
       FROM reservations
       WHERE service_type = 'hotDesk'
         AND status = 'confirmed'
@@ -420,7 +415,6 @@ class ReservationRepository {
           OR (start_time >= ? AND start_time < ?)
           OR (start_time <= ? AND end_time > ?)
         )
-        AND hot_desk_number IS NOT NULL
     `;
     
     const results = await databaseService.all(query, [
@@ -430,9 +424,16 @@ class ReservationRepository {
       startTime, startTime
     ]);
     
-    const reservedNumbers = results.map(r => r.hot_desk_number).filter(n => n != null);
+    const reservedNumbers = results.flatMap(r =>
+      normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number)
+    );
     const allOccupied = [...new Set([...permanentNumbers, ...reservedNumbers])];
-    const occupiedCount = allOccupied.length;
+    const unknownReservedCount = results.reduce((sum, r) => {
+      const explicitNumbers = normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number);
+      if (explicitNumbers.length > 0) return sum;
+      return sum + (Number.parseInt(r.desks_quantity, 10) || 1);
+    }, 0);
+    const occupiedCount = Math.min(TOTAL_DESKS, allOccupied.length + unknownReservedCount);
     
     return {
       occupiedCount,

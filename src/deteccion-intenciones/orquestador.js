@@ -18,6 +18,7 @@ import { clearAgentForm } from '../servicios/agent-form-manager.js';
 import { clearJustConfirmed, clearPendingConfirmation, getPendingConfirmation } from '../servicios/reservation-state.js';
 import { getUserReceipts, resendReceipt, formatReceiptsList } from '../servicios/receipt-lookup.js';
 import { getRelevantExamples, formatRAGExamples } from '../servicios/rag-retriever.js';
+import { formatHotDeskNumbers, getHotDeskNumbers } from '../utils/hot-desk-assignments.js';
 
 // ⚠️ NOTA V2: detectPaulaOutOfScope() ELIMINADA
 // Ahora SOLO @menciones explícitas cambian de agente
@@ -372,8 +373,9 @@ export async function procesarMensaje(mensaje, perfil = {}, historial = [], form
           reservasContexto += `${idx + 1}. ${spaceName}\n`;
           reservasContexto += `   ⏰ ${res.start_time} - ${res.end_time}\n`;
           reservasContexto += `   💰 ${res.was_free ? 'GRATIS (primera visita)' : `$${res.total_price}`}\n`;
-          if (res.hot_desk_number) {
-            reservasContexto += `   🪑 Puesto #${res.hot_desk_number}\n`;
+          const hotDeskNumbers = getHotDeskNumbers(res);
+          if (hotDeskNumbers.length) {
+            reservasContexto += `   🪑 ${hotDeskNumbers.length > 1 ? 'Puestos' : 'Puesto'} ${formatHotDeskNumbers(hotDeskNumbers)}\n`;
           }
         });
         reservasContexto += `\nMuestra esta información al usuario de forma clara y amigable.`;

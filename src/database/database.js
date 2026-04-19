@@ -15,7 +15,7 @@
  * - id, user_phone, service_type, date, start_time, end_time
  * - duration_hours, guest_count, total_price, was_free
  * - status, payment_status, payment_data, payment_method
- * - hot_desk_number, calendar_event_id
+ * - hot_desk_number, hot_desk_numbers, desks_quantity, calendar_event_id
  * - created_at, confirmed_at
  * 
  * AGENT_CONVERSATIONS (NUEVO - Sistema Unificado):
@@ -123,7 +123,7 @@ class InMemoryDB {
     }
 
     if (lowerTrim.startsWith('insert into reservations')) {
-      // Soportar ambos contratos: 8 params (tests directos) y 16 params (repositorio)
+      // Soportar ambos contratos: 8 params (tests directos) y 18 params (repositorio)
       let record = {};
       if (params.length === 8) {
         const [id, user_phone, service_type, date, start_time, end_time, duration_hours, status] = params;
@@ -142,7 +142,26 @@ class InMemoryDB {
           payment_status: 'pending'
         };
       } else {
-        const [id, user_phone, service_type, date, start_time, end_time, duration_hours, guest_count, total_price, was_free, status, payment_status, payment_data, hot_desk_number, payment_method, calendar_event_id] = params;
+        const [
+          id,
+          user_phone,
+          service_type,
+          date,
+          start_time,
+          end_time,
+          duration_hours,
+          guest_count,
+          total_price,
+          was_free,
+          status,
+          payment_status,
+          payment_data,
+          hot_desk_number,
+          hot_desk_numbers,
+          payment_method,
+          calendar_event_id,
+          desks_quantity
+        ] = params;
         record = {
           id,
           user_phone,
@@ -158,8 +177,10 @@ class InMemoryDB {
           payment_status: payment_status || 'pending',
           payment_data,
           hot_desk_number,
+          hot_desk_numbers,
           payment_method,
-          calendar_event_id
+          calendar_event_id,
+          desks_quantity: desks_quantity ?? 1
         };
       }
 

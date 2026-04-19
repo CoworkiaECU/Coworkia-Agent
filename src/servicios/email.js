@@ -835,7 +835,9 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
       endTime: reservationData.endTime,
       serviceType: reservationData.serviceType || 'Hot Desk',
       duration: reservationData.durationHours ? `${reservationData.durationHours} horas` : '2 horas',
-      price: reservationData.total
+      price: reservationData.total,
+      hotDeskNumber: reservationData.reservation?.hot_desk_number || reservationData.hotDeskNumber || null,
+      hotDeskNumbers: reservationData.reservation?.hot_desk_numbers || reservationData.hotDeskNumbers || null
     });
     
     if (calendarResult.success) {

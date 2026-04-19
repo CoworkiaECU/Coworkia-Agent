@@ -301,7 +301,7 @@ ${userLanguage === 'en' ? '\n⚠️ USER SPEAKS ENGLISH: Translate to English, k
       const { databaseService } = await import('../database/database.js');
       
       const reservations = await databaseService.all(`
-        SELECT service_type, date, start_time, end_time, was_free, total_price, hot_desk_number
+        SELECT service_type, date, start_time, end_time, was_free, total_price, hot_desk_number, hot_desk_numbers
         FROM reservations 
         WHERE user_phone = $1 
           AND status = 'confirmed' 

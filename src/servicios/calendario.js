@@ -229,7 +229,15 @@ export async function cancelUserPendingReservations(userId) {
  * 
  * @param {Date} baseTime - (Opcional) Tiempo base para testing con fake timers
  */
-export async function checkAvailability(date, startTime, durationHours, serviceType = 'hotDesk', baseTime = null, userId = null) {
+export async function checkAvailability(
+  date,
+  startTime,
+  durationHours,
+  serviceType = 'hotDesk',
+  baseTime = null,
+  userId = null,
+  requiredSpaces = 1
+) {
   // 🌍 Obtener hora actual en Ecuador de forma robusta
   const currentDateTime = getNowInGuayaquil(baseTime);
   
@@ -245,7 +253,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: '🚫 Los domingos Coworkia está cerrado',
       suggestion: 'Estamos abiertos de lunes a sábado',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requiredSpaces)
     };
   }
   
@@ -257,7 +265,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: `🎉 ${nombreFeriado} - Coworkia está cerrado`,
       suggestion: 'Estamos cerrados en feriados',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requiredSpaces)
     };
   }
   
@@ -275,7 +283,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
       available: false,
       reason: 'Ese horario ya pasó',
       suggestion: `¿Qué tal ${nextTime}?`,
-      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requiredSpaces)
     };
   }
 
@@ -292,7 +300,7 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
     return {
       available: false,
       reason: 'Fuera del horario laboral (7:00 AM - 7:00 PM)',
-      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requiredSpaces)
     };
   }
   
@@ -313,17 +321,26 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
   });
 
   const serviceCapacity = getServiceCapacity(serviceType);
+  const requestedUnits = serviceType === 'hotDesk'
+    ? Math.max(Number.parseInt(requiredSpaces, 10) || 1, 1)
+    : 1;
+  const occupiedUnits = serviceType === 'hotDesk'
+    ? overlappingReservations.reduce((sum, r) => sum + (Number.parseInt(r.desks_quantity, 10) || 1), 0)
+    : overlappingReservations.length;
+  const availableUnits = Math.max(serviceCapacity - occupiedUnits, 0);
 
-  // Contar escritorios ocupados (multi-desk: cada reserva puede ocupar N desks)
-  const occupiedDesks = overlappingReservations.reduce((sum, r) => sum + (r.desks_quantity || 1), 0);
+  if (occupiedUnits + requestedUnits > serviceCapacity) {
+    const reason = serviceType === 'hotDesk' && requestedUnits > 1
+      ? `Solo hay ${availableUnits} Hot Desk${availableUnits !== 1 ? 's' : ''} disponible${availableUnits !== 1 ? 's' : ''} en ese horario`
+      : `${getServiceName(serviceType)} ocupado en ese horario`;
 
-  if (occupiedDesks >= serviceCapacity) {
     return {
       available: false,
-      reason: `${getServiceName(serviceType)} ocupado en ese horario`,
-      occupiedSpaces: occupiedDesks,
+      reason,
+      occupiedSpaces: occupiedUnits,
+      availableSpaces: availableUnits,
       capacity: serviceCapacity,
-      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+      alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requestedUnits)
     };
   }
 
@@ -345,15 +362,15 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
         reason: `Máximo ${CALENDAR_CONFIG.maxSimultaneousSpaces} espacios ocupados en ese horario`,
         occupiedSpaces: overlappingAll.length,
         capacity: CALENDAR_CONFIG.maxSimultaneousSpaces,
-        alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime)
+        alternatives: await suggestAlternatives(date, durationHours, serviceType, startTime, requestedUnits)
       };
     }
   }
   
   return {
     available: true,
-    occupiedSpaces: occupiedDesks,
-    availableSpaces: Math.max(serviceCapacity - occupiedDesks, 0),
+    occupiedSpaces: occupiedUnits,
+    availableSpaces: availableUnits,
     capacity: serviceCapacity
   };
 }
@@ -361,7 +378,13 @@ export async function checkAvailability(date, startTime, durationHours, serviceT
 /**
  * 💡 Sugiere horarios alternativos si no hay disponibilidad
  */
-async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk', requestedStartTime = null) {
+async function suggestAlternatives(
+  date,
+  durationHours,
+  serviceType = 'hotDesk',
+  requestedStartTime = null,
+  requiredSpaces = 1
+) {
   const alternatives = [];
   const capacity = getServiceCapacity(serviceType);
   const dayReservations = await reservationRepository.findByDate(date, serviceType);
@@ -387,7 +410,11 @@ async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk',
       return hasOverlapWithBuffer(startMinutes, endMinutes, resStart, resEnd);
     });
     
-    if (overlapping.length < capacity) {
+    const occupiedUnits = serviceType === 'hotDesk'
+      ? overlapping.reduce((sum, r) => sum + (Number.parseInt(r.desks_quantity, 10) || 1), 0)
+      : overlapping.length;
+
+    if (occupiedUnits + (serviceType === 'hotDesk' ? requiredSpaces : 1) <= capacity) {
       allSlots.push({
         date,
         time: minutesToTime(startMinutes),
@@ -422,7 +449,11 @@ async function suggestAlternatives(date, durationHours, serviceType = 'hotDesk',
       return hasOverlapWithBuffer(nextStart, nextEnd, resStart, resEnd);
     });
     
-    if (overlappingNext.length < capacity) {
+    const occupiedNextUnits = serviceType === 'hotDesk'
+      ? overlappingNext.reduce((sum, r) => sum + (Number.parseInt(r.desks_quantity, 10) || 1), 0)
+      : overlappingNext.length;
+
+    if (occupiedNextUnits + (serviceType === 'hotDesk' ? requiredSpaces : 1) <= capacity) {
       alternatives.push({
         date: nextDate,
         time: testTime,
@@ -476,6 +507,7 @@ export async function createReservation(reservationData) {
     totalPrice,
     guestCount = 0,
     hotDeskNumber = null, // Nuevo campo: número de Hot Desk asignado
+    hotDeskNumbers = null, // Multi-hotdesk: números asignados
     paymentMethod = null, // Nuevo campo: método de pago
     desksQuantity = 1 // Multi-hotdesk: cantidad de escritorios
   } = reservationData;
@@ -484,7 +516,15 @@ export async function createReservation(reservationData) {
   const resolvedTotal = total ?? totalPrice ?? 0;
   
   // Verificar disponibilidad primero (pasando userId para ignorar sus propias reservas pending)
-  const availability = await checkAvailability(date, startTime, durationHours, serviceType, null, userId);
+  const availability = await checkAvailability(
+    date,
+    startTime,
+    durationHours,
+    serviceType,
+    null,
+    userId,
+    desksQuantity
+  );
   if (!availability.available) {
     return {
       success: false,
@@ -511,6 +551,7 @@ export async function createReservation(reservationData) {
       payment_data: email ? { email } : null,
       payment_method: paymentMethod, // Guardar método de pago
       hot_desk_number: hotDeskNumber, // Guardar número de Hot Desk
+      hot_desk_numbers: hotDeskNumbers, // Guardar números de Hot Desk
       desks_quantity: desksQuantity // Multi-hotdesk
     });
     
@@ -531,6 +572,7 @@ export async function createReservation(reservationData) {
         total: resolvedTotal,
         guestCount,
         hotDeskNumber,
+        hotDeskNumbers,
         paymentMethod,
         createdAt: newReservation.created_at
       },
@@ -821,15 +863,18 @@ export async function getDayStats(date) {
  * @param {string} endTime - Hora de fin HH:MM
  * @returns {Object} Estado de disponibilidad con detalles
  */
-export async function checkHotDeskAvailability(date, startTime, endTime) {
+export async function checkHotDeskAvailability(date, startTime, endTime, requiredSpaces = 1) {
   const availability = await reservationRepository.countOccupiedHotDesks(date, startTime, endTime);
-  
-  const message = availability.isFull
-    ? '❌ Lo siento, todos los Hot Desks están reservados para ese horario.'
+
+  const hasEnoughCapacity = availability.availableCount >= requiredSpaces;
+  const message = !hasEnoughCapacity
+    ? availability.availableCount === 0
+      ? '❌ Lo siento, todos los Hot Desks están reservados para ese horario.'
+      : `❌ Solo hay ${availability.availableCount} Hot Desk${availability.availableCount !== 1 ? 's' : ''} disponible${availability.availableCount !== 1 ? 's' : ''}.`
     : `✅ Hay ${availability.availableCount} Hot Desk${availability.availableCount !== 1 ? 's' : ''} disponible${availability.availableCount !== 1 ? 's' : ''}.`;
   
   return {
-    available: !availability.isFull,
+    available: hasEnoughCapacity,
     occupiedCount: availability.occupiedCount,
     availableCount: availability.availableCount,
     occupiedNumbers: availability.occupiedNumbers,
@@ -852,6 +897,10 @@ export async function assignHotDeskNumber(date, startTime, endTime) {
   return await reservationRepository.assignHotDeskNumber(date, startTime, endTime);
 }
 
+export async function assignHotDeskNumbers(date, startTime, endTime, quantity = 1) {
+  return await reservationRepository.assignHotDeskNumbers(date, startTime, endTime, quantity);
+}
+
 export { CALENDAR_CONFIG, SERVICE_CAPACITY };
 
 export default {
@@ -868,6 +917,7 @@ export default {
   getDayStats,
   checkHotDeskAvailability,
   assignHotDeskNumber,
+  assignHotDeskNumbers,
   CALENDAR_CONFIG,
   SERVICE_CAPACITY
 };

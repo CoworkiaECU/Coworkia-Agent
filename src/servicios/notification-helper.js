@@ -187,6 +187,7 @@ export async function sendReservationNotifications(notificationData) {
       duration: `${durationHours} horas`,
       reservationId: reservation?.id,
       hotDeskNumber: reservation?.hot_desk_number || reservation?.hotDeskNumber, // Número de Hot Desk
+      hotDeskNumbers: reservation?.hot_desk_numbers || reservation?.hotDeskNumbers || null,
       paymentMethod: reservation?.payment_method || reservation?.paymentMethod, // Método de pago
       wifiCode: wifiCode || null  // Código WiFi para la sesión
     })

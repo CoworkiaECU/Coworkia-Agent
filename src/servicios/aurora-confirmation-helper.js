@@ -623,7 +623,8 @@ ${alternatives.slice(0, 3).map((alt, i) => `${i+1}. ${alt.startTime} - ${alt.end
       reservationData.durationHours,
       reservationData.serviceType,
       null, // baseTime
-      userProfile.userId // userId para ignorar sus propias reservas pending
+      userProfile.userId, // userId para ignorar sus propias reservas pending
+      reservationData.serviceType === 'hotDesk' ? (reservationData.desksQuantity || 1) : 1
     );
 
     if (!availability.available) {

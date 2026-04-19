@@ -92,8 +92,8 @@ Fixes urgentes desde screenshots WA + consolidación de duplicados + tests
 
 ## 📋 PENDIENTE (próxima sesión)
 
-- [ ] Plan 08abr: alternativas inteligentes (usuario elige "3" → aplicar slot)
-- [ ] Plan 08abr: multi-hotdesk ("somos 3, necesitamos 3 hot desks")
+- [x] Plan 08abr: alternativas inteligentes (usuario elige "3" → aplicar slot)
+- [x] Plan 08abr: multi-hotdesk ("somos 3, necesitamos 3 hot desks")
 - [ ] ~30 archivos con "Whymper 403" hardcoded (frontend + i18n) → migrar a constants
 - [ ] 15 tests skipped → evaluar si recuperables
 - [ ] Consolidar: 13 copias de formatDate, 9 WA message bypasses

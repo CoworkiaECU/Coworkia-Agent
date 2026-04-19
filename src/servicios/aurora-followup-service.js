@@ -17,6 +17,7 @@ import { buildEmailTemplate } from '../servicios/email-template-system.js';
 import databaseService from '../database/database.js';
 import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../utils/constants.js';
 import { getServiceLabel } from '../utils/service-labels.js';
+import { formatHotDeskNumbers, normalizeHotDeskNumbers } from '../utils/hot-desk-assignments.js';
 import {
   findReservationsForOneHourFollowup,
   markFollowup1hSent,
@@ -431,7 +432,7 @@ export async function sendAuroraReminder10min() {
   try {
     const reservations = await databaseService.all(`
       SELECT r.id, r.user_phone, r.service_type, r.date, r.start_time, r.end_time,
-             r.hot_desk_number, r.payment_status, r.total_price,
+             r.hot_desk_number, r.hot_desk_numbers, r.payment_status, r.total_price,
              u.name AS user_name
       FROM reservations r
       LEFT JOIN users u ON r.user_phone = u.phone_number
@@ -453,8 +454,10 @@ export async function sendAuroraReminder10min() {
       try {
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : '';
-
-        const deskInfo = r.hot_desk_number ? `\n🪑 Tu puesto: *Hot Desk #${r.hot_desk_number}*` : '';
+        const assignedDesks = normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number);
+        const deskInfo = assignedDesks.length
+          ? `\n🪑 ${assignedDesks.length > 1 ? 'Tus puestos' : 'Tu puesto'}: *${formatHotDeskNumbers(assignedDesks)}*`
+          : '';
         const payInfo = r.payment_status === 'paid'
           ? '\n✅ Pago confirmado'
           : r.total_price > 0

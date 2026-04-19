@@ -21,14 +21,16 @@ const PRICING = {
     basePrice: 10.00,
     additionalHourPrice: 10.00,
     minPeople: 1,
-    maxPeople: 1
+    maxPeople: 6,
+    pricePerUnit: true
   },
   meetingRoom: {
     baseHours: 2,
     basePrice: 29.00,
     additionalHourPrice: 15.00,
     minPeople: 3,
-    maxPeople: 4
+    maxPeople: 4,
+    pricePerUnit: false
   }
 };
 
@@ -74,6 +76,10 @@ export function calculateReservationCost(serviceType, hours, people = 1, payment
   } else {
     const additionalHours = hours - config.baseHours;
     basePrice = config.basePrice + (additionalHours * config.additionalHourPrice);
+  }
+
+  if (config.pricePerUnit) {
+    basePrice *= people;
   }
 
   // Calcular IVA (15% sobre precio base)

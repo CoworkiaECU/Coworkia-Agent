@@ -215,4 +215,57 @@ describe('🧠 Formulario parcial - Flujo progresivo', () => {
     const json = form.toJSON();
     expect(json.freeTrialWindowEligible).toBe(false);
   });
+
+  test('Selección de alternativa por número aplica el horario elegido', () => {
+    const form = new PartialReservationForm('test-user', {
+      pendingAlternatives: [
+        { startTime: '10:00', endTime: '12:00', durationHours: 2 },
+        { startTime: '15:00', endTime: '17:00', durationHours: 2 }
+      ]
+    });
+
+    const updates = extractDataFromMessage('2', form);
+
+    expect(updates.time).toBe('15:00');
+    expect(updates.durationHours).toBe(2);
+    expect(form.pendingAlternatives).toBeNull();
+  });
+
+  test('Selección de alternativa textual funciona igual', () => {
+    const form = new PartialReservationForm('test-user', {
+      pendingAlternatives: [
+        { startTime: '09:00', endTime: '11:00', durationHours: 2 },
+        { startTime: '11:00', endTime: '13:00', durationHours: 2 },
+        { startTime: '16:00', endTime: '18:00', durationHours: 2 }
+      ]
+    });
+
+    const updates = extractDataFromMessage('la tercera', form);
+
+    expect(updates.time).toBe('16:00');
+    expect(form.pendingAlternatives).toBeNull();
+  });
+
+  test('Si el usuario escribe una hora nueva, limpia alternativas pendientes', () => {
+    const form = new PartialReservationForm('test-user', {
+      pendingAlternatives: [
+        { startTime: '10:00', endTime: '12:00', durationHours: 2 }
+      ]
+    });
+
+    const updates = extractDataFromMessage('prefiero 5pm', form);
+
+    expect(updates.time).toBe('17:00');
+    expect(form.pendingAlternatives).toBeNull();
+  });
+
+  test('Multi-hotdesk detecta cantidad de escritorios para Hot Desk', () => {
+    const form = new PartialReservationForm('test-user');
+    form.updateField('spaceType', 'hotDesk');
+
+    const updates = extractDataFromMessage('somos 3 personas', form);
+
+    expect(updates.numPeople).toBe(3);
+    expect(updates.desksQuantity).toBe(3);
+  });
 });

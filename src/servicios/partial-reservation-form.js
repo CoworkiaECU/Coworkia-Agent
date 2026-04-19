@@ -1434,7 +1434,9 @@ Estamos abiertos:
         const availability = await checkAvailability(
           form.date, form.time, form.durationHours, 
           form.spaceType === 'meetingRoom' ? 'meetingRoom' : 'hotDesk',
-          null, userId
+          null,
+          userId,
+          form.spaceType === 'hotDesk' ? (form.desksQuantity || 1) : 1
         );
         if (!availability.available) {
           console.log('[FORM] 🛡️ Early availability check FAILED:', availability.reason);

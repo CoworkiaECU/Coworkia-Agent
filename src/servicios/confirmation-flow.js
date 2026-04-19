@@ -21,6 +21,7 @@ import { sendReservationNotifications } from './notification-helper.js';
 import { generateWifiCode, getWifiCodeForReservation } from './wifi-codes-service.js';
 import { isPositiveResponse, isNegativeResponse } from './generic-confirmation-flow.js';
 import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../utils/constants.js';
+import { formatHotDeskNumbers, getHotDeskNumbers } from '../utils/hot-desk-assignments.js';
 export { isPositiveResponse, isNegativeResponse };
 
 class ConfirmationFlowError extends Error {
@@ -54,6 +55,14 @@ function formatUserDate(date) {
   
   // ✅ Formato: "Domingo 27 de enero 2026"
   return `${dayName} ${parseInt(day, 10)} de ${monthName} ${year}`;
+}
+
+function buildHotDeskMessageLine(reservationLike) {
+  const numbers = getHotDeskNumbers(reservationLike);
+  if (!numbers.length) return '';
+
+  const label = numbers.length > 1 ? '🪑 *Puestos:*' : '🪑 *Puesto:*';
+  return `\n${label} ${formatHotDeskNumbers(numbers)}`;
 }
 
 /**
@@ -239,6 +248,8 @@ async function processPaymentVerificationConfirmation(userProfile, pendingReserv
       duration: `${durationHours} horas`,
       price: reservationRecord.total_price || 0,
       guestCount: reservationRecord.guest_count || 0,
+      hotDeskNumber: reservationRecord.hot_desk_number || null,
+      hotDeskNumbers: reservationRecord.hot_desk_numbers || null,
       paymentMethod: reservationRecord.payment_method || null
     }),
     { circuitId: 'calendar-events-job' }
@@ -256,8 +267,8 @@ Tu reserva está activa:
 
 📅 *${formattedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-� *Reserva:* ${reservationRecord.id}
-�💰 *Pago:* ✅ Verificado${wifiLine}
+🔢 *Reserva:* ${reservationRecord.id}
+💰 *Pago:* ✅ Verificado${wifiLine}
 
     ${emailLine}
 
@@ -351,15 +362,15 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
         console.log(`[Confirmation] 🕐 Calculado: ${pendingReservation.startTime} + ${durationHours}h = ${pendingReservation.endTime}`);
       }
       
-      const { checkHotDeskAvailability, assignHotDeskNumber } = await import('./calendario.js');
+      const { checkHotDeskAvailability, assignHotDeskNumbers } = await import('./calendario.js');
+      const desksNeeded = pendingReservation.desksQuantity || 1;
       
       const availability = await checkHotDeskAvailability(
         pendingReservation.date,
         pendingReservation.startTime,
-        pendingReservation.endTime
+        pendingReservation.endTime,
+        desksNeeded
       );
-      
-      const desksNeeded = pendingReservation.desksQuantity || 1;
       console.log('[Confirmation] 📊 Disponibilidad verificada:', availability, 'desks necesarios:', desksNeeded);
       
       if (!availability.available || availability.availableCount < desksNeeded) {
@@ -378,14 +389,25 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
       }
       
       // Asignar número(s) de Hot Desk automáticamente
-      const hotDeskNumber = await assignHotDeskNumber(
+      const hotDeskNumbers = await assignHotDeskNumbers(
         pendingReservation.date,
         pendingReservation.startTime,
-        pendingReservation.endTime
+        pendingReservation.endTime,
+        desksNeeded
       );
-      
-      pendingReservation.hotDeskNumber = hotDeskNumber;
-      console.log(`[Confirmation] ✅ Hot Desk asignado: ${hotDeskNumber}/${availability.maxCapacity}`);
+
+      if (hotDeskNumbers.length < desksNeeded) {
+        throw new ConfirmationFlowError({
+          success: false,
+          message: `Solo pude asignar ${hotDeskNumbers.length} Hot Desk${hotDeskNumbers.length !== 1 ? 's' : ''}, pero necesitas ${desksNeeded}. ¿Prefieres otro horario?`,
+          needsAction: true,
+          actionType: 'check_alternatives'
+        });
+      }
+
+      pendingReservation.hotDeskNumbers = hotDeskNumbers;
+      pendingReservation.hotDeskNumber = hotDeskNumbers[0] ?? null;
+      console.log(`[Confirmation] ✅ Hot Desks asignados: ${formatHotDeskNumbers(hotDeskNumbers)} / ${availability.maxCapacity}`);
     }
     
     // 🔄 Crear reserva
@@ -523,6 +545,7 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
     const confirmedDate = reservationRecord?.date || pendingReservation.date;
     const confirmedStart = reservationRecord?.start_time || pendingReservation.startTime;
     const confirmedEnd = reservationRecord?.end_time || pendingReservation.endTime;
+    const confirmedDeskLine = buildHotDeskMessageLine(reservationRecord || pendingReservation);
     
     // 🆕 v283: Formatear fecha para mensajes al usuario
     const formattedConfirmedDate = formatUserDate(confirmedDate);
@@ -551,6 +574,8 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
           duration: `${pendingReservation.durationHours} horas`,
           price: pendingReservation.totalPrice,
           guestCount: pendingReservation.guestCount || 0,
+          hotDeskNumber: reservationRecord?.hot_desk_number || pendingReservation.hotDeskNumber || null,
+          hotDeskNumbers: reservationRecord?.hot_desk_numbers || pendingReservation.hotDeskNumbers || null,
           paymentMethod: pendingReservation.paymentMethod || reservationRecord.payment_method || null
         }),
         { circuitId: 'calendar-events-job' }
@@ -661,8 +686,9 @@ export async function processPositiveConfirmation(userProfile, pendingReservatio
 
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-� *Reserva:* ${reservationRecord.id}
-�💰 *Precio:* ¡GRATIS! (primera visita)${freeWifiLine}
+🔢 *Reserva:* ${reservationRecord.id}
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*${confirmedDeskLine}
+💰 *Precio:* ¡GRATIS! (primera visita)${freeWifiLine}
 
     ${confirmationDeliveryLine}
 
@@ -748,7 +774,7 @@ Tu reserva queda *pre-reservada* hasta confirmar el pago. ¡Gracias! 😊`,
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
 🔢 *Reserva:* ${reservationRecord.id}
-🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*${confirmedDeskLine}
 💰 *Pago pendiente:* $${pendingReservation.totalPrice} (efectivo en Coworkia)
 
 ✅ Pagarás directamente al llegar
@@ -770,10 +796,13 @@ Tu reserva queda *pre-reservada* hasta confirmar el pago. ¡Gracias! 😊`,
     
     // Calcular con método de pago específico si está disponible
     const paymentMethod = pendingReservation.paymentMethod === 'transferencia' ? 'transferencia' : 'payphone';
+    const billingUnits = pendingReservation.serviceType === 'hotDesk'
+      ? (pendingReservation.desksQuantity || 1)
+      : (pendingReservation.guestCount || 1);
     const costBreakdown = calculateReservationCost(
       pendingReservation.serviceType,
       pendingReservation.durationHours || 2,
-      pendingReservation.guestCount || 1,
+      billingUnits,
       paymentMethod
     );
     
@@ -842,7 +871,7 @@ Tu reserva queda *pre-reservada* hasta confirmar el pago. ¡Gracias! 😊`,
 
 📅 *${formattedConfirmedDate}*
 ⏰ *${confirmedStart} - ${confirmedEnd}*
-🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*
+🏢 *${pendingReservation.serviceType === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones'}*${confirmedDeskLine}
 ${priceBreakdown}
 🔢 *Referencia:* ${reservationRecord.id}
 ${paymentInstructions}${confirmationEmailLine}

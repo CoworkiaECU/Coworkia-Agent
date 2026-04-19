@@ -55,12 +55,14 @@ router.get('/reservations', async (req, res) => {
         r.end_time,
         r.duration_hours,
         r.guest_count,
+        r.desks_quantity,
         r.total_price,
         r.was_free,
         r.status,
         r.payment_status,
         r.payment_method,
         r.hot_desk_number,
+        r.hot_desk_numbers,
         r.created_at,
         r.confirmed_at,
         r.followup_1h_sent_at,
@@ -129,7 +131,8 @@ router.get('/reservations', async (req, res) => {
     const enriched = reservations.map(r => {
       let reference_price = null;
       if (!r.was_free && r.service_type && r.duration_hours) {
-        const calc = calculateReservationCost(r.service_type, r.duration_hours, 1, 'transferencia');
+        const billingUnits = r.service_type === 'hotDesk' ? (r.desks_quantity || 1) : 1;
+        const calc = calculateReservationCost(r.service_type, r.duration_hours, billingUnits, 'transferencia');
         if (!calc.error) reference_price = calc.basePrice;
       }
       return { ...r, reference_price };

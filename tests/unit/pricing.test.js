@@ -34,6 +34,13 @@ describe('💰 Cálculo de Precios', () => {
       const result = calculateReservationCost('hotDesk', 8, 1);
       expect(parseFloat(result.basePrice)).toBe(70);
     });
+
+    test('2 hot desks por 2 horas deben costar $20 base', () => {
+      const result = calculateReservationCost('hotDesk', 2, 2, 'transferencia');
+      expect(result.error).toBeUndefined();
+      expect(parseFloat(result.basePrice)).toBe(20);
+      expect(parseFloat(result.totalPrice)).toBe(23);
+    });
   });
 
   describe('Sala de Reuniones - Precios', () => {

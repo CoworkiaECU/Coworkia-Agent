@@ -143,6 +143,8 @@ class PostgresAdapter {
           payment_data TEXT,
           payment_method TEXT,
           hot_desk_number INTEGER,
+          hot_desk_numbers TEXT,
+          desks_quantity INTEGER DEFAULT 1,
           calendar_event_id TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           confirmed_at TIMESTAMP,

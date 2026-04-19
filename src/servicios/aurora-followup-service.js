@@ -240,7 +240,7 @@ export async function sendAuroraD1Followups() {
           const html = buildEmailTemplate('AURORA', 'D1', {
             nombre: r.user_name || firstName, servicio: serviceLabel, dia: formatDateEs(r.date)
           });
-          await sendEmail({ to: r.user_email, subject: '¿Cómo estuvo tu experiencia en Coworkia? 🌟', html });
+          await sendEmail({ to: r.user_email, subject: '¿Cómo estuvo tu experiencia en Coworkia? 🌟', html, agent: 'aurora' });
         }
 
         await databaseService.run(`UPDATE reservations SET followup_d1_sent_at = NOW() WHERE id = $1`, [r.id]);
@@ -300,7 +300,10 @@ export async function sendAuroraD3Followups() {
           const html = buildEmailTemplate('AURORA', 'D3', {
             nombre: r.user_name || firstName, servicio: serviceLabel, wasFree
           });
-          await sendEmail({ to: r.user_email, subject: `¿Cuándo vuelves a Coworkia, ${firstName}? 🚀`, html });
+          const subjectName = (firstName && firstName !== '.' && firstName !== 'amig@' && firstName.length > 1)
+            ? `, ${firstName}`
+            : '';
+          await sendEmail({ to: r.user_email, subject: `¿Cuándo vuelves a Coworkia${subjectName}? 🚀`, html, agent: 'aurora' });
         }
 
         await databaseService.run(`UPDATE reservations SET followup_d3_sent_at = NOW() WHERE id = $1`, [r.id]);
@@ -354,7 +357,7 @@ export async function sendAuroraReminder24h() {
             nombre: r.user_name || firstName, servicio: serviceLabel,
             dia: formatDateEs(r.date), hora: r.start_time
           });
-          await sendEmail({ to: r.user_email, subject: `📅 Mañana a las ${r.start_time} te esperamos en Coworkia`, html });
+          await sendEmail({ to: r.user_email, subject: `📅 Mañana a las ${r.start_time} te esperamos en Coworkia`, html, agent: 'aurora' });
         }
 
         await databaseService.run(`UPDATE reservations SET reminder_24h_sent_at = NOW() WHERE id = $1`, [r.id]);

@@ -385,7 +385,7 @@ export function buildAuroraConfirmationHTML({ nombre, servicio, dia, hora, preci
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
-    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
     <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Reserva Confirmada! 🎉</h1>
     <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Tu espacio está listo en Coworkia</p>
   </div>
@@ -453,7 +453,7 @@ export function buildAuroraRebookingHTML({ nombre, servicio, descuento = '' }, {
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
-    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
     <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Te extrañamos, ${firstName}! 👋</h1>
     <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Han pasado 7 días desde tu última visita</p>
   </div>
@@ -524,7 +524,7 @@ export function buildAuroraD1HTML({ nombre, servicio, dia }, { xiaomiSafe = fals
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
-    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
     <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¿Cómo estuvo tu experiencia? 🌟</h1>
     <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Tu opinión nos hace mejores</p>
   </div>
@@ -572,13 +572,16 @@ export function buildAuroraD1HTML({ nombre, servicio, dia }, { xiaomiSafe = fals
  */
 export function buildAuroraD3HTML({ nombre, servicio, wasFree = false }, { xiaomiSafe = false } = {}) {
   const b = AGENT_BRANDING.AURORA;
-  const firstName = nombre ? nombre.split(' ')[0] : 'amig@';
+  const rawFirst = nombre ? nombre.trim().split(' ')[0] : '';
+  const firstName = (rawFirst && rawFirst !== '.' && rawFirst.length > 1) ? rawFirst : '';
 
   const fomoMsg = wasFree
     ? 'Tu primera visita gratis fue genial, pero hay mucho más por descubrir. Esta semana tenemos <strong>15% OFF</strong> en tu siguiente reserva.'
     : servicio?.toLowerCase().includes('sala')
       ? '¿Tienes otra reunión pendiente? Salas disponibles esta semana con <strong>horarios flexibles</strong>.'
       : '¿Sabías que con una <strong>Membresía Coworkia</strong> ahorras hasta un 40%? Pregunta por nuestros planes.';
+
+  const LOGO_URL = 'https://coworkia-agent-e97d15dac56f.herokuapp.com/images/logos/coworkia.svg';
 
   return `<!DOCTYPE html>
 <html lang="es" style="color-scheme:light !important;">
@@ -588,31 +591,33 @@ export function buildAuroraD3HTML({ nombre, servicio, wasFree = false }, { xiaom
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <style>:root{color-scheme:light !important;}${getEmailStyles({ xiaomiSafe })}</style>
+  <title>¿Cuándo vuelves a Coworkia?</title>
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
 <div class="em-container" style="width:100%;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
-    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
-    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¿Cuándo vuelves, ${firstName}? 🚀</h1>
+    <img src="${LOGO_URL}" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">${firstName ? `¿Cuándo vuelves, ${firstName}?` : '¿Cuándo vuelves?'} 🚀</h1>
     <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Han pasado 3 días desde tu visita</p>
   </div>
 
   <!-- Body -->
   <div style="padding:36px 32px;">
-    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 20px;">
+    <p style="font-size:16px;color:#1e293b;margin:0 0 20px;">${firstName ? `Hola <strong>${firstName}</strong> 👋` : 'Hola 👋'}</p>
+    <p style="font-size:15px;color:#475569;line-height:1.7;margin:0 0 24px;">
       ${fomoMsg}
     </p>
 
     <!-- Social proof -->
-    <div style="background:#f8fafc;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:18px 20px;margin-bottom:24px;">
-      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">
-        📊 <strong>Esta semana en Coworkia:</strong><br>
-        ✅ 47 profesionales trabajaron aquí<br>
-        ✅ 12 reuniones exitosas<br>
-        ✅ WiFi premium · Café ilimitado
-      </p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid ${b.primaryColor};border-radius:8px;padding:18px 20px;margin-bottom:24px;">
+      <div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📊 Esta semana en Coworkia</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:5px 0;font-size:14px;color:#374151;">✅ Profesionales que trabajaron aquí</td><td style="padding:5px 0;font-size:14px;color:#1e293b;font-weight:600;text-align:right;">+40</td></tr>
+        <tr><td style="padding:5px 0;font-size:14px;color:#374151;">✅ Reuniones exitosas</td><td style="padding:5px 0;font-size:14px;color:#1e293b;font-weight:600;text-align:right;">+10</td></tr>
+        <tr><td style="padding:5px 0;font-size:14px;color:#374151;">✅ WiFi premium · Café ilimitado</td><td style="padding:5px 0;font-size:14px;color:#1e293b;font-weight:600;text-align:right;">∞</td></tr>
+      </table>
     </div>
 
     ${wasFree ? `
@@ -662,7 +667,7 @@ export function buildAuroraReminder24hHTML({ nombre, servicio, dia, hora }, { xi
 
   <!-- Header -->
   <div style="background:${b.gradient};padding:36px 32px;text-align:center;">
-    <img src="/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
+    <img src="https://coworkia-agent-e97d15dac56f.herokuapp.com/images/logos/coworkia.svg" alt="Coworkia" style="height:40px;margin-bottom:12px;filter:brightness(0) invert(1);" onerror="this.style.display='none'">
     <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Mañana te esperamos! 📅</h1>
     <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Recordatorio de tu reserva</p>
   </div>

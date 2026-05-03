@@ -12,7 +12,7 @@
  *  5. Próximos pasos operativos
  */
 
-import { sendEmail } from './email.js';
+import { sendEmail, getAdminCC } from './email.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 
 // ─── Datos de planes ─────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ export async function sendAlunaWelcomeEmail(lead, payment, composite = null, wif
   const result = await sendEmail({
     from:    '"Aluna - Coworkia Membresías" <noreply@coworkia.ec>',
     to:      lead.email,
-    cc:      'coworkia.ec@gmail.com',
+    cc:      getAdminCC(),
     subject: `🎉 ¡Bienvenida a Coworkia, ${lead.client_name || lead.full_name}! — Tu ${lead.membership_type} está activa · ${lead.membership_code}`,
     html:    htmlContent
   });

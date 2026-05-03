@@ -10,7 +10,7 @@
 import express from 'express';
 import databaseService from '../../database/database.js';
 import { enviarWhatsApp } from './wassenger.js';
-import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from '../../servicios/email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL, getAdminCC } from '../../servicios/email.js';
 import { buildEmailTemplate } from '../../servicios/email-template-system.js';
 import { sendPaymentReceipt, prepareReceiptData } from '../../servicios/payment-receipt-email.js';
 import { approveLead } from '../../servicios/membership-payment-verification.js';
@@ -1001,13 +1001,13 @@ router.post('/send-d1-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
-      cc: 'coworkia.ec@gmail.com',
+      cc: getAdminCC(),
       from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL },
       subject: '💼 Tu plan de membresía en Coworkia está listo',
       html: buildEmailTemplate('ALUNA', 'D1', { name: clientName, message, plan: req.body.plan || 'Membresía Coworkia' })
     });
 
-    console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
+    console.log(`[ALUNA-FOLLOWUP] Email D+1 enviado a ${email} (CC: ${getAdminCC() || '—'})`);
 
     // Actualizar BD
     await databaseService.run(
@@ -1111,13 +1111,13 @@ router.post('/send-d3-email', async (req, res) => {
     // Enviar Email
     await sendEmail({
       to: email,
-      cc: 'coworkia.ec@gmail.com',
+      cc: getAdminCC(),
       from: { name: AGENT_FROM_NAMES.aluna, address: DEFAULT_FROM_EMAIL },
       subject: '🔥 Últimas disponibilidades — Coworkia (oferta limitada)',
       html: buildEmailTemplate('ALUNA', 'D3', { name: clientName, message })
     });
 
-    console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: coworkia.ec@gmail.com)`);
+    console.log(`[ALUNA-FOLLOWUP] Email D+3 enviado a ${email} (CC: ${getAdminCC() || '—'})`);
 
     // Actualizar BD
     await databaseService.run(

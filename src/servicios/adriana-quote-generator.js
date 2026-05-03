@@ -15,7 +15,9 @@ import { sendEmail } from './email.js';
 import { loggers } from '../utils/logger.js';
 import { thinkingComplete, isGeminiAvailable } from '../servicios-ia/gemini.js';
 
-const ADMIN_CC = process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com';
+// 📧 CC operativo a partner SegPopular: ELIMINADO el 02-may-2026 por decisión de Diego.
+// Si necesitas re-activar copia a oficina SegPopular, configura ADRIANA_CC_EMAIL en Heroku.
+const ADMIN_CC = process.env.ADRIANA_CC_EMAIL || '';
 const ADMIN_WA = (process.env.BOT_PHONE || '593994837117').replace('+', '');
 
 /**
@@ -86,10 +88,10 @@ export async function generateAndSendComparisonQuote(
     // Subject personalizado
     const subject = `Cotización 🛡️ ${quoteCode} — ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year} · ${customerData.nombres} | Adriana - SegPopular`;
 
-    // Enviar email con CC a admin
+    // Enviar email (CC opcional vía env ADRIANA_CC_EMAIL)
     const emailResult = await sendEmail({
       to: customerData.email,
-      cc: ADMIN_CC,
+      cc: ADMIN_CC || undefined,
       subject,
       html,
       from: {

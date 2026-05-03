@@ -4338,7 +4338,7 @@ async function handleAdrianaFlow({ userId, profile, processedText, mediaUrl, typ
           adriana_email: process.env.ADRIANA_EMAIL || 'adriana@segpopular.com',
           adriana_phone: process.env.ADRIANA_PHONE || '+593 987 770 788',
         });
-        await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html, from: { name: 'Adriana · SegPopular', address: process.env.ADRIANA_FROM_EMAIL || 'adriana@segpopular.com' }, agent: 'adriana', cc: process.env.ADRIANA_CC_EMAIL || 'info@segpopular.com' })
+        await sendEmail({ to: clientEmail, subject: `Cotización de seguro vehicular — ${brandModel} | Ref. ${quoteCode}`, html, from: { name: 'Adriana · SegPopular', address: process.env.ADRIANA_FROM_EMAIL || 'adriana@segpopular.com' }, agent: 'adriana', cc: process.env.ADRIANA_CC_EMAIL || undefined })
           .catch(err => console.error('[ADRIANA-V2] ⚠️ Email error:', err));
       }
 

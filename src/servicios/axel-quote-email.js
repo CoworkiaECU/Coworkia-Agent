@@ -3,11 +3,13 @@
  * Genera y envía emails HTML con cotizaciones de The PaintBull
  */
 
-import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL, getAdminCC } from './email.js';
 import { ecosistemaTable } from './email-ecosystem.js';
 
-const WORKSHOP_CC = process.env.AXEL_WORKSHOP_CC || '';
-const ADMIN_CC = process.env.COWORKIA_ADMIN_EMAIL || '';
+// 📧 CC operativo al taller PaintBull (AXEL_WORKSHOP_CC): ELIMINADO el 02-may-2026
+// por decisión de Diego. Si necesitas re-activar copia al taller, configura
+// AXEL_WORKSHOP_CC en Heroku.
+const WORKSHOP_CC = '';
 
 async function fetchAndCompressPhoto(url) {
   try {
@@ -351,7 +353,7 @@ export async function sendQuoteEmail({
 
     const result = await sendEmail({
       to: customerEmail,
-      cc: [WORKSHOP_CC, ADMIN_CC].filter(Boolean).join(',') || undefined,
+      cc: [WORKSHOP_CC, getAdminCC()].filter(Boolean).join(',') || undefined,
       subject: subject,
       html: htmlContent,
       attachments,

@@ -7,11 +7,22 @@ import { createCalendarEvent } from './google-calendar.js';
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
 import { getServiceLabel } from '../utils/service-labels.js';
 import databaseService from '../database/database.js';
+import { isBlocked, recordBounce, classifyEmailError } from './email-blocklist.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const DEFAULT_FROM_EMAIL = EMAIL_USER || 'secretaria.coworkia@gmail.com';
+
+/**
+ * 📧 Devuelve el CC del admin coworkia (centralizado).
+ * Usado por todos los agentes que necesitan copiar a Diego.
+ * Configurable vía env COWORKIA_ADMIN_EMAIL. Devuelve '' si está vacío.
+ */
+export function getAdminCC() {
+  const cc = (process.env.COWORKIA_ADMIN_EMAIL || 'coworkia.ec@gmail.com').trim();
+  return cc || '';
+}
 
 // Nombres de remitente personalizados por agente
 const AGENT_FROM_NAMES = {
@@ -470,7 +481,23 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
   try {
     console.log(`[EMAIL] 📧 Enviando email genérico a: ${to}`);
     console.log(`[EMAIL] 📋 Asunto: ${subject}`);
-    
+
+    // 🚫 BLOCKLIST: cortar antes de gastar SMTP si el destinatario está marcado como rebotador
+    const primaryRecipient = Array.isArray(to) ? to[0] : to;
+    if (primaryRecipient) {
+      const block = await isBlocked(primaryRecipient);
+      if (block.blocked) {
+        console.warn(`[EMAIL] 🚫 Destinatario en blocklist: ${primaryRecipient} (${block.reason}, count=${block.bounce_count})`);
+        return {
+          success: false,
+          skipped: true,
+          blocked: true,
+          reason: block.reason,
+          error: `Recipient is in email blocklist (${block.reason})`
+        };
+      }
+    }
+
     // Detectar si es email de Adriana para usar transporter dedicado
     const isAdriana = agent === 'adriana' || 
       (typeof from === 'object' && from?.name?.toLowerCase().includes('adriana')) ||
@@ -551,6 +578,24 @@ export async function sendEmail({ to, subject, html, text, from, cc, bcc, attach
     
   } catch (error) {
     console.error('[EMAIL] ❌ Error enviando email:', error);
+
+    // 📥 BOUNCE HANDLER: clasificar el error y registrar en blocklist si aplica
+    try {
+      const classification = classifyEmailError(error);
+      if (classification.type === 'hard_bounce' || classification.type === 'soft_bounce') {
+        const recipient = Array.isArray(to) ? to[0] : to;
+        if (recipient) {
+          await recordBounce(recipient, {
+            reason: classification.type,
+            lastError: `${classification.reason || ''}: ${error.message || ''}`.slice(0, 500),
+            agent: agent || null
+          });
+        }
+      }
+    } catch (bounceErr) {
+      console.warn('[EMAIL] ⚠️ No se pudo registrar bounce:', bounceErr.message);
+    }
+
     return { success: false, error: error.message };
   }
 }
@@ -625,7 +670,7 @@ export async function sendReservationConfirmation(reservationData) {
       address: DEFAULT_FROM_EMAIL
     },
     to: [email],
-    cc: 'coworkia.ec@gmail.com', // Copia al administrador
+    cc: getAdminCC(), // Copia al administrador (centralizado vía COWORKIA_ADMIN_EMAIL)
     subject: `✅ Reserva Confirmada - ${serviceName} Coworkia desde ${timeFormatted}`,
     html: emailHTML,
     text: `
@@ -650,6 +695,13 @@ Equipo Coworkia
 
   try {
     console.log(`[EMAIL] 📤 Enviando confirmación a ${email}...`);
+
+    // 🚫 BLOCKLIST guard
+    const block = await isBlocked(email);
+    if (block.blocked) {
+      console.warn(`[EMAIL] 🚫 Aurora confirmation skipped — destinatario en blocklist: ${email} (${block.reason})`);
+      return { success: false, skipped: true, blocked: true, reason: block.reason };
+    }
     console.log('[EMAIL] 📋 Configuración del email:', {
       from: mailOptions.from,
       to: mailOptions.to,
@@ -691,6 +743,12 @@ Equipo Coworkia
     console.error('[EMAIL] 📜 Tipo de error:', error.name);
     console.error('[EMAIL] 🔍 Código de error:', error.code);
     console.error('[EMAIL] 📋 Stack trace:', error.stack);
+    try {
+      const c = classifyEmailError(error);
+      if (c.type === 'hard_bounce' || c.type === 'soft_bounce') {
+        await recordBounce(email, { reason: c.type, lastError: `${c.reason || ''}: ${error.message || ''}`.slice(0, 500), agent: 'aurora' });
+      }
+    } catch (_) {}
     return {
       success: false,
       error: error.message
@@ -759,6 +817,11 @@ Equipo Coworkia
   };
 
   try {
+    const block = await isBlocked(email);
+    if (block.blocked) {
+      console.warn(`[EMAIL] 🚫 Reminder skipped — destinatario en blocklist: ${email} (${block.reason})`);
+      return { success: false, skipped: true, blocked: true, reason: block.reason };
+    }
     const result = await transporter.sendMail(mailOptions);
     console.log(`[EMAIL] 🔔 Recordatorio enviado a ${email}`);
     return {
@@ -767,6 +830,12 @@ Equipo Coworkia
     };
   } catch (error) {
     console.error('[EMAIL] Error enviando recordatorio:', error);
+    try {
+      const c = classifyEmailError(error);
+      if (c.type === 'hard_bounce' || c.type === 'soft_bounce') {
+        await recordBounce(email, { reason: c.type, lastError: `${c.reason || ''}: ${error.message || ''}`.slice(0, 500), agent: 'aurora' });
+      }
+    } catch (_) {}
     return {
       success: false,
       error: error.message
@@ -821,6 +890,11 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
 
   try {
     console.log('[EMAIL] 📤 Enviando email...');
+    const block = await isBlocked(userEmail);
+    if (block.blocked) {
+      console.warn(`[EMAIL] 🚫 Payment confirmation skipped — destinatario en blocklist: ${userEmail} (${block.reason})`);
+      return { success: false, skipped: true, blocked: true, reason: block.reason };
+    }
     const info = await transporter.sendMail(emailOptions);
     console.log('[EMAIL] ✅ Email enviado exitosamente. ID:', info.messageId);
     console.log('[EMAIL] 📊 Info completa:', info);
@@ -858,6 +932,12 @@ export async function sendPaymentConfirmationEmail(userEmail, userName, reservat
     console.error('[EMAIL] 📜 Stack trace completo:', error.stack);
     console.error('[EMAIL] 🔍 Tipo de error:', error.name);
     console.error('[EMAIL] 📋 Código de error:', error.code);
+    try {
+      const c = classifyEmailError(error);
+      if (c.type === 'hard_bounce' || c.type === 'soft_bounce') {
+        await recordBounce(userEmail, { reason: c.type, lastError: `${c.reason || ''}: ${error.message || ''}`.slice(0, 500), agent: 'aurora' });
+      }
+    } catch (_) {}
     return {
       success: false,
       error: error.message

@@ -73,6 +73,7 @@ import portalwifiDashboardRouter from './endpoints-api/portalwifi-dashboard.js';
 import autopilotApiRouter from './endpoints-api/autopilot-api.js';
 import privacidadRouter from './endpoints-api/privacidad.js';
 import emailRepliesRouter from './endpoints-api/email-replies.js';
+import emailBouncesRouter from './endpoints-api/email-bounces.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -237,6 +238,7 @@ app.use('/', wifiCodesRouter);
 app.use('/', portalwifiDashboardRouter);
 app.use('/', privacidadRouter);
 app.use('/api/email-replies', emailRepliesRouter);
+app.use('/api/email-bounces', emailBouncesRouter);
 
 // 🛡️ Middleware de captura de errores para Self-Healing System
 app.use(async (err, req, res, next) => {

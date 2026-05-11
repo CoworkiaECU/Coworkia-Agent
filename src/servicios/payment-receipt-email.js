@@ -551,15 +551,17 @@ export async function sendReservationReceiptByGabi(reservationData) {
     receiptImageUrl
   });
 
+  const adminCC = process.env.COWORKIA_ADMIN_EMAIL || '';
   const result = await sendEmail({
     from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
     to: clientEmail,
+    ...(adminCC ? { cc: adminCC } : {}),
     subject: `🧾 Recibo de Reserva ${receiptNumber} — Coworkia`,
     html: htmlContent
   });
 
   if (result.success) {
-    console.log('[GABI-RESERVA] ✅ Recibo de reserva enviado a', clientEmail, '—', receiptNumber);
+    console.log('[GABI-RESERVA] ✅ Recibo de reserva enviado a', clientEmail, adminCC ? `(CC: ${adminCC})` : '', '—', receiptNumber);
   } else {
     console.error('[GABI-RESERVA] ❌ Error enviando recibo de reserva:', result.error);
   }

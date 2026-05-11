@@ -126,7 +126,7 @@ Lista cualquier señal que requiera atención médica urgente
 - Cuidados generales para heridas
 
 🏥 **PRÓXIMO PASO:**
-Si necesitas una evaluación profesional, puedes usar el médico virtual de MedBeneficios: https://demo.doctorone.com/home/#
+Si necesitas una evaluación profesional, puedes usar el médico virtual de MedBeneficios: https://demoi.doctorone.com
 
 Contexto del usuario: ${userContext}
 

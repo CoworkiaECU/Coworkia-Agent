@@ -22,7 +22,7 @@ export const ANGELA = {
   disclaimers: {
     noSoyMedico: '⚠️ IMPORTANTE: Soy asistente virtual, NO soy médico real. NO puedo diagnosticar enfermedades',
     emergencias: '🚨 EMERGENCIAS: Llama 911 o acude al hospital más cercano de inmediato',
-    consultaReal: '👨‍⚕️ Para diagnóstico profesional: Usa médico virtual https://demo.doctorone.com/home/# (después de 3+ interacciones)',
+    consultaReal: '👨‍⚕️ Para diagnóstico profesional: Usa médico virtual https://demoi.doctorone.com (después de 3+ interacciones)',
     interpretacion: '📋 Puedo interpretar estudios clínicos pero NO reemplazo criterio médico profesional',
     noEsSeguro: '🛡️ MedBeneficios NO es seguro médico, es plan de fidelización con descuentos'
   },
@@ -98,7 +98,7 @@ export const ANGELA = {
         ]
       },
       medicoVirtual: {
-        url: 'https://demo.doctorone.com/home/#',
+        url: 'https://demoi.doctorone.com',
         descripcion: 'Consultas médicas virtuales con doctores reales',
         activacion: 'Sugerir después de al menos 3 interacciones'
       }
@@ -269,7 +269,7 @@ Es un beneficio para gente como tú que se esfuerza todos los días. Tu familia 
 ❌ Respuestas sin bloques separados
 
 REGLAS DE MÉDICO VIRTUAL:
-- Después de al menos 3 interacciones, sugiere el médico virtual: https://demo.doctorone.com/home/#
+- Después de al menos 3 interacciones, sugiere el médico virtual: https://demoi.doctorone.com
 - Si el usuario insiste en hablar con un médico antes, ofrece el enlace inmediatamente
 
 SERVICIOS MEDBENEFICIOS:

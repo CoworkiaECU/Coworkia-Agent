@@ -22,6 +22,7 @@ import { generateWifiCode, getWifiCodeForReservation } from './wifi-codes-servic
 import { isPositiveResponse, isNegativeResponse } from './generic-confirmation-flow.js';
 import { COWORKIA_ADDRESS, COWORKIA_MAPS_URL } from '../utils/constants.js';
 import { formatHotDeskNumbers, getHotDeskNumbers } from '../utils/hot-desk-assignments.js';
+import { sendReservationReceiptByGabi } from './payment-receipt-email.js';
 export { isPositiveResponse, isNegativeResponse };
 
 class ConfirmationFlowError extends Error {
@@ -233,6 +234,34 @@ async function processPaymentVerificationConfirmation(userProfile, pendingReserv
       }),
       { circuitId: 'notifications-job' }
     ).catch(err => console.error('[Confirmation] ❌ Error en notificaciones pago confirmado:', err.message));
+
+    // 💼 Gabi envía recibo oficial de reserva SILENCIOSAMENTE (sin WA al cliente)
+    const serviceLabels = {
+      hotDesk: 'Hot Desk',
+      meetingRoom: 'Sala de Reuniones',
+      permanentDesk: 'Escritorio Permanente',
+      privateOffice: 'Oficina Privada'
+    };
+    enqueueBackgroundTask(
+      'gabi-receipt',
+      `gabi-reservation-receipt-${reservationId}`,
+      () => sendReservationReceiptByGabi({
+        clientName: userProfile.name || 'Cliente',
+        clientEmail: userProfile.email,
+        serviceType: serviceLabels[reservationRecord.service_type] || reservationRecord.service_type || 'Hot Desk',
+        reservationDate: confirmedDate,
+        startTime: confirmedStart,
+        endTime: confirmedEnd,
+        totalAmount: reservationRecord.total_price || 0,
+        paymentMethod: paymentReceipt?.method || 'Transferencia Bancaria',
+        bankName: null,
+        transactionReference: paymentReceipt?.reference || null,
+        authorizationCode: paymentReceipt?.authorizationCode || null,
+        receiptImageUrl: null,
+        reservationId: reservationRecord.id
+      }),
+      { circuitId: 'gabi-receipt-job' }
+    ).catch(err => console.error('[Confirmation] ❌ Error en recibo Gabi:', err.message));
   }
 
   enqueueBackgroundTask(

@@ -337,3 +337,232 @@ export function prepareReceiptData(lead, paymentData, compositePayment = null) {
     diegoAuthorized: compositePayment ? true : false
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🏢 RECIBO DE RESERVA — Gabi lo envía silenciosamente al confirmar el pago
+// Diferente al recibo de membresía: habla de "espacio" no "membresía",
+// incluye fecha/horario de la reserva, CTA a @aurora.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 🎨 Genera HTML para recibo oficial de RESERVA (Hot Desk / Sala de Reuniones)
+ */
+function generateReservationReceiptHTML(data) {
+  const {
+    receiptNumber,
+    clientName,
+    clientEmail,
+    serviceType,       // 'Hot Desk' | 'Sala de Reuniones' | 'Escritorio Permanente'
+    totalAmount,
+    reservationDate,   // 'Lunes 11 de mayo de 2026' o rango 'Lun 11 – Jue 14 mayo'
+    startTime,
+    endTime,
+    paymentMethod,
+    bankName,
+    transactionReference,
+    authorizationCode,
+    receiptImageUrl    // URL del comprobante original enviado por WhatsApp (opcional)
+  } = data;
+
+  const today = new Date().toLocaleDateString('es-EC', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  const horarioLine = (startTime && endTime)
+    ? `${startTime} – ${endTime}`
+    : 'Jornada completa';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recibo de Reserva - ${receiptNumber}</title>
+  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+</head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;background-color:#f9fafb;margin:0;padding:0;">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+
+  <!-- Header Aurora teal -->
+  <div style="background:linear-gradient(135deg,#0f766e 0%,#134e4a 100%);text-align:center;padding:40px 20px;">
+    <div style="color:white;font-size:64px;font-weight:700;letter-spacing:-2px;margin-bottom:8px;">Coworkia</div>
+    <div style="color:rgba(255,255,255,0.9);font-size:18px;font-weight:500;letter-spacing:2px;margin-bottom:20px;text-transform:uppercase;">Business Center</div>
+    <div style="background:white;color:#0f766e;padding:18px 28px;border-radius:12px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      <h1 style="margin:0;font-size:20px;font-weight:700;">🧾 RECIBO DE PAGO OFICIAL</h1>
+      <p style="margin:8px 0 0 0;color:#6b7280;font-size:13px;">Comprobante de pago de reserva de espacio</p>
+    </div>
+  </div>
+
+  <div style="padding:30px;">
+
+    <!-- Datos del recibo -->
+    <div style="background:#f3f4f6;border:2px solid #d1d5db;border-radius:12px;padding:20px;margin:20px 0;">
+      <table style="width:100%;font-size:14px;">
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Número de recibo:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:700;font-family:monospace;text-align:right;">${receiptNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Fecha de emisión:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${today}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Datos del cliente -->
+    <div style="background:linear-gradient(135deg,rgba(15,118,110,0.07),rgba(20,83,45,0.07));border-left:4px solid #0f766e;border-radius:12px;padding:25px;margin:25px 0;">
+      <h3 style="color:#374151;margin-top:0;font-size:15px;font-weight:600;">👤 DATOS DEL CLIENTE</h3>
+      <table style="width:100%;font-size:14px;margin-top:12px;">
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Nombre completo:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${clientName}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Email:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${clientEmail}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Tipo de espacio:</td>
+          <td style="padding:8px 0;color:#0f766e;font-weight:700;text-align:right;">${serviceType}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Detalle de la reserva -->
+    <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:20px;margin:20px 0;">
+      <h3 style="color:#166534;margin-top:0;font-size:15px;font-weight:600;">📅 DETALLE DE LA RESERVA</h3>
+      <table style="width:100%;font-size:14px;margin-top:12px;">
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Fecha:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${reservationDate}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Horario:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${horarioLine}</td>
+        </tr>
+        <tr style="border-top:2px solid #bbf7d0;">
+          <td style="padding:12px 0;color:#374151;font-weight:700;font-size:16px;">Total pagado:</td>
+          <td style="padding:12px 0;text-align:right;color:#166534;font-weight:700;font-size:22px;">$${Number(totalAmount).toFixed(2)} <span style="font-size:14px;font-weight:500;">USD</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Transacción bancaria -->
+    <div style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0;">
+      <h3 style="color:#374151;margin-top:0;font-size:15px;font-weight:600;">🏦 DETALLES DE TRANSACCIÓN</h3>
+      <table style="width:100%;font-size:14px;margin-top:12px;">
+        ${bankName ? `<tr><td style="padding:8px 0;color:#6b7280;font-weight:500;">Banco / Método:</td><td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${bankName}</td></tr>` : ''}
+        ${transactionReference ? `<tr><td style="padding:8px 0;color:#6b7280;font-weight:500;">Referencia:</td><td style="padding:8px 0;color:#374151;font-weight:700;font-family:monospace;text-align:right;">${transactionReference}</td></tr>` : ''}
+        ${authorizationCode ? `<tr><td style="padding:8px 0;color:#6b7280;font-weight:500;">Autorización:</td><td style="padding:8px 0;color:#374151;font-weight:700;font-family:monospace;text-align:right;">${authorizationCode}</td></tr>` : ''}
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Método de pago:</td>
+          <td style="padding:8px 0;color:#374151;font-weight:600;text-align:right;">${paymentMethod || 'Transferencia Bancaria'}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6b7280;font-weight:500;">Estado:</td>
+          <td style="padding:8px 0;text-align:right;">
+            <span style="background:#dcfce7;color:#15803d;padding:4px 12px;border-radius:6px;font-weight:600;font-size:13px;">✅ VERIFICADO Y APROBADO</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    ${receiptImageUrl ? `
+    <!-- Comprobante original adjunto -->
+    <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 10px 0;color:#6b7280;font-size:13px;">📎 Comprobante original enviado</p>
+      <img src="${receiptImageUrl}" alt="Comprobante" style="max-width:100%;border-radius:8px;border:1px solid #e5e7eb;" />
+    </div>` : ''}
+
+    <!-- Nota legal -->
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;margin:24px 0;">
+      <p style="margin:0;color:#78350f;font-size:12px;line-height:1.7;">
+        <strong>Nota legal:</strong> Este recibo constituye comprobante oficial de pago de su reserva en Coworkia Business Center.
+        Conserve este documento para cualquier consulta futura.<br>
+        RUC: 1702683499001 · secretaria.coworkia@gmail.com
+      </p>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin:28px 0;">
+      <a href="https://wa.me/593994837117?text=@aurora%2C%20revisa%20mi%20reserva%20${receiptNumber}"
+         style="background:linear-gradient(135deg,#0f766e,#134e4a);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
+        🏢 Ver detalles de tu reserva
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:20px;border-top:1px solid #f3f4f6;color:#9ca3af;font-size:12px;line-height:1.8;">
+      © 2026 Coworkia Ecuador · Espacios que inspiran<br>
+      Whymper 403, Edificio Finistere · Quito, Ecuador<br>
+      <a href="mailto:secretaria.coworkia@gmail.com" style="color:#0f766e;">secretaria.coworkia@gmail.com</a>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+/**
+ * 📧 Gabi envía recibo de RESERVA por email (silenciosamente, sin WA al cliente)
+ * @param {Object} reservationData - Datos de la reserva confirmada
+ */
+export async function sendReservationReceiptByGabi(reservationData) {
+  console.log('[GABI-RESERVA] 🧾 Preparando recibo de reserva...');
+
+  const {
+    clientName,
+    clientEmail,
+    serviceType,
+    reservationDate,
+    startTime,
+    endTime,
+    totalAmount,
+    paymentMethod,
+    bankName,
+    transactionReference,
+    authorizationCode,
+    receiptImageUrl,
+    reservationId
+  } = reservationData;
+
+  if (!clientEmail) {
+    console.warn('[GABI-RESERVA] ⚠️ Sin email — no se envía recibo');
+    return { success: false, error: 'No email provided' };
+  }
+
+  const receiptNumber = `RSV-${reservationId || Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+  const htmlContent = generateReservationReceiptHTML({
+    receiptNumber,
+    clientName: clientName || 'Cliente',
+    clientEmail,
+    serviceType: serviceType || 'Hot Desk',
+    reservationDate: reservationDate || new Date().toLocaleDateString('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+    startTime,
+    endTime,
+    totalAmount: totalAmount || 0,
+    paymentMethod,
+    bankName,
+    transactionReference,
+    authorizationCode,
+    receiptImageUrl
+  });
+
+  const result = await sendEmail({
+    from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
+    to: clientEmail,
+    subject: `🧾 Recibo de Reserva ${receiptNumber} — Coworkia`,
+    html: htmlContent
+  });
+
+  if (result.success) {
+    console.log('[GABI-RESERVA] ✅ Recibo de reserva enviado a', clientEmail, '—', receiptNumber);
+  } else {
+    console.error('[GABI-RESERVA] ❌ Error enviando recibo de reserva:', result.error);
+  }
+
+  return { ...result, receiptNumber };
+}

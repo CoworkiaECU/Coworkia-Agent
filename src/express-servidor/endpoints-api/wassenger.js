@@ -2325,6 +2325,28 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
     // CRÍTICO: debe ejecutarse ANTES del orquestador/LLM para que "Si"/"No"
     // llegue a processConfirmationResponse en lugar de al modelo de lenguaje.
     // ═══════════════════════════════════════════════════════════════════════
+    // 🛡️ AURORA GUARDRAIL: imágenes recibidas con Aurora activo → manejar como comprobante
+    // Debe ejecutarse ANTES del bloque general para que Aurora nunca ceda al handler de Axel/Adriana
+    if (profile.activeAgent === 'AURORA' && mediaUrl && type === 'image') {
+      const _receiptMsgData = { type, media: { url: mediaUrl } };
+      if (isReceiptImage(_receiptMsgData)) {
+        console.log('[AURORA-GUARDRAIL] 📸 Imagen recibida con Aurora activo → procesando como comprobante de pago');
+        const _paymentResult = await processPaymentReceipt(_receiptMsgData, profile);
+        await enviarWhatsApp(userId, _paymentResult.message);
+        await saveConversationMessage(userId, { role: 'assistant', content: _paymentResult.message, agent: 'AURORA' });
+        await saveInteraction({
+          userId,
+          agent: normalizeAgentName('AURORA'),
+          agentName: 'Aurora Core',
+          intentReason: 'payment_receipt_guardrail',
+          input: `[RECEIPT:${type}]`,
+          output: _paymentResult.message,
+          meta: { envelope, paymentVerified: _paymentResult.success }
+        });
+        return;
+      }
+    }
+
     if (profile.activeAgent === 'AURORA' && processedText) {
       const { detectVirtualAgentSalesPromo: _dvVAP, detectarSaludoConInteresServicio: _dSCIS } = await import('../../deteccion-intenciones/detectar-intencion.js');
       const _hasVAP = _dvVAP(processedText).detected;
@@ -3004,7 +3026,10 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
 
     // 🛡️ ADRIANA AUTO-TRIGGER: Detectar foto de matrícula aunque el agente activo no sea ADRIANA
     // Solo aplica cuando el agente activo NO tiene su propio handler de imágenes
-    if (mediaUrl && type === 'image' && !['AXEL', 'ALUNA', 'ANGELA'].includes(profile.activeAgent)) {
+    // 🚨 GUARDRAIL: AURORA excluida — tiene su propio handler de comprobantes (línea ~3301)
+    //    Si Aurora recibe una imagen → siempre procesarla como posible recibo de pago,
+    //    NUNCA re-rutear a Adriana aunque Vision AI detecte algo parecido a una matrícula.
+    if (mediaUrl && type === 'image' && !['AXEL', 'ALUNA', 'ANGELA', 'AURORA'].includes(profile.activeAgent)) {
       const existingInsuranceLead = await findLeadByPhone(userId).catch(() => null);
       const ADRIANA_ACTIVE_STATES = ['waiting_matricula', 'waiting_cedula', 'waiting_competitor', 'waiting_coverage', 'quoted', 'waiting_kyc', 'accepted'];
       const hasActiveAdrianaLead = existingInsuranceLead && ADRIANA_ACTIVE_STATES.includes(existingInsuranceLead.status);

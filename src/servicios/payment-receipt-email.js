@@ -533,7 +533,10 @@ export async function sendReservationReceiptByGabi(reservationData) {
     return { success: false, error: 'No email provided' };
   }
 
-  const receiptNumber = `RSV-${reservationId || Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+  // Número corto: RSV-YYYYMMDD-XXXX (no usar UUID completo)
+  const dateTag = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const shortId = reservationId ? reservationId.slice(-4).toUpperCase() : Date.now().toString(36).slice(-4).toUpperCase();
+  const receiptNumber = `RSV-${dateTag}-${shortId}`;
 
   const htmlContent = generateReservationReceiptHTML({
     receiptNumber,
@@ -556,7 +559,7 @@ export async function sendReservationReceiptByGabi(reservationData) {
     from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
     to: clientEmail,
     ...(adminCC ? { cc: adminCC } : {}),
-    subject: `🧾 Recibo de Reserva ${receiptNumber} — Coworkia`,
+    subject: `🧾 Tu recibo de reserva ${receiptNumber} — Coworkia`,
     html: htmlContent
   });
 

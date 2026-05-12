@@ -148,7 +148,7 @@ export function generateVisitConfirmationEmail(visitData) {
     <!-- Footer -->
     <div style="text-align: center; margin: 45px 0 0 0; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
@@ -264,7 +264,7 @@ export function generateRescheduleEmail(visitData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
@@ -362,7 +362,7 @@ export function generateCancellationEmail(visitData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
@@ -482,7 +482,7 @@ export function generateReminderEmail(visitData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
@@ -602,7 +602,7 @@ export function generateFollowUp24hEmail(leadData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
@@ -715,7 +715,7 @@ export function generateFollowUp3dEmail(leadData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
@@ -862,7 +862,7 @@ export function generateVisitReminderFollowUpEmail(visitData) {
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
       <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
-      <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+      <p style="color: #888888; font-size: 10px; margin: 0 0 20px 0; letter-spacing: 4px; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">REAL ESTATE</p>
       <div style="margin: 20px 0;">
         <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
       <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Emails — PropElite</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #2a2a2a; font-family: 'Jost', Arial, sans-serif; }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 4px; padding: 16px 24px 0; background: #1a1a1a; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #444; }
+    .tab { padding: 8px 18px; background: #333; color: #aaa; font-size: 12px; border-radius: 6px 6px 0 0; cursor: pointer; border: 1px solid #444; border-bottom: none; white-space: nowrap; }
+    .tab.active { background: #fff; color: #111; }
+    .tab:hover:not(.active) { background: #444; color: #ddd; }
+
+    /* Canvas */
+    .preview-wrap { padding: 30px 24px; display: none; }
+    .preview-wrap.active { display: block; }
+    .email-canvas { max-width: 650px; margin: 0 auto; background: #fff; box-shadow: 0 8px 40px rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; }
+    .email-label { text-align: center; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="show('t1', this)">✅ Confirmación</div>
+  <div class="tab" onclick="show('t2', this)">📅 Reagendada</div>
+  <div class="tab" onclick="show('t3', this)">❌ Cancelada</div>
+  <div class="tab" onclick="show('t4', this)">🔔 Recordatorio</div>
+  <div class="tab" onclick="show('t5', this)">📧 Follow-up 24h</div>
+  <div class="tab" onclick="show('t6', this)">🏠 Follow-up 3d</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T1 — CONFIRMACIÓN DE VISITA
+════════════════════════════════════════════════════════════════════ -->
+<div id="t1" class="preview-wrap active">
+  <p class="email-label">Email 1 · Confirmación de visita agendada</p>
+  <div class="email-canvas">
+
+    <!-- HEADER -->
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65" role="img" aria-label="PropElite Real Estate">
+        <defs>
+          <linearGradient id="cg1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"  stop-color="#FFFFFF"/>
+            <stop offset="20%" stop-color="#E4E4E4"/>
+            <stop offset="48%" stop-color="#8C8C8C"/>
+            <stop offset="72%" stop-color="#D8D8D8"/>
+            <stop offset="100%" stop-color="#ABABAB"/>
+          </linearGradient>
+          <linearGradient id="cg2" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"  stop-color="#C8C8C8"/>
+            <stop offset="100%" stop-color="#787878"/>
+          </linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="56" font-weight="400" fill="url(#cg1)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="300" fill="url(#cg2)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+
+    <!-- CHECK ICON -->
+    <div style="text-align:center;margin:35px 0 25px 0;">
+      <div style="display:inline-block;width:80px;height:80px;border-radius:50%;background:#059669;line-height:80px;">
+        <span style="color:white;font-size:42px;">✓</span>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div style="text-align:center;padding:0 30px 30px 30px;">
+      <h2 style="color:#111;font-size:28px;margin:0 0 15px 0;font-weight:400;letter-spacing:2px;font-family:'Cormorant Garamond',Georgia,serif;">Visita Confirmada</h2>
+      <p style="color:#1F1F1F;font-size:15px;margin:0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Carlos Andrade, nos alegra que des este paso — todo está listo para recibirte</p>
+    </div>
+
+    <!-- BODY -->
+    <div style="padding:0 30px 30px 30px;">
+
+      <!-- Visit code -->
+      <div style="background:#F0F0F0;padding:18px 25px;margin:20px 0;border-left:4px solid #C0C0C0;">
+        <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Código de Visita</div>
+        <div style="color:#111;font-weight:700;font-size:22px;font-family:Georgia,serif;">VIS-20260515-A4B2</div>
+      </div>
+
+      <!-- Details grid -->
+      <div style="background:#F5F5F5;border:1px solid #ddd;padding:25px;margin:20px 0;">
+        <div style="margin-bottom:22px;">
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Propiedad</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Casa Jardín Modelo — Tipo 6</div>
+          <div style="color:#666;font-size:13px;margin-top:4px;">ECU-JARDIN-6</div>
+        </div>
+        <div style="margin-bottom:22px;">
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Dirección</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Urb. El Morenal, Cumbayá, Quito</div>
+        </div>
+        <div style="margin-bottom:22px;">
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Fecha y Hora</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Jueves 15/05/2026</div>
+          <div style="color:#C0C0C0;font-size:16px;font-weight:600;margin-top:4px;">10:00 (1 hora)</div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div style="background:#fff;border:2px solid #C0C0C0;padding:25px;margin:25px 0;">
+        <h3 style="color:#C0C0C0;font-size:16px;margin:0 0 18px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:2px;font-weight:400;">📋 PARA TU VISITA</h3>
+        <div style="color:#111;font-size:14px;line-height:1.8;font-family:Arial,sans-serif;">
+          <p style="margin:12px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;"><span style="color:#C0C0C0;font-weight:600;font-size:16px;font-family:'Cormorant Garamond',Georgia,serif;">I.</span> &nbsp; Llega 5 minutos antes — te esperamos</p>
+          <p style="margin:12px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;"><span style="color:#C0C0C0;font-weight:600;font-size:16px;font-family:'Cormorant Garamond',Georgia,serif;">II.</span> &nbsp; Trae tu identificación oficial (cédula o pasaporte)</p>
+          <p style="margin:12px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;"><span style="color:#C0C0C0;font-weight:600;font-size:16px;font-family:'Cormorant Garamond',Georgia,serif;">III.</span> &nbsp; Un agente de PropElite te recibirá personalmente</p>
+          <p style="margin:12px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;"><span style="color:#C0C0C0;font-weight:600;font-size:16px;font-family:'Cormorant Garamond',Georgia,serif;">IV.</span> &nbsp; Todas tus preguntas tienen respuesta ese día</p>
+        </div>
+      </div>
+
+      <!-- Reagendar note -->
+      <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:18px 20px;margin:20px 0;">
+        <p style="color:#92400E;font-size:13px;margin:0;line-height:1.6;"><strong>⚠️ ¿Necesitas reagendar?</strong><br>Avísanos por WhatsApp con mínimo 24 horas de anticipación.</p>
+      </div>
+
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:35px 0;">
+        <a href="#" style="display:inline-block;background:#059669;color:#fff;padding:16px 40px;text-decoration:none;font-weight:600;font-size:15px;letter-spacing:1px;font-family:Arial,sans-serif;">CONTACTAR A PAULA</a>
+      </div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:linear-gradient(to right,transparent,#B0B0B0,transparent);margin:35px 0;"></div>
+
+      <!-- Benefits -->
+      <div style="padding:20px 0;">
+        <h3 style="color:#111;font-size:18px;margin:0 0 20px 0;font-family:'Cormorant Garamond',Georgia,serif;text-align:center;letter-spacing:2px;font-weight:400;">Lo que PropElite hace por ti</h3>
+        <div style="color:#1F1F1F;font-size:14px;line-height:1.9;font-family:'Jost',Arial,sans-serif;font-weight:300;">
+          <p style="margin:12px 0;">Tu asesor personal, sin costo, desde el primer mensaje hasta la escritura final</p>
+          <p style="margin:12px 0;">Propiedades cuidadosamente seleccionadas — solo lo que realmente vale tu tiempo</p>
+          <p style="margin:12px 0;">Revisamos cada detalle legal antes de que des el siguiente paso</p>
+          <p style="margin:12px 0;">Contigo desde la primera visita hasta las llaves en tus manos</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T2 — REAGENDADA
+════════════════════════════════════════════════════════════════════ -->
+<div id="t2" class="preview-wrap">
+  <p class="email-label">Email 2 · Visita reagendada</p>
+  <div class="email-canvas">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65">
+        <defs>
+          <linearGradient id="rg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="20%" stop-color="#E4E4E4"/><stop offset="48%" stop-color="#8C8C8C"/><stop offset="72%" stop-color="#D8D8D8"/><stop offset="100%" stop-color="#ABABAB"/></linearGradient>
+          <linearGradient id="rg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8C8C8"/><stop offset="100%" stop-color="#787878"/></linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="400" fill="url(#rg1)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="300" fill="url(#rg2)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <div style="text-align:center;margin:35px 0 20px 0;">
+      <div style="display:inline-block;width:80px;height:80px;border-radius:50%;background:#1D4ED8;line-height:80px;">
+        <span style="color:white;font-size:38px;">📅</span>
+      </div>
+    </div>
+    <div style="text-align:center;padding:0 30px 30px 30px;">
+      <h2 style="color:#111;font-size:28px;margin:0 0 15px 0;font-weight:400;letter-spacing:2px;font-family:Georgia,serif;">Visita Reagendada</h2>
+      <p style="color:#1F1F1F;font-size:15px;margin:0;">Tu visita ha sido cambiada exitosamente</p>
+    </div>
+    <div style="padding:0 30px 30px 30px;">
+      <div style="background:#F0F0F0;padding:18px 25px;margin:20px 0;border-left:4px solid #C0C0C0;">
+        <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Código de Visita</div>
+        <div style="color:#111;font-weight:700;font-size:22px;font-family:Georgia,serif;">VIS-20260515-A4B2</div>
+      </div>
+      <div style="background:#F5F5F5;border:1px solid #ddd;padding:25px;margin:20px 0;">
+        <div style="margin-bottom:18px;">
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Propiedad</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Casa Jardín Modelo — Tipo 6</div>
+        </div>
+        <div>
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Nueva Fecha y Hora</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Sábado 17/05/2026 · 11:00 (1 hora)</div>
+          <div style="color:#C0C0C0;font-size:14px;font-weight:600;margin-top:4px;">1 hora de visita</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin:30px 0;">
+        <a href="#" style="display:inline-block;background:#059669;color:#fff;padding:16px 40px;text-decoration:none;font-weight:600;font-size:15px;letter-spacing:1px;font-family:Arial,sans-serif;">CONTACTAR A PAULA</a>
+      </div>
+    </div>
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T3 — CANCELADA
+════════════════════════════════════════════════════════════════════ -->
+<div id="t3" class="preview-wrap">
+  <p class="email-label">Email 3 · Visita cancelada</p>
+  <div class="email-canvas">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65">
+        <defs>
+          <linearGradient id="cng1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="48%" stop-color="#8C8C8C"/><stop offset="100%" stop-color="#ABABAB"/></linearGradient>
+          <linearGradient id="cng2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8C8C8"/><stop offset="100%" stop-color="#787878"/></linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="400" fill="url(#cng1)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="url(#cng2)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <div style="text-align:center;margin:35px 0 20px 0;">
+      <div style="display:inline-block;width:80px;height:80px;border-radius:50%;background:#DC2626;line-height:80px;">
+        <span style="color:white;font-size:38px;">✕</span>
+      </div>
+    </div>
+    <div style="text-align:center;padding:0 30px 30px 30px;">
+      <h2 style="color:#111;font-size:28px;margin:0 0 15px 0;font-weight:400;letter-spacing:2px;font-family:Georgia,serif;">Visita Cancelada</h2>
+      <p style="color:#1F1F1F;font-size:15px;margin:0;">Tu visita ha sido cancelada según tu solicitud</p>
+    </div>
+    <div style="padding:0 30px 30px 30px;">
+      <div style="background:#F0F0F0;padding:18px 25px;margin:20px 0;border-left:4px solid #C0C0C0;">
+        <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Visita Cancelada</div>
+        <div style="color:#111;font-weight:700;font-size:22px;font-family:Georgia,serif;">VIS-20260515-A4B2</div>
+      </div>
+      <div style="background:#FEF2F2;border:1px solid #FCA5A5;padding:20px 25px;margin:20px 0;">
+        <p style="color:#991B1B;font-size:14px;margin:0;line-height:1.6;">Si fue un error o deseas reagendar, escríbenos por WhatsApp y con gusto te ayudamos a encontrar una nueva fecha.</p>
+      </div>
+      <div style="text-align:center;margin:30px 0;">
+        <a href="#" style="display:inline-block;background:#059669;color:#fff;padding:16px 40px;text-decoration:none;font-weight:600;font-size:15px;letter-spacing:1px;font-family:Arial,sans-serif;">REAGENDAR MI VISITA</a>
+      </div>
+    </div>
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T4 — RECORDATORIO
+════════════════════════════════════════════════════════════════════ -->
+<div id="t4" class="preview-wrap">
+  <p class="email-label">Email 4 · Recordatorio de visita (24h antes)</p>
+  <div class="email-canvas">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65">
+        <defs>
+          <linearGradient id="rmg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="48%" stop-color="#8C8C8C"/><stop offset="100%" stop-color="#ABABAB"/></linearGradient>
+          <linearGradient id="rmg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8C8C8"/><stop offset="100%" stop-color="#787878"/></linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="400" fill="url(#rmg1)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="url(#rmg2)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <div style="text-align:center;margin:35px 0 20px 0;">
+      <div style="display:inline-block;width:80px;height:80px;border-radius:50%;background:#C0C0C0;line-height:80px;">
+        <span style="color:#111;font-size:38px;">🔔</span>
+      </div>
+    </div>
+    <div style="text-align:center;padding:0 30px 20px 30px;">
+      <h2 style="color:#111;font-size:28px;margin:0 0 12px 0;font-weight:400;letter-spacing:2px;font-family:Georgia,serif;">Recordatorio de Visita</h2>
+      <p style="color:#555;font-size:15px;margin:0;">Tu visita es <strong>mañana</strong> · Jueves 15/05/2026</p>
+    </div>
+    <div style="padding:0 30px 30px 30px;">
+      <div style="background:#F0F0F0;padding:18px 25px;margin:20px 0;border-left:4px solid #C0C0C0;">
+        <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Código de Visita</div>
+        <div style="color:#111;font-weight:700;font-size:22px;font-family:Georgia,serif;">VIS-20260515-A4B2</div>
+      </div>
+      <div style="background:#F5F5F5;border:1px solid #ddd;padding:25px;margin:20px 0;">
+        <div style="margin-bottom:18px;">
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Propiedad</div>
+          <div style="color:#111;font-weight:700;font-size:17px;font-family:Georgia,serif;">Casa Jardín Modelo — Tipo 6</div>
+          <div style="color:#666;font-size:13px;margin-top:3px;">Urb. El Morenal, Cumbayá, Quito</div>
+        </div>
+        <div>
+          <div style="color:#1F1F1F;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Fecha y Hora</div>
+          <div style="color:#C0C0C0;font-size:18px;font-weight:700;font-family:Georgia,serif;">Jueves 15/05/2026 · 10:00</div>
+        </div>
+      </div>
+      <div style="background:#fff;border:2px solid #C0C0C0;padding:25px;margin:25px 0;">
+        <h3 style="color:#C0C0C0;font-size:16px;margin:0 0 18px 0;font-family:Georgia,serif;letter-spacing:1px;">📋 PARA MAÑANA</h3>
+        <div style="color:#111;font-size:14px;line-height:1.8;">
+          <p style="margin:10px 0;"><span style="color:#C0C0C0;font-weight:700;font-size:16px;font-family:Georgia,serif;">I.</span> &nbsp; Llega 5 minutos antes</p>
+          <p style="margin:10px 0;"><span style="color:#C0C0C0;font-weight:700;font-size:16px;font-family:Georgia,serif;">II.</span> &nbsp; Trae tu cédula o pasaporte</p>
+          <p style="margin:10px 0;"><span style="color:#C0C0C0;font-weight:700;font-size:16px;font-family:Georgia,serif;">III.</span> &nbsp; Un agente te recibirá en la propiedad</p>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T5 — FOLLOW-UP 24H
+════════════════════════════════════════════════════════════════════ -->
+<div id="t5" class="preview-wrap">
+  <p class="email-label">Email 5 · Follow-up 24h después del primer contacto</p>
+  <div class="email-canvas">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65">
+        <defs>
+          <linearGradient id="fg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="48%" stop-color="#8C8C8C"/><stop offset="100%" stop-color="#ABABAB"/></linearGradient>
+          <linearGradient id="fg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8C8C8"/><stop offset="100%" stop-color="#787878"/></linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="400" fill="url(#fg1)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="url(#fg2)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <div style="text-align:center;margin:35px 0 20px 0;">
+      <div style="display:inline-block;width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#888,#C8C8C8);line-height:80px;">
+        <span style="color:#fff;font-size:38px;">📧</span>
+      </div>
+    </div>
+    <div style="text-align:center;padding:0 30px 20px 30px;">
+      <h2 style="color:#111;font-size:26px;margin:0 0 12px 0;font-weight:400;letter-spacing:2px;font-family:Georgia,serif;">Hola Carlos</h2>
+      <p style="color:#555;font-size:15px;margin:0;line-height:1.6;">Ayer hablamos sobre tu búsqueda de propiedad. Quería seguimiento y ver si tienes alguna pregunta.</p>
+    </div>
+    <div style="padding:0 30px 30px 30px;">
+      <div style="background:#F5F5F5;border:1px solid #ddd;padding:20px 25px;margin:20px 0;">
+        <h3 style="color:#111;font-size:16px;margin:0 0 18px 0;font-family:Georgia,serif;letter-spacing:1px;">Tu búsqueda</h3>
+        <div style="font-size:14px;color:#444;line-height:1.7;">
+          <p style="margin:8px 0;">🏠 Casa en Cumbayá · Compra</p>
+          <p style="margin:8px 0;">💰 Presupuesto: $300,000 – $380,000</p>
+          <p style="margin:8px 0;">🛏 3+ habitaciones</p>
+        </div>
+      </div>
+      <div style="background:#fff;border:2px solid #C0C0C0;padding:25px;margin:25px 0;">
+        <h3 style="color:#C0C0C0;font-size:16px;margin:0 0 12px 0;font-family:Georgia,serif;letter-spacing:1px;">Siguiente paso</h3>
+        <p style="color:#444;font-size:14px;line-height:1.7;margin:0;">Tengo propiedades que coinciden exactamente con tu búsqueda. ¿Te gustaría agendar una visita esta semana?</p>
+      </div>
+      <div style="text-align:center;margin:30px 0;">
+        <a href="#" style="display:inline-block;background:linear-gradient(135deg,#888,#C8C8C8);color:#fff;padding:16px 40px;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:1px;font-family:Arial,sans-serif;">AGENDAR VISITA</a>
+      </div>
+    </div>
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     T6 — FOLLOW-UP 3D
+════════════════════════════════════════════════════════════════════ -->
+<div id="t6" class="preview-wrap">
+  <p class="email-label">Email 6 · Follow-up 3 días · nuevas opciones</p>
+  <div class="email-canvas">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#1C1C1C 100%);padding:45px 30px;text-align:center;border-bottom:2px solid #B0B0B0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="260" height="65">
+        <defs>
+          <linearGradient id="fg31" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="48%" stop-color="#8C8C8C"/><stop offset="100%" stop-color="#ABABAB"/></linearGradient>
+          <linearGradient id="fg32" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8C8C8"/><stop offset="100%" stop-color="#787878"/></linearGradient>
+        </defs>
+        <text x="240" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="400" fill="url(#fg31)" letter-spacing="2">PropElite</text>
+        <line x1="62" y1="83" x2="158" y2="83" stroke="#888" stroke-width="0.8"/>
+        <line x1="322" y1="83" x2="418" y2="83" stroke="#888" stroke-width="0.8"/>
+        <text x="240" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="url(#fg32)" letter-spacing="5.5">REAL ESTATE</text>
+      </svg>
+    </div>
+    <div style="text-align:center;padding:35px 30px 20px 30px;">
+      <h2 style="color:#111;font-size:26px;margin:0 0 12px 0;font-weight:400;letter-spacing:2px;font-family:Georgia,serif;">Nuevas opciones para ti</h2>
+      <p style="color:#555;font-size:15px;margin:0;">Carlos, encontré propiedades nuevas que podrían interesarte</p>
+    </div>
+    <div style="padding:0 30px 30px 30px;">
+      <div style="background:#F5F5F5;border:1px solid #ddd;padding:20px 25px;margin:20px 0;">
+        <h3 style="color:#111;font-size:16px;margin:0 0 15px 0;font-family:Georgia,serif;letter-spacing:1px;">¿Qué tengo para ti?</h3>
+        <div style="font-size:14px;color:#444;line-height:1.8;">
+          <p style="margin:10px 0;">🏡 <strong>Casa Jardín Tipo 7</strong> — $349,435 · 4 hab · 280m²</p>
+          <p style="margin:10px 0;">🏡 <strong>Casa Jardín Tipo 1</strong> — $340,587 · 3 hab · 250m²</p>
+        </div>
+      </div>
+      <div style="background:#F0F0F0;border-left:4px solid #C0C0C0;padding:20px 25px;margin:25px 0;">
+        <p style="color:#111;font-size:14px;margin:0;line-height:1.7;">Ambas están en Urb. El Morenal, Cumbayá, con escritura limpia y financiamiento disponible hasta 20 años.</p>
+      </div>
+      <div style="text-align:center;margin:30px 0;">
+        <a href="#" style="display:inline-block;background:linear-gradient(135deg,#888,#C8C8C8);color:#fff;padding:16px 36px;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:1px;font-family:Arial,sans-serif;">VER PROPIEDADES</a>
+      </div>
+    </div>
+    <div style="text-align:center;padding:45px 30px;background:#111;border-top:1px solid rgba(180,180,180,0.3);">
+      <p style="color:#C0C0C0;font-size:22px;font-weight:600;margin:0 0 6px 0;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:3px;">PropElite</p>
+      <p style="color:#888;font-size:10px;margin:0 0 20px 0;letter-spacing:4px;font-family:'Jost',Arial,sans-serif;font-weight:300;">REAL ESTATE</p>
+      <p style="color:#888;font-size:13px;margin:5px 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">noreply@coworkia.ec &nbsp;·&nbsp; 🇪🇨 Ecuador</p>
+      <p style="color:#777;font-size:13px;margin:10px 0 0 0;font-family:'Jost',Arial,sans-serif;font-weight:300;">Atendido personalmente por <strong style="color:#C0C0C0;font-weight:600;">@Paula</strong></p>
+      <p style="color:#444;font-size:11px;margin-top:18px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;font-family:'Jost',Arial,sans-serif;font-weight:300;">© 2026 PropElite Bienes Raíces · Todos los derechos reservados.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id, tab) {
+  document.querySelectorAll('.preview-wrap').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  tab.classList.add('active');
+}
+</script>
+</body>
+</html>

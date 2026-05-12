@@ -268,6 +268,43 @@
       </div>
       <div id="leads-container">
         <div class="loading">Cargando leads de Paula...</div>
+        <script>
+          async function loadLeads() {
+            const response = await fetch('/api/paula/leads');
+            const { data } = await response.json();
+            const container = document.getElementById('leads-container');
+            container.innerHTML = '';
+
+            data.forEach(lead => {
+              const badgeColor = lead.score >= 80 ? '#ef4444' : lead.score >= 50 ? '#f97316' : '#3b82f6';
+              const badgeText = lead.score >= 80 ? '🔥 Hot' : lead.score >= 50 ? '🌡️ Warm' : '❄️ Cold';
+
+              const leadRow = document.createElement('div');
+              leadRow.innerHTML = `
+                <div>
+                  <span>${lead.client_name}</span>
+                  <span class="badge" style="background:${badgeColor};color:white;">${badgeText}</span>
+                </div>
+              `;
+              container.appendChild(leadRow);
+            });
+          }
+
+          async function sendBrochure(leadId) {
+            const confirmation = confirm('¿Estás seguro de que deseas enviar el brochure?');
+            if (!confirmation) return;
+
+            const response = await fetch(`/api/paula/send-brochure?leadId=${leadId}`, { method: 'POST' });
+            if (response.ok) {
+              alert('Brochure enviado exitosamente.');
+              document.getElementById(`send-btn-${leadId}`).disabled = true;
+            } else {
+              alert('Error al enviar el brochure.');
+            }
+          }
+
+          loadLeads();
+        </script>
       </div>
     </div>
   </div>

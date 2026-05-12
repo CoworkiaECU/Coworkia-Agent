@@ -17,8 +17,11 @@ router.get('/leads', async (req, res) => {
 
     let query = `SELECT id, operation_type, property_type, preferred_zone, budget_range,
                         client_name, email, phone, status, requirements,
-                        viewing_scheduled, created_at, updated_at
-                 FROM real_estate_leads WHERE 1=1`;
+                        viewing_scheduled, created_at, updated_at,
+                        pls.score, pls.tier
+                 FROM real_estate_leads pl
+                 LEFT JOIN paula_lead_scores pls ON pl.id = pls.lead_id
+                 WHERE 1=1`;
     const params = [];
     let i = 1;
 
@@ -170,6 +173,70 @@ router.get('/seed-demo', async (req, res) => {
     return res.json({ ok: true, inserted, total: DEMO_LEADS.length });
   } catch (err) {
     console.error('[PAULA-API] Error seed-demo:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── GET /api/paula/leads/:id/follow-ups ───────────────────────────────────────
+router.get('/leads/:id/follow-ups', async (req, res) => {
+  try {
+    await databaseService.initialize();
+    const { id } = req.params;
+
+    const followUps = await databaseService.all(
+      `SELECT '📤' AS icon, 'Brochure enviado' AS description, brochure_sent_at AS timestamp
+       FROM paula_followups WHERE lead_id = $1
+       UNION ALL
+       SELECT '⏳', 'Follow-up 24h', follow_up_24h_sent_at
+       FROM paula_followups WHERE lead_id = $1
+       UNION ALL
+       SELECT '⏳', 'Follow-up 3d', follow_up_3d_sent_at
+       FROM paula_followups WHERE lead_id = $1
+       UNION ALL
+       SELECT '📅', 'Visita agendada', visit_scheduled_at
+       FROM property_visits WHERE lead_id = $1
+       ORDER BY timestamp`,
+      [id]
+    );
+
+    return res.json({ ok: true, data: followUps });
+  } catch (err) {
+    console.error('[PAULA-API] Error follow-ups:', err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/paula/send-brochure ────────────────────────────────────────────
+router.post('/send-brochure', async (req, res) => {
+  try {
+    await databaseService.initialize();
+    const { leadId } = req.query;
+
+    const lead = await databaseService.get(
+      `SELECT id, client_name, email, brochure_sent_at
+       FROM real_estate_leads WHERE id = $1`,
+      [leadId]
+    );
+
+    if (!lead) {
+      return res.status(404).json({ ok: false, error: 'Lead no encontrado' });
+    }
+
+    if (lead.brochure_sent_at) {
+      return res.status(400).json({ ok: false, error: 'Brochure ya enviado' });
+    }
+
+    // Call existing function to send brochure
+    await sendBrochureEmail(lead.email, lead.client_name);
+
+    await databaseService.run(
+      `UPDATE real_estate_leads SET brochure_sent_at = NOW() WHERE id = $1`,
+      [leadId]
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[PAULA-API] Error send-brochure:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });

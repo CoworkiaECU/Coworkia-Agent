@@ -28,9 +28,9 @@ export function generateVisitConfirmationEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Confirmada - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   
   <!-- Container Principal -->
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
@@ -57,7 +57,7 @@ export function generateVisitConfirmationEmail(visitData) {
     <div style="text-align: center; padding: 0 30px 30px 30px;">
       <h2 style="color: #111111; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Confirmada</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0;">
-        ${clientName}, tu visita ha sido agendada exitosamente
+        ${clientName}, nos alegra que des este paso — todo está listo para recibirte
       </p>
     </div>
     
@@ -67,26 +67,26 @@ export function generateVisitConfirmationEmail(visitData) {
       <!-- Código de visita -->
       <div style="background: #F0F0F0; border-radius: 0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #C0C0C0;">
         <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Cormorant Garamond', Georgia, serif;">${visitId}</div>
       </div>
       
       <!-- Grid de detalles -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; border-radius: 0; padding: 25px; margin: 20px 0;">
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyName}</div>
           <div style="color: #666666; font-size: 13px; margin-top: 4px;">${propertyCode}</div>
         </div>
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyAddress}</div>
         </div>
         
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${dayName} ${day}/${month}/${year}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${dayName} ${day}/${month}/${year}</div>
           <div style="color: #C0C0C0; font-size: 16px; font-weight: 600; margin-top: 4px;">${time} (1 hora)</div>
         </div>
         
@@ -94,20 +94,20 @@ export function generateVisitConfirmationEmail(visitData) {
       
       <!-- Instrucciones importantes -->
       <div style="background: #FFFFFF; border: 2px solid #C0C0C0; border-radius: 0; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 INSTRUCCIONES PARA LA VISITA</h3>
+        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">📋 INSTRUCCIONES PARA LA VISITA</h3>
         
-        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Jost', Arial, sans-serif;">
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">II.</span> &nbsp; Trae tu identificación oficial (cédula o pasaporte)
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">II.</span> &nbsp; Trae tu identificación oficial (cédula o pasaporte)
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">IV.</span> &nbsp; Podrás hacer todas las preguntas que necesites
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">IV.</span> &nbsp; Podrás hacer todas las preguntas que necesites
           </p>
         </div>
       </div>
@@ -115,16 +115,16 @@ export function generateVisitConfirmationEmail(visitData) {
       <!-- Nota de reagendamiento -->
       <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 18px 20px; margin: 20px 0;">
         <p style="color: #92400E; font-size: 13px; margin: 0; line-height: 1.6;">
-          <strong>⚠️ ¿Necesitas reagendar?</strong><br>
-          Avísanos por WhatsApp con mínimo 24 horas de anticipación.
+          <strong>¿Necesitas cambiar la fecha?</strong><br>
+          Sin problema — escríbeme a @Paula por WhatsApp con al menos 24 horas de anticipación y lo arreglamos.
         </p>
       </div>
       
       <!-- Botón de contacto WhatsApp -->
       <div style="text-align: center; margin: 35px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20tengo%20una%20pregunta%20sobre%20mi%20visita%20${visitId}" 
-           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; border-radius: 0; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          CONTACTAR A PAULA
+           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; border-radius: 0; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          ESCRIBIR A @PAULA
         </a>
       </div>
       
@@ -133,13 +133,13 @@ export function generateVisitConfirmationEmail(visitData) {
       
       <!-- Beneficios de PropElite -->
       <div style="padding: 20px 0;">
-        <h3 style="color: #111111; font-size: 18px; margin: 0 0 20px 0; font-family: 'Georgia', serif; text-align: center; letter-spacing: 1px;">¿Por qué elegir PropElite?</h3>
+        <h3 style="color: #111111; font-size: 18px; margin: 0 0 20px 0; font-family: 'Cormorant Garamond', Georgia, serif; text-align: center; letter-spacing: 1px;">Lo que PropElite hace por ti</h3>
         
         <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8;">
-          <p style="margin: 12px 0;">✓ <strong>Asesoría 100% gratuita</strong> en todo el proceso</p>
-          <p style="margin: 12px 0;">✓ <strong>Portafolio exclusivo</strong> de propiedades premium</p>
-          <p style="margin: 12px 0;">✓ <strong>Due diligence legal</strong> incluido</p>
-          <p style="margin: 12px 0;">✓ <strong>Acompañamiento</strong> hasta la escrituración</p>
+          <p style="margin: 12px 0;">Tu asesor personal, sin costo, desde el primer mensaje hasta la escritura final</p>
+          <p style="margin: 12px 0;">Propiedades cuidadosamente seleccionadas — solo mostramos lo que realmente vale tu tiempo</p>
+          <p style="margin: 12px 0;">Revisamos cada detalle legal antes de que des el siguiente paso</p>
+          <p style="margin: 12px 0;">Contigo desde la primera visita hasta las llaves en tus manos</p>
         </div>
       </div>
       
@@ -147,17 +147,17 @@ export function generateVisitConfirmationEmail(visitData) {
     
     <!-- Footer -->
     <div style="text-align: center; margin: 45px 0 0 0; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© 2025 PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
     
@@ -194,9 +194,9 @@ export function generateRescheduleEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Reagendada - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
@@ -220,7 +220,7 @@ export function generateRescheduleEmail(visitData) {
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 30px 30px;">
       <h2 style="color: #111111; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Reagendada</h2>
-      <p style="color: #1F1F1F; font-size: 15px; margin: 0;">${clientName}, tu visita ha sido confirmada en la nueva fecha</p>
+      <p style="color: #1F1F1F; font-size: 15px; margin: 0;">${clientName}, tu nueva cita quedó registrada — estaremos listos para recibirte</p>
     </div>
 
     <!-- Details -->
@@ -229,18 +229,18 @@ export function generateRescheduleEmail(visitData) {
       <!-- Visit code -->
       <div style="background: #F0F0F0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #C0C0C0;">
         <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Cormorant Garamond', Georgia, serif;">${visitId}</div>
       </div>
 
       <!-- New schedule -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyName}</div>
         </div>
         <div>
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Nueva Fecha y Hora</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${formatted}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Nueva Fecha y Hora</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${formatted}</div>
           <div style="color: #C0C0C0; font-size: 14px; font-weight: 600; margin-top: 4px;">1 hora de visita</div>
         </div>
       </div>
@@ -248,30 +248,30 @@ export function generateRescheduleEmail(visitData) {
       <!-- Note -->
       <div style="background: #EFF6FF; border-left: 4px solid #1D4ED8; padding: 18px 20px; margin: 20px 0;">
         <p style="color: #1e40af; font-size: 13px; margin: 0; line-height: 1.6;">
-          <strong>✅ Todo listo</strong> — hemos registrado el cambio de fecha. Si necesitas hacer otro ajuste, escríbenos con mínimo 24 horas de anticipación.
+          <strong>✅ Todo actualizado.</strong> Los planes cambian y estamos siempre dispuestos a adaptarnos. Si necesitas otro ajuste, avísame con al menos 24 horas de anticipación.
         </p>
       </div>
 
       <!-- CTA -->
       <div style="text-align: center; margin: 35px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20tengo%20una%20pregunta%20sobre%20mi%20visita%20reagendada%20${visitId}"
-           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          CONTACTAR A PAULA
+           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          ESCRIBIR A @PAULA
         </a>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>
@@ -298,9 +298,9 @@ export function generateCancellationEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visita Cancelada - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
@@ -325,7 +325,7 @@ export function generateCancellationEmail(visitData) {
     <div style="text-align: center; padding: 0 30px 30px 30px;">
       <h2 style="color: #111111; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Visita Cancelada</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0;">
-        ${clientName}, hemos procesado la cancelación de tu visita
+        ${clientName}, entendemos que los planes cambian — cuando estés listo, aquí seguiremos
       </p>
     </div>
 
@@ -335,25 +335,25 @@ export function generateCancellationEmail(visitData) {
       <!-- Visit code -->
       <div style="background: #F0F0F0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #C0C0C0;">
         <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Cormorant Garamond', Georgia, serif;">${visitId}</div>
       </div>
 
       <!-- Property -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
-        <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-        <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+        <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+        <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyName}</div>
       </div>
 
       <!-- Reschedule CTA -->
       <div style="background: #FFFBEB; border: 2px solid #C0C0C0; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 12px 0; font-family: 'Georgia', serif;">¿Deseas agendar en otra fecha?</h3>
+        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 12px 0; font-family: 'Cormorant Garamond', Georgia, serif;">¿Quieres retomar cuando estés listo?</h3>
         <p style="color: #1F1F1F; font-size: 14px; margin: 0 0 16px 0; line-height: 1.7;">
-          Nuestro portafolio El Morenal sigue disponible. Escríbenos por WhatsApp y te ayudamos a encontrar el momento ideal.
+          El Morenal te sigue esperando. Cuando estés listo, solo escríbeme y en minutos coordinamos todo — sin apuro, sin presión.
         </p>
         <div style="text-align: center;">
           <a href="https://wa.me/593984455060?text=Hola%20Paula,%20quisiera%20reagendar%20mi%20visita%20a%20${encodeURIComponent(propertyName)}"
-             style="display: inline-block; background: #059669; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-            REAGENDAR VISITA
+             style="display: inline-block; background: #059669; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+            REAGENDAR CON @PAULA
           </a>
         </div>
       </div>
@@ -361,15 +361,15 @@ export function generateCancellationEmail(visitData) {
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>
@@ -398,9 +398,9 @@ export function generateReminderEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recordatorio de Visita - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header -->
@@ -425,7 +425,7 @@ export function generateReminderEmail(visitData) {
     <div style="text-align: center; padding: 0 30px 30px 30px;">
       <h2 style="color: #111111; font-size: 28px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Recordatorio de Visita</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0;">
-        ${clientName}, mañana es tu visita. ¡Te esperamos!
+        ${clientName}, mañana nos vemos — ya tenemos todo preparado para recibirte
       </p>
     </div>
 
@@ -435,37 +435,37 @@ export function generateReminderEmail(visitData) {
       <!-- Visit code -->
       <div style="background: #F0F0F0; padding: 18px 25px; margin: 20px 0; border-left: 4px solid #C0C0C0;">
         <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Código de Visita</div>
-        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Georgia', serif;">${visitId}</div>
+        <div style="color: #111111; font-weight: 700; font-size: 22px; font-family: 'Cormorant Garamond', Georgia, serif;">${visitId}</div>
       </div>
 
       <!-- Visit info -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 20px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyName}</div>
         </div>
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #111111; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #111111; font-weight: 700; font-size: 15px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyAddress}</div>
         </div>
         <div>
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
-          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${formatted}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha y Hora</div>
+          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Cormorant Garamond', Georgia, serif;">${formatted}</div>
         </div>
       </div>
 
       <!-- Reminders -->
       <div style="background: #FFFFFF; border: 2px solid #C0C0C0; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
-        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
+        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Jost', Arial, sans-serif;">
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">II.</span> &nbsp; Trae tu cédula o pasaporte
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">II.</span> &nbsp; Trae tu cédula o pasaporte
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
           </p>
         </div>
       </div>
@@ -473,23 +473,23 @@ export function generateReminderEmail(visitData) {
       <!-- CTA -->
       <div style="text-align: center; margin: 35px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20confirmo%20asistencia%20a%20mi%20visita%20${visitId}%20mañana"
-           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          CONFIRMAR ASISTENCIA
+           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          CONFIRMAR CON @PAULA
         </a>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>
@@ -525,9 +525,9 @@ export function generateFollowUp24hEmail(leadData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Follow-up Brochure - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
@@ -552,7 +552,7 @@ export function generateFollowUp24hEmail(leadData) {
     <div style="text-align: center; padding: 0 30px 10px 30px;">
       <h2 style="color: #111111; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Hola ${firstName}</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0; line-height: 1.7;">
-        Te escribo para saber si pudiste revisar el brochure de <strong>${prop}</strong> que te envié.
+        ¿Pudiste revisar el brochure de <strong>${prop}</strong>? Quería saber si algo llamó tu atención — a veces una propiedad te habla desde la primera imagen.
       </p>
     </div>
 
@@ -560,8 +560,8 @@ export function generateFollowUp24hEmail(leadData) {
 
       <!-- Resumen de búsqueda -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #111111; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">Tu búsqueda</h3>
-        <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #111111; font-size: 16px; margin: 0 0 18px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">Tu búsqueda</h3>
+        <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8; font-family: 'Jost', Arial, sans-serif;">
           <p style="margin: 8px 0;">🏠 <strong>Tipo:</strong> ${prop} — ${operationType || 'Compra'}</p>
           <p style="margin: 8px 0;">📍 <strong>Zona:</strong> ${zone}</p>
           ${budgetRange ? `<p style="margin: 8px 0;">💰 <strong>Presupuesto:</strong> ${budgetRange}</p>` : ''}
@@ -570,9 +570,9 @@ export function generateFollowUp24hEmail(leadData) {
 
       <!-- Siguiente paso -->
       <div style="background: #FFFFFF; border: 2px solid #C0C0C0; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 12px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">Siguiente paso</h3>
-        <p style="color: #1F1F1F; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
-          Si alguna propiedad llamó tu atención, podemos agendar una <strong>visita presencial</strong> sin compromiso. Te acompaño personalmente para resolver todas tus dudas.
+        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 12px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">¿Damos el siguiente paso?</h3>
+        <p style="color: #1F1F1F; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Jost', Arial, sans-serif;">
+          Si algo te llamó la atención, me encantaría acompañarte a verlo en persona. Sin presión, sin compromiso — solo tú, la propiedad, y yo para resolver cada pregunta.
         </p>
       </div>
 
@@ -581,35 +581,35 @@ export function generateFollowUp24hEmail(leadData) {
         <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8;">
           <p style="margin: 8px 0;">✓ <strong>Asesoría 100% gratuita</strong></p>
           <p style="margin: 8px 0;">✓ <strong>Sin compromiso</strong> — conoce la propiedad antes de decidir</p>
-          <p style="margin: 8px 0;">✓ <strong>Due diligence legal</strong> incluido</p>
+          <p style="margin: 8px 0;">Revisamos cada detalle legal antes de que des el siguiente paso</p>
         </div>
       </div>
 
       <!-- CTA -->
       <div style="text-align: center; margin: 30px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20me%20interesa%20agendar%20una%20visita%20🏡"
-           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
+           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
           AGENDAR VISITA
         </a>
       </div>
 
-      <p style="text-align: center; color: #666666; font-size: 13px; margin: 10px 0 0 0; font-family: 'Arial', sans-serif;">
-        ¿Preguntas? Responde este email o escríbeme al WhatsApp
+      <p style="text-align: center; color: #666666; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif;">
+        ¿Tienes dudas? Responde este email o escríbeme directo a @Paula por WhatsApp.
       </p>
 
     </div>
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>
@@ -641,9 +641,9 @@ export function generateFollowUp3dEmail(leadData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nuevas Opciones - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
@@ -668,7 +668,7 @@ export function generateFollowUp3dEmail(leadData) {
     <div style="text-align: center; padding: 0 30px 10px 30px;">
       <h2 style="color: #111111; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Nuevas opciones para ti</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0; line-height: 1.7;">
-        ${firstName}, he estado revisando propiedades en <strong>${zone}</strong> y encontré opciones que podrían interesarte.
+        ${firstName}, he estado buscando en <strong>${zone}</strong> y hay opciones nuevas que creo que te van a gustar. Quería contártelo antes de que alguien más las vea.
       </p>
     </div>
 
@@ -676,8 +676,8 @@ export function generateFollowUp3dEmail(leadData) {
 
       <!-- Propuesta -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #111111; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">¿Qué tengo para ti?</h3>
-        <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #111111; font-size: 16px; margin: 0 0 18px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">Lo que encontré para ti</h3>
+        <div style="color: #1F1F1F; font-size: 14px; line-height: 1.8; font-family: 'Jost', Arial, sans-serif;">
           <p style="margin: 10px 0;">🏠 Propiedades nuevas en <strong>${zone}</strong></p>
           <p style="margin: 10px 0;">📊 Análisis de precios actualizado del sector</p>
           <p style="margin: 10px 0;">🎯 Opciones ajustadas a tu perfil de búsqueda</p>
@@ -686,43 +686,43 @@ export function generateFollowUp3dEmail(leadData) {
 
       <!-- Cambio de planes -->
       <div style="background: #F0F0F0; border-left: 4px solid #C0C0C0; padding: 20px 25px; margin: 25px 0;">
-        <p style="color: #111111; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Arial', sans-serif;">
+        <p style="color: #111111; font-size: 14px; margin: 0; line-height: 1.7; font-family: 'Jost', Arial, sans-serif;">
           <strong>¿Cambiaron tus planes?</strong><br>
-          Si tu presupuesto, zona o tipo de propiedad cambió, cuéntame y te busco algo que se ajuste mejor. Sin compromiso.
+          Si la zona, el presupuesto o lo que buscas cambió, dímelo — adapto la búsqueda sin ningún problema.
         </p>
       </div>
 
       <!-- Dual CTA -->
       <div style="text-align: center; margin: 30px 0 15px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20me%20interesa%20ver%20las%20nuevas%20opciones%20🏡"
-           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 36px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          VER OPCIONES NUEVAS
+           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 36px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          VER OPCIONES CON @PAULA
         </a>
       </div>
       <div style="text-align: center; margin: 0 0 20px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20quisiera%20agendar%20una%20visita"
-           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          AGENDAR VISITA DIRECTA
+           style="display: inline-block; background: #059669; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          AGENDAR CON @PAULA
         </a>
       </div>
 
-      <p style="text-align: center; color: #666666; font-size: 13px; margin: 10px 0 0 0; font-family: 'Arial', sans-serif;">
-        Estoy a una respuesta de distancia
+      <p style="text-align: center; color: #666666; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif;">
+        Solo escríbeme — estoy a un mensaje de distancia.
       </p>
 
     </div>
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>
@@ -767,9 +767,9 @@ export function generateVisitReminderFollowUpEmail(visitData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recordatorio de Visita - PropElite</title>
-  <style>@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:ital,wght@0,300;0,400;0,600;1,300&display=swap');@media(prefers-color-scheme:dark){body{background-color:#f3f4f6!important}.em-wrap{background-color:#fff!important;color:#1f2937!important}}</style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background: #F5F5F5;">
+<body style="margin: 0; padding: 0; font-family: 'Jost', Arial, sans-serif; background: #F5F5F5;">
   <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF;">
 
     <!-- Header PropElite -->
@@ -792,9 +792,9 @@ export function generateVisitReminderFollowUpEmail(visitData) {
 
     <!-- Title -->
     <div style="text-align: center; padding: 0 30px 10px 30px;">
-      <h2 style="color: #111111; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">¡Mañana es tu visita!</h2>
+      <h2 style="color: #111111; font-size: 26px; margin: 0 0 15px 0; font-weight: 400; letter-spacing: 2px;">Mañana nos vemos ✨</h2>
       <p style="color: #1F1F1F; font-size: 15px; margin: 0; line-height: 1.7;">
-        ${firstName}, te esperamos mañana en <strong>${propertyName}</strong>
+        ${firstName}, todo está listo para recibirte mañana en <strong>${propertyName}</strong>
       </p>
     </div>
 
@@ -803,42 +803,42 @@ export function generateVisitReminderFollowUpEmail(visitData) {
       <!-- Detalles -->
       <div style="background: #F5F5F5; border: 1px solid #E5E1D8; padding: 25px; margin: 25px 0;">
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
-          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Georgia', serif;">${propertyName}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Propiedad</div>
+          <div style="color: #111111; font-weight: 700; font-size: 17px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyName}</div>
         </div>
         ${propertyAddress ? `<div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
-          <div style="color: #111111; font-weight: 700; font-size: 15px; font-family: 'Georgia', serif;">${propertyAddress}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Dirección</div>
+          <div style="color: #111111; font-weight: 700; font-size: 15px; font-family: 'Cormorant Garamond', Georgia, serif;">${propertyAddress}</div>
         </div>` : ''}
         <div style="margin-bottom: 22px;">
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha</div>
-          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${dateFormatted}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Fecha</div>
+          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Cormorant Garamond', Georgia, serif;">${dateFormatted}</div>
         </div>
         <div>
-          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Hora</div>
-          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Georgia', serif;">${timeStr}</div>
+          <div style="color: #1F1F1F; font-weight: 600; font-size: 12px; font-family: 'Jost', Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">Hora</div>
+          <div style="color: #C0C0C0; font-size: 18px; font-weight: 700; font-family: 'Cormorant Garamond', Georgia, serif;">${timeStr}</div>
         </div>
       </div>
 
       ${mapsLink ? `<!-- Google Maps -->
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${mapsLink}" style="color: #1D4ED8; font-size: 14px; font-family: 'Arial', sans-serif; text-decoration: underline;">
+        <a href="${mapsLink}" style="color: #1D4ED8; font-size: 14px; font-family: 'Jost', Arial, sans-serif; text-decoration: underline;">
           📍 Ver ubicación en Google Maps
         </a>
       </div>` : ''}
 
       <!-- Checklist -->
       <div style="background: #FFFFFF; border: 2px solid #C0C0C0; padding: 25px; margin: 25px 0;">
-        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Georgia', serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
-        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Arial', sans-serif;">
+        <h3 style="color: #C0C0C0; font-size: 16px; margin: 0 0 18px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">📋 PARA MAÑANA</h3>
+        <div style="color: #111111; font-size: 14px; line-height: 1.8; font-family: 'Jost', Arial, sans-serif;">
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">I.</span> &nbsp; Llega 5 minutos antes de la hora programada
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">II.</span> &nbsp; Trae tu cédula o pasaporte
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">II.</span> &nbsp; Trae tu cédula o pasaporte
           </p>
           <p style="margin: 12px 0;">
-            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Georgia', serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, serif;">III.</span> &nbsp; Un agente de PropElite te recibirá en la propiedad
           </p>
         </div>
       </div>
@@ -846,13 +846,13 @@ export function generateVisitReminderFollowUpEmail(visitData) {
       <!-- Dual CTA -->
       <div style="text-align: center; margin: 30px 0 15px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20confirmo%20mi%20visita%20de%20mañana%20✅"
-           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 36px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Arial', sans-serif;">
-          CONFIRMAR ASISTENCIA
+           style="display: inline-block; background-color:#C0C0C0;background:linear-gradient(135deg, #888888, #C8C8C8); color: #FFFFFF; padding: 16px 36px; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif;">
+          CONFIRMAR CON @PAULA
         </a>
       </div>
       <div style="text-align: center; margin: 0 0 20px 0;">
         <a href="https://wa.me/593984455060?text=Hola%20Paula,%20necesito%20reagendar%20mi%20visita"
-           style="display: inline-block; background: transparent; color: #1F1F1F; padding: 12px 32px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 1px; font-family: 'Arial', sans-serif; border: 1px solid #E5E1D8;">
+           style="display: inline-block; background: transparent; color: #1F1F1F; padding: 12px 32px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 1px; font-family: 'Jost', Arial, sans-serif; border: 1px solid #E5E1D8;">
           REAGENDAR
         </a>
       </div>
@@ -861,15 +861,15 @@ export function generateVisitReminderFollowUpEmail(visitData) {
 
     <!-- Footer -->
     <div style="text-align: center; padding: 45px 30px; background: #111111; border-top: 1px solid rgba(180,180,180,0.3);">
-      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">PropElite</p>
+      <p style="color: #C0C0C0; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 2px;">PropElite</p>
       <p style="color: #F0F0F0; font-size: 12px; margin: 0 0 18px 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
       <div style="margin: 20px 0;">
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📱 WhatsApp: +593 98 445 5060</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">📧 noreply@coworkia.ec</p>
-        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
+        <p style="color: #888888; font-size: 13px; margin: 5px 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">noreply@coworkia.ec</p>
+      <p style="color: #777777; font-size: 13px; margin: 10px 0 0 0; font-family: 'Jost', Arial, sans-serif; font-weight: 300;">Atendido personalmente por <strong style="color: #C0C0C0; font-weight: 600;">@Paula</strong></p>
+        <p style="color: #B8BDB3; font-size: 13px; margin: 5px 0;">🇪🇨 Ecuador</p>
       </div>
       <div style="margin: 25px 0 0 0; padding: 20px 0 0 0; border-top: 1px solid rgba(184,189,179,0.2);">
-        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces. Todos los derechos reservados.</p>
+        <p style="color: #666666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} PropElite Bienes Raíces · Todos los derechos reservados.</p>
       </div>
     </div>
   </div>

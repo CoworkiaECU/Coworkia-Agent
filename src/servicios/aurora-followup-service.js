@@ -494,6 +494,7 @@ export async function detectAuroraNoShows() {
       FROM reservations r
       LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status = 'confirmed'
+        AND r.payment_status NOT IN ('paid', 'verified')
         AND (r.date::date + r.start_time::time) < (NOW() - INTERVAL '3 hours')
         AND r.followup_1h_sent_at IS NULL
         AND r.no_show_detected_at IS NULL
@@ -545,8 +546,10 @@ export async function sendAuroraUpsellAluna() {
       LEFT JOIN users u ON r.user_phone = u.phone_number
       WHERE r.status IN ('confirmed', 'completed')
         AND r.date >= CURRENT_DATE - INTERVAL '30 days'
+        AND r.payment_status IN ('paid', 'verified', 'completed')
+        AND r.created_at <= NOW() - INTERVAL '24 hours'
       GROUP BY r.user_phone, u.name, u.email
-      HAVING COUNT(*) >= 3 AND MAX(r.upsell_aluna_sent_at) IS NULL
+      HAVING COUNT(DISTINCT r.date) >= 4 AND MAX(r.upsell_aluna_sent_at) IS NULL
       ORDER BY SUM(COALESCE(r.total_price, 0)) DESC LIMIT 10
     `);
 

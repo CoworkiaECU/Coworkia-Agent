@@ -292,3 +292,24 @@ export async function getRealEstateLeadsStats() {
 
   return stats || {};
 }
+
+/**
+ * 🔍 Obtener cliente por slug
+ */
+export async function getClientBySlug(slug) {
+  await databaseService.ensureInitialized();
+
+  const result = await databaseService.get(
+    `SELECT * FROM real_estate_clients WHERE slug = $1`,
+    [slug]
+  );
+
+  return result || null;
+}
+
+/**
+ * 🔍 Obtener cliente por defecto
+ */
+export async function getDefaultClient() {
+  return await getClientBySlug('casas-jardin');
+}

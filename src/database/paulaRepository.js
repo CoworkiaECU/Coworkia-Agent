@@ -313,3 +313,45 @@ export async function getClientBySlug(slug) {
 export async function getDefaultClient() {
   return await getClientBySlug('casas-jardin');
 }
+
+/**
+ * 🔍 Buscar propiedades por filtros
+ */
+export async function searchProperties(filters) {
+  await databaseService.ensureInitialized();
+
+  const { clientId, type, operation, city, priceRange } = filters;
+  const query = `
+    SELECT * FROM real_estate_properties
+    WHERE client_id = $1
+      AND ($2::TEXT IS NULL OR type = $2)
+      AND ($3::TEXT IS NULL OR operation = $3)
+      AND ($4::TEXT IS NULL OR city = $4)
+      AND ($5::NUMERIC IS NULL OR price_usd BETWEEN $5 AND $6)
+  `;
+
+  const result = await databaseService.all(query, [
+    clientId,
+    type || null,
+    operation || null,
+    city || null,
+    priceRange?.min || null,
+    priceRange?.max || null
+  ]);
+
+  return result;
+}
+
+/**
+ * 🔍 Obtener propiedad por código
+ */
+export async function getPropertyByCode(code, clientId) {
+  await databaseService.ensureInitialized();
+
+  const result = await databaseService.get(
+    `SELECT * FROM real_estate_properties WHERE code = $1 AND client_id = $2`,
+    [code, clientId]
+  );
+
+  return result || null;
+}

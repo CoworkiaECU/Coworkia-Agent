@@ -45,12 +45,22 @@ export async function checkVisitAvailability(date, startTime, propertyCode) {
       };
     }
     
-    // Validar horario de oficina (9am - 6pm)
+    // Validar horario de visitas: martes, jueves y sábado únicamente
+    const visitDayOfWeek = new Date(date + 'T00:00:00-05:00').getDay();
+    const VISIT_DAYS = [2, 4, 6]; // Martes=2, Jueves=4, Sábado=6
+    if (!VISIT_DAYS.includes(visitDayOfWeek)) {
+      return { 
+        available: false, 
+        reason: 'Las visitas solo están disponibles martes, jueves y sábados' 
+      };
+    }
+
+    // Validar horario de visitas (9am - 6pm)
     const [hour] = startTime.split(':').map(Number);
     if (hour < 9 || hour >= 18) {
       return { 
         available: false, 
-        reason: 'Las visitas solo están disponibles de 9am a 6pm' 
+        reason: 'Las visitas están disponibles de 9am a 6pm' 
       };
     }
     
@@ -92,15 +102,17 @@ export async function suggestVisitTimes(propertyCode, daysAhead = 7) {
   const suggestions = [];
   const today = new Date();
   
-  // Horarios típicos de visita: 10am, 11am, 3pm, 4pm, 5pm
+  // Horarios de visita: 10am, 11am, 3pm, 4pm, 5pm
   const preferredTimes = ['10:00', '11:00', '15:00', '16:00', '17:00'];
+  // Días de visita: martes=2, jueves=4, sábado=6
+  const VISIT_DAYS = [2, 4, 6];
   
   for (let i = 1; i <= daysAhead; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     
-    // Skip domingos
-    if (date.getDay() === 0) continue;
+    // Solo martes, jueves y sábados
+    if (!VISIT_DAYS.includes(date.getDay())) continue;
     
     const dateStr = date.toISOString().split('T')[0];
     

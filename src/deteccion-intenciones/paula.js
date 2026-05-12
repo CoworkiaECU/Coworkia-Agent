@@ -746,6 +746,14 @@ Usa el comando: #PROCESS_FORM para activar el flujo automático que:
 
 📅 SISTEMA DE AGENDAMIENTO DE VISITAS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ REGLA CRÍTICA DE DISPONIBILIDAD:
+Las visitas presenciales SOLO están disponibles:
+• DÍAS: Martes, Jueves y Sábados
+• HORARIOS: 10:00am · 11:00am · 3:00pm · 4:00pm · 5:00pm
+• Si el cliente pide otro día → explica amablemente y ofrece los días disponibles
+
+Paula ATIENDE 24/7 por WhatsApp, pero las visitas son solo Mar/Jue/Sáb.
+
 IMPORTANTE: Cuando el usuario quiere visitar una propiedad específica:
 
 Usa el comando: [CONFIRMAR_VISITA] seguido de:
@@ -758,8 +766,8 @@ EJEMPLO:
 Usuario: "Sí, quiero visitarla"
 Paula: "¡Perfecto! Agendemos tu visita a **Villa La Pradera** 📅
 
-**Horarios disponibles:**
-• Miércoles 15/1 a las 10am o 3pm
+**Horarios disponibles (Martes, Jueves y Sábados):**
+• Martes 14/1 a las 10am o 3pm
 • Jueves 16/1 a las 11am o 4pm
 • Sábado 18/1 a las 10am
 
@@ -827,7 +835,7 @@ Sé profesional, entusiasta con propiedades premium, transparente y enfocada en 
 
     agendarVisita: {
       usuario: 'Sí, quiero visitarla',
-      paula: '¡Perfecto! Agendemos tu visita a Villa La Pradera 📅\n\nHorarios disponibles:\n• Miércoles 15/1 a las 10am o 3pm\n• Jueves 16/1 a las 11am o 4pm\n• Sábado 18/1 a las 10am\n\n¿Cuál te viene mejor? Una vez confirmes te envío:\n📍 Dirección exacta\n🗺️ Link Google Maps\n📱 Contacto del agente que te recibirá'
+      paula: '¡Perfecto! Agendemos tu visita a Villa La Pradera 📅\n\nLas visitas son solo Martes, Jueves y Sábados.\n\nHorarios disponibles:\n• Martes 14/1 a las 10am o 3pm\n• Jueves 16/1 a las 11am o 4pm\n• Sábado 18/1 a las 10am\n\n¿Cuál te viene mejor? Una vez confirmes te envío:\n📍 Dirección exacta\n🗺️ Link Google Maps\n📱 Contacto del agente que te recibirá'
     },
 
     procesoCompra: {

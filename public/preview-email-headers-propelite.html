@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Preview: Email Headers PropElite — con y sin logo</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #e8e8e8; padding: 30px; }
+    h2 { color: #333; font-size: 18px; margin: 30px 0 10px; }
+    .note { background: #fffbeb; border: 1px solid #d4af37; padding: 14px 20px; border-radius: 4px; margin-bottom: 30px; font-size: 14px; color: #5a4c0a; }
+    .card { max-width: 650px; margin: 0 auto 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+    .label { text-align: center; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; margin: 0 auto 8px; max-width: 650px; }
+  </style>
+</head>
+<body>
+
+<div class="note">
+  <strong>Torre de Control — Vista previa para decision de logo</strong><br>
+  Todos los templates de Paula usan el mismo header CSS (texto). 
+  La opción A mantiene el texto actual. La opción B muestra cómo quedaría con imagen de logo.<br>
+  <strong>Hay 4 templates:</strong> Confirmación de visita · Reagendamiento · Cancelación · Recordatorio 24h + follow-ups
+</div>
+
+<p class="label">Opción A — Header actual (solo texto CSS)</p>
+<div class="card">
+  <!-- Header actual igual al código en email-templates-paula.js -->
+  <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 45px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <h1 style="color: #D4AF37; font-size: 32px; margin: 0; font-weight: 400; letter-spacing: 3px; font-family: 'Georgia', serif;">Prop Elite</h1>
+    <p style="color: #EDE8D0; margin: 8px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
+  </div>
+  <div style="background:#fff; padding: 30px; font-family:Georgia, serif; color:#1A2744; border-bottom: 1px solid #E5E1D8;">
+    <p style="text-align:center; color:#888; font-size:13px; font-style:italic;">... contenido del email ...</p>
+  </div>
+  <div style="text-align: center; padding: 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
+    <p style="color: #D4AF37; font-size: 18px; font-weight: 700; margin: 0 0 6px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
+    <p style="color: #EDE8D0; font-size: 11px; margin: 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+  </div>
+</div>
+
+<p class="label">Opción B — Con logo imagen (propuesta para aprobación)</p>
+<div class="card">
+  <!-- Header con placeholder de logo -->
+  <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 35px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <!-- Zona donde irá el logo PNG/SVG cuando lo provea Diego -->
+    <div style="display:inline-block; background:rgba(212,175,55,0.12); border: 2px dashed #D4AF37; border-radius: 4px; padding: 18px 40px; margin-bottom: 10px;">
+      <p style="color:#D4AF37; font-size:13px; margin:0; letter-spacing:1px;">[LOGO PNG/SVG aquí — máx 220px ancho, fondo transparente]</p>
+    </div>
+    <p style="color: #EDE8D0; margin: 6px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
+  </div>
+  <div style="background:#fff; padding: 30px; font-family:Georgia, serif; color:#1A2744; border-bottom: 1px solid #E5E1D8;">
+    <p style="text-align:center; color:#888; font-size:13px; font-style:italic;">... contenido del email ...</p>
+  </div>
+  <div style="text-align: center; padding: 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
+    <!-- Footer con logo pequeño -->
+    <div style="display:inline-block; background:rgba(212,175,55,0.12); border: 1px dashed #D4AF37; padding: 8px 20px; margin-bottom: 8px;">
+      <p style="color:#D4AF37; font-size:11px; margin:0;">[logo pequeño en footer]</p>
+    </div>
+    <p style="color: #EDE8D0; font-size: 11px; margin: 6px 0 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+  </div>
+</div>
+
+<p class="label">Opción C — Logo imagen en header, texto en footer (recomendada)</p>
+<div class="card">
+  <div style="background-color:#1A2744;background:linear-gradient(135deg, #1A2744 0%, #2D3748 100%); padding: 35px 30px; text-align: center; border-bottom: 3px solid #D4AF37;">
+    <div style="display:inline-block; background:rgba(212,175,55,0.12); border: 2px dashed #D4AF37; border-radius: 4px; padding: 18px 40px; margin-bottom: 10px;">
+      <p style="color:#D4AF37; font-size:13px; margin:0; letter-spacing:1px;">[LOGO PNG aquí]</p>
+    </div>
+    <p style="color: #EDE8D0; margin: 6px 0 0 0; font-size: 13px; letter-spacing: 1.5px; font-weight: 300;">BIENES RAÍCES DE LUJO</p>
+  </div>
+  <div style="background:#fff; padding: 30px; font-family:Georgia, serif; color:#1A2744; border-bottom: 1px solid #E5E1D8;">
+    <p style="text-align:center; color:#888; font-size:13px; font-style:italic;">... contenido del email ...</p>
+  </div>
+  <div style="text-align: center; padding: 30px; background: #1A2744; border-top: 1px solid rgba(212,175,55,0.3);">
+    <!-- Footer: texto solo, sin logo duplicado -->
+    <p style="color: #D4AF37; font-size: 18px; font-weight: 700; margin: 0 0 6px 0; font-family: 'Georgia', serif; letter-spacing: 2px;">Prop Elite</p>
+    <p style="color: #EDE8D0; font-size: 11px; margin: 0; letter-spacing: 1.5px;">BIENES RAÍCES DE LUJO</p>
+  </div>
+</div>
+
+<div class="note" style="max-width:650px; margin: 0 auto;">
+  <strong>Nota técnica:</strong> El logo se implementa editando la función <code>_propEliteHeader()</code> 
+  (o los 4 headers directamente si no hay función compartida). Un solo cambio de 2 líneas afecta todos los templates.<br>
+  Formato recomendado: PNG con fondo transparente, 440px × auto, peso máx 50KB para compatibilidad Gmail.<br>
+  <strong>Envía el archivo logo y elijo cuál opción implementamos.</strong>
+</div>
+
+</body>
+</html>

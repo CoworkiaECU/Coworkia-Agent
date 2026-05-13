@@ -2403,39 +2403,24 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
         }
       }
 
-      // ② bis: Interceptar solicitud de link de pago cuando el form está incompleto (spaceType/date/time null)
-      // Evita el loop infinito donde el usuario pide el link y el form vuelve a preguntar por espacio/fecha/hora
-      const _PAYMENT_LINK_PATTERNS = [/link.*pago/i, /enlace.*pago/i, /dame.*link/i, /envia.*link/i, /me.*das.*link/i, /como.*pago/i, /donde.*pago/i, /quiero.*pagar/i, /necesito.*pagar/i];
+      // ② bis: Interceptar solicitud de link de pago — responder siempre con el link directamente
+      // No bloquear por falta de form/reserva: lo importante es capturar el pago, el registro se ajusta después
+      const _PAYMENT_LINK_PATTERNS = [/link.*pago/i, /enlace.*pago/i, /dame.*link/i, /envia.*link/i, /me.*das.*link/i, /como.*pago/i, /donde.*pago/i, /quiero.*pagar/i, /necesito.*pagar/i, /pagar.*tarjeta/i, /tarjeta.*pagar/i];
       const _isPayLinkReq = _PAYMENT_LINK_PATTERNS.some(p => p.test(processedText));
-      if (_isPayLinkReq && _hasAF && currentAgentForm) {
-        const _fd = currentAgentForm.form_data || currentAgentForm;
-        const _formIsEmpty = !_fd.spaceType && !_fd.date && !_fd.time;
-        if (_formIsEmpty) {
-          console.log('[AURORA-FLOW] 💳 Solicitud de link de pago con form vacío — verificando reserva pendiente');
-          // Buscar reserva pendiente de pago para este usuario
-          const _pendingPay = await databaseService.get(
-            `SELECT id, service_type, date, start_time, total_price FROM reservations WHERE user_phone = $1 AND payment_status = 'pending' AND status = 'confirmed' ORDER BY created_at DESC LIMIT 1`,
-            [userId]
-          ).catch(() => null);
-          if (_pendingPay) {
-            // Hay reserva confirmada pendiente de pago → enviar link directamente
-            const _spaceLabel = _pendingPay.service_type === 'hotDesk' ? 'Hot Desk' : 'Sala de Reuniones';
-            const _payMsg = `Aquí tienes el link para pagar tu reserva confirmada 😊\n\n📋 *${_spaceLabel}* — ${_pendingPay.date} a las ${_pendingPay.start_time}\n💰 Total: $${_pendingPay.total_price} USD\n\n💳 *PAGO CON TARJETA (PAYPHONE):*\n🔗 https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA\n\nUna vez que pagues, envíame el comprobante ✅`;
-            await enviarWhatsApp(userId, _payMsg);
-            await saveConversationMessage(userId, { role: 'assistant', content: _payMsg, agent: 'AURORA' });
-            await saveInteraction({ userId, agent: normalizeAgentName('AURORA'), agentName: 'Aurora Core', intentReason: 'payment_link_direct', input: processedText, output: _payMsg, meta: { envelope } });
-            return;
-          } else {
-            // No hay reserva pendiente — limpiar form vacío y pedir que complete la reserva
-            console.log('[AURORA-FLOW] 🗑️ Form vacío + sin reserva pendiente — limpiando y reiniciando');
-            await cancelAgentForm(userId, 'AURORA', 'stale_form_on_payment_request').catch(() => {});
-            const _resetMsg = `Para enviarte el link de pago primero necesito completar tu reserva 😊\n\n¿Qué espacio necesitas?\n\n📍 *Hot Desk* — trabajo individual ($10/2h)\n🏢 *Sala de Reuniones* — hasta 4 personas ($29/2h)`;
-            await enviarWhatsApp(userId, _resetMsg);
-            await saveConversationMessage(userId, { role: 'assistant', content: _resetMsg, agent: 'AURORA' });
-            await saveInteraction({ userId, agent: normalizeAgentName('AURORA'), agentName: 'Aurora Core', intentReason: 'payment_link_reset_form', input: processedText, output: _resetMsg, meta: { envelope } });
-            return;
+      if (_isPayLinkReq) {
+        console.log('[AURORA-FLOW] 💳 Solicitud de link de pago — enviando link directo sin condiciones');
+        // Limpiar form vacío si existe para evitar loops futuros
+        if (_hasAF && currentAgentForm) {
+          const _fd = currentAgentForm.form_data || currentAgentForm;
+          if (!_fd.spaceType && !_fd.date && !_fd.time) {
+            await cancelAgentForm(userId, 'AURORA', 'payment_link_requested').catch(() => {});
           }
         }
+        const _payMsg = `Aquí tienes el link de pago con tarjeta 💳\n\n🔗 *https://ppls.me/hnMI9yMRxbQ6rgIVi6L2DA*\n\n💵 Ingresa el monto de tu reserva y paga con tarjeta crédito/débito (Visa, Mastercard).\n\nCuando termines, envíame el comprobante por aquí y te confirmo ✅`;
+        await enviarWhatsApp(userId, _payMsg);
+        await saveConversationMessage(userId, { role: 'assistant', content: _payMsg, agent: 'AURORA' });
+        await saveInteraction({ userId, agent: normalizeAgentName('AURORA'), agentName: 'Aurora Core', intentReason: 'payment_link_direct', input: processedText, output: _payMsg, meta: { envelope } });
+        return;
       }
 
       // ② Formulario de reservas (progresivo, sin LLM)

@@ -123,7 +123,7 @@ export const PAULA = {
       
       enfoqueDiseno: 'Combina funcionalidad con estética y respeto por el entorno natural',
 
-      proyectoActual: profile.paulaClientId ? await getClientBySlug(profile.paulaClientId).name : 'Casas Jardín - El Morenal',
+      proyectoActual: 'Casas Jardín - El Morenal',
       
       reglasUso: [
         '⚠️ SOLO mencionar esta info si usuario pregunta específicamente sobre constructor',

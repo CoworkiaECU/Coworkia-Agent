@@ -3,6 +3,7 @@
 
 import { sendEmail } from './email.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
+import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
 /**
  * 🎨 Genera HTML template para recibo de pago (estilo formal/legal)
@@ -299,10 +300,19 @@ export async function sendPaymentReceipt(paymentData) {
 
   const htmlContent = generatePaymentReceiptHTML(paymentData);
 
+  const lang = await getUserPreferredLanguage(paymentData.memberPhone || '').catch(() => 'es');
+  const SUBJ_RECEIPT = {
+    es: `🧾 Recibo de Pago - ${paymentData.receiptNumber} - Coworkia`,
+    en: `🧾 Payment Receipt - ${paymentData.receiptNumber} - Coworkia`,
+    fr: `🧾 Reçu de Paiement - ${paymentData.receiptNumber} - Coworkia`,
+    it: `🧾 Ricevuta di Pagamento - ${paymentData.receiptNumber} - Coworkia`,
+    pt: `🧾 Recibo de Pagamento - ${paymentData.receiptNumber} - Coworkia`,
+  };
+
   const result = await sendEmail({
     from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
     to: paymentData.memberEmail,
-    subject: `🧾 Recibo de Pago - ${paymentData.receiptNumber} - Coworkia`,
+    subject: SUBJ_RECEIPT[lang] ?? SUBJ_RECEIPT.es,
     html: htmlContent
   });
 
@@ -555,11 +565,20 @@ export async function sendReservationReceiptByGabi(reservationData) {
   });
 
   const adminCC = process.env.COWORKIA_ADMIN_EMAIL || '';
+  const lang = await getUserPreferredLanguage(reservationData.clientPhone || '').catch(() => 'es');
+  const SUBJ_RSV = {
+    es: `🧾 Tu recibo de reserva ${receiptNumber} — Coworkia`,
+    en: `🧾 Your reservation receipt ${receiptNumber} — Coworkia`,
+    fr: `🧾 Votre reçu de réservation ${receiptNumber} — Coworkia`,
+    it: `🧾 La tua ricevuta di prenotazione ${receiptNumber} — Coworkia`,
+    pt: `🧾 Seu recibo de reserva ${receiptNumber} — Coworkia`,
+  };
+
   const result = await sendEmail({
     from: '"Gabi • Asesoría Legal y Contable" <secretaria.coworkia@gmail.com>',
     to: clientEmail,
     ...(adminCC ? { cc: adminCC } : {}),
-    subject: `🧾 Tu recibo de reserva ${receiptNumber} — Coworkia`,
+    subject: SUBJ_RSV[lang] ?? SUBJ_RSV.es,
     html: htmlContent
   });
 

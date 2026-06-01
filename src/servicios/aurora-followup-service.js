@@ -25,6 +25,7 @@ import {
   markRebookReminderSent
 } from '../database/auroraRepository.js';
 import { loggers } from '../utils/logger.js';
+import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
 const logger = loggers.aurora || console;
 
@@ -273,10 +274,20 @@ export async function sendAuroraD1Followups() {
         }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
+        const userLang = await getUserPreferredLanguage(r.user_phone) || 'es';
         const serviceQuestion = r.service_type === 'meeting_room'
-          ? '¿Tu reunión fue un éxito? 🎯' : '¿Tuviste un día productivo? 💪';
+          ? { es: '¿Tu reunión fue un éxito? 🎯', en: 'Was your meeting a success? 🎯', fr: 'Votre réunion a-t-elle été un succès? 🎯', it: 'La tua riunione è andata bene? 🎯', pt: 'Sua reunião foi um sucesso? 🎯', qu: '¿Tu reunión fue un éxito? 🎯' }[userLang] ?? '¿Tu reunión fue un éxito? 🎯'
+          : { es: '¿Tuviste un día productivo? 💪', en: 'Was it a productive day? 💪', fr: 'Avez-vous eu une journée productive? 💪', it: 'È stata una giornata produttiva? 💪', pt: 'Foi um dia produtivo? 💪', qu: '¿Tuviste un día productivo? 💪' }[userLang] ?? '¿Tuviste un día productivo? 💪';
 
-        const waMessage = `¡Hola ${firstName}! 😊\n\nAyer disfrutaste de tu *${serviceLabel}* en Coworkia. ${serviceQuestion}\n\nTu feedback nos ayuda a mejorar. ¿Qué calificación nos das del 1 al 5? ⭐\n\nY si quieres volver pronto, solo dime y reservo para ti 📅`;
+        const D1_MSG = {
+          es: `¡Hola ${firstName}! 😊\n\nAyer disfrutaste de tu *${serviceLabel}* en Coworkia. ${serviceQuestion}\n\nTu feedback nos ayuda a mejorar. ¿Qué calificación nos das del 1 al 5? ⭐\n\nY si quieres volver pronto, solo dime y reservo para ti 📅`,
+          en: `Hi ${firstName}! 😊\n\nYesterday you enjoyed your *${serviceLabel}* at Coworkia. ${serviceQuestion}\n\nYour feedback helps us improve. How would you rate us from 1 to 5? ⭐\n\nIf you'd like to come back soon, just let me know and I'll book for you 📅`,
+          fr: `Bonjour ${firstName}! 😊\n\nHier vous avez profité de votre *${serviceLabel}* chez Coworkia. ${serviceQuestion}\n\nVotre avis nous aide à nous améliorer. Quelle note nous donneriez-vous de 1 à 5? ⭐\n\nSi vous souhaitez revenir bientôt, dites-le moi et je réserve pour vous 📅`,
+          it: `Ciao ${firstName}! 😊\n\nIeri hai usufruito della tua *${serviceLabel}* da Coworkia. ${serviceQuestion}\n\nIl tuo feedback ci aiuta a migliorare. Che voto ci dai da 1 a 5? ⭐\n\nSe vuoi tornare presto, dimmelo e prenoto per te 📅`,
+          pt: `Olá ${firstName}! 😊\n\nOntem você aproveitou a sua *${serviceLabel}* na Coworkia. ${serviceQuestion}\n\nSeu feedback nos ajuda a melhorar. Que nota nos dá de 1 a 5? ⭐\n\nSe quiser voltar em breve, me avise e faço a reserva 📅`,
+          qu: `Napaykullayki ${firstName}! 😊\n\nAyer disfrutaste de tu *${serviceLabel}* en Coworkia. ${serviceQuestion}\n\nTu calificación nos ayuda. ¿Qué nota nos das del 1 al 5? ⭐\n\n¿Quieres volver? Solo avísame 📅`,
+        };
+        const waMessage = D1_MSG[userLang] ?? D1_MSG.es;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         if (r.user_email) {
@@ -340,7 +351,16 @@ export async function sendAuroraD3Followups() {
         else if (r.service_type === 'meeting_room') fomoLine = '👥 ¿Tienes otra reunión pendiente? Salas disponibles esta semana con horarios flexibles.';
         else fomoLine = '💡 ¿Sabías que con una *Membresía Coworkia* ahorras hasta un 40%? Pregúntame por los planes.';
 
-        const waMessage = `¡Hola ${firstName}! 🚀\n\nHan pasado 3 días desde tu visita a Coworkia. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana en Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado\n\nSolo dime qué día y hora y reservo para ti 📅`;
+        const userLangD3 = await getUserPreferredLanguage(r.user_phone) || 'es';
+        const D3_MSG = {
+          es: `¡Hola ${firstName}! 🚀\n\nHan pasado 3 días desde tu visita a Coworkia. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana en Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado\n\nSolo dime qué día y hora y reservo para ti 📅`,
+          en: `Hi ${firstName}! 🚀\n\nIt's been 3 days since your visit to Coworkia. When are you coming back?\n\n${fomoLine}\n\n📊 *This week at Coworkia:*\n✅ Premium WiFi · ☕ Unlimited coffee\n\nJust tell me what day and time and I'll book for you 📅`,
+          fr: `Bonjour ${firstName}! 🚀\n\nCela fait 3 jours depuis votre visite chez Coworkia. Quand revenez-vous?\n\n${fomoLine}\n\n📊 *Cette semaine chez Coworkia:*\n✅ WiFi premium · ☕ Café illimité\n\nDites-moi le jour et l'heure et je réserve pour vous 📅`,
+          it: `Ciao ${firstName}! 🚀\n\nSono passati 3 giorni dalla tua visita da Coworkia. Quando torni?\n\n${fomoLine}\n\n📊 *Questa settimana da Coworkia:*\n✅ WiFi premium · ☕ Caffè illimitato\n\nDimmi giorno e orario e prenoto per te 📅`,
+          pt: `Olá ${firstName}! 🚀\n\nFaz 3 dias desde a sua visita à Coworkia. Quando volta?\n\n${fomoLine}\n\n📊 *Esta semana na Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado\n\nMe diga o dia e horário e faço a reserva 📅`,
+          qu: `Napaykullayki ${firstName}! 🚀\n\nKinsa punchaumanta Coworkia-pi kashqaykimanta. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana:*\n✅ WiFi premium · ☕ Café\n\nDime el día y hora 📅`,
+        };
+        const waMessage = D3_MSG[userLangD3] ?? D3_MSG.es;
         await enviarWhatsApp(r.user_phone, waMessage);
 
         if (r.user_email) {

@@ -22,6 +22,7 @@ export const CONTACT = Object.freeze({
   phoneWhatsApp: '593994837117',       // formato wa.me (sin + ni espacios)
   whatsappUrl: 'https://wa.me/593994837117',
   email: 'coworkia.ec@gmail.com',
+  website: COWORKIA_MAPS_URL,          // URL oficial (ficha Google Maps)
 });
 
 // ── 📍 Ubicación ──────────────────────────────────────────────

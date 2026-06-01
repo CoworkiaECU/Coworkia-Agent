@@ -28,6 +28,17 @@ import { loggers } from '../utils/logger.js';
 
 const logger = loggers.aurora || console;
 
+/**
+ * 🚫 No enviar automatizaciones al teléfono de Diego/admin (pruebas internas).
+ */
+function isInternalPhone(phone) {
+  if (!phone) return false;
+  const norm = String(phone).replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
+
 // ─────────────────────────────────────────────────────────────
 // FOLLOW-UP +1H POST-RESERVA
 // ─────────────────────────────────────────────────────────────
@@ -347,6 +358,7 @@ export async function sendAuroraReminder24h() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
+        if (isInternalPhone(r.user_phone)) { logger.info(`[AURORA-24H] ⏭️ Saltando teléfono interno ${r.user_phone}`); continue; }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
@@ -403,6 +415,7 @@ export async function sendAuroraReminder2h() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
+        if (isInternalPhone(r.user_phone)) { logger.info(`[AURORA-2H] ⏭️ Saltando teléfono interno ${r.user_phone}`); continue; }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 

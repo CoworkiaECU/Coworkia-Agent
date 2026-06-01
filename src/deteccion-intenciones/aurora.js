@@ -75,7 +75,7 @@ export const AURORA = {
 • 2 horas: $29
 • Pizarra + TV + WiFi + café ☕`,
         ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:30-18h
+⏰ Lun-Vie 8:00-19h
 🚫 Cerrado: Sábados, domingos y feriados
 🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Salud - Ángela en MedBeneficios
@@ -99,7 +99,7 @@ export const AURORA = {
 • 2 hours: $29
 • Whiteboard + TV + WiFi + coffee ☕`,
         ubicacion: `📍 Whymper 403, Finistere Building, Quito
-⏰ Mon-Fri 8:30am-6pm
+⏰ Mon-Fri 8:00am-7pm
 🚫 Closed: Saturdays, Sundays and holidays
 🗺️ Map: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Health - Angela at MedBeneficios
@@ -123,7 +123,7 @@ export const AURORA = {
 • 2 heures: $29
 • Tableau blanc + TV + WiFi + café ☕`,
         ubicacion: `📍 Whymper 403, Édifice Finistere, Quito
-⏰ Lun-Ven 8h30-18h
+⏰ Lun-Ven 8h00-19h
 🚫 Fermé: Samedis, dimanches et jours fériés
 🗺️ Carte: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Santé - Angela chez MedBeneficios
@@ -153,7 +153,7 @@ export const AURORA = {
 • 2 horas: $29
 • Pizarra + TV + WiFi + café ☕`,
     ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:30-18h
+⏰ Lun-Vie 8:00-19h
 🚫 Cerrado: Sábados, domingos y feriados
 🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
     especialistas: `🏥 Salud - Ángela en MedBeneficios

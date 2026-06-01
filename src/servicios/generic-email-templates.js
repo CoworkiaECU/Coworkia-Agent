@@ -1094,7 +1094,7 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
       <!-- Lo que te espera -->
       <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:22px;">
         <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Lo que te espera 👇</div>
-        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, WiFi 300 Mbps y café ilimitado desde que llegas</div>
+        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, WiFi de alta velocidad y café ilimitado desde que llegas</div>
         <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Salas de reuniones, impresoras y toda la infraestructura disponible</div>
         <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Una comunidad de profesionales y empresarios que ya están creciendo aquí</div>
       </div>

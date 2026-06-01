@@ -11,6 +11,7 @@
 
 import { complete } from '../servicios-ia/openai.js';
 import { sendEmail, AGENT_FROM_NAMES, DEFAULT_FROM_EMAIL } from './email.js';
+import { CONTACT } from '../utils/coworkia-facts.js';
 
 // SMTP dedicado Paula/PropElite — si no hay env var, fallback al global
 const PE_FROM_EMAIL = process.env.PAULA_SMTP_USER || DEFAULT_FROM_EMAIL;
@@ -332,7 +333,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
       <div style="margin-top:18px;">
         <div style="color:#374151;font-size:13px;line-height:1.7;background:#F9F6F0;border-radius:10px;padding:14px;">
           Asesoría por <strong>Paula</strong> — PropElite Bienes Raíces<br>
-          📧 secretaria.coworkia@gmail.com &nbsp;|&nbsp; 📱 +593 98 777 0788
+          📧 secretaria.coworkia@gmail.com &nbsp;|&nbsp; 📱 ${CONTACT.phoneDisplay}
         </div>
       </div>
     </div>
@@ -346,7 +347,7 @@ function buildPaulaEmailHTML({ nombre, propiedad, esOverview, introTexto, quoteC
     </div>
 
     <div style="margin:20px 0;">
-      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">📱 WhatsApp: +593 98 777 0788</p>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">📱 WhatsApp: ${CONTACT.phoneDisplay}</p>
       <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">📧 secretaria.coworkia@gmail.com</p>
       <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:5px 0;">🇪🇨 Ecuador • 🇩🇴 República Dominicana</p>
     </div>

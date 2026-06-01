@@ -11,6 +11,7 @@
 
 import { ecosistemaTable } from './email-ecosystem.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
+import { CONTACT, WIFI } from '../utils/coworkia-facts.js';
 
 // ─── BRANDING POR AGENTE ──────────────────────────────────────────────────────
 
@@ -140,7 +141,7 @@ function buildCoworkiaFooter(branding) {
     <div style="background:${branding.gradient};padding:32px 24px;text-align:center;border-radius:0 0 12px 12px;">
       <div style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:12px;">${branding.emoji} ${branding.companyName}</div>
       <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:8px;">${branding.tagline}</div>
-      <div style="color:rgba(255,255,255,0.65);font-size:12px;">📍 Av. República del Salvador N34-183 · Quito, Ecuador · 📞 +593 98 777 0788</div>
+      <div style="color:rgba(255,255,255,0.65);font-size:12px;">📍 ${COWORKIA_ADDRESS_FULL} · 📞 ${CONTACT.phoneDisplay}</div>
     </div>`;
 }
 
@@ -207,7 +208,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
       <div style="color:#047857;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">🌟 Lo que incluye tu membresía</div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Espacio totalmente equipado</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Café y snacks ilimitados</span></div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi 300 Mbps de alta velocidad</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">${WIFI.display}</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Salas de reuniones incluidas</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Acceso en horario de oficina</span></div>
       <div style="margin:10px 0 0;background:white;border-radius:8px;padding:10px 14px;border:1px solid rgba(4,120,87,0.2);">

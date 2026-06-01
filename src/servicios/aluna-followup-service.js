@@ -16,6 +16,8 @@ import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail } from '../servicios/email.js';
 import { normalizePhoneEC } from '../utils/validators.js';
 import { loggers } from '../utils/logger.js';
+import { CONTACT, WIFI } from '../utils/coworkia-facts.js';
+import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 
 const logger = loggers.aluna || console;
 
@@ -298,7 +300,7 @@ function buildD1EmailHTML(lead) {
       <ul style="padding-left: 20px;">
         <li>✅ Oficina totalmente equipada</li>
         <li>✅ Café y snacks ilimitados</li>
-        <li>✅ WiFi de alta velocidad (200 Mbps)</li>
+        <li>✅ ${WIFI.display}</li>
         <li>✅ Salas de reuniones (uso incluido)</li>
         <li>✅ Recepción y manejo de correspondencia</li>
         <li>✅ Acceso 24/7</li>
@@ -306,19 +308,19 @@ function buildD1EmailHTML(lead) {
     </div>
     
     <p><strong>¿Cuándo te gustaría conocer el espacio?</strong></p>
-    <p>Podemos coordinar una visita guiada en el horario que mejor te venga 📅</p>
+    <p>Podemos coordinar un día de prueba gratis en el horario que mejor te venga 📅</p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://wa.me/593994837117?text=Hola,%20me%20gustaría%20agendar%20una%20visita" 
+      <a href="https://wa.me/593994837117?text=Hola,%20me%20gustaría%20coordinar%20un%20día%20de%20prueba" 
          style="display: inline-block; padding: 15px 30px; background: #25D366; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-        📱 Agendar Visita por WhatsApp
+        📱 Coordinar Día de Prueba por WhatsApp
       </a>
     </div>
     
     <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
       Coworkia Quito<br>
-      📍 Av. República del Salvador N34-183 y Suecia<br>
-      📞 +593 98 777 0788
+      📍 ${COWORKIA_ADDRESS_FULL}<br>
+      📞 ${CONTACT.phoneDisplay}
     </p>
   </div>
   

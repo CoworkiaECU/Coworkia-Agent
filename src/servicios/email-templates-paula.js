@@ -6,7 +6,7 @@
 /**
  * ✉️ Email de confirmación de visita agendada
  */
-export function generateVisitConfirmationEmail(visitData) {
+export function generateVisitConfirmationEmail(visitData, lang = 'es') {
   const {
     visitId,
     clientName,
@@ -167,8 +167,16 @@ export function generateVisitConfirmationEmail(visitData) {
 </html>
   `;
   
+  const SUBJ_CONFIRM = {
+    es: `✅ Visita Confirmada: ${propertyName} - ${formatted}`,
+    en: `✅ Visit Confirmed: ${propertyName} - ${formatted}`,
+    fr: `✅ Visite Confirmée: ${propertyName} - ${formatted}`,
+    it: `✅ Visita Confermata: ${propertyName} - ${formatted}`,
+    pt: `✅ Visita Confirmada: ${propertyName} - ${formatted}`,
+  };
+
   return {
-    subject: `✅ Visita Confirmada: ${propertyName} - ${formatted}`,
+    subject: SUBJ_CONFIRM[lang] ?? SUBJ_CONFIRM.es,
     html
   };
 }
@@ -176,7 +184,7 @@ export function generateVisitConfirmationEmail(visitData) {
 /**
  * ✉️ Email de reagendamiento de visita
  */
-export function generateRescheduleEmail(visitData) {
+export function generateRescheduleEmail(visitData, lang = 'es') {
   const {
     visitId,
     clientName,
@@ -186,8 +194,16 @@ export function generateRescheduleEmail(visitData) {
     formatted
   } = visitData;
 
+  const SUBJ_RESCHEDULE = {
+    es: `🔄 Visita Reagendada: ${propertyName} — ${formatted}`,
+    en: `🔄 Visit Rescheduled: ${propertyName} — ${formatted}`,
+    fr: `🔄 Visite Reportée: ${propertyName} — ${formatted}`,
+    it: `🔄 Visita Riprogrammata: ${propertyName} — ${formatted}`,
+    pt: `🔄 Visita Reagendada: ${propertyName} — ${formatted}`,
+  };
+
   return {
-    subject: `🔄 Visita Reagendada: ${propertyName} — ${formatted}`,
+    subject: SUBJ_RESCHEDULE[lang] ?? SUBJ_RESCHEDULE.es,
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -283,15 +299,23 @@ export function generateRescheduleEmail(visitData) {
 /**
  * ✉️ Email de cancelación de visita
  */
-export function generateCancellationEmail(visitData) {
+export function generateCancellationEmail(visitData, lang = 'es') {
   const {
     visitId,
     clientName,
     propertyName
   } = visitData;
 
+  const SUBJ_CANCEL = {
+    es: `Visita Cancelada: ${propertyName} — ${visitId}`,
+    en: `Visit Cancelled: ${propertyName} — ${visitId}`,
+    fr: `Visite Annulée: ${propertyName} — ${visitId}`,
+    it: `Visita Annullata: ${propertyName} — ${visitId}`,
+    pt: `Visita Cancelada: ${propertyName} — ${visitId}`,
+  };
+
   return {
-    subject: `Visita Cancelada: ${propertyName} — ${visitId}`,
+    subject: SUBJ_CANCEL[lang] ?? SUBJ_CANCEL.es,
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -381,7 +405,7 @@ export function generateCancellationEmail(visitData) {
 /**
  * ✉️ Email recordatorio 24h antes
  */
-export function generateReminderEmail(visitData) {
+export function generateReminderEmail(visitData, lang = 'es') {
   const {
     visitId,
     clientName,
@@ -390,8 +414,16 @@ export function generateReminderEmail(visitData) {
     formatted
   } = visitData;
 
+  const SUBJ_REMINDER = {
+    es: `🔔 Recordatorio: Tu visita mañana — ${propertyName}`,
+    en: `🔔 Reminder: Your visit tomorrow — ${propertyName}`,
+    fr: `🔔 Rappel: Votre visite demain — ${propertyName}`,
+    it: `🔔 Promemoria: La tua visita domani — ${propertyName}`,
+    pt: `🔔 Lembrete: Sua visita amanhã — ${propertyName}`,
+  };
+
   return {
-    subject: `🔔 Recordatorio: Tu visita mañana — ${propertyName}`,
+    subject: SUBJ_REMINDER[lang] ?? SUBJ_REMINDER.es,
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -504,7 +536,7 @@ export function generateReminderEmail(visitData) {
  * ✉️ Email follow-up 24h post-brochure
  * "¿Pudiste revisar el brochure?"
  */
-export function generateFollowUp24hEmail(leadData) {
+export function generateFollowUp24hEmail(leadData, lang = 'es') {
   const {
     clientName,
     propertyType,
@@ -517,8 +549,16 @@ export function generateFollowUp24hEmail(leadData) {
   const prop = propertyType || 'la propiedad';
   const zone = preferredZone || 'la zona de tu interés';
 
+  const SUBJ_24H = {
+    es: `${firstName}, ¿pudiste revisar el brochure? 🏡 — PropElite`,
+    en: `${firstName}, did you get a chance to review the brochure? 🏡 — PropElite`,
+    fr: `${firstName}, avez-vous pu consulter la brochure ? 🏡 — PropElite`,
+    it: `${firstName}, hai potuto consultare il brochure? 🏡 — PropElite`,
+    pt: `${firstName}, conseguiu ver o brochure? 🏡 — PropElite`,
+  };
+
   return {
-    subject: `${firstName}, ¿pudiste revisar el brochure? 🏡 — PropElite`,
+    subject: SUBJ_24H[lang] ?? SUBJ_24H.es,
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -622,7 +662,7 @@ export function generateFollowUp24hEmail(leadData) {
  * ✉️ Email follow-up 3 días — re-engagement
  * "Tengo opciones nuevas para ti"
  */
-export function generateFollowUp3dEmail(leadData) {
+export function generateFollowUp3dEmail(leadData, lang = 'es') {
   const {
     clientName,
     propertyType,
@@ -633,8 +673,16 @@ export function generateFollowUp3dEmail(leadData) {
   const firstName = (clientName || 'Estimado/a').split(' ')[0];
   const zone = preferredZone || 'tu zona de interés';
 
+  const SUBJ_3D = {
+    es: `${firstName}, tengo opciones nuevas en ${zone} 🏡 — PropElite`,
+    en: `${firstName}, I have new options in ${zone} 🏡 — PropElite`,
+    fr: `${firstName}, j'ai de nouvelles options à ${zone} 🏡 — PropElite`,
+    it: `${firstName}, ho nuove opzioni a ${zone} 🏡 — PropElite`,
+    pt: `${firstName}, tenho novas opções em ${zone} 🏡 — PropElite`,
+  };
+
   return {
-    subject: `${firstName}, tengo opciones nuevas en ${zone} 🏡 — PropElite`,
+    subject: SUBJ_3D[lang] ?? SUBJ_3D.es,
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -735,7 +783,7 @@ export function generateFollowUp3dEmail(leadData) {
  * ✉️ Email recordatorio follow-up 24h antes de visita (usado por cron)
  * Complementa el WA reminder con versión email
  */
-export function generateVisitReminderFollowUpEmail(visitData) {
+export function generateVisitReminderFollowUpEmail(visitData, lang = 'es') {
   const {
     clientName,
     propertyName,
@@ -759,8 +807,16 @@ export function generateVisitReminderFollowUpEmail(visitData) {
     ? `https://www.google.com/maps/search/${encodeURIComponent(propertyAddress)}`
     : '';
 
+  const SUBJ_VISIT_REM = {
+    es: `Mañana: tu visita a ${propertyName} — PropElite`,
+    en: `Tomorrow: your visit to ${propertyName} — PropElite`,
+    fr: `Demain: votre visite à ${propertyName} — PropElite`,
+    it: `Domani: la tua visita a ${propertyName} — PropElite`,
+    pt: `Amanhã: sua visita a ${propertyName} — PropElite`,
+  };
+
   return {
-    subject: `Mañana: tu visita a ${propertyName} — PropElite`,
+    subject: SUBJ_VISIT_REM[lang] ?? SUBJ_VISIT_REM.es,
     html: `<!DOCTYPE html>
 <html>
 <head>

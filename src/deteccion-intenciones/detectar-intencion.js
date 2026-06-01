@@ -18,6 +18,11 @@ import {
 } from './intent-detection-helpers.js';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AGENTES ESPECIALIZADOS (sticky: solo @mención los cambia)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SPECIALIZED_AGENTS = ['ALUNA', 'ADRIANA', 'ENZO', 'ANGELA', 'AXEL', 'GABI', 'PAULA'];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // KEYWORDS ESPECIALIZADAS (Aurora/Aluna/Paula)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -241,7 +246,12 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   }
   
   // 2.2) Detectar mensaje promocional de venta de agentes virtuales
-  const virtualAgentPromo = detectVirtualAgentSalesPromo(text);
+  // 🔒 GUARD ANTI-HIJACK: si hay un agente especializado activo (Enzo en plena
+  //    venta, Adriana, etc.) NO secuestrar la conversación hacia Aurora por una
+  //    frase promocional. El sticky de la sección 5.1 manda. Solo @mención cambia.
+  const virtualAgentPromo = SPECIALIZED_AGENTS.includes(currentAgent)
+    ? { detected: false }
+    : detectVirtualAgentSalesPromo(text);
   
   if (virtualAgentPromo.detected) {
     return {
@@ -348,8 +358,7 @@ export function detectarIntencion(inputRaw = '', currentAgent = 'AURORA', contex
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // REGLA: Solo @menciones explícitas cambian agentes especializados
   // BENEFICIO: Conversaciones no se interrumpen por keywords accidentales
-  
-  const SPECIALIZED_AGENTS = ['ALUNA', 'ADRIANA', 'ENZO', 'ANGELA', 'AXEL', 'GABI', 'PAULA'];
+  // (SPECIALIZED_AGENTS definido a nivel de módulo)
 
   // 5.0) Si AXEL está activo, seguir detectando señales relevantes sin cambiar de agente
   if (currentAgent === 'AXEL') {

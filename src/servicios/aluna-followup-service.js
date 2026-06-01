@@ -18,6 +18,7 @@ import { normalizePhoneEC } from '../utils/validators.js';
 import { loggers } from '../utils/logger.js';
 import { CONTACT, MEMBERSHIP_PLANS, WIFI } from '../utils/coworkia-facts.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
+import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
 const logger = loggers.aluna || console;
 
@@ -97,7 +98,8 @@ export async function sendD1Followups() {
         // Enviar WhatsApp al teléfono del cliente (no del admin)
         const clientPhone = resolveClientPhone(lead);
         if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
-          const whatsappMessage = buildD1WhatsAppMessage(lead);
+          const userLangD1 = await getUserPreferredLanguage(clientPhone || lead.user_phone);
+          const whatsappMessage = buildD1WhatsAppMessage(lead, userLangD1);
           await enviarWhatsApp(clientPhone, whatsappMessage);
         }
         
@@ -191,7 +193,8 @@ export async function sendD3Followups() {
         // Enviar WhatsApp con FOMO al teléfono del cliente
         const clientPhone = resolveClientPhone(lead);
         if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
-          const whatsappMessage = buildD3WhatsAppMessage(lead);
+          const userLangD3 = await getUserPreferredLanguage(clientPhone || lead.user_phone);
+          const whatsappMessage = buildD3WhatsAppMessage(lead, userLangD3);
           await enviarWhatsApp(clientPhone, whatsappMessage);
         }
         
@@ -240,11 +243,12 @@ export async function sendD3Followups() {
 /**
  * 📝 Build WhatsApp message D+1 (amigable)
  */
-function buildD1WhatsAppMessage(lead) {
+function buildD1WhatsAppMessage(lead, lang = 'es') {
   const planType = lead.interest_type === 'private_office' ? 'oficina privada' : 'hot desk';
   const price = lead.mensualidad || '300';
-  
-  return `Hola ${lead.name}! 👋
+
+  const D1_MSG = {
+    es: `Hola ${lead.name}! 👋
 
 Te recuerdo que tenemos ${planType} disponible desde $${price}/mes con todo incluido:
 
@@ -256,17 +260,77 @@ Te recuerdo que tenemos ${planType} disponible desde $${price}/mes con todo incl
 
 ¿Cuándo te gustaría conocer el espacio? 🏢
 
-Puedo mostrártelo hoy mismo o agendamos para la fecha que mejor te venga 📅`;
+Puedo mostrártelo hoy mismo o agendamos para la fecha que mejor te venga 📅`,
+
+    en: `Hi ${lead.name}! 👋
+
+Just a reminder that we have ${planType} available from $${price}/month, all-inclusive:
+
+✅ Fully equipped office
+✅ Unlimited coffee ☕
+✅ High-speed WiFi
+✅ Meeting rooms
+✅ Reception & mail handling
+
+When would you like to visit? 🏢
+
+I can show you around today or we can schedule for whatever works best 📅`,
+
+    fr: `Bonjour ${lead.name}! 👋
+
+Je vous rappelle que nous avons ${planType} disponible à partir de $${price}/mois tout inclus:
+
+✅ Bureau équipé
+✅ Café illimité ☕
+✅ WiFi haut débit
+✅ Salles de réunion
+✅ Réception et gestion du courrier
+
+Quand souhaitez-vous visiter? 🏢
+
+Je peux vous montrer l'espace aujourd'hui ou nous pouvons planifier à votre convenance 📅`,
+
+    it: `Ciao ${lead.name}! 👋
+
+Ti ricordo che abbiamo ${planType} disponibile da $${price}/mese tutto incluso:
+
+✅ Ufficio attrezzato
+✅ Caffè illimitato ☕
+✅ WiFi ad alta velocità
+✅ Sale riunioni
+✅ Reception e gestione posta
+
+Quando vorresti visitare? 🏢
+
+Posso mostrarti lo spazio oggi o pianifichiamo per quando ti è più comodo 📅`,
+
+    pt: `Olá ${lead.name}! 👋
+
+Lembrando que temos ${planType} disponível a partir de $${price}/mês com tudo incluso:
+
+✅ Escritório equipado
+✅ Café ilimitado ☕
+✅ WiFi de alta velocidade
+✅ Salas de reunião
+✅ Recepção e gestão de correspondência
+
+Quando você gostaria de conhecer o espaço? 🏢
+
+Posso mostrar hoje mesmo ou agendamos para a data que melhor te convier 📅`,
+  };
+
+  return D1_MSG[lang] ?? D1_MSG.es;
 }
 
 /**
  * 🔥 Build WhatsApp message D+3 (FOMO)
  */
-function buildD3WhatsAppMessage(lead) {
+function buildD3WhatsAppMessage(lead, lang = 'es') {
   const firstName = lead.name.split(' ')[0];
   const planType = lead.interest_type === 'private_office' ? 'oficinas privadas' : 'espacios de hot desk';
-  
-  return `${firstName}, últimas ${planType} disponibles! 🔥
+
+  const D3_MSG = {
+    es: `${firstName}, últimas ${planType} disponibles! 🔥
 
 Este mes tenemos una promoción especial:
 🎁 Primer mes con 20% de descuento
@@ -275,7 +339,54 @@ Pero solo nos quedan 2 espacios disponibles y ya varios clientes interesados.
 
 ¿Hablamos hoy? Te reservo uno antes de que se agoten 👀
 
-Responde "Sí" y coordinamos una visita para esta semana 📅`;
+Responde "Sí" y coordinamos una visita para esta semana 📅`,
+
+    en: `${firstName}, last ${planType} available! 🔥
+
+This month we have a special promotion:
+🎁 First month with 20% discount
+
+But we only have 2 spots left and several interested clients.
+
+Can we talk today? I'll reserve one for you before they're gone 👀
+
+Reply "Yes" and we'll arrange a visit this week 📅`,
+
+    fr: `${firstName}, derniers ${planType} disponibles! 🔥
+
+Ce mois-ci nous avons une promotion spéciale:
+🎁 Premier mois avec 20% de réduction
+
+Mais il ne nous reste que 2 espaces et plusieurs clients intéressés.
+
+On peut parler aujourd'hui? Je vous en réserve un avant qu'ils soient pris 👀
+
+Répondez "Oui" et on organise une visite cette semaine 📅`,
+
+    it: `${firstName}, ultimi ${planType} disponibili! 🔥
+
+Questo mese abbiamo una promozione speciale:
+🎁 Primo mese con 20% di sconto
+
+Ma abbiamo solo 2 posti rimasti e diversi clienti interessati.
+
+Possiamo parlare oggi? Te ne riservo uno prima che finiscano 👀
+
+Rispondi "Sì" e organizziamo una visita questa settimana 📅`,
+
+    pt: `${firstName}, últimos ${planType} disponíveis! 🔥
+
+Este mês temos uma promoção especial:
+🎁 Primeiro mês com 20% de desconto
+
+Mas só temos 2 espaços disponíveis e vários clientes interessados.
+
+Podemos conversar hoje? Reservo um para você antes que acabem 👀
+
+Responda "Sim" e marcamos uma visita esta semana 📅`,
+  };
+
+  return D3_MSG[lang] ?? D3_MSG.es;
 }
 
 /**

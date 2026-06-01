@@ -106,6 +106,86 @@ export async function getMarketingLeadsStats() {
 export const getMarketingLeadsByType = (projectType) => _base.getByType('project_type', projectType);
 
 /**
+ * 🎯 Captura automática de lead de marketing desde conversación con Enzo.
+ *
+ * Se invoca en cada turno de conversación con Enzo (activeAgent === 'ENZO').
+ * Si detecta intención de servicio (keywords), crea/actualiza un lead en
+ * marketing_leads de forma idempotente por user_phone. Así un prospecto
+ * queda registrado en el dashboard aunque nunca llegue a #PROCESS_FORM.
+ *
+ * Excluye el teléfono de Diego/admin (no son leads reales).
+ *
+ * @param {string} userPhone  - Teléfono del prospecto
+ * @param {string} userName   - Nombre conocido (o 'Sin nombre')
+ * @param {string} messageText - Texto del mensaje del usuario
+ * @returns {Promise<{id:string, created?:boolean, updated?:boolean}|null>}
+ */
+export async function captureEnzoLeadFromKeywords(userPhone, userName, messageText) {
+  await databaseService.ensureInitialized();
+
+  // 🚫 Excluir admin / Diego — no son leads reales
+  const norm = String(userPhone || '').replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  if (!norm || (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm)) {
+    return null;
+  }
+
+  // Keywords de intención de servicio (marketing / IA / software)
+  const ENZO_KEYWORDS = [
+    'agente virtual', 'agente ia', 'chatbot', 'bot', 'automatizar', 'automatización', 'automatizacion',
+    'marketing', 'campaña', 'campania', 'meta ads', 'google ads', 'publicidad', 'redes sociales',
+    'software', 'sistema', 'aplicación', 'aplicacion', 'app', 'página web', 'pagina web', 'landing',
+    'inteligencia artificial', 'crm', 'pos', 'dashboard', 'cotización', 'cotizacion', 'cotizar',
+    'presupuesto', 'proyecto', 'lead', 'leads', 'vender', 'ventas', 'captar', 'captación', 'captacion'
+  ];
+  const textLower = (messageText || '').toLowerCase();
+  const matched = ENZO_KEYWORDS.filter(kw => textLower.includes(kw));
+  if (matched.length === 0) return null; // sin señal de servicio → no crear lead
+
+  try {
+    const existing = await databaseService.get(
+      'SELECT id FROM marketing_leads WHERE user_phone = $1',
+      [userPhone]
+    );
+
+    if (existing) {
+      await databaseService.run(
+        `UPDATE marketing_leads SET updated_at = CURRENT_TIMESTAMP WHERE user_phone = $1`,
+        [userPhone]
+      );
+      console.log(`[ENZO-CAPTURE] 🔄 Lead existente actualizado: ${userPhone}`);
+      return { id: existing.id, updated: true };
+    }
+
+    const id = uuidv4();
+    const projectCode = `MKT-WS-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const placeholderEmail = `wassenger+${norm}@coworkia.space`;
+
+    await databaseService.run(
+      `INSERT INTO marketing_leads (
+        id, project_code, user_phone, project_type,
+        company, client_name, email, phone,
+        budget_range, urgency, description, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        id, projectCode, userPhone, 'Consulta inicial',
+        null, userName || 'Sin nombre', placeholderEmail, userPhone,
+        'Por definir', 'Normal',
+        `Capturado automáticamente desde conversación con Enzo. Keywords: ${matched.join(', ')}. Mensaje: ${(messageText || '').substring(0, 200)}`,
+        'pending'
+      ]
+    );
+
+    console.log(`[ENZO-CAPTURE] ✅ Nuevo lead capturado: ${projectCode} (${userName || userPhone})`);
+    return { id, projectCode, created: true };
+  } catch (err) {
+    console.warn('[ENZO-CAPTURE] ⚠️ Error capturando lead (no crítico):', err.message);
+    return null;
+  }
+}
+
+/**
  * 🎯 Obtener leads urgentes
  */
 export async function getUrgentMarketingLeads() {
@@ -131,6 +211,7 @@ export default {
   getMarketingLeadsStats,
   getMarketingLeadsByType,
   getUrgentMarketingLeads,
+  captureEnzoLeadFromKeywords,
   findLeadsForEnzoD1Followup,
   findLeadsForEnzoD3Followup,
   findLeadsForEnzoD7Followup,

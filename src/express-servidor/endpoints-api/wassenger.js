@@ -2610,6 +2610,14 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       } catch (enzoErr) {
         console.error('[ENZO-FLOW] ❌ Error en flujo consultivo, fallback al LLM:', enzoErr.message);
       }
+      // 🆕 Auto-captura de lead: registra al prospecto en marketing_leads aunque
+      //    no llegue a #PROCESS_FORM (excluye Diego/admin internamente).
+      try {
+        const enzoLeadName = profile?.nombre || envelope?.from?.name || 'Sin nombre';
+        await enzoRepository.captureEnzoLeadFromKeywords(userId, enzoLeadName, processedText);
+      } catch (captureErr) {
+        console.warn('[ENZO-CAPTURE] ⚠️ Error en auto-captura (no crítico):', captureErr.message);
+      }
       // → Conversaciones normales fluyen al orquestador con Enzo system prompt + history
     }
 

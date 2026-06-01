@@ -2,6 +2,8 @@
 // Extraído de enzo.js para mejor mantenibilidad
 // Última actualización: 2026-02-12
 
+import { MEMBERSHIP_PLANS, HOURS } from '../utils/coworkia-facts.js';
+
 export const conocimientoEnzo = {
   marketing: {
     canales: ['Meta Ads', 'Google Ads', 'TikTok', 'WhatsApp Business', 'Email'],
@@ -231,11 +233,12 @@ ROI: Ahorras 1 recepcionista = $600-800/mes + disponibilidad 24/7
       
       modeloNegocio: {
         tipo: 'Membresías recurrentes (ingreso predecible)',
+        // Precios/horario derivados de la fuente única de verdad (coworkia-facts.js)
         planesQueVende: {
-          plan10: '$140/mes (11 días Hot Desk, entrada libre todo el día 8:30am-6pm)',
-          plan20: '$265/mes (22 días Hot Desk, entrada libre todo el día)',
-          oficinaVirtual: '$365/año (dirección comercial + gestión de correo)',
-          salaReuniones: '$39 por sesión 2h para miembros'
+          plan10: `${MEMBERSHIP_PLANS.plan10.priceDisplay} (11 días Hot Desk, entrada libre todo el día, ${HOURS.display})`,
+          plan20: `${MEMBERSHIP_PLANS.plan20.priceDisplay} (22 días Hot Desk, entrada libre todo el día)`,
+          oficinaVirtual: `${MEMBERSHIP_PLANS.oficinavirtual.priceDisplay} (dirección comercial + gestión de correo)`,
+          salaReuniones: `${MEMBERSHIP_PLANS.salareuniones.priceDisplay} 2h para miembros`
         },
         tasaConversion: '20% de usuarios gratuitos → miembros',
         roiCoworkia: 'Cada miembro Plan 10 = $1,680/año vs $10-30 por visita única',
@@ -246,7 +249,7 @@ ROI: Ahorras 1 recepcionista = $600-800/mes + disponibilidad 24/7
         {
           titulo: 'Usuario frecuente sin membresía',
           escenario: 'Usuario ha visitado 3 veces pagando $10 cada vez (2 horas por visita) 💳',
-          flujo: 'Aluna: "Hola Diego! 👋 Vi que has venido 3 veces este mes pagando $10 por 2 horas ⏰\n\n¿Sabías que con el Plan 10 pagas $140 por 11 días pero con ENTRADA LIBRE TODO EL DÍA? 🎯🔓\n\nEn lugar de 2 horas, puedes estar de 8:30am a 6pm cuando quieras ☀️🌙\n\nSi sigues viniendo 3 veces/mes pero quedándote todo el día = trabajas 24-30 horas vs 6 horas actuales 📈 ROI: 4x más productividad por solo $40 adicionales 💪"',
+          flujo: 'Aluna: "Hola Diego! 👋 Vi que has venido 3 veces este mes pagando $10 por 2 horas ⏰\n\n¿Sabías que con el Plan 10 pagas $140 por 11 días pero con ENTRADA LIBRE TODO EL DÍA? 🎯🔓\n\nEn lugar de 2 horas, puedes estar de 8:00am a 7pm cuando quieras ☀️🌙\n\nSi sigues viniendo 3 veces/mes pero quedándote todo el día = trabajas 24-30 horas vs 6 horas actuales 📈 ROI: 4x más productividad por solo $40 adicionales 💪"',
           resultado: 'Usuario ve el ahorro claro, convierte a Plan 10 ✅'
         },
         {
@@ -258,7 +261,7 @@ ROI: Ahorras 1 recepcionista = $600-800/mes + disponibilidad 24/7
         {
           titulo: 'Manejo de objeción "muy caro"',
           escenario: 'Usuario: "El Plan 10 me parece caro, prefiero pagar por visita" 💸',
-          flujo: 'Aluna: "Te entiendo perfectamente! 😊 Déjame mostrarte la diferencia real:\n\n**VISITA SUELTA:** 🎫\n• $10 por 2 horas ⏰\n• 10 visitas de 2h = $100/mes (20 horas totales) 📊\n\n**PLAN 10:** 🎟️\n• $140/mes por 11 días 📅\n• ENTRADA LIBRE TODO EL DÍA (8:30am-6pm) 🔓☀️\n• Si vienes 1 día completo = 8-9 horas vs 2 horas ⏳\n• Puedes trabajar 80-100 horas/mes vs 20 horas 🚀\n\nLa diferencia no es solo el precio, es FLEXIBILIDAD TOTAL: 💎\n✅ Entras y sales cuando quieras 🚪\n✅ No estás limitado a 2 horas ⏰\n✅ Sin reservas (ya tienes tu día garantizado) 📅\n\n¿Cuánto vale poder trabajar todo el día sin estrés vs estar corriendo contra el reloj de 2 horas? 🤔💡"',
+          flujo: 'Aluna: "Te entiendo perfectamente! 😊 Déjame mostrarte la diferencia real:\n\n**VISITA SUELTA:** 🎫\n• $10 por 2 horas ⏰\n• 10 visitas de 2h = $100/mes (20 horas totales) 📊\n\n**PLAN 10:** 🎟️\n• $140/mes por 11 días 📅\n• ENTRADA LIBRE TODO EL DÍA (8:00am-7pm) 🔓☀️\n• Si vienes 1 día completo = 8-9 horas vs 2 horas ⏳\n• Puedes trabajar 80-100 horas/mes vs 20 horas 🚀\n\nLa diferencia no es solo el precio, es FLEXIBILIDAD TOTAL: 💎\n✅ Entras y sales cuando quieras 🚪\n✅ No estás limitado a 2 horas ⏰\n✅ Sin reservas (ya tienes tu día garantizado) 📅\n\n¿Cuánto vale poder trabajar todo el día sin estrés vs estar corriendo contra el reloj de 2 horas? 🤔💡"',
           resultado: 'Usuario ve el valor más allá del precio 💯'
         }
       ],

@@ -32,15 +32,14 @@ async function checkOpenAI() {
     return true;
   }
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15s — margen para red de eco dyno
 
+  try {
     const res = await fetch('https://api.openai.com/v1/models?limit=1', {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: controller.signal,
     });
-    clearTimeout(timeout);
 
     if (res.ok || res.status === 429) {
       // 429 = rate limited → servicio UP
@@ -50,6 +49,12 @@ async function checkOpenAI() {
 
     throw new Error(`HTTP ${res.status}`);
   } catch (err) {
+    if (err.name === 'AbortError') {
+      // Timeout de red: OpenAI lento pero no necesariamente caído — no genera ERROR CRÍTICO
+      console.warn('[HEALTH] ⏱️ OpenAI check timeout (>15s) — lentitud de red, no se genera alerta');
+      return false;
+    }
+
     failCounters.openai++;
     console.warn(`[HEALTH] ❌ OpenAI check failed (${failCounters.openai}/${FAIL_THRESHOLD}):`, err.message);
 
@@ -58,6 +63,8 @@ async function checkOpenAI() {
       failCounters.openai = 0; // Reset para no re-notificar en cada ciclo hasta que vuelva a fallar
     }
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -172,3 +179,13 @@ export function stopHealthMonitor() {
 export function getLastStatus() {
   return { ..._lastStatus };
 }
+
+/** @internal Solo para tests unitarios */
+export function _resetCountersForTest() {
+  failCounters.openai = 0;
+  failCounters.db = 0;
+  failCounters.wassenger = 0;
+}
+
+/** @internal Solo para tests unitarios */
+export { checkOpenAI as _checkOpenAI };

@@ -32,8 +32,9 @@ jest.unstable_mockModule('../../src/express-servidor/endpoints-api/wassenger.js'
 const mockSendEmail = jest.fn().mockResolvedValue({ messageId: 'test-id' });
 jest.unstable_mockModule('../../src/servicios/email.js', () => ({
   sendEmail: mockSendEmail,
+  getAdminCC: jest.fn(() => []),
   DEFAULT_FROM_EMAIL: 'test@coworkia.com',
-  AGENT_FROM_NAMES: { adriana: 'Adriana · SegPopular' },
+  AGENT_FROM_NAMES: { adriana: 'Adriana · SegPopular', aluna: 'Aluna · Coworkia' },
 }));
 
 // ─── Mock email-template-system ──────────────────────────────────────────────

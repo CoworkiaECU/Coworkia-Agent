@@ -29,7 +29,7 @@ import { loggers } from '../utils/logger.js';
 const logger = loggers.aurora || console;
 
 /**
- * 🚫 No enviar automatizaciones al teléfono de Diego/admin (pruebas internas).
+ * 🚫 No enviar automatizaciones a teléfonos internos definidos por configuración.
  */
 function isInternalPhone(phone) {
   if (!phone) return false;
@@ -37,6 +37,17 @@ function isInternalPhone(phone) {
   const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
   const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
   return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
+
+function describeAutomationTarget(record) {
+  const id = record?.id || record?.last_reservation_id;
+  return id ? `reserva ${id}` : 'contacto sin id';
+}
+
+function shouldSkipInternalAutomation(record, scope) {
+  if (!isInternalPhone(record?.user_phone)) return false;
+  logger.info(`[${scope}] ⏭️ Saltando contacto interno (${describeAutomationTarget(record)})`);
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -65,20 +76,24 @@ export async function sendOneHourFollowups() {
 
     for (const reservation of reservations) {
       try {
+        if (shouldSkipInternalAutomation(reservation, 'AURORA-FOLLOWUP')) {
+          await markFollowup1hSent(reservation.id);
+          continue;
+        }
         const waMessage = buildOneHourWhatsApp(reservation);
         await enviarWhatsApp(reservation.user_phone, waMessage);
 
         await markFollowup1hSent(reservation.id);
         sent++;
 
-        logger.info(`[AURORA-FOLLOWUP] ✅ +1h enviado: ${reservation.user_phone} (${reservation.service_type})`);
+        logger.info(`[AURORA-FOLLOWUP] ✅ +1h enviado: ${describeAutomationTarget(reservation)} (${reservation.service_type})`);
 
         // Delay entre envíos
         await new Promise(resolve => setTimeout(resolve, 1500));
 
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-FOLLOWUP] ❌ Error +1h (${reservation.user_phone}):`, err);
+        logger.error(`[AURORA-FOLLOWUP] ❌ Error +1h (${describeAutomationTarget(reservation)}):`, err);
       }
     }
 
@@ -117,18 +132,22 @@ export async function sendRebookingReminders() {
 
     for (const reservation of reservations) {
       try {
+        if (shouldSkipInternalAutomation(reservation, 'AURORA-FOLLOWUP')) {
+          await markRebookReminderSent(reservation.id);
+          continue;
+        }
         const waMessage = buildRebookingWhatsApp(reservation);
         await enviarWhatsApp(reservation.user_phone, waMessage);
 
         await markRebookReminderSent(reservation.id);
         sent++;
 
-        logger.info(`[AURORA-FOLLOWUP] ✅ D+7 enviado: ${reservation.user_phone}`);
+        logger.info(`[AURORA-FOLLOWUP] ✅ D+7 enviado: ${describeAutomationTarget(reservation)}`);
         await new Promise(resolve => setTimeout(resolve, 1500));
 
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-FOLLOWUP] ❌ Error D+7 (${reservation.user_phone}):`, err);
+        logger.error(`[AURORA-FOLLOWUP] ❌ Error D+7 (${describeAutomationTarget(reservation)}):`, err);
       }
     }
 
@@ -155,20 +174,28 @@ export async function sendRebookingReminders() {
  * Envía follow-up +1h a una reserva específica (uso manual desde dashboard)
  */
 export async function sendOneHourFollowup(reservation) {
+  if (shouldSkipInternalAutomation(reservation, 'AURORA-FOLLOWUP')) {
+    await markFollowup1hSent(reservation.id);
+    return { success: true, skipped: true };
+  }
   const waMessage = buildOneHourWhatsApp(reservation);
   await enviarWhatsApp(reservation.user_phone, waMessage);
   await markFollowup1hSent(reservation.id);
-  logger.info(`[AURORA-FOLLOWUP] ✅ +1h manual enviado: ${reservation.user_phone}`);
+  logger.info(`[AURORA-FOLLOWUP] ✅ +1h manual enviado: ${describeAutomationTarget(reservation)}`);
 }
 
 /**
  * Envía recordatorio de re-booking a una reserva específica (uso manual desde dashboard)
  */
 export async function sendRebookingReminder(reservation) {
+  if (shouldSkipInternalAutomation(reservation, 'AURORA-FOLLOWUP')) {
+    await markRebookReminderSent(reservation.id);
+    return { success: true, skipped: true };
+  }
   const waMessage = buildRebookingWhatsApp(reservation);
   await enviarWhatsApp(reservation.user_phone, waMessage);
   await markRebookReminderSent(reservation.id);
-  logger.info(`[AURORA-FOLLOWUP] ✅ D+7 manual enviado: ${reservation.user_phone}`);
+  logger.info(`[AURORA-FOLLOWUP] ✅ D+7 manual enviado: ${describeAutomationTarget(reservation)}`);
 }
 
 function buildOneHourWhatsApp(reservation) {
@@ -240,6 +267,10 @@ export async function sendAuroraD1Followups() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
+        if (shouldSkipInternalAutomation(r, 'AURORA-D1')) {
+          await databaseService.run(`UPDATE reservations SET followup_d1_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const serviceQuestion = r.service_type === 'meeting_room'
@@ -260,7 +291,7 @@ export async function sendAuroraD1Followups() {
         await new Promise(resolve => setTimeout(resolve, 2500));
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-D1] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-D1] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-D1] 📊 D+1: ${sent} enviados, ${errors} fallidos`);
@@ -296,6 +327,10 @@ export async function sendAuroraD3Followups() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
+        if (shouldSkipInternalAutomation(r, 'AURORA-D3')) {
+          await databaseService.run(`UPDATE reservations SET followup_d3_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const wasFree = parseFloat(r.total_price || 0) === 0;
@@ -323,7 +358,7 @@ export async function sendAuroraD3Followups() {
         await new Promise(resolve => setTimeout(resolve, 2500));
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-D3] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-D3] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-D3] 📊 D+3: ${sent} enviados, ${errors} fallidos`);
@@ -358,7 +393,10 @@ export async function sendAuroraReminder24h() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
-        if (isInternalPhone(r.user_phone)) { logger.info(`[AURORA-24H] ⏭️ Saltando teléfono interno ${r.user_phone}`); continue; }
+        if (shouldSkipInternalAutomation(r, 'AURORA-24H')) {
+          await databaseService.run(`UPDATE reservations SET reminder_24h_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
@@ -378,7 +416,7 @@ export async function sendAuroraReminder24h() {
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-24H] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-24H] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-24H] 📊 24h: ${sent} enviados, ${errors} fallidos`);
@@ -415,7 +453,10 @@ export async function sendAuroraReminder2h() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
-        if (isInternalPhone(r.user_phone)) { logger.info(`[AURORA-2H] ⏭️ Saltando teléfono interno ${r.user_phone}`); continue; }
+        if (shouldSkipInternalAutomation(r, 'AURORA-2H')) {
+          await databaseService.run(`UPDATE reservations SET reminder_2h_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
 
@@ -427,7 +468,7 @@ export async function sendAuroraReminder2h() {
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-2H] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-2H] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-2H] 📊 2h: ${sent} enviados, ${errors} fallidos`);
@@ -465,6 +506,10 @@ export async function sendAuroraReminder10min() {
     let sent = 0, errors = 0;
     for (const r of reservations) {
       try {
+        if (shouldSkipInternalAutomation(r, 'AURORA-10MIN')) {
+          await databaseService.run(`UPDATE reservations SET reminder_10min_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : '';
         const assignedDesks = normalizeHotDeskNumbers(r.hot_desk_numbers, r.hot_desk_number);
@@ -485,7 +530,7 @@ export async function sendAuroraReminder10min() {
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (err) {
         errors++;
-        logger.error(`[AURORA-10MIN] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-10MIN] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-10MIN] 📊 10min: ${sent} enviados, ${errors} fallidos`);
@@ -523,6 +568,10 @@ export async function detectAuroraNoShows() {
     let sent = 0;
     for (const r of noShows) {
       try {
+        if (shouldSkipInternalAutomation(r, 'AURORA-NOSHOW')) {
+          await databaseService.run(`UPDATE reservations SET no_show_detected_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const wasFree = parseFloat(r.total_price || 0) === 0;
         const freeNote = wasFree ? '\n🎁 Tu visita gratis sigue disponible. Reagenda cuando quieras.' : '';
@@ -574,6 +623,10 @@ export async function sendAuroraUpsellAluna() {
     let sent = 0;
     for (const u of powerUsers) {
       try {
+        if (shouldSkipInternalAutomation(u, 'AURORA-UPSELL')) {
+          await databaseService.run(`UPDATE reservations SET upsell_aluna_sent_at = NOW() WHERE id = $1`, [u.last_reservation_id]);
+          continue;
+        }
         const firstName = u.user_name ? u.user_name.split(' ')[0] : 'amig@';
         const totalGastado = parseFloat(u.total_gastado || 0);
         const alunaGoldCost = 180;
@@ -591,7 +644,7 @@ export async function sendAuroraUpsellAluna() {
         sent++;
         await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (err) {
-        logger.error(`[AURORA-UPSELL] ❌ Error ${u.user_phone}:`, err.message);
+        logger.error(`[AURORA-UPSELL] ❌ Error ${describeAutomationTarget(u)}:`, err.message);
       }
     }
     logger.info(`[AURORA-UPSELL] 📊 ${sent} upsells enviados`);
@@ -628,6 +681,10 @@ export async function sendAuroraPaymentReminders() {
     let sent = 0;
     for (const r of pending) {
       try {
+        if (shouldSkipInternalAutomation(r, 'AURORA-PAY')) {
+          await databaseService.run(`UPDATE reservations SET payment_reminder_sent_at = NOW() WHERE id = $1`, [r.id]);
+          continue;
+        }
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const serviceLabel = getServiceLabelLegacy(r.service_type);
 
@@ -638,7 +695,7 @@ export async function sendAuroraPaymentReminders() {
         sent++;
         await new Promise(resolve => setTimeout(resolve, 2500));
       } catch (err) {
-        logger.error(`[AURORA-PAY] ❌ Error ${r.user_phone}:`, err.message);
+        logger.error(`[AURORA-PAY] ❌ Error ${describeAutomationTarget(r)}:`, err.message);
       }
     }
     logger.info(`[AURORA-PAY] 📊 ${sent} recordatorios de pago enviados`);

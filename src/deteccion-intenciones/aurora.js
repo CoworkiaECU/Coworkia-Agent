@@ -1,6 +1,12 @@
 // Aurora: Núcleo operativo de Coworkia - Orquestadora de agentes
 // VERSIÓN LIMPIA v230 - Sin parches
 
+import { FREE_TRIALS, HOURS } from '../utils/coworkia-facts.js';
+
+const AURORA_HOURS_ES = HOURS.display;
+const AURORA_HOURS_EN = `Mon-Fri ${HOURS.open}–${HOURS.close}`;
+const AURORA_HOURS_FR = `Lun-Ven ${HOURS.open}–${HOURS.close}`;
+
 export const AURORA = {
   nombre: 'Aurora',
   rol: 'Recepcionista y Coordinadora de Coworkia',
@@ -66,7 +72,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 1 reserva = 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
+• Primera visita GRATIS 🎁 (${FREE_TRIALS.aurora.duration}, ${AURORA_HOURS_ES})`,
           sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 1 reserva = 2 horas: $10
 • WiFi + café ☕`
@@ -75,7 +81,7 @@ export const AURORA = {
 • 2 horas: $29
 • Pizarra + TV + WiFi + café ☕`,
         ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:00-19h
+⏰ ${AURORA_HOURS_ES}
 🚫 Cerrado: Sábados, domingos y feriados
 🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Salud - Ángela en MedBeneficios
@@ -90,7 +96,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
 • 2 hours: $10
 • WiFi + coffee ☕
-• First visit FREE 🎁 (8:00am–12:00pm)`,
+• First visit FREE 🎁 (${AURORA_HOURS_EN})`,
           sinPrimeraVisita: `💻 Hot Desk (Shared desk - 1 person)
 • 2 hours: $10
 • WiFi + coffee ☕`
@@ -99,7 +105,7 @@ export const AURORA = {
 • 2 hours: $29
 • Whiteboard + TV + WiFi + coffee ☕`,
         ubicacion: `📍 Whymper 403, Finistere Building, Quito
-⏰ Mon-Fri 8:00am-7pm
+⏰ ${AURORA_HOURS_EN}
 🚫 Closed: Saturdays, Sundays and holidays
 🗺️ Map: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Health - Angela at MedBeneficios
@@ -114,7 +120,7 @@ export const AURORA = {
           conPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
 • 2 heures: $10
 • WiFi + café ☕
-• Première visite GRATUITE 🎁 (8h00–12h00)`,
+• Première visite GRATUITE 🎁 (${AURORA_HOURS_FR})`,
           sinPrimeraVisita: `💻 Hot Desk (Bureau partagé - 1 personne)
 • 2 heures: $10
 • WiFi + café ☕`
@@ -123,7 +129,7 @@ export const AURORA = {
 • 2 heures: $29
 • Tableau blanc + TV + WiFi + café ☕`,
         ubicacion: `📍 Whymper 403, Édifice Finistere, Quito
-⏰ Lun-Ven 8h00-19h
+⏰ ${AURORA_HOURS_FR}
 🚫 Fermé: Samedis, dimanches et jours fériés
 🗺️ Carte: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
         especialistas: `🏥 Santé - Angela chez MedBeneficios
@@ -144,7 +150,7 @@ export const AURORA = {
       conPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 1 reserva = 2 horas: $10
 • WiFi + café ☕
-• Primera visita GRATIS 🎁 (horario 08:00–12:00)`,
+• Primera visita GRATIS 🎁 (${FREE_TRIALS.aurora.duration}, ${AURORA_HOURS_ES})`,
       sinPrimeraVisita: `💻 Hot Desk (Escritorio compartido - 1 persona)
 • 1 reserva = 2 horas: $10
 • WiFi + café ☕`
@@ -153,7 +159,7 @@ export const AURORA = {
 • 2 horas: $29
 • Pizarra + TV + WiFi + café ☕`,
     ubicacion: `📍 Whymper 403, Edificio Finistere, Quito
-⏰ Lun-Vie 8:00-19h
+⏰ ${AURORA_HOURS_ES}
 🚫 Cerrado: Sábados, domingos y feriados
 🗺️ Mapa: https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`,
     especialistas: `🏥 Salud - Ángela en MedBeneficios
@@ -185,7 +191,7 @@ Ejemplo:
       },
       prueba: {
         nombre: '2 Horas Gratis',
-        condicion: 'Primera visita, Hot Desk, horario 08:00–12:00, previa reserva',
+        condicion: `${FREE_TRIALS.aurora.label}, Hot Desk, ${AURORA_HOURS_ES}, previa reserva`,
         proceso: 'Agendar con Aurora, confirmar asistencia'
       }
     },
@@ -403,7 +409,7 @@ RESPONDE EXACTAMENTE:
 Coordinamos espacios de coworking + red de especialistas en múltiples áreas:
 
 🏢 ESPACIOS DE TRABAJO:
-• Hot Desk: $10/2h ${freeTrialUsed ? '' : '(primera visita GRATIS 🎁 horario 08:00–12:00)'}
+• Hot Desk: $10/2h ${freeTrialUsed ? '' : `(${FREE_TRIALS.aurora.label} 🎁 ${AURORA_HOURS_ES})`}
 • Sala Reuniones: $29/2h (3-4 personas)
 
 👥 ESPECIALISTAS DISPONIBLES:

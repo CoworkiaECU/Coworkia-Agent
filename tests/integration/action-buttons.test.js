@@ -22,6 +22,11 @@ const mockDB = {
 
 jest.unstable_mockModule('../../src/database/database.js', () => ({ default: mockDB }));
 
+// ─── Mock user memory ────────────────────────────────────────────────────────
+jest.unstable_mockModule('../../src/perfiles-interacciones/memoria-sqlite.js', () => ({
+  getUserPreferredLanguage: jest.fn().mockResolvedValue('es'),
+}));
+
 // ─── Mock Wassenger ───────────────────────────────────────────────────────────
 const mockEnviarWhatsApp = jest.fn().mockResolvedValue({ ok: true });
 jest.unstable_mockModule('../../src/express-servidor/endpoints-api/wassenger.js', () => ({

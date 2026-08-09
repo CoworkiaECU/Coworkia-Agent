@@ -13,6 +13,16 @@ import { ecosistemaTable } from './email-ecosystem.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 import { CONTACT, WIFI } from '../utils/coworkia-facts.js';
 
+function escapeHtml(value = '') {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
+
 // ─── BRANDING POR AGENTE ──────────────────────────────────────────────────────
 
 export const AGENT_BRANDING = {
@@ -160,6 +170,10 @@ function buildCoworkiaFooter(branding) {
 export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
+  const safeFirstName = firstName ? escapeHtml(firstName) : null;
+  const safeDisplayName = escapeHtml(displayName);
+  const safeMessage = escapeHtml(message);
+  const safePlan = escapeHtml(plan);
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero agendar mi visita gratuita a Coworkia`);
 
   return `<!DOCTYPE html>
@@ -183,9 +197,9 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
     <!-- Card blanca con nombre del cliente -->
     <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
       <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;text-align:center;">· SEGUIMIENTO DE MEMBRESÍA ·</div>
-      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:12px;text-align:center;">${displayName}</div>` : ''}
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:12px;text-align:center;">${safeDisplayName}</div>` : ''}
       <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:10px 0;margin-bottom:10px;text-align:center;">
-        <span style="font-size:16px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:15px;font-weight:700;vertical-align:middle;">${plan}</strong>
+        <span style="font-size:16px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:15px;font-weight:700;vertical-align:middle;">${safePlan}</strong>
       </div>
       <div style="color:#047857;font-size:12px;font-weight:600;text-align:center;">Aluna · Especialista en Membresías</div>
     </div>
@@ -196,12 +210,12 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 
     <!-- Saludo personalizado -->
     <div style="text-align:center;margin-bottom:24px;">
-      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName ? `¡Hola ${firstName}! 👋` : '¡Hola! 👋'}</h2>
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${safeFirstName ? `¡Hola ${safeFirstName}! 👋` : '¡Hola! 👋'}</h2>
       <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">Te damos seguimiento a tu interés en Coworkia</p>
     </div>
 
     <!-- Mensaje del operador -->
-    <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:28px;">${message}</div>
+    <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:28px;">${safeMessage}</div>
 
     <!-- Card de beneficios — misma paleta verde -->
     <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px;margin-bottom:28px;">
@@ -212,14 +226,14 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Salas de reuniones incluidas</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Acceso en horario de oficina</span></div>
       <div style="margin:10px 0 0;background:white;border-radius:8px;padding:10px 14px;border:1px solid rgba(4,120,87,0.2);">
-        <span style="font-size:16px;">🎁</span>&nbsp;&nbsp;<strong style="color:#047857;font-size:14px;">Primera semana de prueba GRATIS</strong>
+        <span style="font-size:16px;">🎁</span>&nbsp;&nbsp;<strong style="color:#047857;font-size:14px;">Primera visita de prueba GRATIS</strong>
       </div>
     </div>
 
     <!-- CTA — mismo estilo que la proforma -->
     <div style="text-align:center;margin-bottom:28px;">
       <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Tu espacio ideal te está esperando</p>
-      <a href="https://wa.me/593994837117?text=${waText}"
+      <a href="${CONTACT.whatsappUrl}?text=${waText}"
          style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:14px 32px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:15px;">
         🏢 Sí, quiero conocer Coworkia esta semana →
       </a>
@@ -242,7 +256,7 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         ${COWORKIA_ADDRESS_FULL}<br>
-        coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+        ${CONTACT.email} &nbsp;·&nbsp; ${CONTACT.phoneDisplay}
       </div>
     </div>
   </div>
@@ -265,6 +279,9 @@ export function buildAlunaD1HTML({ name, message, plan = 'Membresía Coworkia' }
 export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : null;
   const displayName = name || '';
+  const safeFirstName = firstName ? escapeHtml(firstName) : null;
+  const safeDisplayName = escapeHtml(displayName);
+  const safeMessage = escapeHtml(message);
   const waText = encodeURIComponent(`¡Hola @aluna!, quiero reservar mi espacio en Coworkia antes de que se agoten`);
 
   return `<!DOCTYPE html>
@@ -288,7 +305,7 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
     <!-- Card blanca con urgencia -->
     <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
       <div style="background:#DC2626;color:white;display:inline-block;padding:4px 14px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⚠️ ÚLTIMA OPORTUNIDAD</div>
-      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${displayName}</div>` : ''}
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${safeDisplayName}</div>` : ''}
       <div style="color:#DC2626;font-size:14px;font-weight:700;margin-bottom:8px;">Solo quedan 2–3 espacios este mes</div>
       <div style="color:#047857;font-size:12px;font-weight:600;">Aluna · Especialista en Membresías</div>
     </div>
@@ -299,19 +316,19 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
 
     <!-- Saludo -->
     <div style="text-align:center;margin-bottom:24px;">
-      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName ? `${firstName}, ¡no dejes pasar esta oportunidad! 🔥` : '¡No dejes pasar esta oportunidad! 🔥'}</h2>
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${safeFirstName ? `${safeFirstName}, ¡no dejes pasar esta oportunidad! 🔥` : '¡No dejes pasar esta oportunidad! 🔥'}</h2>
       <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">📅 Esta oferta tiene fecha límite</p>
     </div>
 
     <!-- Mensaje del operador -->
-    <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:24px;">${message}</div>
+    <div style="color:#374151;font-size:15px;line-height:1.8;white-space:pre-line;margin-bottom:24px;">${safeMessage}</div>
 
     <!-- Urgencia card -->
     <div style="background:#FFF5F5;border:1.5px solid #FECACA;border-radius:12px;padding:20px;margin-bottom:20px;">
       <div style="color:#DC2626;font-size:14px;font-weight:700;margin-bottom:12px;">🚨 ¿Por qué decidir hoy?</div>
       <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">⏰</span><span style="color:#374151;font-size:14px;">Solo quedan 2–3 espacios disponibles este mes</span></div>
       <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">📈</span><span style="color:#374151;font-size:14px;">Ya tenemos 3 interesados más esta semana</span></div>
-      <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">🎁</span><span style="color:#374151;font-size:14px;">La semana gratis aplica solo este mes</span></div>
+      <div style="margin:8px 0;"><span style="color:#DC2626;font-size:16px;margin-right:8px;">🎁</span><span style="color:#374151;font-size:14px;">La primera visita gratis aplica solo este mes</span></div>
     </div>
 
     <!-- Testimonio — con border verde Coworkia -->
@@ -324,7 +341,7 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
 
     <!-- CTA urgente -->
     <div style="text-align:center;margin-bottom:28px;">
-      <a href="https://wa.me/593994837117?text=${waText}"
+      <a href="${CONTACT.whatsappUrl}?text=${waText}"
          style="background:linear-gradient(135deg,#DC2626,#9F1239);color:white;padding:16px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 16px rgba(220,38,38,0.4);font-size:16px;">
         🔥 RESERVAR MI ESPACIO AHORA →
       </a>
@@ -347,7 +364,7 @@ export function buildAlunaD3HTML({ name, message }, { xiaomiSafe = false } = {})
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         ${COWORKIA_ADDRESS_FULL}<br>
-        coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+        ${CONTACT.email} &nbsp;·&nbsp; ${CONTACT.phoneDisplay}
       </div>
     </div>
   </div>
@@ -1167,6 +1184,11 @@ export function buildAdrianaComparisonV2HTML({
 export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDate, monthlyFee }, { xiaomiSafe = false } = {}) {
   const firstName = name ? name.trim().split(' ')[0] : 'Hola';
   const displayName = name || '';
+  const safeFirstName = escapeHtml(firstName);
+  const safeDisplayName = escapeHtml(displayName);
+  const safePlan = escapeHtml(plan);
+  const safeExpirationDate = escapeHtml(expirationDate);
+  const safeMonthlyFee = monthlyFee ? escapeHtml(monthlyFee) : '';
   const fee = monthlyFee ? parseFloat(monthlyFee) : 0;
   const parkingFee = 25;
   const totalWithParking = fee ? fee + parkingFee : parkingFee;
@@ -1202,8 +1224,8 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
     <!-- Card blanca con info de renovación -->
     <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:22px 28px;display:inline-block;min-width:280px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
       <div style="background:#F59E0B;color:white;display:inline-block;padding:4px 14px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⏰ RENOVACIÓN</div>
-      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${displayName}</div>` : ''}
-      <div style="color:#92400E;font-size:14px;font-weight:700;margin-bottom:8px;">Tu ${plan} vence el ${expirationDate}</div>
+      ${displayName ? `<div style="color:#111827;font-size:22px;font-weight:800;margin-bottom:10px;">${safeDisplayName}</div>` : ''}
+      <div style="color:#92400E;font-size:14px;font-weight:700;margin-bottom:8px;">Tu ${safePlan} vence el ${safeExpirationDate}</div>
       <div style="color:#047857;font-size:12px;font-weight:600;">Aluna · Especialista en Membresías</div>
     </div>
   </div>
@@ -1213,25 +1235,25 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
 
     <!-- Saludo -->
     <div style="text-align:center;margin-bottom:24px;">
-      <h2 style="color:#1f2937;font-size:20px;margin:0;">${firstName}, tu espacio te espera 🌟</h2>
+      <h2 style="color:#1f2937;font-size:20px;margin:0;">${safeFirstName}, tu espacio te espera 🌟</h2>
       <p style="color:#6B7280;font-size:14px;margin:8px 0 0;">Renueva y sigue disfrutando todo sin interrupciones</p>
     </div>
 
     <!-- Resumen de membresía actual -->
     <div style="background:linear-gradient(135deg,rgba(4,120,87,0.08),rgba(6,95,70,0.12));border-left:4px solid #047857;border-radius:12px;padding:22px;margin-bottom:24px;">
       <div style="color:#047857;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">📋 Tu membresía actual</div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;"><strong>${plan}</strong>${monthlyFee ? ` — $${monthlyFee}/mes` : ''}</span></div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Vencimiento: <strong>${expirationDate}</strong></span></div>
-      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">WiFi premium + café ilimitado</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;"><strong>${safePlan}</strong>${monthlyFee ? ` — $${safeMonthlyFee}/mes` : ''}</span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Vencimiento: <strong>${safeExpirationDate}</strong></span></div>
+      <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">${WIFI.display} + café ilimitado</span></div>
       <div style="margin:8px 0;"><span style="color:#059669;font-size:16px;margin-right:8px;">✦</span><span style="color:#374151;font-size:14px;">Locker o cajonera (a elegir)</span></div>
     </div>
 
     <!-- CTA principal — Renovar -->
     <div style="text-align:center;margin-bottom:28px;">
       <p style="color:#374151;font-size:14px;font-weight:600;margin:0 0 14px;">💬 Renueva con un mensaje</p>
-      <a href="https://wa.me/593994837117?text=${waText}"
+      <a href="${CONTACT.whatsappUrl}?text=${waText}"
          style="background:linear-gradient(135deg,#047857,#065F46);color:white;padding:16px 36px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(4,120,87,0.35);font-size:16px;">
-        🔄 Renovar mi ${plan} →
+        🔄 Renovar mi ${safePlan} →
       </a>
       <p style="color:#9CA3AF;font-size:12px;margin:10px 0 0;">Respuesta en menos de 5 minutos · WhatsApp</p>
     </div>
@@ -1241,9 +1263,9 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
       <div style="color:#0E7490;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">🅿️ AGREGA ESTACIONAMIENTO</div>
       <div style="color:#1f2937;font-size:16px;font-weight:700;margin-bottom:8px;">Parking privado — $${parkingFee}/mes adicional</div>
       <div style="margin:8px 0;"><span style="color:#0E7490;font-size:16px;margin-right:8px;">🚗</span><span style="color:#374151;font-size:14px;">Sótano nivel 2, acceso exclusivo miembros</span></div>
-      <div style="margin:8px 0;"><span style="color:#0E7490;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${plan}${fee ? ` ($${fee})` : ''} + parking = <strong>$${totalWithParking}/mes</strong></span></div>
+      <div style="margin:8px 0;"><span style="color:#0E7490;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${safePlan}${fee ? ` ($${fee})` : ''} + parking = <strong>$${totalWithParking}/mes</strong></span></div>
       <div style="text-align:center;margin-top:16px;">
-        <a href="https://wa.me/593994837117?text=${waParkingText}"
+        <a href="${CONTACT.whatsappUrl}?text=${waParkingText}"
            style="background:linear-gradient(135deg,#0E7490,#0D6E85);color:white;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(14,116,144,0.35);font-size:14px;">
           🅿️ Renovar con estacionamiento →
         </a>
@@ -1254,11 +1276,11 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
     <!-- UPSALE — Upgrade de plan -->
     <div style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(109,40,217,0.12));border:1.5px solid rgba(139,92,246,0.3);border-radius:12px;padding:22px;margin-bottom:24px;">
       <div style="color:#7C3AED;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">🚀 ¿Y si subes de nivel?</div>
-      <div style="color:#1f2937;font-size:16px;font-weight:700;margin-bottom:8px;">${upsale.next} — ${upsale.price}</div>
-      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">⭐</span><span style="color:#374151;font-size:14px;">${upsale.benefit}</span></div>
-      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${upsale.save}</span></div>
+      <div style="color:#1f2937;font-size:16px;font-weight:700;margin-bottom:8px;">${escapeHtml(upsale.next)} — ${escapeHtml(upsale.price)}</div>
+      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">⭐</span><span style="color:#374151;font-size:14px;">${escapeHtml(upsale.benefit)}</span></div>
+      <div style="margin:8px 0;"><span style="color:#7C3AED;font-size:16px;margin-right:8px;">💰</span><span style="color:#374151;font-size:14px;">${escapeHtml(upsale.save)}</span></div>
       <div style="text-align:center;margin-top:16px;">
-        <a href="https://wa.me/593994837117?text=${waUpgradeText}"
+        <a href="${CONTACT.whatsappUrl}?text=${waUpgradeText}"
            style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);color:white;padding:12px 28px;text-decoration:none;border-radius:25px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(139,92,246,0.35);font-size:14px;">
           ⬆️ Quiero hacer upgrade →
         </a>
@@ -1290,7 +1312,7 @@ export function buildAlunaRenewalHTML({ name, plan = 'Membresía', expirationDat
       <div style="color:rgba(255,255,255,0.60);font-size:11px;line-height:1.8;">
         © 2026 Coworkia Ecuador — Espacios que inspiran<br>
         ${COWORKIA_ADDRESS_FULL}<br>
-        coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+        ${CONTACT.email} &nbsp;·&nbsp; ${CONTACT.phoneDisplay}
       </div>
     </div>
   </div>

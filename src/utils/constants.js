@@ -12,4 +12,4 @@ export const COWORKIA_MAPS_URL = 'https://maps.app.goo.gl/Nqy6YeGuxo3czEt66';
 export const COWORKIA_PHONE_DISPLAY = '+593 99 483 7117';
 export const COWORKIA_PHONE_WA = '593994837117';
 export const COWORKIA_EMAIL = 'coworkia.ec@gmail.com';
-export const COWORKIA_HOURS = 'Lunes a Viernes 8:00 AM – 7:00 PM';
+export const COWORKIA_HOURS = 'Lunes a Viernes 8:30 AM – 6:00 PM';

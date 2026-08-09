@@ -14,89 +14,33 @@ import { saveMembershipLead, trackAlunaProspect } from '../database/alunaReposit
 import { validateEmail, formatEmailError } from '../utils/email-validator.js';
 import databaseService from '../database/database.js';
 import { generateSequentialCode } from '../utils/code-generator.js';
+import { CONTACT, MEMBERSHIP_PLANS, normalizePlanKey as normalizeFactPlanKey } from '../utils/coworkia-facts.js';
 
 // ──────────────────────────────────────────────
-// 📋 Datos de los planes (fuente de verdad)
+// 📋 Vista legacy derivada de la fuente canónica de planes.
 // ──────────────────────────────────────────────
-export const PLAN_DATA = {
-  plan10: {
-    key: 'plan10',
-    name: 'Plan 10',
-    price: '$140 USD / mes',
-    days: '10 días + 1 GRATIS = 11 días al mes de Hot Desk',
-    hours: 'Jornada completa en cada visita (horario de oficina)',
-    ideal: 'Freelancers y profesionales independientes con horario flexible',
-    benefits: [
-      'Locker o cajonera privada (a elegir)',
-      '2 invitados gratis al mes (registro obligatorio)',
-      '2 usos de Sala de Reuniones por mes (2 horas c/u, vía Aurora)',
-      'WiFi de alta velocidad + café ilimitado incluido',
-      'Impresiones básicas incluidas',
-      'Secretaria Virtual con IA (en contratos de 9+ meses)',
-    ],
-  },
-  plan20: {
-    key: 'plan20',
-    name: 'Plan 20',
-    price: '$250 USD / mes',
-    days: '20 días + 2 GRATIS = 22 días al mes de Hot Desk',
-    hours: 'Jornada completa en cada visita (horario de oficina)',
-    ideal: 'Profesionales con rutina de trabajo regular que necesitan presencia constante',
-    benefits: [
-      'Locker o cajonera privada (a elegir)',
-      '4 invitados gratis al mes (registro obligatorio)',
-      '4 usos de Sala de Reuniones por mes (2 horas c/u, vía Aurora)',
-      'WiFi de alta velocidad + café ilimitado incluido',
-      'Impresiones básicas incluidas',
-      'Secretaria Virtual con IA (en contratos de 9+ meses)',
-    ],
-  },
-  oficinavirtual: {
-    key: 'oficinavirtual',
-    name: 'Oficina Virtual',
-    price: '$365 USD / año ($1 por día equivalente)',
-    days: 'Dirección comercial oficial — sin acceso físico diario',
-    hours: 'Sala de Reuniones incluida: 1 vez al mes por 2 horas',
-    ideal: 'Emprendedores remotos, startups o empresas extranjeras que necesitan presencia legal en Quito',
-    benefits: [
-      'Dirección comercial oficial (Whymper 403, Quito)',
-      'Recepción y notificación de correspondencia física',
-      'Cumplimiento legal con SRI y entidades de control',
-      'Sala de Reuniones incluida (1 x mes, 2 horas)',
-      'Acceso a red de contactos y comunidad Coworkia',
-    ],
-  },
-  salareuniones: {
-    key: 'salareuniones',
-    name: 'Sala de Reuniones',
-    price: '$39 USD / sesión',
-    days: 'Reserva por sesión individual — sin contrato',
-    hours: '2 horas por sesión, capacidad: 3-4 personas',
-    ideal: 'Reuniones de trabajo, presentaciones, entrevistas o workshops puntuales',
-    benefits: [
-      'Pantalla para presentaciones incluida',
-      'WiFi de alta velocidad',
-      'Espacio privado y profesional',
-      'Reserva previa vía Aurora (WhatsApp)',
-      'Sin contrato ni permanencia',
-    ],
-  },
-};
+const toLegacyPlanData = (plan) => Object.freeze({
+  key: plan.key,
+  name: plan.name,
+  price: plan.priceDisplay,
+  days: plan.days,
+  hours: plan.hours,
+  ideal: plan.ideal,
+  benefits: plan.benefits,
+});
+
+export const PLAN_DATA = Object.freeze(
+  Object.fromEntries(
+    Object.entries(MEMBERSHIP_PLANS).map(([key, plan]) => [key, toLegacyPlanData(plan)])
+  )
+);
 
 /**
  * 🔧 Normaliza el texto del plan al key interno
  * Acepta variaciones: "plan10", "Plan 10", "plan mensual", "oficina", etc.
  */
 export function normalizePlanKey(rawPlan) {
-  if (!rawPlan) return 'plan10';
-  const t = rawPlan.toLowerCase().replace(/\s+/g, '');
-  if (t.includes('20')) return 'plan20';
-  if (t.includes('10')) return 'plan10';
-  if (t.includes('oficina') || t.includes('virtual') || t.includes('ov')) return 'oficinavirtual';
-  if (t.includes('sala') || t.includes('reunion')) return 'salareuniones';
-  // Fallback: si dice "plan" sin número, Plan 10 es el más popular
-  if (t.includes('plan') || t.includes('mensual') || t.includes('membresia')) return 'plan10';
-  return 'plan10';
+  return normalizeFactPlanKey(rawPlan);
 }
 
 /**
@@ -142,7 +86,7 @@ export async function sendAlunaProforma({ clientName, clientEmail, planKey, prof
       planIdeal: plan.ideal,
       proformaCode: code,
       nota: nota || null,
-      coworkiaWhatsApp: '593994837117',
+      coworkiaWhatsApp: CONTACT.phoneWhatsApp,
     });
 
     const contextualSubject = `Membresía Coworkia ${code} - Aluna`;

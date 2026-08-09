@@ -16,10 +16,20 @@ import { enviarWhatsApp } from '../express-servidor/endpoints-api/wassenger.js';
 import { sendEmail } from '../servicios/email.js';
 import { normalizePhoneEC } from '../utils/validators.js';
 import { loggers } from '../utils/logger.js';
-import { CONTACT, WIFI } from '../utils/coworkia-facts.js';
+import { CONTACT, MEMBERSHIP_PLANS, WIFI } from '../utils/coworkia-facts.js';
 import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 
 const logger = loggers.aluna || console;
+
+function escapeHtml(value = '') {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
 
 /**
  * Resolve client phone for WA follow-up.
@@ -273,7 +283,10 @@ Responde "Sí" y coordinamos una visita para esta semana 📅`;
  */
 function buildD1EmailHTML(lead) {
   const planType = lead.interest_type === 'private_office' ? 'Oficina Privada' : 'Hot Desk';
-  const price = lead.mensualidad || '300';
+  const price = lead.mensualidad || (lead.interest_type === 'private_office' ? '300' : MEMBERSHIP_PLANS.plan10.price);
+  const safeName = escapeHtml(lead.name);
+  const safePrice = escapeHtml(price);
+  const trialText = encodeURIComponent('Hola, me gustaría coordinar un día de prueba');
   
   return `
 <!DOCTYPE html>
@@ -291,9 +304,9 @@ function buildD1EmailHTML(lead) {
   </div>
   
   <div style="padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px;">
-    <h2 style="color: #667eea; margin-top: 0;">Hola ${lead.name}! 👋</h2>
+    <h2 style="color: #667eea; margin-top: 0;">Hola ${safeName}! 👋</h2>
     
-    <p>Te escribo para recordarte que tenemos <strong>${planType}</strong> disponible desde <strong>$${price}/mes</strong>.</p>
+    <p>Te escribo para recordarte que tenemos <strong>${planType}</strong> disponible desde <strong>$${safePrice}/mes</strong>.</p>
     
     <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
       <h3 style="margin-top: 0; color: #667eea;">¿Qué incluye tu plan?</h3>
@@ -303,7 +316,7 @@ function buildD1EmailHTML(lead) {
         <li>✅ ${WIFI.display}</li>
         <li>✅ Salas de reuniones (uso incluido)</li>
         <li>✅ Recepción y manejo de correspondencia</li>
-        <li>✅ Acceso 24/7</li>
+        <li>✅ Acceso en horario de oficina</li>
       </ul>
     </div>
     
@@ -311,7 +324,7 @@ function buildD1EmailHTML(lead) {
     <p>Podemos coordinar un día de prueba gratis en el horario que mejor te venga 📅</p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://wa.me/593994837117?text=Hola,%20me%20gustaría%20coordinar%20un%20día%20de%20prueba" 
+      <a href="${CONTACT.whatsappUrl}?text=${trialText}"
          style="display: inline-block; padding: 15px 30px; background: #25D366; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
         📱 Coordinar Día de Prueba por WhatsApp
       </a>
@@ -333,7 +346,7 @@ function buildD1EmailHTML(lead) {
  * 🔥 Build Email HTML D+3 (FOMO)
  */
 function buildD3EmailHTML(lead) {
-  const firstName = lead.name.split(' ')[0];
+  const firstName = escapeHtml(lead.name.split(' ')[0]);
   const planType = lead.interest_type === 'private_office' ? 'oficinas privadas' : 'espacios de hot desk';
   
   return `

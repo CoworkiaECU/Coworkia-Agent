@@ -2,7 +2,7 @@
 
 **Status**: 🟡 PENDIENTE — listo para autopilot
 **Modo**: Autopilot autónomo · Checkpoint por bloque · NO deploy sin Torre de Control
-**Caso de referencia**: cliente exigente "Byron" (`+593983567563`) probando el sistema en vivo. Es solo el detonante — el objetivo es **arreglar el sistema completo**, no parchear su caso.
+**Caso de referencia**: cliente de prueba exigente probando el sistema en vivo. Es solo el detonante — el objetivo es **arreglar el sistema completo**, no parchear un caso individual.
 **Filosofía**: refactor estructural, no parches. Una sola fuente de verdad. Cero datos inventados por el LLM.
 
 ---
@@ -22,23 +22,23 @@
 > Valores reales verificados en el repo. Regirán para todo el sistema.
 
 ### Contacto / ubicación
-- **Teléfono display**: `+593 99 483 7117` · **WhatsApp**: `593994837117` (NO el `0788` viejo)
+- **Teléfono display**: `+593 99 483 7117` · **WhatsApp**: `593994837117` (teléfono comercial vigente)
 - **Dirección**: `Whymper 403, Edificio Finistere, Planta Baja, Quito` (constants.js)
 - **Maps**: `https://maps.app.goo.gl/Nqy6YeGuxo3czEt66`
 - **Email**: `coworkia.ec@gmail.com`
-- **Horario**: **Lunes a Viernes 8:00 AM – 7:00 PM** (aluna.js:425)
-- **WiFi**: alta velocidad incluido (SIN mencionar Mbps — decisión Diego 01-jun)
+- **Horario**: **Lunes a Viernes 8:30 AM – 6:00 PM**
+- **WiFi**: alta velocidad incluido, sin velocidad específica — decisión Diego 01-jun
 
 ### Planes Aluna (precios reales — resolver discrepancias)
 | Plan | Precio canónico | Notas |
 |------|-----------------|-------|
 | Plan 10 | **$140 / mes** | 10+1 = 11 días Hot Desk, jornada completa por visita |
-| Plan 20 | **$250 / mes** | 20+2 = 22 días Hot Desk (⚠️ enzo-knowledge dice $265 → CORREGIR a $250) |
+| Plan 20 | **$250 / mes** | 20+2 = 22 días Hot Desk |
 | Oficina Virtual | **$365 / año** | Dirección comercial + correspondencia |
-| Sala de Reuniones | **$39 / sesión** | 3-4 personas, 2h |
+| Sala de Reuniones | **$29 / sesión** | 3-4 personas, 2h |
 
 ### Pruebas gratuitas (decisión Diego 01-jun)
-- **Aurora**: 2 horas gratis · primera visita · Hot Desk · **horario restringido 08:00–12:00** · previa reserva.
+- **Aurora**: primera visita gratis · Hot Desk · 2 horas · dentro del horario de oficina · previa reserva.
 - **Aluna**: **1 día completo gratis** · **Aluna lo agenda ella misma** · sin handoff a Aurora · sin "presentación en recepción" ni visita guiada ficticia.
 
 ---
@@ -51,15 +51,15 @@
 | F2 | Enzo no captura lead pese a intención clara (`marketing_leads=0`) | 🟠 | flujo Enzo no usa enzoRepository.js:39 |
 | F3 | Enzo no da precio, entra en bucle | 🟠 | prompt enzo.js |
 | F4 | Automatizaciones Aurora podrían no disparar / textos con datos sueltos | 🟡 | src/cron/ + templates |
-| F5 | **Emails con datos incoherentes / inventados** | 🔴 | datos duplicados en 3+ archivos + LLM inventando ("Membresía Flex $180") |
+| F5 | **Emails con datos incoherentes / inventados** | 🔴 | datos duplicados en 3+ archivos + LLM inventando planes no canónicos |
 | F6 | Aluna hace saltos ficticios a "recepción"/"visita guiada" en vez de agendar ella | 🟠 | prompt aluna.js |
 
 ### F5 — Mapa de duplicación/contradicción (lo que el refactor elimina)
-- **Teléfono**: `+593 98 777 0788` ❌ en aluna-followup-service.js vs `+593 99 483 7117` ✅ resto.
-- **Dirección**: "Av. República del Salvador" ❌ en aluna-followup-service.js vs "Whymper 403" ✅.
-- **Plan 20**: $250 (aluna.js, PLAN_DATA) vs $265 ❌ (enzo-knowledge.js).
-- **WiFi**: "200 Mbps" vs "300 Mbps" → eliminar Mbps por completo.
-- **Plan inventado**: "Membresía Flex / $180" generado por LLM — no existe.
+- **Teléfono**: teléfono antiguo ❌ en aluna-followup-service.js vs teléfono comercial vigente ✅ resto.
+- **Dirección**: dirección antigua ❌ en aluna-followup-service.js vs "Whymper 403" ✅.
+- **Plan 20**: fuentes heredadas pendientes deben converger al precio canónico.
+- **WiFi**: velocidades específicas contradictorias → eliminar velocidades por completo.
+- **Plan inventado**: planes no canónicos generados por LLM — no existen.
 - **Saludo duplicado**: header "Hola Diego" + cuerpo "Hola Diego Villota".
 
 ---
@@ -71,10 +71,10 @@
 - [ ] T0.1 — Crear `src/utils/coworkia-facts.js` exportando objetos congelados (`Object.freeze`):
   - `CONTACT` (teléfono display/WA, email)
   - `LOCATION` (dirección, dirección full, maps) — reexportar desde constants.js
-  - `HOURS` (`'Lunes a Viernes 8:00 AM – 7:00 PM'`, y campos estructurados start/end/days)
-  - `WIFI` (`'WiFi de alta velocidad incluido'` — sin Mbps)
+  - `HOURS` (`'Lunes a Viernes 8:30 AM – 6:00 PM'`, y campos estructurados start/end/days)
+  - `WIFI` (`'WiFi de alta velocidad incluido'` — sin velocidad específica)
   - `MEMBERSHIP_PLANS` (Plan 10/20/Oficina Virtual/Sala: key, nombre, precio numérico + display, descripción, beneficios) — **fuente única**
-  - `FREE_TRIALS` (`aurora`: 2h, 08:00–12:00, primera visita; `aluna`: día completo, agenda Aluna)
+  - `FREE_TRIALS` (`aurora`: primera visita gratis de 2h en horario de oficina; `aluna`: día completo, agenda Aluna)
   - Helper `getPlan(key)` con `normalizePlanKey`.
 - [ ] T0.2 — Migrar `src/utils/constants.js` para reexportar de `coworkia-facts.js` (no romper imports existentes) y agregar `COWORKIA_PHONE_DISPLAY` / `COWORKIA_PHONE_WA` / `COWORKIA_EMAIL` / `COWORKIA_HOURS`.
 - [ ] T0.3 — `node --check` del módulo nuevo + verificar que no rompe imports actuales.
@@ -106,7 +106,7 @@
 ## 🧱 BLOQUE 3 — Enzo: precio + CTA sin bucle
 
 - [ ] T3.1 — Prompt Enzo: 1ª pregunta de precio → rango orientativo + 1 pregunta de alcance. 2ª → CTA (agendar/propuesta), nunca repreguntar.
-- [ ] T3.2 — Precios desde `coworkia-facts.js` (corregir $265→$250). Nada hardcodeado.
+- [ ] T3.2 — Precios desde `coworkia-facts.js`. Nada hardcodeado.
 - [ ] T3.3 — Test: 2 preguntas de precio → segunda contiene CTA.
 
 **Criterio de salida**: Enzo nunca repite la misma pregunta 2 veces. ✅
@@ -139,15 +139,15 @@
 
 > Encarar al final. Mata la duplicación y blinda al LLM.
 
-- [ ] T6.1 — `aluna-followup-service.js`: eliminar tel `0788` y dirección "República del Salvador" → import de `coworkia-facts.js`. Eliminar Mbps.
-- [ ] T6.2 — `aluna-proforma-email.js`: `PLAN_DATA` deja de ser fuente → consume `MEMBERSHIP_PLANS` de facts. Eliminar "300 Mbps".
+- [ ] T6.1 — `aluna-followup-service.js`: eliminar teléfono/dirección antiguos → import de `coworkia-facts.js`. Eliminar velocidades WiFi específicas.
+- [ ] T6.2 — `aluna-proforma-email.js`: `PLAN_DATA` deja de ser fuente → consume `MEMBERSHIP_PLANS` de facts. Eliminar velocidades WiFi específicas.
 - [ ] T6.3 — `aluna.js` (`conocimiento.planes`): consumir facts en vez de redefinir precios/beneficios.
-- [ ] T6.4 — `enzo-knowledge.js`: corregir $265→$250 y consumir facts.
-- [ ] T6.5 — `email-template-system.js` (D1/D3): wifi/horario/plan/prueba desde facts. Resolver 200 vs 300 Mbps eliminando Mbps.
-- [ ] T6.6 — Auditar TODOS los templates (Aurora/Enzo/Adriana/Axel/Gabi/Paula) y reemplazar hardcodes por facts. Grep guía: `0788|483 7117|200 Mbps|300 Mbps|República del Salvador|Membresía Flex`.
+- [ ] T6.4 — `enzo-knowledge.js`: consumir facts para precio canónico.
+- [ ] T6.5 — `email-template-system.js` (D1/D3): wifi/horario/plan/prueba desde facts. Resolver velocidades específicas eliminándolas.
+- [ ] T6.6 — Auditar TODOS los templates (Aurora/Enzo/Adriana/Axel/Gabi/Paula) y reemplazar hardcodes por facts.
 - [ ] T6.7 — **Blindar LLM**: prompts de follow-up con instrucción "NO inventes precios, planes, wifi ni horarios; usa solo los datos provistos". Specs se inyectan por template, no por el modelo.
 - [ ] T6.8 — Fix saludo duplicado (header + cuerpo) → un solo saludo con primer nombre.
-- [ ] T6.9 — Test de coherencia: render de cada template → assert tel/dirección/horario/precios == facts; 0 menciones de Mbps, 0 "Membresía Flex".
+- [ ] T6.9 — Test de coherencia: render de cada template → assert tel/dirección/horario/precios == facts; 0 velocidades WiFi específicas, 0 planes no canónicos.
 - [ ] T6.10 — `node --check` de todo lo tocado + suites de emails.
 
 **Criterio de salida**: cualquier email del sistema = mismos datos canónicos, sin contradicciones, sin specs alucinadas. ✅
@@ -169,22 +169,22 @@
 
 - [ ] `node --check` en todos los archivos modificados
 - [ ] Suites: `detectar-intencion`, emails, enzo, aurora, aluna (`--forceExit --testTimeout=15000`)
-- [ ] Grep final = 0 resultados fuera de facts: `0788`, `República del Salvador`, `Membresía Flex`, `Mbps`
-- [ ] Grep precios: Plan 20 == `$250` en todo el repo (0 `$265`)
-- [ ] Diego y Byron excluidos de envíos automáticos de prueba
+- [ ] Grep final = 0 datos antiguos fuera de facts y pruebas de regresión
+- [ ] Grep precios: Plan 20 == `$250` donde aplique
+- [ ] Números personales y de prueba excluidos de envíos automáticos
 - [ ] Resumen ejecutivo + versiones de deploy propuestas a Torre de Control
 
 ---
 
 ## 🧹 LIMPIEZA
 
-- [ ] Borrar scripts temporales: `scripts/diagnose-client-983567563.mjs`, `scripts/diagnose-client-v2.mjs`, `scripts/diagnose-client-v3.mjs`
+- [ ] Borrar scripts temporales de diagnóstico de clientes
 
 ---
 
 ## ✅ DECISIONES DE DIEGO YA RESUELTAS (01-jun)
 
-1. WiFi: velocidad NO importa → eliminar Mbps de todos los emails.
-2. Horario: ya en sistema → **Lunes a Viernes 8:00 AM – 7:00 PM** (canónico).
-3. Pruebas: Aurora = 2h restringidas (08:00–12:00); Aluna = 1 día completo que **ella agenda**, sin saltos ni recepción ficticia.
-4. "Nombre canónico + precio real": tabla maestra de planes en facts; Plan 20 = $250 (no $265); "Membresía Flex" eliminado.
+1. WiFi: velocidad NO importa → eliminar velocidades específicas de todos los emails.
+2. Horario vigente confirmado → **Lunes a Viernes 8:30 AM – 6:00 PM** (canónico).
+3. Pruebas: Aurora = primera visita gratis de 2h en horario de oficina; Aluna = 1 día completo que **ella agenda**, sin saltos ni recepción ficticia.
+4. "Nombre canónico + precio real": tabla maestra de planes en facts; Plan 20 = $250; planes no canónicos eliminados.

@@ -9,6 +9,17 @@ import { ecosistemaTable } from './email-ecosystem.js';
 import { calcularLeadScore, generarReporteLeadScore } from './paula-lead-scoring.js';
 import { EMAIL_TRANSLATIONS } from './email-i18n.js';
 import { buildEmailTemplate } from './email-template-system.js';
+import { CONTACT, LOCATION, WIFI } from '../utils/coworkia-facts.js';
+
+function escapeHtml(value = '') {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
 
 /**
  * 🛡️ ADRIANA - SegPopular (Seguros)
@@ -1094,7 +1105,7 @@ export function generateAlunaEmailHTML(leadData, userLanguage = 'es') {
       <!-- Lo que te espera -->
       <div style="background:#ECFDF5;border-left:4px solid #047857;border-radius:10px;padding:14px 18px;margin-bottom:22px;">
         <div style="color:#065F46;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Lo que te espera 👇</div>
-        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, WiFi de alta velocidad y café ilimitado desde que llegas</div>
+        <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Escritorio, ${WIFI.display} y café ilimitado desde que llegas</div>
         <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Salas de reuniones, impresoras y toda la infraestructura disponible</div>
         <div style="color:#374151;font-size:13px;margin:5px 0;"><span style="color:#059669;margin-right:8px;">✓</span>Una comunidad de profesionales y empresarios que ya están creciendo aquí</div>
       </div>
@@ -1427,15 +1438,24 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
     planIdeal = '',
     proformaCode = '',
     nota = null,
-    coworkiaWhatsApp = '593994837117'
+    coworkiaWhatsApp = CONTACT.phoneWhatsApp
   } = data;
+  const safeClientName = escapeHtml(clientName || 'Cliente');
+  const safePlanName = escapeHtml(planName);
+  const safePlanPrice = escapeHtml(planPrice);
+  const safePlanDays = escapeHtml(planDays);
+  const safePlanHours = escapeHtml(planHours);
+  const safePlanBenefits = planBenefits.map(escapeHtml);
+  const safePlanIdeal = escapeHtml(planIdeal);
+  const safeProformaCode = escapeHtml(proformaCode);
+  const safeNota = nota ? escapeHtml(nota) : null;
 
   // Paleta Aluna — Verde Oscuro Elegante
   // Primary: #047857 (emerald-700)  Accent: #065F46 (emerald-800)  Light: #059669
   // BG light: #ECFDF5  BG mid: #D1FAE5  Border: #A7F3D0
   // Static glow: rgba(4,120,87,0.35)
 
-  const benefitsList = planBenefits.map(b => `
+  const benefitsList = safePlanBenefits.map(b => `
     <div style="margin:10px 0;line-height:1.5;">
       <span style="color:#059669;font-size:18px;margin-right:8px;vertical-align:top;">✦</span><span style="color:#374151;font-size:15px;line-height:1.5;">${b}</span>
     </div>`).join('');
@@ -1470,7 +1490,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
       <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
         ${(() => {
           const rows = [];
-          const items = planBenefits.length > 0 ? planBenefits : [];
+          const items = safePlanBenefits.length > 0 ? safePlanBenefits : [];
           for (let i = 0; i < items.length; i += 2) {
             const pair = items.slice(i, i + 2);
             rows.push(`<tr>${pair.map(b => `<td style="width:50%;padding:3px 4px;vertical-align:top;"><div style="font-size:11px;color:#374151;line-height:1.4;"><span style="color:#059669;margin-right:4px;">✓</span>${b}</div></td>`).join(pair.length < 2 ? '<td></td>' : '')}</tr>`);
@@ -1604,9 +1624,9 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
       <!-- Tarjeta membresía preparada para —— diseño aprobado -->
       <div style="background:rgba(255,255,255,0.97);border-radius:16px;padding:24px 32px;display:inline-block;min-width:300px;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,0.18);">
         <div style="color:#9CA3AF;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;text-align:center;">${t.headerLabel}</div>
-        <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${clientName}</div>
+        <div style="color:#111827;font-size:26px;font-weight:800;margin-bottom:14px;text-align:center;">${safeClientName}</div>
         <div style="border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:12px 0;margin-bottom:12px;text-align:center;">
-          <span style="font-size:18px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:16px;font-weight:700;vertical-align:middle;">${planName}</strong>&nbsp;&nbsp;${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;vertical-align:middle;">${proformaCode}</span>` : ''}
+          <span style="font-size:18px;vertical-align:middle;">🎫</span>&nbsp;&nbsp;<strong style="color:#111827;font-size:16px;font-weight:700;vertical-align:middle;">${safePlanName}</strong>&nbsp;&nbsp;${proformaCode ? `<span style="background:#047857;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;vertical-align:middle;">${safeProformaCode}</span>` : ''}
         </div>
         <div style="color:#047857;font-size:13px;font-weight:600;text-align:center;">${t.agentTag}</div>
       </div>
@@ -1616,7 +1636,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
 
       <!-- Saludo -->
       <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${clientName}! ${t.greetingEnd}</h2>
+        <h2 style="color: #1f2937; font-size: 20px; margin: 0;">${t.greeting}, ${safeClientName}! ${t.greetingEnd}</h2>
         <p style="color: #6B7280; font-size: 15px; margin: 10px 0 0 0;">
           ${t.greetingBody}
         </p>
@@ -1633,7 +1653,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
             </td>
             <td style="vertical-align:middle;">
               <div style="color:#047857;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${t.membershipLabel}</div>
-              <div style="color:#1f2937;font-size:24px;font-weight:800;line-height:1;">${planName}</div>
+              <div style="color:#1f2937;font-size:24px;font-weight:800;line-height:1;">${safePlanName}</div>
             </td>
           </tr>
         </table>
@@ -1641,31 +1661,31 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
         <!-- Precio destacado -->
         <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(4,120,87,0.2); margin-bottom: 15px; text-align: center; box-shadow: 0 2px 6px rgba(4,120,87,0.08);">
           <div style="color: #6B7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">${t.investmentLabel}</div>
-          <div style="color: #047857; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${planPrice}</div>
+          <div style="color: #047857; font-size: 36px; font-weight: 800; letter-spacing: -1px;">${safePlanPrice}</div>
         </div>
 
         <!-- Detalles -->
         <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid rgba(4,120,87,0.15); margin-bottom: 10px;">
           <span style="color: #059669; font-size: 16px; margin-right: 8px;">📅</span>
-          <span style="color: #374151; font-size: 15px; font-weight: 600;">${planDays}</span>
+          <span style="color: #374151; font-size: 15px; font-weight: 600;">${safePlanDays}</span>
         </div>
 
         ${planHours ? `
         <div style="background: white; border-radius: 10px; padding: 14px 18px; border: 1px solid rgba(4,120,87,0.15); margin-bottom: 10px;">
           <span style="color: #059669; font-size: 16px; margin-right: 8px;">⏱️</span>
-          <span style="color: #374151; font-size: 15px; font-weight: 600;">${planHours}</span>
+          <span style="color: #374151; font-size: 15px; font-weight: 600;">${safePlanHours}</span>
         </div>` : ''}
 
         ${planIdeal ? `
         <div style="background: linear-gradient(135deg, rgba(4,120,87,0.06), rgba(5,150,105,0.06)); border-radius: 10px; padding: 14px 18px; border: 1px solid rgba(4,120,87,0.2);">
           <span style="color: #059669; font-size: 15px; margin-right: 8px;">🎯</span>
           <span style="color: #047857; font-size: 14px; font-weight: 600;">${t.idealLabel}</span>
-          <span style="color: #374151; font-size: 14px;">${planIdeal}</span>
+          <span style="color: #374151; font-size: 14px;">${safePlanIdeal}</span>
         </div>` : ''}
       </div>
 
       <!-- Beneficios -->
-      ${planBenefits.length > 0 ? `
+      ${safePlanBenefits.length > 0 ? `
       <div style="margin-bottom: 25px;">
         <h3 style="color: #1f2937; font-size: 18px; font-weight: 700; margin: 0 0 15px 0;">${t.benefitsTitle}</h3>
         <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; border: 1px solid #D1FAE5;">
@@ -1703,12 +1723,12 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
             <td style="width:50%;vertical-align:middle;padding-right:8px;">
               <div style="background:white;border-radius:10px;padding:16px 18px;">
                 <div style="color:#047857;font-size:15px;font-weight:700;margin-bottom:6px;">Coworkia</div>
-                <div style="color:#6B7280;font-size:13px;line-height:1.7;">Edificio Finistere — Planta Baja<br>Whymper 403, Quito</div>
+                <div style="color:#6B7280;font-size:13px;line-height:1.7;">${LOCATION.addressFull}</div>
               </div>
             </td>
             <td style="width:50%;vertical-align:middle;padding-left:8px;text-align:center;">
               <div style="background:white;border-radius:10px;padding:16px 18px;text-align:center;">
-                <a href="https://maps.app.goo.gl/Nqy6YeGuxo3czEt66" style="background:#047857;color:white;padding:12px 18px;text-decoration:none;border-radius:8px;font-weight:600;display:inline-block;font-size:13px;box-shadow:0 4px 10px rgba(4,120,87,0.3);">📍 Ver en Google Maps</a>
+                <a href="${LOCATION.mapsUrl}" style="background:#047857;color:white;padding:12px 18px;text-decoration:none;border-radius:8px;font-weight:600;display:inline-block;font-size:13px;box-shadow:0 4px 10px rgba(4,120,87,0.3);">📍 Ver en Google Maps</a>
               </div>
             </td>
           </tr>
@@ -1722,7 +1742,7 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
             <td style="width:30px;vertical-align:top;padding-right:10px;padding-top:2px;"><span style="font-size:20px;">📝</span></td>
             <td style="vertical-align:top;">
               <div style="color:#92400E;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${t.noteTitle}</div>
-              <div style="color:#78350F;font-size:14px;line-height:1.6;">${nota}</div>
+    <div style="color:#78350F;font-size:14px;line-height:1.6;">${safeNota}</div>
             </td>
           </tr>
         </table>
@@ -1745,8 +1765,8 @@ export function generateAlunaProformaHTML(data, userLanguage = 'es') {
         <div style="color:rgba(255,255,255,0.35);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">${t.footerTagline}</div>
         <div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8;">
           © 2026 Coworkia Ecuador — Espacios que inspiran<br>
-          Whymper 403, Edificio Finistere, Planta Baja, Quito<br>
-          coworkia.ec@gmail.com &nbsp;·&nbsp; +593 99 483 7117
+          ${LOCATION.addressFull}<br>
+          ${CONTACT.email} &nbsp;·&nbsp; ${CONTACT.phoneDisplay}
         </div>
       </div>
     </div>

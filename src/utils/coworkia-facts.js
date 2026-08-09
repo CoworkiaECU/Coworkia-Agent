@@ -22,7 +22,7 @@ export const CONTACT = Object.freeze({
   phoneWhatsApp: '593994837117',       // formato wa.me (sin + ni espacios)
   whatsappUrl: 'https://wa.me/593994837117',
   email: 'coworkia.ec@gmail.com',
-  // Coworkia no tiene sitio web propio. OneMind (diegovillota.com) opera el sistema.
+  // Coworkia no tiene sitio web propio.
 });
 
 // ── 📍 Ubicación ──────────────────────────────────────────────
@@ -35,10 +35,10 @@ export const LOCATION = Object.freeze({
 
 // ── 🕐 Horario ────────────────────────────────────────────────
 export const HOURS = Object.freeze({
-  display: 'Lunes a Viernes 8:00 AM – 7:00 PM',
+  display: 'Lunes a Viernes 8:30 AM – 6:00 PM',
   days: 'Lunes a Viernes',
-  open: '8:00 AM',
-  close: '7:00 PM',
+  open: '8:30 AM',
+  close: '6:00 PM',
 });
 
 // ── 📶 WiFi ───────────────────────────────────────────────────
@@ -106,9 +106,9 @@ export const MEMBERSHIP_PLANS = Object.freeze({
   salareuniones: Object.freeze({
     key: 'salareuniones',
     name: 'Sala de Reuniones',
-    price: 39,
+    price: 29,
     period: 'sesión',
-    priceDisplay: '$39 USD / sesión',
+    priceDisplay: '$29 USD / sesión',
     days: 'Reserva por sesión individual — sin contrato',
     hours: '2 horas por sesión, capacidad: 3-4 personas',
     ideal: 'Reuniones de trabajo, presentaciones, entrevistas o workshops puntuales',
@@ -124,14 +124,14 @@ export const MEMBERSHIP_PLANS = Object.freeze({
 
 // ── 🎁 Pruebas gratuitas ──────────────────────────────────────
 export const FREE_TRIALS = Object.freeze({
-  // Aurora: prueba restringida, requiere reserva previa.
+  // Aurora: primera visita gratuita con reserva previa.
   aurora: Object.freeze({
-    label: '2 horas gratis',
+    label: 'primera visita gratis',
     duration: '2 horas',
-    window: '08:00 – 12:00',
+    window: HOURS.display,
     scope: 'Primera visita · Hot Desk',
     requiresBooking: true,
-    note: 'Prueba de 2 horas gratis en tu primera visita (Hot Desk), en horario de 08:00 a 12:00, previa reserva.',
+    note: `Primera visita gratis de 2 horas en Hot Desk, dentro del horario ${HOURS.display}, previa reserva.`,
   }),
   // Aluna: prueba de día completo que Aluna agenda ella misma.
   aluna: Object.freeze({
@@ -155,7 +155,11 @@ export const FREE_TRIALS = Object.freeze({
  */
 export function normalizePlanKey(rawPlan) {
   if (!rawPlan) return 'plan10';
-  const t = String(rawPlan).toLowerCase().replace(/\s+/g, '');
+  const t = String(rawPlan)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
   if (t.includes('20')) return 'plan20';
   if (t.includes('10')) return 'plan10';
   if (t.includes('oficina') || t.includes('virtual') || t.includes('ov')) return 'oficinavirtual';

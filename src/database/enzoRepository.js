@@ -3,6 +3,8 @@
  * Maneja marketing_leads completas
  */
 
+import { createHash } from 'crypto';
+
 import databaseService from './database.js';
 import { v4 as uuidv4 } from 'uuid';
 import { BaseRepository } from './BaseRepository.js';
@@ -105,6 +107,24 @@ export async function getMarketingLeadsStats() {
 /** 📋 Obtener leads por tipo de proyecto */
 export const getMarketingLeadsByType = (projectType) => _base.getByType('project_type', projectType);
 
+function normalizePhoneDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function normalizeLeadName(value) {
+  const name = String(value || '').trim();
+  return name ? name.slice(0, 120) : 'Sin nombre';
+}
+
+function buildAutoProjectCode(normalizedPhone) {
+  const fingerprint = createHash('sha256')
+    .update(normalizedPhone)
+    .digest('hex')
+    .slice(0, 12)
+    .toUpperCase();
+  return `MKT-WS-${fingerprint}`;
+}
+
 /**
  * 🎯 Captura automática de lead de marketing desde conversación con Enzo.
  *
@@ -121,12 +141,11 @@ export const getMarketingLeadsByType = (projectType) => _base.getByType('project
  * @returns {Promise<{id:string, created?:boolean, updated?:boolean}|null>}
  */
 export async function captureEnzoLeadFromKeywords(userPhone, userName, messageText) {
-  await databaseService.ensureInitialized();
-
   // 🚫 Excluir admin / Diego — no son leads reales
-  const norm = String(userPhone || '').replace(/\D/g, '');
-  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
-  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  const phone = String(userPhone || '').trim();
+  const norm = normalizePhoneDigits(phone);
+  const adminNorm = normalizePhoneDigits(process.env.ADMIN_PHONE);
+  const diegoNorm = normalizePhoneDigits(process.env.DIEGO_PERSONAL_PHONE);
   if (!norm || (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm)) {
     return null;
   }
@@ -144,41 +163,50 @@ export async function captureEnzoLeadFromKeywords(userPhone, userName, messageTe
   if (matched.length === 0) return null; // sin señal de servicio → no crear lead
 
   try {
+    await databaseService.ensureInitialized();
+
     const existing = await databaseService.get(
-      'SELECT id FROM marketing_leads WHERE user_phone = $1',
-      [userPhone]
+      'SELECT id, project_code FROM marketing_leads WHERE user_phone = $1 ORDER BY created_at DESC LIMIT 1',
+      [phone]
     );
 
     if (existing) {
       await databaseService.run(
         `UPDATE marketing_leads SET updated_at = CURRENT_TIMESTAMP WHERE user_phone = $1`,
-        [userPhone]
+        [phone]
       );
-      console.log(`[ENZO-CAPTURE] 🔄 Lead existente actualizado: ${userPhone}`);
+      console.log('[ENZO-CAPTURE] 🔄 Lead existente actualizado');
       return { id: existing.id, updated: true };
     }
 
     const id = uuidv4();
-    const projectCode = `MKT-WS-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const placeholderEmail = `wassenger+${norm}@coworkia.space`;
+    const projectCode = buildAutoProjectCode(norm);
+    const clientName = normalizeLeadName(userName);
+    const description = `Capturado automáticamente desde conversación con Enzo. Keywords: ${matched.slice(0, 8).join(', ')}`;
 
-    await databaseService.run(
+    const saved = await databaseService.get(
       `INSERT INTO marketing_leads (
         id, project_code, user_phone, project_type,
         company, client_name, email, phone,
         budget_range, urgency, description, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ON CONFLICT (project_code) DO UPDATE SET
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING id, project_code`,
       [
-        id, projectCode, userPhone, 'Consulta inicial',
-        null, userName || 'Sin nombre', placeholderEmail, userPhone,
-        'Por definir', 'Normal',
-        `Capturado automáticamente desde conversación con Enzo. Keywords: ${matched.join(', ')}. Mensaje: ${(messageText || '').substring(0, 200)}`,
-        'pending'
+        id, projectCode, phone, 'Consulta inicial',
+        null, clientName, null, phone,
+        'Por definir', 'Normal', description, 'pending'
       ]
     );
 
-    console.log(`[ENZO-CAPTURE] ✅ Nuevo lead capturado: ${projectCode} (${userName || userPhone})`);
-    return { id, projectCode, created: true };
+    const savedId = saved?.id || id;
+    const savedProjectCode = saved?.project_code || projectCode;
+    const created = savedId === id;
+    console.log(created ? '[ENZO-CAPTURE] ✅ Nuevo lead capturado' : '[ENZO-CAPTURE] 🔄 Lead existente actualizado');
+    return created
+      ? { id: savedId, projectCode: savedProjectCode, created: true }
+      : { id: savedId, projectCode: savedProjectCode, updated: true };
   } catch (err) {
     console.warn('[ENZO-CAPTURE] ⚠️ Error capturando lead (no crítico):', err.message);
     return null;

@@ -28,6 +28,90 @@ import { loggers } from '../utils/logger.js';
 import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
 const logger = loggers.aurora || console;
+const AUTOMATION_LANGUAGES = ['es', 'en', 'fr', 'it', 'pt', 'qu'];
+
+function normalizeAutomationLanguage(lang) {
+  return AUTOMATION_LANGUAGES.includes(lang) ? lang : 'es';
+}
+
+async function getAutomationLanguage(phone) {
+  try {
+    return normalizeAutomationLanguage(await getUserPreferredLanguage(phone));
+  } catch {
+    return 'es';
+  }
+}
+
+function getLocalizedServiceLabel(type, lang = 'es') {
+  const labels = {
+    hotDesk: { es: 'Hot Desk', en: 'Hot Desk', fr: 'Hot Desk', it: 'Hot Desk', pt: 'Hot Desk', qu: 'Hot Desk' },
+    hot_desk: { es: 'Hot Desk', en: 'Hot Desk', fr: 'Hot Desk', it: 'Hot Desk', pt: 'Hot Desk', qu: 'Hot Desk' },
+    meetingRoom: { es: 'Sala de Reuniones', en: 'Meeting Room', fr: 'Salle de réunion', it: 'Sala riunioni', pt: 'Sala de reunião', qu: 'Sala de Reuniones' },
+    meeting_room: { es: 'Sala de Reuniones', en: 'Meeting Room', fr: 'Salle de réunion', it: 'Sala riunioni', pt: 'Sala de reunião', qu: 'Sala de Reuniones' },
+    salaReuniones: { es: 'Sala de Reuniones', en: 'Meeting Room', fr: 'Salle de réunion', it: 'Sala riunioni', pt: 'Sala de reunião', qu: 'Sala de Reuniones' },
+    sala_reunion: { es: 'Sala de Reuniones', en: 'Meeting Room', fr: 'Salle de réunion', it: 'Sala riunioni', pt: 'Sala de reunião', qu: 'Sala de Reuniones' },
+    deskIndividual: { es: 'Escritorio Individual', en: 'Individual Desk', fr: 'Bureau individuel', it: 'Scrivania individuale', pt: 'Mesa individual', qu: 'Escritorio Individual' },
+    privateOffice: { es: 'Oficina Privada', en: 'Private Office', fr: 'Bureau privé', it: 'Ufficio privato', pt: 'Escritório privado', qu: 'Oficina Privada' },
+    private_office: { es: 'Oficina Privada', en: 'Private Office', fr: 'Bureau privé', it: 'Ufficio privato', pt: 'Escritório privado', qu: 'Oficina Privada' },
+    oficina_privada: { es: 'Oficina Privada', en: 'Private Office', fr: 'Bureau privé', it: 'Ufficio privato', pt: 'Escritório privado', qu: 'Oficina Privada' },
+    evento: { es: 'Evento', en: 'Event Space', fr: 'Espace événementiel', it: 'Spazio eventi', pt: 'Espaço para eventos', qu: 'Evento' },
+    coworking: { es: 'Espacio Coworking', en: 'Coworking Space', fr: 'Espace de coworking', it: 'Spazio coworking', pt: 'Espaço de coworking', qu: 'Espacio Coworking' },
+  };
+  return labels[type]?.[lang] ?? labels[type]?.es ?? getServiceLabel(type);
+}
+
+function getLocalizedServiceQuestion(type, lang = 'es') {
+  const meetingRoom = {
+    es: '¿Tu reunión fue un éxito? 🎯',
+    en: 'Was your meeting a success? 🎯',
+    fr: 'Votre réunion a-t-elle été un succès? 🎯',
+    it: 'La tua riunione è andata bene? 🎯',
+    pt: 'Sua reunião foi um sucesso? 🎯',
+    qu: '¿Tu reunión fue un éxito? 🎯',
+  };
+  const workspace = {
+    es: '¿Tuviste un día productivo? 💪',
+    en: 'Was it a productive day? 💪',
+    fr: 'Avez-vous eu une journée productive? 💪',
+    it: 'È stata una giornata produttiva? 💪',
+    pt: 'Foi um dia produtivo? 💪',
+    qu: '¿Tuviste un día productivo? 💪',
+  };
+  const isMeetingRoom = ['meeting_room', 'meetingRoom', 'sala_reunion', 'salaReuniones'].includes(type);
+  return (isMeetingRoom ? meetingRoom : workspace)[lang] ?? workspace.es;
+}
+
+function getD3FomoLine({ wasFree, serviceType, lang = 'es' }) {
+  const isMeetingRoom = ['meeting_room', 'meetingRoom', 'sala_reunion', 'salaReuniones'].includes(serviceType);
+  const type = wasFree ? 'free' : isMeetingRoom ? 'meeting' : 'membership';
+  const lines = {
+    free: {
+      es: '🎁 Tu primera visita gratis ya pasó, pero tenemos *15% OFF* en tu siguiente reserva esta semana.',
+      en: '🎁 Your first free visit is over, but you have *15% OFF* on your next booking this week.',
+      fr: '🎁 Votre première visite gratuite est passée, mais vous avez *15% OFF* sur votre prochaine réservation cette semaine.',
+      it: '🎁 La tua prima visita gratuita è passata, ma hai *15% OFF* sulla prossima prenotazione questa settimana.',
+      pt: '🎁 Sua primeira visita grátis já passou, mas você tem *15% OFF* na próxima reserva desta semana.',
+      qu: '🎁 Tu primera visita gratis ya pasó, pero tienes *15% OFF* esta semana.',
+    },
+    meeting: {
+      es: '👥 ¿Tienes otra reunión pendiente? Salas disponibles esta semana con horarios flexibles.',
+      en: '👥 Do you have another meeting coming up? Meeting rooms are available this week with flexible times.',
+      fr: '👥 Avez-vous une autre réunion prévue? Des salles sont disponibles cette semaine avec des horaires flexibles.',
+      it: '👥 Hai un’altra riunione in arrivo? Sale disponibili questa settimana con orari flessibili.',
+      pt: '👥 Tem outra reunião em breve? Salas disponíveis esta semana com horários flexíveis.',
+      qu: '👥 ¿Tienes otra reunión pendiente? Hay salas disponibles esta semana.',
+    },
+    membership: {
+      es: '💡 ¿Sabías que con una *Membresía Coworkia* ahorras hasta un 40%? Pregúntame por los planes.',
+      en: '💡 Did you know a *Coworkia Membership* can save you up to 40%? Ask me about the plans.',
+      fr: '💡 Saviez-vous qu’un *abonnement Coworkia* peut vous faire économiser jusqu’à 40%? Demandez-moi les plans.',
+      it: '💡 Sapevi che con un *abbonamento Coworkia* puoi risparmiare fino al 40%? Chiedimi i piani.',
+      pt: '💡 Sabia que uma *assinatura Coworkia* pode ajudar você a economizar até 40%? Pergunte-me sobre os planos.',
+      qu: '💡 Con una *Membresía Coworkia* puedes ahorrar hasta 40%. Pregúntame por los planes.',
+    },
+  };
+  return lines[type][lang] ?? lines[type].es;
+}
 
 /**
  * 🚫 No enviar automatizaciones a teléfonos internos definidos por configuración.
@@ -272,12 +356,10 @@ export async function sendAuroraD1Followups() {
           await databaseService.run(`UPDATE reservations SET followup_d1_sent_at = NOW() WHERE id = $1`, [r.id]);
           continue;
         }
-        const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
-        const userLang = await getUserPreferredLanguage(r.user_phone) || 'es';
-        const serviceQuestion = r.service_type === 'meeting_room'
-          ? { es: '¿Tu reunión fue un éxito? 🎯', en: 'Was your meeting a success? 🎯', fr: 'Votre réunion a-t-elle été un succès? 🎯', it: 'La tua riunione è andata bene? 🎯', pt: 'Sua reunião foi um sucesso? 🎯', qu: '¿Tu reunión fue un éxito? 🎯' }[userLang] ?? '¿Tu reunión fue un éxito? 🎯'
-          : { es: '¿Tuviste un día productivo? 💪', en: 'Was it a productive day? 💪', fr: 'Avez-vous eu une journée productive? 💪', it: 'È stata una giornata produttiva? 💪', pt: 'Foi um dia produtivo? 💪', qu: '¿Tuviste un día productivo? 💪' }[userLang] ?? '¿Tuviste un día productivo? 💪';
+        const userLang = await getAutomationLanguage(r.user_phone);
+        const serviceLabel = getLocalizedServiceLabel(r.service_type, userLang);
+        const serviceQuestion = getLocalizedServiceQuestion(r.service_type, userLang);
 
         const D1_MSG = {
           es: `¡Hola ${firstName}! 😊\n\nAyer disfrutaste de tu *${serviceLabel}* en Coworkia. ${serviceQuestion}\n\nTu feedback nos ayuda a mejorar. ¿Qué calificación nos das del 1 al 5? ⭐\n\nY si quieres volver pronto, solo dime y reservo para ti 📅`,
@@ -342,16 +424,15 @@ export async function sendAuroraD3Followups() {
           await databaseService.run(`UPDATE reservations SET followup_d3_sent_at = NOW() WHERE id = $1`, [r.id]);
           continue;
         }
-        const serviceLabel = getServiceLabelLegacy(r.service_type);
         const firstName = r.user_name ? r.user_name.split(' ')[0] : 'amig@';
         const wasFree = parseFloat(r.total_price || 0) === 0;
-
-        let fomoLine;
-        if (wasFree) fomoLine = '🎁 Tu primera visita gratis ya pasó, pero tenemos *15% OFF* en tu siguiente reserva esta semana.';
-        else if (r.service_type === 'meeting_room') fomoLine = '👥 ¿Tienes otra reunión pendiente? Salas disponibles esta semana con horarios flexibles.';
-        else fomoLine = '💡 ¿Sabías que con una *Membresía Coworkia* ahorras hasta un 40%? Pregúntame por los planes.';
-
-        const userLangD3 = await getUserPreferredLanguage(r.user_phone) || 'es';
+        const userLangD3 = await getAutomationLanguage(r.user_phone);
+        const serviceLabel = getLocalizedServiceLabel(r.service_type, userLangD3);
+        const fomoLine = getD3FomoLine({
+          wasFree,
+          serviceType: r.service_type,
+          lang: userLangD3,
+        });
         const D3_MSG = {
           es: `¡Hola ${firstName}! 🚀\n\nHan pasado 3 días desde tu visita a Coworkia. ¿Cuándo vuelves?\n\n${fomoLine}\n\n📊 *Esta semana en Coworkia:*\n✅ WiFi premium · ☕ Café ilimitado\n\nSolo dime qué día y hora y reservo para ti 📅`,
           en: `Hi ${firstName}! 🚀\n\nIt's been 3 days since your visit to Coworkia. When are you coming back?\n\n${fomoLine}\n\n📊 *This week at Coworkia:*\n✅ Premium WiFi · ☕ Unlimited coffee\n\nJust tell me what day and time and I'll book for you 📅`,

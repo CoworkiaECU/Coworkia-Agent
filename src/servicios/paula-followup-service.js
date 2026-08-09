@@ -14,6 +14,32 @@ import { sendEmail } from './email.js';
 import { generateFollowUp24hEmail, generateFollowUp3dEmail, generateVisitReminderFollowUpEmail } from './email-templates-paula.js';
 import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
+const AUTOMATION_LANGUAGES = ['es', 'en', 'fr', 'it', 'pt'];
+
+function normalizeAutomationLanguage(lang) {
+  return AUTOMATION_LANGUAGES.includes(lang) ? lang : 'es';
+}
+
+async function getAutomationLanguage(phone) {
+  try {
+    return normalizeAutomationLanguage(await getUserPreferredLanguage(phone));
+  } catch {
+    return 'es';
+  }
+}
+
+function isInternalPhone(phone) {
+  if (!phone) return false;
+  const norm = String(phone).replace(/\D/g, '');
+  const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
+  const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
+  return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
+
+function describeLeadTarget(record, kind = 'lead') {
+  return record?.id ? `${kind} ${record.id}` : `${kind} sin id`;
+}
+
 // ─── FOLLOW-UP 24H POST-BROCHURE ──────────────────────────────────────────────
 
 /**
@@ -137,7 +163,14 @@ export async function processPaulaFollowUps() {
     try {
       const firstName = (lead.client_name || 'Hola').split(' ')[0];
       const prop = lead.property_type || 'la propiedad';
-      const lang24h = await getUserPreferredLanguage(lead.phone) || 'es';
+      if (isInternalPhone(lead.phone)) {
+        console.log(`[PAULA-FOLLOWUP] ⏭️ Saltando contacto interno (${describeLeadTarget(lead)})`);
+        await markFollowupSent(lead.id, 'followup24hSent');
+        results.skipped++;
+        continue;
+      }
+
+      const lang24h = await getAutomationLanguage(lead.phone);
       const BROCHURE_MSG = {
         es: `@paula\nHola ${firstName} 👋\n\n¿Pudiste revisar el brochure de *${prop}* que te envié? 📧\n\nSi tienes alguna pregunta sobre la propiedad, financiamiento o el proceso de compra, estoy aquí para ayudarte.\n\n¿Te gustaría agendar una *visita presencial* para conocerla? 🏡`,
         en: `@paula\nHi ${firstName} 👋\n\nWere you able to review the brochure for *${prop}* I sent you? 📧\n\nIf you have any questions about the property, financing or the buying process, I'm here to help.\n\nWould you like to schedule an *in-person visit*? 🏡`,
@@ -161,18 +194,18 @@ export async function processPaulaFollowUps() {
             budgetRange: lead.budget_range
           }, lang24h);
           await sendEmail({ to: lead.email, subject, html, agent: 'paula', refId: `followup24h-${lead.id}` });
-          console.log(`[PAULA-FOLLOWUP] 📧 Email 24h enviado a ${lead.email}`);
+          console.log(`[PAULA-FOLLOWUP] 📧 Email 24h enviado: ${describeLeadTarget(lead)}`);
         } catch (emailErr) {
-          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 24h falló para ${lead.client_name}:`, emailErr.message);
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 24h falló (${describeLeadTarget(lead)}):`, emailErr.message);
         }
       }
 
       await markFollowupSent(lead.id, 'followup24hSent');
       results.sent24h++;
-      console.log(`[PAULA-FOLLOWUP] ✅ 24h follow-up enviado a ${lead.client_name}`);
+      console.log(`[PAULA-FOLLOWUP] ✅ 24h follow-up enviado: ${describeLeadTarget(lead)}`);
       await new Promise(r => setTimeout(r, 1500)); // rate limit
     } catch (err) {
-      console.error(`[PAULA-FOLLOWUP] ❌ Error 24h ${lead.client_name}:`, err.message);
+      console.error(`[PAULA-FOLLOWUP] ❌ Error 24h (${describeLeadTarget(lead)}):`, err.message);
       results.skipped++;
     }
   }
@@ -183,7 +216,14 @@ export async function processPaulaFollowUps() {
     try {
       const firstName = (lead.client_name || 'Hola').split(' ')[0];
       const zone = lead.preferred_zone || 'tu zona de interés';
-      const lang3d = await getUserPreferredLanguage(lead.phone) || 'es';
+      if (isInternalPhone(lead.phone)) {
+        console.log(`[PAULA-FOLLOWUP] ⏭️ Saltando contacto interno (${describeLeadTarget(lead)})`);
+        await markFollowupSent(lead.id, 'followup3dSent');
+        results.skipped++;
+        continue;
+      }
+
+      const lang3d = await getAutomationLanguage(lead.phone);
       const REENGAGEMENT_MSG = {
         es: `@paula\nHola ${firstName} 🏡\n\nTe escribo porque tengo algunas *opciones nuevas* en *${zone}* que podrían interesarte.\n\n¿Sigues buscando propiedad? Si tu presupuesto o preferencias cambiaron, cuéntame y te busco algo que se ajuste mejor 🎯\n\nEstoy a una respuesta de distancia 🤝`,
         en: `@paula\nHi ${firstName} 🏡\n\nI'm reaching out because I have some *new options* in *${zone}* that might interest you.\n\nAre you still looking for a property? If your budget or preferences changed, let me know 🎯\n\nOne message away 🤝`,
@@ -206,18 +246,18 @@ export async function processPaulaFollowUps() {
             preferredZone: lead.preferred_zone
           }, lang3d);
           await sendEmail({ to: lead.email, subject, html, agent: 'paula', refId: `followup3d-${lead.id}` });
-          console.log(`[PAULA-FOLLOWUP] 📧 Email 3d enviado a ${lead.email}`);
+          console.log(`[PAULA-FOLLOWUP] 📧 Email 3d enviado: ${describeLeadTarget(lead)}`);
         } catch (emailErr) {
-          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 3d falló para ${lead.client_name}:`, emailErr.message);
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email 3d falló (${describeLeadTarget(lead)}):`, emailErr.message);
         }
       }
 
       await markFollowupSent(lead.id, 'followup3dSent');
       results.sent3d++;
-      console.log(`[PAULA-FOLLOWUP] ✅ 3d follow-up enviado a ${lead.client_name}`);
+      console.log(`[PAULA-FOLLOWUP] ✅ 3d follow-up enviado: ${describeLeadTarget(lead)}`);
       await new Promise(r => setTimeout(r, 1500));
     } catch (err) {
-      console.error(`[PAULA-FOLLOWUP] ❌ Error 3d ${lead.client_name}:`, err.message);
+      console.error(`[PAULA-FOLLOWUP] ❌ Error 3d (${describeLeadTarget(lead)}):`, err.message);
       results.skipped++;
     }
   }
@@ -228,7 +268,14 @@ export async function processPaulaFollowUps() {
     try {
       const firstName = (visit.client_name || 'Hola').split(' ')[0];
       const timeStr = visit.start_time || '10:00';
-      const langVisit = await getUserPreferredLanguage(visit.client_phone) || 'es';
+      if (isInternalPhone(visit.client_phone)) {
+        console.log(`[PAULA-FOLLOWUP] ⏭️ Saltando contacto interno (${describeLeadTarget(visit, 'visita')})`);
+        await markVisitReminderSent(visit.id);
+        results.skipped++;
+        continue;
+      }
+
+      const langVisit = await getAutomationLanguage(visit.client_phone);
       const addrFallback = { es: 'Te envío la ubicación exacta por aquí', en: "I'll send you the exact location", fr: "Je vous envoie l'adresse exacte", it: "Ti invio l'indirizzo esatto", pt: 'Envio-lhe o endereço exato', qu: 'Te mando la dirección' }[langVisit] ?? 'Te envío la ubicación exacta por aquí';
       const addr = visit.property_address || addrFallback;
       const VISIT_REMINDER = {
@@ -254,18 +301,18 @@ export async function processPaulaFollowUps() {
             startTime: visit.start_time
           }, langVisit);
           await sendEmail({ to: visit.client_email, subject, html, agent: 'paula', refId: `visitreminder-${visit.id}` });
-          console.log(`[PAULA-FOLLOWUP] 📧 Email reminder enviado a ${visit.client_email}`);
+          console.log(`[PAULA-FOLLOWUP] 📧 Email reminder enviado: ${describeLeadTarget(visit, 'visita')}`);
         } catch (emailErr) {
-          console.error(`[PAULA-FOLLOWUP] ⚠️ Email reminder falló para ${visit.client_name}:`, emailErr.message);
+          console.error(`[PAULA-FOLLOWUP] ⚠️ Email reminder falló (${describeLeadTarget(visit, 'visita')}):`, emailErr.message);
         }
       }
 
       await markVisitReminderSent(visit.id);
       results.visitReminders++;
-      console.log(`[PAULA-FOLLOWUP] ✅ Reminder visita enviado a ${visit.client_name}`);
+      console.log(`[PAULA-FOLLOWUP] ✅ Reminder visita enviado: ${describeLeadTarget(visit, 'visita')}`);
       await new Promise(r => setTimeout(r, 1500));
     } catch (err) {
-      console.error(`[PAULA-FOLLOWUP] ❌ Error reminder ${visit.client_name}:`, err.message);
+      console.error(`[PAULA-FOLLOWUP] ❌ Error reminder (${describeLeadTarget(visit, 'visita')}):`, err.message);
       results.skipped++;
     }
   }

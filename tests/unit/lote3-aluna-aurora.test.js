@@ -40,6 +40,10 @@ jest.unstable_mockModule('../../src/database/auroraRepository.js', () => ({
   markRebookReminderSent,
 }));
 
+jest.unstable_mockModule('../../src/perfiles-interacciones/memoria-sqlite.js', () => ({
+  getUserPreferredLanguage: jest.fn().mockResolvedValue('es'),
+}));
+
 jest.unstable_mockModule('../../src/utils/logger.js', () => ({
   loggers: {
     aurora: auroraLogger,

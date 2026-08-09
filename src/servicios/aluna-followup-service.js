@@ -21,6 +21,19 @@ import { COWORKIA_ADDRESS_FULL } from '../utils/constants.js';
 import { getUserPreferredLanguage } from '../perfiles-interacciones/memoria-sqlite.js';
 
 const logger = loggers.aluna || console;
+const AUTOMATION_LANGUAGES = ['es', 'en', 'fr', 'it', 'pt'];
+
+function normalizeAutomationLanguage(lang) {
+  return AUTOMATION_LANGUAGES.includes(lang) ? lang : 'es';
+}
+
+async function getAutomationLanguage(phone) {
+  try {
+    return normalizeAutomationLanguage(await getUserPreferredLanguage(phone));
+  } catch {
+    return 'es';
+  }
+}
 
 function escapeHtml(value = '') {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -51,6 +64,31 @@ function isAdminPhoneCheck(phone) {
   const adminNorm = (process.env.ADMIN_PHONE || '').replace(/\D/g, '');
   const diegoNorm = (process.env.DIEGO_PERSONAL_PHONE || '').replace(/\D/g, '');
   return (adminNorm && norm === adminNorm) || (diegoNorm && norm === diegoNorm);
+}
+
+function describeLeadTarget(lead) {
+  return lead?.id ? `lead ${lead.id}` : 'lead sin id';
+}
+
+function getPlanLabel(interestType, lang = 'es', { plural = false } = {}) {
+  const key = interestType === 'private_office' ? 'privateOffice' : 'hotDesk';
+  const labels = {
+    privateOffice: {
+      es: plural ? 'oficinas privadas' : 'oficina privada',
+      en: plural ? 'private offices' : 'private office',
+      fr: plural ? 'bureaux privés' : 'bureau privé',
+      it: plural ? 'uffici privati' : 'ufficio privato',
+      pt: plural ? 'escritórios privados' : 'escritório privado',
+    },
+    hotDesk: {
+      es: plural ? 'espacios de hot desk' : 'hot desk',
+      en: plural ? 'hot desk spaces' : 'hot desk',
+      fr: plural ? 'espaces hot desk' : 'hot desk',
+      it: plural ? 'postazioni hot desk' : 'hot desk',
+      pt: plural ? 'espaços de hot desk' : 'hot desk',
+    },
+  };
+  return labels[key][lang] ?? labels[key].es;
 }
 
 /**
@@ -97,8 +135,21 @@ export async function sendD1Followups() {
       try {
         // Enviar WhatsApp al teléfono del cliente (no del admin)
         const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && isAdminPhoneCheck(clientPhone)) {
+          logger.info(`[ALUNA-FOLLOWUP] ⏭️ Saltando contacto interno (${describeLeadTarget(lead)})`);
+          await query(`
+            UPDATE membership_leads
+            SET
+              followup_24h_sent_at = NOW(),
+              automation_d1_sent = true,
+              updated_at = NOW()
+            WHERE id = $1
+          `, [lead.id]);
+          continue;
+        }
+
         if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
-          const userLangD1 = await getUserPreferredLanguage(clientPhone || lead.user_phone);
+          const userLangD1 = await getAutomationLanguage(clientPhone || lead.user_phone);
           const whatsappMessage = buildD1WhatsAppMessage(lead, userLangD1);
           await enviarWhatsApp(clientPhone, whatsappMessage);
         }
@@ -124,14 +175,14 @@ export async function sendD1Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado a ${lead.name} (${resolveClientPhone(lead) || lead.user_phone})`);
+        logger.info(`[ALUNA-FOLLOWUP] ✅ D+1 enviado: ${describeLeadTarget(lead)}`);
         
         // Delay entre envíos para no saturar API
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 a ${resolveClientPhone(lead) || lead.user_phone}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+1 (${describeLeadTarget(lead)}):`, error);
       }
     }
     
@@ -192,8 +243,21 @@ export async function sendD3Followups() {
       try {
         // Enviar WhatsApp con FOMO al teléfono del cliente
         const clientPhone = resolveClientPhone(lead);
+        if (clientPhone && isAdminPhoneCheck(clientPhone)) {
+          logger.info(`[ALUNA-FOLLOWUP] ⏭️ Saltando contacto interno (${describeLeadTarget(lead)})`);
+          await query(`
+            UPDATE membership_leads
+            SET
+              followup_3d_sent_at = NOW(),
+              automation_d3_sent = true,
+              updated_at = NOW()
+            WHERE id = $1
+          `, [lead.id]);
+          continue;
+        }
+
         if (clientPhone && !isAdminPhoneCheck(clientPhone)) {
-          const userLangD3 = await getUserPreferredLanguage(clientPhone || lead.user_phone);
+          const userLangD3 = await getAutomationLanguage(clientPhone || lead.user_phone);
           const whatsappMessage = buildD3WhatsAppMessage(lead, userLangD3);
           await enviarWhatsApp(clientPhone, whatsappMessage);
         }
@@ -219,14 +283,14 @@ export async function sendD3Followups() {
         `, [lead.id]);
         
         sent++;
-        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado a ${lead.name} (${resolveClientPhone(lead) || lead.user_phone})`);
+        logger.info(`[ALUNA-FOLLOWUP] 🔥 D+3 enviado: ${describeLeadTarget(lead)}`);
         
         // Delay entre envíos
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
         errors++;
-        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 a ${resolveClientPhone(lead) || lead.user_phone}:`, error);
+        logger.error(`[ALUNA-FOLLOWUP] ❌ Error enviando D+3 (${describeLeadTarget(lead)}):`, error);
       }
     }
     
@@ -244,7 +308,8 @@ export async function sendD3Followups() {
  * 📝 Build WhatsApp message D+1 (amigable)
  */
 function buildD1WhatsAppMessage(lead, lang = 'es') {
-  const planType = lead.interest_type === 'private_office' ? 'oficina privada' : 'hot desk';
+  const language = normalizeAutomationLanguage(lang);
+  const planType = getPlanLabel(lead.interest_type, language);
   const price = lead.mensualidad || '300';
 
   const D1_MSG = {
@@ -256,11 +321,11 @@ Te recuerdo que tenemos ${planType} disponible desde $${price}/mes con todo incl
 ✅ Café ilimitado ☕
 ✅ WiFi de alta velocidad
 ✅ Salas de reuniones
-✅ Recepción y mail handling
+✅ Coordinación directa conmigo
 
-¿Cuándo te gustaría conocer el espacio? 🏢
+¿Qué día te gustaría probar el espacio? 🏢
 
-Puedo mostrártelo hoy mismo o agendamos para la fecha que mejor te venga 📅`,
+Coordino contigo un día completo de prueba dentro del horario de oficina 📅`,
 
     en: `Hi ${lead.name}! 👋
 
@@ -270,11 +335,11 @@ Just a reminder that we have ${planType} available from $${price}/month, all-inc
 ✅ Unlimited coffee ☕
 ✅ High-speed WiFi
 ✅ Meeting rooms
-✅ Reception & mail handling
+✅ Direct coordination with me
 
-When would you like to visit? 🏢
+What day would you like to try the space? 🏢
 
-I can show you around today or we can schedule for whatever works best 📅`,
+I'll coordinate a full trial workday with you during office hours 📅`,
 
     fr: `Bonjour ${lead.name}! 👋
 
@@ -284,11 +349,11 @@ Je vous rappelle que nous avons ${planType} disponible à partir de $${price}/mo
 ✅ Café illimité ☕
 ✅ WiFi haut débit
 ✅ Salles de réunion
-✅ Réception et gestion du courrier
+✅ Coordination directe avec moi
 
-Quand souhaitez-vous visiter? 🏢
+Quel jour souhaitez-vous essayer l'espace? 🏢
 
-Je peux vous montrer l'espace aujourd'hui ou nous pouvons planifier à votre convenance 📅`,
+Je coordonne avec vous une journée complète d'essai pendant les horaires de bureau 📅`,
 
     it: `Ciao ${lead.name}! 👋
 
@@ -298,11 +363,11 @@ Ti ricordo che abbiamo ${planType} disponibile da $${price}/mese tutto incluso:
 ✅ Caffè illimitato ☕
 ✅ WiFi ad alta velocità
 ✅ Sale riunioni
-✅ Reception e gestione posta
+✅ Coordinamento diretto con me
 
-Quando vorresti visitare? 🏢
+Che giorno vorresti provare lo spazio? 🏢
 
-Posso mostrarti lo spazio oggi o pianifichiamo per quando ti è più comodo 📅`,
+Coordino con te una giornata completa di prova durante l'orario d'ufficio 📅`,
 
     pt: `Olá ${lead.name}! 👋
 
@@ -312,14 +377,14 @@ Lembrando que temos ${planType} disponível a partir de $${price}/mês com tudo 
 ✅ Café ilimitado ☕
 ✅ WiFi de alta velocidade
 ✅ Salas de reunião
-✅ Recepção e gestão de correspondência
+✅ Coordenação direta comigo
 
-Quando você gostaria de conhecer o espaço? 🏢
+Que dia você gostaria de experimentar o espaço? 🏢
 
-Posso mostrar hoje mesmo ou agendamos para a data que melhor te convier 📅`,
+Coordeno com você um dia completo de teste dentro do horário de atendimento 📅`,
   };
 
-  return D1_MSG[lang] ?? D1_MSG.es;
+  return D1_MSG[language] ?? D1_MSG.es;
 }
 
 /**
@@ -327,7 +392,8 @@ Posso mostrar hoje mesmo ou agendamos para a data que melhor te convier 📅`,
  */
 function buildD3WhatsAppMessage(lead, lang = 'es') {
   const firstName = lead.name.split(' ')[0];
-  const planType = lead.interest_type === 'private_office' ? 'oficinas privadas' : 'espacios de hot desk';
+  const language = normalizeAutomationLanguage(lang);
+  const planType = getPlanLabel(lead.interest_type, language, { plural: true });
 
   const D3_MSG = {
     es: `${firstName}, últimas ${planType} disponibles! 🔥
@@ -339,7 +405,7 @@ Pero solo nos quedan 2 espacios disponibles y ya varios clientes interesados.
 
 ¿Hablamos hoy? Te reservo uno antes de que se agoten 👀
 
-Responde "Sí" y coordinamos una visita para esta semana 📅`,
+Responde "Sí" y coordinamos tu día de prueba para esta semana 📅`,
 
     en: `${firstName}, last ${planType} available! 🔥
 
@@ -350,7 +416,7 @@ But we only have 2 spots left and several interested clients.
 
 Can we talk today? I'll reserve one for you before they're gone 👀
 
-Reply "Yes" and we'll arrange a visit this week 📅`,
+Reply "Yes" and we'll coordinate your trial workday this week 📅`,
 
     fr: `${firstName}, derniers ${planType} disponibles! 🔥
 
@@ -361,7 +427,7 @@ Mais il ne nous reste que 2 espaces et plusieurs clients intéressés.
 
 On peut parler aujourd'hui? Je vous en réserve un avant qu'ils soient pris 👀
 
-Répondez "Oui" et on organise une visite cette semaine 📅`,
+Répondez "Oui" et nous coordonnons votre journée d'essai cette semaine 📅`,
 
     it: `${firstName}, ultimi ${planType} disponibili! 🔥
 
@@ -372,7 +438,7 @@ Ma abbiamo solo 2 posti rimasti e diversi clienti interessati.
 
 Possiamo parlare oggi? Te ne riservo uno prima che finiscano 👀
 
-Rispondi "Sì" e organizziamo una visita questa settimana 📅`,
+Rispondi "Sì" e coordiniamo la tua giornata di prova questa settimana 📅`,
 
     pt: `${firstName}, últimos ${planType} disponíveis! 🔥
 
@@ -383,10 +449,10 @@ Mas só temos 2 espaços disponíveis e vários clientes interessados.
 
 Podemos conversar hoje? Reservo um para você antes que acabem 👀
 
-Responda "Sim" e marcamos uma visita esta semana 📅`,
+Responda "Sim" e coordenamos seu dia de teste esta semana 📅`,
   };
 
-  return D3_MSG[lang] ?? D3_MSG.es;
+  return D3_MSG[language] ?? D3_MSG.es;
 }
 
 /**
@@ -426,7 +492,7 @@ function buildD1EmailHTML(lead) {
         <li>✅ Café y snacks ilimitados</li>
         <li>✅ ${WIFI.display}</li>
         <li>✅ Salas de reuniones (uso incluido)</li>
-        <li>✅ Recepción y manejo de correspondencia</li>
+        <li>✅ Coordinación directa con Aluna</li>
         <li>✅ Acceso en horario de oficina</li>
       </ul>
     </div>
@@ -502,9 +568,9 @@ function buildD3EmailHTML(lead) {
     </div>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://wa.me/593994837117?text=Quiero%20reservar%20una%20oficina%20antes%20de%20que%20se%20agoten" 
+      <a href="${CONTACT.whatsappUrl}?text=Quiero%20coordinar%20mi%20día%20de%20prueba%20antes%20de%20que%20se%20agoten%20los%20cupos"
          style="display: inline-block; padding: 18px 35px; background: #f5576c; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; animation: pulse 2s infinite;">
-        🔥 RESERVAR AHORA
+        🔥 COORDINAR DÍA DE PRUEBA
       </a>
       <p style="margin: 15px 0 0 0; font-size: 12px; color: #999;">Respuesta en menos de 2 minutos</p>
     </div>

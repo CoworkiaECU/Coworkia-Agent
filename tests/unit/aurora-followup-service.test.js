@@ -25,6 +25,10 @@ jest.unstable_mockModule('../../src/database/auroraRepository.js', () => ({
   markRebookReminderSent: jest.fn().mockResolvedValue(),
 }));
 
+jest.unstable_mockModule('../../src/perfiles-interacciones/memoria-sqlite.js', () => ({
+  getUserPreferredLanguage: jest.fn().mockResolvedValue('es'),
+}));
+
 // ─── Import SUT after mocks ──────────────────────────────────────────────────
 
 const { enviarWhatsApp } = await import('../../src/express-servidor/endpoints-api/wassenger.js');

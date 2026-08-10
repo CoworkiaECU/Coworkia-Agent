@@ -17,10 +17,8 @@ router.get('/leads', async (req, res) => {
 
     let query = `SELECT id, operation_type, property_type, preferred_zone, budget_range,
                         client_name, email, phone, status, requirements,
-                        viewing_scheduled, created_at, updated_at,
-                        pls.score, pls.tier
-                 FROM real_estate_leads pl
-                 LEFT JOIN paula_lead_scores pls ON pl.id = pls.lead_id
+                        viewing_scheduled, created_at, updated_at
+                 FROM real_estate_leads
                  WHERE 1=1`;
     const params = [];
     let i = 1;

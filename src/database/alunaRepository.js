@@ -4,6 +4,7 @@
  */
 
 import databaseService from './database.js';
+import { normalizePhoneEC } from '../utils/validators.js';
 
 /**
  * 💾 Guardar membresía parcial/cancelada
@@ -474,6 +475,98 @@ export async function markAlunaClientResponse(userPhone, channel = 'whatsapp') {
     console.log(`[ALUNA-REPO] 💬 Cliente respondió (${channel}): ${userPhone}`);
   } catch (err) {
     console.warn('[ALUNA-REPO] ⚠️ markAlunaClientResponse no crítico:', err.message);
+  }
+}
+
+function buildPhoneVariants(rawPhone) {
+  const variants = new Set();
+  const raw = String(rawPhone || '').trim();
+  const normalized = normalizePhoneEC(raw);
+  const digits = raw.replace(/\D/g, '');
+
+  if (raw) variants.add(raw);
+  if (normalized) variants.add(normalized);
+  if (digits) {
+    variants.add(digits);
+    variants.add(`+${digits}`);
+  }
+
+  return [...variants].filter(Boolean);
+}
+
+function buildFollowupResponseNote(messageText, channel) {
+  const cleaned = String(messageText || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) return '';
+
+  const snippet = cleaned.slice(0, 500);
+  return `[ALUNA-FOLLOWUP-RESPONSE ${channel}] ${snippet}`;
+}
+
+/**
+ * Marca la primera respuesta de un lead de membresia que ya recibio D+1.
+ * Es idempotente: no sobrescribe client_response_at ni toca leads sin D+1.
+ */
+export async function markAlunaMembershipLeadClientResponse(userPhone, channel = 'whatsapp', messageText = '') {
+  await databaseService.ensureInitialized();
+
+  const phoneVariants = buildPhoneVariants(userPhone);
+  if (phoneVariants.length === 0) {
+    return { updated: false, reason: 'invalid_phone' };
+  }
+
+  const safeChannel = channel === 'email' ? 'email' : 'whatsapp';
+  const responseNote = buildFollowupResponseNote(messageText, safeChannel);
+
+  try {
+    const result = await databaseService.get(
+      `WITH eligible AS (
+         SELECT id
+           FROM membership_leads
+          WHERE (user_phone = ANY($1::text[]) OR phone = ANY($1::text[]))
+            AND followup_24h_sent_at IS NOT NULL
+            AND client_response_at IS NULL
+            AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
+          ORDER BY followup_24h_sent_at DESC NULLS LAST, created_at DESC
+          LIMIT 1
+       )
+       UPDATE membership_leads ml
+          SET client_response_at = CURRENT_TIMESTAMP,
+              client_whatsapp_reply = CASE WHEN $2 = 'whatsapp' THEN TRUE ELSE ml.client_whatsapp_reply END,
+              client_email_reply = CASE WHEN $2 = 'email' THEN TRUE ELSE ml.client_email_reply END,
+              last_interaction_at = CURRENT_TIMESTAMP,
+              notes = CASE
+                WHEN $3::text = '' THEN ml.notes
+                ELSE CONCAT(
+                  COALESCE(ml.notes, ''),
+                  CASE WHEN COALESCE(ml.notes, '') = '' THEN '' ELSE E'\n' END,
+                  $3::text
+                )
+              END
+         FROM eligible
+        WHERE ml.id = eligible.id
+        RETURNING ml.id, ml.client_response_at, ml.client_whatsapp_reply, ml.client_email_reply, ml.last_interaction_at`,
+      [phoneVariants, safeChannel, responseNote]
+    );
+
+    if (!result) {
+      return { updated: false, reason: 'not_eligible' };
+    }
+
+    console.log('[ALUNA-REPO] Respuesta de follow-up registrada en membership_leads');
+    return {
+      updated: true,
+      leadId: result.id,
+      clientResponseAt: result.client_response_at,
+      clientWhatsappReply: result.client_whatsapp_reply,
+      clientEmailReply: result.client_email_reply,
+      lastInteractionAt: result.last_interaction_at,
+    };
+  } catch (err) {
+    console.warn('[ALUNA-REPO] markAlunaMembershipLeadClientResponse error:', err.message);
+    return { updated: false, reason: 'error', error: err.message };
   }
 }
 

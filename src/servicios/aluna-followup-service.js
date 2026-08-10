@@ -217,12 +217,13 @@ export async function sendD3Followups() {
         monthly_fee as mensualidad,
         created_at,
         created_at as interest_at,
-        updated_at as client_response_at
+        client_response_at
       FROM membership_leads
       WHERE created_at >= NOW() - INTERVAL '73 hours'
         AND created_at < NOW() - INTERVAL '71 hours'
         AND followup_24h_sent_at IS NOT NULL
         AND followup_3d_sent_at IS NULL
+        AND client_response_at IS NULL
         AND updated_at = created_at
         AND status NOT IN ('active', 'cancelled', 'expired', 'accepted', 'pending_payment', 'converted')
         AND user_phone != $1

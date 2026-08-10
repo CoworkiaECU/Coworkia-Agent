@@ -35,7 +35,8 @@ import { getUserLanguage, detectLanguageCommand, getLanguageChangeConfirmation }
 import { processMessage as splitLongMessage, cleanPromptMarkers } from '../../utils/message-splitter.js';
 import { getAgentForm, saveAgentForm, clearAgentForm, getAllUserForms, cancelAgentForm } from '../../servicios/agent-form-manager.js';
 import { normalizeAgentName } from '../../utils/agent-normalizer.js';
-import { trackAlunaProspect, captureAlunaLeadFromKeywords, markAlunaClientResponse } from '../../database/alunaRepository.js';
+import { trackAlunaProspect, captureAlunaLeadFromKeywords, markAlunaMembershipLeadClientResponse } from '../../database/alunaRepository.js';
+import { trackAlunaFollowupReply } from '../../servicios/aluna-response-tracking.js';
 
 // 🆕 NUEVO SISTEMA V2 - Handoffs unificados
 import { resolveIntent, decideResponder, logIntent, INTENT_TYPES } from '../../deteccion-intenciones/intent-resolver-v2.js';
@@ -3410,28 +3411,13 @@ REGLAS: nombre=solo nombre de persona. plan=detecta de contexto, si no hay plan 
       }
     }
 
-    // � ALUNA CLIENT RESPONSE TRACKING: Detectar y marcar respuestas de prospectos
-    // Si el usuario tiene follow-ups enviados (D+1 o D+3) y aún no ha respondido,
-    // marcar su respuesta para medir efectividad de la secuencia automatizada
-    try {
-      const prospectStatus = await databaseService.get(
-        `SELECT followup_24h_sent_at, followup_3d_sent_at, client_response_at 
-         FROM aluna_prospect_followups 
-         WHERE user_phone = $1`,
-        [userId]
-      );
-
-      if (prospectStatus && 
-          (prospectStatus.followup_24h_sent_at || prospectStatus.followup_3d_sent_at) && 
-          !prospectStatus.client_response_at) {
-        // Cliente tiene follow-ups enviados pero no ha respondido → marcar ahora
-        await alunaRepository.markAlunaClientResponse(userId, 'whatsapp');
-        console.log(`[ALUNA-TRACKING] 💬 Prospecto respondió después de follow-up: ${userId}`);
-      }
-    } catch (trackErr) {
-      // No crítico - no bloquear flujo principal
-      console.warn('[ALUNA-TRACKING] ⚠️ Error tracking respuesta:', trackErr.message);
-    }
+    await trackAlunaFollowupReply({
+      userId,
+      messageText: processedText || auroraInput || '',
+      channel: 'whatsapp',
+      markClientResponse: markAlunaMembershipLeadClientResponse,
+      logger: { info: console.log, warn: console.warn },
+    });
 
 
     // 🎯 ALUNA HIGH INTENT DETECTION: Detectar señales de alto interés comercial
